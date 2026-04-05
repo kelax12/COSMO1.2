@@ -87,7 +87,7 @@ const SettingsPage: React.FC = () => {
     toast.success('Profil mis à jour avec succès !');
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwords.current || !passwords.new || !passwords.confirm) {
       toast.error('Veuillez remplir tous les champs');
