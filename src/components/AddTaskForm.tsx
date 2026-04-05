@@ -72,8 +72,10 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, friends, shareTask, isPremium } = useTaskContext();
+  const { colorSettings, friends, shareTask } = useTaskContext();
 
+  // Premium — vérification côté serveur
+  const { isPremium } = useBilling();
   const [isFormOpen, setIsFormOpen] = useState(expanded);
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
