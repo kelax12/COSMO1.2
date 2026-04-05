@@ -42,6 +42,11 @@ import { useLists, useAddTaskToList, useRemoveTaskFromList } from '@/modules/lis
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '@/context/TaskContext';
 
+// ═══════════════════════════════════════════════════════════════════
+// BillingContext — vérification premium côté serveur
+// ═══════════════════════════════════════════════════════════════════
+import { useBilling } from '@/modules/billing/billing.context';
+
 interface TaskModalProps {
   task?: Task;
   isOpen: boolean;
