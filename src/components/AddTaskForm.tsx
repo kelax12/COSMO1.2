@@ -33,6 +33,11 @@ import { useLists, useAddTaskToList } from '@/modules/lists';
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
 
+// ═══════════════════════════════════════════════════════════════════
+// BillingContext — vérification premium côté serveur
+// ═══════════════════════════════════════════════════════════════════
+import { useBilling } from '@/modules/billing/billing.context';
+
 type AddTaskFormProps = {
   onFormToggle?: (isOpen: boolean) => void;
   expanded?: boolean;
