@@ -9,10 +9,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
 import { Friend } from '@/modules/friends';
 
+
+// ═══════════════════════════════════════════════════════════════════
+// Messaging hooks (MIGRÉ Supabase)
+// ═══════════════════════════════════════════════════════════════════
+import { useSendChatMessage, useConversationMessages, useMessagingRealtime } from '@/modules/messaging/messaging.hooks';
+
 // ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
+
+// ═══════════════════════════════════════════════════════════════════
+// BillingContext — vérification premium côté serveur
+// ═══════════════════════════════════════════════════════════════════
+import { useBilling } from '@/modules/billing/billing.context';
 
 // Types pour MessagingPage
 interface FriendRequest {
