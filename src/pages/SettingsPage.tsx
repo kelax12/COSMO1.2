@@ -151,8 +151,14 @@ const SettingsPage: React.FC = () => {
             toast.info('Déconnexion en cours...', {
               description: 'Contactez support@cosmo.app pour finaliser la suppression de vos données.'
           });
-          setTimeout(() => {
-            logout();
+          
+        } catch {
+          toast.info('Déconnexion en cours...', {
+            description: 'Contactez support@cosmo.app pour finaliser la suppression de vos données.'
+          });
+        } finally {
+          if (supabase) await supabase.auth.signOut();
+          await logout();
             navigate('/welcome');
           }, 2000);
         }
