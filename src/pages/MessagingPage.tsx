@@ -95,16 +95,29 @@ const MessagingPage: React.FC = () => {
   const {
     user,
     messages,
-    isPremium,
     sendFriendRequest,
     friends
   } = useTaskContext();
 
-    // Stub functions for messaging (not implemented in TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  // Premium — vérification côté serveur via BillingContext
+  // ═══════════════════════════════════════════════════════════════════
+  const { isPremium } = useBilling();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Messaging — hooks Supabase (persistance + realtime)
+  // ═══════════════════════════════════════════════════════════════════
+  const sendMessageMutation = useSendChatMessage();
+  const { data: conversationMessages = [] } = useConversationMessages(selectedConversation ?? '');
+  useMessagingRealtime(selectedConversation ?? '');
+
+  // Friend requests stub (à migrer dans un prochain sprint)
   const friendRequests: FriendRequest[] = [];
-  const sendMessage = (conversationId: string, message: string) => { void conversationId; void message; };
-  const acceptFriendRequest = (email: string) => { void email; };
-  const rejectFriendRequest = (email: string) => { void email; };
+  const sendMessage = (conversationId: string, message: string) => {
+    sendMessageMutation.mutate({ receiverId: conversationId, content: message });
+  };
+  const acceptFriendRequest = (_id: string) => { /* TODO: migrer vers useAcceptFriendRequest */ };
+  const rejectFriendRequest = (_id: string) => { /* TODO: migrer vers useRejectFriendRequest */ };
 
   const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
