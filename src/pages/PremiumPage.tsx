@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Crown, Zap, Play, Check, Star, Users, MessageCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
-import { useUpdateUserSettings, useWatchAd } from '../modules/user';
 import { useDarkMode } from '../hooks/useDarkMode';
 import AdModal from '../components/AdModal';
 import PaymentModal from '../components/PaymentModal';
+import { useBilling } from '@/modules/billing/billing.context';
+import { toast } from 'sonner';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,9 +32,8 @@ const itemVariants = {
 };
 
 export function PremiumPage() {
-  const { user, isPremium } = useAuth();
-  const updateUserSettings = useUpdateUserSettings();
-  const watchAd = useWatchAd();
+  const { user } = useAuth();
+  const { isPremium, addTokens, subscription } = useBilling() as any;
   const { isDark } = useDarkMode();
   const [showAdModal, setShowAdModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
