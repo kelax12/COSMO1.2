@@ -80,7 +80,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { friends, isPremium, shareTask, sendFriendRequest } = useTaskContext();
+  const { friends, shareTask, sendFriendRequest } = useTaskContext();
+
+  // Premium — vérification côté serveur
+  const { isPremium } = useBilling();
 
   // Form state
   const [formData, setFormData] = useState({
