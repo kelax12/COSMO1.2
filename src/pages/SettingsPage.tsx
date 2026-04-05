@@ -122,7 +122,12 @@ const SettingsPage: React.FC = () => {
       toast.error('Une erreur inattendue est survenue');
     }
   };
-
+/**
+   * TODO Sprint 4 follow-up : la suppression réelle des données utilisateur
+   * doit passer par une Supabase Edge Function appelée avec le token JWT de l'utilisateur.
+   * La suppression via auth.admin côté client est retirée (service_role ne doit pas être côté client).
+   * En attendant, on déconnecte l'utilisateur et on l'informe de contacter le support.
+   */
   const handleDeleteAccount = () => {
     setConfirmConfig({
       isOpen: true,
