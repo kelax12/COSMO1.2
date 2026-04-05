@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(\"C:\\\\Users\\\\Axel\\\\Downloads\\\\cosmo.app\\\\src\\\\pages\\\\.claude\\\\worktrees\\\\determined-chaum\\\\node_modules\\\\.bin\\\\tsc\" --noEmit --project tsconfig.app.json)",
+      "Bash(command -v node)",
+      "Read(//usr/local/bin/**)",
+      "Bash(grep -E \"\\\\.ts$|\\\\.tsx$\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep \"from ''./supabase''\" src/lib/repository.factory.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(cmd /c \"cd /d C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1 && npx tsc --noEmit 2>&1\")",
+      "Bash(cmd /c \"cd /d C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1 && grep -r \"\"isDemoMode\\\\|setDemoMode\\\\|checkAuthAndSetMode\"\" src/ --include=*.ts --include=*.tsx 2>&1\")",
+      "Bash(cmd /c \"cd /d C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1 && grep -r \"\"getPage\"\" src/modules/ --include=*.ts --include=*.tsx 2>&1\")",
+      "Bash(cmd /c \"cd /d C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1 && grep -r \"\"limit\\(200\\)\"\" src/modules/ --include=*.ts 2>&1\")"
+    ]
+  }
+}

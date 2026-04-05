@@ -1,0 +1,726 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode colors (RGB format) */
+    --color-primary: 71 85 105;
+    --color-secondary: 100 116 139;
+    --color-accent: 37 99 235;
+    --color-success: 34 197 94;
+    --color-warning: 245 158 11;
+    --color-error: 239 68 68;
+    --color-surface: 255 255 255;
+    --color-background: 248 250 252;
+    
+    /* Semantic colors for better accessibility */
+    --color-text-primary: 15 23 42;
+    --color-text-secondary: 71 85 105;
+    --color-text-muted: 148 163 184;
+    --color-border: 226 232 240;
+    --color-border-muted: 241 245 249;
+      --color-hover: 241 245 249;
+      --color-active: 226 232 240;
+      --color-chip-bg: 241 245 249;
+      --color-chip-border: 203 213 225;
+    
+    /* Navigation specific colors */
+    --nav-bg: 255 255 255;
+    --nav-border: 226 232 240;
+    --nav-item-text: 100 116 139;
+    --nav-item-hover-bg: 248 250 252;
+    --nav-item-hover-text: 15 23 42;
+    --nav-item-active-bg: 15 23 42;
+    --nav-item-active-text: 255 255 255;
+    
+    /* Calendar specific colors */
+    --calendar-bg: 255 255 255;
+    --calendar-border: 226 232 240;
+    --calendar-header-bg: 248 250 252;
+    --calendar-header-text: 71 85 105;
+    --calendar-day-bg: 255 255 255;
+    --calendar-day-hover: 248 250 252;
+    --calendar-today-bg: 241 245 249;
+    
+    /* Table specific colors */
+    --table-bg: 255 255 255;
+    --table-border: 226 232 240;
+    --table-header-bg: 248 250 252;
+    --table-header-text: 71 85 105;
+    --table-row-hover: 248 250 252;
+    --table-row-even: 255 255 255;
+    --table-row-odd: 249 250 251;
+
+    /* shadcn/ui variables (HSL format) - Light mode */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 215 25% 35%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 215 20% 65%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+    
+    /* shadcn/ui sidebar variables - Light mode */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 222 47% 11%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+--sidebar-ring: 217 91% 60%;
+--chart-1: 12 76% 61%;
+--chart-2: 173 58% 39%;
+--chart-3: 197 37% 24%;
+--chart-4: 43 74% 66%;
+--chart-5: 27 87% 67%;
+}
+
+    .dark {
+        /* Dark mode colors (RGB format) */
+        --color-primary: 148 163 184;
+        --color-secondary: 100 116 139;
+        --color-accent: 59 130 246;
+        --color-success: 52 211 153;
+        --color-warning: 251 191 36;
+        --color-error: 239 68 68;
+        --color-surface: 30 41 59;
+    --color-background: 15 23 42;
+    
+    /* Semantic colors for dark mode */
+    --color-text-primary: 248 250 252;
+    --color-text-secondary: 203 213 225;
+    --color-text-muted: 148 163 184;
+    --color-border: 51 65 85;
+    --color-border-muted: 51 65 85;
+      --color-hover: 51 65 85;
+      --color-active: 71 85 105;
+      --color-chip-bg: 51 65 85;
+      --color-chip-border: 71 85 105;
+    
+    /* Navigation specific colors for dark mode */
+    --nav-bg: 30 41 59;
+    --nav-border: 51 65 85;
+    --nav-item-text: 148 163 184;
+    --nav-item-hover-bg: 51 65 85;
+    --nav-item-hover-text: 203 213 225;
+    --nav-item-active-bg: 71 85 105;
+    --nav-item-active-text: 255 255 255;
+    
+    /* Calendar specific colors for dark mode */
+    --calendar-bg: 30 41 59;
+    --calendar-border: 71 85 105;
+    --calendar-header-bg: 15 23 42;
+    --calendar-header-text: 203 213 225;
+    --calendar-day-bg: 15 23 42;
+    --calendar-day-hover: 30 41 59;
+    --calendar-today-bg: 51 65 85;
+    
+    /* Table specific colors for dark mode */
+    --table-bg: 30 41 59;
+    --table-border: 71 85 105;
+    --table-header-bg: 15 23 42;
+    --table-header-text: 203 213 225;
+    --table-row-hover: 51 65 85;
+    --table-row-even: 30 41 59;
+    --table-row-odd: 15 23 42;
+
+    /* shadcn/ui variables (HSL format) - Dark mode */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 215 20% 65%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 215 25% 35%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 27%;
+    --input: 217 33% 27%;
+    --ring: 217 91% 60%;
+    
+    /* shadcn/ui sidebar variables - Dark mode */
+    --sidebar-background: 217 33% 17%;
+    --sidebar-foreground: 215 20% 65%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 27%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 27%;
+--sidebar-ring: 217 91% 60%;
+--chart-1: 220 70% 50%;
+--chart-2: 160 60% 45%;
+--chart-3: 30 80% 55%;
+--chart-4: 280 65% 60%;
+--chart-5: 340 75% 55%;
+}
+
+body {
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-text-primary));
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: rgb(var(--color-text-primary));
+    font-family: 'Inter', sans-serif;
+    transition: color 0.3s ease;
+  }
+
+  /* Ensure proper contrast ratios for accessibility */
+  @media (prefers-contrast: high) {
+    :root {
+      --color-text-primary: 0 0 0; /* Pure black */
+      --color-background: 255 255 255; /* Pure white */
+    }
+    
+    .dark {
+      --color-text-primary: 255 255 255; /* Pure white */
+      --color-background: 0 0 0; /* Pure black */
+    }
+  }
+
+  /* Global Input Styles */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]), 
+  select, 
+  textarea,
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"] {
+    @apply transition-all border-slate-200 dark:border-slate-700 outline-none border rounded-lg !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):hover, 
+  select:hover, 
+  textarea:hover,
+  [data-slot="input"]:hover,
+  [data-slot="textarea"]:hover,
+  [data-slot="select-trigger"]:hover {
+    @apply border-blue-500 !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):focus, 
+  select:focus, 
+  textarea:focus,
+  [data-slot="input"]:focus,
+  [data-slot="textarea"]:focus,
+  [data-slot="select-trigger"]:focus,
+    [data-state="open"][data-slot="select-trigger"] {
+      @apply border-2 border-blue-600 outline-none !ring-0 !ring-offset-0 !important;
+    }
+
+    /* Hide native time picker icon */
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      display: none;
+      -webkit-appearance: none;
+    }
+  }
+  
+  @layer components {
+  /* Design moderne et sobre */
+  .card {
+    background-color: rgb(var(--color-surface));
+    border: 1px solid rgb(var(--color-border));
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  .dark .card {
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .card-elevated {
+    background-color: rgb(var(--color-surface));
+    border: 1px solid rgb(var(--color-border));
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      margin: 0.25rem 0.5rem;
+      color: rgb(var(--nav-item-text));
+      background-color: transparent;
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+    }
+
+  .sidebar-item:hover {
+    background-color: rgb(var(--nav-item-hover-bg));
+    color: rgb(var(--nav-item-hover-text));
+    transform: translateX(4px);
+  }
+
+  .sidebar-item.active {
+    background-color: rgb(var(--nav-item-active-bg));
+    color: rgb(var(--nav-item-active-text));
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Navigation container */
+  .nav-container {
+    background-color: rgb(var(--nav-bg));
+    border-color: rgb(var(--nav-border));
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  /* Favoris en jaune */
+  .favorite-icon {
+    @apply text-yellow-500;
+  }
+
+  .favorite-icon.filled {
+    @apply text-yellow-500;
+    fill: #EAB308;
+  }
+
+  .task-priority-1 {
+    @apply bg-red-50 text-red-700 border border-red-200;
+  }
+
+  .dark .task-priority-1 {
+    @apply bg-red-600/30 text-red-400 border-red-700;
+  }
+
+  .task-priority-2 {
+    @apply bg-orange-50 text-orange-700 border border-orange-200;
+  }
+
+  .dark .task-priority-2 {
+    @apply bg-orange-600/30 text-orange-400 border-orange-700;
+  }
+
+  .task-priority-3 {
+    @apply bg-yellow-50 text-yellow-700 border border-yellow-200;
+  }
+
+  .dark .task-priority-3 {
+    @apply bg-yellow-900/20 text-yellow-300 border-yellow-800;
+  }
+
+  .task-priority-4 {
+    @apply bg-blue-50 text-blue-700 border border-blue-200;
+  }
+
+  .dark .task-priority-4 {
+    @apply bg-blue-900/20 text-blue-300 border-blue-800;
+  }
+
+  .task-priority-5 {
+    @apply bg-slate-50 text-slate-700 border border-slate-200;
+  }
+
+  .dark .task-priority-5 {
+    @apply bg-slate-800 text-slate-300 border-slate-700;
+  }
+
+  .task-category-red {
+    @apply bg-red-500;
+  }
+
+  .task-category-blue {
+    @apply bg-blue-500;
+  }
+
+  .task-category-green {
+    @apply bg-green-500;
+  }
+
+  .task-category-purple {
+    @apply bg-purple-500;
+  }
+
+  .task-category-orange {
+    @apply bg-orange-500;
+  }
+
+  .btn-primary {
+    @apply bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-lg transition-all duration-200 font-medium;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .dark .btn-primary {
+    @apply bg-slate-700 hover:bg-slate-600;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-lg transition-all duration-200 font-medium;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-slate-800 border-slate-600 hover:bg-slate-700 text-slate-300;
+  }
+
+  .collaborative-task {
+    @apply bg-blue-50 border-l-4 border-blue-500;
+  }
+
+  .dark .collaborative-task {
+    @apply bg-blue-900/20 border-blue-400;
+  }
+
+  /* Landing page styles */
+  .hero-gradient {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  }
+
+  .feature-card {
+    @apply bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:bg-white/20 transition-all duration-300;
+  }
+
+  .glass-modal {
+    @apply bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl;
+  }
+
+  .dark .glass-modal {
+    @apply bg-slate-900/95 border-slate-700/50;
+  }
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(var(--table-border));
+  background-color: rgb(var(--table-bg));
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.data-table {
+  min-width: 100%;
+  background-color: rgb(var(--table-bg));
+  transition: background-color 0.3s ease;
+}
+
+.data-table thead {
+  background-color: rgb(var(--table-header-bg));
+  transition: background-color 0.3s ease;
+}
+
+.data-table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(var(--table-header-text));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.3s ease;
+}
+
+.data-table td {
+  padding: 1rem 1.5rem;
+  white-space: nowrap;
+  color: rgb(var(--color-text-primary));
+  transition: color 0.3s ease;
+}
+
+.data-table tr {
+  transition: background-color 0.3s ease;
+  border-bottom: 1px solid rgb(var(--table-border));
+}
+
+.data-table tbody tr:hover {
+  background-color: rgb(var(--table-row-hover));
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: rgb(var(--table-row-even));
+}
+
+.data-table tbody tr:nth-child(odd) {
+  background-color: rgb(var(--table-row-odd));
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes modalBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalContentShow {
+  from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdropFadeIn 0.2s ease-out forwards;
+}
+
+.animate-modal-content {
+  animation: modalContentShow 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* FullCalendar Custom Styles */
+.fc {
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: rgb(var(--calendar-bg));
+  transition: background-color 0.3s ease;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  border-color: rgb(var(--calendar-border));
+  transition: border-color 0.3s ease;
+}
+
+.fc-col-header-cell {
+  background-color: rgb(var(--calendar-header-bg));
+  color: rgb(var(--calendar-header-text));
+  font-weight: 600;
+  padding: 16px 8px;
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.fc-daygrid-day {
+  background-color: rgb(var(--calendar-day-bg));
+  transition: background-color 0.3s ease;
+}
+
+.fc-daygrid-day:hover {
+  background-color: rgb(var(--calendar-day-hover));
+}
+
+.fc-event {
+  border-radius: 8px;
+  border: none !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 2px;
+  font-family: 'Inter', sans-serif;
+}
+
+.fc-today {
+  background-color: rgb(var(--calendar-today-bg)) !important;
+  transition: background-color 0.3s ease;
+}
+
+.fc .fc-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.fc .fc-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.fc .fc-button:active {
+  transform: translateY(0);
+}
+
+.fc .fc-button-primary:disabled {
+  background: rgb(var(--color-border));
+  box-shadow: none;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+}
+
+.fc .fc-toolbar-title {
+  color: rgb(var(--color-text-primary));
+  font-weight: 700;
+  font-size: 1.25rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.fc .fc-daygrid-day-number {
+  color: rgb(var(--color-text-primary));
+  font-weight: 500;
+  padding: 8px;
+}
+
+.fc .fc-col-header-cell-cushion {
+  color: rgb(var(--calendar-header-text));
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.fc .fc-daygrid-more-link {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+
+/* Scrollbar moderne */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-accent) / 0.2);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-accent) / 0.3);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-accent) / 0.4);
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-accent) / 0.5);
+  background-clip: content-box;
+}
+
+/* Custom Blue Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-accent) / 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-accent) / 0.5);
+}
+
+/* Pinned conversation style */
+.conversation-pinned {
+  @apply bg-amber-50 border-l-4 border-amber-400;
+}
+
+  .dark .conversation-pinned {
+    @apply bg-amber-900/20 border-amber-400;
+  }
+
+/* Fix for FullCalendar Drag & Drop Mirror */
+.fc-event-dragging, 
+.fc-draggable-handle,
+.external-event {
+  touch-action: none !important;
+}
+
+/* Ensure the drag mirror follows the mouse precisely without parent transform interference */
+.fc-mirror-skeleton,
+body > .fc-event {
+  pointer-events: none !important;
+  z-index: 999999 !important;
+}
+
+/* Remove transitions during drag to prevent lag/offset */
+.fc-event-dragging {
+  transition: none !important;
+  transform: none !important;
+  opacity: 0.8 !important;
+}
+
+/* Force the external events mirror to be high z-index and follow correctly */
+.fc-event.fc-event-dragging.fc-event-dot {
+  display: none !important; /* Hide the dot if it appears as mirror */
+}
+
+@keyframes taskComplete {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(var(--color-error) / 0.4);
+  }
+  25% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 8px rgb(var(--color-error) / 0.2);
+    border-color: rgb(var(--color-error));
+    background-color: rgb(var(--color-error) / 0.15);
+  }
+  50% {
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgb(var(--color-error) / 0);
+    border-color: rgb(var(--color-error));
+    background-color: rgb(var(--color-error) / 0.1);
+  }
+  100% {
+    transform: scale(0.98);
+    opacity: 0;
+    border-color: rgb(var(--color-error));
+    background-color: rgb(var(--color-error) / 0.05);
+  }
+}
+
+.animate-task-complete {
+  animation: taskComplete 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
