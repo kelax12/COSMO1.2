@@ -55,19 +55,22 @@ export function PremiumPage() {
       }
     ];
 
-  const handlePaymentSuccess = () => {
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 1);
-
-    updateUserSettings({
-      subscriptionEndDate: endDate.toISOString(),
-      premiumWinStreak: user.premiumWinStreak + 1,
-      premiumTokens: user.premiumTokens + 30
-    });
+    const handlePaymentSuccess = async () => {
+    try {
+      await addTokens(30, true); // 30 tokens + active premium
+      toast.success('Abonnement activé ! Vous êtes maintenant Premium.');
+    } catch (err) {
+      toast.error(\"Erreur lors de l'activation du Premium\");
+    }
   };
 
-  const handleAdComplete = () => {
-    watchAd();
+  const handleAdComplete = async () => {
+    try {
+      await addTokens(1, false); // +1 token sans changer le plan
+      toast.success('+1 jeton Premium crédité !');
+    } catch (err) {
+      toast.error('Erreur lors du crédit du jeton');
+    }
     setShowAdModal(false);
   };
 
