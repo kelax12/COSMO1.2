@@ -118,6 +118,9 @@ const SettingsPage: React.FC = () => {
       
     toast.success('Mot de passe mis à jour avec succès !');
     setPasswords({ current: '', new: '', confirm: '' });
+      } catch {
+      toast.error('Une erreur inattendue est survenue');
+    }
   };
 
   const handleDeleteAccount = () => {
