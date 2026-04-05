@@ -8,6 +8,7 @@ import { TaskProvider } from '@/context/TaskContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Lazy load pages for code splitting
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
