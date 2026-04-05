@@ -10,6 +10,7 @@ import { useAuth } from '../modules/auth/AuthContext';
 import { useUpdateUserSettings } from '../modules/user';
 import ThemeToggle from '../components/ThemeToggle';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 import {
   AlertDialog,
   AlertDialogAction,
