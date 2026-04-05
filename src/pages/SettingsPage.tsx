@@ -97,6 +97,25 @@ const SettingsPage: React.FC = () => {
       toast.error('Les nouveaux mots de passe ne correspondent pas');
       return;
     }
+    f (passwords.new.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    try {
+      if (!supabase) {
+        toast.error('Service non disponible');
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({
+        password: passwords.new
+      });
+
+      if (error) {
+        toast.error(error.message || 'Erreur lors de la mise à jour du mot de passe');
+        return;
+      }
+      
     toast.success('Mot de passe mis à jour avec succès !');
     setPasswords({ current: '', new: '', confirm: '' });
   };
