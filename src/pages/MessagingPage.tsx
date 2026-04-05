@@ -343,7 +343,7 @@ const MessagingPage: React.FC = () => {
     setShowAddFriendForm(false);
   };
 
-  onst currentConversation = allConversations.find(c => c.id === selectedConversation);
+  const currentConversation = allConversations.find(c => c.id === selectedConversation);
   const totalUnreadCount = sortedConversations.reduce((acc, conv) => acc + (conv.unread || 0), 0);
 
   // Messages Supabase (persistants) mappés pour le JSX
