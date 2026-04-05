@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { getFriendsRepository } from '@/lib/repository.factory';
 import { IFriendsRepository } from './repository';
 import { Friend, FriendRequestInput, ShareTaskInput } from './types';
