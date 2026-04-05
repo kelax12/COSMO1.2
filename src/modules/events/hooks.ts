@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { getEventsRepository } from '@/lib/repository.factory';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
