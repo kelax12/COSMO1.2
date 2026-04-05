@@ -160,7 +160,7 @@ const SettingsPage: React.FC = () => {
           if (supabase) await supabase.auth.signOut();
           await logout();
             navigate('/welcome');
-          }, 2000);
+          }
         }
     });
     setConfirmInput('');
