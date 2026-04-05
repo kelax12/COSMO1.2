@@ -84,7 +84,7 @@ const RenderAvatar = ({ avatar, className = "w-10 h-10", textClassName = "text-l
 };
 
 const MessagingPage: React.FC = () => {
-  // ═══════════════════════════════════════════════════════════════════
+ // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [] } = useTasksModule();
@@ -104,21 +104,7 @@ const MessagingPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { isPremium } = useBilling();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Messaging — hooks Supabase (persistance + realtime)
-  // ═══════════════════════════════════════════════════════════════════
-  const sendMessageMutation = useSendChatMessage();
-  const { data: conversationMessages = [] } = useConversationMessages(selectedConversation ?? '');
-  useMessagingRealtime(selectedConversation ?? '');
-
-  // Friend requests stub (à migrer dans un prochain sprint)
-  const friendRequests: FriendRequest[] = [];
-  const sendMessage = (conversationId: string, message: string) => {
-    sendMessageMutation.mutate({ receiverId: conversationId, content: message });
-  };
-  const acceptFriendRequest = (_id: string) => { /* TODO: migrer vers useAcceptFriendRequest */ };
-  const rejectFriendRequest = (_id: string) => { /* TODO: migrer vers useRejectFriendRequest */ };
-
+  // State — déclaré avant les hooks qui en dépendent
   const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,6 +115,21 @@ const MessagingPage: React.FC = () => {
   const [showAddFriendForm, setShowAddFriendForm] = useState(false);
   const [addFriendEmail, setAddFriendEmail] = useState('');
   const [showRightSidebar, setShowRightSidebar] = useState(false);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Messaging — hooks Supabase (persistance + realtime)
+  // ═══════════════════════════════════════════════════════════════════
+  const sendMessageMutation = useSendChatMessage();
+  const { data: conversationMessages = [] } = useConversationMessages(selectedConversation);
+  useMessagingRealtime(selectedConversation);
+
+  // Friend requests stub (à migrer dans un prochain sprint)
+  const friendRequests: FriendRequest[] = [];
+  const sendMessage = (conversationId: string, message: string) => {
+    sendMessageMutation.mutate({ receiverId: conversationId, content: message });
+  };
+  const acceptFriendRequest = (_id: string) => { /* TODO: migrer vers useAcceptFriendRequest */ };
+  const rejectFriendRequest = (_id: string) => { /* TODO: migrer vers useRejectFriendRequest */ };
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [pinnedConversations, setPinnedConversations] = useState<string[]>(['equipe-design']);
