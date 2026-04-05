@@ -343,20 +343,19 @@ const MessagingPage: React.FC = () => {
     setShowAddFriendForm(false);
   };
 
-  const currentConversation = allConversations.find(c => c.id === selectedConversation);
+  onst currentConversation = allConversations.find(c => c.id === selectedConversation);
   const totalUnreadCount = sortedConversations.reduce((acc, conv) => acc + (conv.unread || 0), 0);
 
-  const currentConversationMessages = messages
-    .filter(m => m.senderId === selectedConversation || m.receiverId === selectedConversation)
-    .map(m => ({
-      id: m.id,
-      sender: m.senderId === user.id ? user.name : (friends.find(f => f.id === m.senderId)?.name || 'Inconnu'),
-      content: m.content,
-      time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isOwn: m.senderId === user.id,
-      avatar: m.senderId === user.id ? user.avatar : friends.find(f => f.id === m.senderId)?.avatar,
-      taskId: m.taskId
-    }));
+  // Messages Supabase (persistants) mappés pour le JSX
+  const currentConversationMessages = conversationMessages.map(m => ({
+    id: m.id,
+    sender: m.senderId === user?.id ? user.name : (friends.find(f => f.id === m.senderId)?.name || 'Inconnu'),
+    content: m.content,
+    time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    isOwn: m.senderId === user?.id,
+    avatar: m.senderId === user?.id ? user.avatar : friends.find(f => f.id === m.senderId)?.avatar,
+    taskId: m.taskId
+  }));
 
   const switchToFriendsTab = () => setActiveTab('friends');
   const switchToMessagesTab = () => setActiveTab('messages');
