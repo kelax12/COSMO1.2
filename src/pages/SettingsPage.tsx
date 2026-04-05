@@ -97,7 +97,7 @@ const SettingsPage: React.FC = () => {
       toast.error('Les nouveaux mots de passe ne correspondent pas');
       return;
     }
-    f (passwords.new.length < 8) {
+    if (passwords.new.length < 8) {
       toast.error('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
