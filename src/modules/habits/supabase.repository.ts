@@ -97,8 +97,10 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   async createHabit(input: CreateHabitInput): Promise<Habit> {
-    const dbInput = this.mapToDb(input);
-    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    const dbInput = { ...this.mapToDb(input), user_id: user.id };
+
     const { data, error } = await supabase
       .from('habits')
       .insert([dbInput])

@@ -86,9 +86,12 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async create(input: CreateListInput): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const dbInput: ListDbInput = {
       ...this.mapToDb(input),
       task_ids: [],
+      user_id: user.id,
     };
 
     const { data, error } = await supabase
