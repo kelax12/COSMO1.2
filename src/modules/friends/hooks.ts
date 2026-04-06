@@ -1,112 +1,57 @@
-// ═══════════════════════════════════════════════════════════════════
-// FRIENDS MODULE - React Query Hooks
-// ═══════════════════════════════════════════════════════════════════
-
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getFriendsRepository } from '@/lib/repository.factory';
-import { IFriendsRepository } from './repository';
-import { Friend, FriendRequestInput, ShareTaskInput } from './types';
+import type {
+  Friend,
+  FriendRequestInput,
+  ShareTaskInput,
+  PendingFriendRequest,
+} from './types';
 import { friendKeys } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
-// REPOSITORY FACTORY
+// REPOSITORY HOOK
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Factory hook to get the friends repository
- * Selects Supabase or LocalStorage based on environment config
- */
-const useFriendsRepository = (): IFriendsRepository => {
-  return useMemo(() => getFriendsRepository(), []);
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════
+const useFriendsRepository = () => getFriendsRepository();
 
 const invalidateAllFriendQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
-  queryClient.invalidateQueries({ queryKey: friendKeys.all });
+  queryClient.invalidateQueries({ queryKey: friendKeys.all, refetchType: 'none' });
 };
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Fetch all friends
- */
-export const useFriends = (options?: { enabled?: boolean }) => {
+export const useFriends = () => {
   const repository = useFriendsRepository();
   return useQuery({
     queryKey: friendKeys.lists(),
-    queryFn: () => repository.getAll(),
-    enabled: options?.enabled ?? true,
+    queryFn: () => repository.getFriends(),
   });
 };
 
-/**
- * Fetch a single friend by ID
- */
-export const useFriend = (id: string, options?: { enabled?: boolean }) => {
-  const repository = useFriendsRepository();
-  return useQuery({
-    queryKey: friendKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: (options?.enabled ?? true) && !!id,
-  });
-};
-
-/**
- * Fetch pending friend requests
- */
-export const usePendingFriendRequests = (options?: { enabled?: boolean }) => {
+export const useFriendRequests = () => {
   const repository = useFriendsRepository();
   return useQuery({
     queryKey: friendKeys.requests(),
-    queryFn: () => repository.getPendingRequests(),
-    enabled: options?.enabled ?? true,
+    queryFn: () => repository.getFriendRequests(),
+  });
+};
+
+export const useSharedTasks = () => {
+  const repository = useFriendsRepository();
+  return useQuery({
+    queryKey: friendKeys.sharedTasks(),
+    queryFn: () => repository.getSharedTasks(),
   });
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// UTILITY HOOKS
+// MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get friend by ID lookup function
- */
-export const useFriendLookup = () => {
-  const { data: friends = [] } = useFriends();
-  
-  return useMemo(() => {
-    return (friendId: string): Friend | undefined => {
-      return friends.find(f => f.id === friendId || f.name === friendId);
-    };
-  }, [friends]);
-};
-
-/**
- * Get friend by email
- */
-export const useFriendByEmail = () => {
-  const { data: friends = [] } = useFriends();
-  
-  return useMemo(() => {
-    return (email: string): Friend | undefined => {
-      return friends.find(f => f.email.toLowerCase() === email.toLowerCase());
-    };
-  }, [friends]);
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// WRITE HOOKS (Mutations)
-// ═══════════════════════════════════════════════════════════════════
-
-/**
- * Send a friend request
- */
 export const useSendFriendRequest = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
@@ -116,12 +61,12 @@ export const useSendFriendRequest = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible d'envoyer la demande d'ami : ${error.message}`);
+    },
   });
 };
 
-/**
- * Accept a friend request
- */
 export const useAcceptFriendRequest = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
@@ -131,12 +76,12 @@ export const useAcceptFriendRequest = () => {
     onSuccess: () => {
       invalidateAllFriendQueries(queryClient);
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible d'accepter la demande d'ami : ${error.message}`);
+    },
   });
 };
 
-/**
- * Reject a friend request
- */
 export const useRejectFriendRequest = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
@@ -146,45 +91,43 @@ export const useRejectFriendRequest = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de refuser la demande d'ami : ${error.message}`);
+    },
   });
 };
 
-/**
- * Remove a friend
- */
 export const useRemoveFriend = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
 
   return useMutation({
     mutationFn: (id: string) => repository.removeFriend(id),
+
     onMutate: async (id: string) => {
       await queryClient.cancelQueries({ queryKey: friendKeys.all });
-
       const previousFriends = queryClient.getQueryData<Friend[]>(friendKeys.lists());
-
       if (previousFriends) {
         queryClient.setQueryData<Friend[]>(friendKeys.lists(), (old) =>
           old?.filter((friend) => friend.id !== id)
         );
       }
-
       return { previousFriends };
     },
-    onError: (_error, _id, context) => {
+
+    onError: (error: Error, _id, context) => {
       if (context?.previousFriends) {
         queryClient.setQueryData(friendKeys.lists(), context.previousFriends);
       }
+      toast.error(`Impossible de supprimer l'ami : ${error.message}`);
     },
+
     onSettled: () => {
       invalidateAllFriendQueries(queryClient);
     },
   });
 };
 
-/**
- * Share a task with a friend
- */
 export const useShareTask = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
@@ -194,27 +137,47 @@ export const useShareTask = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de partager la tâche : ${error.message}`);
+    },
   });
 };
 
-/**
- * Unshare a task
- */
 export const useUnshareTask = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
 
   return useMutation({
-    mutationFn: ({ taskId, friendId }: { taskId: string; friendId: string }) => 
+    mutationFn: ({ taskId, friendId }: { taskId: string; friendId: string }) =>
       repository.unshareTask(taskId, friendId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible d'annuler le partage de la tâche : ${error.message}`);
     },
   });
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// RE-EXPORTS for convenience
+// DERIVED HOOKS
+// ═══════════════════════════════════════════════════════════════════
+
+export const useFriendCount = () => {
+  const { data: friends = [] } = useFriends();
+  return useMemo(() => friends.length, [friends]);
+};
+
+export const usePendingRequestCount = () => {
+  const { data: requests = [] } = useFriendRequests();
+  return useMemo(
+    () => requests.filter((r: PendingFriendRequest) => r.status === 'pending').length,
+    [requests]
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// RE-EXPORTS
 // ═══════════════════════════════════════════════════════════════════
 
 export type { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest } from './types';
