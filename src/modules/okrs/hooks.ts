@@ -212,11 +212,12 @@ export const useDeleteOkr = () => {
       return { previousOKRs };
     },
 
-    // Rollback on error
-    onError: (_error, _id, context) => {
+        // Rollback on error (useDeleteOkr)
+    onError: (error: Error, _id, context) => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
+      toast.error(`Impossible de supprimer l'OKR : ${error.message}`);
     },
 
     // Cleanup on settle
