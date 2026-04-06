@@ -31,6 +31,8 @@ interface FriendRequest {
   id: string;
   email: string;
   status: 'pending' | 'accepted' | 'rejected';
+  senderId?: string;
+  senderEmail?: string;
 }
 
 interface GroupMember {
@@ -130,6 +132,8 @@ const MessagingPage: React.FC = () => {
     id: r.id,
     email: r.email,
     status: r.status as 'pending' | 'accepted' | 'rejected',
+    senderId: r.senderId,
+    senderEmail: r.senderEmail,
   }));
   const sendMessage = (conversationId: string, message: string) => {
     sendMessageMutation.mutate({ receiverId: conversationId, content: message });
@@ -757,19 +761,17 @@ const MessagingPage: React.FC = () => {
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Demandes d'amis ({pendingRequests.length})</h3>
               <div className="space-y-3">
                     {pendingRequests.map((request) => {
-                      const sender = request.sender;
                       return (
                         <div key={request.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3 transition-colors">
                           <div className="flex items-center gap-3 mb-3">
-                            <RenderAvatar 
-                              avatar={sender?.avatar} 
-                              className="w-10 h-10 bg-gray-100 dark:bg-slate-600" 
-                            />
+                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-lg">
+                              👤
+                            </div>
                             <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 dark:text-white text-sm">{sender?.name || 'Inconnu'}</h4>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{sender?.email || request.senderId}</p>
+                              <h4 className="font-medium text-gray-900 dark:text-white text-sm">{request.senderEmail?.split('@')[0] || 'Inconnu'}</h4>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{request.senderEmail || request.senderId}</p>
+                            </div>
                           </div>
-                        </div>
                       <div className="flex gap-2">
                         <button onClick={() => handleAcceptRequest(request.id)} className="flex-1 bg-blue-500 dark:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors">Accepter</button>
                         <button onClick={() => handleRejectRequest(request.id)} className="flex-1 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors">Refuser</button>

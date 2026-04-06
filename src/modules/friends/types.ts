@@ -38,7 +38,10 @@ export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected';
  */
 export interface PendingFriendRequest {
   id: string;
-  email: string;
+  email: string;        // email du destinataire
   status: FriendRequestStatus;
   sentAt: string;
+  senderId?: string;
+  senderEmail?: string; // email de l'expéditeur
+  receiverId?: string;
 }
