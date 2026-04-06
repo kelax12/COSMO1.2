@@ -80,18 +80,20 @@ const AppRoutes = () => (
     <Route path=\"login\" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
     <Route path=\"signup\" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
 
-    {/* Layout wrapper for all routes */}
-    <Route element={<LayoutWithSuspense />}>
-      <Route index element={<Navigate to=\"/dashboard\" replace />} />
-      <Route path=\"dashboard\" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
-      <Route path=\"tasks\" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
-      <Route path=\"agenda\" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
-      <Route path=\"habits\" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
-      <Route path=\"okr\" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
-      <Route path=\"statistics\" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
-      <Route path=\"settings\" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
-      <Route path=\"premium\" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
-      <Route path=\"messages\" element={<PageWithSuspense><MessagingPage /></PageWithSuspense>} />
+    {/* Protected routes — require authentication */}
+    <Route element={<ProtectedRoute />}>
+      <Route element={<LayoutWithSuspense />}>
+        <Route index element={<Navigate to=\"/dashboard\" replace />} />
+        <Route path=\"dashboard\" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
+        <Route path=\"tasks\" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
+        <Route path=\"agenda\" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
+        <Route path=\"habits\" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
+        <Route path=\"okr\" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
+        <Route path=\"statistics\" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
+        <Route path=\"settings\" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
+        <Route path=\"premium\" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
+        <Route path=\"messages\" element={<PageWithSuspense><MessagingPage /></PageWithSuspense>} />
+      </Route>
     </Route>
 
     {/* Fallback */}
