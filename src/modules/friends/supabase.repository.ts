@@ -21,6 +21,7 @@ interface FriendRow {
   avatar?: string;
   user_id?: string;
   created_at?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -137,30 +138,22 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async acceptFriendRequest(requestId: string): Promise<Friend> {
     if (!supabase) throw new Error('Supabase not configured');
-    
-    // Update request status
-    const { data: request, error: requestError } = await supabase
-      .from('friend_requests')
-      .update({ status: 'accepted' })
-      .eq('id', requestId)
-      .select()
-      .single();
 
-    if (requestError) throw normalizeApiError(requestError);
+    // Utilise la fonction SECURITY DEFINER pour créer l'amitié bidirectionnelle
+    const { error: rpcError } = await supabase.rpc('accept_friend_request', {
+      request_id: requestId,
+    });
+    if (rpcError) throw normalizeApiError(rpcError);
 
-    // Create friend from request
-    const { data: friend, error: friendError } = await supabase
+    // Retourner le nouvel ami depuis la table friends
+    const { data: friends, error: fetchError } = await supabase
       .from('friends')
-      .insert([{ 
-        name: request.email.split('@')[0], 
-        email: request.email, 
-        avatar: '👤' 
-      }])
-      .select()
-      .single();
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-    if (friendError) throw normalizeApiError(friendError);
-    return this.mapFromDb(friend);
+    if (fetchError) throw normalizeApiError(fetchError);
+    return this.mapFromDb(friends?.[0]);
   }
 
   async rejectFriendRequest(requestId: string): Promise<void> {
