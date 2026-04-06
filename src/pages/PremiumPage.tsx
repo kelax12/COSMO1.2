@@ -60,7 +60,7 @@ export function PremiumPage() {
       await addTokens(30, true); // 30 tokens + active premium
       toast.success('Abonnement activé ! Vous êtes maintenant Premium.');
     } catch (err) {
-      toast.error(\Erreur lors de l'activation du Premium\);
+      toast.error("Erreur lors de l'activation du Premium");
     }
   };
 
