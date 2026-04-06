@@ -156,7 +156,7 @@ export const useUpdateOkr = () => {
       return { previousOKRs };
     },
 
-    / Rollback on error
+    // Rollback on error
     onError: (error: Error, _variables, context) => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
