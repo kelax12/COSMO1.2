@@ -83,8 +83,21 @@ const SettingsPage: React.FC = () => {
 
   if (!user) return null;
 
-  const handleSaveProfile = () => {
-    toast.success('Profil mis à jour avec succès !');
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          name: user?.user_metadata?.name,
+        }
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success('Profil mis à jour avec succès !');
+    } catch {
+      toast.error('Une erreur inattendue est survenue');
+    }
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {

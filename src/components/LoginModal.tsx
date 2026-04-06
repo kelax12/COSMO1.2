@@ -34,7 +34,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setIsLoading(true);
-      console.log('[DEBUG] Submit mode:', mode);
       
       const timeout = 20000; // 20s timeout
       const withTimeout = <T,>(promise: Promise<T>): Promise<T> => 
@@ -45,15 +44,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             
       try {
         if (mode === 'login') {
-          console.log('[DEBUG] Calling login function...');
           const result = await withTimeout(login(formData.email, formData.password));
-          console.log('[DEBUG] Login result:', result);
           if (result.success) {
             toast.success('Connexion réussie !');
             onClose();
             navigate('/dashboard');
           } else {
-            console.error('[DEBUG] Login failed:', result.error);
             if (result.error?.includes('Invalid login credentials')) {
               toast.error('Email ou mot de passe incorrect');
             } else {
@@ -61,21 +57,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             }
           }
         } else {
-          console.log('[DEBUG] Calling register function...');
           const result = await withTimeout(register(formData.name, formData.email, formData.password));
-          console.log('[DEBUG] Register result:', result);
           
           if (result.success) {
             toast.success('Compte créé et connecté !');
             onClose();
             navigate('/dashboard');
           } else {
-            console.error('[DEBUG] Registration failed:', result.error);
             toast.error(result.error || 'Erreur lors de la création du compte');
           }
         }
       } catch (error) {
-        console.error('[DEBUG] Unexpected error in handleSubmit:', error);
         toast.error(error instanceof Error ? error.message : 'Une erreur est survenue');
       } finally {
         setIsLoading(false);
@@ -89,7 +81,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
       const demoEmail = 'demo@cosmo.app';
       const demoPassword = 'CosmoDemo2026!';
       
-      console.log('[DEBUG] Attempting Demo Mode login...');
       const result = await login(demoEmail, demoPassword);
       
       if (result.success) {
@@ -97,7 +88,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
         onClose();
         navigate('/dashboard');
       } else if (result.error?.includes('Invalid login credentials')) {
-        console.log('[DEBUG] Demo account missing, creating it...');
         const regResult = await register('Utilisateur Démo', demoEmail, demoPassword);
         if (regResult.success) {
           toast.success('Mode démo activé (nouveau compte) !');
@@ -110,7 +100,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
         toast.error(result.error || 'Erreur mode démo');
       }
     } catch (error) {
-      console.error('[DEBUG] Demo mode error:', error);
       toast.error('Une erreur est survenue');
     } finally {
       setIsLoading(false);

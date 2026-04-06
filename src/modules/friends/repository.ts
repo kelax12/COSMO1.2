@@ -119,7 +119,6 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     };
 
     this.saveRequests([...requests, newRequest]);
-    console.log('Friend request sent to:', input.email);
     return newRequest;
   }
 
@@ -179,7 +178,6 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     }
     
     localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
-    console.log('Task shared:', input.taskId, 'with', input.friendId, 'as', input.role);
   }
 
   async unshareTask(taskId: string, friendId: string): Promise<void> {

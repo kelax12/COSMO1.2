@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Module tasks - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
-import { Friend } from '@/modules/friends';
+import { Friend, useAcceptFriendRequest, useRejectFriendRequest } from '@/modules/friends';
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -128,8 +128,10 @@ const MessagingPage: React.FC = () => {
   const sendMessage = (conversationId: string, message: string) => {
     sendMessageMutation.mutate({ receiverId: conversationId, content: message });
   };
-  const acceptFriendRequest = (_id: string) => { /* TODO: migrer vers useAcceptFriendRequest */ };
-  const rejectFriendRequest = (_id: string) => { /* TODO: migrer vers useRejectFriendRequest */ };
+  const acceptMutation = useAcceptFriendRequest();
+  const rejectMutation = useRejectFriendRequest();
+  const acceptFriendRequest = (id: string) => acceptMutation.mutate(id);
+  const rejectFriendRequest = (id: string) => rejectMutation.mutate(id);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [pinnedConversations, setPinnedConversations] = useState<string[]>(['equipe-design']);
