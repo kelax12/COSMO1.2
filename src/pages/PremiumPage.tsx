@@ -66,7 +66,7 @@ export function PremiumPage() {
 
   const handleAdComplete = async () => {
     try {
-      await addTokens(1, false); // +1 token sans changer le plan
+      await addTokens(1, true); // +1 token + activation premium
       toast.success('+1 jeton Premium crédité !');
     } catch (err) {
       toast.error('Erreur lors du crédit du jeton');

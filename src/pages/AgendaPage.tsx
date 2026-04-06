@@ -233,7 +233,7 @@ setShowTaskSidebar(false);
   const handleAddEvent = (eventData: CreateEventInput) => {
     createEventMutation.mutate({
       ...eventData,
-      taskId: eventData.taskId || ''
+      taskId: eventData.taskId || undefined
     });
 
     setShowAddEventModal(false);
