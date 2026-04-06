@@ -174,7 +174,9 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async create(input: CreateTaskInput): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
-    const dbInput = this.mapToDb(input);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    const dbInput = { ...this.mapToDb(input), user_id: user.id };
 
     const { data, error } = await supabase
       .from('tasks')
