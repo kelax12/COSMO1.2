@@ -63,9 +63,11 @@ export const useUpdateHabit = () => {
     mutationFn: ({ id, updates }: { id: string; updates: UpdateHabitInput }) =>
       repository.updateHabit(id, updates),
     onSuccess: (_, { id }) => {
-      // Invalidate both the list and the specific detail
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
       queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de modifier l'habitude : ${error.message}`);
     },
   });
 };
@@ -80,9 +82,11 @@ export const useDeleteHabit = () => {
   return useMutation({
     mutationFn: (id: string) => repository.deleteHabit(id),
     onSuccess: (_, id) => {
-      // Invalidate the list and remove the specific detail from cache
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
       queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de supprimer l'habitude : ${error.message}`);
     },
   });
 };
@@ -98,9 +102,11 @@ export const useToggleHabitCompletion = () => {
     mutationFn: ({ id, date }: { id: string; date: string }) =>
       repository.toggleCompletion(id, date),
     onSuccess: (_, { id }) => {
-      // Only invalidate the specific habit and the list
       queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de mettre à jour l'habitude : ${error.message}`);
     },
   });
 };
