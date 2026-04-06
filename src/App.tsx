@@ -100,7 +100,7 @@ const AppRoutes = () => (
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    <Route path="*" element={<Navigate to="/welcome" replace />} />
   </Routes>
 );
 
