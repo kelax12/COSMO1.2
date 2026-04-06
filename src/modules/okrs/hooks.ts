@@ -119,6 +119,9 @@ export const useCreateOkr = () => {
     onSuccess: () => {
       invalidateAllOKRQueries(queryClient);
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de créer l'OKR : ${error.message}`);
+    },
   });
 };
 
