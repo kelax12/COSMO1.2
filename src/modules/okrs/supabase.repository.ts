@@ -50,7 +50,8 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const { data, error } = await supabase
       .from('okrs')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
     if (error) throw normalizeApiError(error);
     return (data || []).map(this.mapFromDb);

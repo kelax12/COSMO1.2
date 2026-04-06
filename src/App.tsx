@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from 'react';
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -68,9 +69,11 @@ const LayoutWithSuspense = () => (
 
 // Page wrapper with Suspense
 const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Suspense fallback={<PageLoader />}>
-    {children}
-  </Suspense>
+  <AppErrorBoundary>
+    <Suspense fallback={<PageLoader />}>
+      {children}
+    </Suspense>
+  </AppErrorBoundary>
 );
 
 const AppRoutes = () => (

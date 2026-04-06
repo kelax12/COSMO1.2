@@ -1,20 +1,6 @@
-// ═══════════════════════════════════════════════════════════════════
-// USER MODULE - Type Definitions
-// ═══════════════════════════════════════════════════════════════════
+// Re-export du type User depuis la source de vérité
+export type { User } from '@/modules/auth/AuthContext';
 
-/**
- * User - Represents the current authenticated user
- */
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-}
-
-/**
- * Message - User notification/message
- */
 export interface Message {
   id: string;
   read: boolean;
@@ -23,9 +9,6 @@ export interface Message {
   timestamp?: string;
 }
 
-/**
- * Auth state
- */
 export interface AuthState {
   isAuthenticated: boolean;
   isDemo: boolean;

@@ -1,5 +1,3 @@
-import { toast } from 'sonner';
-
 export type NormalizedError = {
   code: string;
   message: string;
@@ -46,8 +44,6 @@ export const normalizeApiError = (error: ApiErrorLike | Error | string): Normali
   } else if (typeof error === 'string') {
     message = error;
   }
-
-  toast.error(message);
 
   return { code, message };
 };

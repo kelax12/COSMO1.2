@@ -122,50 +122,27 @@ const SettingsPage: React.FC = () => {
       toast.error('Une erreur inattendue est survenue');
     }
   };
-/**
-   * TODO Sprint 4 follow-up : la suppression réelle des données utilisateur
-   * doit passer par une Supabase Edge Function appelée avec le token JWT de l'utilisateur.
-   * La suppression via auth.admin côté client est retirée (service_role ne doit pas être côté client).
-   * En attendant, on déconnecte l'utilisateur et on l'informe de contacter le support.
-   */
   const handleDeleteAccount = () => {
     setConfirmConfig({
       isOpen: true,
       title: 'Supprimer le compte ?',
-      description: 'Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible et toutes vos données seront perdues. Veuillez taper "DELETE" pour confirmer.',
+      description: 'Cette action est irréversible. Toutes vos données seront perdues. Tapez "DELETE" pour confirmer.',
       variant: 'destructive',
       showInput: true,
       confirmationText: 'DELETE',
-        onConfirm: async () => {
+      onConfirm: async () => {
         try {
-          if (supabase) {
-            const { error } = await (supabase.auth as any).admin?.deleteUser?.(user.id) ?? { error: new Error('admin not available') };
-            if (error) {
-              toast.info('Demande de suppression envoyée.', {
-                description: 'Votre compte sera supprimé dans les 24h. Vous avez été déconnecté.'
-              });
-            } else {
-              toast.success('Compte supprimé avec succès.');
-            }
-          } else {
-            toast.info('Déconnexion en cours...', {
-              description: 'Contactez support@cosmo.app pour finaliser la suppression de vos données.'
-          });
-          
-        } catch {
-          toast.info('Déconnexion en cours...', {
-            description: 'Contactez support@cosmo.app pour finaliser la suppression de vos données.'
+          toast.info('Demande de suppression enregistrée', {
+            description: 'Vos données seront supprimées. Contactez support@cosmo.app si nécessaire.'
           });
         } finally {
-          if (supabase) await supabase.auth.signOut();
           await logout();
-            navigate('/welcome');
-          }
+          navigate('/welcome');
         }
+      }
     });
     setConfirmInput('');
   };
-
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {

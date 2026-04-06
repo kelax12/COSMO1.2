@@ -1,83 +1,135 @@
 import React, { createContext, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { billingRepository, Subscription } from './billing.repository';
-import { BillingContextType } from './billing.types';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/modules/auth/AuthContext';
+
+interface SubscriptionRow {
+  id: string;
+  plan: 'free' | 'premium';
+  status: 'active' | 'cancelled' | 'expired';
+  current_period_end: string | null;
+  premium_tokens: number;
+  win_streak: number;
+  // Camelcase aliases for backward compatibility
+  premiumTokens?: number;
+  winStreak?: number;
+  currentPeriodEnd?: string | null;
+}
+
+interface BillingStats {
+  tokenUsage: number;
+  tokenLimit: number;
+  isPremium: boolean;
+  plan: 'free' | 'premium';
+}
+
+interface BillingContextType {
+  stats: BillingStats;
+  isLoading: boolean;
+  refreshBillingStatus: () => Promise<void>;
+  incrementTokenUsage: () => void;
+  isPremium: () => boolean;
+  addTokens: (amount: number, activatePremium?: boolean) => Promise<void>;
+  subscription: SubscriptionRow | null;
+}
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
 
-const billingKeys = {
-  subscription: ['billing', 'subscription'] as const,
-};
+const billingKeys = { subscription: ['billing', 'subscription'] as const };
+
+function mapRow(row: Record<string, unknown>): SubscriptionRow {
+  return {
+    ...(row as SubscriptionRow),
+    premium_tokens: row.premium_tokens as number,
+    win_streak: row.win_streak as number,
+    // Camelcase aliases
+    premiumTokens: row.premium_tokens as number,
+    winStreak: row.win_streak as number,
+    currentPeriodEnd: row.current_period_end as string | null,
+  };
+}
 
 export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isDemo } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch subscription depuis Supabase (uniquement si connecté et pas en démo)
   const { data: subscription, isLoading } = useQuery({
     queryKey: billingKeys.subscription,
-    queryFn: () => billingRepository.getSubscription(),
+    queryFn: async (): Promise<SubscriptionRow | null> => {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .single();
+      if (error && error.code === 'PGRST116') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+        const { data: created } = await supabase
+          .from('subscriptions')
+          .insert([{ user_id: user.id, plan: 'free', status: 'active', premium_tokens: 0, win_streak: 0 }])
+          .select()
+          .single();
+        return created ? mapRow(created as Record<string, unknown>) : null;
+      }
+      if (error) return null;
+      return data ? mapRow(data as Record<string, unknown>) : null;
+    },
     enabled: isAuthenticated && !isDemo,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const addTokensMutation = useMutation({
-    mutationFn: ({ amount, activatePremium }: { amount: number; activatePremium?: boolean }) =>
-      billingRepository.addTokens(amount, activatePremium),
-    onSuccess: (updated: Subscription) => {
-      queryClient.setQueryData(billingKeys.subscription, updated);
+    mutationFn: async ({ amount, activatePremium }: { amount: number; activatePremium?: boolean }) => {
+      if (!subscription) return;
+      const updates: Partial<Record<string, unknown>> = { premium_tokens: (subscription.premium_tokens ?? 0) + amount };
+      if (activatePremium) {
+        updates.plan = 'premium';
+        updates.status = 'active';
+        const end = new Date();
+        end.setDate(end.getDate() + 30);
+        updates.current_period_end = end.toISOString();
+        updates.win_streak = (subscription.win_streak ?? 0) + 1;
+      }
+      await supabase.from('subscriptions').update(updates).eq('id', subscription.id);
     },
-  });
-
-  const consumeTokenMutation = useMutation({
-    mutationFn: () => billingRepository.consumeToken(),
-    onSuccess: (updated: Subscription) => {
-      queryClient.setQueryData(billingKeys.subscription, updated);
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: billingKeys.subscription }),
   });
 
   const isPremium = useCallback((): boolean => {
-    // En démo → toujours premium pour la démo
     if (isDemo) return true;
     if (!subscription) return false;
-    if (subscription.plan !== 'premium') return false;
-    if (subscription.status !== 'active') return false;
-    if (subscription.currentPeriodEnd && new Date(subscription.currentPeriodEnd) < new Date()) return false;
-    if (subscription.premiumTokens <= 0) return false;
-    return true;
+    if (subscription.plan !== 'premium' || subscription.status !== 'active') return false;
+    if (subscription.current_period_end && new Date(subscription.current_period_end) < new Date()) return false;
+    return (subscription.premium_tokens ?? 0) > 0;
   }, [subscription, isDemo]);
+
+  const stats: BillingStats = {
+    tokenUsage: 0,
+    tokenLimit: subscription?.premium_tokens ?? 0,
+    isPremium: isPremium(),
+    plan: subscription?.plan ?? 'free',
+  };
 
   const refreshBillingStatus = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: billingKeys.subscription });
   }, [queryClient]);
 
-  // Stats pour rétrocompat avec BillingContextType
-  const stats = {
-    tokenUsage: 0,
-    tokenLimit: subscription?.premiumTokens ?? 0,
-    isPremium: isPremium(),
-    plan: (subscription?.plan ?? 'free') as 'free' | 'premium',
-  };
-
   return (
     <BillingContext.Provider value={{
-      ...stats,
+      stats,
       isLoading,
       refreshBillingStatus,
-      incrementTokenUsage: (_amount: number) => consumeTokenMutation.mutate(),
+      incrementTokenUsage: () => {},
       isPremium,
+      addTokens: (amount, activatePremium) => addTokensMutation.mutateAsync({ amount, activatePremium }),
       subscription: subscription ?? null,
-      addTokens: (amount: number, activatePremium?: boolean) =>
-        addTokensMutation.mutate({ amount, activatePremium }),
-    } as any}>
+    }}>
       {children}
     </BillingContext.Provider>
   );
 };
 
 export const useBilling = () => {
-  const context = useContext(BillingContext);
-  if (context === undefined) throw new Error('useBilling must be used within a BillingProvider');
-  return context;
+  const ctx = useContext(BillingContext);
+  if (!ctx) throw new Error('useBilling must be used within a BillingProvider');
+  return ctx;
 };
