@@ -60,7 +60,7 @@ export function PremiumPage() {
       await addTokens(30, true); // 30 tokens + active premium
       toast.success('Abonnement activé ! Vous êtes maintenant Premium.');
     } catch (err) {
-      toast.error(\"Erreur lors de l'activation du Premium\");
+      toast.error(\Erreur lors de l'activation du Premium\);
     }
   };
 
@@ -123,14 +123,14 @@ export function PremiumPage() {
                   <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Jetons Premium:</span>
                   <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-400/30">
                     <Zap size={18} className="text-amber-500" />
-                    <span className=\"font-bold text-xl text-amber-600 dark:text-amber-300\">{subscription?.premiumTokens ?? user.premiumTokens ?? 0}</span>
+                    <span className=\font-bold text-xl text-amber-600 dark:text-amber-300\>{subscription?.premiumTokens ?? user.premiumTokens ?? 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Win Streak:</span>
                   <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-400/30">
                     <span className="text-lg">🔥</span>
-                    <span className=\"font-bold text-xl text-orange-600 dark:text-orange-300\">{subscription?.winStreak ?? user.premiumWinStreak ?? 0}</span>
+                    <span className=\font-bold text-xl text-orange-600 dark:text-orange-300\>{subscription?.winStreak ?? user.premiumWinStreak ?? 0}</span>
                     <span className="text-orange-500 dark:text-orange-400/70 text-sm font-medium">jours</span>
                   </div>
                 </div>
