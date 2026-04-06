@@ -39,10 +39,7 @@ export { SupabaseFriendsRepository } from './supabase.repository';
 
 export {
   useFriends,
-  useFriend,
-  usePendingFriendRequests,
-  useFriendLookup,
-  useFriendByEmail,
+  useFriendRequests,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
