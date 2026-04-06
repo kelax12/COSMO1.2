@@ -44,18 +44,18 @@ const queryClient = new QueryClient({
 
 // Loading spinner component
 const LoadingSpinner = () => (
-  <div className=\"min-h-screen bg-slate-950 flex items-center justify-center\">
-    <div className=\"flex flex-col items-center gap-4\">
-      <div className=\"animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500\"></div>
-      <p className=\"text-slate-400 text-sm\">Chargement...</p>
+  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <p className="text-slate-400 text-sm">Chargement...</p>
     </div>
   </div>
 );
 
 // Page loading fallback
 const PageLoader = () => (
-  <div className=\"flex items-center justify-center min-h-[60vh]\">
-    <div className=\"animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500\"></div>
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
   </div>
 );
 
@@ -75,29 +75,29 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 
 const AppRoutes = () => (
   <Routes>
-    {/* Public pages - outside Layout */}
-    <Route path=\"welcome\" element={<PageWithSuspense><LandingPage /></PageWithSuspense>} />
-    <Route path=\"login\" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
-    <Route path=\"signup\" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
+    {/* Public pages — accessibles sans authentification */}
+    <Route path="welcome" element={<PageWithSuspense><LandingPage /></PageWithSuspense>} />
+    <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
+    <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
       <Route element={<LayoutWithSuspense />}>
-        <Route index element={<Navigate to=\"/dashboard\" replace />} />
-        <Route path=\"dashboard\" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
-        <Route path=\"tasks\" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
-        <Route path=\"agenda\" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
-        <Route path=\"habits\" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
-        <Route path=\"okr\" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
-        <Route path=\"statistics\" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
-        <Route path=\"settings\" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
-        <Route path=\"premium\" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
-        <Route path=\"messages\" element={<PageWithSuspense><MessagingPage /></PageWithSuspense>} />
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
+        <Route path="tasks" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
+        <Route path="agenda" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
+        <Route path="habits" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
+        <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
+        <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
+        <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
+        <Route path="premium" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
+        <Route path="messages" element={<PageWithSuspense><MessagingPage /></PageWithSuspense>} />
       </Route>
     </Route>
 
     {/* Fallback */}
-    <Route path=\"*\" element={<Navigate to=\"/dashboard\" replace />} />
+    <Route path="*" element={<Navigate to="/dashboard" replace />} />
   </Routes>
 );
 
@@ -109,10 +109,10 @@ const App: React.FC = () => {
           <TooltipProvider>
             <TaskProvider>
               <Toaster
-                position=\"top-right\"
+                position="top-right"
                 richColors
                 closeButton
-                theme=\"dark\"
+                theme="dark"
                 toastOptions={{
                   duration: 3000,
                 }}
