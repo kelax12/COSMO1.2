@@ -25,7 +25,7 @@ interface PaymentModalProps {
 
 type PaymentStatus = 'idle' | 'processing' | 'success' | 'error';
 
-function CheckoutForm({ onSuccess, onClose }: { onSuccess: () => void; onClose: () => void }) {
+function CheckoutForm({ onSuccess, onClose, isDarkMode }: { onSuccess: () => void; onClose: () => void; isDarkMode: boolean }) {
   const stripe = useStripe();
   const elements = useElements();
   const [status, setStatus] = useState<PaymentStatus>('idle');
@@ -337,7 +337,7 @@ export function PaymentModal({ isOpen, onClose, onPaymentSuccess }: PaymentModal
                   </div>
                 ) : stripeReady ? (
                   <Elements stripe={stripeReady} options={elementsOptions}>
-                    <CheckoutForm onSuccess={onPaymentSuccess} onClose={handleClose} />
+                    <CheckoutForm onSuccess={onPaymentSuccess} onClose={handleClose} isDarkMode={isDarkMode} />
                   </Elements>
                 ) : null}
               </div>
