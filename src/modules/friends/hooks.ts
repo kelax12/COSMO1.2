@@ -36,7 +36,8 @@ export const useFriendRequests = () => {
   const repository = useFriendsRepository();
   return useQuery({
     queryKey: friendKeys.requests(),
-    queryFn: () => repository.getFriendRequests(),
+    queryFn: () => repository.getPendingRequests(),
+    refetchInterval: 15000, // polling toutes les 15s pour recevoir les demandes en temps réel
   });
 };
 

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Module tasks - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
-import { Friend, useAcceptFriendRequest, useRejectFriendRequest } from '@/modules/friends';
+import { Friend, useAcceptFriendRequest, useRejectFriendRequest, useFriendRequests } from '@/modules/friends';
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -125,8 +125,12 @@ const MessagingPage: React.FC = () => {
   const { data: conversationMessages = [] } = useConversationMessages(selectedConversation);
   useMessagingRealtime(selectedConversation);
 
-  // Friend requests stub (à migrer dans un prochain sprint)
-  const friendRequests: FriendRequest[] = [];
+  const { data: rawFriendRequests = [] } = useFriendRequests();
+  const friendRequests: FriendRequest[] = rawFriendRequests.map(r => ({
+    id: r.id,
+    email: r.email,
+    status: r.status as 'pending' | 'accepted' | 'rejected',
+  }));
   const sendMessage = (conversationId: string, message: string) => {
     sendMessageMutation.mutate({ receiverId: conversationId, content: message });
   };
