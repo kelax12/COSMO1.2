@@ -57,3 +57,8 @@ export interface OKRFilters {
   startAfter?: string;
   endBefore?: string;
 }
+
+/**
+ * OKRStatus - Represents the status of an OKR
+ */
+export type OKRStatus = 'not_started' | 'in_progress' | 'at_risk' | 'completed';
