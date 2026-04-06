@@ -1,116 +1,54 @@
-// ═══════════════════════════════════════════════════════════════════
-// EVENTS MODULE - React Query Hooks
-// ═══════════════════════════════════════════════════════════════════
-
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getEventsRepository } from '@/lib/repository.factory';
-import { IEventsRepository } from './repository';
-import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
+import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 import { eventsKeys } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
-// REPOSITORY - Via centralized factory (demo/production mode)
+// REPOSITORY HOOK
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Factory hook to get the events repository
- * Uses centralized factory for demo/production mode switching
- */
-const useEventsRepository = (): IEventsRepository => {
-  return useMemo(() => getEventsRepository(), []);
-};
+const useEventsRepository = () => getEventsRepository();
 
-// ═══════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════
-
-/**
- * Invalidate all event-related queries
- */
 const invalidateAllEventQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
-  queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+  queryClient.invalidateQueries({ queryKey: eventsKeys.all, refetchType: 'none' });
 };
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Fetch all events
- */
-export const useEvents = (options?: { enabled?: boolean }) => {
+export const useEvents = () => {
   const repository = useEventsRepository();
   return useQuery({
     queryKey: eventsKeys.lists(),
     queryFn: () => repository.getAll(),
-    enabled: options?.enabled ?? true,
   });
 };
 
-/**
- * Fetch a single event by ID
- */
-export const useEvent = (id: string, options?: { enabled?: boolean }) => {
+export const useEvent = (id: string) => {
   const repository = useEventsRepository();
   return useQuery({
     queryKey: eventsKeys.detail(id),
     queryFn: () => repository.getById(id),
-    enabled: (options?.enabled ?? true) && !!id,
+    enabled: !!id,
   });
 };
 
-/**
- * Fetch events linked to a specific task
- */
-export const useEventsByTask = (taskId: string, options?: { enabled?: boolean }) => {
+export const useEventsByTask = (taskId: string) => {
   const repository = useEventsRepository();
   return useQuery({
     queryKey: eventsKeys.byTask(taskId),
     queryFn: () => repository.getByTaskId(taskId),
-    enabled: (options?.enabled ?? true) && !!taskId,
-  });
-};
-
-/**
- * Fetch events with filters
- */
-export const useFilteredEvents = (filters: EventFilters, options?: { enabled?: boolean }) => {
-  const repository = useEventsRepository();
-  return useQuery({
-    queryKey: eventsKeys.list(filters),
-    queryFn: () => repository.getFiltered(filters),
-    enabled: options?.enabled ?? true,
+    enabled: !!taskId,
   });
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// COMPUTED HOOKS
+// MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get today's events
- */
-export const useTodaysEvents = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  return useFilteredEvents({
-    startAfter: today.toISOString(),
-    startBefore: tomorrow.toISOString(),
-  });
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// WRITE HOOKS (Mutations)
-// ═══════════════════════════════════════════════════════════════════
-
-/**
- * Create a new event
- */
 export const useCreateEvent = () => {
   const queryClient = useQueryClient();
   const repository = useEventsRepository();
@@ -118,18 +56,17 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: (input: CreateEventInput) => repository.create(input),
     onSuccess: (newEvent) => {
-      // If event is linked to a task, invalidate that query too
       if (newEvent.taskId) {
         queryClient.invalidateQueries({ queryKey: eventsKeys.byTask(newEvent.taskId) });
       }
       invalidateAllEventQueries(queryClient);
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de créer l'événement : ${error.message}`);
+    },
   });
 };
 
-/**
- * Update an existing event with optimistic update
- */
 export const useUpdateEvent = () => {
   const queryClient = useQueryClient();
   const repository = useEventsRepository();
@@ -138,39 +75,28 @@ export const useUpdateEvent = () => {
     mutationFn: ({ id, updates }: { id: string; updates: UpdateEventInput }) =>
       repository.update(id, updates),
 
-    // Optimistic update
     onMutate: async ({ id, updates }) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: eventsKeys.all });
-
-      // Snapshot current state
       const previousEvents = queryClient.getQueryData<CalendarEvent[]>(eventsKeys.lists());
-
-      // Optimistically update the list
       if (previousEvents) {
         queryClient.setQueryData<CalendarEvent[]>(eventsKeys.lists(), (old) =>
-          old?.map((event) =>
-            event.id === id ? { ...event, ...updates } : event
-          )
+          old?.map((event) => event.id === id ? { ...event, ...updates } : event)
         );
       }
-
       return { previousEvents };
     },
 
-    // Rollback on error
-    onError: (_error, _variables, context) => {
+    // Rollback on error (useUpdateEvent)
+    onError: (error: Error, _variables, context) => {
       if (context?.previousEvents) {
         queryClient.setQueryData(eventsKeys.lists(), context.previousEvents);
       }
+      toast.error(`Impossible de modifier l'événement : ${error.message}`);
     },
 
-    // Refetch on settle
     onSettled: (updatedEvent) => {
       if (updatedEvent) {
-        // Update specific event in cache
         queryClient.setQueryData(eventsKeys.detail(updatedEvent.id), updatedEvent);
-        // If linked to a task, invalidate that query
         if (updatedEvent.taskId) {
           queryClient.invalidateQueries({ queryKey: eventsKeys.byTask(updatedEvent.taskId) });
         }
@@ -180,9 +106,6 @@ export const useUpdateEvent = () => {
   });
 };
 
-/**
- * Delete an event with optimistic update
- */
 export const useDeleteEvent = () => {
   const queryClient = useQueryClient();
   const repository = useEventsRepository();
@@ -190,54 +113,66 @@ export const useDeleteEvent = () => {
   return useMutation({
     mutationFn: (id: string) => repository.delete(id),
 
-    // Optimistic update
     onMutate: async (id: string) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: eventsKeys.all });
-
-      // Snapshot current state
       const previousEvents = queryClient.getQueryData<CalendarEvent[]>(eventsKeys.lists());
-
-      // Get the event before deletion (for taskId reference)
-      const eventToDelete = previousEvents?.find(e => e.id === id);
-
-      // Optimistically remove from list
+      const eventToDelete = previousEvents?.find((e) => e.id === id);
       if (previousEvents) {
         queryClient.setQueryData<CalendarEvent[]>(eventsKeys.lists(), (old) =>
           old?.filter((event) => event.id !== id)
         );
       }
-
       return { previousEvents, eventToDelete };
     },
 
-    // Rollback on error
-    onError: (_error, _id, context) => {
+    // Rollback on error (useDeleteEvent)
+    onError: (error: Error, _id, context) => {
       if (context?.previousEvents) {
         queryClient.setQueryData(eventsKeys.lists(), context.previousEvents);
       }
+      toast.error(`Impossible de supprimer l'événement : ${error.message}`);
     },
 
-    // Cleanup on settle
     onSettled: (_result, _error, deletedId, context) => {
-      // Remove from detail cache
       queryClient.removeQueries({ queryKey: eventsKeys.detail(deletedId) });
-      
-      // If was linked to a task, invalidate that query
       if (context?.eventToDelete?.taskId) {
-        queryClient.invalidateQueries({ 
-          queryKey: eventsKeys.byTask(context.eventToDelete.taskId) 
+        queryClient.invalidateQueries({
+          queryKey: eventsKeys.byTask(context.eventToDelete.taskId),
         });
       }
-      
       invalidateAllEventQueries(queryClient);
     },
   });
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// RE-EXPORTS for convenience
+// DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export type { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
+export const useEventsByDate = (date: string) => {
+  const { data: events = [] } = useEvents();
+  return useMemo(
+    () => events.filter((e) => e.startTime.startsWith(date)),
+    [events, date]
+  );
+};
+
+export const useUpcomingEvents = (limit = 5) => {
+  const { data: events = [] } = useEvents();
+  const now = new Date().toISOString();
+  return useMemo(
+    () =>
+      events
+        .filter((e) => e.startTime >= now)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        .slice(0, limit),
+    [events, now, limit]
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// RE-EXPORTS
+// ═══════════════════════════════════════════════════════════════════
+
+export type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 export { eventsKeys } from './constants';
