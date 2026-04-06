@@ -1,70 +1,66 @@
 // ═══════════════════════════════════════════════════════════════════
 // FRIENDS MODULE - Unit Tests
+// Synchronisé avec src/modules/friends/types.ts
 // ═══════════════════════════════════════════════════════════════════
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus } from '@/modules/friends/types';
 import { friendKeys, FRIENDS_STORAGE_KEY } from '@/modules/friends/constants';
+import { Friend, PendingFriendRequest } from '@/modules/friends/types';
+
+// ═══════════════════════════════════════════════════════════════════
+// MOCK SETUP
+// ═══════════════════════════════════════════════════════════════════
+
+const mockLocalStorage = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    removeItem: vi.fn((key: string) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
+  };
+})();
+
+Object.defineProperty(global, 'localStorage', { value: mockLocalStorage });
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES TESTS
 // ═══════════════════════════════════════════════════════════════════
 
 describe('Friends Types', () => {
-  it('should have valid FriendRequestStatus values', () => {
-    const statuses: FriendRequestStatus[] = ['pending', 'accepted', 'rejected'];
-    expect(statuses).toContain('pending');
-    expect(statuses).toContain('accepted');
-    expect(statuses).toContain('rejected');
-  });
-
-  it('should create valid Friend object', () => {
+  it('should create a valid Friend object', () => {
     const friend: Friend = {
       id: 'friend-1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      avatar: '👤',
+      name: 'Alice Dupont',
+      email: 'alice@example.com',
     };
 
     expect(friend.id).toBe('friend-1');
-    expect(friend.name).toBe('John Doe');
-    expect(friend.email).toBe('john@example.com');
-    expect(friend.avatar).toBe('👤');
+    expect(friend.name).toBe('Alice Dupont');
+    expect(friend.email).toBe('alice@example.com');
   });
 
-  it('should create Friend without optional avatar', () => {
+  it('should allow optional avatar', () => {
     const friend: Friend = {
       id: 'friend-2',
-      name: 'Jane Doe',
-      email: 'jane@example.com',
+      name: 'Bob Martin',
+      email: 'bob@example.com',
+      avatar: 'https://example.com/avatar.png',
     };
 
-    expect(friend.avatar).toBeUndefined();
+    expect(friend.avatar).toBeDefined();
   });
 
-  it('should create valid ShareTaskInput', () => {
-    const input: ShareTaskInput = {
-      taskId: 'task-1',
-      friendId: 'friend-1',
-      role: 'editor',
-    };
-
-    expect(input.taskId).toBe('task-1');
-    expect(input.friendId).toBe('friend-1');
-    expect(input.role).toBe('editor');
-  });
-
-  it('should create valid PendingFriendRequest', () => {
+  it('should create a valid PendingFriendRequest', () => {
     const request: PendingFriendRequest = {
       id: 'req-1',
-      email: 'newuser@example.com',
+      email: 'charlie@example.com',
       status: 'pending',
-      sentAt: '2026-01-15T10:00:00Z',
+      sentAt: new Date().toISOString(),
     };
 
-    expect(request.id).toBe('req-1');
     expect(request.status).toBe('pending');
-    expect(request.sentAt).toBe('2026-01-15T10:00:00Z');
+    expect(request.email).toBe('charlie@example.com');
   });
 });
 
@@ -81,81 +77,86 @@ describe('Friends Constants', () => {
     expect(friendKeys.all).toEqual(['friends']);
     expect(friendKeys.lists()).toEqual(['friends', 'list']);
     expect(friendKeys.detail('friend-1')).toEqual(['friends', 'detail', 'friend-1']);
-    expect(friendKeys.pendingRequests()).toEqual(['friends', 'pending']);
+    // Correction : pendingRequests() n'existe pas — la vraie méthode est requests()
+    expect(friendKeys.requests()).toEqual(['friends', 'requests']);
+    expect(friendKeys.sharedTasks()).toEqual(['friends', 'sharedTasks']);
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// EMAIL VALIDATION TESTS
+// FRIEND FILTERING LOGIC TESTS
 // ═══════════════════════════════════════════════════════════════════
 
-describe('Email Validation', () => {
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  it('should accept valid email addresses', () => {
-    expect(isValidEmail('user@example.com')).toBe(true);
-    expect(isValidEmail('john.doe@company.org')).toBe(true);
-    expect(isValidEmail('test+label@domain.co.uk')).toBe(true);
+describe('Friend Filtering Logic', () => {
+  beforeEach(() => {
+    mockLocalStorage.clear();
   });
 
-  it('should reject invalid email addresses', () => {
-    expect(isValidEmail('invalid')).toBe(false);
-    expect(isValidEmail('@domain.com')).toBe(false);
-    expect(isValidEmail('user@')).toBe(false);
-    expect(isValidEmail('user domain.com')).toBe(false);
+  it('should filter friends by name', () => {
+    const friends: Friend[] = [
+      { id: '1', name: 'Alice Dupont', email: 'alice@example.com' },
+      { id: '2', name: 'Bob Martin', email: 'bob@example.com' },
+      { id: '3', name: 'Alice Bernard', email: 'abernard@example.com' },
+    ];
+
+    const filtered = friends.filter((f) =>
+      f.name.toLowerCase().includes('alice')
+    );
+
+    expect(filtered).toHaveLength(2);
+    expect(filtered.every((f) => f.name.includes('Alice'))).toBe(true);
+  });
+
+  it('should filter friends by email', () => {
+    const friends: Friend[] = [
+      { id: '1', name: 'Alice', email: 'alice@company.com' },
+      { id: '2', name: 'Bob', email: 'bob@personal.com' },
+      { id: '3', name: 'Charlie', email: 'charlie@company.com' },
+    ];
+
+    const companyFriends = friends.filter((f) =>
+      f.email.includes('@company.com')
+    );
+
+    expect(companyFriends).toHaveLength(2);
+  });
+
+  it('should return empty array when no friends match', () => {
+    const friends: Friend[] = [
+      { id: '1', name: 'Alice', email: 'alice@example.com' },
+    ];
+
+    const filtered = friends.filter((f) =>
+      f.name.toLowerCase().includes('zzz')
+    );
+
+    expect(filtered).toHaveLength(0);
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// FRIEND REQUEST FLOW TESTS
+// FRIEND REQUEST STATUS TESTS
 // ═══════════════════════════════════════════════════════════════════
 
-describe('Friend Request Flow', () => {
-  it('should transition from pending to accepted', () => {
-    const acceptRequest = (request: PendingFriendRequest): PendingFriendRequest => {
-      return { ...request, status: 'accepted' };
-    };
+describe('Friend Request Status Logic', () => {
+  it('should count pending requests correctly', () => {
+    const requests: PendingFriendRequest[] = [
+      { id: '1', email: 'a@a.com', status: 'pending', sentAt: '' },
+      { id: '2', email: 'b@b.com', status: 'accepted', sentAt: '' },
+      { id: '3', email: 'c@c.com', status: 'pending', sentAt: '' },
+      { id: '4', email: 'd@d.com', status: 'rejected', sentAt: '' },
+    ];
 
-    const request: PendingFriendRequest = {
-      id: '1', email: 'test@test.com', status: 'pending', sentAt: '2026-01-01'
-    };
+    const pendingCount = requests.filter((r) => r.status === 'pending').length;
 
-    const accepted = acceptRequest(request);
-    expect(accepted.status).toBe('accepted');
+    expect(pendingCount).toBe(2);
   });
 
-  it('should transition from pending to rejected', () => {
-    const rejectRequest = (request: PendingFriendRequest): PendingFriendRequest => {
-      return { ...request, status: 'rejected' };
-    };
+  it('should identify accepted requests', () => {
+    const requests: PendingFriendRequest[] = [
+      { id: '1', email: 'a@a.com', status: 'accepted', sentAt: '' },
+    ];
 
-    const request: PendingFriendRequest = {
-      id: '1', email: 'test@test.com', status: 'pending', sentAt: '2026-01-01'
-    };
-
-    const rejected = rejectRequest(request);
-    expect(rejected.status).toBe('rejected');
-  });
-
-  it('should create friend from accepted request', () => {
-    const createFriendFromRequest = (request: PendingFriendRequest): Friend => {
-      return {
-        id: `friend-${request.id}`,
-        name: request.email.split('@')[0],
-        email: request.email,
-        avatar: '👤',
-      };
-    };
-
-    const request: PendingFriendRequest = {
-      id: '1', email: 'john@example.com', status: 'accepted', sentAt: '2026-01-01'
-    };
-
-    const friend = createFriendFromRequest(request);
-    expect(friend.name).toBe('john');
-    expect(friend.email).toBe('john@example.com');
+    expect(requests[0].status).toBe('accepted');
   });
 });
