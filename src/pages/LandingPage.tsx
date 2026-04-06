@@ -191,6 +191,7 @@ const ADVANCED_FEATURES = [
 
 const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: 'login' | 'register' }) => {
   const { login, register } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -203,13 +204,22 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       if (mode === 'login') {
         const result = await login(email, password);
-        if (!result.success) setError(result.error || 'Email ou mot de passe incorrect.');
+        if (!result.success) {
+          setError(result.error || 'Email ou mot de passe incorrect.');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
-        await register(name || 'Nouvel Utilisateur', email, password);
+        const result = await register(name || 'Nouvel Utilisateur', email, password);
+        if (!result.success) {
+          setError(result.error || "Erreur lors de l'inscription");
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       setError('Une erreur est survenue');
@@ -220,8 +230,9 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
 
   const handleDemoLogin = async () => {
     setLoading(true);
-    await login('demo@cosmo.app', 'demo');
+    const result = await login('demo@cosmo.app', 'demo');
     setLoading(false);
+    if (result.success) navigate('/dashboard');
   };
 
   return (
