@@ -101,10 +101,14 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getPendingRequests(): Promise<PendingFriendRequest[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
       .from('friend_requests')
       .select('*')
       .eq('status', 'pending')
+      .eq('receiver_id', user.id) // uniquement les demandes reçues
       .order('sent_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
