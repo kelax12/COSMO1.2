@@ -156,17 +156,27 @@ export const useUpdateOkr = () => {
       return { previousOKRs };
     },
 
-    // Rollback on error
-    onError: (_error, _variables, context) => {
+    / Rollback on error
+    onError: (error: Error, _variables, context) => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
+      toast.error(`Impossible de modifier l'OKR : ${error.message}`);
     },
 
     // Refetch on settle
     onSettled: (updatedOKR) => {
       if (updatedOKR) {
         // Update specific OKR in cache
+        queryClient.setQueryData(okrsKeys.detail(updatedOKR.id), updatedOKR);
+      }
+      invalidateAllOKRQueries(queryClient);
+    },
+  });
+};
+
+/**
+ * Delete an OKR with optimistic update
         queryClient.setQueryData(okrsKeys.detail(updatedOKR.id), updatedOKR);
       }
       invalidateAllOKRQueries(queryClient);
