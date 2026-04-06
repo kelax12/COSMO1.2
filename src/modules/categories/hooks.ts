@@ -132,6 +132,19 @@ export const useCategoryNames = () => {
   return useMemo(() => categories.map((c) => c.name), [categories]);
 };
 
+export const useCategoryLookup = () => {
+  const { data: categories = [] } = useCategories();
+  return useMemo(() => {
+    const map = new Map(categories.map((c) => [c.id, c]));
+    return (id: string) => map.get(id) ?? null;
+  }, [categories]);
+};
+
+export const useCategoryColor = (id: string) => {
+  const lookup = useCategoryLookup();
+  return lookup(id)?.color ?? '#CBD5E1';
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // RE-EXPORTS
 // ═══════════════════════════════════════════════════════════════════
