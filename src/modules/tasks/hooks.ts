@@ -273,7 +273,7 @@ export const useToggleTaskBookmark = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de mettre à jour la tâche : ${error.message}`);
+      toast.error(`Impossible de modifier le signet : ${error.message}`);
     },
 
     // Invalidation sélective post-toggle
