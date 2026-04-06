@@ -169,7 +169,7 @@ export const useDeleteTask = () => {
 
   return useMutation({
     mutationFn: (id: string) => repository.delete(id),
-    onSuccess: (_result, deletedId) => {
+   nSuccess: (_result, deletedId) => {
       // Remove from detail cache
       queryClient.removeQueries({ queryKey: taskKeys.detail(deletedId) });
       // Invalidate all list queries
