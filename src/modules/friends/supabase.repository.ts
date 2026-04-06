@@ -115,7 +115,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('friend_requests')
-      .insert([{ email: input.email, status: 'pending', sent_at: new Date().toISOString() }])
+      .insert([{ email: input.email, status: 'pending', sent_at: new Date().toISOString(), sender_id: (await supabase.auth.getUser()).data.user?.id }])
       .select()
       .single();
 
