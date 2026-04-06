@@ -132,6 +132,9 @@ export const useCreateTask = () => {
         refetchType: 'none',
       });
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de créer la tâche : ${error.message}`);
+    },
   });
 };
 
