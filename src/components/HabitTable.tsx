@@ -466,13 +466,27 @@ const HabitTable: React.FC = () => {
                 {currentPageRows.map((rowDays, rowIndex) => (
                   <div key={rowIndex} className="flex justify-between w-full px-2">
                     {rowDays.map((day) => {
+                      const activeHabitsForDay = habits.filter(h => {
+                        const createdDate = h.createdAt ? h.createdAt.split('T')[0] : '';
+                        return !createdDate || day.date >= createdDate;
+                      });
+                      if (activeHabitsForDay.length === 0) {
+                        return (
+                          <div key={day.date} className="flex flex-col items-center gap-1.5">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg opacity-20 bg-slate-300" />
+                            <div className={`text-[9px] md:text-[10px] ${day.isToday ? 'font-bold text-blue-600' : 'text-slate-500'}`}>
+                              {day.dayNumber}
+                            </div>
+                          </div>
+                        );
+                      }
                       const percentage = getDailyPercentage(day.date);
                       const color = getSuccessColor(percentage);
                       return (
                         <div key={day.date} className="flex flex-col items-center gap-1.5">
                           <div
                             className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-default shadow-sm border"
-                            style={{ 
+                            style={{
                               backgroundColor: color,
                               opacity: day.isFuture ? 0.2 : 1,
                               borderColor: day.isToday ? '#2563EB' : 'transparent',

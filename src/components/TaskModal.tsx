@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -84,6 +85,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
+  const navigate = useNavigate();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -751,6 +753,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                   {/* Status toggles */}
                   <div className="flex flex-wrap gap-4 items-center">
+                      {!isCreating && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, completed: !prev.completed }))}
+                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors min-w-[140px] ${formData.completed ? 'bg-green-500 text-white border-green-600' : ''}`}
+                          style={!formData.completed ? { backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' } : {}}
+                        >
+                          <div className="flex items-center gap-3">
+                            <CheckCircle size={20} className={formData.completed ? 'text-white' : 'text-green-500'} aria-hidden="true" />
+                            <span className="font-semibold text-sm">
+                              {formData.completed ? '✓ Complétée — Annuler' : 'Marquer complétée'}
+                            </span>
+                          </div>
+                        </button>
+                      )}
                       <div className="flex items-center justify-between p-4 rounded-lg border transition-colors min-w-[140px]" style={{
                         backgroundColor: 'rgb(var(--color-hover))',
                         borderColor: 'rgb(var(--color-border))'
@@ -907,7 +924,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               Fonctionnalité Premium requise
                             </p>
-                            <button type="button" className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">
+                            <button type="button" onClick={() => navigate('/premium')} className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">
                               Débloquer Premium
                             </button>
                           </div>
