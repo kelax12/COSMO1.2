@@ -33,7 +33,7 @@ const itemVariants = {
 
 export function PremiumPage() {
   const { user } = useAuth();
-  const { isPremium, addTokens, subscription } = useBilling() as any;
+  const { isPremium, addTokens, subscription } = useBilling();
   const { isDark } = useDarkMode();
   const [showAdModal, setShowAdModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);

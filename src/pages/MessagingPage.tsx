@@ -471,7 +471,7 @@ const MessagingPage: React.FC = () => {
                         <div className="relative">
                           {conv.type === 'group' ? (
                             <div className="flex -space-x-2">
-                              {conv.members?.slice(0, 2).map((member: any, index: number) => (
+                              {conv.members?.slice(0, 2).map((member: GroupMember, index: number) => (
                                 <RenderAvatar 
                                   key={index} 
                                   avatar={member.avatar} 
@@ -604,7 +604,7 @@ const MessagingPage: React.FC = () => {
                       >
                         {currentConversation.type === 'group' ? (
                           <div className="flex -space-x-2">
-                            {(currentConversation as any).members?.slice(0, 3).map((member: any, index: number) => (
+                            {(currentConversation as GroupConversation).members?.slice(0, 3).map((member: GroupMember, index: number) => (
                               <RenderAvatar 
                                 key={index} 
                                 avatar={member.avatar} 
@@ -624,7 +624,7 @@ const MessagingPage: React.FC = () => {
                           <h3 className="font-semibold text-gray-900 dark:text-white">{currentConversation.name}</h3>
                           <div className="flex items-center gap-2">
                             {currentConversation.type === 'group' && (
-                              <span className="text-[10px] text-gray-500 dark:text-gray-400">{(currentConversation as any).members?.length} membres</span>
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">{(currentConversation as GroupConversation).members?.length} membres</span>
                             )}
                             {pinnedConversations.includes(currentConversation.id) &&
                               <div className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full text-[10px] font-medium w-fit">
@@ -928,10 +928,10 @@ const MessagingPage: React.FC = () => {
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                  <Users size={16} /> Membres actuels ({(currentConversation as any).members.length})
+                  <Users size={16} /> Membres actuels ({(currentConversation as GroupConversation).members.length})
                 </h3>
                 <div className="space-y-3">
-                    {(currentConversation as any).members.map((member: any) => (
+                    {(currentConversation as GroupConversation).members.map((member: GroupMember) => (
                       <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900/50 rounded-xl border border-gray-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <RenderAvatar 
@@ -942,7 +942,7 @@ const MessagingPage: React.FC = () => {
                           <div>
                           <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             {member.name}
-                            {member.id === (currentConversation as any).ownerId && (
+                            {member.id === (currentConversation as GroupConversation).ownerId && (
                               <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Chef</span>
                             )}
                           </div>
@@ -950,7 +950,7 @@ const MessagingPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      {user.id === (currentConversation as any).ownerId && member.id !== user.id && (
+                      {user.id === (currentConversation as GroupConversation).ownerId && member.id !== user.id && (
                         <button 
                           onClick={() => {
                             if (window.confirm(`Voulez-vous vraiment retirer ${member.name} du groupe ?`)) {
@@ -958,7 +958,7 @@ const MessagingPage: React.FC = () => {
                                 if (c.id === currentConversation.id) {
                                   return {
                                     ...c,
-                                    members: (c as any).members.filter((m: any) => m.id !== member.id)
+                                    members: (c as GroupConversation).members.filter((m: GroupMember) => m.id !== member.id)
                                   };
                                 }
                                 return c;
@@ -995,7 +995,7 @@ const MessagingPage: React.FC = () => {
                   {friends
                     .filter(f => 
                       (f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())) &&
-                      !(currentConversation as any).members.some((m: any) => m.id === f.id)
+                      !(currentConversation as GroupConversation).members.some((m: GroupMember) => m.id === f.id)
                     )
                     .map((friend) => (
                         <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
@@ -1013,7 +1013,7 @@ const MessagingPage: React.FC = () => {
                               if (c.id === currentConversation.id) {
                                 return {
                                   ...c,
-                                  members: [...(c as any).members, { id: friend.id, name: friend.name, avatar: friend.avatar }]
+                                  members: [...(c as GroupConversation).members, { id: friend.id, name: friend.name, avatar: friend.avatar }]
                                 };
                               }
                               return c;
@@ -1029,7 +1029,7 @@ const MessagingPage: React.FC = () => {
                   
                   {friends.filter(f => 
                     (f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())) &&
-                    !(currentConversation as any).members.some((m: any) => m.id === f.id)
+                    !(currentConversation as GroupConversation).members.some((m: GroupMember) => m.id === f.id)
                   ).length === 0 && (
                     <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400 italic">
                       Aucun autre ami trouvé
