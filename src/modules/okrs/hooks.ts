@@ -277,11 +277,12 @@ export const useUpdateKeyResult = () => {
       return { previousOKRs };
     },
 
-    // Rollback on error
-    onError: (_error, _variables, context) => {
+    / Rollback on error (useUpdateKeyResult)
+    onError: (error: Error, _variables, context) => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
+      toast.error(`Impossible de mettre à jour le résultat clé : ${error.message}`);
     },
 
     // Refetch on settle
