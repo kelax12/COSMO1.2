@@ -113,9 +113,18 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest> {
     if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) throw new Error('Non authentifié');
+
     const { data, error } = await supabase
       .from('friend_requests')
-      .insert([{ email: input.email, status: 'pending', sent_at: new Date().toISOString(), sender_id: (await supabase.auth.getUser()).data.user?.id }])
+      .insert([{
+        email: input.email,
+        status: 'pending',
+        sent_at: new Date().toISOString(),
+        sender_id: currentUser.id,
+        // receiver_id sera auto-rempli par le trigger trg_set_receiver_id
+      }])
       .select()
       .single();
 
