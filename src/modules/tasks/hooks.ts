@@ -218,10 +218,11 @@ export const useToggleTaskComplete = () => {
     },
 
     // Rollback on error
-    onError: (_error, _id, context) => {
+    onError: (error: Error, _id, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
+      toast.error(`Impossible de mettre à jour la tâche : ${error.message}`);
     },
 
     // Invalidation sélective post-toggle
