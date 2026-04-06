@@ -175,6 +175,9 @@ export const useDeleteTask = () => {
       // Invalidate all list queries
       invalidateAllTaskQueries(queryClient);
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de supprimer la tâche : ${error.message}`);
+    },
   });
 };
 
