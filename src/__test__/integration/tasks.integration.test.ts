@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // TASKS MODULE - React Query Integration Tests
+// Synchronisé avec src/modules/tasks/types.ts
 // ═══════════════════════════════════════════════════════════════════
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -14,12 +15,11 @@ import {
   useUpdateTask,
   useDeleteTask,
   useToggleTaskComplete,
-  useTasksByStatus,
   useTaskStats,
   useSearchTasks,
 } from '@/modules/tasks';
 import { TASKS_STORAGE_KEY } from '@/modules/tasks/constants';
-import { Task } from '@/modules/tasks/types';
+import { Task, CreateTaskInput } from '@/modules/tasks/types';
 
 // ═══════════════════════════════════════════════════════════════════
 // MOCK SETUP
@@ -55,6 +55,19 @@ const createWrapper = () => {
   return { Wrapper, queryClient };
 };
 
+// Helper — crée une Task valide selon les vrais types
+const makeTask = (overrides: Partial<Task> = {}): Task => ({
+  id: 'default-id',
+  name: 'Default Task',
+  completed: false,
+  bookmarked: false,
+  priority: 3,
+  category: 'Personnel',
+  deadline: '2026-01-15T00:00:00.000Z',
+  estimatedTime: 30,
+  ...overrides,
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS INTEGRATION TESTS
 // ═══════════════════════════════════════════════════════════════════
@@ -70,7 +83,6 @@ describe('Tasks React Query Integration', () => {
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useTasks(), { wrapper: Wrapper });
 
-      // Initial state
       expect(result.current.isLoading).toBe(true);
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -81,8 +93,8 @@ describe('Tasks React Query Integration', () => {
 
     it('should fetch tasks from localStorage', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task 1', status: 'todo', priority: 3 },
-        { id: '2', title: 'Task 2', status: 'completed', priority: 1 },
+        makeTask({ id: '1', name: 'Task 1' }),
+        makeTask({ id: '2', name: 'Task 2', completed: true }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
@@ -92,14 +104,14 @@ describe('Tasks React Query Integration', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toHaveLength(2);
-      expect(result.current.data?.[0].title).toBe('Task 1');
+      expect(result.current.data?.[0].name).toBe('Task 1');
     });
   });
 
   describe('useTask', () => {
     it('should fetch single task by ID', async () => {
       const mockTasks: Task[] = [
-        { id: 'task-123', title: 'Specific Task', status: 'todo', priority: 2 },
+        makeTask({ id: 'task-123', name: 'Specific Task', priority: 2 }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
@@ -108,7 +120,7 @@ describe('Tasks React Query Integration', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.title).toBe('Specific Task');
+      expect(result.current.data?.name).toBe('Specific Task');
       expect(result.current.data?.priority).toBe(2);
     });
 
@@ -127,7 +139,6 @@ describe('Tasks React Query Integration', () => {
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useTask(''), { wrapper: Wrapper });
 
-      // Should not be loading because query is disabled
       expect(result.current.isLoading).toBe(false);
       expect(result.current.fetchStatus).toBe('idle');
     });
@@ -146,80 +157,88 @@ describe('Tasks Mutations Integration', () => {
 
   describe('useCreateTask', () => {
     it('should create a new task', async () => {
-      const { Wrapper, queryClient } = createWrapper();
-      const { result } = renderHook(() => useCreateTask(), { wrapper: Wrapper });
-
-      await act(async () => {
-        result.current.mutate({
-          title: 'New Task',
-          status: 'todo',
-          priority: 3,
-        });
-      });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      // Verify task was created
-      const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
-      expect(stored).toHaveLength(1);
-      expect(stored[0].title).toBe('New Task');
-    });
-
-    it('should generate unique ID for new task', async () => {
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useCreateTask(), { wrapper: Wrapper });
 
-      await act(async () => {
-        result.current.mutate({ title: 'Task 1', status: 'todo', priority: 1 });
-      });
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      const input: CreateTaskInput = {
+        name: 'New Task',
+        completed: false,
+        bookmarked: false,
+        priority: 3,
+        category: 'Travail',
+        deadline: '2026-02-01T00:00:00.000Z',
+        estimatedTime: 45,
+      };
 
       await act(async () => {
-        result.current.mutate({ title: 'Task 2', status: 'todo', priority: 2 });
+        result.current.mutate(input);
       });
+
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
+      expect(stored).toHaveLength(1);
+      expect(stored[0].name).toBe('New Task');
+    });
+
+    it('should generate unique IDs for each task', async () => {
+      const { Wrapper } = createWrapper();
+      const { result } = renderHook(() => useCreateTask(), { wrapper: Wrapper });
+
+      const base: CreateTaskInput = {
+        name: 'Task',
+        completed: false,
+        bookmarked: false,
+        priority: 1,
+        category: '',
+        deadline: '2026-01-01T00:00:00.000Z',
+        estimatedTime: 0,
+      };
+
+      await act(async () => { result.current.mutate({ ...base, name: 'Task 1' }); });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      await act(async () => { result.current.mutate({ ...base, name: 'Task 2' }); });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
+      expect(stored).toHaveLength(2);
       expect(stored[0].id).not.toBe(stored[1].id);
     });
   });
 
   describe('useUpdateTask', () => {
-    it('should update existing task', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Original', status: 'todo', priority: 3 },
-      ];
+    it('should update existing task name', async () => {
+      const mockTasks: Task[] = [makeTask({ id: '1', name: 'Original' })];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useUpdateTask(), { wrapper: Wrapper });
 
       await act(async () => {
-        result.current.mutate({ id: '1', updates: { title: 'Updated' } });
+        result.current.mutate({ id: '1', updates: { name: 'Updated' } });
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
-      expect(stored[0].title).toBe('Updated');
-      expect(stored[0].status).toBe('todo'); // Unchanged
+      expect(stored[0].name).toBe('Updated');
+      expect(stored[0].completed).toBe(false); // Unchanged
     });
   });
 
   describe('useDeleteTask', () => {
     it('should delete task by ID', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task 1', status: 'todo', priority: 1 },
-        { id: '2', title: 'Task 2', status: 'todo', priority: 2 },
+        makeTask({ id: '1', name: 'Task 1' }),
+        makeTask({ id: '2', name: 'Task 2' }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useDeleteTask(), { wrapper: Wrapper });
 
-      await act(async () => {
-        result.current.mutate('1');
-      });
+      await act(async () => { result.current.mutate('1'); });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -230,42 +249,36 @@ describe('Tasks Mutations Integration', () => {
   });
 
   describe('useToggleTaskComplete', () => {
-    it('should toggle task from todo to completed', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Task', status: 'todo', priority: 3 },
-      ];
+    it('should toggle task from not completed to completed', async () => {
+      const mockTasks: Task[] = [makeTask({ id: '1', completed: false })];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useToggleTaskComplete(), { wrapper: Wrapper });
 
-      await act(async () => {
-        result.current.mutate('1');
-      });
+      await act(async () => { result.current.mutate('1'); });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
-      expect(stored[0].status).toBe('completed');
+      expect(stored[0].completed).toBe(true);
     });
 
-    it('should toggle task from completed to todo', async () => {
+    it('should toggle task from completed to not completed', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task', status: 'completed', priority: 3 },
+        makeTask({ id: '1', completed: true, completedAt: new Date().toISOString() }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const { Wrapper } = createWrapper();
       const { result } = renderHook(() => useToggleTaskComplete(), { wrapper: Wrapper });
 
-      await act(async () => {
-        result.current.mutate('1');
-      });
+      await act(async () => { result.current.mutate('1'); });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
-      expect(stored[0].status).toBe('todo');
+      expect(stored[0].completed).toBe(false);
     });
   });
 });
@@ -280,35 +293,14 @@ describe('Tasks Derived Hooks Integration', () => {
     vi.clearAllMocks();
   });
 
-  describe('useTasksByStatus', () => {
-    it('should group tasks by status', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Todo 1', status: 'todo', priority: 1 },
-        { id: '2', title: 'Todo 2', status: 'todo', priority: 2 },
-        { id: '3', title: 'In Progress', status: 'in_progress', priority: 3 },
-        { id: '4', title: 'Completed', status: 'completed', priority: 4 },
-      ];
-      mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
-
-      const { Wrapper } = createWrapper();
-      const { result } = renderHook(() => useTasksByStatus(), { wrapper: Wrapper });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data?.todo).toHaveLength(2);
-      expect(result.current.data?.in_progress).toHaveLength(1);
-      expect(result.current.data?.completed).toHaveLength(1);
-    });
-  });
-
   describe('useTaskStats', () => {
-    it('should calculate task statistics', async () => {
+    it('should calculate task statistics with real Task fields', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'T1', status: 'todo', priority: 1 },
-        { id: '2', title: 'T2', status: 'todo', priority: 2 },
-        { id: '3', title: 'T3', status: 'completed', priority: 3 },
-        { id: '4', title: 'T4', status: 'completed', priority: 3 },
-        { id: '5', title: 'T5', status: 'in_progress', priority: 5, isBookmarked: true },
+        makeTask({ id: '1', completed: false, bookmarked: false }),
+        makeTask({ id: '2', completed: false, bookmarked: false }),
+        makeTask({ id: '3', completed: true }),
+        makeTask({ id: '4', completed: true }),
+        makeTask({ id: '5', completed: false, bookmarked: true }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
@@ -319,19 +311,16 @@ describe('Tasks Derived Hooks Integration', () => {
 
       expect(result.current.data?.total).toBe(5);
       expect(result.current.data?.completed).toBe(2);
-      expect(result.current.data?.todo).toBe(2);
-      expect(result.current.data?.inProgress).toBe(1);
       expect(result.current.data?.bookmarked).toBe(1);
-      expect(result.current.data?.completionRate).toBe(40); // 2/5 = 40%
     });
   });
 
   describe('useSearchTasks', () => {
-    it('should filter tasks by search term', async () => {
+    it('should filter tasks by search term against name field', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Buy groceries', status: 'todo', priority: 1 },
-        { id: '2', title: 'Call dentist', status: 'todo', priority: 2 },
-        { id: '3', title: 'Buy birthday gift', status: 'todo', priority: 3 },
+        makeTask({ id: '1', name: 'Buy groceries' }),
+        makeTask({ id: '2', name: 'Call dentist' }),
+        makeTask({ id: '3', name: 'Buy birthday gift' }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
@@ -341,13 +330,13 @@ describe('Tasks Derived Hooks Integration', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toHaveLength(2);
-      expect(result.current.data?.[0].title).toContain('Buy');
+      expect(result.current.data?.every(t => t.name.toLowerCase().includes('buy'))).toBe(true);
     });
 
     it('should return all tasks when search term is empty', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task 1', status: 'todo', priority: 1 },
-        { id: '2', title: 'Task 2', status: 'todo', priority: 2 },
+        makeTask({ id: '1', name: 'Task 1' }),
+        makeTask({ id: '2', name: 'Task 2' }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
