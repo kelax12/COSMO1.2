@@ -20,7 +20,7 @@ const SignupPage = () => {
       if (!success) {
         toast.error(error || "Erreur lors de l'inscription");
       } else {
-        toast.success('Compte créé avec succès ! Vérifiez vos emails si nécessaire.');
+        toast.success('Compte créé avec succès !');
         navigate('/dashboard');
       }
     } catch (err) {
