@@ -154,6 +154,9 @@ export const useUpdateTask = () => {
       // Invalidate all list queries
       invalidateAllTaskQueries(queryClient);
     },
+    onError: (error: Error) => {
+      toast.error(`Impossible de modifier la tâche : ${error.message}`);
+    },
   });
 };
 
