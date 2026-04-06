@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // TASKS MODULE - Unit Tests
+// Synchronisé avec src/modules/tasks/types.ts
 // ═══════════════════════════════════════════════════════════════════
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LocalTasksRepository } from '@/modules/tasks/local.repository';
-import { Task, TaskStatus, CreateTaskInput } from '@/modules/tasks/types';
+import { Task, CreateTaskInput } from '@/modules/tasks/types';
 import { taskKeys, TASKS_STORAGE_KEY } from '@/modules/tasks/constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -25,33 +26,67 @@ Object.defineProperty(global, 'localStorage', { value: mockLocalStorage });
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES TESTS
+// Corrected: Task uses `name` (not `title`), `completed: boolean` (not `status`),
+//            `bookmarked` (not `isBookmarked`), `deadline` (not `dueDate`)
 // ═══════════════════════════════════════════════════════════════════
 
 describe('Tasks Types', () => {
-  it('should have correct TaskStatus values', () => {
-    const statuses: TaskStatus[] = ['todo', 'in_progress', 'completed'];
-    expect(statuses).toContain('todo');
-    expect(statuses).toContain('in_progress');
-    expect(statuses).toContain('completed');
-  });
-
-  it('should create valid Task object', () => {
+  it('should create a valid Task object with real fields', () => {
     const task: Task = {
       id: '1',
-      title: 'Test Task',
+      name: 'Test Task',
       description: 'A test task',
-      status: 'todo',
+      completed: false,
+      bookmarked: false,
       priority: 3,
-      dueDate: '2026-01-15',
-      categoryId: 'cat-1',
-      isBookmarked: false,
+      category: 'Personnel',
+      deadline: '2026-01-15T00:00:00.000Z',
+      estimatedTime: 30,
     };
 
     expect(task.id).toBe('1');
-    expect(task.title).toBe('Test Task');
-    expect(task.status).toBe('todo');
+    expect(task.name).toBe('Test Task');
+    expect(task.completed).toBe(false);
+    expect(task.bookmarked).toBe(false);
     expect(task.priority).toBe(3);
-    expect(task.isBookmarked).toBe(false);
+  });
+
+  it('should allow optional fields to be undefined', () => {
+    const minimalTask: Task = {
+      id: '2',
+      name: 'Minimal Task',
+      completed: false,
+      bookmarked: false,
+      priority: 1,
+      category: '',
+      deadline: '2026-06-01T00:00:00.000Z',
+      estimatedTime: 0,
+    };
+
+    expect(minimalTask.description).toBeUndefined();
+    expect(minimalTask.completedAt).toBeUndefined();
+    expect(minimalTask.isCollaborative).toBeUndefined();
+    expect(minimalTask.collaborators).toBeUndefined();
+  });
+
+  it('should support collaborative task fields', () => {
+    const collaborativeTask: Task = {
+      id: '3',
+      name: 'Collab Task',
+      completed: false,
+      bookmarked: false,
+      priority: 2,
+      category: 'Travail',
+      deadline: '2026-03-01T00:00:00.000Z',
+      estimatedTime: 60,
+      isCollaborative: true,
+      collaborators: ['user-1@example.com', 'user-2@example.com'],
+      pendingInvites: ['user-3@example.com'],
+    };
+
+    expect(collaborativeTask.isCollaborative).toBe(true);
+    expect(collaborativeTask.collaborators).toHaveLength(2);
+    expect(collaborativeTask.pendingInvites).toHaveLength(1);
   });
 });
 
@@ -78,6 +113,19 @@ describe('Tasks Constants', () => {
 describe('LocalTasksRepository', () => {
   let repository: LocalTasksRepository;
 
+  // Données de test alignées sur les vrais types Task
+  const makeTask = (overrides: Partial<Task> = {}): Task => ({
+    id: 'default-id',
+    name: 'Default Task',
+    completed: false,
+    bookmarked: false,
+    priority: 3,
+    category: 'Personnel',
+    deadline: '2026-01-15T00:00:00.000Z',
+    estimatedTime: 30,
+    ...overrides,
+  });
+
   beforeEach(() => {
     mockLocalStorage.clear();
     repository = new LocalTasksRepository();
@@ -91,14 +139,14 @@ describe('LocalTasksRepository', () => {
 
     it('should return tasks from localStorage', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task 1', status: 'todo', priority: 3 },
-        { id: '2', title: 'Task 2', status: 'completed', priority: 1 },
+        makeTask({ id: '1', name: 'Task 1' }),
+        makeTask({ id: '2', name: 'Task 2', completed: true }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const tasks = await repository.getAll();
       expect(tasks).toHaveLength(2);
-      expect(tasks[0].title).toBe('Task 1');
+      expect(tasks[0].name).toBe('Task 1');
     });
   });
 
@@ -109,64 +157,68 @@ describe('LocalTasksRepository', () => {
     });
 
     it('should return task by id', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Task 1', status: 'todo', priority: 3 },
-      ];
+      const mockTasks: Task[] = [makeTask({ id: '1', name: 'Task 1' })];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const task = await repository.getById('1');
       expect(task).not.toBeNull();
-      expect(task?.title).toBe('Task 1');
+      expect(task?.name).toBe('Task 1');
     });
   });
 
   describe('create', () => {
     it('should create a new task with generated id', async () => {
       const input: CreateTaskInput = {
-        title: 'New Task',
+        name: 'New Task',
         description: 'A new task',
-        status: 'todo',
+        completed: false,
+        bookmarked: false,
         priority: 2,
+        category: 'Travail',
+        deadline: '2026-02-01T00:00:00.000Z',
+        estimatedTime: 45,
       };
 
       const task = await repository.create(input);
 
       expect(task.id).toBeDefined();
-      expect(task.title).toBe('New Task');
-      expect(task.status).toBe('todo');
+      expect(task.name).toBe('New Task');
+      expect(task.completed).toBe(false);
       expect(task.priority).toBe(2);
     });
 
     it('should persist task to localStorage', async () => {
       const input: CreateTaskInput = {
-        title: 'Persisted Task',
-        status: 'todo',
+        name: 'Persisted Task',
+        completed: false,
+        bookmarked: false,
         priority: 1,
+        category: '',
+        deadline: '2026-03-01T00:00:00.000Z',
+        estimatedTime: 0,
       };
 
       await repository.create(input);
 
       const stored = JSON.parse(mockLocalStorage.getItem(TASKS_STORAGE_KEY) || '[]');
       expect(stored).toHaveLength(1);
-      expect(stored[0].title).toBe('Persisted Task');
+      expect(stored[0].name).toBe('Persisted Task');
     });
   });
 
   describe('update', () => {
     it('should update existing task', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Original', status: 'todo', priority: 3 },
-      ];
+      const mockTasks: Task[] = [makeTask({ id: '1', name: 'Original' })];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
-      const updated = await repository.update('1', { title: 'Updated' });
+      const updated = await repository.update('1', { name: 'Updated' });
 
-      expect(updated.title).toBe('Updated');
-      expect(updated.status).toBe('todo'); // Unchanged
+      expect(updated.name).toBe('Updated');
+      expect(updated.completed).toBe(false); // Unchanged
     });
 
     it('should throw error for non-existent task', async () => {
-      await expect(repository.update('non-existent', { title: 'Test' }))
+      await expect(repository.update('non-existent', { name: 'Test' }))
         .rejects.toThrow();
     });
   });
@@ -174,8 +226,8 @@ describe('LocalTasksRepository', () => {
   describe('delete', () => {
     it('should delete existing task', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task 1', status: 'todo', priority: 3 },
-        { id: '2', title: 'Task 2', status: 'completed', priority: 1 },
+        makeTask({ id: '1', name: 'Task 1' }),
+        makeTask({ id: '2', name: 'Task 2', completed: true }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
@@ -188,39 +240,46 @@ describe('LocalTasksRepository', () => {
   });
 
   describe('toggleComplete', () => {
-    it('should toggle task from todo to completed', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Task', status: 'todo', priority: 3 },
-      ];
+    it('should toggle task from not completed to completed', async () => {
+      const mockTasks: Task[] = [makeTask({ id: '1', completed: false })];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const toggled = await repository.toggleComplete('1');
 
-      expect(toggled.status).toBe('completed');
+      expect(toggled.completed).toBe(true);
+      expect(toggled.completedAt).toBeDefined();
     });
 
-    it('should toggle task from completed to todo', async () => {
+    it('should toggle task from completed to not completed', async () => {
       const mockTasks: Task[] = [
-        { id: '1', title: 'Task', status: 'completed', priority: 3 },
+        makeTask({ id: '1', completed: true, completedAt: new Date().toISOString() }),
       ];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const toggled = await repository.toggleComplete('1');
 
-      expect(toggled.status).toBe('todo');
+      expect(toggled.completed).toBe(false);
+      expect(toggled.completedAt).toBeUndefined();
     });
   });
 
   describe('toggleBookmark', () => {
-    it('should toggle bookmark status', async () => {
-      const mockTasks: Task[] = [
-        { id: '1', title: 'Task', status: 'todo', priority: 3, isBookmarked: false },
-      ];
+    it('should toggle bookmark from false to true', async () => {
+      const mockTasks: Task[] = [makeTask({ id: '1', bookmarked: false })];
       mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
 
       const toggled = await repository.toggleBookmark('1');
 
-      expect(toggled.isBookmarked).toBe(true);
+      expect(toggled.bookmarked).toBe(true);
+    });
+
+    it('should toggle bookmark from true to false', async () => {
+      const mockTasks: Task[] = [makeTask({ id: '1', bookmarked: true })];
+      mockLocalStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(mockTasks));
+
+      const toggled = await repository.toggleBookmark('1');
+
+      expect(toggled.bookmarked).toBe(false);
     });
   });
 });
