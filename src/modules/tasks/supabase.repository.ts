@@ -56,7 +56,8 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
     if (error) throw normalizeApiError(error);
     return (data || []).map(this.mapFromDb);

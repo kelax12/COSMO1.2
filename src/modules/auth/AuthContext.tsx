@@ -9,11 +9,11 @@ export type User = {
   name: string;
   email: string;
   avatar?: string;
-  premiumTokens: number;
-  premiumWinStreak: number;
-  lastTokenConsumption: string;
+  premiumTokens?: number;
+  premiumWinStreak?: number;
+  lastTokenConsumption?: string;
   subscriptionEndDate?: string;
-  autoValidation: boolean;
+  autoValidation?: boolean;
 };
 
 type AuthContextType = {
@@ -42,10 +42,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Utilisateur',
     email: supabaseUser.email || '',
     avatar: supabaseUser.user_metadata?.avatar_url,
-    premiumTokens: 0,
-    premiumWinStreak: 0,
-    lastTokenConsumption: new Date().toISOString(),
-    autoValidation: false,
+    premiumTokens: supabaseUser.user_metadata?.premiumTokens ?? 0,
+    premiumWinStreak: supabaseUser.user_metadata?.premiumWinStreak ?? 0,
+    lastTokenConsumption: supabaseUser.user_metadata?.lastTokenConsumption ?? new Date().toISOString(),
+    subscriptionEndDate: supabaseUser.user_metadata?.subscriptionEndDate,
+    autoValidation: supabaseUser.user_metadata?.autoValidation ?? false,
   });
 
   useEffect(() => {
@@ -61,9 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const isDemo = !session;
-      // Notifie le store — déclenche les hooks useIsDemo() partout
       appModeStore.setDemo(isDemo);
-      // Reset les singletons repositories pour le prochain accès
       resetRepositories();
       if (session?.user) {
         setUser(mapSupabaseUserToAppUser(session.user));
@@ -128,11 +127,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  const isPremium = useCallback(() => {
+  const isPremium = useCallback((): boolean => {
     if (!user) return false;
-    if (user.subscriptionEndDate && new Date(user.subscriptionEndDate) > new Date()) return true;
-    return user.premiumTokens > 0;
-  }, [user]);
+    if (isDemo) return true;
+    if (!user.subscriptionEndDate) return false;
+    return new Date(user.subscriptionEndDate) > new Date() && (user.premiumTokens ?? 0) > 0;
+  }, [user, isDemo]);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, isPremium, login, register, loginWithGoogle, logout }}>

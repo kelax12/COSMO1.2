@@ -48,7 +48,8 @@ export class SupabaseEventsRepository implements IEventsRepository {
     const { data, error } = await supabase
       .from('events')
       .select('*')
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: true })
+      .limit(500);
 
     if (error) throw normalizeApiError(error);
     return (data || []).map(this.mapFromDb);

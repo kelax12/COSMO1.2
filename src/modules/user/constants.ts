@@ -18,6 +18,10 @@ export const DEMO_USER: User = {
   name: 'Demo',
   email: 'demo@cosmo.app',
   avatar: '👤',
+  premiumTokens: 0,
+  premiumWinStreak: 0,
+  lastTokenConsumption: new Date().toISOString(),
+  autoValidation: false,
 };
 
 /**
