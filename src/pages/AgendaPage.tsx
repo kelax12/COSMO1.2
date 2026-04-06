@@ -258,6 +258,11 @@ setShowTaskSidebar(false);
     setSelectedEvent(null);
   };
 
+  const handleOpenAddModal = () => {
+    setSelectedTimeSlot(null);
+    setShowAddEventModal(true);
+  };
+
   const handleCloseAddModal = () => {
     setShowAddEventModal(false);
     setSelectedTimeSlot(null);
@@ -343,7 +348,7 @@ setShowTaskSidebar(false);
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowAddEventModal(true)}
+                  onClick={handleOpenAddModal}
                   className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black monochrome:hover:from-neutral-100 monochrome:hover:to-neutral-300 col-span-1 lg:w-auto whitespace-nowrap"
                 >
                   <Plus size={18} />
@@ -432,6 +437,8 @@ setShowTaskSidebar(false);
                 events={calendarEvents}
                 editable={true}
                 droppable={true}
+                eventStartEditable={true}
+                eventDurationEditable={true}
                 selectable={true}
                 selectMirror={true}
                 dayMaxEvents={false}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Mail, List, Calendar, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import {
@@ -76,6 +77,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
+  const navigate = useNavigate();
   const [isFormOpen, setIsFormOpen] = useState(expanded);
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -583,7 +585,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                                 <Users size={24} className="text-yellow-600 dark:text-yellow-400" />
                               </div>
                               <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Fonctionnalité Premium requise</p>
-                              <button type="button" className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">Débloquer Premium</button>
+                              <button type="button" onClick={() => navigate('/premium')} className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">Débloquer Premium</button>
                             </div>
                           ) : (
                             <>

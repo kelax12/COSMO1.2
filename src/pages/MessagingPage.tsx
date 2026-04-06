@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageCircle, MessageSquare, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
 import TaskModal from '../components/TaskModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -103,6 +104,7 @@ const MessagingPage: React.FC = () => {
   // Premium — vérification côté serveur via BillingContext
   // ═══════════════════════════════════════════════════════════════════
   const { isPremium } = useBilling();
+  const navigate = useNavigate();
 
   // State — déclaré avant les hooks qui en dépendent
   const [selectedConversation, setSelectedConversation] = useState<string>('');
@@ -374,7 +376,7 @@ const MessagingPage: React.FC = () => {
           <p className="text-xl text-slate-600 mb-8">
             Débloquez Premium pour accéder à la messagerie et aux fonctionnalités collaboratives
           </p>
-          <button className="btn-primary text-lg px-8 py-4">
+          <button onClick={() => navigate('/premium')} className="btn-primary text-lg px-8 py-4">
             Débloquer Premium
           </button>
         </div>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
@@ -72,6 +74,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
   const { priorityRange } = useTaskContext();
+  const { isPremium } = useBilling();
+  const navigate = useNavigate();
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -214,10 +218,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setTaskToEventModal(null);
   };
 
-  const confirmDelete = () => {
-    if (taskToDelete) {
-      handleDeleteTask(taskToDelete);
+  const handleOpenCollaborator = useCallback((taskId: string) => {
+    if (!isPremium()) {
+      navigate('/premium');
+      return;
     }
+    setCollaboratorModalTask(taskId);
+  }, [isPremium, navigate]);
+
+  const confirmDelete = () => {
+    if (!taskToDelete) return;
+    deleteMutation.mutate(taskToDelete, {
+      onSuccess: () => setTaskToDelete(null),
+      onError: (err) => console.error('Delete failed', err),
+    });
   };
 
   const formatDate = (dateString: string | undefined) => {
@@ -258,7 +272,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     return (
       <div 
         className={`p-4 rounded-xl border mb-3 transition-all cursor-pointer ${task.completed ? 'opacity-75' : ''}`}
-        onClick={() => setSelectedTask(task.id)}
+        onClick={() => { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ 
@@ -327,7 +341,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
           </button>
             <button 
-              onClick={(e) => { e.stopPropagation(); setCollaboratorModalTask(task.id); }}
+              onClick={(e) => { e.stopPropagation(); handleOpenCollaborator(task.id); }}
               className="p-2 text-slate-400"
             >
               <UserPlus size={18} />
@@ -342,8 +356,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
             )}
           </div>
           <div className="flex gap-1">
-            <button 
-              onClick={(e) => { e.stopPropagation(); setSelectedTask(task.id); }}
+            <button
+              onClick={(e) => { e.stopPropagation(); setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
               className="p-2 text-slate-400"
             >
               <MoreHorizontal size={18} />
@@ -494,8 +508,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <tr 
                 key={task.id} 
                 className={`animate-fade-in cursor-pointer transition-colors ${task.completed ? 'opacity-75' : ''}`}
-                onClick={() => setSelectedTask(task.id)}
-                style={{ 
+                onClick={() => { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
+                style={{
                   backgroundColor: activeQuickFilter === 'retard' 
                     ? 'rgb(var(--color-error) / 0.3)' 
                     : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent'),
@@ -566,7 +580,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                           <MoreHorizontal size={16} />
                         </button>
                       <button 
-                        onClick={() => setCollaboratorModalTask(task.id)}
+                        onClick={() => handleOpenCollaborator(task.id)}
                         className="p-2 rounded transition-colors"
                         style={{ color: 'rgb(var(--color-text-muted))' }}
                       >

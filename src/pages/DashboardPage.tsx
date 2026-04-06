@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Repeat, Target, CheckSquare, Calendar, Zap, Award, Leaf } from 'lucide-react';
 import { useUser } from '@/modules/user';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useOkrs } from '@/modules/okrs';
@@ -21,10 +22,11 @@ const DashboardPage: React.FC = () => {
   // Use new module for events (read-only)
   const { data: events = [] } = useEvents();
   const { user } = useUser();
+  const { user: authUser } = useAuth();
   const { data: habits = [] } = useHabits();
 
-  // Default user for demo mode
-  const displayUser = user || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
+  // Default user for demo mode — prefer real auth user over demo context user
+  const displayUser = authUser || user || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
 
   // Calculer les statistiques du jour
   const today = new Date().toISOString().split('T')[0];
