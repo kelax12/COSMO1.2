@@ -31,6 +31,9 @@ interface FriendRequestRow {
   email: string;
   status: FriendRequestStatus;
   sent_at: string;
+  sender_id?: string;
+  sender_email?: string;
+  receiver_id?: string;
   user_id?: string;
 }
 
@@ -227,6 +230,9 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       email: row.email,
       status: row.status,
       sentAt: row.sent_at,
+      senderId: row.sender_id,
+      senderEmail: row.sender_email,
+      receiverId: row.receiver_id,
     };
   }
 }
