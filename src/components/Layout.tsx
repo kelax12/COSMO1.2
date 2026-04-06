@@ -48,7 +48,7 @@ const Layout: React.FC = () => {
   }, []);
 
   // Compter les messages non lus
-  const unreadMessages = messages.filter((msg) => !msg.read && msg.receiverId === user?.id).length;
+  const unreadMessages = messages.filter((msg) => !msg.read).length;
 
   const NavItems = () =>
   <>

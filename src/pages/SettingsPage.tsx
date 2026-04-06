@@ -87,7 +87,7 @@ const SettingsPage: React.FC = () => {
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
-          name: user?.user_metadata?.name,
+          name: user?.name,
         }
       });
       if (error) {
