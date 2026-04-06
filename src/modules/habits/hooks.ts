@@ -44,8 +44,10 @@ export const useCreateHabit = () => {
   return useMutation({
     mutationFn: (input: CreateHabitInput) => repository.createHabit(input),
     onSuccess: () => {
-      // Only invalidate the list, not all queries
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de créer l'habitude : ${error.message}`);
     },
   });
 };
