@@ -176,6 +176,83 @@
 --chart-5: 340 75% 55%;
 }
 
+  /* ── Monochrome (Noir & Blanc) — overrides .dark variables ── */
+  .monochrome {
+    /* Base palette — pure grays, no hue */
+    --color-primary: 200 200 200;
+    --color-secondary: 140 140 140;
+    --color-accent: 240 240 240;      /* near-white accent replaces blue */
+    --color-success: 160 160 160;
+    --color-warning: 180 180 180;
+    --color-error: 200 60 60;         /* desaturated red kept for destructive safety */
+    --color-surface: 22 22 22;
+    --color-background: 8 8 8;
+
+    --color-text-primary: 242 242 242;
+    --color-text-secondary: 168 168 168;
+    --color-text-muted: 96 96 96;
+    --color-border: 46 46 46;
+    --color-border-muted: 32 32 32;
+    --color-hover: 32 32 32;
+    --color-active: 50 50 50;
+    --color-chip-bg: 32 32 32;
+    --color-chip-border: 52 52 52;
+
+    --nav-bg: 22 22 22;
+    --nav-border: 46 46 46;
+    --nav-item-text: 110 110 110;
+    --nav-item-hover-bg: 32 32 32;
+    --nav-item-hover-text: 210 210 210;
+    --nav-item-active-bg: 240 240 240;
+    --nav-item-active-text: 8 8 8;
+
+    --calendar-bg: 22 22 22;
+    --calendar-border: 46 46 46;
+    --calendar-header-bg: 8 8 8;
+    --calendar-header-text: 160 160 160;
+    --calendar-day-bg: 8 8 8;
+    --calendar-day-hover: 22 22 22;
+    --calendar-today-bg: 36 36 36;
+
+    --table-bg: 22 22 22;
+    --table-border: 46 46 46;
+    --table-header-bg: 8 8 8;
+    --table-header-text: 160 160 160;
+    --table-row-hover: 32 32 32;
+    --table-row-even: 22 22 22;
+    --table-row-odd: 8 8 8;
+
+    /* shadcn/ui variables (HSL) — B&W */
+    --background: 0 0% 3%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 0% 94%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 3%;
+    --destructive: 0 55% 40%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 80%;
+
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 55%;
+    --sidebar-primary: 0 0% 94%;
+    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 80%;
+  }
+
 body {
     background-color: rgb(var(--color-background));
     color: rgb(var(--color-text-primary));
@@ -723,4 +800,40 @@ body > .fc-event {
 
 .animate-task-complete {
   animation: taskComplete 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ── Monochrome overrides for colored hard-coded elements ── */
+.monochrome .fc .fc-button,
+.monochrome .fc .fc-button-primary {
+  background: rgb(50 50 50) !important;
+  box-shadow: none !important;
+}
+.monochrome .fc .fc-button:hover {
+  background: rgb(70 70 70) !important;
+  transform: none;
+}
+.monochrome .fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: rgb(90 90 90) !important;
+}
+.monochrome .fc .fc-daygrid-more-link {
+  color: rgb(200 200 200);
+}
+/* Remove any blue shadows/rings in monochrome */
+.monochrome *:focus-visible {
+  outline-color: rgb(200 200 200) !important;
+  box-shadow: 0 0 0 2px rgb(200 200 200 / 0.3) !important;
+}
+.monochrome input:focus,
+.monochrome textarea:focus,
+.monochrome select:focus,
+.monochrome [data-slot="input"]:focus {
+  border-color: rgb(160 160 160) !important;
+}
+.monochrome ::-webkit-scrollbar-thumb {
+  background: rgb(60 60 60);
+  background-clip: content-box;
+}
+.monochrome ::-webkit-scrollbar-thumb:hover {
+  background: rgb(80 80 80);
+  background-clip: content-box;
 }
