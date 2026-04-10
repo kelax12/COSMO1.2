@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
 // Providers
-import { TaskProvider } from '@/context/TaskContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
@@ -110,18 +109,16 @@ const App: React.FC = () => {
       <AuthProvider>
         <BillingProvider>
           <TooltipProvider>
-            <TaskProvider>
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                theme="dark"
-                toastOptions={{
-                  duration: 3000,
-                }}
-              />
-              <AppRoutes />
-            </TaskProvider>
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              theme="dark"
+              toastOptions={{
+                duration: 3000,
+              }}
+            />
+            <AppRoutes />
           </TooltipProvider>
         </BillingProvider>
       </AuthProvider>

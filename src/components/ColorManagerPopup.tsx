@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Palette, Info, Tag } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 
 type ColorManagerPopupProps = {
@@ -10,7 +10,7 @@ type ColorManagerPopupProps = {
 };
 
 const ColorManagerPopup: React.FC<ColorManagerPopupProps> = ({ isOpen, onClose }) => {
-  const { favoriteColors, setFavoriteColors } = useTasks();
+  const { favoriteColors, setFavoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 

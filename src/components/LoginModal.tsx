@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,7 +28,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     email: '',
     password: '',
   });
-  const { login, register, loginWithGoogle } = useTasks();
+  const { login, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {

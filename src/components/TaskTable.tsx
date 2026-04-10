@@ -32,10 +32,7 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 // ═══════════════════════════════════════════════════════════════════
 import { useCategories } from '@/modules/categories';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { usePriorityRange } from '@/modules/ui-states';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -70,10 +67,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { priorityRange } = useTaskContext();
+  const { priorityRange } = usePriorityRange();
   const { isPremium } = useBilling();
   const navigate = useNavigate();
 

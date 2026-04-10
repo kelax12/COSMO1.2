@@ -18,10 +18,8 @@ import { useEvents } from '@/modules/events';
 // ═══════════════════════════════════════════════════════════════════
 import { useCategories } from '@/modules/categories';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
+import { useFriends } from '@/modules/friends';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -44,10 +42,9 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, priorityRange, friends } = useTaskContext();
+  const { colorSettings } = useColorSettings();
+  const { priorityRange } = usePriorityRange();
+  const { data: friends = [] } = useFriends();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');

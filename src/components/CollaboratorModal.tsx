@@ -7,10 +7,7 @@ import CollaboratorItem from './CollaboratorItem';
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useFriends, useSendFriendRequest } from '@/modules/friends';
 
 type CollaboratorModalProps = {
   isOpen: boolean;
@@ -27,10 +24,8 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const { data: tasks = [] } = useTasks();
   const updateTaskMutation = useUpdateTask();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { friends, sendFriendRequest } = useTaskContext();
+  const { data: friends = [] } = useFriends();
+  const sendFriendRequestMutation = useSendFriendRequest();
 
   const task = tasks.find((t) => t.id === taskId);
 
@@ -81,7 +76,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
       }
       const pendingInvites = task.pendingInvites || [];
       if (!pendingInvites.includes(value)) {
-        sendFriendRequest(value);
+        sendFriendRequestMutation.mutate({ email: value });
         updateTaskMutation.mutate({
           id: task.id,
           updates: {

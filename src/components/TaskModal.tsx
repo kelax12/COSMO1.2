@@ -38,10 +38,7 @@ import { useCategories } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList, useRemoveTaskFromList } from '@/modules/lists';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '@/context/TaskContext';
+import { useFriends, useSendFriendRequest, useShareTask } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -78,10 +75,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const addTaskToListMutation = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { friends, shareTask, sendFriendRequest } = useTaskContext();
+  const { data: friends = [] } = useFriends();
+  const shareTaskMutation = useShareTask();
+  const sendFriendRequestMutation = useSendFriendRequest();
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
@@ -356,7 +352,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             if (isPremium()) {
               collaborators.forEach(userId => {
                 if (!task.collaborators?.includes(userId)) {
-                  shareTask(task.id, userId, 'editor');
+                  shareTaskMutation.mutate({ taskId: task.id, friendId: userId, role: 'editor' });
                 }
               });
             }
@@ -433,7 +429,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         setEmailInput('');
         return;
       }
-      sendFriendRequest(value);
+      sendFriendRequestMutation.mutate({ email: value });
       setCollaborators([...collaborators, value]);
       setPendingInvitesLocal([...pendingInvitesLocal, value]);
       if (task) {

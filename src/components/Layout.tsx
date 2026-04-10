@@ -17,11 +17,13 @@ import {
   X } from
   'lucide-react';
 import Logo from './Logo';
-import { useTasks } from '../context/TaskContext';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useMessages } from '@/modules/user';
 import ThemeToggle from './ThemeToggle';
 
 const Layout: React.FC = () => {
-  const { user, messages, markMessagesAsRead } = useTasks();
+  const { user } = useAuth();
+  const { messages, markMessagesAsRead } = useMessages();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
