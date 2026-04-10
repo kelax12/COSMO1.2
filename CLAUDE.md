@@ -106,8 +106,8 @@ src/modules/{module}/
 | friends | `src/modules/friends/` | Collaboration sociale |
 | okrs | `src/modules/okrs/` | OKR (Objectives & Key Results) |
 | messaging | `src/modules/messaging/` | Messagerie entre amis |
-| ui-states | `src/modules/ui-states/` | État UI persistant |
-| user | `src/modules/user/` | Profil utilisateur |
+| ui-states | `src/modules/ui-states/` | État UI persistant (couleurs, priorités) |
+| user | `src/modules/user/` | Profil utilisateur, messages inbox |
 
 ---
 
@@ -117,27 +117,63 @@ src/modules/{module}/
 ```typescript
 import { useAuth } from '@/modules/auth/AuthContext';
 
-const { user, isAuthenticated, isDemo, isLoading, isPremium, login, logout, register, loginWithGoogle } = useAuth();
+const { user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle } = useAuth();
 ```
 
 > **Ne jamais importer `useAuth` depuis `@/modules/user`** — ce hook n'y existe plus.
 
-### Billing
+### Billing — vérification premium
 ```typescript
 import { useBilling } from '@/modules/billing/billing.context';
 
 const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
+// isPremium est une FONCTION : isPremium() retourne boolean
 ```
 
 > `useBilling()` doit être utilisé uniquement à l'intérieur de `BillingProvider`.
 
-### Données
+### UI States — couleurs et filtres
+```typescript
+import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
+
+const { favoriteColors, setFavoriteColors } = useFavoriteColors();
+const { priorityRange, setPriorityRange } = usePriorityRange();
+const { colorSettings } = useColorSettings(); // Record<categoryId, name> — statique
+```
+
+### Friends — collaboration sociale
+```typescript
+import { useFriends, useSendFriendRequest, useShareTask, useFriendRequests } from '@/modules/friends';
+
+const { data: friends = [] } = useFriends();
+const sendFriendRequestMutation = useSendFriendRequest();
+const shareTaskMutation = useShareTask();
+
+// Appels :
+sendFriendRequestMutation.mutate({ email });
+shareTaskMutation.mutate({ taskId, friendId, role: 'editor' });
+```
+
+### Messages inbox (notifications)
+```typescript
+import { useMessages } from '@/modules/user';
+
+const { messages, markMessagesAsRead } = useMessages();
+```
+
+### Données métier
 ```typescript
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
-import { useOKRs } from '@/modules/okrs';
-// etc.
+import { useOkrs } from '@/modules/okrs';
+import { useCategories } from '@/modules/categories';
+import { useLists } from '@/modules/lists';
+```
+
+### Messagerie temps réel
+```typescript
+import { useSendChatMessage, useConversationMessages, useMessagingRealtime } from '@/modules/messaging/messaging.hooks';
 ```
 
 ---
@@ -149,9 +185,29 @@ QueryClientProvider
   AuthProvider
     BillingProvider        ← dépend de useAuth
       TooltipProvider
-        TaskProvider       ← deprecated, ne plus utiliser
-          Routes
+        Routes             ← pas de TaskProvider (supprimé)
 ```
+
+> `context/TaskContext.tsx` existe encore mais n'est plus utilisé. Ne pas le réimporter.
+
+---
+
+## Règle d'import par zone
+
+Travailler sur une zone = importer uniquement les modules de cette zone.
+
+| Zone | Modules à importer |
+|---|---|
+| Tâches | `tasks`, `categories`, `lists` |
+| Agenda | `events`, `tasks` |
+| Habitudes | `habits`, `categories` |
+| OKR | `okrs` |
+| Amis / Collaboration | `friends` |
+| Messagerie | `messaging`, `friends`, `auth` |
+| UI / Filtres | `ui-states` |
+| Auth | `auth` |
+| Premium | `billing` |
+| Dashboard | `tasks`, `habits`, `events`, `auth` |
 
 ---
 
@@ -207,6 +263,13 @@ Les migrations SQL sont dans `supabase/` :
 
 Toutes les tables ont Row Level Security (RLS) activé. Les policies utilisent `auth.uid()`.
 
+**Fonctions SECURITY DEFINER :**
+- `accept_friend_request(request_id uuid)` — crée l'amitié bidirectionnelle en bypassant RLS
+
+**Triggers automatiques :**
+- `trg_set_receiver_id` — remplit `receiver_id` dans `friend_requests` via `auth.users`
+- `trg_set_sender_email` — remplit `sender_email` dans `friend_requests`
+
 ---
 
 ## Conventions de code
@@ -243,6 +306,7 @@ Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit(
 
 ## Ce qu'il ne faut jamais faire
 
+- ❌ Importer depuis `context/TaskContext` — migré, ne plus utiliser
 - ❌ Créer `supabaseAdmin` avec `SERVICE_ROLE_KEY` côté client
 - ❌ Importer `useAuth` depuis `@/modules/user`
 - ❌ Appeler `toast.error()` depuis un repository ou `normalizeApiError`
@@ -250,3 +314,4 @@ Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit(
 - ❌ Modifier les fichiers dans `src/components/ui/` (shadcn — géré par la CLI)
 - ❌ Committer le fichier `.env`
 - ❌ Ajouter des `as any` pour contourner les erreurs TypeScript
+- ❌ Recréer un contexte/façade global qui agrège plusieurs modules
