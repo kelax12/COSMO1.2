@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Repeat, Target, CheckSquare, Calendar, Zap, Award, Leaf } from 'lucide-react';
+import { Zap } from 'lucide-react';
+import { Bar, BarChart } from 'recharts';
+import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
+import { cn } from '@/lib/utils';
 import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
@@ -14,46 +17,145 @@ import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 
+type ViewMode = 'jour' | 'semaine' | 'mois';
+
+const miniChartConfig: ChartConfig = {
+  value: { color: 'rgb(var(--color-accent))' },
+};
+
 const DashboardPage: React.FC = () => {
-  // Use new module for tasks (read-only)
+  const [viewMode, setViewMode] = useState<ViewMode>('jour');
+
   const { data: tasks = [] } = useTasks();
-  // Use new module for okrs (read-only)
   const { data: okrs = [] } = useOkrs();
-  // Use new module for events (read-only)
   const { data: events = [] } = useEvents();
   const { user } = useUser();
   const { user: authUser } = useAuth();
   const { data: habits = [] } = useHabits();
 
-  // Default user for demo mode — prefer real auth user over demo context user
   const displayUser = authUser || user || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
 
-  // Calculer les statistiques du jour
   const today = new Date().toISOString().split('T')[0];
-  const todayHabits = habits.filter(habit => habit.completions[today]);
-  const todayTasks = tasks.filter(task => 
-    !task.completed && 
-    new Date(task.deadline).toDateString() === new Date().toDateString()
-  );
-  
-  const totalHabitsTime = todayHabits.reduce((sum, habit) => sum + habit.estimatedTime, 0);
-  const totalTasksTime = todayTasks.reduce((sum, task) => sum + task.estimatedTime, 0);
-  // Total work time calculated but not displayed in current UI
-  void (totalHabitsTime + totalTasksTime);
 
-  const completedTasksToday = tasks.filter(task =>
-    task.completed && 
-    task.completedAt &&
-    new Date(task.completedAt).toDateString() === new Date().toDateString()
-  ).length;
+  const statCards = useMemo(() => {
+    const activeOKRsCount = okrs.filter(o => !o.completed).length;
 
-    const activeOKRs = okrs.filter(okr => !okr.completed);
+    if (viewMode === 'jour') {
+      const days: string[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        days.push(d.toISOString().split('T')[0]);
+      }
+      return [
+        {
+          label: 'Tâches complétées',
+          value: tasks.filter(t => t.completed && t.completedAt?.startsWith(today)).length,
+          subtitle: "Aujourd'hui",
+          chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt?.startsWith(date)).length })),
+        },
+        {
+          label: 'Agenda',
+          value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === today).length,
+          subtitle: "Aujourd'hui",
+          chartData: days.map(date => ({ date, value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === date).length })),
+        },
+        {
+          label: 'OKR actifs',
+          value: activeOKRsCount,
+          subtitle: 'En cours',
+          chartData: days.map((_, i) => ({ date: `d${i}`, value: activeOKRsCount })),
+        },
+        {
+          label: 'Habitudes',
+          value: habits.filter(h => h.completions[today]).length,
+          subtitle: 'Réalisées',
+          chartData: days.map(date => ({ date, value: habits.filter(h => h.completions[date]).length })),
+        },
+      ];
+    }
 
-    // Calculer les événements d'aujourd'hui
-    const todayEvents = events.filter(event => {
-      const eventDate = new Date(event.start).toDateString();
-      return eventDate === new Date().toDateString();
-    });
+    if (viewMode === 'semaine') {
+      const weeks: { start: string; end: string; label: string }[] = [];
+      for (let i = 3; i >= 0; i--) {
+        const end = new Date();
+        end.setDate(end.getDate() - i * 7);
+        const start = new Date(end);
+        start.setDate(start.getDate() - 6);
+        weeks.push({
+          start: start.toISOString().split('T')[0],
+          end: end.toISOString().split('T')[0],
+          label: `S${4 - i}`,
+        });
+      }
+      const thisWeek = weeks[weeks.length - 1];
+      return [
+        {
+          label: 'Tâches complétées',
+          value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= thisWeek.start).length,
+          subtitle: 'Cette semaine',
+          chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= w.start && t.completedAt <= w.end + 'T23:59').length })),
+        },
+        {
+          label: 'Agenda',
+          value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= thisWeek.start && d <= thisWeek.end; }).length,
+          subtitle: 'Cette semaine',
+          chartData: weeks.map(w => ({ date: w.label, value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= w.start && d <= w.end; }).length })),
+        },
+        {
+          label: 'OKR actifs',
+          value: activeOKRsCount,
+          subtitle: 'En cours',
+          chartData: weeks.map(w => ({ date: w.label, value: activeOKRsCount })),
+        },
+        {
+          label: 'Habitudes',
+          value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= thisWeek.start && d <= thisWeek.end).length, 0),
+          subtitle: 'Cette semaine',
+          chartData: weeks.map(w => ({ date: w.label, value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= w.start && d <= w.end).length, 0) })),
+        },
+      ];
+    }
+
+    // mois
+    const months: { year: number; month: number; label: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - i);
+      months.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
+    }
+    const thisMonth = months[months.length - 1];
+    const tasksByMonth = (m: { year: number; month: number }) => tasks.filter(t => { if (!t.completed || !t.completedAt) return false; const d = new Date(t.completedAt); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
+    const eventsByMonth = (m: { year: number; month: number }) => events.filter(e => { const d = new Date(e.start); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
+    const habitsByMonth = (m: { year: number; month: number }) => habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => { const date = new Date(d); return date.getFullYear() === m.year && date.getMonth() === m.month; }).length, 0);
+    return [
+      {
+        label: 'Tâches complétées',
+        value: tasksByMonth(thisMonth),
+        subtitle: 'Ce mois',
+        chartData: months.map(m => ({ date: m.label, value: tasksByMonth(m) })),
+      },
+      {
+        label: 'Agenda',
+        value: eventsByMonth(thisMonth),
+        subtitle: 'Ce mois',
+        chartData: months.map(m => ({ date: m.label, value: eventsByMonth(m) })),
+      },
+      {
+        label: 'OKR actifs',
+        value: activeOKRsCount,
+        subtitle: 'En cours',
+        chartData: months.map(m => ({ date: m.label, value: activeOKRsCount })),
+      },
+      {
+        label: 'Habitudes',
+        value: habitsByMonth(thisMonth),
+        subtitle: 'Ce mois',
+        chartData: months.map(m => ({ date: m.label, value: habitsByMonth(m) })),
+      },
+    ];
+  }, [tasks, events, habits, okrs, viewMode, today]);
 
   // Animation variants
   const containerVariants = {
@@ -78,36 +180,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-    const statCards = [
-      {
-        icon: CheckSquare,
-        label: 'Tâches complétées',
-        value: completedTasksToday,
-        subtitle: "Aujourd'hui",
-        color: 'blue'
-      },
-      {
-        icon: Calendar,
-        label: 'Agenda',
-        value: todayEvents.length,
-        subtitle: "Événements aujourd'hui",
-        color: 'blue'
-      },
-      {
-        icon: Target,
-        label: 'OKR actifs',
-        value: activeOKRs.length,
-        subtitle: 'En cours',
-        color: 'blue'
-      },
-      {
-        icon: Repeat,
-        label: 'Habitudes',
-        value: todayHabits.length,
-        subtitle: 'Réalisées',
-        color: 'blue'
-      }
-    ];
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-background))] p-4 sm:p-6 lg:p-8 transition-colors duration-300">
@@ -147,45 +219,65 @@ const DashboardPage: React.FC = () => {
             </div>
           </motion.div>
 
-        {/* Statistiques rapides */}
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6"
-            variants={containerVariants}
-          >
-                {statCards.map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    className="relative overflow-hidden group cursor-pointer"
-                    variants={itemVariants}
-                    whileHover={{ y: -4, scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  >
-                      <div className="p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] group-hover:bg-[rgb(var(--color-accent)/0.02)] monochrome:group-hover:border-white/20 monochrome:group-hover:bg-white/[0.02]">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <p className="text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors monochrome:group-hover:text-white">
-                              {stat.label}
-                            </p>
-                            <motion.p 
-                              className="text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
-                              initial={{ scale: 0.8, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
-                            >
-                              {stat.value}
-                            </motion.p>
-                            <p className="text-xs text-[rgb(var(--color-text-muted))] flex items-center gap-1.5 font-medium group-hover:text-[rgb(var(--color-text-secondary))]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--color-accent))] monochrome:bg-white" />
-                              {stat.subtitle}
-                          </p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-[rgb(var(--color-accent)/0.15)] border border-[rgb(var(--color-accent)/0.3)] group-hover:bg-[rgb(var(--color-accent))] group-hover:text-white transition-all duration-300 monochrome:bg-white/10 monochrome:border-white/20 monochrome:group-hover:bg-white monochrome:group-hover:text-zinc-900">
-                          <stat.icon size={22} className="group-hover:text-white transition-colors monochrome:group-hover:text-zinc-900" strokeWidth={2.5} />
-                        </div>
-                      </div>
-                    </div>
-                </motion.div>
+        {/* Toggle vue + Statistiques rapides */}
+        <motion.div variants={itemVariants}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
+              {(['jour', 'semaine', 'mois'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={cn(
+                    'px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200',
+                    viewMode === mode
+                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
+                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+                  )}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
               ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+            {statCards.map((stat, index) => (
+              <motion.div
+                key={index}
+                className="relative overflow-hidden group cursor-pointer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, type: 'spring', stiffness: 100 }}
+                whileHover={{ y: -4, scale: 1.02 }}
+              >
+                <div className="p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] monochrome:group-hover:border-white/20">
+                  <div className="space-y-1 mb-3">
+                    <p className="text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors monochrome:group-hover:text-white">
+                      {stat.label}
+                    </p>
+                    <motion.p
+                      key={`${stat.label}-${viewMode}`}
+                      className="text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring' }}
+                    >
+                      {stat.value}
+                    </motion.p>
+                    <p className="text-xs text-[rgb(var(--color-text-muted))] flex items-center gap-1.5 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--color-accent))] monochrome:bg-white" />
+                      {stat.subtitle}
+                    </p>
+                  </div>
+                  <ChartContainer config={miniChartConfig} className="h-[56px] w-full">
+                    <BarChart data={stat.chartData} margin={{ left: 0, right: 0, top: 4, bottom: 0 }} barSize={7}>
+                      <Bar dataKey="value" fill="var(--color-value)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Contenu principal en grille */}
