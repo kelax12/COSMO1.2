@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { BarChart3, Clock, TrendingUp, Calendar, ChevronDown, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
-import { useAppContext } from '../context/TaskContext';
+import { useColorSettings } from '@/modules/ui-states';
 import { useTasks, Task } from '@/modules/tasks';
 import { useHabits, Habit } from '@/modules/habits';
 import { useEvents, CalendarEvent } from '@/modules/events';
@@ -93,7 +93,7 @@ export default function StatisticsPage() {
   const { data: events = [] } = useEvents();
   // Use new module for okrs (read-only)
   const { data: okrs = [] } = useOkrs();
-  const { colorSettings } = useAppContext();
+  const { colorSettings } = useColorSettings();
   const { data: habits = [] } = useHabits();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');

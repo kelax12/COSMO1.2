@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Module tasks - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
-import { Friend, useAcceptFriendRequest, useRejectFriendRequest, useFriendRequests } from '@/modules/friends';
+import { Friend, useAcceptFriendRequest, useRejectFriendRequest, useFriendRequests, useFriends, useSendFriendRequest } from '@/modules/friends';
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -16,10 +16,8 @@ import { Friend, useAcceptFriendRequest, useRejectFriendRequest, useFriendReques
 // ═══════════════════════════════════════════════════════════════════
 import { useSendChatMessage, useConversationMessages, useMessagingRealtime } from '@/modules/messaging/messaging.hooks';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useMessages } from '@/modules/user';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -92,15 +90,10 @@ const MessagingPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [] } = useTasksModule();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const {
-    user,
-    messages,
-    sendFriendRequest,
-    friends
-  } = useTaskContext();
+  const { user } = useAuth();
+  const { messages } = useMessages();
+  const { data: friends = [] } = useFriends();
+  const sendFriendRequestMutation = useSendFriendRequest();
 
   // ═══════════════════════════════════════════════════════════════════
   // Premium — vérification côté serveur via BillingContext
@@ -349,7 +342,7 @@ const MessagingPage: React.FC = () => {
     if (foundFriend) {
       alert('Cet utilisateur est déjà votre ami');
     } else {
-      sendFriendRequest(email);
+      sendFriendRequestMutation.mutate({ email });
     }
     setAddFriendEmail('');
     setShowAddFriendForm(false);

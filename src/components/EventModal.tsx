@@ -19,10 +19,7 @@ import { CalendarEvent } from '@/modules/events';
 // ═══════════════════════════════════════════════════════════════════
 import { useCategories } from '@/modules/categories';
 
-// ═══════════════════════════════════════════════════════════════════
-// AppContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useAppContext } from "../context/TaskContext";
+import { useFavoriteColors } from '@/modules/ui-states';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
@@ -60,7 +57,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onDeleteEvent,
   onConvert,
 }) => {
-  const { favoriteColors } = useAppContext();
+  const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
 
   const [title, setTitle] = useState("");

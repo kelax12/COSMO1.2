@@ -9,8 +9,7 @@ import { useTasks, useToggleTaskComplete, useToggleTaskBookmark } from '@/module
 // Module categories - Migré
 import { useCategories } from '@/modules/categories';
 
-// TaskContext uniquement pour friends (domaine non migré)
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useFriends } from '@/modules/friends';
 
 const TodayTasks: React.FC = () => {
   const navigate = useNavigate();
@@ -29,10 +28,7 @@ const TodayTasks: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // FRIENDS - Depuis TaskContext (non migré)
-  // ═══════════════════════════════════════════════════════════════════
-  const { friends } = useTaskContext();
+  const { data: friends = [] } = useFriends();
 
   // Tâches prioritaires pour aujourd'hui (mémoïsé pour performance)
   const todayTasks = useMemo(() => {

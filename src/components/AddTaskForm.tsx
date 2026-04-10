@@ -29,10 +29,8 @@ import { useCategories } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList } from '@/modules/lists';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useColorSettings } from '@/modules/ui-states';
+import { useFriends, useShareTask } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -70,10 +68,9 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const { data: lists = [] } = useLists();
   const addTaskToListMutation = useAddTaskToList();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, friends, shareTask } = useTaskContext();
+  const { colorSettings } = useColorSettings();
+  const { data: friends = [] } = useFriends();
+  const shareTaskMutation = useShareTask();
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
@@ -240,7 +237,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
         
         // Partager avec les collaborateurs si Premium
         if (collaborators.length > 0 && isPremium()) {
-          collaborators.forEach((userId) => shareTask(newTask.id, userId, 'editor'));
+          collaborators.forEach((userId) => shareTaskMutation.mutate({ taskId: newTask.id, friendId: userId, role: 'editor' }));
         }
         
         handleFormToggle(false);

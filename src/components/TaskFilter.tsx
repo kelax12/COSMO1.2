@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 
 import { useCategories } from '@/modules/categories';
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { usePriorityRange } from '@/modules/ui-states';
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
@@ -29,14 +29,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   selectedCategories: controlledSelectedCategories,
   onSelectedCategoriesChange
 }) => {
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
-  const {
-    priorityRange = [1, 5],
-    setPriorityRange
-  } = useTaskContext();
+  const { priorityRange, setPriorityRange } = usePriorityRange();
 
   // État local de secours si pas contrôlé (rétrocompatibilité)
   const [localSearchTerm, setLocalSearchTerm] = useState('');

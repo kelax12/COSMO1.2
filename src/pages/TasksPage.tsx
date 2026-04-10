@@ -25,9 +25,7 @@ import { useCategories } from '@/modules/categories';
 import { useLists } from '@/modules/lists';
 
 // ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { usePriorityRange } from '@/modules/ui-states';
 
 const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
@@ -45,10 +43,7 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: lists = [] } = useLists();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { priorityRange } = useTaskContext();
+  const { priorityRange } = usePriorityRange();
 
   // ═══════════════════════════════════════════════════════════════════
   // État de filtrage LOCAL (migrés depuis TaskContext)

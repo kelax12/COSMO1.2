@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 import { useCreateHabit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
@@ -10,7 +10,7 @@ interface HabitFormProps {
 }
 
 const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
-  const { favoriteColors } = useTasks();
+  const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
   const createHabitMutation = useCreateHabit();
   

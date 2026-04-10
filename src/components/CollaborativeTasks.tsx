@@ -13,10 +13,10 @@ import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
 // ═══════════════════════════════════════════════════════════════════
 import { useCategories } from '@/modules/categories';
 
-// ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
-// ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useBilling } from '@/modules/billing/billing.context';
+import { useFriends, useSendFriendRequest } from '@/modules/friends';
+import { usePriorityRange } from '@/modules/ui-states';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,10 +32,11 @@ const CollaborativeTasks: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const { user, isPremium, friends, priorityRange, sendFriendRequest } = useTaskContext();
+  const { user } = useAuth();
+  const { isPremium } = useBilling();
+  const { data: friends = [] } = useFriends();
+  const { priorityRange } = usePriorityRange();
+  const sendFriendRequestMutation = useSendFriendRequest();
   
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
@@ -141,7 +142,7 @@ const CollaborativeTasks: React.FC = () => {
       const pendingInvites = selectedTask.pendingInvites || [];
       
       if (!currentCollaborators.includes(email) && !pendingInvites.includes(email)) {
-        sendFriendRequest(email);
+        sendFriendRequestMutation.mutate({ email });
         updateTaskMutation.mutate({
           id: selectedTask.id,
           updates: {
