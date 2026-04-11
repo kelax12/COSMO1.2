@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CheckCircle, 
@@ -190,7 +191,7 @@ const ADVANCED_FEATURES = [
 ];
 
 const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: 'login' | 'register' }) => {
-  const { login, register } = useAuth();
+  const { login, register, loginDemo } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -228,11 +229,11 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    const result = await login('demo@cosmo.app', 'demo');
-    setLoading(false);
-    if (result.success) navigate('/dashboard');
+  const handleDemoLogin = () => {
+    loginDemo();
+    toast.success('Bienvenue dans la démo !');
+    onClose();
+    setTimeout(() => navigate('/dashboard'), 0);
   };
 
   return (
@@ -310,7 +311,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginDemo } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -331,11 +332,9 @@ const LandingPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleFeatureClick = async (path: string) => {
-    const result = await login('demo@cosmo.app', 'demo');
-    if (result.success) {
-      navigate(path);
-    }
+  const handleFeatureClick = (path: string) => {
+    loginDemo();
+    navigate(path);
   };
 
   const handleLoginClick = () => {

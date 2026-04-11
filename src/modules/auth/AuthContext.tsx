@@ -52,11 +52,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(mapSupabaseUserToAppUser(session.user));
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(mapSupabaseUserToAppUser(session.user));
+        }
+      } catch {
+        // Supabase non configuré ou erreur réseau — le mode démo prendra le relais
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     initializeAuth();
