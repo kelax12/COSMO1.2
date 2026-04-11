@@ -47,7 +47,13 @@ const DashboardPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const statCards = useMemo(() => {
-    const activeOKRsCount = okrs.filter(o => !o.completed).length;
+    const allKRs = okrs.flatMap(o => o.keyResults);
+
+    const krCompletedInPeriod = (start: string, end: string) =>
+      allKRs.filter(kr => kr.completed && kr.history?.some(h => h.date >= start && h.date <= end)).length;
+
+    const krActivityOnDate = (date: string) =>
+      allKRs.filter(kr => kr.history?.some(h => h.date === date)).length;
 
     if (viewMode === 'jour') {
       const days: string[] = [];
@@ -60,25 +66,21 @@ const DashboardPage: React.FC = () => {
         {
           label: 'Tâches complétées',
           value: tasks.filter(t => t.completed && t.completedAt?.startsWith(today)).length,
-          subtitle: "Aujourd'hui",
           chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt?.startsWith(date)).length })),
         },
         {
           label: 'Agenda',
           value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === today).length,
-          subtitle: "Aujourd'hui",
           chartData: days.map(date => ({ date, value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === date).length })),
         },
         {
-          label: 'OKR actifs',
-          value: activeOKRsCount,
-          subtitle: 'En cours',
-          chartData: days.map((_, i) => ({ date: `d${i}`, value: activeOKRsCount })),
+          label: 'KR réalisés',
+          value: krCompletedInPeriod(today, today),
+          chartData: days.map(date => ({ date, value: krActivityOnDate(date) })),
         },
         {
           label: 'Habitudes',
           value: habits.filter(h => h.completions[today]).length,
-          subtitle: 'Réalisées',
           chartData: days.map(date => ({ date, value: habits.filter(h => h.completions[date]).length })),
         },
       ];
@@ -101,26 +103,22 @@ const DashboardPage: React.FC = () => {
       return [
         {
           label: 'Tâches complétées',
-          value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= thisWeek.start).length,
-          subtitle: 'Cette semaine',
+          value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= thisWeek.start && t.completedAt <= thisWeek.end + 'T23:59').length,
           chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= w.start && t.completedAt <= w.end + 'T23:59').length })),
         },
         {
           label: 'Agenda',
           value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= thisWeek.start && d <= thisWeek.end; }).length,
-          subtitle: 'Cette semaine',
           chartData: weeks.map(w => ({ date: w.label, value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= w.start && d <= w.end; }).length })),
         },
         {
-          label: 'OKR actifs',
-          value: activeOKRsCount,
-          subtitle: 'En cours',
-          chartData: weeks.map(w => ({ date: w.label, value: activeOKRsCount })),
+          label: 'KR réalisés',
+          value: krCompletedInPeriod(thisWeek.start, thisWeek.end),
+          chartData: weeks.map(w => ({ date: w.label, value: krCompletedInPeriod(w.start, w.end) })),
         },
         {
           label: 'Habitudes',
           value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= thisWeek.start && d <= thisWeek.end).length, 0),
-          subtitle: 'Cette semaine',
           chartData: weeks.map(w => ({ date: w.label, value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= w.start && d <= w.end).length, 0) })),
         },
       ];
@@ -135,32 +133,35 @@ const DashboardPage: React.FC = () => {
       months.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
     }
     const thisMonth = months[months.length - 1];
-    const tasksByMonth = (m: { year: number; month: number }) => tasks.filter(t => { if (!t.completed || !t.completedAt) return false; const d = new Date(t.completedAt); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
+    const monthRange = (m: { year: number; month: number }) => {
+      const start = new Date(m.year, m.month, 1).toISOString().split('T')[0];
+      const end = new Date(m.year, m.month + 1, 0).toISOString().split('T')[0];
+      return { start, end };
+    };
+    const tasksByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return tasks.filter(t => t.completed && t.completedAt && t.completedAt >= start && t.completedAt <= end + 'T23:59').length; };
     const eventsByMonth = (m: { year: number; month: number }) => events.filter(e => { const d = new Date(e.start); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
-    const habitsByMonth = (m: { year: number; month: number }) => habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => { const date = new Date(d); return date.getFullYear() === m.year && date.getMonth() === m.month; }).length, 0);
+    const habitsByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= start && d <= end).length, 0); };
+    const krByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return krCompletedInPeriod(start, end); };
+    const { start: thisMonthStart, end: thisMonthEnd } = monthRange(thisMonth);
     return [
       {
         label: 'Tâches complétées',
         value: tasksByMonth(thisMonth),
-        subtitle: 'Ce mois',
         chartData: months.map(m => ({ date: m.label, value: tasksByMonth(m) })),
       },
       {
         label: 'Agenda',
         value: eventsByMonth(thisMonth),
-        subtitle: 'Ce mois',
         chartData: months.map(m => ({ date: m.label, value: eventsByMonth(m) })),
       },
       {
-        label: 'OKR actifs',
-        value: activeOKRsCount,
-        subtitle: 'En cours',
-        chartData: months.map(m => ({ date: m.label, value: activeOKRsCount })),
+        label: 'KR réalisés',
+        value: krCompletedInPeriod(thisMonthStart, thisMonthEnd),
+        chartData: months.map(m => ({ date: m.label, value: krByMonth(m) })),
       },
       {
         label: 'Habitudes',
         value: habitsByMonth(thisMonth),
-        subtitle: 'Ce mois',
         chartData: months.map(m => ({ date: m.label, value: habitsByMonth(m) })),
       },
     ];
@@ -230,7 +231,7 @@ const DashboardPage: React.FC = () => {
 
         {/* Toggle vue + Statistiques rapides */}
         <motion.div variants={itemVariants}>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-end mb-4">
             <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
               {(['jour', 'semaine', 'mois'] as const).map(mode => (
                 <button
@@ -273,10 +274,6 @@ const DashboardPage: React.FC = () => {
                     >
                       {stat.value}
                     </motion.p>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))] flex items-center gap-1.5 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--color-accent))] monochrome:bg-white" />
-                      {stat.subtitle}
-                    </p>
                   </div>
                   <MiniBarChart data={stat.chartData} />
                 </div>
