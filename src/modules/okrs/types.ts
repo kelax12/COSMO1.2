@@ -13,7 +13,7 @@ export interface KeyResult {
   unit: string;
   completed: boolean;
   estimatedTime: number;
-  history?: { date: string; increment: number }[];
+  completedAt?: string | null;
 }
 
 /**
