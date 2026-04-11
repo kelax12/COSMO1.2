@@ -78,26 +78,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
   const handleDemoMode = async () => {
     setIsLoading(true);
     try {
-      const demoEmail = 'demo@cosmo.app';
-      const demoPassword = 'CosmoDemo2026!';
-      
-      const result = await login(demoEmail, demoPassword);
-      
+      const result = await login('demo@cosmo.app', 'CosmoDemo2026!');
       if (result.success) {
-        toast.success('Mode démo activé !');
+        toast.success('Bienvenue dans la démo !');
         onClose();
-        navigate('/dashboard');
-      } else if (result.error?.includes('Invalid login credentials')) {
-        const regResult = await register('Utilisateur Démo', demoEmail, demoPassword);
-        if (regResult.success) {
-          toast.success('Mode démo activé (nouveau compte) !');
-          onClose();
-          navigate('/dashboard');
-        } else {
-          toast.error('Erreur lors de l\'activation du mode démo');
-        }
+        navigate('/');
       } else {
-        toast.error(result.error || 'Erreur mode démo');
+        toast.error(result.error || 'Erreur lors de la connexion démo');
       }
     } catch (error) {
       toast.error('Une erreur est survenue');
