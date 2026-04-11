@@ -65,14 +65,21 @@ const DashboardPage: React.FC = () => {
   const statCards = useMemo(() => {
     const allKRs = okrs.flatMap(o => o.keyResults);
 
-    const krCompletedInPeriod = (start: string, end: string) =>
-      allKRs.filter(kr => kr.completed && kr.completedAt && kr.completedAt >= start && kr.completedAt <= end + 'T23:59:59').length;
+    // Normalise completedAt (ISO datetime ou date) en YYYY-MM-DD pour comparaison fiable
+    const krDate = (kr: { completedAt?: string | null }): string | null =>
+      kr.completedAt ? kr.completedAt.split('T')[0] : null;
 
-    // Chart: une barre par OKR (KR complétés dans la période)
-    const krChartForPeriod = (start: string, end: string) =>
-      okrs.slice(0, 10).map(o => ({
-        value: o.keyResults.filter(kr => kr.completed && kr.completedAt && kr.completedAt >= start && kr.completedAt <= end + 'T23:59:59').length,
-        label: o.title.slice(0, 20),
+    const krCompletedInPeriod = (start: string, end: string) =>
+      allKRs.filter(kr => {
+        if (!kr.completed) return false;
+        const d = krDate(kr);
+        return d !== null && d >= start && d <= end;
+      }).length;
+
+    const krChartByDay = (days: string[]) =>
+      days.map(date => ({
+        date,
+        value: allKRs.filter(kr => kr.completed && krDate(kr) === date).length,
       }));
 
     if (viewMode === 'jour') {
@@ -96,7 +103,7 @@ const DashboardPage: React.FC = () => {
         {
           label: 'KR réalisés',
           value: krCompletedInPeriod(today, today),
-          chartData: krChartForPeriod(today, today),
+          chartData: krChartByDay(days),
         },
         {
           label: 'Habitudes',
@@ -123,8 +130,8 @@ const DashboardPage: React.FC = () => {
       return [
         {
           label: 'Tâches complétées',
-          value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= thisWeek.start && t.completedAt <= thisWeek.end + 'T23:59').length,
-          chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && t.completedAt >= w.start && t.completedAt <= w.end + 'T23:59').length })),
+          value: tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= thisWeek.start && t.completedAt.split('T')[0] <= thisWeek.end).length,
+          chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= w.start && t.completedAt.split('T')[0] <= w.end).length })),
         },
         {
           label: 'Agenda',
@@ -158,9 +165,10 @@ const DashboardPage: React.FC = () => {
       const end = new Date(m.year, m.month + 1, 0).toISOString().split('T')[0];
       return { start, end };
     };
-    const tasksByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return tasks.filter(t => t.completed && t.completedAt && t.completedAt >= start && t.completedAt <= end + 'T23:59').length; };
+    const tasksByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= start && t.completedAt.split('T')[0] <= end).length; };
     const eventsByMonth = (m: { year: number; month: number }) => events.filter(e => { const d = new Date(e.start); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
     const habitsByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= start && d <= end).length, 0); };
+
     const { start: thisMonthStart, end: thisMonthEnd } = monthRange(thisMonth);
     return [
       {
