@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { resetRepositories } from '../../lib/repository.factory';
+import { resetRepositories, clearDemoStorage } from '../../lib/repository.factory';
 import { appModeStore } from '../../lib/app-mode.store';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -117,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginDemo = () => {
+    clearDemoStorage();
     appModeStore.setDemo(true);
     resetRepositories();
     setUser({

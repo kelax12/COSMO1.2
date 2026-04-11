@@ -162,3 +162,21 @@ export function resetRepositories(): void {
   friendsRepository = null;
   okrsRepository = null;
 }
+
+/**
+ * Efface les données démo du localStorage pour forcer le rechargement des seeds
+ */
+export function clearDemoStorage(): void {
+  const DEMO_KEYS = [
+    'cosmo_demo_tasks',
+    'cosmo_demo_habits',
+    'cosmo_demo_events',
+    'cosmo-okrs',
+    'cosmo_categories',
+    'cosmo_lists',
+    'cosmo_friends',
+    'cosmo_friend_requests',
+    'cosmo_shared_tasks',
+  ];
+  DEMO_KEYS.forEach(key => localStorage.removeItem(key));
+}
