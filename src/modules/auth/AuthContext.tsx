@@ -62,8 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const isDemo = !session;
-      appModeStore.setDemo(isDemo);
+      // Ne pas override le mode démo déclenché manuellement
+      if (appModeStore.isDemo && !session) return;
+      appModeStore.setDemo(!session);
       resetRepositories();
       if (session?.user) {
         setUser(mapSupabaseUserToAppUser(session.user));
