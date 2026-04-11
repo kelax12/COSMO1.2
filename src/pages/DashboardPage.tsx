@@ -17,16 +17,32 @@ import TextType from '../components/TextType';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
-const MiniBarChart: React.FC<{ data: { value: number }[] }> = ({ data }) => {
+const MiniBarChart: React.FC<{ data: { value: number; label?: string }[] }> = ({ data }) => {
+  const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
   return (
-    <div className="flex items-end gap-[3px] h-[56px] w-full pt-1">
+    <div className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative">
       {data.map((d, i) => (
         <div
           key={i}
-          className="flex-1 rounded-t-[3px] bg-[rgb(var(--color-accent)/0.7)] monochrome:bg-white/50 transition-all duration-300"
-          style={{ height: `${Math.max((d.value / max) * 100, d.value === 0 ? 8 : 12)}%` }}
-        />
+          className="flex-1 relative flex flex-col items-center justify-end h-full"
+          onMouseEnter={() => setHovered(i)}
+          onMouseLeave={() => setHovered(null)}
+        >
+          {hovered === i && (
+            <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
+              {d.label ? `${d.label} : ` : ''}{d.value}
+            </div>
+          )}
+          <div
+            className={`w-full rounded-t-[3px] transition-all duration-150 ${
+              hovered === i
+                ? 'bg-[rgb(var(--color-accent))] monochrome:bg-white'
+                : 'bg-[rgb(var(--color-accent)/0.5)] monochrome:bg-white/40'
+            }`}
+            style={{ height: `${Math.max((d.value / max) * 100, 8)}%` }}
+          />
+        </div>
       ))}
     </div>
   );
@@ -47,13 +63,12 @@ const DashboardPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const statCards = useMemo(() => {
-    const allKRs = okrs.flatMap(o => o.keyResults);
-
-    const krCompletedInPeriod = (start: string, end: string) =>
-      allKRs.filter(kr => kr.completed && kr.history?.some(h => h.date >= start && h.date <= end)).length;
-
-    const krActivityOnDate = (date: string) =>
-      allKRs.filter(kr => kr.history?.some(h => h.date === date)).length;
+    // KR chart: one bar per OKR showing its completed KR count
+    const krChartByOKR = okrs.slice(0, 10).map(o => ({
+      value: o.keyResults.filter(kr => kr.completed).length,
+      label: o.title.slice(0, 20),
+    }));
+    const totalCompletedKRs = okrs.reduce((sum, o) => sum + o.keyResults.filter(kr => kr.completed).length, 0);
 
     if (viewMode === 'jour') {
       const days: string[] = [];
@@ -75,8 +90,8 @@ const DashboardPage: React.FC = () => {
         },
         {
           label: 'KR réalisés',
-          value: krCompletedInPeriod(today, today),
-          chartData: days.map(date => ({ date, value: krActivityOnDate(date) })),
+          value: totalCompletedKRs,
+          chartData: krChartByOKR,
         },
         {
           label: 'Habitudes',
@@ -113,8 +128,8 @@ const DashboardPage: React.FC = () => {
         },
         {
           label: 'KR réalisés',
-          value: krCompletedInPeriod(thisWeek.start, thisWeek.end),
-          chartData: weeks.map(w => ({ date: w.label, value: krCompletedInPeriod(w.start, w.end) })),
+          value: totalCompletedKRs,
+          chartData: krChartByOKR,
         },
         {
           label: 'Habitudes',
@@ -141,8 +156,6 @@ const DashboardPage: React.FC = () => {
     const tasksByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return tasks.filter(t => t.completed && t.completedAt && t.completedAt >= start && t.completedAt <= end + 'T23:59').length; };
     const eventsByMonth = (m: { year: number; month: number }) => events.filter(e => { const d = new Date(e.start); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
     const habitsByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= start && d <= end).length, 0); };
-    const krByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return krCompletedInPeriod(start, end); };
-    const { start: thisMonthStart, end: thisMonthEnd } = monthRange(thisMonth);
     return [
       {
         label: 'Tâches complétées',
@@ -156,8 +169,8 @@ const DashboardPage: React.FC = () => {
       },
       {
         label: 'KR réalisés',
-        value: krCompletedInPeriod(thisMonthStart, thisMonthEnd),
-        chartData: months.map(m => ({ date: m.label, value: krByMonth(m) })),
+        value: totalCompletedKRs,
+        chartData: krChartByOKR,
       },
       {
         label: 'Habitudes',
