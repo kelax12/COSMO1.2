@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
-import { Bar, BarChart } from 'recharts';
-import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -19,8 +17,19 @@ import TextType from '../components/TextType';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
-const miniChartConfig: ChartConfig = {
-  value: { color: 'rgb(var(--color-accent))' },
+const MiniBarChart: React.FC<{ data: { value: number }[] }> = ({ data }) => {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="flex items-end gap-[3px] h-[56px] w-full pt-1">
+      {data.map((d, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-t-[3px] bg-[rgb(var(--color-accent)/0.7)] monochrome:bg-white/50 transition-all duration-300"
+          style={{ height: `${Math.max((d.value / max) * 100, d.value === 0 ? 8 : 12)}%` }}
+        />
+      ))}
+    </div>
+  );
 };
 
 const DashboardPage: React.FC = () => {
@@ -269,11 +278,7 @@ const DashboardPage: React.FC = () => {
                       {stat.subtitle}
                     </p>
                   </div>
-                  <ChartContainer config={miniChartConfig} className="h-[56px] w-full">
-                    <BarChart data={stat.chartData} margin={{ left: 0, right: 0, top: 4, bottom: 0 }} barSize={7}>
-                      <Bar dataKey="value" fill="var(--color-value)" radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  </ChartContainer>
+                  <MiniBarChart data={stat.chartData} />
                 </div>
               </motion.div>
             ))}
