@@ -65,21 +65,24 @@ const DashboardPage: React.FC = () => {
   const statCards = useMemo(() => {
     const allKRs = okrs.flatMap(o => o.keyResults);
 
-    // Normalise completedAt (ISO datetime ou date) en YYYY-MM-DD pour comparaison fiable
+    // Normalise completedAt en YYYY-MM-DD. Retourne null si absent.
     const krDate = (kr: { completedAt?: string | null }): string | null =>
       kr.completedAt ? kr.completedAt.split('T')[0] : null;
 
+    // Compte les KR complétés dans la période.
+    // Si completedAt est absent sur un KR complété → compté quand même (données legacy)
     const krCompletedInPeriod = (start: string, end: string) =>
       allKRs.filter(kr => {
         if (!kr.completed) return false;
         const d = krDate(kr);
-        return d !== null && d >= start && d <= end;
+        if (d === null) return true; // pas de date → inclure (données sans completedAt)
+        return d >= start && d <= end;
       }).length;
 
     const krChartByDay = (days: string[]) =>
       days.map(date => ({
         date,
-        value: allKRs.filter(kr => kr.completed && krDate(kr) === date).length,
+        value: allKRs.filter(kr => kr.completed && (krDate(kr) === date || krDate(kr) === null)).length,
       }));
 
     if (viewMode === 'jour') {
