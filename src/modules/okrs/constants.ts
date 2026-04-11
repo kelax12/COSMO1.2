@@ -7,7 +7,7 @@ import { OKRFilters } from './types';
 /**
  * LocalStorage key for persisting OKRs
  */
-export const OKRS_STORAGE_KEY = 'cosmo-okrs';
+export const OKRS_STORAGE_KEY = 'cosmo-okrs-v2'; // v2 : ajout completedAt sur KR
 
 /**
  * React Query keys for OKRs
