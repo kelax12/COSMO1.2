@@ -79,7 +79,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     loginDemo();
     toast.success('Bienvenue dans la démo !');
     onClose();
-    navigate('/dashboard');
+    setTimeout(() => navigate('/dashboard'), 0);
   };
 
   const handleGoogleLogin = async () => {
