@@ -11,11 +11,19 @@ const getDateString = (daysFromNow: number = 0): string => {
   return date.toISOString().split('T')[0];
 };
 
-const today = getDateString(0);
-const yesterday = getDateString(-1);
-const twoDaysAgo = getDateString(-2);
+// Génère un historique de complétion déterministe sur toute une période
+const generateCompletions = (daysBack: number, rate: number, seed: number): Record<string, boolean> => {
+  const completions: Record<string, boolean> = {};
+  for (let i = daysBack; i <= 0; i++) {
+    const date = getDateString(i);
+    // Hash déterministe basé sur le jour et la graine — pas de Math.random()
+    const hash = Math.abs((i * 1664525 + seed * 1013904223 + i * seed * 22695477) % 100);
+    completions[date] = hash < rate * 100;
+  }
+  return completions;
+};
 
-// Données de démonstration
+// Données de démonstration — 14 mois d'historique complet
 const DEMO_HABITS: Habit[] = [
   {
     id: 'habit-1',
@@ -25,57 +33,41 @@ const DEMO_HABITS: Habit[] = [
     estimatedTime: 15,
     color: '#8B5CF6',
     icon: '🧘',
-    completions: {
-      [today]: true,
-      [yesterday]: true,
-      [twoDaysAgo]: false,
-    },
-    createdAt: getDateString(-30),
+    completions: generateCompletions(-430, 0.87, 42),
+    createdAt: getDateString(-430),
   },
   {
     id: 'habit-2',
     name: 'Sport',
-    description: "30 minutes d'exercice",
+    description: "30 minutes d'exercice quotidien",
     frequency: 'daily',
     estimatedTime: 30,
     color: '#EF4444',
     icon: '🏃',
-    completions: {
-      [today]: false,
-      [yesterday]: true,
-      [twoDaysAgo]: true,
-    },
-    createdAt: getDateString(-25),
+    completions: generateCompletions(-400, 0.71, 137),
+    createdAt: getDateString(-400),
   },
   {
     id: 'habit-3',
     name: 'Lecture',
-    description: 'Lire 20 pages',
+    description: 'Lire 20 pages minimum',
     frequency: 'daily',
     estimatedTime: 30,
     color: '#3B82F6',
     icon: '📚',
-    completions: {
-      [today]: true,
-      [yesterday]: false,
-      [twoDaysAgo]: true,
-    },
-    createdAt: getDateString(-20),
+    completions: generateCompletions(-420, 0.79, 73),
+    createdAt: getDateString(-420),
   },
   {
     id: 'habit-4',
     name: 'Apprentissage langue',
-    description: '15 minutes de pratique',
+    description: '15 minutes de pratique quotidienne',
     frequency: 'daily',
     estimatedTime: 15,
     color: '#10B981',
     icon: '🌍',
-    completions: {
-      [today]: false,
-      [yesterday]: true,
-      [twoDaysAgo]: true,
-    },
-    createdAt: getDateString(-15),
+    completions: generateCompletions(-380, 0.64, 251),
+    createdAt: getDateString(-380),
   },
   {
     id: 'habit-5',
@@ -85,12 +77,30 @@ const DEMO_HABITS: Habit[] = [
     estimatedTime: 10,
     color: '#F97316',
     icon: '✏️',
-    completions: {
-      [today]: true,
-      [yesterday]: true,
-      [twoDaysAgo]: false,
-    },
-    createdAt: getDateString(-10),
+    completions: generateCompletions(-365, 0.74, 188),
+    createdAt: getDateString(-365),
+  },
+  {
+    id: 'habit-6',
+    name: 'Gratitude',
+    description: '3 choses pour lesquelles je suis reconnaissant',
+    frequency: 'daily',
+    estimatedTime: 5,
+    color: '#EC4899',
+    icon: '🙏',
+    completions: generateCompletions(-180, 0.83, 91),
+    createdAt: getDateString(-180),
+  },
+  {
+    id: 'habit-7',
+    name: 'Hydratation',
+    description: 'Boire 2L d\'eau par jour',
+    frequency: 'daily',
+    estimatedTime: 1,
+    color: '#06B6D4',
+    icon: '💧',
+    completions: generateCompletions(-120, 0.91, 319),
+    createdAt: getDateString(-120),
   },
 ];
 
