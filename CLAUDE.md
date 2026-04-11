@@ -72,7 +72,67 @@ getCategoriesRepository()
 getListsRepository()
 getFriendsRepository()
 getOKRsRepository()
+
+resetRepositories()     // nullifie les singletons (appelé au changement de mode)
+clearDemoStorage()      // efface les 9 clés localStorage démo (appelé dans loginDemo)
 ```
+
+### Parcours d'accès au mode démo
+
+```
+/welcome (LandingPage) → bouton "Connexion" → MockLoginModal (mode login)
+                       → bouton "Mode Démo (Connexion rapide)"
+                       → loginDemo() → clearDemoStorage() + seeds rechargées → /dashboard
+```
+
+Alternativement, cliquer sur une feature card de la landing déclenche aussi `loginDemo()`.
+
+### loginDemo() — séquence exacte (`src/modules/auth/AuthContext.tsx`)
+
+```typescript
+loginDemo() {
+  clearDemoStorage()        // 1. Efface l'ancien localStorage démo
+  appModeStore.setDemo(true) // 2. Active le flag global démo
+  resetRepositories()        // 3. Nullifie les singletons
+  setUser({ id: 'demo-user', email: 'demo@cosmo.app', ... }) // 4. Définit l'utilisateur
+  setIsLoading(false)        // 5. Libère le spinner
+  // 6. navigate('/dashboard') dans le composant appelant (setTimeout 0ms)
+}
+```
+
+> **Important** : `navigate('/dashboard')` doit toujours être appelé avec `setTimeout(() => navigate('/dashboard'), 0)` pour laisser React commiter `setUser()` avant que `ProtectedRoute` vérifie `isAuthenticated`.
+
+### Données seed démo
+
+Les seeds sont dans les fichiers `local.repository.ts` / `repository.ts` de chaque module. Elles sont rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`.
+
+| Module | Fichier seed | Volume | Période couverte |
+|---|---|---|---|
+| Tasks | `src/modules/tasks/local.repository.ts` | 100 tâches | 12 mois |
+| Habits | `src/modules/habits/local.repository.ts` | 100 habitudes | 30–120 jours d'historique |
+| Events | `src/modules/events/repository.ts` | ~150 événements | 12 mois + récurrents |
+| OKRs | `src/modules/okrs/repository.ts` | 8 OKRs | 3 actifs + 5 complétés |
+
+Helpers disponibles dans les fichiers seed :
+- `getDate(daysFromNow)` / `getDateString(daysFromNow)` — dates relatives à aujourd'hui
+- `generateCompletions(daysBack, rate, seed)` — historique déterministe (pas de `Math.random()`)
+- `t(id, name, desc, priority, cat, createdDays, deadlineDays, completedDays, ...)` — raccourci Task
+- `h(id, name, desc, color, icon, time, daysBack, rate, seed, freq?)` — raccourci Habit
+
+### Clés localStorage démo effacées par `clearDemoStorage()`
+
+```
+cosmo_demo_tasks · cosmo_demo_habits · cosmo_demo_events · cosmo-okrs
+cosmo_categories · cosmo_lists · cosmo_friends · cosmo_friend_requests · cosmo_shared_tasks
+```
+
+> Pour ajouter une nouvelle clé démo, l'ajouter dans `clearDemoStorage()` dans `src/lib/repository.factory.ts`.
+
+### Ce qu'il ne faut jamais faire en mode démo
+
+- ❌ Appeler `login(email, password)` pour connecter l'utilisateur démo — utiliser `loginDemo()`
+- ❌ Appeler `navigate('/dashboard')` directement après `loginDemo()` sans `setTimeout`
+- ❌ Oublier d'appeler `clearDemoStorage()` avant de modifier les seeds (sinon les anciennes données persistent)
 
 ---
 
