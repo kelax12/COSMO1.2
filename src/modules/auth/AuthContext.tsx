@@ -23,6 +23,7 @@ type AuthContextType = {
   isLoading: boolean;
   isPremium: () => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginDemo: () => void;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -109,6 +110,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginDemo = () => {
+    appModeStore.setDemo(true);
+    resetRepositories();
+    setUser({
+      id: 'demo-user',
+      name: 'Utilisateur Démo',
+      email: 'demo@cosmo.app',
+      premiumTokens: 100,
+      subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    setIsLoading(false);
+  };
+
   const loginWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -124,6 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (appModeStore.isDemo) {
+      appModeStore.setDemo(false);
+      resetRepositories();
+      setUser(null);
+      return;
+    }
     await supabase.auth.signOut();
   };
 
@@ -135,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, isDemo]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, isPremium, login, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, isPremium, login, loginDemo, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -28,7 +28,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     email: '',
     password: '',
   });
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, loginDemo, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -75,22 +75,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     };
 
 
-  const handleDemoMode = async () => {
-    setIsLoading(true);
-    try {
-      const result = await login('demo@cosmo.app', 'CosmoDemo2026!');
-      if (result.success) {
-        toast.success('Bienvenue dans la démo !');
-        onClose();
-        navigate('/');
-      } else {
-        toast.error(result.error || 'Erreur lors de la connexion démo');
-      }
-    } catch (error) {
-      toast.error('Une erreur est survenue');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDemoMode = () => {
+    loginDemo();
+    toast.success('Bienvenue dans la démo !');
+    onClose();
+    navigate('/dashboard');
   };
 
   const handleGoogleLogin = async () => {
