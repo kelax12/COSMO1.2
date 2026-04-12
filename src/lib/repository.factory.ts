@@ -172,6 +172,8 @@ export function clearDemoStorage(): void {
     'cosmo_demo_habits',
     'cosmo_demo_events',
     'cosmo-okrs',
+    'cosmo-okrs-v2',
+    'cosmo-okrs-v3',
     'cosmo_categories',
     'cosmo_lists',
     'cosmo_friends',

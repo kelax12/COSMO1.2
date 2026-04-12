@@ -122,7 +122,7 @@ Helpers disponibles dans les fichiers seed :
 ### Clés localStorage démo effacées par `clearDemoStorage()`
 
 ```
-cosmo_demo_tasks · cosmo_demo_habits · cosmo_demo_events · cosmo-okrs
+cosmo_demo_tasks · cosmo_demo_habits · cosmo_demo_events · cosmo-okrs · cosmo-okrs-v2 · cosmo-okrs-v3
 cosmo_categories · cosmo_lists · cosmo_friends · cosmo_friend_requests · cosmo_shared_tasks
 ```
 
