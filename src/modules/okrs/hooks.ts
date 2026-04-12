@@ -9,6 +9,8 @@ import { getOKRsRepository } from '@/lib/repository.factory';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
+import { useCreateKRCompletion } from '@/modules/kr-completions';
+import { krCompletionKeys } from '@/modules/kr-completions/constants';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -235,12 +237,13 @@ export const useDeleteOkr = () => {
 export const useUpdateKeyResult = () => {
   const queryClient = useQueryClient();
   const repository = useOKRsRepository();
+  const createCompletion = useCreateKRCompletion();
 
   return useMutation({
-    mutationFn: ({ okrId, keyResultId, updates }: { 
-      okrId: string; 
-      keyResultId: string; 
-      updates: UpdateKeyResultInput 
+    mutationFn: ({ okrId, keyResultId, updates }: {
+      okrId: string;
+      keyResultId: string;
+      updates: UpdateKeyResultInput
     }) => repository.updateKeyResult(okrId, keyResultId, updates),
 
     // Optimistic update
@@ -250,6 +253,12 @@ export const useUpdateKeyResult = () => {
 
       // Snapshot current state
       const previousOKRs = queryClient.getQueryData<OKR[]>(okrsKeys.lists());
+
+      // Was the KR already completed before this update?
+      const wasCompleted = previousOKRs
+        ?.find(o => o.id === okrId)
+        ?.keyResults.find(kr => kr.id === keyResultId)
+        ?.completed ?? false;
 
       // Optimistically update the key result
       if (previousOKRs) {
@@ -283,7 +292,7 @@ export const useUpdateKeyResult = () => {
         );
       }
 
-      return { previousOKRs };
+      return { previousOKRs, wasCompleted };
     },
 
     // Rollback on error (useUpdateKeyResult)
@@ -294,12 +303,26 @@ export const useUpdateKeyResult = () => {
       toast.error(`Impossible de mettre à jour le résultat clé : ${error.message}`);
     },
 
-    // Refetch on settle
-    onSettled: (updatedOKR) => {
+    // Refetch + create KR completion record if newly completed
+    onSettled: (updatedOKR, _error, { okrId, keyResultId }, context) => {
       if (updatedOKR) {
         queryClient.setQueryData(okrsKeys.detail(updatedOKR.id), updatedOKR);
+
+        // If the KR just transitioned to completed → create a completion record
+        const kr = updatedOKR.keyResults.find(k => k.id === keyResultId);
+        if (kr?.completed && !context?.wasCompleted) {
+          createCompletion.mutate({
+            krId: keyResultId,
+            okrId: okrId,
+            userId: 'demo-user',
+            completedAt: kr.completedAt ?? new Date().toISOString(),
+            krTitle: kr.title,
+            okrTitle: updatedOKR.title,
+          });
+        }
       }
       invalidateAllOKRQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: krCompletionKeys.all });
     },
   });
 };

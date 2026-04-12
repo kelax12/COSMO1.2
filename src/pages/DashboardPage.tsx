@@ -6,7 +6,7 @@ import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
-import { useCompletedKeyResults } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
 import { useEvents } from '@/modules/events';
 import DashboardChart from '../components/DashboardChart';
 import TodayHabits from '../components/TodayHabits';
@@ -55,7 +55,7 @@ const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('jour');
 
   const { data: tasks = [] } = useTasks();
-  const { data: completedKRs = [] } = useCompletedKeyResults();
+  const { data: krCompletions = [] } = useKRCompletions();
   const { data: events = [] } = useEvents();
   const { user } = useUser();
   const { user: authUser } = useAuth();
@@ -66,17 +66,17 @@ const DashboardPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const statCards = useMemo(() => {
-    // KR helpers — completedKRs have guaranteed non-null completedAt (type-safe)
+    // KR helpers — count completion records per period (simple & reliable)
     const krCompletedInPeriod = (start: string, end: string) =>
-      completedKRs.filter(kr => {
-        const d = kr.completedAt.split('T')[0];
+      krCompletions.filter(c => {
+        const d = c.completedAt.split('T')[0];
         return d >= start && d <= end;
       }).length;
 
     const krChartByDay = (days: string[]) =>
       days.map(date => ({
         date,
-        value: completedKRs.filter(kr => kr.completedAt.split('T')[0] === date).length,
+        value: krCompletions.filter(c => c.completedAt.split('T')[0] === date).length,
       }));
 
     if (viewMode === 'jour') {
@@ -189,7 +189,7 @@ const DashboardPage: React.FC = () => {
         chartData: months.map(m => ({ date: m.label, value: habitsByMonth(m) })),
       },
     ];
-  }, [tasks, events, habits, completedKRs, viewMode, today]);
+  }, [tasks, events, habits, krCompletions, viewMode, today]);
 
   // Animation variants
   const containerVariants = {
