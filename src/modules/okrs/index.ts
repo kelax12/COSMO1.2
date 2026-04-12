@@ -63,4 +63,8 @@ export {
   useOkrStats,
   useOkrsEndingSoon,
   useAtRiskOkrs,
+  useKeyResults,
+  useCompletedKeyResults,
 } from './hooks.derived';
+
+export type { EnrichedKeyResult } from './hooks.derived';

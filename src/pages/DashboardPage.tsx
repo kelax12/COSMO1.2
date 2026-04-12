@@ -6,7 +6,7 @@ import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
-import { useOkrs } from '@/modules/okrs';
+import { useCompletedKeyResults } from '@/modules/okrs';
 import { useEvents } from '@/modules/events';
 import DashboardChart from '../components/DashboardChart';
 import TodayHabits from '../components/TodayHabits';
@@ -55,7 +55,7 @@ const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('jour');
 
   const { data: tasks = [] } = useTasks();
-  const { data: okrs = [] } = useOkrs();
+  const { data: completedKRs = [] } = useCompletedKeyResults();
   const { data: events = [] } = useEvents();
   const { user } = useUser();
   const { user: authUser } = useAuth();
@@ -66,26 +66,17 @@ const DashboardPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const statCards = useMemo(() => {
-    const allKRs = okrs.flatMap(o => o.keyResults);
-
-    // Normalise completedAt en YYYY-MM-DD. Retourne null si absent.
-    const krDate = (kr: { completedAt?: string | null }): string | null =>
-      kr.completedAt ? kr.completedAt.split('T')[0] : null;
-
-    // Compte les KR complétés dans la période.
-    // KR sans completedAt → ignorés (pas de date = pas de filtre possible)
+    // KR helpers — completedKRs have guaranteed non-null completedAt (type-safe)
     const krCompletedInPeriod = (start: string, end: string) =>
-      allKRs.filter(kr => {
-        if (!kr.completed) return false;
-        const d = krDate(kr);
-        if (d === null) return false;
+      completedKRs.filter(kr => {
+        const d = kr.completedAt.split('T')[0];
         return d >= start && d <= end;
       }).length;
 
     const krChartByDay = (days: string[]) =>
       days.map(date => ({
         date,
-        value: allKRs.filter(kr => kr.completed && krDate(kr) === date).length,
+        value: completedKRs.filter(kr => kr.completedAt.split('T')[0] === date).length,
       }));
 
     if (viewMode === 'jour') {
@@ -198,7 +189,7 @@ const DashboardPage: React.FC = () => {
         chartData: months.map(m => ({ date: m.label, value: habitsByMonth(m) })),
       },
     ];
-  }, [tasks, events, habits, okrs, viewMode, today]);
+  }, [tasks, events, habits, completedKRs, viewMode, today]);
 
   // Animation variants
   const containerVariants = {
