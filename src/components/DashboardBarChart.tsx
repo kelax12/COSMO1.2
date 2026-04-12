@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar } from 'lucide-react';
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Bar, BarChart, XAxis, CartesianGrid } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -154,13 +154,6 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
               axisLine={false}
               tickMargin={8}
               tick={{ fontSize: 11, fontWeight: 600 }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={formatMinutes}
-              width={44}
-              tick={{ fontSize: 11 }}
             />
             <ChartTooltip
               cursor={false}

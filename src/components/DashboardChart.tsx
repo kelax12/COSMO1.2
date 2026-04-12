@@ -5,7 +5,6 @@ import {
   AreaChart,
   Area,
   XAxis,
-  YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
@@ -184,13 +183,6 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
               axisLine={false}
               tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11, fontWeight: 600 }}
               tickMargin={8}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11 }}
-              tickFormatter={formatMinutes}
-              width={44}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
             <Legend
