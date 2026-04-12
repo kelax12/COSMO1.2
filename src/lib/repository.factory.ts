@@ -39,6 +39,11 @@ import { IOKRsRepository } from '@/modules/okrs/repository';
 import { LocalStorageOKRsRepository } from '@/modules/okrs/repository';
 import { SupabaseOKRsRepository } from '@/modules/okrs/supabase.repository';
 
+// KR Completions
+import { IKRCompletionsRepository } from '@/modules/kr-completions/repository';
+import { LocalStorageKRCompletionsRepository } from '@/modules/kr-completions/repository';
+import { SupabaseKRCompletionsRepository } from '@/modules/kr-completions/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -50,6 +55,7 @@ let categoriesRepository: ICategoriesRepository | null = null;
 let listsRepository: IListsRepository | null = null;
 let friendsRepository: IFriendsRepository | null = null;
 let okrsRepository: IOKRsRepository | null = null;
+let krCompletionsRepository: IKRCompletionsRepository | null = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // FACTORY FUNCTIONS
@@ -139,6 +145,18 @@ export function getOKRsRepository(): IOKRsRepository {
   return okrsRepository;
 }
 
+/**
+ * Get the KR Completions repository based on current mode
+ */
+export function getKRCompletionsRepository(): IKRCompletionsRepository {
+  if (!krCompletionsRepository) {
+    krCompletionsRepository = appModeStore.isDemo
+      ? new LocalStorageKRCompletionsRepository()
+      : new SupabaseKRCompletionsRepository();
+  }
+  return krCompletionsRepository;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // UTILITY
 // ═══════════════════════════════════════════════════════════════════
@@ -161,6 +179,7 @@ export function resetRepositories(): void {
   listsRepository = null;
   friendsRepository = null;
   okrsRepository = null;
+  krCompletionsRepository = null;
 }
 
 /**
@@ -175,6 +194,7 @@ export function clearDemoStorage(): void {
     'cosmo-okrs-v2',
     'cosmo-okrs-v3',
     'cosmo-okrs-v4',
+    'cosmo_demo_kr_completions',
     'cosmo_categories',
     'cosmo_lists',
     'cosmo_friends',

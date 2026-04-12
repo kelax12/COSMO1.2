@@ -123,7 +123,7 @@ Helpers disponibles dans les fichiers seed :
 
 ```
 cosmo_demo_tasks · cosmo_demo_habits · cosmo_demo_events · cosmo-okrs · cosmo-okrs-v2 · cosmo-okrs-v3 · cosmo-okrs-v4
-cosmo_categories · cosmo_lists · cosmo_friends · cosmo_friend_requests · cosmo_shared_tasks
+cosmo_demo_kr_completions · cosmo_categories · cosmo_lists · cosmo_friends · cosmo_friend_requests · cosmo_shared_tasks
 ```
 
 > Pour ajouter une nouvelle clé démo, l'ajouter dans `clearDemoStorage()` dans `src/lib/repository.factory.ts`.
@@ -165,6 +165,7 @@ src/modules/{module}/
 | lists | `src/modules/lists/` | Listes de tâches |
 | friends | `src/modules/friends/` | Collaboration sociale |
 | okrs | `src/modules/okrs/` | OKR (Objectives & Key Results) |
+| kr-completions | `src/modules/kr-completions/` | Journal de complétion des KR |
 | messaging | `src/modules/messaging/` | Messagerie entre amis |
 | ui-states | `src/modules/ui-states/` | État UI persistant (couleurs, priorités) |
 | user | `src/modules/user/` | Profil utilisateur, messages inbox |
@@ -267,7 +268,7 @@ Travailler sur une zone = importer uniquement les modules de cette zone.
 | UI / Filtres | `ui-states` |
 | Auth | `auth` |
 | Premium | `billing` |
-| Dashboard | `tasks`, `habits`, `events`, `auth` |
+| Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `auth` |
 
 ---
 
