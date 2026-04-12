@@ -7,7 +7,6 @@ import {
   XAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { useTasks } from '@/modules/tasks';
@@ -158,6 +157,16 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
             {periodLabel}
           </p>
         </div>
+
+        {/* Legend */}
+        <div className="hidden sm:flex items-center gap-4">
+          {SERIES.map(s => (
+            <div key={s.key} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: s.color }} />
+              <span className="text-[rgb(var(--color-text-secondary))] text-xs font-medium">{s.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Chart */}
@@ -185,14 +194,6 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
               tickMargin={8}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
-            <Legend
-              iconType="circle"
-              iconSize={8}
-              formatter={(value) => {
-                const s = SERIES.find(s => s.key === value);
-                return <span style={{ color: 'rgb(var(--color-text-secondary))', fontSize: 12, fontWeight: 600 }}>{s?.label ?? value}</span>;
-              }}
-            />
             {SERIES.map(s => (
               <Area
                 key={s.key}
