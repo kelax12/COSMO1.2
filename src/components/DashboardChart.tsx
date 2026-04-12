@@ -162,7 +162,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       </div>
 
       {/* Chart */}
-      <div className="relative z-10" style={{ height: 260 }}>
+      <div className="relative z-10" style={{ height: 340 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
