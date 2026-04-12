@@ -9,6 +9,7 @@ import { useHabits } from '@/modules/habits';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { useEvents } from '@/modules/events';
 import DashboardChart from '../components/DashboardChart';
+import DashboardBarChart from '../components/DashboardBarChart';
 import TodayHabits from '../components/TodayHabits';
 import TodayTasks from '../components/TodayTasks';
 import CollaborativeTasks from '../components/CollaborativeTasks';
@@ -311,12 +312,13 @@ const DashboardPage: React.FC = () => {
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
           variants={containerVariants}
         >
-          {/* Colonne gauche - Graphique */}
-          <motion.div 
-            className="lg:col-span-2"
+          {/* Colonne gauche - Graphiques */}
+          <motion.div
+            className="lg:col-span-2 flex flex-col gap-6 lg:gap-8"
             variants={itemVariants}
           >
             <DashboardChart viewMode={viewMode} />
+            <DashboardBarChart viewMode={viewMode} />
           </motion.div>
           
           {/* Colonne droite - Habitudes du jour */}
