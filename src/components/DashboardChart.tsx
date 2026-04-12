@@ -205,7 +205,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
               <Area
                 key={s.key}
                 dataKey={s.key}
-                type="monotone"
+                type="linear"
                 fill={`url(#fill-${s.key})`}
                 stroke={s.color}
                 strokeWidth={2}
