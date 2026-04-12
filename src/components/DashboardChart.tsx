@@ -1,279 +1,221 @@
-import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
-import { useTasks, Task } from '@/modules/tasks';
-import { useHabits, Habit } from '@/modules/habits';
-import { useEvents, CalendarEvent } from '@/modules/events';
-import { useOkrs, OKR } from '@/modules/okrs';
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Calendar } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import { useTasks } from '@/modules/tasks';
+import { useHabits } from '@/modules/habits';
+import { useEvents } from '@/modules/events';
+import { useOkrs } from '@/modules/okrs';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
-interface WorkTimeData {
-  tasks: Task[];
-  events: CalendarEvent[];
-  habits: Habit[];
-  okrs: OKR[];
+type ViewMode = 'jour' | 'semaine' | 'mois';
+
+interface DashboardChartProps {
+  viewMode: ViewMode;
 }
 
-const calculateWorkTimeForDate = (
-  date: Date,
-  data: WorkTimeData
-): number => {
-  const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
-  const endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-  const result = calculateWorkTimeForPeriod(startDate, endDate, data);
-  return result.totalTime;
+const SERIES = [
+  { key: 'tasks',  label: 'Tâches',   color: '#3b82f6' },
+  { key: 'events', label: 'Agenda',   color: '#ef4444' },
+  { key: 'okrs',   label: 'OKR',      color: '#22c55e' },
+  { key: 'habits', label: 'Habitudes', color: '#eab308' },
+] as const;
+
+type SeriesKey = typeof SERIES[number]['key'];
+
+interface ChartPoint {
+  label: string;
+  tasks: number;
+  events: number;
+  okrs: number;
+  habits: number;
+}
+
+const formatMinutes = (minutes: number): string => {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
 };
 
-const DashboardChart: React.FC = () => {
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
-  // Use new module for tasks (read-only)
+const CustomTooltip = ({ active, payload, label }: {
+  active?: boolean;
+  payload?: { dataKey: SeriesKey; value: number; color: string }[];
+  label?: string;
+}) => {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 shadow-2xl">
+      <p className="text-[rgb(var(--color-text-secondary))] text-xs font-semibold mb-2 uppercase tracking-wide">{label}</p>
+      {payload.map(entry => {
+        const series = SERIES.find(s => s.key === entry.dataKey);
+        return (
+          <div key={entry.dataKey} className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span className="text-[rgb(var(--color-text-secondary))] text-xs">{series?.label ?? entry.dataKey}</span>
+            <span className="text-[rgb(var(--color-text-primary))] text-xs font-bold ml-auto pl-4">{formatMinutes(entry.value)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
   const { data: tasks = [] } = useTasks();
-  // Use new module for events (read-only)
   const { data: events = [] } = useEvents();
-  // Use new module for okrs (read-only)
   const { data: okrs = [] } = useOkrs();
   const { data: habits = [] } = useHabits();
 
-  const chartData = useMemo(() => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
+  const chartData: ChartPoint[] = useMemo(() => {
+    const calcPeriod = (start: Date, end: Date) => {
+      const r = calculateWorkTimeForPeriod(start, end, { tasks, events, habits, okrs });
+      return {
+        tasks: r.tasksTime,
+        events: r.eventsTime,
+        okrs: r.okrTime,
+        habits: r.habitsTime,
+      };
+    };
 
-      days.push({
-        date: date.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', ''),
-        time: calculateWorkTimeForDate(date, { tasks, events, habits, okrs }),
-        fullDate: date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-      });
+    if (viewMode === 'jour') {
+      const points: ChartPoint[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+        const end   = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        const label = d.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+        points.push({ label, ...calcPeriod(start, end) });
+      }
+      return points;
     }
-    return days;
-  }, [tasks, events, habits, okrs]);
 
-  const maxTime = Math.max(...chartData.map(d => d.time), 1);
-  const avgTime = chartData.reduce((sum, d) => sum + d.time, 0) / chartData.length;
-  const totalTime = chartData.reduce((sum, d) => sum + d.time, 0);
-  const todayTime = chartData[chartData.length - 1].time;
-
-  const formatTimeShort = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return mins > 0 ? `${hours}h${mins}` : `${hours}h`;
+    if (viewMode === 'semaine') {
+      const points: ChartPoint[] = [];
+      for (let i = 3; i >= 0; i--) {
+        const end = new Date();
+        end.setDate(end.getDate() - i * 7);
+        const start = new Date(end);
+        start.setDate(start.getDate() - 6);
+        const startD = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+        const endD   = new Date(end.getFullYear(),   end.getMonth(),   end.getDate(),   23, 59, 59, 999);
+        points.push({ label: `S${4 - i}`, ...calcPeriod(startD, endD) });
+      }
+      return points;
     }
-    return `${minutes}m`;
-  };
 
-  const formatTimeFull = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  };
+    // mois
+    const points: ChartPoint[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const ref = new Date();
+      ref.setDate(1);
+      ref.setMonth(ref.getMonth() - i);
+      const start = new Date(ref.getFullYear(), ref.getMonth(), 1, 0, 0, 0, 0);
+      const end   = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59, 999);
+      const label = ref.toLocaleDateString('fr-FR', { month: 'short' });
+      points.push({ label, ...calcPeriod(start, end) });
+    }
+    return points;
+  }, [tasks, events, habits, okrs, viewMode]);
 
-  const yScaleMax = Math.max(Math.ceil(maxTime / 120) * 120, 120);
-  const yTicks = [];
-  for (let i = 0; i <= yScaleMax; i += 120) {
-    yTicks.push(i);
-  }
+  const periodLabel = viewMode === 'jour' ? '7 derniers jours' : viewMode === 'semaine' ? '4 dernières semaines' : '6 derniers mois';
 
   return (
-    <motion.div 
+    <motion.div
       className="relative overflow-hidden rounded-3xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] p-6 lg:p-8 shadow-lg dark:shadow-2xl"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden monochrome:hidden">
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
-        </div>
-        <div className="absolute inset-0 overflow-hidden hidden monochrome:block">
-          <div className="absolute -top-32 -right-32 w-64 h-64 bg-white/[0.02] rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-white/[0.01] rounded-full blur-3xl" />
-        </div>
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
+      </div>
+      <div className="absolute inset-0 overflow-hidden hidden monochrome:block">
+        <div className="absolute -top-32 -right-32 w-64 h-64 bg-white/[0.02] rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-white/[0.01] rounded-full blur-3xl" />
+      </div>
 
+      {/* Header */}
       <div className="relative z-10 flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-            <motion.div 
-              className="p-3 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/25 monochrome:bg-white monochrome:from-white monochrome:to-white monochrome:shadow-white/10"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-            >
-              <TrendingUp size={24} className="text-white monochrome:text-zinc-900" />
-          </motion.div>
-          <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-              Temps de travail
-            </h2>
-            <p className="text-[rgb(var(--color-text-secondary))] text-sm flex items-center gap-2">
-              <Calendar size={14} />
-              7 derniers jours
-            </p>
-          </div>
-        </div>
-        
-          <motion.div 
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[rgb(var(--color-success)/0.1)] border border-[rgb(var(--color-success)/0.2)] monochrome:bg-white/5 monochrome:border-white/10"
-            whileHover={{ scale: 1.02 }}
-          >
-            <Flame size={16} className="text-[rgb(var(--color-success))] monochrome:text-white" />
-            <span className="text-[rgb(var(--color-success))] text-sm font-medium monochrome:text-zinc-300">+12% cette semaine</span>
-          </motion.div>
-      </div>
-  
-      <div className="relative z-10 mb-6">
-          <div className="flex">
-                {/* Y-Axis Labels */}
-                <div className="flex flex-col justify-between pr-3 w-14" style={{ height: '200px' }}>
-                  {[...yTicks].reverse().map((tick) => (
-                    <span key={tick} className="text-[11px] font-medium text-[rgb(var(--color-text-muted))] text-right leading-none flex items-center justify-end" style={{ height: 0 }}>
-                      {formatTimeShort(tick)}
-                    </span>
-                  ))}
-                </div>
-    
-              {/* Chart Area */}
-              <div className="flex-1 relative" style={{ height: '200px' }}>
-                {/* Grid Lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                  {yTicks.map((tick) => (
-                    <div key={tick} className="border-b border-[rgb(var(--color-border)/0.5)] w-full" style={{ height: 0 }} />
-                  ))}
-                </div>
-  
-              {/* Bars Container */}
-              <div className="absolute inset-0 flex items-end justify-around px-2">
-                {chartData.map((day, index) => {
-                  const chartHeight = 200;
-                  const barHeight = (day.time / yScaleMax) * chartHeight;
-                  const isToday = index === chartData.length - 1;
-                  const isHovered = hoveredBar === index;
-  
-                  return (
-                    <div
-                      key={index}
-                      className="flex flex-col items-center justify-end relative h-full"
-                      style={{ width: `${100 / chartData.length}%` }}
-                      onMouseEnter={() => setHoveredBar(index)}
-                      onMouseLeave={() => setHoveredBar(null)}
-                    >
-                      {/* Tooltip */}
-                      <AnimatePresence>
-                        {isHovered && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                            className="absolute z-20 flex flex-col items-center"
-                            style={{ bottom: barHeight + 10 }}
-                          >
-                            <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-3 py-1.5 rounded-xl shadow-xl text-center">
-                              <div className="text-[rgb(var(--color-text-primary))] font-bold text-xs whitespace-nowrap">
-                                {formatTimeFull(day.time)}
-                              </div>
-                              <div className="text-[rgb(var(--color-text-secondary))] text-[10px] whitespace-nowrap">
-                                {day.fullDate}
-                              </div>
-                            </div>
-                            <div className="w-2 h-2 bg-[rgb(var(--color-surface))] border-r border-b border-[rgb(var(--color-border))] rotate-45 -mt-1 shadow-xl" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-  
-                        {/* Bar */}
-                        <motion.div
-                          className={`w-8 rounded-t-lg cursor-pointer transition-all duration-200 ${
-                            isToday 
-                              ? 'bg-gradient-to-t from-[rgb(var(--color-accent))] to-[rgb(var(--color-accent)/0.6)] monochrome:from-white monochrome:to-white/60' 
-                              : 'bg-gradient-to-t from-[rgb(var(--color-accent)/0.8)] to-[rgb(var(--color-accent)/0.4)] monochrome:from-zinc-400 monochrome:to-zinc-600'
-                          }`}
-                        style={{
-                          opacity: hoveredBar === null || isHovered ? 1 : 0.4,
-                          minHeight: 4
-                        }}
-                        initial={{ height: 0 }}
-                        animate={{ height: barHeight }}
-                        transition={{ 
-                          type: "spring", 
-                          stiffness: 100, 
-                          damping: 15, 
-                          delay: index * 0.05 
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-          </div>
-        </div>
-  
-              {/* X-Axis Labels */}
-              <div className="flex mt-3">
-                <div className="pr-3 w-14" />
-                <div className="flex-1 flex justify-around px-2">
-            {chartData.map((day, index) => {
-              const isToday = index === chartData.length - 1;
-              const isHovered = hoveredBar === index;
-              return (
-                  <div 
-                    key={index} 
-                    className="text-center"
-                    style={{ width: `${100 / chartData.length}%` }}
-                  >
-                    <span className={`text-[11px] font-bold uppercase tracking-wider transition-colors duration-200 ${
-                      isToday ? 'text-[rgb(var(--color-accent))]' : isHovered ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
-                    }`}>
-                      {day.date}
-                    </span>
-                  </div>
-              );
-            })}
-          </div>
+        <div>
+          <h2 className="text-xl lg:text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+            Temps de travail
+          </h2>
+          <p className="text-[rgb(var(--color-text-secondary))] text-sm flex items-center gap-2 mt-0.5">
+            <Calendar size={14} />
+            {periodLabel}
+          </p>
         </div>
       </div>
-  
-        {/* Stats grid */}
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-          {[
-            { 
-              label: "Aujourd'hui", 
-              value: formatTimeFull(todayTime),
-              icon: Clock,
-              color: 'text-[rgb(var(--color-accent))]',
-              iconBg: 'bg-[rgb(var(--color-accent)/0.1)]'
-            },
-            { 
-              label: 'Moyenne', 
-              value: formatTimeFull(Math.round(avgTime)),
-              icon: TrendingUp,
-              color: 'text-[rgb(var(--color-secondary))]',
-              iconBg: 'bg-[rgb(var(--color-secondary)/0.1)]'
-            },
-            { 
-              label: 'Total', 
-              value: `${Math.floor(totalTime / 60)}h`,
-              icon: Flame,
-              color: 'text-[rgb(var(--color-warning))]',
-              iconBg: 'bg-[rgb(var(--color-warning)/0.1)]'
-            }
-            ].map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                className="flex flex-col p-5 rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] transition-all duration-300 hover:shadow-md"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`p-2 rounded-xl ${stat.iconBg} ${stat.color}`}>
-                    <stat.icon size={18} />
-                  </div>
-                  <span className="text-[rgb(var(--color-text-secondary))] text-xs font-semibold uppercase tracking-wide">{stat.label}</span>
-                </div>
-                <div className={`text-2xl lg:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight`}>
-                  {stat.value}
-                </div>
-              </motion.div>
+
+      {/* Chart */}
+      <div className="relative z-10" style={{ height: 260 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <defs>
+              {SERIES.map(s => (
+                <linearGradient key={s.key} id={`fill-${s.key}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor={s.color} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={s.color} stopOpacity={0.02} />
+                </linearGradient>
+              ))}
+            </defs>
+            <CartesianGrid
+              vertical={false}
+              stroke="rgb(var(--color-border))"
+              strokeOpacity={0.5}
+            />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11, fontWeight: 600 }}
+              tickMargin={8}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11 }}
+              tickFormatter={formatMinutes}
+              width={44}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
+            <Legend
+              iconType="circle"
+              iconSize={8}
+              formatter={(value) => {
+                const s = SERIES.find(s => s.key === value);
+                return <span style={{ color: 'rgb(var(--color-text-secondary))', fontSize: 12, fontWeight: 600 }}>{s?.label ?? value}</span>;
+              }}
+            />
+            {SERIES.map(s => (
+              <Area
+                key={s.key}
+                dataKey={s.key}
+                type="monotone"
+                fill={`url(#fill-${s.key})`}
+                stroke={s.color}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
+              />
             ))}
-        </div>
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </motion.div>
   );
 };

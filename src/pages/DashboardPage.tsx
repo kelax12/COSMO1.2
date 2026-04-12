@@ -316,7 +316,7 @@ const DashboardPage: React.FC = () => {
             className="lg:col-span-2"
             variants={itemVariants}
           >
-            <DashboardChart />
+            <DashboardChart viewMode={viewMode} />
           </motion.div>
           
           {/* Colonne droite - Habitudes du jour */}
