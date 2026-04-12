@@ -256,9 +256,18 @@ export const useUpdateKeyResult = () => {
         queryClient.setQueryData<OKR[]>(okrsKeys.lists(), (old) =>
           old?.map((okr) => {
             if (okr.id === okrId) {
-              const updatedKeyResults = okr.keyResults.map((kr) =>
-                kr.id === keyResultId ? { ...kr, ...updates } : kr
-              );
+              const updatedKeyResults = okr.keyResults.map((kr) => {
+                if (kr.id !== keyResultId) return kr;
+                const merged = { ...kr, ...updates };
+                // Auto-set completedAt (mirrors localStorage repo + Supabase trigger)
+                if (merged.completed && !merged.completedAt) {
+                  merged.completedAt = new Date().toISOString();
+                }
+                if (merged.completed === false) {
+                  merged.completedAt = null;
+                }
+                return merged;
+              });
               // Recalculate progress
               const totalProgress = updatedKeyResults.reduce((sum, kr) => {
                 return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);

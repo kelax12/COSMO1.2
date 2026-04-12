@@ -312,8 +312,15 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       throw new Error(`KeyResult with id ${keyResultId} not found`);
     }
 
-    // Update the key result
-    okr.keyResults[krIndex] = { ...okr.keyResults[krIndex], ...updates };
+    // Update the key result + auto-set completedAt (equivalent to Supabase trigger)
+    const merged = { ...okr.keyResults[krIndex], ...updates };
+    if (merged.completed && !merged.completedAt) {
+      merged.completedAt = new Date().toISOString();
+    }
+    if (merged.completed === false) {
+      merged.completedAt = null;
+    }
+    okr.keyResults[krIndex] = merged;
 
     // Recalculate OKR progress
     const totalProgress = okr.keyResults.reduce((sum, kr) => {
