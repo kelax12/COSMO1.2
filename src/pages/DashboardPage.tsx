@@ -17,33 +17,36 @@ import TextType from '../components/TextType';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
-const MiniBarChart: React.FC<{ data: { value: number; label?: string }[] }> = ({ data }) => {
+const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[] }> = ({ data }) => {
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
   return (
     <div className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative">
-      {data.map((d, i) => (
-        <div
-          key={i}
-          className="flex-1 relative flex flex-col items-center justify-end h-full"
-          onMouseEnter={() => setHovered(i)}
-          onMouseLeave={() => setHovered(null)}
-        >
-          {hovered === i && (
-            <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
-              {d.label ? `${d.label} : ` : ''}{d.value}
-            </div>
-          )}
+      {data.map((d, i) => {
+        const tooltipLabel = d.label || d.date || '';
+        return (
           <div
-            className={`w-full rounded-t-[3px] transition-all duration-150 ${
-              hovered === i
-                ? 'bg-[rgb(var(--color-accent))] monochrome:bg-white'
-                : 'bg-[rgb(var(--color-accent)/0.5)] monochrome:bg-white/40'
-            }`}
-            style={{ height: `${Math.max((d.value / max) * 100, 8)}%` }}
-          />
-        </div>
-      ))}
+            key={i}
+            className="flex-1 relative flex flex-col items-center justify-end h-full"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {hovered === i && (
+              <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
+                {tooltipLabel ? `${tooltipLabel} : ` : ''}{d.value}
+              </div>
+            )}
+            <div
+              className={`w-full rounded-t-[3px] transition-all duration-150 ${
+                hovered === i
+                  ? 'bg-[rgb(var(--color-accent))] monochrome:bg-white'
+                  : 'bg-[rgb(var(--color-accent)/0.5)] monochrome:bg-white/40'
+              }`}
+              style={{ height: `${Math.max((d.value / max) * 100, 8)}%` }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -70,19 +73,19 @@ const DashboardPage: React.FC = () => {
       kr.completedAt ? kr.completedAt.split('T')[0] : null;
 
     // Compte les KR complétés dans la période.
-    // Si completedAt est absent sur un KR complété → compté quand même (données legacy)
+    // KR sans completedAt → ignorés (pas de date = pas de filtre possible)
     const krCompletedInPeriod = (start: string, end: string) =>
       allKRs.filter(kr => {
         if (!kr.completed) return false;
         const d = krDate(kr);
-        if (d === null) return true; // pas de date → inclure (données sans completedAt)
+        if (d === null) return false;
         return d >= start && d <= end;
       }).length;
 
     const krChartByDay = (days: string[]) =>
       days.map(date => ({
         date,
-        value: allKRs.filter(kr => kr.completed && (krDate(kr) === date || krDate(kr) === null)).length,
+        value: allKRs.filter(kr => kr.completed && krDate(kr) === date).length,
       }));
 
     if (viewMode === 'jour') {
