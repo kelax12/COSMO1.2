@@ -5,6 +5,8 @@
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
+import { KRCompletion } from '@/modules/kr-completions/types';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -312,6 +314,9 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       throw new Error(`KeyResult with id ${keyResultId} not found`);
     }
 
+    // Snapshot before update
+    const wasPreviouslyCompleted = okr.keyResults[krIndex].completed;
+
     // Update the key result + auto-set completedAt (equivalent to Supabase trigger)
     const merged = { ...okr.keyResults[krIndex], ...updates };
     if (merged.completed && !merged.completedAt) {
@@ -333,6 +338,24 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
 
     okrs[okrIndex] = okr;
     this.saveOKRs(okrs);
+
+    // ── ATOMIC: create completion record in the same synchronous call ──
+    // No race condition possible — localStorage writes are synchronous
+    if (merged.completed && !wasPreviouslyCompleted) {
+      const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
+      const completions: KRCompletion[] = raw ? JSON.parse(raw) : [];
+      completions.push({
+        id: crypto.randomUUID(),
+        krId: keyResultId,
+        okrId: okrId,
+        userId: 'demo-user',
+        completedAt: merged.completedAt!,
+        krTitle: merged.title,
+        okrTitle: okr.title,
+      });
+      localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
+    }
+
     return okr;
   }
 }
