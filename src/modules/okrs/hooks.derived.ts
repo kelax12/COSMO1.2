@@ -7,6 +7,12 @@ import { useOkrs } from './hooks';
 import { OKR, KeyResult, OKRStatus } from './types';
 
 // ═══════════════════════════════════════════════════════════════════
+// ENRICHED KEY RESULT TYPE
+// ═══════════════════════════════════════════════════════════════════
+
+export type EnrichedKeyResult = KeyResult & { okrId: string };
+
+// ═══════════════════════════════════════════════════════════════════
 // PROGRESS CALCULATIONS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -187,4 +193,45 @@ export const useAtRiskOkrs = () => {
   }, [okrs]);
 
   return { data: atRisk, ...rest };
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// KEY RESULT DERIVED HOOKS
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Flat list of all KeyResults enriched with their parent okrId.
+ * Derived from useOkrs() — single source of truth, no data duplication.
+ */
+export const useKeyResults = () => {
+  const { data: okrs = [], ...rest } = useOkrs();
+
+  const keyResults = useMemo<EnrichedKeyResult[]>(
+    () =>
+      okrs.flatMap((o) =>
+        o.keyResults.map((kr) => ({ ...kr, okrId: o.id }))
+      ),
+    [okrs]
+  );
+
+  return { data: keyResults, ...rest };
+};
+
+/**
+ * Completed KeyResults with guaranteed non-null completedAt.
+ * Optimized for dashboard period-based filtering (jour/semaine/mois).
+ */
+export const useCompletedKeyResults = () => {
+  const { data: keyResults, ...rest } = useKeyResults();
+
+  const completed = useMemo(
+    () =>
+      keyResults.filter(
+        (kr): kr is EnrichedKeyResult & { completedAt: string } =>
+          kr.completed && kr.completedAt != null
+      ),
+    [keyResults]
+  );
+
+  return { data: completed, ...rest };
 };

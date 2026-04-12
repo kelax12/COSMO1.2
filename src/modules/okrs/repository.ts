@@ -19,7 +19,8 @@ const getDate = (daysFromNow: number): string => {
 // completedAt à daysFromNow jours (ISO string)
 const completedAt = (daysFromNow: number): string => getDate(daysFromNow);
 
-const DEMO_OKRS: OKR[] = [
+function createDemoOkrs(): OKR[] {
+  return [
   // ── OKRs ACTUELS (en cours) — KR partiellement complétés récemment ───
   {
     id: 'okr-1',
@@ -145,7 +146,8 @@ const DEMO_OKRS: OKR[] = [
     startDate: getDate(-430),
     endDate: getDate(-250),
   },
-];
+  ];
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
@@ -179,8 +181,9 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   private getOKRs(): OKR[] {
     const data = localStorage.getItem(OKRS_STORAGE_KEY);
     if (!data) {
-      this.saveOKRs(DEMO_OKRS);
-      return DEMO_OKRS;
+      const demo = createDemoOkrs();
+      this.saveOKRs(demo);
+      return demo;
     }
     return JSON.parse(data);
   }
