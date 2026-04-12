@@ -9,7 +9,6 @@ import { getOKRsRepository } from '@/lib/repository.factory';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
-import { getKRCompletionsRepository } from '@/lib/repository.factory';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -239,36 +238,13 @@ export const useUpdateKeyResult = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: async ({ okrId, keyResultId, updates }: {
+    mutationFn: ({ okrId, keyResultId, updates }: {
       okrId: string;
       keyResultId: string;
       updates: UpdateKeyResultInput;
-    }) => {
-      // 1. Check if KR was already completed BEFORE the update
-      const okrBefore = await repository.getById(okrId);
-      const krBefore = okrBefore?.keyResults.find(k => k.id === keyResultId);
-      const wasCompleted = krBefore?.completed ?? false;
-
-      // 2. Update the KR in the OKR repository
-      const updatedOKR = await repository.updateKeyResult(okrId, keyResultId, updates);
-
-      // 3. If KR just transitioned to completed → create a completion record
-      //    Done HERE (not in onSettled) to avoid race conditions with cache invalidation
-      const kr = updatedOKR.keyResults.find(k => k.id === keyResultId);
-      if (kr?.completed && !wasCompleted) {
-        const completionsRepo = getKRCompletionsRepository();
-        await completionsRepo.create({
-          krId: keyResultId,
-          okrId: okrId,
-          userId: 'demo-user',
-          completedAt: kr.completedAt ?? new Date().toISOString(),
-          krTitle: kr.title,
-          okrTitle: updatedOKR.title,
-        });
-      }
-
-      return updatedOKR;
-    },
+    }) => repository.updateKeyResult(okrId, keyResultId, updates),
+    // Note: completion record is created atomically inside the repository
+    // (localStorage writes are synchronous — no race condition possible)
 
     // Optimistic update
     onMutate: async ({ okrId, keyResultId, updates }) => {
