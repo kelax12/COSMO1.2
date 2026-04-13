@@ -270,7 +270,7 @@ const CollaborativeTasks: React.FC = () => {
 
                       return (
                         <div key={index} className="relative" title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}>
-                          <Avatar className="size-9 border-2 border-background">
+                          <Avatar className="size-9">
                             {friend?.avatar && !isEmoji && friend.avatar.startsWith('http') && (
                               <AvatarImage src={friend.avatar} alt={collaborator} />
                             )}

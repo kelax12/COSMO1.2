@@ -33,7 +33,7 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
         return (
           <Avatar
             key={index}
-            className={cn('border-2 border-background', sizeClasses)}
+            className={cn(sizeClasses)}
             title={name}
           >
             {friend?.avatar && friend.avatar.startsWith('http') ? (
@@ -50,7 +50,7 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
         );
       })}
       {overflow > 0 && (
-        <AvatarGroupCount className={cn('border-2 border-background', sizeClasses)}>
+        <AvatarGroupCount className={cn(sizeClasses)}>
           +{overflow}
         </AvatarGroupCount>
       )}
