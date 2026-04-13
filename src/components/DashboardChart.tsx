@@ -12,7 +12,8 @@ import {
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
-import { useOkrs } from '@/modules/okrs';
+import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
+import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
@@ -69,11 +70,27 @@ const CustomTooltip = ({ active, payload, label }: {
   );
 };
 
+const calcOkrTime = (start: Date, end: Date, krCompletions: KRCompletion[], okrs: OKR[]): number => {
+  const krMap = new Map<string, number>();
+  okrs.forEach((okr: OKR) => {
+    (okr.keyResults || []).forEach((kr: KeyResult) => {
+      krMap.set(kr.id, kr.estimatedTime || 0);
+    });
+  });
+  return krCompletions
+    .filter(c => {
+      const d = new Date(c.completedAt);
+      return d >= start && d <= end;
+    })
+    .reduce((sum, c) => sum + (krMap.get(c.krId) ?? 0), 0);
+};
+
 const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
   const { data: habits = [] } = useHabits();
+  const { data: krCompletions = [] } = useKRCompletions();
 
   const chartData: ChartPoint[] = useMemo(() => {
     const calcPeriod = (start: Date, end: Date) => {
@@ -81,7 +98,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       return {
         tasks: r.tasksTime,
         events: r.eventsTime,
-        okrs: r.okrTime,
+        okrs: calcOkrTime(start, end, krCompletions, okrs),
         habits: r.habitsTime,
       };
     };
@@ -125,7 +142,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       points.push({ label, ...calcPeriod(start, end) });
     }
     return points;
-  }, [tasks, events, habits, okrs, viewMode]);
+  }, [tasks, events, habits, okrs, krCompletions, viewMode]);
 
   const periodLabel = viewMode === 'jour' ? '7 derniers jours' : viewMode === 'semaine' ? '4 dernières semaines' : '6 derniers mois';
 
