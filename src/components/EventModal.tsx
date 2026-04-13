@@ -367,41 +367,24 @@ const EventModal: React.FC<EventModalProps> = ({
                 borderColor: "rgb(var(--color-border))",
               }}
             >
-              <div className="grid grid-cols-1 gap-4">
-                <div className="group">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-sm font-bold" style={{ color: "rgb(var(--color-text-primary))" }}>
-                      Début de l'événement
-                    </span>
-                  </div>
-                  <CalendarWithTime
-                    date={startDate}
-                    onDateChange={(d) => handleFieldChange("startDate", setStartDate, d)}
-                    time={startTime}
-                    onTimeChange={(t) => handleFieldChange("startTime", setStartTime, t)}
-                    placeholder="Date et heure de début"
-                    highlighted={isPrefilledMode && (prefilledFields.has("startDate") || prefilledFields.has("startTime"))}
-                  />
-                </div>
-
-                <div className="group">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full" />
-                    <span className="text-sm font-bold" style={{ color: "rgb(var(--color-text-primary))" }}>
-                      Fin de l'événement
-                    </span>
-                  </div>
-                  <CalendarWithTime
-                    date={endDate}
-                    onDateChange={(d) => handleFieldChange("endDate", setEndDate, d)}
-                    time={endTime}
-                    onTimeChange={(t) => handleFieldChange("endTime", setEndTime, t)}
-                    placeholder="Date et heure de fin"
-                    highlighted={isPrefilledMode && (prefilledFields.has("endDate") || prefilledFields.has("endTime"))}
-                  />
-                </div>
-              </div>
+              <CalendarWithTime
+                date={startDate}
+                onDateChange={(d) => {
+                  handleFieldChange("startDate", setStartDate, d);
+                  handleFieldChange("endDate", setEndDate, d);
+                }}
+                startTime={startTime}
+                onStartTimeChange={(t) => handleFieldChange("startTime", setStartTime, t)}
+                endTime={endTime}
+                onEndTimeChange={(t) => handleFieldChange("endTime", setEndTime, t)}
+                placeholder="Sélectionner date & horaires"
+                highlighted={
+                  isPrefilledMode &&
+                  (prefilledFields.has("startDate") ||
+                    prefilledFields.has("startTime") ||
+                    prefilledFields.has("endTime"))
+                }
+              />
 
               {calculateDuration() && (
                 <div
