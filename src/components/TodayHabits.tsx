@@ -1,13 +1,11 @@
 import React from 'react';
 import { Repeat, Clock, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 
 const TodayHabits: React.FC = () => {
   const { data: habits = [], isLoading } = useHabits();
   const toggleCompletionMutation = useToggleHabitCompletion();
-  const navigate = useNavigate();
-
   const today = new Date().toLocaleDateString('en-CA');
 
   const todayHabits = habits.map((habit) => ({
@@ -62,13 +60,7 @@ const TodayHabits: React.FC = () => {
               'bg-blue-600 dark:bg-blue-900 border-blue-400 dark:border-blue-700 shadow-md' :
               'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-slate-700/50'}`
               }
-            onClick={(e) => {
-              if ((e.target as HTMLElement).closest('.completion-toggle')) {
-                handleToggle(habit.id);
-              } else {
-                navigate('/habits', { state: { selectedHabitId: habit.id } });
-              }
-            }}>
+            onClick={() => handleToggle(habit.id)}>
 
               <div className="flex items-center gap-4">
                   <div className="flex-shrink-0 completion-toggle" onClick={(e) => e.stopPropagation()}>
