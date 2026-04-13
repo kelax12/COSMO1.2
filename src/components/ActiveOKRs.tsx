@@ -18,9 +18,6 @@ const ActiveOKRs: React.FC = () => {
     return (
         <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-[rgb(var(--color-success)/0.1)] rounded-xl">
-                <Target size={24} className="text-[rgb(var(--color-success))]" />
-              </div>
               <div>
                 <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">OKR en cours</h2>
                 <p className="text-[rgb(var(--color-text-secondary))] text-sm">{activeOKRs.length} objectifs actifs</p>

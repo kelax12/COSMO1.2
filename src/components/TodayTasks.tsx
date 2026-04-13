@@ -79,9 +79,6 @@ const TodayTasks: React.FC = () => {
     return (
       <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-[rgb(var(--color-accent)/0.15)] rounded-xl">
-            <CheckSquare size={24} className="text-[rgb(var(--color-accent))]" />
-          </div>
           <div>
             <div className="h-5 w-32 bg-[rgb(var(--color-border))] rounded animate-pulse mb-2"></div>
             <div className="h-4 w-24 bg-[rgb(var(--color-border))] rounded animate-pulse"></div>
@@ -107,9 +104,6 @@ const TodayTasks: React.FC = () => {
   return (
     <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-[rgb(var(--color-accent)/0.15)] rounded-xl">
-          <CheckSquare size={24} className="text-[rgb(var(--color-accent))]" />
-        </div>
         <div>
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
           <p className="text-[rgb(var(--color-text-secondary))] text-sm">
