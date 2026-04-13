@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
@@ -6,11 +7,13 @@ import CollaboratorItem from './CollaboratorItem';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import CollaboratorModal from './CollaboratorModal';
+import AddToListModal from './AddToListModal';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks, useUpdateTask, useDeleteTask, useToggleTaskBookmark, Task } from '@/modules/tasks';
+import { useCreateEvent, CreateEventInput } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
@@ -30,8 +33,9 @@ const CollaborativeTasks: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [], isLoading } = useTasks();
   const updateTaskMutation = useUpdateTask();
-  const deleteMutation = useDeleteTask();
+  const deleteMutation         = useDeleteTask();
   const toggleBookmarkMutation = useToggleTaskBookmark();
+  const createEventMutation    = useCreateEvent();
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
@@ -57,9 +61,23 @@ const CollaborativeTasks: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   // Action modals
-  const [taskModalTask, setTaskModalTask] = useState<Task | null>(null);
-  const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
+  const [taskModalTask, setTaskModalTask]               = useState<Task | null>(null);
+  const [taskToEventModal, setTaskToEventModal]         = useState<Task | null>(null);
+  const [addToListTask, setAddToListTask]               = useState<string | null>(null);
   const [collaboratorModalTaskId, setCollaboratorModalTaskId] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete]                 = useState<string | null>(null);
+
+  const handleCreateEventFromTask = (eventData: CreateEventInput) => {
+    if (taskToEventModal) {
+      createEventMutation.mutate({ ...eventData, taskId: taskToEventModal.id });
+    }
+    setTaskToEventModal(null);
+  };
+
+  const confirmDelete = () => {
+    if (!taskToDelete) return;
+    deleteMutation.mutate(taskToDelete, { onSuccess: () => setTaskToDelete(null) });
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [collaboratorSearchQuery, setCollaboratorSearchQuery] = useState('');
@@ -288,9 +306,9 @@ const CollaborativeTasks: React.FC = () => {
                         <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); setTaskModalTask(task); }}
+                        onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }}
                         className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title="Détails"
+                        title="Ajouter à une liste"
                       >
                         <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
                       </button>
@@ -302,7 +320,7 @@ const CollaborativeTasks: React.FC = () => {
                         <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(task.id); }}
+                        onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }}
                         className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
                         title="Supprimer"
                       >
@@ -558,20 +576,56 @@ const CollaborativeTasks: React.FC = () => {
 
       {/* Action modals */}
       {taskModalTask && (
-        <TaskModal task={taskModalTask} onClose={() => setTaskModalTask(null)} />
+        <TaskModal task={taskModalTask} isOpen={!!taskModalTask} onClose={() => setTaskModalTask(null)} />
       )}
       {taskToEventModal && (
         <EventModal
-          isOpen={!!taskToEventModal}
+          mode="convert"
+          isOpen={true}
           onClose={() => setTaskToEventModal(null)}
-          initialTask={taskToEventModal}
+          task={taskToEventModal}
+          onConvert={handleCreateEventFromTask}
         />
       )}
+      {addToListTask && (
+        <AddToListModal isOpen={true} onClose={() => setAddToListTask(null)} taskId={addToListTask} />
+      )}
       {collaboratorModalTaskId && (
-        <CollaboratorModal
-          taskId={collaboratorModalTaskId}
-          onClose={() => setCollaboratorModalTaskId(null)}
-        />
+        <CollaboratorModal isOpen={!!collaboratorModalTaskId} onClose={() => setCollaboratorModalTaskId(null)} taskId={collaboratorModalTaskId} />
+      )}
+      {taskToDelete && (
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+          >
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setTaskToDelete(null)}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </>
   );

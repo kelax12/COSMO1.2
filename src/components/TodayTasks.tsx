@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import CollaboratorModal from './CollaboratorModal';
+import AddToListModal from './AddToListModal';
 
 import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, Task } from '@/modules/tasks';
+import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { useFriends } from '@/modules/friends';
 
@@ -13,16 +16,19 @@ const TodayTasks: React.FC = () => {
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
 
   // Modals
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask]             = useState<Task | null>(null);
+  const [taskToEventModal, setTaskToEventModal]     = useState<Task | null>(null);
+  const [addToListTask, setAddToListTask]           = useState<string | null>(null);
   const [collaboratorTaskId, setCollaboratorTaskId] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete]             = useState<string | null>(null);
 
   const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
-  const toggleCompleteMutation = useToggleTaskComplete();
-  const toggleBookmarkMutation = useToggleTaskBookmark();
-  const deleteMutation = useDeleteTask();
+  const toggleCompleteMutation  = useToggleTaskComplete();
+  const toggleBookmarkMutation  = useToggleTaskBookmark();
+  const deleteMutation          = useDeleteTask();
+  const createEventMutation     = useCreateEvent();
   const { data: categories = [] } = useCategories();
-  const { data: friends = [] } = useFriends();
+  const { data: friends = [] }    = useFriends();
 
   const today = new Date();
 
@@ -41,9 +47,9 @@ const TodayTasks: React.FC = () => {
       .slice(0, 5);
   }, [tasks]);
 
-  const totalTime = useMemo(() => todayTasks.reduce((sum, task) => sum + task.estimatedTime, 0), [todayTasks]);
+  const totalTime = useMemo(() => todayTasks.reduce((sum, t) => sum + t.estimatedTime, 0), [todayTasks]);
 
-  const getCategoryData = (categoryId: string) => categories.find(cat => cat.id === categoryId);
+  const getCategoryData = (categoryId: string) => categories.find(c => c.id === categoryId);
 
   const getPriorityIcon = (priority: number) => {
     if (priority <= 2) return <AlertCircle size={16} className="text-[rgb(var(--color-error))]" />;
@@ -58,14 +64,24 @@ const TodayTasks: React.FC = () => {
     }, 600);
   };
 
+  const handleCreateEventFromTask = (eventData: CreateEventInput) => {
+    if (taskToEventModal) {
+      createEventMutation.mutate({ ...eventData, taskId: taskToEventModal.id });
+    }
+    setTaskToEventModal(null);
+  };
+
+  const confirmDelete = () => {
+    if (!taskToDelete) return;
+    deleteMutation.mutate(taskToDelete, { onSuccess: () => setTaskToDelete(null) });
+  };
+
   if (isLoadingTasks) {
     return (
       <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div>
-            <div className="h-5 w-32 bg-[rgb(var(--color-border))] rounded animate-pulse mb-2" />
-            <div className="h-4 w-24 bg-[rgb(var(--color-border))] rounded animate-pulse" />
-          </div>
+        <div className="mb-6">
+          <div className="h-5 w-32 bg-[rgb(var(--color-border))] rounded animate-pulse mb-2" />
+          <div className="h-4 w-24 bg-[rgb(var(--color-border))] rounded animate-pulse" />
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
@@ -87,13 +103,11 @@ const TodayTasks: React.FC = () => {
   return (
     <>
       <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div>
-            <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
-            <p className="text-[rgb(var(--color-text-secondary))] text-sm">
-              {todayTasks.length} tâches • {Math.floor(totalTime / 60)}h{totalTime % 60}min
-            </p>
-          </div>
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
+          <p className="text-[rgb(var(--color-text-secondary))] text-sm">
+            {todayTasks.length} tâches • {Math.floor(totalTime / 60)}h{totalTime % 60}min
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -125,7 +139,6 @@ const TodayTasks: React.FC = () => {
                         ? 'bg-[rgb(var(--color-error))] border-[rgb(var(--color-error))]'
                         : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-error)/0.5)]'
                     }`}
-                    title={task.completed ? 'Marquer comme non faite' : 'Marquer comme faite'}
                   >
                     {task.completed && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -140,16 +153,11 @@ const TodayTasks: React.FC = () => {
                       <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{task.name}</h3>
                       {getPriorityIcon(task.priority)}
                       {task.isCollaborative && (
-                        <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">
-                          Collaboratif
-                        </span>
+                        <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
                       )}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-[rgb(var(--color-text-secondary))]">
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span>{task.estimatedTime} min</span>
-                      </div>
+                      <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
                       <div className="flex items-center gap-1">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
                         <span>P{task.priority}</span>
@@ -165,39 +173,19 @@ const TodayTasks: React.FC = () => {
 
                   {/* Action icons — visible on hover */}
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }}
-                      className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                      title="Favori"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Favori">
                       <Bookmark size={15} className={task.bookmarked ? 'text-amber-500 fill-amber-500' : 'text-[rgb(var(--color-text-muted))]'} />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }}
-                      className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                      title="Ajouter à l'agenda"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Convertir en événement">
                       <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSelectedTask(task); }}
-                      className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                      title="Détails"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Ajouter à une liste">
                       <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }}
-                      className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                      title="Collaborateurs"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Collaborateurs">
                       <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(task.id); }}
-                      className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
-                      title="Supprimer"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Supprimer">
                       <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
                     </button>
                   </div>
@@ -216,25 +204,66 @@ const TodayTasks: React.FC = () => {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* TaskModal */}
       {selectedTask && (
-        <TaskModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-        />
+        <TaskModal task={selectedTask} isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} />
       )}
+
+      {/* EventModal — convert mode */}
       {taskToEventModal && (
         <EventModal
-          isOpen={!!taskToEventModal}
+          mode="convert"
+          isOpen={true}
           onClose={() => setTaskToEventModal(null)}
-          initialTask={taskToEventModal}
+          task={taskToEventModal}
+          onConvert={handleCreateEventFromTask}
         />
       )}
+
+      {/* AddToListModal */}
+      {addToListTask && (
+        <AddToListModal isOpen={true} onClose={() => setAddToListTask(null)} taskId={addToListTask} />
+      )}
+
+      {/* CollaboratorModal */}
       {collaboratorTaskId && (
-        <CollaboratorModal
-          taskId={collaboratorTaskId}
-          onClose={() => setCollaboratorTaskId(null)}
-        />
+        <CollaboratorModal isOpen={!!collaboratorTaskId} onClose={() => setCollaboratorTaskId(null)} taskId={collaboratorTaskId} />
+      )}
+
+      {/* Delete confirmation */}
+      {taskToDelete && (
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+          >
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setTaskToDelete(null)}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </>
   );
