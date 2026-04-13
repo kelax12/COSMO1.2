@@ -28,9 +28,6 @@ const TodayHabits: React.FC = () => {
     return (
       <div className="card p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-indigo-50 dark:bg-purple-900/20 rounded-xl border border-indigo-100 dark:border-purple-800/30">
-            <Repeat size={24} className="text-indigo-600 dark:text-purple-400" />
-          </div>
           <div>
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
             <p className="text-[rgb(var(--color-text-secondary))] text-sm">Chargement...</p>
@@ -48,9 +45,6 @@ const TodayHabits: React.FC = () => {
   return (
     <div className="card p-6">
     <div className="flex items-center gap-3 mb-6">
-      <div className="p-2 bg-indigo-50 dark:bg-purple-900/20 rounded-xl border border-indigo-100 dark:border-purple-800/30">
-        <Repeat size={24} className="text-indigo-600 dark:text-purple-400" />
-      </div>
       <div>
         <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
         <p className="text-[rgb(var(--color-text-secondary))] text-sm">
