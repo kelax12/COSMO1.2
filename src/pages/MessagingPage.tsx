@@ -477,7 +477,7 @@ const MessagingPage: React.FC = () => {
                                 <RenderAvatar
                                   key={index}
                                   avatar={member.avatar}
-                                  className="size-10 border-2 border-white dark:border-slate-800"
+                                  className="size-10"
                                 />
                               ))}
                             </AvatarGroup>
@@ -610,7 +610,7 @@ const MessagingPage: React.FC = () => {
                               <RenderAvatar
                                 key={index}
                                 avatar={member.avatar}
-                                className="size-8 border-2 border-white dark:border-slate-800"
+                                className="size-8"
                                 textClassName="text-xs"
                               />
                             ))}
