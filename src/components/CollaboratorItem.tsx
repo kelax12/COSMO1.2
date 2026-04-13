@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserPlus, Trash2, X, Mail } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface CollaboratorItemProps {
   id: string;
@@ -48,15 +49,18 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
       }}
     >
       <div className="flex items-center gap-3 overflow-hidden">
-        <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center font-semibold text-sm ${
-          isPending
-            ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white'
-            : isEmoji 
-              ? 'text-2xl' 
-              : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-        }`} style={isEmoji && !isPending ? { backgroundColor: 'rgb(var(--color-hover))' } : {}}>
-          {isPending ? <Mail size={16} /> : avatar ? (isEmoji ? avatar : <img src={avatar} alt={name} className="w-full h-full rounded-full object-cover" />) : getInitials(name || id)}
-        </div>
+        <Avatar className="size-10 shrink-0">
+          {!isPending && avatar && !isEmoji && <AvatarImage src={avatar} alt={name} />}
+          <AvatarFallback className={
+            isPending
+              ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white'
+              : isEmoji
+                ? 'bg-[rgb(var(--color-hover))] text-2xl'
+                : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold text-sm'
+          }>
+            {isPending ? <Mail size={16} /> : isEmoji ? avatar : getInitials(name || id)}
+          </AvatarFallback>
+        </Avatar>
         <div className="overflow-hidden">
           <p className="text-sm font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{name || id}</p>
           {isPending ? (

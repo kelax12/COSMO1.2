@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, MessageSquare, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
 import TaskModal from '../components/TaskModal';
@@ -70,17 +71,15 @@ function isGroupConversation(conv: Conversation | GroupConversation | undefined)
   return conv !== undefined && 'isGroup' in conv && conv.isGroup === true;
 }
 
-const RenderAvatar = ({ avatar, className = "w-10 h-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
+const RenderAvatar = ({ avatar, className = "size-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
   const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image') || avatar.startsWith('/'));
-  
   return (
-    <div className={`rounded-full flex items-center justify-center overflow-hidden shrink-0 transition-colors ${className}`}>
-      {isUrl ? (
-        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-      ) : (
+    <Avatar className={className}>
+      {isUrl && <AvatarImage src={avatar} alt="Avatar" />}
+      <AvatarFallback className="bg-gray-100 dark:bg-slate-700 text-muted-foreground">
         <span className={textClassName}>{avatar || '👤'}</span>
-      )}
-    </div>
+      </AvatarFallback>
+    </Avatar>
   );
 };
 
@@ -473,19 +472,19 @@ const MessagingPage: React.FC = () => {
                   <div className="flex items-center gap-3">
                         <div className="relative">
                           {conv.type === 'group' ? (
-                            <div className="flex -space-x-2">
+                            <AvatarGroup>
                               {conv.members?.slice(0, 2).map((member: GroupMember, index: number) => (
-                                <RenderAvatar 
-                                  key={index} 
-                                  avatar={member.avatar} 
-                                  className="w-10 h-10 bg-gray-100 dark:bg-slate-700 border-2 border-white dark:border-slate-800" 
+                                <RenderAvatar
+                                  key={index}
+                                  avatar={member.avatar}
+                                  className="size-10 border-2 border-white dark:border-slate-800"
                                 />
                               ))}
-                            </div>
+                            </AvatarGroup>
                           ) : (
-                            <RenderAvatar 
-                              avatar={conv.avatar} 
-                              className="w-10 h-10 bg-gray-100 dark:bg-slate-700 relative" 
+                            <RenderAvatar
+                              avatar={conv.avatar}
+                              className="size-10"
                             />
                           )}
                         </div>
@@ -606,20 +605,20 @@ const MessagingPage: React.FC = () => {
                         onClick={() => currentConversation.type === 'group' && setShowGroupSettings(true)}
                       >
                         {currentConversation.type === 'group' ? (
-                          <div className="flex -space-x-2">
+                          <AvatarGroup>
                             {(currentConversation as GroupConversation).members?.slice(0, 3).map((member: GroupMember, index: number) => (
-                              <RenderAvatar 
-                                key={index} 
-                                avatar={member.avatar} 
-                                className="w-8 h-8 bg-gray-100 dark:bg-slate-600 border-2 border-white dark:border-slate-800" 
+                              <RenderAvatar
+                                key={index}
+                                avatar={member.avatar}
+                                className="size-8 border-2 border-white dark:border-slate-800"
                                 textClassName="text-xs"
                               />
                             ))}
-                          </div>
+                          </AvatarGroup>
                         ) : (
-                          <RenderAvatar 
-                            avatar={currentConversation.avatar} 
-                            className="w-8 h-8 bg-gray-100 dark:bg-slate-600 relative" 
+                          <RenderAvatar
+                            avatar={currentConversation.avatar}
+                            className="size-8"
                             textClassName="text-sm"
                           />
                         )}
