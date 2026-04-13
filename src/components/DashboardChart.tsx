@@ -59,7 +59,7 @@ const CustomTooltip = ({ active, payload, label }: {
         const series = SERIES.find(s => s.key === entry.dataKey);
         return (
           <div key={entry.dataKey} className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: entry.color }} />
             <span className="text-[rgb(var(--color-text-secondary))] text-xs">{series?.label ?? entry.dataKey}</span>
             <span className="text-[rgb(var(--color-text-primary))] text-xs font-bold ml-auto pl-4">{formatMinutes(entry.value)}</span>
           </div>
