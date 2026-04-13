@@ -1,13 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail } from 'lucide-react';
+import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import CollaboratorItem from './CollaboratorItem';
+import TaskModal from './TaskModal';
+import EventModal from './EventModal';
+import CollaboratorModal from './CollaboratorModal';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
+import { useTasks, useUpdateTask, useDeleteTask, useToggleTaskBookmark, Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
@@ -27,6 +30,8 @@ const CollaborativeTasks: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [], isLoading } = useTasks();
   const updateTaskMutation = useUpdateTask();
+  const deleteMutation = useDeleteTask();
+  const toggleBookmarkMutation = useToggleTaskBookmark();
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
@@ -51,6 +56,10 @@ const CollaborativeTasks: React.FC = () => {
   
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  // Action modals
+  const [taskModalTask, setTaskModalTask] = useState<Task | null>(null);
+  const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
+  const [collaboratorModalTaskId, setCollaboratorModalTaskId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [collaboratorSearchQuery, setCollaboratorSearchQuery] = useState('');
@@ -233,13 +242,14 @@ const CollaborativeTasks: React.FC = () => {
               const ownerFriend = friends.find(f => f.name === task.sharedBy);
 
                 return (
-                  <div 
-                    key={task.id} 
-                    className="collaborative-task p-4 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer group"
-                    style={{ 
+                  <div
+                    key={task.id}
+                    className="collaborative-task group p-4 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer"
+                    style={{
                       backgroundColor: `${categoryColor}25`,
                       borderColor: `${categoryColor}60`
                     }}
+                    onClick={() => setTaskModalTask(task)}
                   >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -261,6 +271,45 @@ const CollaborativeTasks: React.FC = () => {
 
                 
                   <div className="flex items-center gap-2">
+                    {/* Action icons */}
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }}
+                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        title="Favori"
+                      >
+                        <Bookmark size={15} className={task.bookmarked ? 'text-amber-500 fill-amber-500' : 'text-[rgb(var(--color-text-muted))]'} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }}
+                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        title="Ajouter à l'agenda"
+                      >
+                        <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setTaskModalTask(task); }}
+                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        title="Détails"
+                      >
+                        <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCollaboratorModalTaskId(task.id); }}
+                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        title="Collaborateurs"
+                      >
+                        <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(task.id); }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
+                      </button>
+                    </div>
+
                     <AvatarGroup>
                     {task.collaborators?.map((collaborator, index) => {
                       const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
@@ -505,6 +554,24 @@ const CollaborativeTasks: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Action modals */}
+      {taskModalTask && (
+        <TaskModal task={taskModalTask} onClose={() => setTaskModalTask(null)} />
+      )}
+      {taskToEventModal && (
+        <EventModal
+          isOpen={!!taskToEventModal}
+          onClose={() => setTaskToEventModal(null)}
+          initialTask={taskToEventModal}
+        />
+      )}
+      {collaboratorModalTaskId && (
+        <CollaboratorModal
+          taskId={collaboratorModalTaskId}
+          onClose={() => setCollaboratorModalTaskId(null)}
+        />
       )}
     </>
   );
