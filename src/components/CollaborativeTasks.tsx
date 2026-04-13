@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';
+import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import CollaboratorItem from './CollaboratorItem';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -260,38 +261,36 @@ const CollaborativeTasks: React.FC = () => {
 
                 
                   <div className="flex items-center gap-2">
+                    <AvatarGroup>
                     {task.collaborators?.map((collaborator, index) => {
                       const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
                       const friend = friends.find(f => f.name === collaborator || f.id === collaborator);
                       const initials = collaborator.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                      
+                      const isEmoji = friend?.avatar && friend.avatar.length <= 2;
+
                       return (
-                        <div 
-                          key={index}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold relative transition-all overflow-hidden ${
-                            hasValidated 
-                              ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg shadow-green-500/30' 
-                              : 'bg-[rgb(var(--color-active))] text-[rgb(var(--color-text-secondary))]'
-                          }`}
-                          title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}
-                        >
-                          {friend?.avatar ? (
-                            friend.avatar.startsWith('http') ? (
-                              <img src={friend.avatar} alt={collaborator} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-xl">{friend.avatar}</span>
-                            )
-                          ) : (
-                            <span>{initials}</span>
-                          )}
+                        <div key={index} className="relative" title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}>
+                          <Avatar className="size-9 border-2 border-background">
+                            {friend?.avatar && !isEmoji && friend.avatar.startsWith('http') && (
+                              <AvatarImage src={friend.avatar} alt={collaborator} />
+                            )}
+                            <AvatarFallback className={
+                              hasValidated
+                                ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white text-xs font-bold shadow-lg shadow-green-500/30'
+                                : 'bg-[rgb(var(--color-active))] text-[rgb(var(--color-text-secondary))] text-xs font-bold'
+                            }>
+                              {isEmoji ? <span className="text-base">{friend?.avatar}</span> : initials}
+                            </AvatarFallback>
+                          </Avatar>
                           {hasValidated && (
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[rgb(var(--color-surface))] rounded-full flex items-center justify-center shadow-md z-10">
-                              <Check size={12} className="text-green-500" />
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[rgb(var(--color-surface))] rounded-full flex items-center justify-center shadow-md z-10">
+                              <Check size={10} className="text-green-500" />
                             </div>
                           )}
                         </div>
                       );
                     })}
+                    </AvatarGroup>
                   </div>
 
               </div>
