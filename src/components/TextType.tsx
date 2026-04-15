@@ -31,7 +31,9 @@ const TextType = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
+  const [isTypingDone, setIsTypingDone] = useState(false);
   const cursorRef = useRef(null);
+  const cursorTweenRef = useRef(null);
   const containerRef = useRef(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
@@ -87,7 +89,7 @@ const TextType = ({
   useEffect(() => {
     if (showCursor && cursorRef.current) {
       gsap.set(cursorRef.current, { opacity: 1 });
-      gsap.to(cursorRef.current, {
+      cursorTweenRef.current = gsap.to(cursorRef.current, {
         opacity: 0,
         duration: cursorBlinkDuration,
         repeat: -1,
@@ -96,6 +98,13 @@ const TextType = ({
       });
     }
   }, [showCursor, cursorBlinkDuration]);
+
+  useEffect(() => {
+    if (isTypingDone && cursorRef.current) {
+      cursorTweenRef.current?.kill();
+      gsap.set(cursorRef.current, { opacity: 0 });
+    }
+  }, [isTypingDone]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -135,7 +144,10 @@ const TextType = ({
             variableSpeed ? getRandomSpeed() : typingSpeed
           );
         } else if (textArray.length >= 1) {
-          if (!loop && currentTextIndex === textArray.length - 1) return;
+          if (!loop && currentTextIndex === textArray.length - 1) {
+            setIsTypingDone(true);
+            return;
+          }
           timeout = setTimeout(() => {
             setIsDeleting(true);
           }, pauseDuration);
