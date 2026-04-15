@@ -55,7 +55,9 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   end,
 }) => {
   const [iconHovered, setIconHovered] = useState(false);
+  const [groupHovered, setGroupHovered] = useState(false);
   const isCollapsedMode = collapsed && !mobileOpen;
+  const isColored = iconHovered || groupHovered;
 
   return (
     <NavLink
@@ -65,7 +67,8 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         `sidebar-item ${isActive ? 'active' : ''} ${isCollapsedMode ? 'justify-center px-0' : ''}`
       }
       onClick={onClick}
-      onMouseEnter={onMouseEnterExtra}
+      onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); }}
+      onMouseLeave={() => setGroupHovered(false)}
     >
       <div
         className="min-w-[20px] flex items-center justify-center relative"
@@ -74,7 +77,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         style={{
           transition: 'transform 0.2s ease, color 0.2s ease',
           transform: iconHovered ? 'scale(1.2)' : 'scale(1)',
-          color: iconHovered ? hoverColor : undefined,
+          color: isColored ? hoverColor : undefined,
         }}
       >
         {icon}
