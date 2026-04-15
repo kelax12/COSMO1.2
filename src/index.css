@@ -73,7 +73,11 @@
     --input: 214 32% 91%;
     --ring: 217 91% 60%;
     --radius: 0.75rem;
-    
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+
     /* shadcn/ui sidebar variables - Light mode */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 16% 47%;
