@@ -66,7 +66,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       className={({ isActive }) =>
         `sidebar-item ${isActive ? 'active' : ''} ${isCollapsedMode ? 'justify-center px-0' : ''}`
       }
-      style={groupHovered ? { transform: 'translateX(5.2px)' } : undefined}
+      style={groupHovered ? { transform: 'translateX(6.2px)' } : undefined}
       onClick={onClick}
       onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); }}
       onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
@@ -232,13 +232,13 @@ const Layout: React.FC = () => {
         </div>
       
         <nav className={`flex-1 ${isCollapsed && !isMobile ? 'px-2' : 'px-4'} py-6 space-y-2 overflow-x-hidden overflow-y-auto`}>
-          <NavItems />
+          {NavItems()}
         </nav>
-        
+
         {/* Section Company */}
         <div className={`border-t ${isCollapsed && !isMobile ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
           {(!isCollapsed || isMobile) && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-muted))' }}>AUTRE</div>}
-          <CompanyItems />
+          {CompanyItems()}
         </div>
       </aside>
 
