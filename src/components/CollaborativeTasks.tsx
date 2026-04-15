@@ -245,10 +245,16 @@ const CollaborativeTasks: React.FC = () => {
               </div>
             </div>
           
-          <Button onClick={handleOpenPopup} className="bg-blue-600 hover:bg-blue-700 text-white border-0">
-            <UserPlus size={16} data-icon="inline-start" />
+          <button
+            onClick={handleOpenPopup}
+            className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-sm font-medium text-white transition-colors"
+            style={{ backgroundColor: '#2563eb' }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#2563eb')}
+          >
+            <UserPlus size={16} />
             <span className="hidden sm:inline">Gérer</span>
-          </Button>
+          </button>
         </div>
 
         <div className="space-y-4">
