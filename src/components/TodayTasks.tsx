@@ -113,21 +113,13 @@ const TodayTasks: React.FC = () => {
         <div className="space-y-3">
           {todayTasks.map(task => {
             const categoryData = getCategoryData(task.category);
-            const cardColor = categoryData?.color || '#3B82F6';
 
             return (
               <div
                 key={task.id}
-                className={`group p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
+                className={`group p-4 rounded-xl border border-[rgb(var(--color-border))] transition-all duration-300 cursor-pointer hover:shadow-md ${
                   task.isCollaborative ? 'collaborative-task' : ''
-                } ${task.priority <= 2
-                    ? 'bg-[rgb(var(--color-error)/0.35)] dark:bg-[rgb(var(--color-error)/0.45)] border-[rgb(var(--color-error)/0.6)] dark:border-[rgb(var(--color-error)/0.8)]'
-                    : 'border-[rgb(var(--color-border))]'
                 } ${completedTaskId === task.id ? 'animate-task-complete' : ''}`}
-                style={task.priority > 2 ? {
-                  backgroundColor: `${cardColor}25`,
-                  borderColor: task.isCollaborative ? `${cardColor}50` : undefined,
-                } : {}}
                 onClick={() => setSelectedTask(task)}
               >
                 <div className="flex items-center gap-3">
