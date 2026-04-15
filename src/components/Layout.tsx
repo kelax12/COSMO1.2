@@ -66,9 +66,10 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       className={({ isActive }) =>
         `sidebar-item ${isActive ? 'active' : ''} ${isCollapsedMode ? 'justify-center px-0' : ''}`
       }
+      style={groupHovered ? { transform: 'translateX(5.2px)' } : undefined}
       onClick={onClick}
       onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); }}
-      onMouseLeave={() => setGroupHovered(false)}
+      onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
     >
       <div
         className="min-w-[20px] flex items-center justify-center relative"
