@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, Plus } from 'lucide-react';
+import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, Plus, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import { DatePicker } from '@/components/ui/date-picker';
 import CollaboratorAvatars from './CollaboratorAvatars';
@@ -510,29 +511,32 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         </DialogTitle>
         <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header */}
-          <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+          <div className="flex justify-between items-center px-6 py-4 border-b transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                <CheckCircle size={24} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+              <div className="p-2 bg-primary/10 rounded-xl">
+                {isCreating
+                  ? <Sparkles size={22} className="text-primary" aria-hidden="true" />
+                  : <CheckCircle size={22} className="text-primary" aria-hidden="true" />
+                }
               </div>
-              <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
+              <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
               </h2>
               {hasChanges &&
-                <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm">
-                  <AlertCircle size={16} aria-hidden="true" />
+                <div className="flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md">
+                  <AlertCircle size={12} aria-hidden="true" />
                   <span>Non sauvegardé</span>
                 </div>
               }
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleClose}
-              className="p-2 rounded-lg transition-colors"
-              style={{ color: 'rgb(var(--color-text-muted))' }}
               aria-label="Fermer le formulaire"
             >
-              <X size={20} aria-hidden="true" />
-            </button>
+              <X size={18} aria-hidden="true" />
+            </Button>
           </div>
 
           <div className="p-6 overflow-y-auto h-[calc(100%-72px)] md:h-auto">
@@ -920,9 +924,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               Fonctionnalité Premium requise
                             </p>
-                            <button type="button" onClick={() => navigate('/premium')} className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">
+                                            <Button type="button" size="sm" onClick={() => navigate('/premium')} className="bg-yellow-500 hover:bg-yellow-600 text-white border-0">
                               Débloquer Premium
-                            </button>
+                            </Button>
                           </div>
                         ) : (
                           <>
@@ -945,14 +949,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                   }}
                                 />
                               </div>
-                              <button
+                              <Button
                                 type="button"
+                                size="icon"
                                 onClick={handleAddEmail}
                                 disabled={!emailInput.trim()}
-                                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                               >
-                                <UserPlus size={18} />
-                              </button>
+                                <UserPlus size={16} />
+                              </Button>
                             </div>
 
                             {/* Search users */}
@@ -1066,48 +1070,43 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                 {/* Action Buttons */}
                 <div className="flex justify-between items-center pt-6 border-t mt-6" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  {!isCreating && (
-                    <button
+                  {!isCreating ? (
+                    <Button
                       type="button"
+                      variant="destructive"
+                      size="sm"
                       onClick={handleDelete}
                       disabled={isLoading}
-                      className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg transition-colors border border-red-200 dark:border-red-800 disabled:opacity-50"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} data-icon="inline-start" />
                       <span className="hidden sm:inline">Supprimer</span>
-                    </button>
-                  )}
-                  {isCreating && <div></div>}
+                    </Button>
+                  ) : <div />}
 
                   <div className="flex gap-2 sm:gap-3">
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="lg"
                       onClick={handleClose}
                       disabled={isLoading}
-                      className="px-4 py-2 sm:px-6 sm:py-3 rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-hover))',
-                        color: 'rgb(var(--color-text-secondary))'
-                      }}
                     >
                       Annuler
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
+                      size="lg"
                       disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                     >
                       {isLoading ? (
                         <>
-                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" role="status"></div>
-                          <span className="hidden sm:inline">{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                          <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
+                          <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
                         </>
                       ) : (
-                        <>
-                          {isCreating ? 'Créer' : 'Sauvegarder'}
-                        </>
+                        isCreating ? 'Créer la tâche' : 'Sauvegarder'
                       )}
-                    </button>
+                    </Button>
                   </div>
               </div>
             </form>
@@ -1132,21 +1131,26 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
                   </p>
                   <div className="flex gap-3">
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      className="flex-1"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
                     >
                       Annuler
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="destructive"
+                      className="flex-1"
                       onClick={confirmDelete}
                       disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20 disabled:opacity-50"
                     >
-                      {isLoading ? '...' : 'Supprimer'}
-                    </button>
+                      {isLoading
+                        ? <><Loader2 size={14} className="animate-spin" data-icon="inline-start" />Suppression...</>
+                        : <><Trash2 size={14} data-icon="inline-start" />Supprimer</>
+                      }
+                    </Button>
                   </div>
                 </div>
               </motion.div>
