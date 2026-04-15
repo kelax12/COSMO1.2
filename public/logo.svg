@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 210" fill="none">
+  <defs>
+    <clipPath id="ringBack">
+      <rect x="0" y="0" width="220" height="116"/>
+    </clipPath>
+    <clipPath id="ringFront">
+      <rect x="0" y="116" width="220" height="94"/>
+    </clipPath>
+  </defs>
+
+  <!-- Ring — back half (behind planet) -->
+  <ellipse cx="110" cy="116" rx="96" ry="27"
+    fill="#2dd4bf" stroke="#1a1744" stroke-width="6"
+    clip-path="url(#ringBack)"/>
+
+  <!-- Planet body -->
+  <circle cx="110" cy="102" r="68" fill="#4f46e5" stroke="#1a1744" stroke-width="7"/>
+
+  <!-- Dark spot on planet -->
+  <ellipse cx="88" cy="87" rx="26" ry="22" fill="#312e81" stroke="#1a1744" stroke-width="4"/>
+
+  <!-- Ring — front half (in front of planet) -->
+  <ellipse cx="110" cy="116" rx="96" ry="27"
+    fill="#2dd4bf" stroke="#1a1744" stroke-width="6"
+    clip-path="url(#ringFront)"/>
+
+  <!-- Sparkle top-right -->
+  <path d="M172 36 L174.5 28 L177 36 L185 38.5 L177 41 L174.5 49 L172 41 L164 38.5 Z"
+    fill="white"/>
+</svg>
