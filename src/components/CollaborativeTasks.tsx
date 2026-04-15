@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import CollaboratorItem from './CollaboratorItem';
@@ -244,13 +245,10 @@ const CollaborativeTasks: React.FC = () => {
               </div>
             </div>
           
-          <button 
-            onClick={handleOpenPopup}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
-          >
-            <UserPlus size={20} />
-            <span className="hidden sm:inline">Gérer collaborateurs</span>
-          </button>
+          <Button variant="outline" size="sm" onClick={handleOpenPopup}>
+            <UserPlus size={14} data-icon="inline-start" />
+            <span className="hidden sm:inline">Gérer</span>
+          </Button>
         </div>
 
         <div className="space-y-4">
