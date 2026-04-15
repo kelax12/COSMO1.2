@@ -80,7 +80,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         onMouseLeave={() => setIconHovered(false)}
         style={{
           transition: 'transform 0.2s ease, color 0.2s ease',
-          transform: iconHovered ? 'scale(1.2)' : 'scale(1)',
+          transform: (iconHovered || groupHovered) ? 'scale(1.2)' : 'scale(1)',
           color: isColored ? hoverColor : undefined,
         }}
       >
