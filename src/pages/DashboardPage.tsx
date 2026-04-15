@@ -354,17 +354,6 @@ const DashboardPage: React.FC = () => {
           <CollaborativeTasks />
         </motion.div>
 
-        {/* Floating action button for quick add */}
-          <motion.button
-            className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 monochrome:from-white monochrome:to-zinc-200 rounded-full shadow-2xl shadow-blue-500/30 dark:shadow-blue-400/20 monochrome:shadow-white/10 flex items-center justify-center text-white monochrome:text-zinc-900 z-50 hover:shadow-blue-500/50 dark:hover:shadow-blue-400/30 monochrome:hover:shadow-white/20 transition-shadow duration-300"
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1 }}
-          >
-            <Zap size={24} />
-          </motion.button>
       </motion.div>
     </div>
   );
