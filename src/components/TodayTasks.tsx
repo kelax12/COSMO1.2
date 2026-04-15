@@ -117,9 +117,13 @@ const TodayTasks: React.FC = () => {
             return (
               <div
                 key={task.id}
-                className={`group p-4 rounded-xl border border-[rgb(var(--color-border))] transition-all duration-300 cursor-pointer hover:shadow-md ${
-                  task.isCollaborative ? 'collaborative-task' : ''
+                className={`group p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
+                  !task.bookmarked && task.isCollaborative ? 'collaborative-task' : ''
                 } ${completedTaskId === task.id ? 'animate-task-complete' : ''}`}
+                style={{
+                  backgroundColor: task.bookmarked ? 'rgba(234, 179, 8, 0.15)' : undefined,
+                  borderColor: task.bookmarked ? '#EAB308' : 'rgb(var(--color-border))',
+                }}
                 onClick={() => setSelectedTask(task)}
               >
                 <div className="flex items-center gap-3">
