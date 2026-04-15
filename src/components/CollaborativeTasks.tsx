@@ -245,7 +245,7 @@ const CollaborativeTasks: React.FC = () => {
               </div>
             </div>
           
-          <Button onClick={handleOpenPopup}>
+          <Button onClick={handleOpenPopup} className="bg-blue-600 hover:bg-blue-700 text-white border-0">
             <UserPlus size={16} data-icon="inline-start" />
             <span className="hidden sm:inline">Gérer</span>
           </Button>
