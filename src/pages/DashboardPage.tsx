@@ -44,7 +44,7 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
               }`}
               style={{
                 height: `${Math.max((d.value / max) * 100, 8)}%`,
-                backgroundColor: hovered === i ? '#1E3A8A' : '#1E3A8Acc',
+                backgroundColor: hovered === i ? '#1d4ed8' : '#1E40AF',
               }}
             />
           </div>
