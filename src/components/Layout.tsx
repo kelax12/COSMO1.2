@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
-  Home,
   LayoutDashboard,
   CheckSquare,
   Calendar,
@@ -20,6 +19,77 @@ import Logo from './Logo';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useMessages } from '@/modules/user';
 import ThemeToggle from './ThemeToggle';
+import { Button } from '@/components/ui/button';
+
+// Couleurs du graphique "Répartition du temps"
+const CHART_COLORS = {
+  tasks:  '#3b82f6',
+  events: '#ef4444',
+  okrs:   '#22c55e',
+  habits: '#eab308',
+} as const;
+
+interface NavItemLinkProps {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  hoverColor: string;
+  collapsed: boolean;
+  mobileOpen: boolean;
+  onClick?: () => void;
+  onMouseEnterExtra?: () => void;
+  badge?: number;
+  end?: boolean;
+}
+
+const NavItemLink: React.FC<NavItemLinkProps> = ({
+  to,
+  label,
+  icon,
+  hoverColor,
+  collapsed,
+  mobileOpen,
+  onClick,
+  onMouseEnterExtra,
+  badge,
+  end,
+}) => {
+  const [iconHovered, setIconHovered] = useState(false);
+  const isCollapsedMode = collapsed && !mobileOpen;
+
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `sidebar-item ${isActive ? 'active' : ''} ${isCollapsedMode ? 'justify-center px-0' : ''}`
+      }
+      onClick={onClick}
+      onMouseEnter={onMouseEnterExtra}
+    >
+      <div
+        className="min-w-[20px] flex items-center justify-center relative"
+        onMouseEnter={() => setIconHovered(true)}
+        onMouseLeave={() => setIconHovered(false)}
+        style={{
+          transition: 'transform 0.2s ease, color 0.2s ease',
+          transform: iconHovered ? 'scale(1.2)' : 'scale(1)',
+          color: iconHovered ? hoverColor : undefined,
+        }}
+      >
+        {icon}
+        {badge !== undefined && badge > 0 && (
+          <span
+            className={`absolute ${isCollapsedMode ? '-top-1 -right-1' : '-top-2 -right-2'} bg-red-500 text-white text-[10px] rounded-full ${isCollapsedMode ? 'w-4 h-4' : 'w-5 h-5'} flex items-center justify-center`}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      {(!collapsed || mobileOpen) && <span className="ml-3 truncate">{label}</span>}
+    </NavLink>
+  );
+};
 
 const Layout: React.FC = () => {
   const { user } = useAuth();
@@ -54,118 +124,47 @@ const Layout: React.FC = () => {
 
   const NavItems = () =>
   <>
-      <NavLink
-      to="/"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      end
-      onClick={() => setIsMobileMenuOpen(false)}>
+      <NavItemLink to="/" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} end />
 
-        <div className="min-w-[20px] flex items-center justify-center">
-          <LayoutDashboard size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Dashboard</span>}
-      </NavLink>
-      
-      <NavLink
-      to="/tasks"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
+      <NavItemLink to="/tasks" label="To do list" icon={<CheckSquare size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
 
-        <div className="min-w-[20px] flex items-center justify-center">
-          <CheckSquare size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">To do list</span>}
-      </NavLink>
-      
-      <NavLink
-      to="/agenda"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
+      <NavItemLink to="/agenda" label="Agenda" icon={<Calendar size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.events} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
 
-        <div className="min-w-[20px] flex items-center justify-center">
-          <Calendar size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Agenda</span>}
-      </NavLink>
-      
-      <NavLink
-      to="/okr"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
+      <NavItemLink to="/okr" label="OKR" icon={<Target size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
 
-        <div className="min-w-[20px] flex items-center justify-center">
-          <Target size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">OKR</span>}
-      </NavLink>
-      
-      <NavLink
-      to="/habits"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
+      <NavItemLink to="/habits" label="Habitudes" icon={<Repeat size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
 
-        <div className="min-w-[20px] flex items-center justify-center">
-          <Repeat size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Habitudes</span>}
-      </NavLink>
-      
-      <NavLink
-      to="/statistics"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
-
-        <div className="min-w-[20px] flex items-center justify-center">
-          <BarChart2 size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Statistiques</span>}
-      </NavLink>
+      <NavItemLink to="/statistics" label="Statistiques" icon={<BarChart2 size={20} aria-hidden="true" />}
+        hoverColor="#8b5cf6" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
     </>;
 
 
   const CompanyItems = () =>
   <>
-        <NavLink
-      to="/messages"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => {
-        setIsMobileMenuOpen(false);
-        markMessagesAsRead();
-      }}
-      onMouseEnter={markMessagesAsRead}>
+      <NavItemLink to="/messages" label="Messagerie" icon={<MessageCircle size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        badge={unreadMessages}
+        onClick={() => { setIsMobileMenuOpen(false); markMessagesAsRead(); }}
+        onMouseEnterExtra={markMessagesAsRead} />
 
-        <div className="min-w-[20px] flex items-center justify-center relative">
-          <MessageCircle size={20} aria-hidden="true" />
-          {unreadMessages > 0 &&
-        <span className={`absolute ${isCollapsed && !isMobileMenuOpen ? '-top-1 -right-1' : '-top-2 -right-2'} bg-red-500 text-white text-[10px] rounded-full ${isCollapsed && !isMobileMenuOpen ? 'w-4 h-4' : 'w-5 h-5'} flex items-center justify-center`}>
-              {unreadMessages}
-            </span>
-        }
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Messagerie</span>}
-      </NavLink>
-      
-      <NavLink
-      to="/premium"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
+      <NavItemLink to="/premium" label="Premium" icon={<Crown size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
 
-        <div className="min-w-[20px] flex items-center justify-center">
-          <Crown size={20} aria-hidden="true" />
-        </div>
-        {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Premium</span>}
-      </NavLink>
-      
-        <NavLink
-      to="/settings"
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isCollapsed && !isMobileMenuOpen ? 'justify-center px-0' : ''}`}
-      onClick={() => setIsMobileMenuOpen(false)}>
-
-          <div className="min-w-[20px] flex items-center justify-center">
-            <Settings size={20} aria-hidden="true" />
-          </div>
-          {(!isCollapsed || isMobileMenuOpen) && <span className="ml-3 truncate">Paramètres</span>}
-        </NavLink>
+      <NavItemLink to="/settings" label="Paramètres" icon={<Settings size={20} aria-hidden="true" />}
+        hoverColor="#94a3b8" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)} />
     </>;
 
 
@@ -174,12 +173,14 @@ const Layout: React.FC = () => {
       {/* Mobile Header */}
         {isMobile &&
       <header className="fixed top-0 left-0 right-0 h-16 bg-[rgb(var(--color-surface))] border-b border-[rgb(var(--color-border))] flex items-center justify-between px-4 z-40">
-            <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-background))] rounded-lg transition-colors">
-
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              style={{ color: 'rgb(var(--color-text-primary))' }}
+            >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </Button>
             <Logo showText={true} />
           </header>
       }
@@ -204,14 +205,16 @@ const Layout: React.FC = () => {
 
         {/* Toggle Button - Only Desktop */}
         {!isMobile &&
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full p-1.5 shadow-sm hover:shadow-md transition-all z-50 md:opacity-0 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-blue-500"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-0 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-blue-500"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
-          aria-label={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}>
-
-            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
+          aria-label={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}
+        >
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </Button>
         }
 
         <div className={`p-6 border-b flex flex-col items-center ${isCollapsed && !isMobile ? 'px-2' : ''}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
