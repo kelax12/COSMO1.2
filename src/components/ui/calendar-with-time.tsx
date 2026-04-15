@@ -7,6 +7,7 @@ import { CalendarIcon, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
 
 interface CalendarWithTimeProps {
   /** ISO date string "yyyy-MM-dd" */
@@ -19,7 +20,7 @@ interface CalendarWithTimeProps {
   endTime: string
   onEndTimeChange: (time: string) => void
   placeholder?: string
-  /** highlights the trigger border in blue (pre-filled mode) */
+  /** highlights the trigger border in primary color (pre-filled mode) */
   highlighted?: boolean
   className?: string
 }
@@ -45,7 +46,9 @@ export function CalendarWithTime({
   }
 
   const displayLabel = (() => {
-    const datePart = selectedDate ? format(selectedDate, "dd MMM yyyy", { locale: fr }) : null
+    const datePart = selectedDate
+      ? format(selectedDate, "dd MMM yyyy", { locale: fr })
+      : null
     const times = [startTime, endTime].filter(Boolean).join(" → ")
     if (datePart && times) return `${datePart}  ·  ${times}`
     if (datePart) return datePart
@@ -55,74 +58,62 @@ export function CalendarWithTime({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
           className={cn(
-            "w-full px-3 py-2.5 h-11 border rounded-lg transition-all flex items-center justify-between text-left text-sm font-medium",
-            "hover:border-blue-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/50",
-            highlighted
-              ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-300 dark:border-blue-800"
-              : "bg-transparent border-[rgb(var(--color-border))]",
+            "w-full justify-between font-normal",
+            highlighted && "border-primary/50 bg-primary/5",
+            !displayLabel && "text-muted-foreground",
             className
           )}
         >
-          <span
-            className={cn(
-              displayLabel
-                ? "text-[rgb(var(--color-text-primary))]"
-                : "text-[rgb(var(--color-text-muted))]"
-            )}
-          >
-            {displayLabel ?? placeholder}
-          </span>
-          <CalendarIcon size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
-        </button>
+          <span>{displayLabel ?? placeholder}</span>
+          <CalendarIcon size={16} data-icon="inline-end" />
+        </Button>
       </PopoverTrigger>
 
-      <PopoverContent
-        className="w-auto p-0 z-[100]"
-        align="start"
-        sideOffset={8}
-      >
-        {/* Calendar */}
+      <PopoverContent className="w-auto p-0 z-[100]" align="start" sideOffset={8}>
         <Calendar
           mode="single"
           selected={selectedDate}
           onSelect={handleSelectDate}
-          initialFocus
           locale={fr}
+          initialFocus
         />
 
-        {/* Divider */}
-        <div className="border-t border-border mx-3" />
-
-        {/* Time inputs */}
-        <div className="p-3 space-y-3">
-          {/* Start Time */}
-          <div>
-            <p className="text-sm font-bold text-foreground mb-1.5">Start Time</p>
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
-              <Clock size={15} className="text-muted-foreground shrink-0" />
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => onStartTimeChange(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-foreground focus:outline-none"
-              />
+        <div className="border-t border-border p-3 space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Heure de début */}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                Heure de début
+              </p>
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
+                <Clock size={14} className="text-muted-foreground shrink-0" />
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => onStartTimeChange(e.target.value)}
+                  className="flex-1 bg-transparent text-sm text-foreground focus:outline-none"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* End Time */}
-          <div>
-            <p className="text-sm font-bold text-foreground mb-1.5">End Time</p>
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
-              <Clock size={15} className="text-muted-foreground shrink-0" />
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => onEndTimeChange(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-foreground focus:outline-none"
-              />
+            {/* Heure de fin */}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                Heure de fin
+              </p>
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
+                <Clock size={14} className="text-muted-foreground shrink-0" />
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => onEndTimeChange(e.target.value)}
+                  className="flex-1 bg-transparent text-sm text-foreground focus:outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
