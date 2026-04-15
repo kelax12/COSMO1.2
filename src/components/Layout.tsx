@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useMatch, useResolvedPath } from 'react-router-dom';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -56,8 +56,11 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
 }) => {
   const [iconHovered, setIconHovered] = useState(false);
   const [groupHovered, setGroupHovered] = useState(false);
+  const resolved = useResolvedPath(to);
+  const match = useMatch({ path: resolved.pathname, end: end ?? false });
+  const isActive = !!match;
   const isCollapsedMode = collapsed && !mobileOpen;
-  const isColored = iconHovered || groupHovered;
+  const isColored = iconHovered || groupHovered || isActive;
 
   return (
     <NavLink
@@ -129,7 +132,7 @@ const Layout: React.FC = () => {
   const NavItems = () =>
   <>
       <NavItemLink to="/" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
+        hoverColor="#94a3b8" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
         onClick={() => setIsMobileMenuOpen(false)} end />
 
       <NavItemLink to="/tasks" label="To do list" icon={<CheckSquare size={20} aria-hidden="true" />}
