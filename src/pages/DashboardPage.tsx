@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { cn } from '@/lib/utils';
 import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -38,12 +39,13 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
               </div>
             )}
             <div
-              className={`w-full rounded-t-[3px] transition-all duration-150 ${
-                hovered === i
-                  ? 'bg-[rgb(var(--color-accent))] monochrome:bg-white'
-                  : 'bg-[rgb(var(--color-accent)/0.5)] monochrome:bg-white/40'
+              className={`w-full rounded-t-[3px] transition-all duration-150 monochrome:bg-white ${
+                hovered === i ? 'monochrome:bg-white' : 'monochrome:bg-white/40'
               }`}
-              style={{ height: `${Math.max((d.value / max) * 100, 8)}%` }}
+              style={{
+                height: `${Math.max((d.value / max) * 100, 8)}%`,
+                backgroundColor: hovered === i ? '#1E3A8A' : '#1E3A8Acc',
+              }}
             />
           </div>
         );
@@ -259,8 +261,9 @@ const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-end mb-4">
             <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
               {(['jour', 'semaine', 'mois'] as const).map(mode => (
-                <button
+                <Button
                   key={mode}
+                  variant="ghost"
                   onClick={() => setViewMode(mode)}
                   className={cn(
                     'px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200',
@@ -270,7 +273,7 @@ const DashboardPage: React.FC = () => {
                   )}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
