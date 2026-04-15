@@ -152,7 +152,7 @@ const TodayTasks: React.FC = () => {
                       <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
                       <div className="flex items-center gap-1">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
-                        <span>P{task.priority}</span>
+                        <span>Priorité {task.priority}</span>
                       </div>
                       <div className="text-xs">{new Date(task.deadline).toLocaleDateString('fr-FR')}</div>
                     </div>
