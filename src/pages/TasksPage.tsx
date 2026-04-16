@@ -331,44 +331,6 @@ const TasksPage: React.FC = () => {
                       })}
                     </div>
 
-                    <AnimatePresence>
-                      {selectedList && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 monochrome:bg-neutral-900 rounded-lg border border-slate-200 dark:border-slate-600 monochrome:border-neutral-700"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <motion.div 
-                                animate={{ rotate: [0, 360] }}
-                                transition={{ duration: 1, repeat: Infinity, repeatDelay: 3 }}
-                                className="w-4 h-4 rounded-full"
-                                style={{ backgroundColor: colorOptions.find(c => c.value === selectedList.color)?.color || '#3B82F6' }}
-                              />
-                              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                Liste active : {selectedList.name}
-                              </span>
-                              <span className="text-sm text-slate-600 dark:text-slate-400">
-                                ({filteredTasks.length} tâche{filteredTasks.length !== 1 ? 's' : ''})
-                              </span>
-                            </div>
-                            <motion.button
-                              whileHover={{ scale: 1.1, rotate: 90 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => {
-                                clearListFilter();
-                              }}
-                              className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 p-1"
-                              title="Afficher toutes les tâches"
-                            >
-                              <X size={16} />
-                            </motion.button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                 </motion.div>
               )}
