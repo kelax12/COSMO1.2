@@ -70,8 +70,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
       <div className="space-y-3">
         {/* Single row: Search + Sort + Filters + Reset */}
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Search Bar - reduced width */}
-          <div className="relative w-52 shrink-0">
+          {/* Search Bar */}
+          <div className="relative w-80 shrink-0">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" aria-hidden="true" />
             <input
               id="search-tasks-main"
@@ -144,7 +144,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
           <Button
             variant={showAdvancedFilters || hasActiveFilters ? 'default' : 'outline'}
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`flex items-center justify-center gap-2 shrink-0 ${
+            className={`flex items-center justify-center gap-2 shrink-0 px-5 py-2.5 text-sm ${
               showAdvancedFilters || hasActiveFilters
                 ? 'monochrome:bg-white monochrome:text-black monochrome:border-white'
                 : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
@@ -152,8 +152,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             aria-label={showAdvancedFilters ? "Masquer les filtres avancés" : "Afficher les filtres avancés"}
             aria-expanded={showAdvancedFilters}
           >
-            <Filter size={18} data-icon="inline-start" aria-hidden="true" />
-            <span className="hidden xs:inline">Filtres</span>
+            <Filter size={20} data-icon="inline-start" aria-hidden="true" />
+            <span>Filtres</span>
             {hasActiveFilters && (
               <motion.span
                 initial={{ scale: 0 }}
