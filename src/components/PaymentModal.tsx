@@ -283,9 +283,6 @@ export function PaymentModal({ isOpen, onClose, onPaymentSuccess }: PaymentModal
             <div className="bg-gradient-to-br from-blue-600 via-sky-600 to-indigo-700 text-white p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <Crown className="w-6 h-6" />
-                  </div>
                   <h2 className="text-xl font-bold">Cosmo Premium</h2>
                 </div>
                 <motion.button

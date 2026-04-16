@@ -513,12 +513,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
           {/* Header */}
           <div className="flex justify-between items-center px-6 py-4 border-b transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-xl">
-                {isCreating
-                  ? <Sparkles size={22} className="text-primary" aria-hidden="true" />
-                  : <CheckCircle size={22} className="text-primary" aria-hidden="true" />
-                }
-              </div>
               <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
               </h2>
@@ -1074,7 +1068,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     <Button
                       type="button"
                       variant="destructive"
-                      size="sm"
                       onClick={handleDelete}
                       disabled={isLoading}
                     >

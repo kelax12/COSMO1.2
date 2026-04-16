@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
 import CollaboratorItem from './CollaboratorItem';
+import { Button } from '@/components/ui/button';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -166,9 +167,6 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30">
-              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
             <div>
               <p className="text-xs uppercase tracking-wide" style={{ color: 'rgb(var(--color-text-muted))' }}>Collaborateurs</p>
               <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -176,9 +174,10 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
               </h2>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
             style={{ color: 'rgb(var(--color-text-muted))' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'rgb(var(--color-text-primary))';
@@ -191,7 +190,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
             aria-label="Fermer la fenêtre des collaborateurs"
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -251,23 +250,26 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   }}
                 />
                 {input && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setInput('')}
                     className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600"
                     aria-label="Effacer l'entrée"
                   >
                     <X size={14} />
-                  </button>
+                  </Button>
                 )}
               </div>
-              <button
+              <Button
+                variant="default"
                 onClick={handleAdd}
                 disabled={!input.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="inline-flex items-center justify-center gap-2"
               >
-                <UserPlus size={16} />
+                <UserPlus size={16} data-icon="inline-start" />
                 Ajouter
-              </button>
+              </Button>
             </div>
             {input && !emailRegex.test(input.trim()) && input.includes('@') && (
               <p className="text-xs text-orange-500">Le format de l'adresse semble invalide.</p>
@@ -293,12 +295,14 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                     }}
                   />
                   {search && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setSearch('')}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       <X size={14} />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -328,15 +332,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
-          <button
+          <Button
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg transition-colors"
-            style={{ color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-active))' }}
-            onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(0.95)'}
-            onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
           >
             Fermer
-          </button>
+          </Button>
         </div>
       </div>
     </div>
