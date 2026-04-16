@@ -219,7 +219,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                               onClick={() => toggleCategory(category.id)}
                               className={`flex items-center gap-2 shrink-0 ${
                                 selectedCategories.includes(category.id)
-                                  ? 'monochrome:bg-white monochrome:text-black monochrome:border-white'
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
                                   : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
                               }`}
                               aria-label={`${selectedCategories.includes(category.id) ? 'Retirer' : 'Ajouter'} le filtre ${category.name}`}
