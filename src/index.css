@@ -841,3 +841,11 @@ body > .fc-event {
   background: rgb(80 80 80);
   background-clip: content-box;
 }
+
+/* Trash icon turns red on hover */
+button:has(.lucide-trash-2):hover,
+button:has(.lucide-trash):hover,
+[role="button"]:has(.lucide-trash-2):hover,
+[role="button"]:has(.lucide-trash):hover {
+  color: rgb(239 68 68) !important;
+}
