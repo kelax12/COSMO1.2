@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Filter, X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
+import { Button } from '@/components/ui/button';
 
 import { useCategories } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
@@ -66,120 +67,122 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                           showCompleted;
 
     return (
-      <div className="space-y-4">
-        {/* Search Bar - Always on top */}
-        <div className="relative w-full">
-          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          <input
-            id="search-tasks-main"
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Filtrer par nom..."
-            className="w-full pl-10 pr-10 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-base"
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-primary))'
-            }}
-            aria-label="Rechercher une tâche par nom"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Effacer la recherche"
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex flex-row items-center gap-3 w-full lg:w-auto">
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-2 flex-1 lg:flex-none">
-              <label htmlFor="task-filter" className="text-sm font-medium whitespace-nowrap shrink-0 hidden sm:block" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                Trier par :
-              </label>
-              <div className="relative flex-1 lg:w-48">
-                <select
-                  id="task-filter"
-                  className="w-full appearance-none border rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
-                  style={{ 
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    borderColor: 'rgb(var(--color-border))',
-                    color: 'rgb(var(--color-text-primary))'
-                  }}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === 'completed') {
-                      onShowCompletedChange?.(true);
-                      onFilterChange('');
-                    } else {
-                      onShowCompletedChange?.(false);
-                      onFilterChange(value);
-                    }
-                  }}
-                  value={showCompleted ? 'completed' : currentFilter}
-                  aria-label="Trier les tâches par"
-                >
-                  <option value="">Toutes les tâches</option>
-                  <option value="priority">Par priorité</option>
-                  <option value="deadline">Par échéance</option>
-                  <option value="createdAt">Par date de création</option>
-                    <option value="name">Par nom</option>
-                    <option value="category">Par catégorie</option>
-                  </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  <ChevronDown size={16} aria-hidden="true" />
-                </div>
-              </div>
-            </div>
-
-            {/* Advanced Filters Toggle */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all shadow-sm border shrink-0 ${
-                showAdvancedFilters || hasActiveFilters
-                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                  : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-              }`}
-              aria-label={showAdvancedFilters ? "Masquer les filtres avancés" : "Afficher les filtres avancés"}
-              aria-expanded={showAdvancedFilters}
-            >
-              <Filter size={18} aria-hidden="true" />
-              <span className="hidden xs:inline">Filtres</span>
-              {hasActiveFilters && (
-                <motion.span 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-                >
-                  {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
-                </motion.span>
-              )}
-            </motion.button>
+      <div className="space-y-3">
+        {/* Single row: Search + Sort + Filters + Reset */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Search Bar - reduced width */}
+          <div className="relative w-52 shrink-0">
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              id="search-tasks-main"
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filtrer par nom..."
+              className="w-full pl-9 pr-8 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-sm"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+                color: 'rgb(var(--color-text-primary))'
+              }}
+              aria-label="Rechercher une tâche par nom"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                aria-label="Effacer la recherche"
+              >
+                <X size={14} aria-hidden="true" />
+              </Button>
+            )}
           </div>
 
-          {/* Clear Filters - Mobile Responsive */}
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2 shrink-0">
+            <label htmlFor="task-filter" className="text-sm font-medium whitespace-nowrap hidden sm:block" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+              Trier par :
+            </label>
+            <div className="relative w-44">
+              <select
+                id="task-filter"
+                className="w-full appearance-none border rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                style={{
+                  backgroundColor: 'rgb(var(--color-surface))',
+                  borderColor: 'rgb(var(--color-border))',
+                  color: 'rgb(var(--color-text-primary))'
+                }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'completed') {
+                    onShowCompletedChange?.(true);
+                    onFilterChange('');
+                  } else {
+                    onShowCompletedChange?.(false);
+                    onFilterChange(value);
+                  }
+                }}
+                value={showCompleted ? 'completed' : currentFilter}
+                aria-label="Trier les tâches par"
+              >
+                <option value="">Toutes les tâches</option>
+                <option value="priority">Par priorité</option>
+                <option value="deadline">Par échéance</option>
+                <option value="createdAt">Par date de création</option>
+                <option value="name">Par nom</option>
+                <option value="category">Par catégorie</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                <ChevronDown size={16} aria-hidden="true" />
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Filters Toggle */}
+          <Button
+            variant={showAdvancedFilters || hasActiveFilters ? 'default' : 'outline'}
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`flex items-center justify-center gap-2 shrink-0 ${
+              showAdvancedFilters || hasActiveFilters
+                ? 'monochrome:bg-white monochrome:text-black monochrome:border-white'
+                : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+            }`}
+            aria-label={showAdvancedFilters ? "Masquer les filtres avancés" : "Afficher les filtres avancés"}
+            aria-expanded={showAdvancedFilters}
+          >
+            <Filter size={18} data-icon="inline-start" aria-hidden="true" />
+            <span className="hidden xs:inline">Filtres</span>
+            {hasActiveFilters && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+              >
+                {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
+              </motion.span>
+            )}
+          </Button>
+
+          {/* Reset - inline next to Filters */}
           <AnimatePresence>
             {hasActiveFilters && (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={clearAllFilters}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-900/20 monochrome:bg-neutral-900 text-red-600 dark:text-red-400 monochrome:text-neutral-300 hover:bg-red-100 dark:hover:bg-red-900/40 monochrome:hover:bg-neutral-800 border border-red-200 dark:border-red-800/50 monochrome:border-neutral-700 transition-all shadow-sm w-full lg:w-auto"
-                aria-label="Réinitialiser tous les filtres"
               >
-                <X size={18} aria-hidden="true" />
-                <span>Réinitialiser</span>
-              </motion.button>
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 monochrome:bg-neutral-900 text-red-600 dark:text-red-400 monochrome:text-neutral-300 hover:bg-red-100 dark:hover:bg-red-900/40 monochrome:hover:bg-neutral-800 border-red-200 dark:border-red-800/50 monochrome:border-neutral-700 shrink-0"
+                  aria-label="Réinitialiser tous les filtres"
+                >
+                  <X size={16} data-icon="inline-start" aria-hidden="true" />
+                  <span>Réinitialiser</span>
+                </Button>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
@@ -210,26 +213,25 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                       </label>
                       <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                         {categories.map((category) => (
-                            <motion.button
+                            <Button
                               key={category.id}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
+                              variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
                               onClick={() => toggleCategory(category.id)}
-                              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all border shadow-sm shrink-0 ${
+                              className={`flex items-center gap-2 shrink-0 ${
                                 selectedCategories.includes(category.id)
-                                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                                  ? 'monochrome:bg-white monochrome:text-black monochrome:border-white'
+                                  : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
                               }`}
                               aria-label={`${selectedCategories.includes(category.id) ? 'Retirer' : 'Ajouter'} le filtre ${category.name}`}
                               aria-pressed={selectedCategories.includes(category.id)}
                             >
-                              <div 
+                              <div
                                 className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shadow-sm"
                                 style={{ backgroundColor: category.color }}
                                 aria-hidden="true"
                               />
                               <span className="truncate">{category.name}</span>
-                            </motion.button>
+                            </Button>
                           ))}
                         </div>
                       </div>
@@ -299,13 +301,14 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     <span className="text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Filtres actifs
                     </span>
-                    <button
+                    <Button
+                      variant="link"
                       onClick={clearAllFilters}
-                      className="text-xs text-red-600 dark:text-red-400 monochrome:text-neutral-400 hover:underline"
+                      className="text-xs text-red-600 dark:text-red-400 monochrome:text-neutral-400 h-auto p-0"
                       aria-label="Effacer tous les filtres"
                     >
                       Tout effacer
-                    </button>
+                    </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {searchTerm && (
@@ -320,12 +323,14 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                         <div key={cat} className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 monochrome:bg-neutral-800 text-blue-800 dark:text-blue-300 monochrome:text-neutral-300">
                           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
                           <span>{selected?.name || cat}</span>
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => toggleCategory(cat)}
                             className="text-blue-600 dark:text-blue-400 monochrome:text-neutral-400 hover:text-blue-800 dark:hover:text-blue-200"
                           >
                             <X size={14} aria-hidden="true" />
-                          </button>
+                          </Button>
                         </div>
                       );
                     })}
