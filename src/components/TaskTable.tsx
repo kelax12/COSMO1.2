@@ -391,9 +391,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant={activeQuickFilter === 'favoris' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => toggleQuickFilter('favoris')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? 'monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
           >
             {activeQuickFilter === 'favoris' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
             <span className="hidden sm:inline">{activeQuickFilter === 'favoris' ? 'Tous' : 'Favoris'}</span>
@@ -401,9 +401,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </Button>
 
           <Button
-            variant={activeQuickFilter === 'terminées' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => toggleQuickFilter('terminées')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? 'monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
           >
             <CheckCircle2 size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Terminées</span>
@@ -411,11 +411,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </Button>
 
           <Button
-            variant={activeQuickFilter === 'retard' ? 'outline' : 'outline'}
+            variant="outline"
             onClick={() => toggleQuickFilter('retard')}
             className={`flex items-center gap-2 ${
               activeQuickFilter === 'retard'
-                ? 'bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 text-red-600 dark:text-red-400 monochrome:text-neutral-300 border-red-300 dark:border-red-700 monochrome:border-neutral-600'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
                 : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
             }`}
           >
@@ -425,9 +425,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </Button>
 
           <Button
-            variant={activeQuickFilter === 'collaboration' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => toggleQuickFilter('collaboration')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? 'monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
           >
             <Users size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Collaboration</span>
