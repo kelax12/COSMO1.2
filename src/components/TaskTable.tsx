@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
@@ -312,9 +313,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
       </div>
       
-      <h4 className={`font-semibold text-lg mb-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
-        {task.name}
-      </h4>
+      <div className="flex items-center gap-2 mb-2">
+        <h4 className={`font-semibold text-lg ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {task.name}
+        </h4>
+        {task.isCollaborative && (
+          <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
+        )}
+      </div>
       
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[rgb(var(--color-text-secondary))] mb-3">
         <div className="flex items-center gap-1">
@@ -384,57 +390,49 @@ const TaskTable: React.FC<TaskTableProps> = ({
     <>
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-2">
-          <button
+          <Button
+            variant={activeQuickFilter === 'favoris' ? 'default' : 'outline'}
             onClick={() => toggleQuickFilter('favoris')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all shadow-sm border ${
-              activeQuickFilter === 'favoris' 
-                ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md' 
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-            }`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? 'monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
           >
-            {activeQuickFilter === 'favoris' ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
+            {activeQuickFilter === 'favoris' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
             <span className="hidden sm:inline">{activeQuickFilter === 'favoris' ? 'Tous' : 'Favoris'}</span>
             <span className="sm:hidden">Favoris</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant={activeQuickFilter === 'terminées' ? 'default' : 'outline'}
             onClick={() => toggleQuickFilter('terminées')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all shadow-sm border ${
-              activeQuickFilter === 'terminées'
-                ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-            }`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? 'monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
           >
-            <CheckCircle2 size={20} />
+            <CheckCircle2 size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Terminées</span>
             <span className="sm:hidden">Fait</span>
-          </button>
+          </Button>
 
-            <button
-              onClick={() => toggleQuickFilter('retard')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all shadow-sm border ${
-                activeQuickFilter === 'retard'
-                  ? 'bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 text-red-600 dark:text-red-400 monochrome:text-neutral-300 border border-red-300 dark:border-red-700 monochrome:border-neutral-600 shadow-md'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-              }`}
-            >
-              <AlertTriangle size={20} />
-              <span className="hidden sm:inline">Retard</span>
-              <span className="sm:hidden">Retard</span>
-            </button>
+          <Button
+            variant={activeQuickFilter === 'retard' ? 'outline' : 'outline'}
+            onClick={() => toggleQuickFilter('retard')}
+            className={`flex items-center gap-2 ${
+              activeQuickFilter === 'retard'
+                ? 'bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 text-red-600 dark:text-red-400 monochrome:text-neutral-300 border-red-300 dark:border-red-700 monochrome:border-neutral-600'
+                : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+            }`}
+          >
+            <AlertTriangle size={20} data-icon="inline-start" />
+            <span className="hidden sm:inline">Retard</span>
+            <span className="sm:hidden">Retard</span>
+          </Button>
 
-            <button
-              onClick={() => toggleQuickFilter('collaboration')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all shadow-sm border ${
-                activeQuickFilter === 'collaboration'
-                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-              }`}
-            >
-              <Users size={20} />
-              <span className="hidden sm:inline">Collaboration</span>
-              <span className="sm:hidden">Collab</span>
-            </button>
+          <Button
+            variant={activeQuickFilter === 'collaboration' ? 'default' : 'outline'}
+            onClick={() => toggleQuickFilter('collaboration')}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? 'monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+          >
+            <Users size={20} data-icon="inline-start" />
+            <span className="hidden sm:inline">Collaboration</span>
+            <span className="sm:hidden">Collab</span>
+          </Button>
         </div>
       </div>
 
@@ -531,10 +529,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <td className="px-1 py-4 whitespace-nowrap">
                   <TaskCategoryIndicator category={task.category} />
                 </td>
-                <td className={`font-medium px-2 py-4 text-base ${task.completed ? 'line-through' : ''}`} 
+                <td className={`font-medium px-2 py-4 text-base ${task.completed ? 'line-through' : ''}`}
                     style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
-                  <div className="truncate" title={task.name}>
-                    {task.name}
+                  <div className="flex items-center gap-2">
+                    <span className="truncate" title={task.name}>{task.name}</span>
+                    {task.isCollaborative && (
+                      <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
+                    )}
                   </div>
                 </td>
                 <td className="text-center px-1 py-4 whitespace-nowrap">
