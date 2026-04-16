@@ -244,11 +244,11 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                       </label>
                       <div className="flex items-center gap-2">
                         <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 monochrome:bg-neutral-800 border border-blue-200 dark:border-blue-500/30 monochrome:border-neutral-600 text-blue-600 dark:text-blue-400 monochrome:text-neutral-300 text-xs font-bold">
-                          P{priorityRange[0]}
+                          Priorité {priorityRange[0]}
                         </span>
                         <span className="text-slate-400 dark:text-slate-600">à</span>
                         <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 monochrome:bg-neutral-800 border border-blue-200 dark:border-blue-500/30 monochrome:border-neutral-600 text-blue-600 dark:text-blue-400 monochrome:text-neutral-300 text-xs font-bold">
-                          P{priorityRange[1]}
+                          Priorité {priorityRange[1]}
                         </span>
                       </div>
                     </div>
@@ -261,7 +261,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     step={1}
                     value={priorityRange}
                     onValueChange={(value) => setPriorityRange(value as [number, number])}
-                    className="cursor-pointer"
+                    className="cursor-pointer [&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                   />
                 </div>
 
@@ -271,7 +271,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     return (
                       <div key={p} className="flex flex-col items-center gap-2">
                         <div className={`text-xs font-black transition-colors ${isActive ? 'text-blue-400 monochrome:text-white scale-110' : 'text-slate-600'}`}>
-                          P{p}
+                          Priorité {p}
                         </div>
                         <div className={`h-2 w-2 rounded-full transition-all duration-300 ${isActive ? 'bg-blue-500 monochrome:bg-white ring-4 ring-blue-500/20 monochrome:ring-white/20' : 'bg-slate-800'}`} />
                         <span className="text-[10px] text-slate-500 font-medium">
@@ -284,69 +284,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               </div>
 
 
-              {/* Active Filters Summary */}
-              {hasActiveFilters && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-lg border"
-                  style={{
-                    backgroundColor: 'rgb(var(--color-hover))',
-                    borderColor: 'rgb(var(--color-border))'
-                  }}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      Filtres actifs
-                    </span>
-                    <Button
-                      variant="link"
-                      onClick={clearAllFilters}
-                      className="text-xs text-red-600 dark:text-red-400 monochrome:text-neutral-400 h-auto p-0"
-                      aria-label="Effacer tous les filtres"
-                    >
-                      Tout effacer
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {searchTerm && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 monochrome:bg-neutral-800 text-blue-700 dark:text-blue-400 monochrome:text-neutral-300 rounded text-xs">
-                        Recherche: "{searchTerm}"
-                      </span>
-                    )}
-                    {selectedCategories.map((cat) => {
-                      const selected = categories.find(c => c.id === cat);
-                      const color = selected?.color || '#3B82F6';
-                      return (
-                        <div key={cat} className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 monochrome:bg-neutral-800 text-blue-800 dark:text-blue-300 monochrome:text-neutral-300">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
-                          <span>{selected?.name || cat}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => toggleCategory(cat)}
-                            className="text-blue-600 dark:text-blue-400 monochrome:text-neutral-400 hover:text-blue-800 dark:hover:text-blue-200"
-                          >
-                            <X size={14} aria-hidden="true" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                    {showCompleted && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 monochrome:bg-neutral-800 text-green-700 dark:text-green-400 monochrome:text-neutral-300 rounded text-xs">
-                        Complétées
-                      </span>
-                    )}
-                    {(priorityRange[0] !== 1 || priorityRange[1] !== 5) && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 monochrome:bg-neutral-800 text-orange-700 dark:text-orange-400 monochrome:text-neutral-300 rounded text-xs">
-                        Priorité: {priorityRange[0]}-{priorityRange[1]}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
           </motion.div>
         )}
