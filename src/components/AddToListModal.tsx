@@ -127,7 +127,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                       </span>
                     </div>
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>
