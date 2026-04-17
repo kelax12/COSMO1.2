@@ -3,6 +3,7 @@ import { X, Clock, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import ColorSettingsModal from "./ColorSettingsModal";
 import { CalendarWithTime } from "./ui/calendar-with-time";
+import { Button } from "@/components/ui/button";
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Types (MIGRÉ)
@@ -182,8 +183,18 @@ const EventModal: React.FC<EventModalProps> = ({
       return;
     }
 
+    if (!startDate || !startTime || !endDate || !endTime) {
+      alert("Veuillez sélectionner une date et des horaires");
+      return;
+    }
+
     const start = new Date(`${startDate}T${startTime}`).toISOString();
     const end = new Date(`${endDate}T${endTime}`).toISOString();
+
+    if (isNaN(new Date(start).getTime()) || isNaN(new Date(end).getTime())) {
+      alert("Les dates saisies sont invalides");
+      return;
+    }
 
     if (new Date(end) <= new Date(start)) {
       alert("La date de fin doit être après la date de début");
@@ -302,10 +313,11 @@ const EventModal: React.FC<EventModalProps> = ({
           {getHeaderTitle()}
         </h2>
 
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
           type="button"
-          className="p-2 rounded-lg transition-colors"
           style={{ color: "rgb(var(--color-text-muted))" }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = "rgb(var(--color-text-primary))";
@@ -318,7 +330,7 @@ const EventModal: React.FC<EventModalProps> = ({
           aria-label="Fermer"
         >
           <X size={20} />
-        </button>
+        </Button>
       </div>
 
       <form
@@ -557,38 +569,31 @@ const EventModal: React.FC<EventModalProps> = ({
               </div>
 
             <div className="pt-2 space-y-2">
-              <button
+              <Button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                variant="default"
+                className="w-full flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
               >
                 {getSubmitButtonText()}
-              </button>
+              </Button>
               {mode === 'edit' ? (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
                   onClick={handleDelete}
-                  className="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: "transparent",
-                    borderColor: "rgb(var(--color-border))",
-                    color: "#DC2626",
-                  }}
+                  className="w-full"
                 >
                   Supprimer l'événement
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={onClose}
-                  className="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                  style={{
-                    backgroundColor: "transparent",
-                    borderColor: "rgb(var(--color-border))",
-                    color: "rgb(var(--color-text-secondary))",
-                  }}
+                  className="w-full"
                 >
                   Annuler
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -643,26 +648,18 @@ const EventModal: React.FC<EventModalProps> = ({
                 est irréversible.
               </p>
               <div className="flex justify-end gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <Button
+                  variant="outline"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 rounded-lg font-medium border transition-colors"
-                  style={{
-                    borderColor: "rgb(var(--color-border))",
-                    color: "rgb(var(--color-text-primary))",
-                  }}
                 >
                   Annuler
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                </Button>
+                <Button
+                  variant="destructive"
                   onClick={confirmDelete}
-                  className="px-4 py-2 rounded-lg font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
                 >
                   Supprimer
-                </motion.button>
+                </Button>
               </div>
             </motion.div>
           </motion.div>
