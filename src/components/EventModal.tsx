@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { X, Clock, Plus } from "lucide-react";
+import { X, Clock, Plus, CalendarIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import ColorSettingsModal from "./ColorSettingsModal";
-import { CalendarWithTime } from "./ui/calendar-with-time";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Types (MIGRÉ)
@@ -374,33 +377,134 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
 
             <div
-              className="p-4 rounded-2xl border transition-colors relative bg-transparent"
-              style={{
-                borderColor: "rgb(var(--color-border))",
-              }}
+              className="p-4 rounded-2xl border transition-colors relative bg-transparent space-y-3"
+              style={{ borderColor: "rgb(var(--color-border))" }}
             >
-              <CalendarWithTime
-                date={startDate}
-                onDateChange={(d) => {
-                  handleFieldChange("startDate", setStartDate, d);
-                  handleFieldChange("endDate", setEndDate, d);
-                }}
-                startTime={startTime}
-                onStartTimeChange={(t) => handleFieldChange("startTime", setStartTime, t)}
-                endTime={endTime}
-                onEndTimeChange={(t) => handleFieldChange("endTime", setEndTime, t)}
-                placeholder="Sélectionner date & horaires"
-                highlighted={
-                  isPrefilledMode &&
-                  (prefilledFields.has("startDate") ||
-                    prefilledFields.has("startTime") ||
-                    prefilledFields.has("endTime"))
-                }
-              />
+              {/* Sélecteur de date */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-1.5"
+                  style={{ color: "rgb(var(--color-text-secondary))" }}
+                >
+                  Date
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={`w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-sm transition-colors ${
+                        isPrefilledMode && prefilledFields.has("startDate")
+                          ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                          : ""
+                      }`}
+                      style={{
+                        backgroundColor:
+                          isPrefilledMode && prefilledFields.has("startDate")
+                            ? undefined
+                            : "transparent",
+                        borderColor:
+                          isPrefilledMode && prefilledFields.has("startDate")
+                            ? undefined
+                            : "rgb(var(--color-border))",
+                        color: startDate
+                          ? "rgb(var(--color-text-primary))"
+                          : "rgb(var(--color-text-muted))",
+                      }}
+                    >
+                      <span>
+                        {startDate
+                          ? format(new Date(startDate + "T12:00:00"), "dd MMMM yyyy", { locale: fr })
+                          : "Choisir une date"}
+                      </span>
+                      <CalendarIcon size={16} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[100]" align="start" sideOffset={8}>
+                    <Calendar
+                      mode="single"
+                      selected={startDate ? new Date(startDate + "T12:00:00") : undefined}
+                      onSelect={(d) => {
+                        if (!d) return;
+                        const formatted = format(d, "yyyy-MM-dd");
+                        handleFieldChange("startDate", setStartDate, formatted);
+                        handleFieldChange("endDate", setEndDate, formatted);
+                      }}
+                      locale={fr}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
+              {/* Sélecteurs d'heure */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    className="block text-sm font-semibold mb-1.5"
+                    style={{ color: "rgb(var(--color-text-secondary))" }}
+                  >
+                    Début
+                  </label>
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${
+                      isPrefilledMode && prefilledFields.has("startTime")
+                        ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                        : ""
+                    }`}
+                    style={{
+                      borderColor:
+                        isPrefilledMode && prefilledFields.has("startTime")
+                          ? undefined
+                          : "rgb(var(--color-border))",
+                    }}
+                  >
+                    <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
+                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      style={{ color: "rgb(var(--color-text-primary))" }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-semibold mb-1.5"
+                    style={{ color: "rgb(var(--color-text-secondary))" }}
+                  >
+                    Fin
+                  </label>
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${
+                      isPrefilledMode && prefilledFields.has("endTime")
+                        ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                        : ""
+                    }`}
+                    style={{
+                      borderColor:
+                        isPrefilledMode && prefilledFields.has("endTime")
+                          ? undefined
+                          : "rgb(var(--color-border))",
+                    }}
+                  >
+                    <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
+                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      style={{ color: "rgb(var(--color-text-primary))" }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Durée calculée */}
               {calculateDuration() && (
                 <div
-                  className="mt-3.5 pt-2.5 border-t border-dashed"
+                  className="pt-2.5 border-t border-dashed"
                   style={{ borderColor: "rgb(var(--color-border))" }}
                 >
                   <div className="flex items-center justify-between">
