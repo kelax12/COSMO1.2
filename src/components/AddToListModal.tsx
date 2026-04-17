@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
@@ -60,9 +61,10 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
               style={{ color: 'rgb(var(--color-text-primary))' }}>
             Ajouter à une liste
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
             style={{ color: 'rgb(var(--color-text-muted))' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'rgb(var(--color-text-primary))';
@@ -74,17 +76,18 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             }}
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
           <div className="space-y-3">
             {lists.map(list => {
               const isAlreadyInList = list.taskIds.includes(taskId);
               return (
-                <button
+                <Button
                   key={list.id}
+                  variant="outline"
                   onClick={() => handleAddToList(list.id)}
-                  className="w-full flex items-center gap-4 p-4 rounded-lg border transition-all"
+                  className="w-full flex items-center gap-4 p-4 h-auto"
                   style={{
                     backgroundColor: isAlreadyInList ? `${colorMap[list.color] || list.color}1A` : 'rgb(var(--color-surface))',
                     borderColor: isAlreadyInList ? colorMap[list.color] || list.color : 'rgb(var(--color-border))',

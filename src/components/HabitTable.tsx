@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Clock, Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { Button } from '@/components/ui/button';
 
 const colorOptions = [
 { value: 'blue', color: '#3B82F6' },
@@ -251,31 +252,34 @@ const HabitTable: React.FC = () => {
             {/* Navigation */}
             {period !== 'all' &&
             <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto">
-                <button
-                onClick={() => navigatePeriod('prev')}
-                className="p-1.5 md:p-2 rounded-lg transition-colors border md:border-0"
-                style={{ 
-                  color: 'rgb(var(--color-text-secondary))',
-                  borderColor: 'rgb(var(--color-border))'
-                }}>
-
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigatePeriod('prev')}
+                  className="border md:border-0"
+                  style={{
+                    color: 'rgb(var(--color-text-secondary))',
+                    borderColor: 'rgb(var(--color-border))'
+                  }}
+                >
                   <ChevronLeft size={18} />
-                </button>
+                </Button>
                 <div className="text-xs md:text-sm font-medium min-w-[100px] md:min-w-[120px] text-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
                   {getCurrentPeriodLabel()}
                 </div>
-                <button
-                onClick={() => navigatePeriod('next')}
-                disabled={!canNavigateNext()}
-                className="p-1.5 md:p-2 rounded-lg transition-colors border md:border-0"
-                style={{
-                  color: canNavigateNext() ? 'rgb(var(--color-text-secondary))' : 'rgb(var(--color-text-muted))',
-                  cursor: canNavigateNext() ? 'pointer' : 'not-allowed',
-                  borderColor: 'rgb(var(--color-border))'
-                }}>
-
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigatePeriod('next')}
+                  disabled={!canNavigateNext()}
+                  className="border md:border-0"
+                  style={{
+                    color: canNavigateNext() ? 'rgb(var(--color-text-secondary))' : 'rgb(var(--color-text-muted))',
+                    borderColor: 'rgb(var(--color-border))'
+                  }}
+                >
                   <ChevronRight size={18} />
-                </button>
+                </Button>
               </div>
             }
 
@@ -507,25 +511,27 @@ const HabitTable: React.FC = () => {
                 
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-4 pt-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setGlobalPage(p => Math.max(0, p - 1))}
                       disabled={globalPage === 0}
-                      className="p-1.5 rounded-full transition-colors disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800"
                       style={{ color: 'rgb(var(--color-text-secondary))' }}
                     >
                       <ChevronLeft size={20} />
-                    </button>
+                    </Button>
                     <span className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       {globalPage + 1} / {totalPages}
                     </span>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setGlobalPage(p => Math.min(totalPages - 1, p + 1))}
                       disabled={globalPage === totalPages - 1}
-                      className="p-1.5 rounded-full transition-colors disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800"
                       style={{ color: 'rgb(var(--color-text-secondary))' }}
                     >
                       <ChevronRight size={20} />
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

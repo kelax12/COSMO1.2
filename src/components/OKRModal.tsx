@@ -3,6 +3,7 @@ import { Plus, TrendingUp, Trash2, X, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
+import { Button } from '@/components/ui/button';
 
 type KeyResult = {
   id: string;
@@ -211,9 +212,9 @@ const OKRModal: React.FC<OKRModalProps> = ({
         <div className="md:rounded-xl md:shadow-2xl w-full h-full transition-colors bg-white dark:bg-slate-800">
           <div className="flex justify-between items-center p-6 border-b dark:border-slate-700">
             <h2 className="text-xl font-bold">{editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}</h2>
-            <button onClick={handleClose}>
+            <Button variant="ghost" size="icon" onClick={handleClose}>
               <X size={20} />
-            </button>
+            </Button>
           </div>
           <form onSubmit={handleSubmitObjective} className="p-6 space-y-8 overflow-y-auto h-[calc(100%-80px)] md:h-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -304,14 +305,15 @@ const OKRModal: React.FC<OKRModalProps> = ({
                     Définissez comment vous mesurerez votre succès
                   </p>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={addKeyResult}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                  className="flex items-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50">
 
-                  <Plus size={18} />Ajouter un KR (Sous-objectif)
+                  <Plus size={18} data-icon="inline-start" />Ajouter un KR (Sous-objectif)
 
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-3">
@@ -367,14 +369,16 @@ const OKRModal: React.FC<OKRModalProps> = ({
                       </div>
                     </div>
                     {keyResults.length > 1 &&
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeKeyResult(idx)}
-                    className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all self-center"
+                    className="self-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                     title="Supprimer ce résultat">
 
                         <Trash2 size={20} className="text-red-500" />
-                      </button>
+                      </Button>
                   }
                   </motion.div>
                 )}
@@ -382,19 +386,20 @@ const OKRModal: React.FC<OKRModalProps> = ({
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t dark:border-slate-700">
-              <button
+              <Button
                 type="button"
-                onClick={handleClose}
-                className="px-6 py-2.5 rounded-lg font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                variant="outline"
+                onClick={handleClose}>
 
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
+                variant="default"
+                className="flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
 
                 {editingObjective ? 'Mettre à jour' : "Créer l'objectif"}
-              </button>
+              </Button>
             </div>
             </form>
           </div>

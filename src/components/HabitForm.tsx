@@ -4,6 +4,7 @@ import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 import { useCreateHabit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
+import { Button } from '@/components/ui/button';
 
 interface HabitFormProps {
   onClose: () => void;
@@ -48,15 +49,14 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
     }}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Nouvelle habitude</h2>
-        <button 
-          onClick={onClose} 
-          className="transition-colors"
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
           style={{ color: 'rgb(var(--color-text-muted))' }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-secondary))'}
-          onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
         >
           <X size={20} />
-        </button>
+        </Button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
@@ -155,19 +155,21 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
 
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm md:text-base"
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto"
             >
               Annuler
-            </button>
-            <button 
-              type="submit" 
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-sm md:text-base"
+            </Button>
+            <Button
+              type="submit"
+              variant="default"
+              className="w-full sm:w-auto"
             >
               Créer l'habitude
-            </button>
+            </Button>
           </div>
       </form>
       

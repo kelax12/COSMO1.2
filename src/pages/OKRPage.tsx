@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Clock } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import CategoryManager, { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -212,25 +213,26 @@ const OKRPage: React.FC = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 mb-8">
-          <button
+          <Button
+            variant="outline"
             onClick={() => setShowCategoryManager(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2 border rounded-lg transition-all duration-300 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 hover:scale-105 hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 active:scale-95 group relative overflow-hidden"
+            className="flex items-center justify-center gap-2 group relative overflow-hidden"
             style={{
               borderColor: 'rgb(var(--color-border))',
               color: 'rgb(var(--color-text-secondary))',
               backgroundColor: 'rgb(var(--color-surface))'
             }}>
             <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Plus size={20} className="text-blue-500 group-hover:rotate-90 transition-transform duration-300" />
+            <Plus data-icon="inline-start" size={20} className="text-blue-500 group-hover:rotate-90 transition-transform duration-300" />
             <span className="whitespace-nowrap font-medium">Gérer les catégories</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="default"
             onClick={() => setShowAddObjective(true)}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
-
-          <Plus size={20} />
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
+          <Plus data-icon="inline-start" size={20} />
           <span className="whitespace-nowrap">Nouvel Objectif</span>
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">

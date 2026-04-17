@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Habit, useUpdateHabit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
+import { Button } from '@/components/ui/button';
 
 interface HabitCardProps {
   habit: Habit;
@@ -122,13 +123,14 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit, externalIsEditi
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Modifier l'habitude</h3>
-              <button
+              <Button
+                variant="outline"
                 onClick={handleCancelEdit}
-                className="flex items-center gap-1 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-sm"
+                className="flex items-center gap-1"
               >
-                <X size={14} />
+                <X size={14} data-icon="inline-start" />
                 Annuler
-              </button>
+              </Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,12 +182,13 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit, externalIsEditi
             </div>
             
               <div className="flex justify-end pt-4">
-                <button
+                <Button
+                  variant="default"
                   onClick={handleSaveEdit}
-                  className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+                  className="w-full md:w-auto"
                 >
                   Sauvegarder
-                </button>
+                </Button>
               </div>
           </div>
         ) : (
@@ -213,29 +216,33 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit, externalIsEditi
               </div>
               
                 <div className="flex items-center gap-1 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowDetails(!showDetails)}
-                    className={`flex items-center gap-2 p-2 md:px-3 md:py-2 rounded-lg transition-colors ${
-                      showDetails 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                        : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    className={`flex items-center gap-2 md:px-3 md:w-auto ${
+                      showDetails
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : ''
                     }`}
                   >
                     <Calendar size={18} className="md:w-4 md:h-4" />
                     <span className="text-xs font-medium md:hidden">Historique</span>
-                  </button>
-                  <button 
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsEditing(true)}
-                    className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                   >
                     <Edit2 size={18} className="md:w-4 md:h-4" />
-                  </button>
-                    <button 
-                      onClick={() => setIsDeleting(true)}
-                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={18} className="md:w-4 md:h-4" />
-                    </button>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsDeleting(true)}
+                  >
+                    <Trash2 size={18} className="md:w-4 md:h-4" />
+                  </Button>
                   </div>
                 </div>
       
@@ -258,18 +265,20 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit, externalIsEditi
                             Êtes-vous sûr de vouloir supprimer l'habitude "{habit.name}" ? Cette action est irréversible.
                           </p>
                           <div className="flex gap-3">
-                            <button
+                            <Button
+                              variant="outline"
                               onClick={() => setIsDeleting(false)}
-                              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                              className="flex-1"
                             >
                               Annuler
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="destructive"
                               onClick={handleDelete}
-                              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
+                              className="flex-1"
                             >
                               Supprimer
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </motion.div>

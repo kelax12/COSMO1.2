@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Calendar, Grid3X3, List } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import HabitCard from '../components/HabitCard';
 import HabitForm from '../components/HabitForm';
 import HabitTable from '../components/HabitTable';
@@ -54,39 +55,42 @@ const HabitsPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             {habits.length > 0 && (
               <div className="flex items-center rounded-lg p-1 transition-colors bg-opacity-50" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setViewMode('list')}
-                  className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md transition-all text-sm md:text-base"
+                  className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md text-sm md:text-base"
                   style={{
                     backgroundColor: viewMode === 'list' ? 'rgb(var(--color-surface))' : 'transparent',
                     color: viewMode === 'list' ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
                     boxShadow: viewMode === 'list' ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
                   }}
                 >
-                  <List size={16} />
+                  <List data-icon="inline-start" size={16} />
                   <span>Liste</span>
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => setViewMode('table')}
-                  className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md transition-all text-sm md:text-base"
+                  className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md text-sm md:text-base"
                   style={{
                     backgroundColor: viewMode === 'table' ? 'rgb(var(--color-surface))' : 'transparent',
                     color: viewMode === 'table' ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
                     boxShadow: viewMode === 'table' ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
                   }}
                 >
-                  <Grid3X3 size={16} />
+                  <Grid3X3 data-icon="inline-start" size={16} />
                   <span>Tableau</span>
-                </button>
+                </Button>
               </div>
             )}
-            <button
+            <Button
+              variant="default"
               onClick={() => setShowAddForm(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-sm md:text-base"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-sm md:text-base"
             >
-              <Plus size={18} />
+              <Plus data-icon="inline-start" size={18} />
               <span>Nouvelle</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -111,12 +115,13 @@ const HabitsPage: React.FC = () => {
                 </div>
                 <h3 className="text-lg md:text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Aucune habitude</h3>
                 <p className="mb-6 text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>Commencez par créer votre première habitude</p>
-                <button
+                <Button
+                  variant="default"
                   onClick={() => setShowAddForm(true)}
-                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
                 >
                   Créer une habitude
-                </button>
+                </Button>
               </div>
             )}
           </div>
