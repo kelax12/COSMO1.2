@@ -133,6 +133,9 @@ const DeadlineCalendar: React.FC = () => {
       borderColor: 'rgb(var(--color-border))'
     }}>
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          Calendrier des deadlines
+        </p>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-2 justify-center sm:justify-start">
             <button
