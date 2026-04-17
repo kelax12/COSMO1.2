@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Clock, Plus } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import ColorSettingsModal from "./ColorSettingsModal";
 import { CalendarWithTime } from "./ui/calendar-with-time";
 import { Button } from "@/components/ui/button";
