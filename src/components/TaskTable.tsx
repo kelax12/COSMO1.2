@@ -458,12 +458,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
-              <th 
+              <th
                 className="cursor-pointer px-2 py-3"
                 onClick={() => handleSort('deadline')}
                 style={{ width: '100px' }}
               >
-                Dead line
+                {activeQuickFilter === 'terminées' ? 'Date de validation' : 'Dead line'}
                 {localSortField === 'deadline' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
@@ -540,7 +540,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </span>
                 </td>
                 <td className="px-2 py-4 whitespace-nowrap text-base font-medium">
-                  {formatDate(task.deadline)}
+                  {activeQuickFilter === 'terminées'
+                    ? (task.completedAt ? formatDate(task.completedAt) : '—')
+                    : formatDate(task.deadline)}
                 </td>
                 <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.estimatedTime}</td>
                 <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
