@@ -1,12 +1,31 @@
-import React from 'react';
-import { Repeat, Clock, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Repeat, Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+
+// Hauteur approximative d'une carte habitude (p-4 + contenu + gap)
+const HABIT_ITEM_HEIGHT = 100;
+// Hauteur occupée par le header de la card + paddings de la page
+const CARD_OVERHEAD = 180;
+
+const getVisibleLimit = () => {
+  if (typeof window === 'undefined') return 5;
+  const available = window.innerHeight - CARD_OVERHEAD;
+  return Math.max(3, Math.floor(available / HABIT_ITEM_HEIGHT));
+};
 
 const TodayHabits: React.FC = () => {
   const { data: habits = [], isLoading } = useHabits();
   const toggleCompletionMutation = useToggleHabitCompletion();
   const today = new Date().toLocaleDateString('en-CA');
+  const [visibleLimit, setVisibleLimit] = useState(getVisibleLimit);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setVisibleLimit(getVisibleLimit());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const todayHabits = habits.map((habit) => ({
     ...habit,
@@ -52,7 +71,7 @@ const TodayHabits: React.FC = () => {
     </div>
 
     <div className="space-y-4">
-        {todayHabits.map((habit) =>
+        {(showAll ? todayHabits : todayHabits.slice(0, visibleLimit)).map((habit) =>
         <div
           key={habit.id}
             className={`p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg ${
@@ -95,13 +114,32 @@ const TodayHabits: React.FC = () => {
           </div>
         )}
 
-        {todayHabits.length === 0 &&
-        <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
+        {todayHabits.length === 0 && (
+          <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
             <Repeat size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
             <p>Aucune habitude configurée</p>
             <p className="text-sm">Ajoutez des habitudes dans la section dédiée</p>
           </div>
-        }
+        )}
+
+        {todayHabits.length > visibleLimit && (
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+          >
+            {showAll ? (
+              <>
+                <ChevronUp size={16} />
+                Voir moins
+              </>
+            ) : (
+              <>
+                <ChevronDown size={16} />
+                Voir plus ({todayHabits.length - visibleLimit} restantes)
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>);
 
