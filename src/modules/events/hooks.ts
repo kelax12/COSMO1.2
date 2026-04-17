@@ -56,10 +56,11 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: (input: CreateEventInput) => repository.create(input),
     onSuccess: (newEvent) => {
+      queryClient.setQueryData<CalendarEvent[]>(eventsKeys.lists(), (old = []) => [...old, newEvent]);
       if (newEvent.taskId) {
         queryClient.invalidateQueries({ queryKey: eventsKeys.byTask(newEvent.taskId) });
       }
-      invalidateAllEventQueries(queryClient);
+      toast.success('Événement créé');
     },
     onError: (error: Error) => {
       toast.error(`Impossible de créer l'événement : ${error.message}`);
@@ -152,7 +153,7 @@ export const useDeleteEvent = () => {
 export const useEventsByDate = (date: string) => {
   const { data: events = [] } = useEvents();
   return useMemo(
-    () => events.filter((e) => e.startTime.startsWith(date)),
+    () => events.filter((e) => e.start.startsWith(date)),
     [events, date]
   );
 };
@@ -163,8 +164,8 @@ export const useUpcomingEvents = (limit = 5) => {
   return useMemo(
     () =>
       events
-        .filter((e) => e.startTime >= now)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        .filter((e) => e.start >= now)
+        .sort((a, b) => a.start.localeCompare(b.start))
         .slice(0, limit),
     [events, now, limit]
   );

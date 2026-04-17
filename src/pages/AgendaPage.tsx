@@ -36,6 +36,7 @@ const AgendaPage: React.FC = () => {
   const calendarRef = useRef<FullCalendar>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
+  const categoriesRef = useRef(categories);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -60,6 +61,10 @@ const AgendaPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
+
   // Initialization effect for external dragging
   useEffect(() => {
     if (!showTaskSidebar) return;
@@ -72,18 +77,19 @@ const AgendaPage: React.FC = () => {
           longPressDelay: 50,
           eventData: function (eventEl) {
             const taskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
+            const catColor = categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280';
             return {
               title: taskData.name,
               duration: { minutes: taskData.estimatedTime },
-              backgroundColor: getCategoryColor(taskData.category),
-              borderColor: getCategoryColor(taskData.category),
+              backgroundColor: catColor,
+              borderColor: catColor,
               textColor: '#ffffff',
               extendedProps: {
                 taskId: taskData.id,
                 priority: taskData.priority,
                 category: taskData.category,
                 estimatedTime: taskData.estimatedTime,
-                categoryName: categories.find(c => c.id === taskData.category)?.name || 'Sans catégorie'
+                categoryName: categoriesRef.current.find(c => c.id === taskData.category)?.name || 'Sans catégorie'
               }
             };
           }
