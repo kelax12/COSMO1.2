@@ -311,21 +311,23 @@ const DashboardPage: React.FC = () => {
         </motion.div>
 
         {/* Contenu principal en grille */}
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
           variants={containerVariants}
         >
-          {/* Colonne gauche - Graphiques */}
+          {/* Colonne gauche - Graphiques + Tâches */}
           <motion.div
             className="lg:col-span-2 flex flex-col gap-6 lg:gap-8"
             variants={itemVariants}
           >
             <DashboardChart viewMode={viewMode} />
             <DashboardBarChart viewMode={viewMode} />
+            <TodayTasks />
+            <CollaborativeTasks />
           </motion.div>
-          
+
           {/* Colonne droite - Habitudes du jour */}
-          <motion.div 
+          <motion.div
             className="lg:col-span-1"
             variants={itemVariants}
           >
@@ -333,25 +335,9 @@ const DashboardPage: React.FC = () => {
           </motion.div>
         </motion.div>
 
-        {/* Deuxième rangée */}
-        <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8"
-          variants={containerVariants}
-        >
-          {/* OKR en cours */}
-          <motion.div variants={itemVariants}>
-            <ActiveOKRs />
-          </motion.div>
-          
-          {/* Mini To-Do List du jour */}
-          <motion.div variants={itemVariants}>
-            <TodayTasks />
-          </motion.div>
-        </motion.div>
-
-        {/* Section Tâches collaboratives */}
+        {/* OKR en cours - pleine largeur */}
         <motion.div variants={itemVariants}>
-          <CollaborativeTasks />
+          <ActiveOKRs />
         </motion.div>
 
       </motion.div>
