@@ -315,7 +315,7 @@ const DashboardPage: React.FC = () => {
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
           variants={containerVariants}
         >
-          {/* Colonne gauche - Graphiques + Tâches */}
+          {/* Colonne gauche - Graphiques + Tâches + OKR */}
           <motion.div
             className="lg:col-span-2 flex flex-col gap-6 lg:gap-8"
             variants={itemVariants}
@@ -324,6 +324,7 @@ const DashboardPage: React.FC = () => {
             <DashboardBarChart viewMode={viewMode} />
             <TodayTasks />
             <CollaborativeTasks />
+            <ActiveOKRs />
           </motion.div>
 
           {/* Colonne droite - Habitudes du jour */}
@@ -333,11 +334,6 @@ const DashboardPage: React.FC = () => {
           >
             <TodayHabits />
           </motion.div>
-        </motion.div>
-
-        {/* OKR en cours - pleine largeur */}
-        <motion.div variants={itemVariants}>
-          <ActiveOKRs />
         </motion.div>
 
       </motion.div>
