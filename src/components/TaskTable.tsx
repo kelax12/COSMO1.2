@@ -393,7 +393,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('favoris')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
           >
             {activeQuickFilter === 'favoris' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
             <span className="hidden sm:inline">{activeQuickFilter === 'favoris' ? 'Tous' : 'Favoris'}</span>
@@ -403,7 +403,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('terminées')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
           >
             <CheckCircle2 size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Terminées</span>
@@ -413,11 +413,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('retard')}
-            className={`flex items-center gap-2 ${
-              activeQuickFilter === 'retard'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-            }`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'retard' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
           >
             <AlertTriangle size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Retard</span>
@@ -427,7 +423,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('collaboration')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white' : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
           >
             <Users size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Collaboration</span>
