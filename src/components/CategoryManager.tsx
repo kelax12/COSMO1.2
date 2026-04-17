@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2, Edit2, Check, LayoutGrid, Type, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 export type Category = {
   id: string;
@@ -149,12 +150,13 @@ export const getColorFr = (colorName: string) => {
                   <p className="text-xs text-slate-400 font-medium">Organisez vos objectifs et tâches</p>
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onClose}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             {/* Content */}

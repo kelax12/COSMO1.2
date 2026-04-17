@@ -3,6 +3,7 @@ import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -103,12 +104,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md relative">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
         >
           <X size={24} />
-        </button>
+        </Button>
 
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">
@@ -123,14 +126,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => handleGoogleLogin()}
-            className="w-full bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-900 dark:text-white border border-gray-300 dark:border-slate-600 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-3"
+            className="w-full flex items-center justify-center gap-3"
           >
-            <GoogleIcon />
+            <GoogleIcon data-icon="inline-start" />
             {mode === 'login' ? 'Se connecter avec Google' : 'S\'inscrire avec Google'}
-          </button>
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -194,44 +198,49 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
                 placeholder="••••••••"
                 required
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-400 hover:text-white dark:hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              </Button>
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
+            variant="default"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
           >
             {isLoading ? 'Chargement...' : (mode === 'login' ? 'Se connecter' : 'Créer mon compte')}
-          </button>
+          </Button>
 
           {mode === 'login' && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleDemoMode}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-lg font-semibold transition-all duration-300 border border-slate-700"
+              className="w-full"
             >
               Mode Démo (Aperçu rapide)
-            </button>
+            </Button>
           )}
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-slate-400 dark:text-slate-400">
             {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
-            <button
+            <Button
+              variant="link"
               onClick={() => onSwitchMode(mode === 'login' ? 'register' : 'login')}
-              className="text-blue-400 dark:text-blue-400 hover:text-blue-300 dark:hover:text-blue-300 font-semibold ml-1 transition-colors"
+              className="text-blue-400 hover:text-blue-300 font-semibold ml-1 p-0 h-auto"
             >
               {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
-            </button>
+            </Button>
           </p>
         </div>
       </div>

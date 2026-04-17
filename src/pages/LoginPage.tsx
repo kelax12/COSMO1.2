@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -59,13 +60,14 @@ const LoginPage = () => {
             />
           </div>
           
-          <button
+          <Button
             type="submit"
+            variant="default"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50"
+            className="w-full"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
-          </button>
+          </Button>
         </form>
         
         <p className="mt-8 text-center text-slate-400">
