@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, Plus, Loader2, Sparkles } from 'lucide-react';
+import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -110,6 +110,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [step, setStep] = useState(1);
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
@@ -149,6 +150,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // Initialize form data when task changes
   useEffect(() => {
     if (!isOpen) return;
+    setStep(1);
 
     if (isCreating) {
       setFormData({
@@ -287,6 +289,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     }
 
     return nameValid && timeValid && priorityValid && categoryValid && deadlineValid;
+  };
+
+  const isStep1Valid = () => {
+    const nameValid = formData.name.trim().length >= 1 && formData.name.trim().length <= 100;
+    const priorityValid = formData.priority !== 0;
+    const categoryValid = !!formData.category;
+    let deadlineValid = true;
+    if (formData.deadline) {
+      const d = new Date(formData.deadline);
+      const today = new Date(); today.setHours(0,0,0,0);
+      deadlineValid = d >= today;
+    }
+    return nameValid && priorityValid && categoryValid && deadlineValid;
   };
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -530,6 +545,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
               </h2>
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full transition-colors ${step === 1 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                <div className={`w-2 h-2 rounded-full transition-colors ${step === 2 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+              </div>
               {hasChanges &&
                 <div className="flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md">
                   <AlertCircle size={12} aria-hidden="true" />
@@ -559,9 +578,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             }
 
               <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {/* Left Column - Main Information */}
+                {/* ── Step 1 : champs principaux ── */}
+                {step === 1 && (
                 <div className="space-y-5">
 
                   {/* Task Name */}
@@ -917,24 +936,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         </div>
                       )}
 
-                        {/* Collaborateurs Toggle (Mobile Only) */}
-                          <button
-                            type="button"
-                            data-collaborator-toggle="true"
-                            onClick={() => setShowCollaboratorSection(!showCollaboratorSection)}
-                            className={`md:hidden flex items-center gap-3 p-4 rounded-lg border transition-all ${
-                              showCollaboratorSection ? 'bg-blue-500/10 border-blue-500/50' : ''
-                            }`}
-                          style={{
-                            backgroundColor: showCollaboratorSection ? undefined : 'rgb(var(--color-hover))',
-                            borderColor: showCollaboratorSection ? undefined : 'rgb(var(--color-border))'
-                          }}
-                        >
-                          <Users size={20} className="text-blue-500" />
-                            <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                              Collaborateurs
-                            </span>
-                        </button>
+
 
                       <div className="flex flex-wrap gap-2 items-center">
                                 {selectedListIds.map(id => {
@@ -962,28 +964,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               </div>
                   </div>
                 </div>
+                )} {/* end step 1 */}
 
-                  {/* Right Column - Collaborators and Preview */}
-                  <div className="space-y-6">
+                {/* ── Step 2 : collaborateurs + aperçu ── */}
+                {step === 2 && (
+                <div className="space-y-6">
 
                     {/* Collaborators Section */}
                     <div>
-                      <div className="hidden md:flex items-center justify-between mb-4">
+                      <div className="flex items-center mb-4">
                         <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Collaborateurs
                         </label>
-                            <button
-                              type="button"
-                              data-collaborator-toggle="true"
-                              onClick={() => setShowCollaboratorSection(!showCollaboratorSection)}
-                              className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                            >
-                            <Users size={16} className="text-blue-500" />
-                            <span>{showCollaboratorSection ? 'Masquer' : 'Gérer'}</span>
-                          </button>
                       </div>
 
-                      {showCollaboratorSection && (
+                      {(
                         <div
                           ref={collaboratorRef}
                           className="rounded-lg p-4 border transition-colors"
@@ -1107,8 +1102,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   </div>
 
                   {/* Task Preview */}
-                  {!showCollaboratorSection && (
-                    <div className="hidden md:block p-4 rounded-lg border transition-colors" style={{
+                  {(
+                    <div className="block p-4 rounded-lg border transition-colors" style={{
                       backgroundColor: 'rgb(var(--color-hover))',
                       borderColor: 'rgb(var(--color-border))'
                     }}>
@@ -1142,52 +1137,68 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     </div>
                   )}
                 </div>
-              </div>
+                )} {/* end step 2 */}
 
-                {/* Action Buttons */}
+                {/* ── Action Buttons ── */}
                 <div className="flex justify-between items-center pt-6 border-t mt-6" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  {!isCreating ? (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={handleDelete}
-                      disabled={isLoading}
-                    >
-                      <Trash2 size={14} data-icon="inline-start" />
-                      <span className="hidden sm:inline">Supprimer</span>
-                    </Button>
-                  ) : <div />}
-
-                  <div className="flex gap-2 sm:gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      onClick={handleClose}
-                      disabled={isLoading}
-                    >
-                      Annuler
-                    </Button>
-                    <Button
-                      type="submit"
-                      size="lg"
-                      disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
-                      className={
-                        isLoading || !isFormValid() || (!hasChanges && !isCreating)
-                          ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
-                      }
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                          <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
-                        </>
-                      ) : (
-                        isCreating ? 'Créer la tâche' : 'Sauvegarder'
-                      )}
-                    </Button>
-                  </div>
+                  {step === 1 ? (
+                    <>
+                      {!isCreating ? (
+                        <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
+                          <Trash2 size={14} data-icon="inline-start" />
+                          <span className="hidden sm:inline">Supprimer</span>
+                        </Button>
+                      ) : <div />}
+                      <div className="flex gap-2 sm:gap-3">
+                        <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading}>
+                          Annuler
+                        </Button>
+                        <Button
+                          type="button"
+                          size="lg"
+                          onClick={() => { if (validateForm()) setStep(2); }}
+                          disabled={!isStep1Valid()}
+                          className={!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}
+                        >
+                          Suivant
+                          <ChevronRight size={16} data-icon="inline-end" />
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)} disabled={isLoading}>
+                        ← Retour
+                      </Button>
+                      <div className="flex gap-2 sm:gap-3">
+                        {!isCreating && (
+                          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
+                            <Trash2 size={14} data-icon="inline-start" />
+                            <span className="hidden sm:inline">Supprimer</span>
+                          </Button>
+                        )}
+                        <Button
+                          type="submit"
+                          size="lg"
+                          disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
+                          className={
+                            isLoading || !isFormValid() || (!hasChanges && !isCreating)
+                              ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                          }
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
+                              <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                            </>
+                          ) : (
+                            isCreating ? 'Créer la tâche' : 'Sauvegarder'
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
               </div>
             </form>
           </div>
