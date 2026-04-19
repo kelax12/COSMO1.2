@@ -672,35 +672,13 @@ const EventModal: React.FC<EventModalProps> = ({
                 )}
               </div>
 
-            <div className="pt-2 space-y-2">
+            <div className="pt-6">
               <Button
                 type="submit"
-                className="w-full h-11 text-sm font-semibold flex items-center justify-center gap-2 border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all"
+                className="w-full h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all"
               >
-                {mode === 'add' && <Plus size={16} />}
-                {mode === 'edit' && <Check size={16} />}
-                {mode === 'convert' && <ArrowRight size={16} />}
                 {getSubmitButtonText()}
               </Button>
-              {mode === 'edit' ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleDelete}
-                  className="w-full"
-                >
-                  Supprimer l'événement
-                </Button>
-              ) : mode === 'add' ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  className="w-full"
-                >
-                  Annuler
-                </Button>
-              ) : null}
             </div>
           </div>
         </div>
