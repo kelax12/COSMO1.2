@@ -1156,7 +1156,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         <Button
                           type="button"
                           size="lg"
-                          onClick={() => { if (validateForm()) setStep(2); }}
+                          onClick={(e) => { e.preventDefault(); setStep(2); }}
                           disabled={!isStep1Valid()}
                           className={!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}
                         >
