@@ -545,7 +545,7 @@ const TasksPage: React.FC = () => {
                           initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
-                          className="mt-3 flex items-center gap-3 px-4 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
+                          className="mt-3 flex items-center gap-3 px-6 py-5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
                         >
                           <span className="text-sm text-blue-700 dark:text-blue-300 font-medium flex-1">
                             {selectedTasksForList.length === 0
@@ -555,15 +555,15 @@ const TasksPage: React.FC = () => {
                           <button
                             onClick={confirmAddTasksToList}
                             disabled={selectedTasksForList.length === 0}
-                            className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                            className="px-5 py-2.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-40 transition-all"
                           >
                             Valider
                           </button>
                           <button
                             onClick={cancelSelectingTasks}
-                            className="p-1 rounded text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                            className="p-2 rounded text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                           >
-                            <X size={14} />
+                            <X size={20} />
                           </button>
                         </motion.div>
                       )}
