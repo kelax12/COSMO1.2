@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
@@ -539,38 +539,47 @@ const TaskTable: React.FC<TaskTableProps> = ({
               >
                 <td className="px-2 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center gap-5">
-                    {addToListMode && (
-                      <motion.button
-                        onClick={() => onToggleTaskForList?.(task.id)}
-                        initial={{ scale: 0, opacity: 0, x: -8 }}
-                        animate={{
-                          scale: 1, opacity: 1, x: 0,
-                          boxShadow: selectedForListIds.includes(task.id)
-                            ? '0 0 0 3px rgba(59,130,246,0.3)'
-                            : '0 0 0 0px rgba(59,130,246,0)',
-                        }}
-                        exit={{ scale: 0, opacity: 0, x: -8 }}
-                        whileHover={{ scale: 1.15, borderColor: '#3B82F6' }}
-                        whileTap={{ scale: 0.88 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                        className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
-                          selectedForListIds.includes(task.id)
-                            ? 'bg-blue-500 border-blue-500'
-                            : 'border-slate-300 dark:border-slate-600'
-                        }`}
-                      >
-                        <motion.svg
-                          key={selectedForListIds.includes(task.id) ? 'checked' : 'unchecked'}
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: selectedForListIds.includes(task.id) ? 1 : 0, opacity: selectedForListIds.includes(task.id) ? 1 : 0 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                          className="w-3.5 h-3.5 text-white"
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                    <AnimatePresence>
+                      {addToListMode && (
+                        <motion.div
+                          initial={{ width: 0, opacity: 0 }}
+                          animate={{ width: 28, opacity: 1 }}
+                          exit={{ width: 0, opacity: 0 }}
+                          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                          className="overflow-hidden shrink-0 flex items-center"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </motion.svg>
-                      </motion.button>
-                    )}
+                          <motion.button
+                            onClick={() => onToggleTaskForList?.(task.id)}
+                            animate={{
+                              boxShadow: selectedForListIds.includes(task.id)
+                                ? '0 0 0 3px rgba(59,130,246,0.3)'
+                                : '0 0 0 0px rgba(59,130,246,0)',
+                            }}
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.88 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                            className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
+                              selectedForListIds.includes(task.id)
+                                ? 'bg-blue-500 border-blue-500'
+                                : 'border-slate-300 dark:border-slate-600'
+                            }`}
+                          >
+                            <motion.svg
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{
+                                scale: selectedForListIds.includes(task.id) ? 1 : 0,
+                                opacity: selectedForListIds.includes(task.id) ? 1 : 0,
+                              }}
+                              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                              className="w-3.5 h-3.5 text-white"
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </motion.svg>
+                          </motion.button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <button
                       onClick={() => handleToggleComplete(task.id)}
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
