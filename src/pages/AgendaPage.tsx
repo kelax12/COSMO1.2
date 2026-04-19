@@ -333,35 +333,68 @@ setShowTaskSidebar(false);
           className="px-4 py-3 border-b"
           style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
 
-            <div className="grid grid-cols-2 gap-2 lg:flex lg:items-center lg:justify-between">
-              <div className="contents lg:flex lg:items-center lg:gap-4 lg:w-auto">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowTaskSidebar(!showTaskSidebar)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm col-span-1 lg:w-auto justify-center border ${
-                    showTaskSidebar ? 'shadow-md' : ''
-                  }`}
-                  style={{
-                    backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
-                    borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
-                    color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))'
-                  }}>
-                  <Calendar size={18} />
-                  <span className="font-medium text-sm lg:text-base">Tâches</span>
-                </motion.button>
+            <div className="flex items-center justify-between gap-2">
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleOpenAddModal}
-                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black monochrome:hover:from-neutral-100 monochrome:hover:to-neutral-300 col-span-1 lg:w-auto whitespace-nowrap"
-                >
-                  <Plus size={18} />
-                  <span className="font-medium text-sm lg:text-base">Nouveau</span>
-                </motion.button>
-              
-                <div className="flex items-center gap-1 col-span-1 lg:w-auto">
+              {/* ── Gauche : bouton Tâches ── */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowTaskSidebar(!showTaskSidebar)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm shrink-0 border ${
+                  showTaskSidebar ? 'shadow-md' : ''
+                }`}
+                style={{
+                  backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
+                  borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
+                  color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))'
+                }}>
+                <Calendar size={18} />
+                <span className="font-medium text-sm lg:text-base">Tâches</span>
+              </motion.button>
+
+              {/* ── Centre : Zoom → Vue → Navigation ── */}
+              <div className="flex items-center gap-2 lg:gap-3">
+
+                {/* Zoom */}
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleZoomIn}
+                    disabled={zoomLevel === 0}
+                    className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                    <ZoomIn size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleZoomOut}
+                    disabled={zoomLevel === zoomDurations.length - 1}
+                    className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                    <ZoomOut size={18} />
+                  </motion.button>
+                </div>
+
+                {/* Sélecteur de vue */}
+                <div className="flex rounded-lg p-0.5" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                  {['timeGridDay', 'timeGridWeek', 'dayGridMonth'].map((view) =>
+                    <motion.button
+                      key={view}
+                      onClick={() => handleViewChange(view)}
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                        currentView === view ? 'shadow-sm' : ''
+                      }`}
+                      style={{
+                        backgroundColor: currentView === view ? 'rgb(var(--color-surface))' : 'transparent',
+                        color: currentView === view ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))'
+                      }}>
+                      {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
+                    </motion.button>
+                  )}
+                </div>
+
+                {/* Navigation période < > */}
+                <div className="flex items-center gap-1">
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -381,48 +414,17 @@ setShowTaskSidebar(false);
                 </div>
               </div>
 
-                <motion.div
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="contents lg:flex lg:items-center lg:gap-3 lg:w-auto">
+              {/* ── Droite : bouton Nouveau ── */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleOpenAddModal}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black shrink-0 whitespace-nowrap"
+              >
+                <Plus size={18} />
+                <span className="font-medium text-sm lg:text-base">Nouveau</span>
+              </motion.button>
 
-                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 col-span-1 lg:mr-2 lg:w-auto justify-center">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={handleZoomIn}
-                      disabled={zoomLevel === 0}
-                      className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
-                      <ZoomIn size={20} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={handleZoomOut}
-                      disabled={zoomLevel === zoomDurations.length - 1}
-                      className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
-                      <ZoomOut size={20} />
-                    </motion.button>
-                  </div>
-
-                  <div className="flex rounded-lg p-0.5 col-span-2 lg:col-span-1 lg:w-auto" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                    {['timeGridDay', 'timeGridWeek', 'dayGridMonth'].map((view, _index) =>
-                      <motion.button
-                        key={view}
-                        onClick={() => handleViewChange(view)}
-                        className={`px-2 py-1 text-xs font-medium rounded-md transition-all flex-1 lg:flex-none ${
-                          currentView === view ? 'shadow-sm' : ''
-                        }`}
-                        style={{
-                          backgroundColor: currentView === view ? 'rgb(var(--color-surface))' : 'transparent',
-                          color: currentView === view ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))'
-                        }}>
-                        {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
-                      </motion.button>
-                    )}
-                  </div>
-                </motion.div>
             </div>
         </motion.div>
 
