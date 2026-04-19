@@ -538,11 +538,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 }}
               >
                 <td className="px-2 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-3">
                     {addToListMode && (
                       <button
                         onClick={() => onToggleTaskForList?.(task.id)}
-                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                        className={`w-5 h-5 rounded-none border-2 flex items-center justify-center transition-all shrink-0 ${
                           selectedForListIds.includes(task.id)
                             ? 'bg-blue-500 border-blue-500'
                             : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
