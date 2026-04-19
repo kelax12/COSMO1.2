@@ -760,66 +760,59 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           </div>
                         </button>
                       )}
-                      <div className="flex items-center justify-between p-4 rounded-lg border transition-colors min-w-[140px]" style={{
-                        backgroundColor: 'rgb(var(--color-hover))',
-                        borderColor: 'rgb(var(--color-border))'
-                      }}>
-                          <div className="flex items-center gap-3">
-                            <Bookmark size={20} className="text-yellow-500" aria-hidden="true" />
-                              <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Favori</span>
-                          </div>
-                        <label className="relative inline-flex items-center cursor-pointer ml-4">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={formData.bookmarked}
-                            onChange={(e) => handleInputChange('bookmarked', e.target.checked)}
-                            aria-label="Marquer comme favori"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
-                        </label>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
+                        aria-label={formData.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        className={`p-2.5 rounded-lg border transition-all ${
+                          formData.bookmarked
+                            ? 'bg-yellow-500/15 border-yellow-500/40'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-yellow-400/50 hover:bg-yellow-500/10'
+                        }`}
+                        style={!formData.bookmarked ? { backgroundColor: 'rgb(var(--color-hover))' } : {}}
+                      >
+                        <Bookmark
+                          size={20}
+                          className={formData.bookmarked ? 'text-yellow-500' : 'text-yellow-500/60'}
+                          fill={formData.bookmarked ? 'currentColor' : 'none'}
+                        />
+                      </button>
 
-                      <div className="flex items-center gap-3 p-4 rounded-lg border transition-colors" style={{
-                        backgroundColor: 'rgb(var(--color-hover))',
-                        borderColor: 'rgb(var(--color-border))'
-                      }}>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <List size={18} className="text-blue-500" aria-hidden="true" />
-                            <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Listes</span>
-                          </div>
-                          
-                          <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="p-1 rounded-lg transition-all hover:bg-blue-500/10"
-                                  style={{ color: "rgb(var(--color-text-primary))" }}
-                                >
-                                  <Plus size={18} className="text-blue-500" />
-                                </button>
-                              </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 bg-[#1e293b] border-slate-700 text-white shadow-xl">
-                              {lists.map(list => (
-                                <DropdownMenuCheckboxItem
-                                  key={list.id}
-                                  checked={selectedListIds.includes(list.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedListIds([...selectedListIds, list.id]);
-                                    } else {
-                                      setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                                    }
-                                    setHasChanges(true);
-                                  }}
-                                  className="focus:bg-slate-700 focus:text-white"
-                                >
-                                  {list.name}
-                                </DropdownMenuCheckboxItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-slate-200 dark:border-slate-700 hover:border-blue-400/50 hover:bg-blue-500/10"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-hover))',
+                              color: 'rgb(var(--color-text-primary))',
+                            }}
+                          >
+                            <List size={16} className="text-blue-500" />
+                            Ajouter à une liste
+                            <ChevronDown size={14} className="text-blue-500" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56 bg-[#1e293b] border-slate-700 text-white shadow-xl">
+                          {lists.map(list => (
+                            <DropdownMenuCheckboxItem
+                              key={list.id}
+                              checked={selectedListIds.includes(list.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedListIds([...selectedListIds, list.id]);
+                                } else {
+                                  setSelectedListIds(selectedListIds.filter(id => id !== list.id));
+                                }
+                                setHasChanges(true);
+                              }}
+                              className="focus:bg-slate-700 focus:text-white"
+                            >
+                              {list.name}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                         {/* Collaborateurs Toggle (Mobile Only) */}
                           <button
