@@ -1058,25 +1058,17 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                 {/* ── Step 2 : collaborateurs + aperçu ── */}
                 {step === 2 && (
-                <div className="space-y-6">
+                <div className="space-y-5">
 
                     {/* Collaborators Section */}
                     <div>
-                      <div className="flex items-center mb-4">
+                      <div className="flex items-center mb-3">
                         <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Collaborateurs
                         </label>
                       </div>
 
-                      {(
-                        <div
-                          ref={collaboratorRef}
-                          className="rounded-lg p-4 border transition-colors"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-hover))',
-                            borderColor: 'rgb(var(--color-border))',
-                          }}
-                        >
+                      <div ref={collaboratorRef}>
                         {!isPremium() ? (
                           <div className="text-center py-6">
                             <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -1188,44 +1180,38 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           </>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
                   {/* Task Preview */}
-                  {(
-                    <div className="block p-4 rounded-lg border transition-colors" style={{
-                      backgroundColor: 'rgb(var(--color-hover))',
+                  <div>
+                    <div className="flex items-center mb-3">
+                      <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        Aperçu de la tâche
+                      </label>
+                    </div>
+                    <div className="p-4 rounded-lg border transition-colors flex items-center justify-between" style={{
+                      backgroundColor: 'rgb(var(--color-surface))',
                       borderColor: 'rgb(var(--color-border))'
                     }}>
-                      <h4 className="text-sm font-semibold mb-3 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>Aperçu de la tâche</h4>
-                          <div className="p-4 rounded-lg border transition-colors flex items-center justify-between" style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            borderColor: 'rgb(var(--color-border))'
-                          }}>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="w-4 h-4 rounded"
-                                  style={{ backgroundColor: getCategoryColor(formData.category) }}
-                                />
-                                <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                                  {formData.name || 'Nom de la tâche'}
-                                </span>
-                                {formData.bookmarked && <BookmarkCheck size={16} className="text-yellow-500" fill="#EAB308" />}
-                              </div>
-                              <div className="flex items-center gap-4 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                                <span>Priorité {formData.priority}</span>
-                                <span>{formData.estimatedTime} min</span>
-                                {formData.completed && <span className="text-blue-600 dark:text-blue-400">✓ Complétée</span>}
-                              </div>
-                            </div>
-                            {collaborators.length > 0 && (
-                              <CollaboratorAvatars collaborators={collaborators} friends={friends} size="md" />
-                            )}
-                          </div>
-
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-4 h-4 rounded" style={{ backgroundColor: getCategoryColor(formData.category) }} />
+                          <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                            {formData.name || 'Nom de la tâche'}
+                          </span>
+                          {formData.bookmarked && <BookmarkCheck size={16} className="text-yellow-500" fill="#EAB308" />}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          <span>Priorité {formData.priority}</span>
+                          <span>{formData.estimatedTime} min</span>
+                          {formData.completed && <span className="text-blue-600 dark:text-blue-400">✓ Complétée</span>}
+                        </div>
+                      </div>
+                      {collaborators.length > 0 && (
+                        <CollaboratorAvatars collaborators={collaborators} friends={friends} size="md" />
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
                 )} {/* end step 2 */}
 
