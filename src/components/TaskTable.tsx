@@ -554,14 +554,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
                               boxShadow: selectedForListIds.includes(task.id)
                                 ? '0 0 0 3px rgba(59,130,246,0.3)'
                                 : '0 0 0 0px rgba(59,130,246,0)',
+                              opacity: selectedForListIds.includes(task.id) ? 1 : 0.35,
                             }}
-                            whileHover={{ scale: 1.15 }}
+                            whileHover={{ scale: 1.15, opacity: 0.7 }}
                             whileTap={{ scale: 0.88 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                             className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
                               selectedForListIds.includes(task.id)
                                 ? 'bg-blue-500 border-blue-500'
-                                : 'border-slate-200 dark:border-slate-700'
+                                : 'border-slate-400 dark:border-slate-400'
                             }`}
                           >
                             <motion.svg
