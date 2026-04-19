@@ -375,22 +375,21 @@ setShowTaskSidebar(false);
                   </motion.button>
                 </div>
 
-                {/* Sélecteur de vue */}
-                <div className="flex rounded-lg p-0.5" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                  {['timeGridDay', 'timeGridWeek', 'dayGridMonth'].map((view) =>
-                    <motion.button
+                {/* Sélecteur de vue — style Dashboard */}
+                <div className="flex gap-1 p-1 rounded-xl border"
+                  style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
+                  {(['timeGridDay', 'timeGridWeek', 'dayGridMonth'] as const).map((view) => (
+                    <button
                       key={view}
                       onClick={() => handleViewChange(view)}
-                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
-                        currentView === view ? 'shadow-sm' : ''
-                      }`}
-                      style={{
-                        backgroundColor: currentView === view ? 'rgb(var(--color-surface))' : 'transparent',
-                        color: currentView === view ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))'
-                      }}>
+                      className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
+                        currentView === view
+                          ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
+                          : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+                      }`}>
                       {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
-                    </motion.button>
-                  )}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Navigation période < > */}
