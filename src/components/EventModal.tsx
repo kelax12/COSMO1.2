@@ -484,7 +484,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
               {/* Durée calculée */}
               {calculateDuration() && (
-                <div className="pt-2.5">
+                <div className="pt-1">
                   <div className="flex items-center justify-between">
                     <span
                       className="text-xs font-medium"
