@@ -46,7 +46,8 @@ export const useCreateList = () => {
 
   return useMutation({
     mutationFn: (input: CreateListInput) => repository.create(input),
-    onSuccess: () => {
+    onSuccess: (newList) => {
+      queryClient.setQueryData<TaskList[]>(listKeys.lists(), (old = []) => [...old, newList]);
       invalidateAllListQueries(queryClient);
     },
     onError: (error: Error) => {
