@@ -261,19 +261,18 @@ const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-end mb-4">
             <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
               {(['jour', 'semaine', 'mois'] as const).map(mode => (
-                <Button
+                <button
                   key={mode}
-                  variant="ghost"
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    'px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200',
+                    'px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
-                      ? 'bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent))] text-white hover:text-white shadow-sm monochrome:bg-white monochrome:hover:bg-white monochrome:text-zinc-900'
-                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-transparent'
+                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
+                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                   )}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
