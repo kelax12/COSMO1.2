@@ -672,10 +672,20 @@ const EventModal: React.FC<EventModalProps> = ({
                 )}
               </div>
 
-            <div className="pt-6">
+            <div className={`pt-6 ${mode === 'edit' ? 'flex gap-2' : ''}`}>
+              {mode === 'edit' && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  className="h-11 flex-1 text-sm font-semibold"
+                >
+                  Supprimer
+                </Button>
+              )}
               <Button
                 type="submit"
-                className="w-full h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all"
+                className={`h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'flex-1' : 'w-full'}`}
               >
                 {getSubmitButtonText()}
               </Button>
