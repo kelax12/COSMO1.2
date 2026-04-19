@@ -542,7 +542,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     {addToListMode && (
                       <button
                         onClick={() => onToggleTaskForList?.(task.id)}
-                        className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center transition-all shrink-0 ${
+                        className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center transition-all shrink-0 ${
                           selectedForListIds.includes(task.id)
                             ? 'bg-blue-500 border-blue-500'
                             : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
