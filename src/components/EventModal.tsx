@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Clock, Plus, CalendarIcon } from "lucide-react";
+import { X, Clock, Plus, CalendarIcon, Check, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -675,9 +675,11 @@ const EventModal: React.FC<EventModalProps> = ({
             <div className="pt-2 space-y-2">
               <Button
                 type="submit"
-                variant="default"
-                className="w-full flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                className="w-full h-11 text-sm font-semibold flex items-center justify-center gap-2 border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all"
               >
+                {mode === 'add' && <Plus size={16} />}
+                {mode === 'edit' && <Check size={16} />}
+                {mode === 'convert' && <ArrowRight size={16} />}
                 {getSubmitButtonText()}
               </Button>
               {mode === 'edit' ? (
@@ -689,7 +691,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 >
                   Supprimer l'événement
                 </Button>
-              ) : mode === 'create' ? (
+              ) : mode === 'add' ? (
                 <Button
                   type="button"
                   variant="outline"
