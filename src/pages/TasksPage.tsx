@@ -5,7 +5,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListManager from '../components/ListManager';
-import { CalendarDays, List, X, Plus } from 'lucide-react';
+import { CalendarDays, List, X, Plus, Pencil, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -22,7 +22,7 @@ import { useCategories } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useLists, useCreateList } from '@/modules/lists';
+import { useLists, useCreateList, useUpdateList, useDeleteList } from '@/modules/lists';
 
 // ═══════════════════════════════════════════════════════════════════
 import { usePriorityRange } from '@/modules/ui-states';
@@ -43,9 +43,16 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: lists = [] } = useLists();
   const createListMutation = useCreateList();
+  const updateListMutation = useUpdateList();
+  const deleteListMutation = useDeleteList();
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
+  const [hoveredListId, setHoveredListId] = useState<string | null>(null);
+  const [editingListId, setEditingListId] = useState<string | null>(null);
+  const [editListName, setEditListName] = useState('');
+  const [editListColor, setEditListColor] = useState('blue');
+  const [listToDeleteId, setListToDeleteId] = useState<string | null>(null);
 
   const { priorityRange } = usePriorityRange();
 
@@ -102,6 +109,36 @@ const TasksPage: React.FC = () => {
 
   const clearListFilter = () => {
     setSelectedListId(null);
+  };
+
+  const startEditList = (list: { id: string; name: string; color: string }) => {
+    setEditingListId(list.id);
+    setEditListName(list.name);
+    setEditListColor(list.color);
+    setHoveredListId(null);
+  };
+
+  const cancelEditList = () => {
+    setEditingListId(null);
+    setEditListName('');
+    setEditListColor('blue');
+  };
+
+  const submitEditList = () => {
+    if (!editingListId || !editListName.trim()) return;
+    updateListMutation.mutate({ id: editingListId, updates: { name: editListName.trim(), color: editListColor } }, {
+      onSuccess: () => cancelEditList()
+    });
+  };
+
+  const confirmDeleteList = () => {
+    if (!listToDeleteId) return;
+    deleteListMutation.mutate(listToDeleteId, {
+      onSuccess: () => {
+        setListToDeleteId(null);
+        if (selectedListId === listToDeleteId) setSelectedListId(null);
+      }
+    });
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -285,7 +322,7 @@ const TasksPage: React.FC = () => {
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Accès rapide aux listes</h3>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3 pt-8">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -304,33 +341,112 @@ const TasksPage: React.FC = () => {
                       {lists.map((list) => {
                         const colorOption = colorOptions.find(c => c.value === list.color);
                         const isSelected = selectedListId === list.id;
+                        const isEditing = editingListId === list.id;
+                        const isHovered = hoveredListId === list.id;
+                        const showActions = (isHovered || isSelected) && !isEditing;
 
                         return (
-                          <button
+                          <div
                             key={list.id}
-                            onClick={() => {
-                              handleListSelect(list.id);
-                            }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
-                              isSelected
-                                ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-                            }`}
+                            className="relative"
+                            onMouseEnter={() => setHoveredListId(list.id)}
+                            onMouseLeave={() => setHoveredListId(null)}
                           >
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colorOption?.color || '#3B82F6' }} />
-                            <span>{list.name}</span>
-                            <span className="text-xs opacity-60 ml-1 monochrome:text-neutral-400">
-                              {list.taskIds.filter(taskId => {
-                                const task = tasks.find(t => t.id === taskId);
-                                return task && !task.completed;
-                              }).length}
-                            </span>
-                            {isSelected && (
-                              <div className="text-white monochrome:text-black">
-                                <X size={14} className="ml-1 hover:text-red-200 monochrome:hover:text-neutral-600" />
-                              </div>
+                            <AnimatePresence>
+                              {showActions && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 4 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: 4 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="absolute -top-7 left-1/2 -translate-x-1/2 flex gap-1 z-10"
+                                >
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); startEditList(list); }}
+                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                    title="Modifier"
+                                  >
+                                    <Pencil size={12} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
+                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                                    title="Supprimer"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
+                            {isEditing ? (
+                              <form
+                                onSubmit={(e) => { e.preventDefault(); submitEditList(); }}
+                                className="flex items-center gap-2"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const idx = colorOptions.findIndex(c => c.value === editListColor);
+                                    setEditListColor(colorOptions[(idx + 1) % colorOptions.length].value);
+                                  }}
+                                  className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                                  style={{ backgroundColor: colorOptions.find(c => c.value === editListColor)?.color || '#3B82F6' }}
+                                  title="Changer la couleur"
+                                />
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={editListName}
+                                  onChange={(e) => setEditListName(e.target.value)}
+                                  className="px-2 py-1 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 w-28"
+                                  style={{
+                                    backgroundColor: 'rgb(var(--color-surface))',
+                                    borderColor: 'rgb(var(--color-border))',
+                                    color: 'rgb(var(--color-text-primary))'
+                                  }}
+                                  onKeyDown={(e) => { if (e.key === 'Escape') cancelEditList(); }}
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={!editListName.trim()}
+                                  className="px-2 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                                >
+                                  OK
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditList}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </form>
+                            ) : (
+                              <button
+                                onClick={() => handleListSelect(list.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
+                                  isSelected
+                                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
+                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                                }`}
+                              >
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colorOption?.color || '#3B82F6' }} />
+                                <span>{list.name}</span>
+                                <span className="text-xs opacity-60 ml-1 monochrome:text-neutral-400">
+                                  {list.taskIds.filter(taskId => {
+                                    const task = tasks.find(t => t.id === taskId);
+                                    return task && !task.completed;
+                                  }).length}
+                                </span>
+                                {isSelected && (
+                                  <div className="text-white monochrome:text-black">
+                                    <X size={14} className="ml-1 hover:text-red-200 monochrome:hover:text-neutral-600" />
+                                  </div>
+                                )}
+                              </button>
                             )}
-                          </button>
+                          </div>
                         );
                       })}
 
@@ -516,6 +632,46 @@ const TasksPage: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Dialog suppression liste */}
+      <AnimatePresence>
+        {listToDeleteId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#1e2235] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-700/50"
+            >
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white mb-3">Confirmer la suppression</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                  Êtes-vous sûr de vouloir supprimer la liste <strong className="text-white">"{lists.find(l => l.id === listToDeleteId)?.name}"</strong> ? Les tâches associées resteront mais ne seront plus groupées.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setListToDeleteId(null)}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white border border-slate-600 hover:bg-slate-800 transition-all duration-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmDeleteList}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
