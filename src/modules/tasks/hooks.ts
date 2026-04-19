@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getTasksRepository } from '@/lib/repository.factory';
+import { useIsDemo } from '@/lib/app-mode.store';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { taskKeys } from './constants';
@@ -11,7 +12,8 @@ import { PaginationParams } from '@/lib/pagination.types';
 // Repository - Via centralized factory (demo/production mode)
 // ═══════════════════════════════════════════════════════════════════
 const useTasksRepository = (): ITasksRepository => {
-  return useMemo(() => getTasksRepository(), []);
+  const isDemo = useIsDemo();
+  return useMemo(() => getTasksRepository(), [isDemo]);
 };
 
 // ═══════════════════════════════════════════════════════════════════

@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getOKRsRepository } from '@/lib/repository.factory';
+import { useIsDemo } from '@/lib/app-mode.store';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
@@ -20,7 +21,8 @@ import { krCompletionKeys } from '@/modules/kr-completions/constants';
  * Uses centralized factory for demo/production mode switching
  */
 const useOKRsRepository = (): IOKRsRepository => {
-  return useMemo(() => getOKRsRepository(), []);
+  const isDemo = useIsDemo();
+  return useMemo(() => getOKRsRepository(), [isDemo]);
 };
 
 // ═══════════════════════════════════════════════════════════════════
