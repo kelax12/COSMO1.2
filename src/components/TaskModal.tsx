@@ -1107,6 +1107,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 size="icon"
                                 onClick={handleAddEmail}
                                 disabled={!emailInput.trim()}
+                                className={emailInput.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-white border-0 !opacity-100'}
                               >
                                 <UserPlus size={16} />
                               </Button>
