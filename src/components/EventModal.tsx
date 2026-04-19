@@ -287,7 +287,7 @@ const EventModal: React.FC<EventModalProps> = ({
       case 'add':
         return "Valider";
       case 'edit':
-        return "Enregistrer les modifications";
+        return "Enregistrer";
       case 'convert':
         return "Convertir en événement";
     }
@@ -676,9 +676,8 @@ const EventModal: React.FC<EventModalProps> = ({
               {mode === 'edit' && (
                 <Button
                   type="button"
-                  variant="destructive"
                   onClick={handleDelete}
-                  className="h-11 flex-1 text-sm font-semibold"
+                  className="h-11 flex-1 text-sm font-semibold border-0 text-white bg-red-400 hover:bg-red-500 active:bg-red-600 transition-all"
                 >
                   Supprimer
                 </Button>
