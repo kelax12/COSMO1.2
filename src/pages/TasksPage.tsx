@@ -359,7 +359,7 @@ const TasksPage: React.FC = () => {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-7 left-1/2 -translate-x-1/2 flex gap-4 z-10"
+                                  className="absolute -top-7 inset-x-0 flex justify-center gap-4 z-10"
                                 >
                                   <button
                                     onClick={(e) => { e.stopPropagation(); startEditList(list); }}
