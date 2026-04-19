@@ -15,7 +15,6 @@ import CollaboratorItem from '@/components/CollaboratorItem';
 import { DatePicker } from '@/components/ui/date-picker';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import ColorSettingsModal from './ColorSettingsModal';
-import ListModal from '../ListModal';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -98,7 +97,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showListModal, setShowListModal] = useState(false);
   const [okrFields, setOkrFields] = useState<Record<string, boolean>>({});
 
   // Collaborator state (integrated from AddTaskForm)
@@ -802,18 +800,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 </button>
                               </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 bg-[#1e293b] border-slate-700 text-white shadow-xl">
-                              {lists.length === 0 && (
-                                <DropdownMenuItem asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowListModal(true)}
-                                    className="w-full text-left px-4 py-2 text-sm rounded-md transition-colors flex items-center gap-2 text-blue-400 font-medium hover:bg-slate-700"
-                                  >
-                                    <Plus size={16} />
-                                    Ajouter une liste
-                                  </button>
-                                </DropdownMenuItem>
-                              )}
                               {lists.map(list => (
                                 <DropdownMenuCheckboxItem
                                   key={list.id}
@@ -1159,11 +1145,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             <ColorSettingsModal 
               isOpen={showCategoryModal} 
               onClose={() => setShowCategoryModal(false)} 
-              isNested={true}
-            />
-            <ListModal 
-              isOpen={showListModal} 
-              onClose={() => setShowListModal(false)} 
               isNested={true}
             />
           </DialogContent>
