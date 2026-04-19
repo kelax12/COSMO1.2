@@ -112,7 +112,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [hasChanges, setHasChanges] = useState(false);
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
-  const [newListColor, setNewListColor] = useState('#3b82f6');
+  const [newListColor, setNewListColor] = useState('blue');
+
+  const listColorOptions = [
+    { value: 'blue', color: '#3B82F6' },
+    { value: 'red', color: '#EF4444' },
+    { value: 'green', color: '#10B981' },
+    { value: 'purple', color: '#8B5CF6' },
+    { value: 'orange', color: '#F97316' },
+    { value: 'yellow', color: '#F59E0B' },
+    { value: 'pink', color: '#EC4899' },
+    { value: 'indigo', color: '#6366F1' },
+  ];
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
 
@@ -832,13 +843,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                       {showNewListInput && (
                         <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={newListColor}
-                            onChange={(e) => setNewListColor(e.target.value)}
-                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 flex-shrink-0"
-                            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-                            title="Couleur de la liste"
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const idx = listColorOptions.findIndex(c => c.value === newListColor);
+                              setNewListColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
+                            }}
+                            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                            style={{ backgroundColor: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
+                            title="Changer la couleur"
                           />
                           <input
                             type="text"
@@ -850,21 +863,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 e.preventDefault();
                                 if (!newListName.trim()) return;
                                 createListMutation.mutate(
-                                  { name: newListName.trim(), color: newListColor },
+                                  { name: newListName.trim(), color: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' },
                                   {
                                     onSuccess: (created) => {
                                       setSelectedListIds(prev => [...prev, created.id]);
                                       setHasChanges(true);
                                       setShowNewListInput(false);
                                       setNewListName('');
-                                      setNewListColor('#3b82f6');
+                                      setNewListColor('blue');
                                     }
                                   }
                                 );
                               } else if (e.key === 'Escape') {
                                 setShowNewListInput(false);
                                 setNewListName('');
-                                setNewListColor('#3b82f6');
+                                setNewListColor('blue');
                               }
                             }}
                             placeholder="Nom de la liste..."
@@ -877,14 +890,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             onClick={() => {
                               if (!newListName.trim()) return;
                               createListMutation.mutate(
-                                { name: newListName.trim(), color: newListColor },
+                                { name: newListName.trim(), color: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' },
                                 {
                                   onSuccess: (created) => {
                                     setSelectedListIds(prev => [...prev, created.id]);
                                     setHasChanges(true);
                                     setShowNewListInput(false);
                                     setNewListName('');
-                                    setNewListColor('#3b82f6');
+                                    setNewListColor('blue');
                                   }
                                 }
                               );
@@ -895,7 +908,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           </button>
                           <button
                             type="button"
-                            onClick={() => { setShowNewListInput(false); setNewListName(''); setNewListColor('#3b82f6'); }}
+                            onClick={() => { setShowNewListInput(false); setNewListName(''); setNewListColor('blue'); }}
                             className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             style={{ color: 'rgb(var(--color-text-secondary))' }}
                           >
