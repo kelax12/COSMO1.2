@@ -32,7 +32,7 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useCategories } from '@/modules/categories';
+import { useCategories, useCreateCategory } from '@/modules/categories';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
@@ -68,6 +68,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // CATEGORIES - Depuis le module categories (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
+  const createCategoryMutation = useCreateCategory();
 
   // ═══════════════════════════════════════════════════════════════════
   // LISTS - Depuis le module lists (MIGRÉ)
@@ -111,6 +112,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [step, setStep] = useState(1);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('blue');
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
@@ -715,8 +719,94 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               </button>
                             </DropdownMenuItem>
                           ))}
+                          {categories.length > 0 && <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700 my-1" />}
+                          <DropdownMenuItem asChild>
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                              onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }}
+                            >
+                              <Plus size={15} />
+                              Créer une catégorie
+                            </button>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+
+                      {showNewCategoryInput && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const idx = listColorOptions.findIndex(c => c.value === newCategoryColor);
+                              setNewCategoryColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
+                            }}
+                            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                            style={{ backgroundColor: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
+                            title="Changer la couleur"
+                          />
+                          <input
+                            type="text"
+                            autoFocus
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!newCategoryName.trim()) return;
+                                createCategoryMutation.mutate(
+                                  { name: newCategoryName.trim(), color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
+                                  {
+                                    onSuccess: (created) => {
+                                      handleInputChange('category', created.id);
+                                      setShowNewCategoryInput(false);
+                                      setNewCategoryName('');
+                                      setNewCategoryColor('blue');
+                                    }
+                                  }
+                                );
+                              } else if (e.key === 'Escape') {
+                                setShowNewCategoryInput(false);
+                                setNewCategoryName('');
+                                setNewCategoryColor('blue');
+                              }
+                            }}
+                            placeholder="Nom de la catégorie..."
+                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                          />
+                          <button
+                            type="button"
+                            disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+                            onClick={() => {
+                              if (!newCategoryName.trim()) return;
+                              createCategoryMutation.mutate(
+                                { name: newCategoryName.trim(), color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
+                                {
+                                  onSuccess: (created) => {
+                                    handleInputChange('category', created.id);
+                                    setShowNewCategoryInput(false);
+                                    setNewCategoryName('');
+                                    setNewCategoryColor('blue');
+                                  }
+                                }
+                              );
+                            }}
+                            className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                          >
+                            {createCategoryMutation.isPending ? 'Création...' : 'Créer'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowNewCategoryInput(false); setNewCategoryName(''); setNewCategoryColor('blue'); }}
+                            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            style={{ color: 'rgb(var(--color-text-secondary))' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
+
                         {errors.category &&
                           <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
                             <AlertCircle size={14} aria-hidden="true" />
@@ -1156,7 +1246,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         <Button
                           type="button"
                           size="lg"
-                          onClick={(e) => { e.preventDefault(); setStep(2); }}
+                          onClick={(e) => { e.preventDefault(); if (validateForm()) setStep(2); }}
                           disabled={!isStep1Valid()}
                           className={!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}
                         >
