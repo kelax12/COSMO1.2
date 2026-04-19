@@ -8,6 +8,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,7 @@ import { useCategories } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useLists, useAddTaskToList, useRemoveTaskFromList } from '@/modules/lists';
+import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
 import { useFriends, useSendFriendRequest, useShareTask } from '@/modules/friends';
 
@@ -74,6 +75,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const { data: lists = [] } = useLists();
   const addTaskToListMutation = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
+  const createListMutation = useCreateList();
 
   const { data: friends = [] } = useFriends();
   const shareTaskMutation = useShareTask();
@@ -108,6 +110,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [showNewListInput, setShowNewListInput] = useState(false);
+  const [newListName, setNewListName] = useState('');
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
 
@@ -811,8 +815,82 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               {list.name}
                             </DropdownMenuCheckboxItem>
                           ))}
+                          {lists.length > 0 && <DropdownMenuSeparator className="bg-slate-700" />}
+                          <DropdownMenuItem asChild>
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 transition-colors"
+                              onClick={() => { setShowNewListInput(true); setNewListName(''); }}
+                            >
+                              <Plus size={15} />
+                              Créer une liste
+                            </button>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+
+                      {showNewListInput && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={newListName}
+                            onChange={(e) => setNewListName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!newListName.trim()) return;
+                                createListMutation.mutate(
+                                  { name: newListName.trim(), color: '#3b82f6' },
+                                  {
+                                    onSuccess: (created) => {
+                                      setSelectedListIds(prev => [...prev, created.id]);
+                                      setHasChanges(true);
+                                      setShowNewListInput(false);
+                                      setNewListName('');
+                                    }
+                                  }
+                                );
+                              } else if (e.key === 'Escape') {
+                                setShowNewListInput(false);
+                                setNewListName('');
+                              }
+                            }}
+                            placeholder="Nom de la liste..."
+                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                          />
+                          <button
+                            type="button"
+                            disabled={!newListName.trim() || createListMutation.isPending}
+                            onClick={() => {
+                              if (!newListName.trim()) return;
+                              createListMutation.mutate(
+                                { name: newListName.trim(), color: '#3b82f6' },
+                                {
+                                  onSuccess: (created) => {
+                                    setSelectedListIds(prev => [...prev, created.id]);
+                                    setHasChanges(true);
+                                    setShowNewListInput(false);
+                                    setNewListName('');
+                                  }
+                                }
+                              );
+                            }}
+                            className="p-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-40 transition-colors"
+                          >
+                            {createListMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowNewListInput(false); setNewListName(''); }}
+                            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            style={{ color: 'rgb(var(--color-text-secondary))' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
 
                         {/* Collaborateurs Toggle (Mobile Only) */}
                           <button
