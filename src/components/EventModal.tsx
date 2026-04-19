@@ -377,8 +377,7 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
 
             <div
-              className="p-4 rounded-2xl border transition-colors relative bg-transparent space-y-3"
-              style={{ borderColor: "rgb(var(--color-border))" }}
+              className="p-4 rounded-2xl transition-colors relative bg-transparent space-y-3"
             >
               {/* Sélecteur de date */}
               <div>
@@ -445,7 +444,10 @@ const EventModal: React.FC<EventModalProps> = ({
                   >
                     Début
                   </label>
-                  <div className="flex items-center gap-2 px-1 py-2.5">
+                  <div
+                    className="flex items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    style={{ borderColor: "rgb(var(--color-border))" }}
+                  >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
                     <input
                       type="time"
@@ -464,7 +466,10 @@ const EventModal: React.FC<EventModalProps> = ({
                   >
                     Fin
                   </label>
-                  <div className="flex items-center gap-2 px-1 py-2.5">
+                  <div
+                    className="flex items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    style={{ borderColor: "rgb(var(--color-border))" }}
+                  >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
                     <input
                       type="time"
