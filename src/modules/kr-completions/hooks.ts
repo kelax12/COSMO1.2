@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getKRCompletionsRepository } from '@/lib/repository.factory';
+import { useIsDemo } from '@/lib/app-mode.store';
 import { IKRCompletionsRepository } from './repository';
 import { KRCompletion, CreateKRCompletionInput } from './types';
 import { krCompletionKeys } from './constants';
@@ -15,7 +16,8 @@ import { krCompletionKeys } from './constants';
 // ═══════════════════════════════════════════════════════════════════
 
 const useKRCompletionsRepository = (): IKRCompletionsRepository => {
-  return useMemo(() => getKRCompletionsRepository(), []);
+  const isDemo = useIsDemo();
+  return useMemo(() => getKRCompletionsRepository(), [isDemo]);
 };
 
 // ═══════════════════════════════════════════════════════════════════

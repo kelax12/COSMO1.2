@@ -2,13 +2,15 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getHabitsRepository } from '@/lib/repository.factory';
+import { useIsDemo } from '@/lib/app-mode.store';
 import { IHabitsRepository } from './repository';
 import { CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
 
 // Repository - Via centralized factory (demo/production mode)
 const useHabitsRepository = (): IHabitsRepository => {
-  return useMemo(() => getHabitsRepository(), []);
+  const isDemo = useIsDemo();
+  return useMemo(() => getHabitsRepository(), [isDemo]);
 };
 
 /**
