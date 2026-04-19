@@ -41,14 +41,20 @@ type TaskTableProps = {
   showCompleted?: boolean;
   selectedTaskId?: string | null;
   onTaskModalClose?: () => void;
+  addToListMode?: boolean;
+  selectedForListIds?: string[];
+  onToggleTaskForList?: (taskId: string) => void;
 };
 
-const TaskTable: React.FC<TaskTableProps> = ({ 
-  tasks: propTasks, 
-  sortField: propSortField, 
+const TaskTable: React.FC<TaskTableProps> = ({
+  tasks: propTasks,
+  sortField: propSortField,
   showCompleted = false,
   selectedTaskId: externalSelectedTaskId,
-  onTaskModalClose
+  onTaskModalClose,
+  addToListMode = false,
+  selectedForListIds = [],
+  onToggleTaskForList,
 }) => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -265,45 +271,66 @@ const TaskTable: React.FC<TaskTableProps> = ({
     const categoryColor = category?.color || '#3B82F6';
     
     return (
-      <div 
-        className={`p-4 rounded-xl border mb-3 transition-all cursor-pointer ${task.completed ? 'opacity-75' : ''}`}
-        onClick={() => { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
+      <div
+        className={`p-4 rounded-xl border mb-3 transition-all ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
+        onClick={() => { if (!addToListMode) { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); } }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        style={{ 
-          backgroundColor: activeQuickFilter === 'retard' 
-            ? (isHovered ? 'rgb(var(--color-error) / 0.25)' : 'rgb(var(--color-error) / 0.15)') 
-            : (task.bookmarked 
-                ? (isHovered ? 'rgba(234, 179, 8, 0.25)' : 'rgba(234, 179, 8, 0.15)') 
-                : (isHovered ? `${categoryColor}25` : `${categoryColor}10`)),
-          borderColor: activeQuickFilter === 'retard'
-            ? (isHovered ? 'rgb(var(--color-error))' : 'rgb(var(--color-error) / 0.7)')
-            : (task.bookmarked 
-                ? (isHovered ? '#EAB308' : 'rgba(234, 179, 8, 0.6)') 
-                : (isHovered ? categoryColor : 'rgb(var(--color-border))')),
+        style={{
+          backgroundColor: addToListMode
+            ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
+            : (activeQuickFilter === 'retard'
+                ? (isHovered ? 'rgb(var(--color-error) / 0.25)' : 'rgb(var(--color-error) / 0.15)')
+                : (task.bookmarked
+                    ? (isHovered ? 'rgba(234, 179, 8, 0.25)' : 'rgba(234, 179, 8, 0.15)')
+                    : (isHovered ? `${categoryColor}25` : `${categoryColor}10`))),
+          borderColor: addToListMode
+            ? (selectedForListIds.includes(task.id) ? '#3B82F6' : 'rgb(var(--color-border))')
+            : (activeQuickFilter === 'retard'
+                ? (isHovered ? 'rgb(var(--color-error))' : 'rgb(var(--color-error) / 0.7)')
+                : (task.bookmarked
+                    ? (isHovered ? '#EAB308' : 'rgba(234, 179, 8, 0.6)')
+                    : (isHovered ? categoryColor : 'rgb(var(--color-border))'))),
           borderLeftWidth: '4px',
           borderLeftColor: activeQuickFilter === 'retard' ? 'rgb(var(--color-error))' : (task.bookmarked ? '#EAB308' : categoryColor)
         }}
       >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleComplete(task.id);
-            }}
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-              task.completed 
-                ? 'bg-blue-500 border-blue-500' 
-                : 'border-gray-400 hover:border-blue-500'
-            }`}
-          >
-            {task.completed && (
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </button>
+          {addToListMode ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
+              className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                selectedForListIds.includes(task.id)
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
+              }`}
+            >
+              {selectedForListIds.includes(task.id) && (
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleComplete(task.id);
+              }}
+              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                task.completed
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'border-gray-400 hover:border-blue-500'
+              }`}
+            >
+              {task.completed && (
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          )}
           <TaskCategoryIndicator category={task.category} />
         </div>
         <div className="flex items-center gap-1">
@@ -493,34 +520,55 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </thead>
           <tbody className="divide-y divide-gray-200">
             {sortedTasks.map((task) => (
-              <tr 
-                key={task.id} 
-                className={`animate-fade-in cursor-pointer transition-colors ${task.completed ? 'opacity-75' : ''}`}
-                onClick={() => { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
+              <tr
+                key={task.id}
+                className={`animate-fade-in transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
+                onClick={() => { if (!addToListMode) { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); } }}
                 style={{
-                  backgroundColor: activeQuickFilter === 'retard' 
-                    ? 'rgb(var(--color-error) / 0.3)' 
-                    : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent'),
-                  borderLeft: activeQuickFilter === 'retard'
-                    ? '4px solid rgb(var(--color-error))'
-                    : (task.bookmarked ? '4px solid #EAB308' : '3px solid transparent')
+                  backgroundColor: addToListMode
+                    ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
+                    : (activeQuickFilter === 'retard'
+                        ? 'rgb(var(--color-error) / 0.3)'
+                        : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent')),
+                  borderLeft: addToListMode
+                    ? (selectedForListIds.includes(task.id) ? '4px solid #3B82F6' : '3px solid transparent')
+                    : (activeQuickFilter === 'retard'
+                        ? '4px solid rgb(var(--color-error))'
+                        : (task.bookmarked ? '4px solid #EAB308' : '3px solid transparent'))
                 }}
               >
                 <td className="px-2 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
-                  <button
-                    onClick={() => handleToggleComplete(task.id)}
-                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                      task.completed 
-                        ? 'bg-blue-500 border-blue-500' 
-                        : 'border-gray-400 hover:border-blue-500'
-                    }`}
-                  >
-                    {task.completed && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
+                  {addToListMode ? (
+                    <button
+                      onClick={() => onToggleTaskForList?.(task.id)}
+                      className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
+                        selectedForListIds.includes(task.id)
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
+                      }`}
+                    >
+                      {selectedForListIds.includes(task.id) && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleComplete(task.id)}
+                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                        task.completed
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'border-gray-400 hover:border-blue-500'
+                      }`}
+                    >
+                      {task.completed && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
                 </td>
                 <td className="px-1 py-4 whitespace-nowrap">
                   <TaskCategoryIndicator category={task.category} />

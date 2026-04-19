@@ -22,7 +22,7 @@ import { useCategories } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useLists, useCreateList, useUpdateList, useDeleteList } from '@/modules/lists';
+import { useLists, useCreateList, useUpdateList, useDeleteList, useAddTaskToList } from '@/modules/lists';
 
 // ═══════════════════════════════════════════════════════════════════
 import { usePriorityRange } from '@/modules/ui-states';
@@ -48,11 +48,14 @@ const TasksPage: React.FC = () => {
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
+  const addTaskToListMutation = useAddTaskToList();
   const [hoveredListId, setHoveredListId] = useState<string | null>(null);
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editListName, setEditListName] = useState('');
   const [editListColor, setEditListColor] = useState('blue');
   const [listToDeleteId, setListToDeleteId] = useState<string | null>(null);
+  const [selectingTasksForListId, setSelectingTasksForListId] = useState<string | null>(null);
+  const [selectedTasksForList, setSelectedTasksForList] = useState<string[]>([]);
 
   const { priorityRange } = usePriorityRange();
 
@@ -139,6 +142,36 @@ const TasksPage: React.FC = () => {
         if (selectedListId === listToDeleteId) setSelectedListId(null);
       }
     });
+  };
+
+  const startSelectingTasks = (listId: string) => {
+    setSelectingTasksForListId(listId);
+    setSelectedTasksForList([]);
+    setHoveredListId(null);
+  };
+
+  const toggleTaskForList = (taskId: string) => {
+    setSelectedTasksForList(prev =>
+      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+    );
+  };
+
+  const confirmAddTasksToList = () => {
+    if (!selectingTasksForListId || selectedTasksForList.length === 0) {
+      setSelectingTasksForListId(null);
+      setSelectedTasksForList([]);
+      return;
+    }
+    selectedTasksForList.forEach(taskId => {
+      addTaskToListMutation.mutate({ taskId, listId: selectingTasksForListId });
+    });
+    setSelectingTasksForListId(null);
+    setSelectedTasksForList([]);
+  };
+
+  const cancelSelectingTasks = () => {
+    setSelectingTasksForListId(null);
+    setSelectedTasksForList([]);
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -375,6 +408,13 @@ const TasksPage: React.FC = () => {
                                   >
                                     <Trash2 size={15} />
                                   </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
+                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                    title="Ajouter des tâches"
+                                  >
+                                    <Plus size={15} />
+                                  </button>
                                 </motion.div>
                               )}
                             </AnimatePresence>
@@ -527,6 +567,36 @@ const TasksPage: React.FC = () => {
                       </AnimatePresence>
                     </div>
 
+                    <AnimatePresence>
+                      {selectingTasksForListId && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          className="mt-3 flex items-center gap-3 px-4 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
+                        >
+                          <span className="text-sm text-blue-700 dark:text-blue-300 font-medium flex-1">
+                            {selectedTasksForList.length === 0
+                              ? `Sélectionnez des tâches à ajouter dans "${lists.find(l => l.id === selectingTasksForListId)?.name}"`
+                              : `${selectedTasksForList.length} tâche${selectedTasksForList.length > 1 ? 's' : ''} sélectionnée${selectedTasksForList.length > 1 ? 's' : ''}`}
+                          </span>
+                          <button
+                            onClick={confirmAddTasksToList}
+                            disabled={selectedTasksForList.length === 0}
+                            className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                          >
+                            Valider
+                          </button>
+                          <button
+                            onClick={cancelSelectingTasks}
+                            className="p-1 rounded text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                   </div>
                 </motion.div>
               )}
@@ -576,12 +646,15 @@ const TasksPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
               >
-                <TaskTable 
+                <TaskTable
                   tasks={filteredTasks}
                   sortField={filter}
                   showCompleted={showCompleted}
                   selectedTaskId={selectedTaskId}
                   onTaskModalClose={() => setSelectedTaskId(null)}
+                  addToListMode={!!selectingTasksForListId}
+                  selectedForListIds={selectedTasksForList}
+                  onToggleTaskForList={toggleTaskForList}
                 />
               </motion.div>
             </div>
