@@ -546,7 +546,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                           animate={{ width: 28, opacity: 1 }}
                           exit={{ width: 0, opacity: 0 }}
                           transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-                          className="overflow-hidden shrink-0 flex items-center"
+                          className="shrink-0 flex items-center"
                         >
                           <motion.button
                             onClick={() => onToggleTaskForList?.(task.id)}
