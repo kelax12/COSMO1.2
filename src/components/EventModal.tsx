@@ -463,7 +463,7 @@ const EventModal: React.FC<EventModalProps> = ({
                       type="time"
                       value={startTime}
                       onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
-                      className="flex-1 bg-transparent text-sm focus:outline-none border-0 appearance-none"
+                      className="flex-1 bg-transparent text-sm outline-none border-0 ring-0 shadow-none appearance-none"
                       style={{ color: "rgb(var(--color-text-primary))" }}
                     />
                   </div>
@@ -494,7 +494,7 @@ const EventModal: React.FC<EventModalProps> = ({
                       type="time"
                       value={endTime}
                       onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
-                      className="flex-1 bg-transparent text-sm focus:outline-none border-0 appearance-none"
+                      className="flex-1 bg-transparent text-sm outline-none border-0 ring-0 shadow-none appearance-none"
                       style={{ color: "rgb(var(--color-text-primary))" }}
                     />
                   </div>
