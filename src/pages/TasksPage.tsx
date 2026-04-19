@@ -4,8 +4,7 @@ import TaskFilter from '../components/TaskFilter';
 import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
-import ListManager from '../components/ListManager';
-import { CalendarDays, List, X, Plus, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, X, Plus, Pencil, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -69,7 +68,6 @@ const TasksPage: React.FC = () => {
   const [filter, setFilter] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
-  const [showListManager, setShowListManager] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -282,20 +280,7 @@ const TasksPage: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto"
           >
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowListManager(!showListManager)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 transition-all shadow-sm border font-medium text-sm sm:text-base ${
-                showListManager
-                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-              }`}
-            >
-              <List size={18} className={showListManager ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
-              <span>Listes</span>
-            </motion.button>
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
@@ -310,19 +295,6 @@ const TasksPage: React.FC = () => {
             </motion.button>
           </motion.div>
         </motion.header>
-
-        <AnimatePresence>
-          {showListManager && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ListManager />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {showDeadlineCalendar && (
