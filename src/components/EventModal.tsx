@@ -689,7 +689,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 >
                   Supprimer l'événement
                 </Button>
-              ) : (
+              ) : mode === 'create' ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -698,7 +698,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 >
                   Annuler
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
