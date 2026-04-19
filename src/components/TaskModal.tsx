@@ -112,6 +112,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [hasChanges, setHasChanges] = useState(false);
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
+  const [newListColor, setNewListColor] = useState('#3b82f6');
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
 
@@ -832,6 +833,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                       {showNewListInput && (
                         <div className="flex items-center gap-2">
                           <input
+                            type="color"
+                            value={newListColor}
+                            onChange={(e) => setNewListColor(e.target.value)}
+                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 flex-shrink-0"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+                            title="Couleur de la liste"
+                          />
+                          <input
                             type="text"
                             autoFocus
                             value={newListName}
@@ -841,19 +850,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 e.preventDefault();
                                 if (!newListName.trim()) return;
                                 createListMutation.mutate(
-                                  { name: newListName.trim(), color: '#3b82f6' },
+                                  { name: newListName.trim(), color: newListColor },
                                   {
                                     onSuccess: (created) => {
                                       setSelectedListIds(prev => [...prev, created.id]);
                                       setHasChanges(true);
                                       setShowNewListInput(false);
                                       setNewListName('');
+                                      setNewListColor('#3b82f6');
                                     }
                                   }
                                 );
                               } else if (e.key === 'Escape') {
                                 setShowNewListInput(false);
                                 setNewListName('');
+                                setNewListColor('#3b82f6');
                               }
                             }}
                             placeholder="Nom de la liste..."
@@ -866,13 +877,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             onClick={() => {
                               if (!newListName.trim()) return;
                               createListMutation.mutate(
-                                { name: newListName.trim(), color: '#3b82f6' },
+                                { name: newListName.trim(), color: newListColor },
                                 {
                                   onSuccess: (created) => {
                                     setSelectedListIds(prev => [...prev, created.id]);
                                     setHasChanges(true);
                                     setShowNewListInput(false);
                                     setNewListName('');
+                                    setNewListColor('#3b82f6');
                                   }
                                 }
                               );
@@ -883,7 +895,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           </button>
                           <button
                             type="button"
-                            onClick={() => { setShowNewListInput(false); setNewListName(''); }}
+                            onClick={() => { setShowNewListInput(false); setNewListName(''); setNewListColor('#3b82f6'); }}
                             className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             style={{ color: 'rgb(var(--color-text-secondary))' }}
                           >
