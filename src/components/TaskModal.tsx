@@ -1159,7 +1159,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                     Sélectionnés ({collaborators.length})
                                   </h4>
                                 </div>
-                                <div className="grid grid-cols-1 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                   {collaborators.map((userId) => {
                                     const info = displayInfo(userId);
                                     return (
