@@ -676,9 +676,8 @@ const EventModal: React.FC<EventModalProps> = ({
               {mode === 'edit' && (
                 <Button
                   type="button"
-                  variant="destructive"
                   onClick={handleDelete}
-                  className="h-11 flex-1 text-sm font-semibold"
+                  className="h-11 flex-1 text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
                 >
                   Supprimer
                 </Button>
