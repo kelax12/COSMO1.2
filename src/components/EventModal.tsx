@@ -445,7 +445,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     Début
                   </label>
                   <div
-                    className="flex items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    className="time-input-wrapper flex items-center gap-2 px-3 py-2.5 border rounded-lg"
                     style={{ borderColor: "rgb(var(--color-border))" }}
                   >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
@@ -467,7 +467,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     Fin
                   </label>
                   <div
-                    className="flex items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    className="time-input-wrapper flex items-center gap-2 px-3 py-2.5 border rounded-lg"
                     style={{ borderColor: "rgb(var(--color-border))" }}
                   >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />

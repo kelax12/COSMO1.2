@@ -315,12 +315,21 @@ body {
       @apply border-2 border-blue-600 outline-none !ring-0 !ring-offset-0 !important;
     }
 
-    /* Suppress focus ring on time inputs */
+    /* Suppress all focus styling on time inputs */
+    input[type="time"],
     input[type="time"]:focus,
     input[type="time"]:focus-visible {
       outline: none !important;
       box-shadow: none !important;
-      border-color: inherit !important;
+      border: none !important;
+      -webkit-box-shadow: none !important;
+    }
+
+    /* Keep wrapper border color unchanged when time input is focused */
+    .time-input-wrapper:focus-within {
+      border-color: rgb(var(--color-border)) !important;
+      outline: none !important;
+      box-shadow: none !important;
     }
 
     /* Hide native time picker icon */
