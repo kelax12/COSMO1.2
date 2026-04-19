@@ -484,10 +484,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
               {/* Durée calculée */}
               {calculateDuration() && (
-                <div
-                  className="pt-2.5 border-t border-dashed"
-                  style={{ borderColor: "rgb(var(--color-border))" }}
-                >
+                <div className="pt-2.5">
                   <div className="flex items-center justify-between">
                     <span
                       className="text-xs font-medium"
