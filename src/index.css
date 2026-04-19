@@ -305,7 +305,7 @@ body {
     @apply border-blue-500 !important;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):focus, 
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="time"]):focus,
   select:focus, 
   textarea:focus,
   [data-slot="input"]:focus,
