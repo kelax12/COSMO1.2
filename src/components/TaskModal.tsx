@@ -902,9 +902,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 }
                               );
                             }}
-                            className="p-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-40 transition-colors"
+                            className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
                           >
-                            {createListMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                            {createListMutation.isPending ? 'Création...' : 'Créer'}
                           </button>
                           <button
                             type="button"
