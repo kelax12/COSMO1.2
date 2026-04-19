@@ -268,8 +268,8 @@ const DashboardPage: React.FC = () => {
                   className={cn(
                     'px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200',
                     viewMode === mode
-                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
-                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+                      ? 'bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent))] text-white hover:text-white shadow-sm monochrome:bg-white monochrome:hover:bg-white monochrome:text-zinc-900'
+                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-transparent'
                   )}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
