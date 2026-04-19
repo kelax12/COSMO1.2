@@ -359,21 +359,21 @@ const TasksPage: React.FC = () => {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-7 left-1/2 -translate-x-1/2 flex gap-2 z-10"
+                                  className="absolute -top-7 left-1/2 -translate-x-1/2 flex gap-4 z-10"
                                 >
                                   <button
                                     onClick={(e) => { e.stopPropagation(); startEditList(list); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                     title="Modifier"
                                   >
-                                    <Pencil size={13} />
+                                    <Pencil size={15} />
                                   </button>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
                                     title="Supprimer"
                                   >
-                                    <Trash2 size={13} />
+                                    <Trash2 size={15} />
                                   </button>
                                 </motion.div>
                               )}
