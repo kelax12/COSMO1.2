@@ -367,6 +367,13 @@ const TasksPage: React.FC = () => {
                                   className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
                                 >
                                   <button
+                                    onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
+                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                    title="Ajouter des tâches"
+                                  >
+                                    <Plus size={15} />
+                                  </button>
+                                  <button
                                     onClick={(e) => { e.stopPropagation(); startEditList(list); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                     title="Modifier"
@@ -379,13 +386,6 @@ const TasksPage: React.FC = () => {
                                     title="Supprimer"
                                   >
                                     <Trash2 size={15} />
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
-                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                    title="Ajouter des tâches"
-                                  >
-                                    <Plus size={15} />
                                   </button>
                                 </motion.div>
                               )}
