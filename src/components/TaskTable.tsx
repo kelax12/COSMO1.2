@@ -561,7 +561,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                             className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
                               selectedForListIds.includes(task.id)
                                 ? 'bg-blue-500 border-blue-500'
-                                : 'border-slate-300 dark:border-slate-600'
+                                : 'border-slate-200 dark:border-slate-700'
                             }`}
                           >
                             <motion.svg
@@ -585,7 +585,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                         task.completed
                           ? 'bg-blue-500 border-blue-500'
-                          : 'border-gray-400 hover:border-blue-500'
+                          : addToListMode
+                            ? 'border-gray-500 dark:border-gray-400 hover:border-blue-500'
+                            : 'border-gray-400 hover:border-blue-500'
                       }`}
                     >
                       {task.completed && (
