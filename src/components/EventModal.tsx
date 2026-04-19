@@ -445,13 +445,25 @@ const EventModal: React.FC<EventModalProps> = ({
                   >
                     Début
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${
+                      isPrefilledMode && prefilledFields.has("startTime")
+                        ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                        : ""
+                    }`}
+                    style={{
+                      borderColor:
+                        isPrefilledMode && prefilledFields.has("startTime")
+                          ? undefined
+                          : "rgb(var(--color-border))",
+                    }}
+                  >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
                     <input
                       type="time"
                       value={startTime}
                       onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
-                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      className="flex-1 bg-transparent text-sm focus:outline-none border-0 appearance-none"
                       style={{ color: "rgb(var(--color-text-primary))" }}
                     />
                   </div>
@@ -464,13 +476,25 @@ const EventModal: React.FC<EventModalProps> = ({
                   >
                     Fin
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${
+                      isPrefilledMode && prefilledFields.has("endTime")
+                        ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                        : ""
+                    }`}
+                    style={{
+                      borderColor:
+                        isPrefilledMode && prefilledFields.has("endTime")
+                          ? undefined
+                          : "rgb(var(--color-border))",
+                    }}
+                  >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
                     <input
                       type="time"
                       value={endTime}
                       onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
-                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      className="flex-1 bg-transparent text-sm focus:outline-none border-0 appearance-none"
                       style={{ color: "rgb(var(--color-text-primary))" }}
                     />
                   </div>
