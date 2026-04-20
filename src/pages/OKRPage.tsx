@@ -121,6 +121,10 @@ const OKRPage: React.FC = () => {
 
   const getCategoryById = (id: string) => categories.find((cat: { id: string }) => cat.id === id);
 
+  // Résout une couleur : accepte un hex (#3B82F6) ou un nom ('blue')
+  const resolveColor = (color: string) =>
+    color.startsWith('#') ? color : getColorHex(color);
+
   const formatTime = (minutes: number) => {
     if (minutes === 0) return '0min';
     const h = Math.floor(minutes / 60);
@@ -223,10 +227,10 @@ const OKRPage: React.FC = () => {
               onClick={() => setSelectedCategory(category.id)}
               className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
               style={{
-                backgroundColor: selectedCategory === category.id ? getColorHex(category.color) : 'rgb(var(--color-chip-bg))',
-                borderColor: selectedCategory === category.id ? getColorHex(category.color) : 'rgb(var(--color-chip-border))',
-                color: selectedCategory === category.id ? '#ffffff' : 'rgb(var(--color-text-secondary))',
-                boxShadow: selectedCategory === category.id ? `0 4px 12px ${getColorHex(category.color)}40` : 'none'
+                backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
+                borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
+                color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
+                boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
               }}>
 
               <span>{category.name}</span>
