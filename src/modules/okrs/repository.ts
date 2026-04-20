@@ -28,7 +28,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-1',
     title: 'Améliorer ma productivité Q2 2026',
     description: 'Devenir plus efficace dans mes tâches quotidiennes',
-    category: 'personal',
+    category: 'cat-2',
     progress: 55,
     completed: false,
     keyResults: [
@@ -43,7 +43,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-2',
     title: 'Maîtriser le machine learning',
     description: 'Acquérir des compétences solides en ML/IA',
-    category: 'learning',
+    category: 'cat-4',
     progress: 50,
     completed: false,
     keyResults: [
@@ -58,7 +58,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-3',
     title: 'Santé et bien-être 2026',
     description: 'Adopter et maintenir un mode de vie sain',
-    category: 'health',
+    category: 'cat-3',
     progress: 78,
     completed: false,
     keyResults: [
@@ -75,7 +75,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-4',
     title: 'Lancer COSMO v1.2 en production',
     description: 'Développer et déployer la version 1.2',
-    category: 'personal',
+    category: 'cat-2',
     progress: 100,
     completed: true,
     keyResults: [
@@ -90,7 +90,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-5',
     title: 'Optimisation performances app',
     description: 'Réduire les temps de chargement et améliorer le score Lighthouse',
-    category: 'personal',
+    category: 'cat-2',
     progress: 100,
     completed: true,
     keyResults: [
@@ -105,7 +105,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-6',
     title: 'Croissance utilisateurs COSMO v1',
     description: 'Acquérir les premiers utilisateurs actifs',
-    category: 'personal',
+    category: 'cat-2',
     progress: 100,
     completed: true,
     keyResults: [
@@ -122,7 +122,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-7',
     title: 'Excellence technique Q3 2025',
     description: 'Améliorer la qualité et la performance du code',
-    category: 'personal',
+    category: 'cat-2',
     progress: 100,
     completed: true,
     keyResults: [
@@ -137,7 +137,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-8',
     title: 'Bien-être et santé H1 2025',
     description: 'Établir de bonnes habitudes de santé durables',
-    category: 'health',
+    category: 'cat-3',
     progress: 100,
     completed: true,
     keyResults: [
