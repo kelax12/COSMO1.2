@@ -38,7 +38,7 @@ const OKRPage: React.FC = () => {
     const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
     const totalProgress = keyResults.reduce((sum, kr) => {
-      return sum + Math.min(kr.currentValue / kr.targetValue * 100, 100);
+      return sum + (kr.currentValue / kr.targetValue * 100);
     }, 0);
     return Math.round(totalProgress / keyResults.length);
   };
@@ -404,7 +404,7 @@ const OKRPage: React.FC = () => {
                   <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
                     <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
                       <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-border-muted))" strokeWidth="8" fill="none" />
-                      <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-accent))" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 32}`} strokeDashoffset={2 * Math.PI * 32 * (1 - progress / 100)} />
+                      <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-accent))" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 32}`} strokeDashoffset={2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)} />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-lg sm:text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
@@ -425,7 +425,7 @@ const OKRPage: React.FC = () => {
                 <div className="space-y-3">
                   <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
                   {objective.keyResults.map((keyResult) => {
-                    const krProgress = Math.min(keyResult.currentValue / keyResult.targetValue * 100, 100);
+                    const krProgress = keyResult.currentValue / keyResult.targetValue * 100;
 
                     return (
                       <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
@@ -473,7 +473,7 @@ const OKRPage: React.FC = () => {
                           
                           <div className="flex items-center gap-3 w-full">
                             <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${krProgress}%` }} />
+                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
                             <span className="text-[10px] sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
                           </div>
