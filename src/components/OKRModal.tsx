@@ -360,7 +360,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400/40 group-hover:bg-blue-500 rounded-l-xl transition-colors" />
 
                       <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Résultat clé (KR) {idx + 1}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Résultat clé {idx + 1}</span>
                         {keyResults.length > 1 && (
                           <button type="button" onClick={() => removeKR(idx)} className="text-slate-300 hover:text-red-500 transition-colors">
                             <Trash2 size={13} />
