@@ -176,9 +176,21 @@ export interface IOKRsRepository {
 // LOCAL STORAGE REPOSITORY IMPLEMENTATION
 // ═══════════════════════════════════════════════════════════════════
 
+// Mapping des anciens IDs de catégorie OKR vers les IDs du système partagé
+const CATEGORY_MIGRATIONS: Record<string, string> = {
+  'personal': 'cat-2',
+  'learning': 'cat-4',
+  'health':   'cat-3',
+  'okrcat-1': 'cat-1',
+  'okrcat-2': 'cat-3',
+  'okrcat-3': 'cat-4',
+  'okrcat-4': 'cat-5',
+};
+
 export class LocalStorageOKRsRepository implements IOKRsRepository {
   /**
-   * Get all OKRs from localStorage (or initialize with demo data)
+   * Get all OKRs from localStorage (or initialize with demo data).
+   * Migrates legacy category IDs to the shared category system on first load.
    */
   private getOKRs(): OKR[] {
     const data = localStorage.getItem(OKRS_STORAGE_KEY);
@@ -187,7 +199,15 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       this.saveOKRs(demo);
       return demo;
     }
-    return JSON.parse(data);
+    const okrs: OKR[] = JSON.parse(data);
+    const migrated = okrs.map(okr => ({
+      ...okr,
+      category: CATEGORY_MIGRATIONS[okr.category] ?? okr.category,
+    }));
+    if (migrated.some((o, i) => o.category !== okrs[i].category)) {
+      this.saveOKRs(migrated);
+    }
+    return migrated;
   }
 
   /**
