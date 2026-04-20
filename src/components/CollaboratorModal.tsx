@@ -211,7 +211,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l'instant.</p>
                 </div>
               ) : (
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {assignedCollaborators.map((collaboratorId) => {
                       const info = displayInfo(collaboratorId);
                       return (
@@ -265,7 +265,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                 variant="default"
                 onClick={handleAdd}
                 disabled={!input.trim()}
-                className="inline-flex items-center justify-center gap-2"
+                className={`inline-flex items-center justify-center gap-2 ${input.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
               >
                 <UserPlus size={16} data-icon="inline-start" />
                 Ajouter
@@ -330,15 +330,6 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
-          <Button
-            variant="secondary"
-            onClick={onClose}
-          >
-            Fermer
-          </Button>
-        </div>
       </div>
     </div>
   );
