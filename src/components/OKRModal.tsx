@@ -32,7 +32,6 @@ type Category = {
   id: string;
   name: string;
   color: string;
-  icon: string;
 };
 
 type KeyResultForm = {
@@ -258,7 +257,7 @@ const OKRModal: React.FC<OKRModalProps> = ({
 
                     {categories.map((c) =>
                     <option key={c.id} value={c.id}>
-                        {c.icon} {c.name}
+                        {c.name}
                       </option>
                     )}
                   </select>

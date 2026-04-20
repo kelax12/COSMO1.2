@@ -1,35 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import CategoryManager, { getColorHex } from '../components/CategoryManager';
+import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { useCategories } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
 
 type Objective = OKR & { estimatedTime?: number };
-
-type Objective = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  startDate: string;
-  endDate: string;
-  keyResults: KeyResult[];
-  completed: boolean;
-  estimatedTime: number;
-};
-
-type Category = {
-  id: string;
-  name: string;
-  color: string;
-  icon: string;
-};
 
 const OKRPage: React.FC = () => {
   const location = useLocation();
@@ -40,24 +22,14 @@ const OKRPage: React.FC = () => {
   const deleteOkrMutation = useDeleteOkr();
   const updateKeyResultMutation = useUpdateKeyResult();
   const createEventMutation = useCreateEvent();
+  const { data: categories = [] } = useCategories();
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedKeyResultForModal, setSelectedKeyResultForModal] = useState<{kr: KeyResult;obj: Objective;} | null>(null);
   const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
-
-    const [categories, setCategories] = useState<Category[]>([
-    { id: 'personal', name: 'Personnel', color: 'blue', icon: '👤' },
-    { id: 'professional', name: 'Professionnel', color: 'green', icon: '💼' },
-    { id: 'health', name: 'Santé', color: 'red', icon: '❤️' },
-    { id: 'learning', name: 'Apprentissage', color: 'purple', icon: '📚' },
-    { id: 'demo', name: 'Nouvelle Catégorie (Démo)', color: 'orange', icon: '🚀' }]
-    );
-
-    const [showAddObjective, setShowAddObjective] = useState(false);
-    const [showCategoryManager, setShowCategoryManager] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
-    const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [showAddObjective, setShowAddObjective] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
 
     const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
@@ -81,33 +53,7 @@ const OKRPage: React.FC = () => {
       });
     }
   };
-  const addCategory = (category: Category) => {
-    setCategories([...categories, category]);
-  };
-
-  const updateCategory = (categoryId: string, updates: Partial<Category>) => {
-    setCategories((prev) => prev.map((cat) =>
-    cat.id === categoryId ? { ...cat, ...updates } : cat
-    ));
-  };
-
-    const deleteCategory = (categoryId: string) => {
-      const isUsed = objectives.some((obj) => obj.category === categoryId);
-      if (isUsed) {
-        alert('Cette catégorie est utilisée par des objectifs existants et ne peut pas être supprimée.');
-        return;
-      }
-      setCategoryToDelete(categoryId);
-    };
-
-    const confirmDeleteCategory = () => {
-      if (categoryToDelete) {
-        setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete));
-        setCategoryToDelete(null);
-      }
-    };
-
-       const deleteObjective = (objectiveId: string) => {
+  const deleteObjective = (objectiveId: string) => {
     deleteOkrMutation.mutate(objectiveId);
     setDeletingObjective(null);
   };
@@ -158,7 +104,7 @@ const OKRPage: React.FC = () => {
     0
   };
 
-  const getCategoryById = (id: string) => categories.find((cat) => cat.id === id);
+  const getCategoryById = (id: string) => categories.find((cat: { id: string }) => cat.id === id);
 
   const formatTime = (minutes: number) => {
     if (minutes === 0) return '0min';
@@ -222,19 +168,6 @@ const OKRPage: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 mb-8">
           <Button
-            variant="outline"
-            onClick={() => setShowCategoryManager(true)}
-            className="flex items-center justify-center gap-2 group relative overflow-hidden"
-            style={{
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-secondary))',
-              backgroundColor: 'rgb(var(--color-surface))'
-            }}>
-            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Plus data-icon="inline-start" size={20} className="text-blue-500 group-hover:rotate-90 transition-transform duration-300" />
-            <span className="whitespace-nowrap font-medium">Gérer les catégories</span>
-          </Button>
-          <Button
             variant="default"
             onClick={() => setShowAddObjective(true)}
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
@@ -281,7 +214,6 @@ const OKRPage: React.FC = () => {
                 boxShadow: selectedCategory === category.id ? `0 4px 12px ${getColorHex(category.color)}40` : 'none'
               }}>
 
-              {category.icon && <span>{category.icon}</span>}
               <span>{category.name}</span>
             </button>
           )}
@@ -343,9 +275,8 @@ const OKRPage: React.FC = () => {
                   <div className="flex justify-between items-start mb-4 gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: 'rgb(var(--color-accent) / 0.1)', color: 'rgb(var(--color-accent))' }}>
-                          {category?.icon && <span>{category.icon}</span>}
-                          <span>{category?.name}</span>
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: category ? getColorHex(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? getColorHex(category.color) : 'rgb(var(--color-accent))' }}>
+                          <span>{category?.name ?? objective.category}</span>
                         </span>
                         <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
                           {new Date(objective.startDate).toLocaleDateString('fr-FR')} - {new Date(objective.endDate).toLocaleDateString('fr-FR')}
@@ -536,52 +467,6 @@ const OKRPage: React.FC = () => {
             </div>
           )}
         </AnimatePresence>
-
-        <AnimatePresence>
-          {categoryToDelete && (
-            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
-              >
-                <div className="p-6">
-                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                    <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la catégorie</h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                    Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setCategoryToDelete(null)}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={confirmDeleteCategory}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-      <CategoryManager
-        isOpen={showCategoryManager}
-        onClose={() => setShowCategoryManager(false)}
-        categories={categories}
-        onAdd={addCategory}
-        onUpdate={updateCategory}
-        onDelete={deleteCategory}
-      />
 
       <TaskModal 
         isOpen={showAddTaskModal} 
