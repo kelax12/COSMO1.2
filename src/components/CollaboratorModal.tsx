@@ -204,11 +204,11 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                 </span>
               </div>
               {assignedCollaborators.length === 0 ? (
-                <div className="p-8 rounded-2xl border-2 border-dashed text-center transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                    <Users className="w-6 h-6 text-slate-400" />
+                <div className="p-6 rounded-2xl border-2 border-dashed text-center transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                    <Users className="w-5 h-5 text-slate-400" />
                   </div>
-                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l'instant.</p>
+                  <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l'instant.</p>
                 </div>
               ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
