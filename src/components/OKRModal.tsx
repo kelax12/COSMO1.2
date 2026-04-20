@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, TrendingUp, Trash2, X, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, Target } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ type KeyResult = {
   unit: string;
   completed: boolean;
   estimatedTime: number;
-  history?: {date: string;increment: number;}[];
+  history?: { date: string; increment: number }[];
 };
 
 type Objective = {
@@ -50,26 +50,34 @@ type OKRModalProps = {
   onSubmit: (data: Omit<Objective, 'id'>, isEditing: boolean) => void;
 };
 
-const OKRModal: React.FC<OKRModalProps> = ({
-  isOpen,
-  onClose,
-  categories,
-  editingObjective,
-  onSubmit
-}) => {
+const slideVariants = {
+  enterFromRight: { x: 40, opacity: 0 },
+  enterFromLeft:  { x: -40, opacity: 0 },
+  center:         { x: 0, opacity: 1 },
+  exitToLeft:     { x: -40, opacity: 0 },
+  exitToRight:    { x: 40, opacity: 0 },
+};
+
+const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editingObjective, onSubmit }) => {
   const { data: allCategories = [] } = useCategories();
+
+  const [step, setStep] = useState<1 | 2>(1);
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
+
   const [newObjective, setNewObjective] = useState({
     title: '',
     description: '',
     category: '',
-    endDate: ''
+    endDate: '',
   });
 
   const [keyResults, setKeyResults] = useState<KeyResultForm[]>([
-  { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
-  { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
-  { title: '', targetValue: '', currentValue: '', estimatedTime: '' }]
-  );
+    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+  ]);
+
+  const [step1Error, setStep1Error] = useState('');
 
   useEffect(() => {
     if (editingObjective) {
@@ -77,46 +85,69 @@ const OKRModal: React.FC<OKRModalProps> = ({
         title: editingObjective.title,
         description: editingObjective.description,
         category: editingObjective.category,
-        endDate: editingObjective.endDate
+        endDate: editingObjective.endDate,
       });
       setKeyResults(
         editingObjective.keyResults.map((kr) => ({
           title: kr.title,
           targetValue: kr.targetValue.toString(),
           currentValue: kr.currentValue.toString(),
-          estimatedTime: kr.estimatedTime.toString()
+          estimatedTime: kr.estimatedTime.toString(),
         }))
       );
     } else {
       resetForm();
     }
+    setStep(1);
+    setStep1Error('');
   }, [editingObjective, isOpen]);
 
   const calculateDuration = (start: string, end: string) => {
     if (!start || !end) return null;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const diffTime = endDate.getTime() - startDate.getTime();
+    const diffTime = new Date(end).getTime() - new Date(start).getTime();
     if (diffTime < 0) return { text: "La date d'échéance doit être après la date de début", isError: true };
-
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays === 0) return { text: "Moins d'un jour", isError: false };
     if (diffDays < 7) return { text: `${diffDays} jour${diffDays > 1 ? 's' : ''}`, isError: false };
-
     if (diffDays < 32) {
       const weeks = Math.floor(diffDays / 7);
-      const remainingDays = diffDays % 7;
-      let text = `${weeks} semaine${weeks > 1 ? 's' : ''}`;
-      if (remainingDays > 0) text += ` et ${remainingDays} jour${remainingDays > 1 ? 's' : ''}`;
-      return { text, isError: false };
+      const rem = diffDays % 7;
+      return { text: `${weeks} semaine${weeks > 1 ? 's' : ''}${rem > 0 ? ` et ${rem} jour${rem > 1 ? 's' : ''}` : ''}`, isError: false };
     }
-
     const months = Math.floor(diffDays / 30);
-    const remainingDays = diffDays % 30;
-    let text = `${months} mois`;
-    if (remainingDays > 0) text += ` et ${remainingDays} jour${remainingDays > 1 ? 's' : ''}`;
-    return { text, isError: false };
+    const rem = diffDays % 30;
+    return { text: `${months} mois${rem > 0 ? ` et ${rem} jour${rem > 1 ? 's' : ''}` : ''}`, isError: false };
+  };
+
+  const resetForm = () => {
+    setNewObjective({ title: '', description: '', category: allCategories[0]?.id ?? '', endDate: '' });
+    setKeyResults([
+      { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+      { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+      { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+    ]);
+    setStep1Error('');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    setStep(1);
+    onClose();
+  };
+
+  const handleNext = () => {
+    if (!newObjective.title.trim()) {
+      setStep1Error("Veuillez saisir un titre pour l'objectif.");
+      return;
+    }
+    setStep1Error('');
+    setDirection('forward');
+    setStep(2);
+  };
+
+  const handleBack = () => {
+    setDirection('back');
+    setStep(1);
   };
 
   const addKeyResult = () => {
@@ -126,47 +157,19 @@ const OKRModal: React.FC<OKRModalProps> = ({
   };
 
   const removeKeyResult = (index: number) => {
-    if (keyResults.length > 1) {
-      setKeyResults(keyResults.filter((_, i) => i !== index));
-    }
+    if (keyResults.length > 1) setKeyResults(keyResults.filter((_, i) => i !== index));
   };
 
   const updateKeyResultField = (index: number, field: string, value: string) => {
-    const updated = keyResults.map((kr, i) => i === index ? { ...kr, [field]: value } : kr);
-    setKeyResults(updated);
+    setKeyResults(keyResults.map((kr, i) => (i === index ? { ...kr, [field]: value } : kr)));
   };
 
-  const resetForm = () => {
-    setNewObjective({
-      title: '',
-      description: '',
-      category: allCategories[0]?.id ?? '',
-      endDate: ''
-    });
-    setKeyResults([
-    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
-    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
-    { title: '', targetValue: '', currentValue: '', estimatedTime: '' }]
-    );
-  };
-
-  const handleSubmitObjective = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newObjective.title.trim()) {
-      alert("Veuillez saisir un titre pour l'objectif");
+  const handleSubmit = () => {
+    const validKRs = keyResults.filter((kr) => kr.title.trim() && kr.targetValue && Number(kr.targetValue) > 0);
+    if (validKRs.length === 0) {
+      alert('Veuillez définir au moins un résultat clé valide.');
       return;
     }
-
-    const validKeyResults = keyResults.filter(
-      (kr) => kr.title.trim() && kr.targetValue && Number(kr.targetValue) > 0
-    );
-
-    if (validKeyResults.length === 0) {
-      alert('Veuillez définir au moins un résultat clé valide');
-      return;
-    }
-
     const objData: Omit<Objective, 'id'> = {
       title: newObjective.title,
       description: newObjective.description,
@@ -174,26 +177,21 @@ const OKRModal: React.FC<OKRModalProps> = ({
       startDate: editingObjective ? editingObjective.startDate : new Date().toISOString().split('T')[0],
       endDate: newObjective.endDate,
       completed: false,
-      estimatedTime: validKeyResults.reduce((sum, kr) => sum + Number(kr.estimatedTime) * Number(kr.targetValue), 0),
-      keyResults: validKeyResults.map((kr, index) => ({
-        id: editingObjective ? editingObjective.keyResults[index]?.id || `${Date.now()}-${index}` : `${Date.now()}-${index}`,
+      estimatedTime: validKRs.reduce((s, kr) => s + Number(kr.estimatedTime) * Number(kr.targetValue), 0),
+      keyResults: validKRs.map((kr, i) => ({
+        id: editingObjective ? editingObjective.keyResults[i]?.id || `${Date.now()}-${i}` : `${Date.now()}-${i}`,
         title: kr.title,
         currentValue: Number(kr.currentValue) || 0,
         targetValue: Number(kr.targetValue),
         unit: '',
         completed: Number(kr.currentValue) >= Number(kr.targetValue),
         estimatedTime: Number(kr.estimatedTime) || 30,
-        history: editingObjective ? editingObjective.keyResults[index]?.history || [] : []
-      }))
+        history: editingObjective ? editingObjective.keyResults[i]?.history || [] : [],
+      })),
     };
-
     onSubmit(objData, !!editingObjective);
     resetForm();
-    onClose();
-  };
-
-  const handleClose = () => {
-    resetForm();
+    setStep(1);
     onClose();
   };
 
@@ -205,209 +203,260 @@ const OKRModal: React.FC<OKRModalProps> = ({
       <DialogContent
         showCloseButton={false}
         fullScreenMobile={true}
-        className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl 3xl:max-w-[1600px] w-full h-full md:h-auto md:min-h-[50vh] 3xl:min-h-[85vh] md:max-h-[90vh] overflow-y-auto"
+        className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-2xl w-full h-full md:h-auto md:max-h-[90vh] overflow-hidden"
       >
         <DialogTitle className="sr-only">
           {editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}
         </DialogTitle>
-        <div className="md:rounded-xl md:shadow-2xl w-full h-full transition-colors bg-white dark:bg-slate-800">
-          <div className="flex justify-between items-center p-6 border-b dark:border-slate-700">
-            <h2 className="text-xl font-bold">{editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}</h2>
+
+        <div className="md:rounded-xl md:shadow-2xl w-full h-full flex flex-col bg-white dark:bg-slate-800 overflow-hidden">
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b dark:border-slate-700 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                <Target size={16} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">
+                  {editingObjective ? 'Modifier' : 'Nouvel objectif'} — étape {step}/2
+                </p>
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                  {step === 1 ? 'Informations générales' : 'Résultats clés'}
+                </h2>
+              </div>
+            </div>
             <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X size={20} />
+              <X size={18} />
             </Button>
           </div>
-          <form onSubmit={handleSubmitObjective} className="p-6 space-y-8 overflow-y-auto h-[calc(100%-80px)] md:h-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-5">
-                <div>
-                  <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block !whitespace-pre-line !whitespace-pre-line">Nom de l'objectif
 
-                  </label>
-                        <input
-                    type="text"
-                    value={newObjective.title}
-                    onChange={(e) => setNewObjective({ ...newObjective, title: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-500 focus:border-blue-600 focus:border-2 outline-none transition-all"
-                    placeholder="Ex: Sport"
-                    required />
-
-                        </div>
-                        <div>
-                          <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block">
-                            Description
-                          </label>
-                          <textarea
-                    value={newObjective.description}
-                    onChange={(e) => setNewObjective({ ...newObjective, description: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-500 focus:border-blue-600 focus:border-2 outline-none transition-all resize-none"
-                    placeholder="Ex: améliorer ma santé"
-                    rows={4} />
-
-                  </div>
-                </div>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block">
-                    Catégorie
-                  </label>
-                  <select
-                    value={newObjective.category}
-                    onChange={(e) => setNewObjective({ ...newObjective, category: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none">
-
-                    {categories.map((c) =>
-                    <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    )}
-                  </select>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block">
-                      Date d'échéance
-                    </label>
-                    <DatePicker
-                      value={newObjective.endDate}
-                      onChange={(date) => setNewObjective({ ...newObjective, endDate: date })}
-                      placeholder="Sélectionner une date" />
-
-                  </div>
-                </div>
-                {duration &&
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className={`flex items-center gap-2 p-3 rounded-xl border text-sm transition-all ${
-                  duration.isError ?
-                  'bg-red-50 border-red-100 text-red-600 dark:bg-red-900/20 dark:border-red-800/30 dark:text-red-400' :
-                  'bg-indigo-50 border-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800/30 dark:text-indigo-400'}`
-                  }>
-
-                    <Clock size={16} className={duration.isError ? 'text-red-500' : 'text-indigo-500'} />
-                    <span>
-                      {duration.isError ? '' : "Temps prévu pour l'objectif : "}
-                      <strong className="font-bold">{duration.text}</strong>
-                    </span>
-                  </motion.div>
-                }
-              </div>
+          {/* Step indicator */}
+          <div className="px-6 pt-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= 1 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+              <div className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
             </div>
-
-            <div className="border-t border-slate-100 dark:border-slate-700 pt-8">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 relative inline-block">
-                    Résultats Clés
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Définissez comment vous mesurerez votre succès
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addKeyResult}
-                  className="flex items-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50">
-
-                  <Plus size={18} data-icon="inline-start" />Ajouter un KR (Sous-objectif)
-
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {keyResults.map((kr, idx) =>
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="group relative p-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex flex-wrap md:flex-nowrap gap-4 items-end transition-all hover:border-blue-300 dark:hover:border-blue-700 overflow-hidden">
-
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/30 group-hover:bg-blue-500 transition-colors" />
-
-                    <div className="flex-1 min-w-[200px]">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
-                        Intitulé du résultat clé *
-                      </label>
-                            <input
-                      type="text"
-                      value={kr.title}
-                      onChange={(e) => updateKeyResultField(idx, 'title', e.target.value)}
-                      className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                      placeholder="Ex: Faire 30 séances haut du corps" />
-
-                      </div>
-                    <div className="w-full md:w-32">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
-                        Objectif
-                      </label>
-                      <div className="relative">
-                        <input
-                        type="number"
-                        value={kr.targetValue}
-                        onChange={(e) => updateKeyResultField(idx, 'targetValue', e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-8"
-                        placeholder="100" />
-
-                        <TrendingUp size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                    <div className="w-full md:w-40">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 !whitespace-pre-line">TEMPS PAR RÉPÉTITION (MIN)
-
-                    </label>
-                      <div className="relative">
-                        <input
-                        type="number"
-                        value={kr.estimatedTime}
-                        onChange={(e) => updateKeyResultField(idx, 'estimatedTime', e.target.value)}
-                        className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-8"
-                        placeholder="60" />
-
-                        <Clock size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                    </div>
-                    {keyResults.length > 1 &&
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeKeyResult(idx)}
-                    className="self-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title="Supprimer ce résultat">
-
-                        <Trash2 size={20} className="text-red-500" />
-                      </Button>
-                  }
-                  </motion.div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-6 border-t dark:border-slate-700">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}>
-
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                variant="default"
-                className="flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
-
-                {editingObjective ? 'Mettre à jour' : "Créer l'objectif"}
-              </Button>
-            </div>
-            </form>
           </div>
-        </DialogContent>
-      </Dialog>
-  );
 
+          {/* Content */}
+          <div className="flex-1 overflow-hidden relative">
+            <AnimatePresence mode="wait" initial={false}>
+              {step === 1 ? (
+                <motion.div
+                  key="step1"
+                  initial={direction === 'back' ? slideVariants.enterFromLeft : slideVariants.enterFromRight}
+                  animate={slideVariants.center}
+                  exit={direction === 'back' ? slideVariants.exitToRight : slideVariants.exitToLeft}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  className="absolute inset-0 overflow-y-auto px-6 py-5 space-y-5"
+                >
+                  {/* Titre */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-200">
+                      Nom de l'objectif <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={newObjective.title}
+                      onChange={(e) => { setNewObjective({ ...newObjective, title: e.target.value }); setStep1Error(''); }}
+                      className={`w-full p-3 bg-white dark:bg-slate-800 border rounded-lg outline-none transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${step1Error ? 'border-red-400' : 'border-slate-200 dark:border-slate-700'}`}
+                      placeholder="Ex: Améliorer ma condition physique"
+                    />
+                    {step1Error && <p className="text-xs text-red-500 mt-1">{step1Error}</p>}
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-200">
+                      Description
+                    </label>
+                    <textarea
+                      value={newObjective.description}
+                      onChange={(e) => setNewObjective({ ...newObjective, description: e.target.value })}
+                      className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none transition-all resize-none hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Ex: Courir un marathon avant la fin de l'année"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Catégorie + Date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-200">
+                        Catégorie
+                      </label>
+                      <select
+                        value={newObjective.category}
+                        onChange={(e) => setNewObjective({ ...newObjective, category: e.target.value })}
+                        className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none transition-all appearance-none hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-200">
+                        Date d'échéance
+                      </label>
+                      <DatePicker
+                        value={newObjective.endDate}
+                        onChange={(date) => setNewObjective({ ...newObjective, endDate: date })}
+                        placeholder="Sélectionner une date"
+                      />
+                    </div>
+                  </div>
+
+                  {duration && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex items-center gap-2 p-3 rounded-xl border text-sm ${
+                        duration.isError
+                          ? 'bg-red-50 border-red-100 text-red-600 dark:bg-red-900/20 dark:border-red-800/30 dark:text-red-400'
+                          : 'bg-indigo-50 border-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800/30 dark:text-indigo-400'
+                      }`}
+                    >
+                      <Clock size={15} />
+                      <span>
+                        {!duration.isError && "Durée de l'objectif : "}
+                        <strong>{duration.text}</strong>
+                      </span>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="step2"
+                  initial={direction === 'back' ? slideVariants.enterFromLeft : slideVariants.enterFromRight}
+                  animate={slideVariants.center}
+                  exit={direction === 'back' ? slideVariants.exitToRight : slideVariants.exitToLeft}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  className="absolute inset-0 overflow-y-auto px-6 py-5 space-y-3"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-slate-400">
+                      Définissez comment mesurer votre succès
+                    </p>
+                    <button
+                      type="button"
+                      onClick={addKeyResult}
+                      disabled={keyResults.length >= 10}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 disabled:opacity-40 transition-colors"
+                    >
+                      <Plus size={14} />
+                      Ajouter un KR
+                    </button>
+                  </div>
+
+                  {keyResults.map((kr, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.04 }}
+                      className="group relative p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl transition-all hover:border-blue-300 dark:hover:border-blue-700 overflow-hidden"
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-300/50 group-hover:bg-blue-500 transition-colors rounded-l-xl" />
+
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          KR {idx + 1}
+                        </span>
+                        {keyResults.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeKeyResult(idx)}
+                            className="text-slate-300 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={kr.title}
+                          onChange={(e) => updateKeyResultField(idx, 'title', e.target.value)}
+                          className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                          placeholder="Ex: Courir 3x par semaine pendant 3 mois"
+                        />
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="relative">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Objectif cible</label>
+                            <input
+                              type="number"
+                              value={kr.targetValue}
+                              onChange={(e) => updateKeyResultField(idx, 'targetValue', e.target.value)}
+                              className="w-full p-2.5 pr-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                              placeholder="100"
+                            />
+                            <TrendingUp size={13} className="absolute right-2.5 bottom-3 text-slate-400" />
+                          </div>
+                          <div className="relative">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Temps/unité (min)</label>
+                            <input
+                              type="number"
+                              value={kr.estimatedTime}
+                              onChange={(e) => updateKeyResultField(idx, 'estimatedTime', e.target.value)}
+                              className="w-full p-2.5 pr-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                              placeholder="60"
+                            />
+                            <Clock size={13} className="absolute right-2.5 bottom-3 text-slate-400" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-t dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 shrink-0">
+            {step === 1 ? (
+              <>
+                <Button variant="ghost" onClick={handleClose} className="text-slate-500">
+                  Annuler
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/25 transition-all"
+                >
+                  Résultats clés
+                  <ArrowRight size={16} />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                >
+                  <ArrowLeft size={16} />
+                  Retour
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/25 transition-all"
+                >
+                  {editingObjective ? 'Mettre à jour' : "Créer l'objectif"}
+                </button>
+              </>
+            )}
+          </div>
+
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 export default OKRModal;
