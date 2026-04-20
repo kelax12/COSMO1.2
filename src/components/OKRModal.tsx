@@ -348,7 +348,16 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 </div>
 
                 <div className="space-y-2.5">
-                  {keyResults.map((kr, idx) => (
+                  {keyResults.map((kr, idx) => {
+                    const KR_PLACEHOLDERS = [
+                      { title: 'Ex : Publier 12 articles de blog', target: 'Cible (ex : 12)', time: 'Min. par article (ex : 90)' },
+                      { title: 'Ex : Atteindre 95 % de satisfaction client', target: 'Cible (ex : 95)', time: 'Min. par éval. (ex : 15)' },
+                      { title: 'Ex : Compléter 20 sessions de formation', target: 'Cible (ex : 20)', time: 'Min. par session (ex : 60)' },
+                      { title: 'Ex : Réduire le délai de livraison à 3 j', target: 'Cible (ex : 3)', time: 'Min. par livraison (ex : 30)' },
+                      { title: 'Ex : Générer 500 leads qualifiés', target: 'Cible (ex : 500)', time: 'Min. par lead (ex : 10)' },
+                    ];
+                    const ph = KR_PLACEHOLDERS[idx % KR_PLACEHOLDERS.length];
+                    return (
                     <motion.div
                       key={idx}
                       initial={{ opacity: 0, y: 6 }}
@@ -374,7 +383,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                         onChange={(e) => updateKR(idx, 'title', e.target.value)}
                         className="w-full px-3 py-2 mb-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all
                           focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-slate-300"
-                        placeholder="Ex: Courir 3x par semaine pendant 3 mois"
+                        placeholder={ph.title}
                       />
 
                       <div className="grid grid-cols-2 gap-2">
@@ -385,7 +394,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             onChange={(e) => updateKR(idx, 'targetValue', e.target.value)}
                             className="w-full px-3 py-2 pr-8 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all
                               focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-slate-300"
-                            placeholder="Objectif cible"
+                            placeholder={ph.target}
                           />
                           <TrendingUp size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
@@ -396,13 +405,14 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             onChange={(e) => updateKR(idx, 'estimatedTime', e.target.value)}
                             className="w-full px-3 py-2 pr-8 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all
                               focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-slate-300"
-                            placeholder="Temps/unité (min)"
+                            placeholder={ph.time}
                           />
                           <Clock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
