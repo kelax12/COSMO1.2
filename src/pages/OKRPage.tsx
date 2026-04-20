@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Clock } from 'lucide-react';
+import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Clock, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
-import { useCategories } from '@/modules/categories';
+import { useCategories, useCreateCategory } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
@@ -23,6 +23,10 @@ const OKRPage: React.FC = () => {
   const updateKeyResultMutation = useUpdateKeyResult();
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
+  const createCategoryMutation = useCreateCategory();
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('blue');
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedKeyResultForModal, setSelectedKeyResultForModal] = useState<{kr: KeyResult;obj: Objective;} | null>(null);
@@ -103,6 +107,17 @@ const OKRPage: React.FC = () => {
     Math.round(objectives.reduce((sum, obj) => sum + getProgress(obj.keyResults), 0) / objectives.length) :
     0
   };
+
+  const colorOptions = [
+    { value: 'blue', color: '#3B82F6' },
+    { value: 'red', color: '#EF4444' },
+    { value: 'green', color: '#10B981' },
+    { value: 'purple', color: '#8B5CF6' },
+    { value: 'orange', color: '#F97316' },
+    { value: 'yellow', color: '#F59E0B' },
+    { value: 'pink', color: '#EC4899' },
+    { value: 'indigo', color: '#6366F1' },
+  ];
 
   const getCategoryById = (id: string) => categories.find((cat: { id: string }) => cat.id === id);
 
@@ -217,6 +232,80 @@ const OKRPage: React.FC = () => {
               <span>{category.name}</span>
             </button>
           )}
+
+          <AnimatePresence mode="wait">
+            {!showCreateCategory ? (
+              <motion.button
+                key="add-btn"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                onClick={() => setShowCreateCategory(true)}
+                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                title="Nouvelle catégorie"
+              >
+                <Plus size={14} />
+              </motion.button>
+            ) : (
+              <motion.form
+                key="add-form"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!newCategoryName.trim()) return;
+                  createCategoryMutation.mutate({ name: newCategoryName.trim(), color: newCategoryColor }, {
+                    onSuccess: () => {
+                      setNewCategoryName('');
+                      setNewCategoryColor('blue');
+                      setShowCreateCategory(false);
+                    }
+                  });
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = colorOptions.findIndex(c => c.value === newCategoryColor);
+                    setNewCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
+                  }}
+                  className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                  style={{ backgroundColor: colorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
+                  title="Changer la couleur"
+                />
+                <input
+                  autoFocus
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Nom de la catégorie…"
+                  className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
+                  style={{
+                    backgroundColor: 'rgb(var(--color-surface))',
+                    borderColor: 'rgb(var(--color-border))',
+                    color: 'rgb(var(--color-text-primary))'
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateCategory(false); setNewCategoryName(''); } }}
+                />
+                <button
+                  type="submit"
+                  disabled={!newCategoryName.trim()}
+                  className="px-3 py-1 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                >
+                  Créer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateCategory(false); setNewCategoryName(''); }}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
