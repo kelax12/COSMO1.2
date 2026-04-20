@@ -75,7 +75,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-4',
     title: 'Lancer COSMO v1.2 en production',
     description: 'Développer et déployer la version 1.2',
-    category: 'cat-2',
+    category: 'cat-5',
     progress: 100,
     completed: true,
     keyResults: [
@@ -90,7 +90,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-5',
     title: 'Optimisation performances app',
     description: 'Réduire les temps de chargement et améliorer le score Lighthouse',
-    category: 'cat-2',
+    category: 'cat-1',
     progress: 100,
     completed: true,
     keyResults: [
@@ -105,7 +105,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-6',
     title: 'Croissance utilisateurs COSMO v1',
     description: 'Acquérir les premiers utilisateurs actifs',
-    category: 'cat-2',
+    category: 'cat-5',
     progress: 100,
     completed: true,
     keyResults: [
@@ -122,7 +122,7 @@ function createDemoOkrs(): OKR[] {
     id: 'okr-7',
     title: 'Excellence technique Q3 2025',
     description: 'Améliorer la qualité et la performance du code',
-    category: 'cat-2',
+    category: 'cat-1',
     progress: 100,
     completed: true,
     keyResults: [
