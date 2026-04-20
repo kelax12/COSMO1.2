@@ -209,18 +209,6 @@ const OKRPage: React.FC = () => {
 
               Tous
             </button>
-            <button
-            onClick={() => setSelectedCategory('finished')}
-            className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all border"
-            style={{
-              backgroundColor: selectedCategory === 'finished' ? 'rgb(var(--color-accent) / 0.1)' : 'rgb(var(--color-chip-bg))',
-              borderColor: selectedCategory === 'finished' ? 'rgb(var(--color-accent) / 0.3)' : 'rgb(var(--color-chip-border))',
-              color: selectedCategory === 'finished' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-secondary))'
-            }}>
-
-              <CheckCircle size={14} />
-              <span>Finis</span>
-            </button>
             {categories.map((category) =>
             <button
               key={category.id}
