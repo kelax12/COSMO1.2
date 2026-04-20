@@ -238,7 +238,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-white dark:bg-slate-800 outline-none transition-all
                       focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
                       ${step1Error ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
-                    placeholder="Ex: Améliorer ma condition physique"
+                    placeholder="Ex : Développer la notoriété de ma marque en ligne"
                   />
                   {step1Error && <p className="text-xs text-red-500 mt-1">{step1Error}</p>}
                 </div>
@@ -254,7 +254,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     rows={3}
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all resize-none
                       hover:border-slate-300 dark:hover:border-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                    placeholder="Ex: Courir un marathon avant la fin de l'année"
+                    placeholder="Ex : Devenir une référence dans mon secteur et multiplier les prospects"
                   />
                 </div>
 
@@ -350,11 +350,11 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 <div className="space-y-2.5">
                   {keyResults.map((kr, idx) => {
                     const KR_PLACEHOLDERS = [
-                      { title: 'Ex : Publier 12 articles de blog', target: 'Cible (ex : 12)', time: 'Min. par article (ex : 90)' },
-                      { title: 'Ex : Atteindre 95 % de satisfaction client', target: 'Cible (ex : 95)', time: 'Min. par éval. (ex : 15)' },
-                      { title: 'Ex : Compléter 20 sessions de formation', target: 'Cible (ex : 20)', time: 'Min. par session (ex : 60)' },
-                      { title: 'Ex : Réduire le délai de livraison à 3 j', target: 'Cible (ex : 3)', time: 'Min. par livraison (ex : 30)' },
-                      { title: 'Ex : Générer 500 leads qualifiés', target: 'Cible (ex : 500)', time: 'Min. par lead (ex : 10)' },
+                      { title: 'Ex : Publier 24 contenus sur les réseaux sociaux', target: 'Cible (ex : 24)', time: 'Min. par post (ex : 45)' },
+                      { title: 'Ex : Atteindre 10 000 abonnés sur Instagram', target: 'Cible (ex : 10000)', time: 'Min. par analyse (ex : 30)' },
+                      { title: 'Ex : Obtenir 50 avis clients 5 étoiles', target: 'Cible (ex : 50)', time: 'Min. par avis (ex : 15)' },
+                      { title: 'Ex : Générer 5 000 visiteurs uniques par mois', target: 'Cible (ex : 5000)', time: 'Min. par rapport (ex : 60)' },
+                      { title: 'Ex : Signer 3 partenariats avec des influenceurs', target: 'Cible (ex : 3)', time: 'Min. par partenariat (ex : 120)' },
                     ];
                     const ph = KR_PLACEHOLDERS[idx % KR_PLACEHOLDERS.length];
                     return (
