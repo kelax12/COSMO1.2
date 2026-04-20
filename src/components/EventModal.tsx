@@ -364,7 +364,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     backgroundColor:
                       isPrefilledMode && prefilledFields.has("title")
                         ? undefined
-                        : "transparent",
+                        : "rgb(var(--color-surface))",
                     color: "rgb(var(--color-text-primary))",
                     borderColor:
                       isPrefilledMode && prefilledFields.has("title")
@@ -400,7 +400,7 @@ const EventModal: React.FC<EventModalProps> = ({
                         backgroundColor:
                           isPrefilledMode && prefilledFields.has("startDate")
                             ? undefined
-                            : "transparent",
+                            : "rgb(var(--color-surface))",
                         borderColor:
                           isPrefilledMode && prefilledFields.has("startDate")
                             ? undefined
@@ -523,7 +523,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     backgroundColor:
                       isPrefilledMode && prefilledFields.has("notes")
                         ? undefined
-                        : "transparent",
+                        : "rgb(var(--color-surface))",
                     color: "rgb(var(--color-text-primary))",
                     borderColor:
                       isPrefilledMode && prefilledFields.has("notes")
