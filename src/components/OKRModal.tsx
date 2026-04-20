@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, Target } from 'lucide-react';
+import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, Target, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useCategories } from '@/modules/categories';
 
 type KeyResult = {
@@ -171,7 +177,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         showCloseButton={false}
-        className="p-0 gap-0 border-0 sm:max-w-xl w-full overflow-hidden rounded-2xl shadow-2xl"
+        className="p-0 gap-0 border-0 sm:max-w-[606px] w-full overflow-hidden rounded-2xl shadow-2xl"
       >
         <DialogTitle className="sr-only">
           {editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}
@@ -210,7 +216,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         </div>
 
         {/* Animated content */}
-        <div className="overflow-hidden" style={{ minHeight: 380 }}>
+        <div className="overflow-hidden" style={{ minHeight: 400 }}>
           <AnimatePresence mode="wait" custom={direction} initial={false}>
             {step === 1 ? (
               <motion.div
@@ -222,7 +228,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 exit="exit"
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
                 className="px-6 py-5 space-y-4 overflow-y-auto"
-                style={{ maxHeight: 420 }}
+                style={{ maxHeight: 441 }}
               >
                 {/* Titre */}
                 <div>
@@ -263,14 +269,40 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                       Catégorie
                     </label>
-                    <select
-                      value={info.category}
-                      onChange={(e) => setInfo({ ...info, category: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all appearance-none
-                        hover:border-slate-300 dark:hover:border-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                    >
-                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all flex items-center gap-2
+                            hover:border-slate-300 dark:hover:border-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                        >
+                          {(() => {
+                            const cat = categories.find((c) => c.id === info.category);
+                            return cat ? (
+                              <>
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                                <span className="flex-1 text-left truncate">{cat.name}</span>
+                              </>
+                            ) : (
+                              <span className="flex-1 text-left text-slate-400">Choisir...</span>
+                            );
+                          })()}
+                          <ChevronDown size={14} className="text-slate-400 shrink-0 ml-auto" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48">
+                        {categories.map((c) => (
+                          <DropdownMenuItem
+                            key={c.id}
+                            onSelect={() => setInfo({ ...info, category: c.id })}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                            {c.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -280,6 +312,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                       value={info.endDate}
                       onChange={(d) => setInfo({ ...info, endDate: d })}
                       placeholder="Choisir une date"
+                      className="h-auto py-2.5 text-sm rounded-lg border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500"
                     />
                   </div>
                 </div>
@@ -305,7 +338,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 exit="exit"
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
                 className="px-6 py-5 overflow-y-auto"
-                style={{ maxHeight: 420 }}
+                style={{ maxHeight: 441 }}
               >
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs text-slate-400">Définissez comment mesurer votre succès</p>
