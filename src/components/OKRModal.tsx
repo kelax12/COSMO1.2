@@ -238,7 +238,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-white dark:bg-slate-800 outline-none transition-all
                       focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
                       ${step1Error ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
-                    placeholder="Ex : Développer la notoriété de ma marque en ligne"
+                    placeholder="Ex : Améliorer ma santé physique"
                   />
                   {step1Error && <p className="text-xs text-red-500 mt-1">{step1Error}</p>}
                 </div>
@@ -254,7 +254,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     rows={3}
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all resize-none
                       hover:border-slate-300 dark:hover:border-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                    placeholder="Ex : Devenir une référence dans mon secteur et multiplier les prospects"
+                    placeholder="Ex : Prendre soin de mon corps à travers le sport et l'alimentation"
                   />
                 </div>
 
@@ -350,11 +350,11 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 <div className="space-y-2.5">
                   {keyResults.map((kr, idx) => {
                     const KR_PLACEHOLDERS = [
-                      { title: 'Ex : Publier 24 contenus sur les réseaux sociaux', target: 'Cible (ex : 24)', time: 'Min. par post (ex : 45)' },
-                      { title: 'Ex : Atteindre 10 000 abonnés sur Instagram', target: 'Cible (ex : 10000)', time: 'Min. par analyse (ex : 30)' },
-                      { title: 'Ex : Obtenir 50 avis clients 5 étoiles', target: 'Cible (ex : 50)', time: 'Min. par avis (ex : 15)' },
-                      { title: 'Ex : Générer 5 000 visiteurs uniques par mois', target: 'Cible (ex : 5000)', time: 'Min. par rapport (ex : 60)' },
-                      { title: 'Ex : Signer 3 partenariats avec des influenceurs', target: 'Cible (ex : 3)', time: 'Min. par partenariat (ex : 120)' },
+                      { title: 'Ex : Faire 10 sorties longues en plein air', target: 'Cible (ex : 10)', time: 'Min. par sortie (ex : 120)' },
+                      { title: 'Ex : Faire 50 séances de salle de sport', target: 'Cible (ex : 50)', time: 'Min. par séance (ex : 60)' },
+                      { title: 'Ex : Apprendre le muscle-up', target: 'Cible (ex : 1)', time: 'Min. estimées (ex : 600)' },
+                      { title: 'Ex : Cuisiner 60 repas healthy', target: 'Cible (ex : 60)', time: 'Min. par repas (ex : 60)' },
+                      { title: 'Ex : Courir un semi-marathon', target: 'Cible (ex : 1)', time: 'Min. par entraînement (ex : 45)' },
                     ];
                     const ph = KR_PLACEHOLDERS[idx % KR_PLACEHOLDERS.length];
                     return (
