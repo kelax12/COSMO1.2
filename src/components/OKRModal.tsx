@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useCategories } from '@/modules/categories';
 
 type KeyResult = {
   id: string;
@@ -56,10 +57,11 @@ const OKRModal: React.FC<OKRModalProps> = ({
   editingObjective,
   onSubmit
 }) => {
+  const { data: allCategories = [] } = useCategories();
   const [newObjective, setNewObjective] = useState({
     title: '',
     description: '',
-    category: 'personal',
+    category: '',
     endDate: ''
   });
 
@@ -138,7 +140,7 @@ const OKRModal: React.FC<OKRModalProps> = ({
     setNewObjective({
       title: '',
       description: '',
-      category: 'personal',
+      category: allCategories[0]?.id ?? '',
       endDate: ''
     });
     setKeyResults([
