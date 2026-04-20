@@ -160,6 +160,14 @@ const OKRPage: React.FC = () => {
 
   const getCategoryById = (id: string) => categories.find((cat) => cat.id === id);
 
+  const formatTime = (minutes: number) => {
+    if (minutes === 0) return '0min';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m}min`;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  };
+
   useEffect(() => {
     const state = location.state as {selectedOKRId?: string;};
     if (state?.selectedOKRId) {
@@ -342,10 +350,6 @@ const OKRPage: React.FC = () => {
                         <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
                           {new Date(objective.startDate).toLocaleDateString('fr-FR')} - {new Date(objective.endDate).toLocaleDateString('fr-FR')}
                         </span>
-                            <span className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              <Clock size={14} />
-                              {objective.keyResults.reduce((sum, kr) => sum + (kr.currentValue * kr.estimatedTime), 0)} / {objective.keyResults.reduce((sum, kr) => sum + (kr.estimatedTime * kr.targetValue), 0)} min
-                            </span>
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
                       <p className="text-xs sm:text-sm line-clamp-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
@@ -466,6 +470,22 @@ const OKRPage: React.FC = () => {
 
                   })}
                 </div>
+
+                {(() => {
+                  const doneMins = objective.keyResults.reduce((sum, kr) => sum + Math.round(kr.currentValue * kr.estimatedTime), 0);
+                  const totalMins = objective.keyResults.reduce((sum, kr) => sum + Math.round(kr.estimatedTime * kr.targetValue), 0);
+                  return totalMins > 0 ? (
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={13} style={{ color: 'rgb(var(--color-text-muted))' }} />
+                        <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Temps effectué</span>
+                      </div>
+                      <span className="text-xs font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                        {formatTime(doneMins)} <span style={{ color: 'rgb(var(--color-text-muted))' }}>/ {formatTime(totalMins)}</span>
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
             </motion.div>);
 
           })}
