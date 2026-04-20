@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, Target, ChevronDown } from 'lucide-react';
+import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
@@ -177,7 +177,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         showCloseButton={false}
-        className="p-0 gap-0 border-0 sm:max-w-[606px] w-full overflow-hidden rounded-2xl shadow-2xl"
+        className="p-0 gap-0 border-0 sm:max-w-[624px] w-full overflow-hidden rounded-2xl shadow-2xl"
       >
         <DialogTitle className="sr-only">
           {editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}
@@ -185,18 +185,13 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
-              <Target size={17} className="text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">
-                {editingObjective ? 'Modifier' : 'Nouvel objectif'} · {step}/2
-              </p>
-              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
-                {step === 1 ? 'Informations générales' : 'Résultats clés'}
-              </h2>
-            </div>
+          <div>
+            <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">
+              {editingObjective ? 'Modifier' : 'Nouvel objectif'} · {step}/2
+            </p>
+            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+              {step === 1 ? 'Informations générales' : 'Résultats clés (KR)'}
+            </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={handleClose} className="shrink-0">
             <X size={18} />
@@ -216,7 +211,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         </div>
 
         {/* Animated content */}
-        <div className="overflow-hidden" style={{ minHeight: 400 }}>
+        <div className="overflow-hidden" style={{ minHeight: 412 }}>
           <AnimatePresence mode="wait" custom={direction} initial={false}>
             {step === 1 ? (
               <motion.div
@@ -228,7 +223,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 exit="exit"
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
                 className="px-6 py-5 space-y-4 overflow-y-auto"
-                style={{ maxHeight: 441 }}
+                style={{ maxHeight: 454 }}
               >
                 {/* Titre */}
                 <div>
@@ -338,7 +333,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 exit="exit"
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
                 className="px-6 py-5 overflow-y-auto"
-                style={{ maxHeight: 441 }}
+                style={{ maxHeight: 454 }}
               >
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs text-slate-400">Définissez comment mesurer votre succès</p>
@@ -348,7 +343,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     disabled={keyResults.length >= 10}
                     className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 disabled:opacity-40 transition-colors"
                   >
-                    <Plus size={13} /> Ajouter un KR
+                    <Plus size={13} /> Ajouter un Résultat clé (KR)
                   </button>
                 </div>
 
@@ -359,14 +354,13 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.03 }}
-                      className="group relative bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 overflow-hidden
-                        hover:border-blue-300 dark:hover:border-blue-600 transition-all"
+                      className="group relative bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 overflow-hidden transition-all"
                     >
                       {/* accent bar */}
                       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400/40 group-hover:bg-blue-500 rounded-l-xl transition-colors" />
 
                       <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">KR {idx + 1}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Résultat clé (KR) {idx + 1}</span>
                         {keyResults.length > 1 && (
                           <button type="button" onClick={() => removeKR(idx)} className="text-slate-300 hover:text-red-500 transition-colors">
                             <Trash2 size={13} />
