@@ -7,7 +7,7 @@ import { OKRFilters } from './types';
 /**
  * LocalStorage key for persisting OKRs
  */
-export const OKRS_STORAGE_KEY = 'cosmo-okrs-v4'; // v4 : DEMO_OKRS → createDemoOkrs() factory
+export const OKRS_STORAGE_KEY = 'cosmo-okrs-v5'; // v5 : catégories unifiées avec le système partagé
 
 /**
  * React Query keys for OKRs
