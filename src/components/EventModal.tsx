@@ -302,7 +302,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const renderContent = () => (
 <div
         className="md:rounded-2xl shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-full md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden opacity-0 scale-95 animate-modal-content"
-      style={{ backgroundColor: "rgb(var(--color-surface))" }}
+      style={{ backgroundColor: "hsl(var(--background))" }}
       onClick={(e) => e.stopPropagation()}
     >
       <div
