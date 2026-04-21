@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Clock, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { getColorHex } from '../components/CategoryManager';
@@ -6,12 +6,48 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
 import { useCategories, useCreateCategory } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
 
 type Objective = OKR & { estimatedTime?: number };
+
+const MiniBarChart: React.FC<{ data: { value: number; date?: string }[]; color?: string }> = ({ data, color = '#1E40AF' }) => {
+  const [hovered, setHovered] = React.useState<number | null>(null);
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative">
+      {data.map((d, i) => {
+        const label = d.date
+          ? new Date(d.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
+          : '';
+        return (
+          <div
+            key={i}
+            className="flex-1 relative flex flex-col items-center justify-end h-full"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {hovered === i && (
+              <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
+                {label ? `${label} : ` : ''}{d.value}
+              </div>
+            )}
+            <div
+              className="w-full rounded-t-[3px] transition-all duration-150"
+              style={{
+                height: `${Math.max((d.value / max) * 100, 8)}%`,
+                backgroundColor: hovered === i ? color : color + 'bb',
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const OKRPage: React.FC = () => {
   const location = useLocation();
@@ -34,11 +70,46 @@ const OKRPage: React.FC = () => {
   const [showAddObjective, setShowAddObjective] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
+  const { data: krCompletions = [] } = useKRCompletions();
 
-    const getProgress = (keyResults: KeyResult[]) => {
+  const last7Days = useMemo(() => {
+    const days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+    return days;
+  }, []);
+
+  const krByDay = useMemo(() =>
+    last7Days.map(date => ({
+      date,
+      value: krCompletions.filter(c => c.completedAt.split('T')[0] === date).length,
+    })),
+  [krCompletions, last7Days]);
+
+  const progressByDay = useMemo(() => {
+    return last7Days.map(date => {
+      if (objectives.length === 0) return { date, value: 0 };
+      const avgForDay = objectives.reduce((sum, obj) => {
+        if (obj.keyResults.length === 0) return sum;
+        const krAvg = obj.keyResults.reduce((s, kr) => {
+          const wasCompleted = krCompletions.some(c => c.krId === kr.id && c.completedAt.split('T')[0] <= date);
+          if (wasCompleted) return s + 100;
+          const p = kr.targetValue > 0 ? Math.min(100, (kr.currentValue / kr.targetValue) * 100) : 0;
+          return s + p;
+        }, 0) / obj.keyResults.length;
+        return sum + krAvg;
+      }, 0) / objectives.length;
+      return { date, value: Math.round(avgForDay) };
+    });
+  }, [objectives, krCompletions, last7Days]);
+
+  const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
     const totalProgress = keyResults.reduce((sum, kr) => {
-      return sum + (kr.currentValue / kr.targetValue * 100);
+      return sum + (kr.targetValue > 0 ? (kr.currentValue / kr.targetValue * 100) : 0);
     }, 0);
     return Math.round(totalProgress / keyResults.length);
   };
@@ -104,8 +175,9 @@ const OKRPage: React.FC = () => {
     completed: objectives.filter((obj) => obj.completed).length,
     inProgress: objectives.filter((obj) => !obj.completed).length,
     avgProgress: objectives.length > 0 ?
-    Math.round(objectives.reduce((sum, obj) => sum + getProgress(obj.keyResults), 0) / objectives.length) :
-    0
+      Math.round(objectives.reduce((sum, obj) => sum + getProgress(obj.keyResults), 0) / objectives.length) :
+      0,
+    completedKRs: objectives.reduce((sum, obj) => sum + obj.keyResults.filter(kr => kr.completed).length, 0),
   };
 
   const colorOptions = [
@@ -158,31 +230,59 @@ const OKRPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
-        {[
-        { icon: TrendingUp, color: 'orange', label: 'En Cours', value: stats.inProgress },
-        { icon: BarChart3, color: 'purple', label: 'Progression Moy.', value: `${stats.avgProgress}%` }].
-        map((stat) =>
+        {/* Card 1 : En cours + KR réalisés */}
         <div
-          key={stat.label}
           className="p-4 sm:p-6 rounded-lg shadow-sm border transition-all"
-          style={{
-            backgroundColor: 'rgb(var(--color-surface))',
-            borderColor: 'rgb(var(--color-border))'
-          }}>
-
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-lg shrink-0" style={{ backgroundColor: `rgba(var(--color-${stat.color}-rgb), 0.1)` }}>
-                <stat.icon size={24} style={{ color: `rgb(var(--color-${stat.color}))` }} />
+          style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="shrink-0">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(var(--color-orange-rgb), 0.1)' }}>
+                  <TrendingUp size={18} style={{ color: 'rgb(var(--color-orange))' }} />
+                </div>
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>En Cours</p>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm truncate" title={stat.label} style={{ color: 'rgb(var(--color-text-secondary))' }}>{stat.label}</p>
-                <p className="text-xl sm:text-2xl font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {stat.value}
-                </p>
+              <p className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {stats.inProgress}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={13} className="text-green-500 shrink-0" />
+                <span className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  {stats.completedKRs} KR réalisés
+                </span>
               </div>
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium mb-1 text-right" style={{ color: 'rgb(var(--color-text-muted))' }}>KR / jour</p>
+              <MiniBarChart data={krByDay} color="#f97316" />
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Card 2 : Progression moyenne journalière */}
+        <div
+          className="p-4 sm:p-6 rounded-lg shadow-sm border transition-all"
+          style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="shrink-0">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(var(--color-purple-rgb), 0.1)' }}>
+                  <BarChart3 size={18} style={{ color: 'rgb(var(--color-purple))' }} />
+                </div>
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression Moy.</p>
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {stats.avgProgress}%
+              </p>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium mb-1 text-right" style={{ color: 'rgb(var(--color-text-muted))' }}>Progression / jour</p>
+              <MiniBarChart data={progressByDay} color="#8b5cf6" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end mb-8">
@@ -358,13 +458,16 @@ const OKRPage: React.FC = () => {
                   }}>
                   <div className="flex justify-between items-start mb-4 gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: category ? getColorHex(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? getColorHex(category.color) : 'rgb(var(--color-accent))' }}>
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
                           <span>{category?.name ?? objective.category}</span>
                         </span>
-                        <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                          {new Date(objective.startDate).toLocaleDateString('fr-FR')} - {new Date(objective.endDate).toLocaleDateString('fr-FR')}
-                        </span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2 mb-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <span>{new Date(objective.startDate).toLocaleDateString('fr-FR')}</span>
+                        <span>→</span>
+                        <span>{new Date(objective.endDate).toLocaleDateString('fr-FR')}</span>
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
                       <p className="text-xs sm:text-sm line-clamp-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
