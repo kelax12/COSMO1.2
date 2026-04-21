@@ -87,7 +87,10 @@ const CollaborativeTasks: React.FC = () => {
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) || null : null;
   
   const premium = isPremium();
-  const collaborativeTasks = tasks.filter(task => task.isCollaborative);
+  // Exclude tasks assigned by others that haven't been accepted yet (still pending in SocialRequests)
+  const collaborativeTasks = tasks.filter(task =>
+    task.isCollaborative && (!task.sharedBy || task.sharedBy === user?.name)
+  );
   
   const isOwner = (task: Task) => {
     return !task.sharedBy || task.sharedBy === user?.name;
