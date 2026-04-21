@@ -14,6 +14,7 @@ export interface Task {
   collaborators?: string[];
   pendingInvites?: string[];
   collaboratorValidations?: Record<string, boolean>;
+  sharedBy?: string;
   userId?: string;
 }
 
