@@ -15,6 +15,25 @@ const DEMO_FRIENDS: Friend[] = [
   { id: 'friend-3', name: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
 ];
 
+const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
+  {
+    id: 'req-demo-1',
+    email: 'demo@cosmo.app',
+    status: 'pending',
+    sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    senderId: 'user-lucas',
+    senderEmail: 'lucas.moreau@email.com',
+  },
+  {
+    id: 'req-demo-2',
+    email: 'demo@cosmo.app',
+    status: 'pending',
+    sentAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+    senderId: 'user-camille',
+    senderEmail: 'camille.richard@email.com',
+  },
+];
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
 // ═══════════════════════════════════════════════════════════════════
@@ -66,7 +85,11 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    */
   private getRequests(): PendingFriendRequest[] {
     const data = localStorage.getItem(FRIEND_REQUESTS_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    if (!data) {
+      this.saveRequests(DEMO_INCOMING_REQUESTS);
+      return DEMO_INCOMING_REQUESTS;
+    }
+    return JSON.parse(data);
   }
 
   /**

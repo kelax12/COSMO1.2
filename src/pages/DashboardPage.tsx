@@ -12,6 +12,7 @@ import { useEvents } from '@/modules/events';
 import DashboardChart from '../components/DashboardChart';
 import DashboardBarChart from '../components/DashboardBarChart';
 import TodayHabits from '../components/TodayHabits';
+import SocialRequests from '../components/SocialRequests';
 import TodayTasks from '../components/TodayTasks';
 import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
@@ -326,12 +327,13 @@ const DashboardPage: React.FC = () => {
             <ActiveOKRs />
           </motion.div>
 
-          {/* Colonne droite - Habitudes du jour */}
+          {/* Colonne droite - Habitudes du jour + Demandes sociales */}
           <motion.div
-            className="lg:col-span-1"
+            className="lg:col-span-1 flex flex-col gap-6 lg:gap-8"
             variants={itemVariants}
           >
             <TodayHabits />
+            <SocialRequests />
           </motion.div>
         </motion.div>
 
