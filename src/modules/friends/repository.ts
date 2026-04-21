@@ -157,13 +157,13 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     request.status = 'accepted';
     this.saveRequests(requests);
 
-    // Create new friend from request
+    // Create new friend from request — use senderEmail for incoming requests
+    const friendEmail = request.senderEmail || request.email;
     const friends = this.getFriends();
     const newFriend: Friend = {
       id: crypto.randomUUID(),
-      name: request.email.split('@')[0],
-      email: request.email,
-      avatar: '👤',
+      name: friendEmail.split('@')[0].split('.').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+      email: friendEmail,
     };
 
     this.saveFriends([...friends, newFriend]);

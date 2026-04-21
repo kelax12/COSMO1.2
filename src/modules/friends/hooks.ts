@@ -75,7 +75,8 @@ export const useAcceptFriendRequest = () => {
   return useMutation({
     mutationFn: (requestId: string) => repository.acceptFriendRequest(requestId),
     onSuccess: () => {
-      invalidateAllFriendQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: friendKeys.lists() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'accepter la demande d'ami : ${error.message}`);
