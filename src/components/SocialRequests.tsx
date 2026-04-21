@@ -10,7 +10,7 @@ import {
   useSendFriendRequest,
   type PendingFriendRequest,
 } from '@/modules/friends';
-import { useTasks, useUpdateTask, useDeleteTask } from '@/modules/tasks';
+import { useTasks, useUpdateTask } from '@/modules/tasks';
 import { useAuth } from '@/modules/auth/AuthContext';
 
 const SocialRequests: React.FC = () => {
@@ -21,7 +21,6 @@ const SocialRequests: React.FC = () => {
   const rejectFriendMutation = useRejectFriendRequest();
   const sendFriendMutation = useSendFriendRequest();
   const updateTaskMutation = useUpdateTask();
-  const deleteTaskMutation = useDeleteTask();
 
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [friendEmail, setFriendEmail] = useState('');
@@ -73,9 +72,10 @@ const SocialRequests: React.FC = () => {
   };
 
   const handleDeclineTask = (taskId: string) => {
-    deleteTaskMutation.mutate(taskId, {
-      onSuccess: () => toast.success('Tâche refusée'),
-    });
+    updateTaskMutation.mutate(
+      { id: taskId, updates: { sharedBy: undefined, isCollaborative: false, collaborators: [] } },
+      { onSuccess: () => toast.success('Tâche refusée') }
+    );
   };
 
   if (total === 0 && !showAddFriend) return null;
@@ -223,7 +223,7 @@ const SocialRequests: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeclineTask(task.id)}
-                        disabled={deleteTaskMutation.isPending}
+                        disabled={updateTaskMutation.isPending}
                         className="flex-1 h-8 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-[rgb(var(--color-text-secondary))] hover:text-red-500 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <X size={13} />
