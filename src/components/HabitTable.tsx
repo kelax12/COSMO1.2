@@ -1,7 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Clock, Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
+
+const calculateStreak = (completions: Record<string, boolean>): number => {
+  const completed = Object.entries(completions)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .sort()
+    .reverse();
+  if (completed.length === 0) return 0;
+  const today = new Date().toLocaleDateString('en-CA');
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+  if (completed[0] !== today && completed[0] !== yesterdayStr) return 0;
+  let streak = 1;
+  for (let i = 1; i < completed.length; i++) {
+    const diff = Math.round(
+      (new Date(completed[i - 1]).getTime() - new Date(completed[i]).getTime()) / 86400000
+    );
+    if (diff === 1) streak++;
+    else break;
+  }
+  return streak;
+};
 
 const colorOptions = [
 { value: 'blue', color: '#3B82F6' },
@@ -19,8 +42,6 @@ const HabitTable: React.FC = () => {
   const toggleMutation = useToggleHabitCompletion();
   const [period, setPeriod] = useState<PeriodType>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [globalPage, setGlobalPage] = useState(0);
-  const [selectedHabitId, setSelectedHabitId] = useState<string>('all');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -123,38 +144,6 @@ const HabitTable: React.FC = () => {
   };
 
   const days = generateDays();
-
-  const getDailyPercentage = (date: string) => {
-    if (habits.length === 0) return 0;
-    
-    let filteredHabits = habits;
-    if (selectedHabitId !== 'all') {
-      filteredHabits = habits.filter(h => h.id === selectedHabitId);
-    }
-
-    const activeHabits = filteredHabits.filter((h) => {
-      const createdDate = h.createdAt ? h.createdAt.split('T')[0] : '';
-      return !createdDate || date >= createdDate;
-    });
-    
-    if (activeHabits.length === 0) return 0;
-    const completedCount = activeHabits.filter((h) => h.completions[date]).length;
-    return Math.round(completedCount / activeHabits.length * 100);
-  };
-
-    const getSuccessColor = (percentage: number) => {
-      if (percentage === 100) return '#2563EB';
-      if (percentage >= 90) return '#064e3b';
-      if (percentage >= 80) return '#059669';
-      if (percentage >= 70) return '#10B981';
-      if (percentage >= 60) return '#34d399';
-      if (percentage >= 50) return '#d97706';
-      if (percentage >= 40) return '#f59e0b';
-      if (percentage >= 30) return '#ea580c';
-      if (percentage >= 20) return '#c2410c';
-      if (percentage >= 10) return '#dc2626';
-      return '#991b1b';
-    };
 
   const handleDayClick = (habitId: string, date: string) => {
     toggleMutation.mutate({ id: habitId, date });
@@ -359,7 +348,7 @@ const HabitTable: React.FC = () => {
                     <div className="flex items-center gap-1.5 md:gap-3">
                       <div
                         className="w-2 h-2 md:w-3 md:h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: colorOptions.find((c) => c.value === habit.color)?.color }} />
+                        style={{ backgroundColor: habit.color.startsWith('#') ? habit.color : (colorOptions.find((c) => c.value === habit.color)?.color ?? '#3B82F6') }} />
 
                       <div className="min-w-0">
                         <div className="font-medium truncate text-[11px] md:text-sm leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.name}</div>
@@ -403,7 +392,7 @@ const HabitTable: React.FC = () => {
                     <td className="p-3 md:p-4 text-center transition-colors border-l" style={{ borderColor: 'rgb(var(--table-border))' }}>
                       <div className="flex items-center justify-center gap-1">
                         <Flame size={14} className="text-orange-500 md:w-4 md:h-4" />
-                        <span className="font-semibold text-xs md:text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.streak}</span>
+                        <span className="font-semibold text-xs md:text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{calculateStreak(habit.completions)}</span>
                       </div>
                     </td>
                 </tr>
@@ -413,132 +402,6 @@ const HabitTable: React.FC = () => {
           </div>
         </div>
 
-      <div className="card overflow-hidden mt-6 md:mt-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 p-4 border-b transition-colors" style={{
-          backgroundColor: 'rgb(var(--color-hover))',
-          borderColor: 'rgb(var(--color-border))'
-        }}>
-          <div>
-            <h3 className="text-base md:text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              Suivi Global
-            </h3>
-            <p className="text-[10px] md:text-sm mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              {selectedHabitId === 'all' 
-                ? "Complétion moyenne par jour"
-                : `Suivi pour : ${habits.find(h => h.id === selectedHabitId)?.name}`
-              }
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <select
-              id="habit-filter"
-              value={selectedHabitId}
-              onChange={(e) => setSelectedHabitId(e.target.value)}
-              className="w-full md:w-auto px-3 py-1.5 rounded-lg border text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-              style={{
-                backgroundColor: 'rgb(var(--color-surface))',
-                borderColor: 'rgb(var(--color-border))',
-                color: 'rgb(var(--color-text-primary))'
-              }}
-            >
-              <option value="all">Toutes les habitudes</option>
-              {habits.map((habit) => (
-                <option key={habit.id} value={habit.id}>
-                  {habit.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        
-          <div className="p-4 rounded-xl overflow-x-auto hide-scrollbar" style={{ backgroundColor: 'rgb(var(--color-surface-elevated))' }}>
-            {(() => {
-              const itemsPerRow = typeof window !== 'undefined' && window.innerWidth < 768 ? 7 : 10;
-              const rows: typeof days[] = [];
-              for (let i = days.length; i > 0; i -= itemsPerRow) {
-                const start = Math.max(0, i - itemsPerRow);
-                rows.push(days.slice(start, i));
-              }
-              
-              const maxRowsPerPage = 6;
-              const totalPages = Math.ceil(rows.length / maxRowsPerPage);
-              const currentPageRows = rows.slice(globalPage * maxRowsPerPage, (globalPage + 1) * maxRowsPerPage);
-            
-            return (
-              <div className="space-y-4">
-                {currentPageRows.map((rowDays, rowIndex) => (
-                  <div key={rowIndex} className="flex justify-between w-full px-2">
-                    {rowDays.map((day) => {
-                      const activeHabitsForDay = habits.filter(h => {
-                        const createdDate = h.createdAt ? h.createdAt.split('T')[0] : '';
-                        return !createdDate || day.date >= createdDate;
-                      });
-                      if (activeHabitsForDay.length === 0) {
-                        return (
-                          <div key={day.date} className="flex flex-col items-center gap-1.5">
-                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg opacity-20 bg-slate-300" />
-                            <div className={`text-[9px] md:text-[10px] ${day.isToday ? 'font-bold text-blue-600' : 'text-slate-500'}`}>
-                              {day.dayNumber}
-                            </div>
-                          </div>
-                        );
-                      }
-                      const percentage = getDailyPercentage(day.date);
-                      const color = getSuccessColor(percentage);
-                      return (
-                        <div key={day.date} className="flex flex-col items-center gap-1.5">
-                          <div
-                            className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-default shadow-sm border"
-                            style={{
-                              backgroundColor: color,
-                              opacity: day.isFuture ? 0.2 : 1,
-                              borderColor: day.isToday ? '#2563EB' : 'transparent',
-                              borderWidth: day.isToday ? '2px' : '0'
-                            }}
-                            title={`${day.dayNumber}/${new Date(day.date).getMonth() + 1}: ${percentage}%`}
-                          >
-                            <span className="text-[10px] md:text-xs font-bold text-white">{percentage}%</span>
-                          </div>
-                          <div className={`text-[9px] md:text-[10px] ${day.isToday ? 'font-bold text-blue-600' : 'text-slate-500'}`}>
-                            {day.dayNumber}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-                
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-4 pt-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setGlobalPage(p => Math.max(0, p - 1))}
-                      disabled={globalPage === 0}
-                      style={{ color: 'rgb(var(--color-text-secondary))' }}
-                    >
-                      <ChevronLeft size={20} />
-                    </Button>
-                    <span className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      {globalPage + 1} / {totalPages}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setGlobalPage(p => Math.min(totalPages - 1, p + 1))}
-                      disabled={globalPage === totalPages - 1}
-                      style={{ color: 'rgb(var(--color-text-secondary))' }}
-                    >
-                      <ChevronRight size={20} />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-      </div>
     </>
   );
 };
