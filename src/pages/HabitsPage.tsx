@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
+
+const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; label: string }[] = [
+  { mode: 'list', icon: List, label: 'Liste' },
+  { mode: 'table', icon: Grid3X3, label: 'Tableau' },
+  { mode: 'global', icon: TrendingUp, label: 'Suivi global' },
+];
 import HabitCard from '../components/HabitCard';
 import HabitModal from '../components/HabitModal';
 import HabitTable from '../components/HabitTable';
@@ -60,48 +66,27 @@ const HabitsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {habits.length > 0 && (
             <div
-              className="flex items-center rounded-lg p-1 transition-colors bg-opacity-50"
-              style={{ backgroundColor: 'rgb(var(--color-hover))' }}
+              className="flex items-center rounded-xl p-1 border transition-colors"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+              }}
             >
-              <Button
-                variant="ghost"
-                onClick={() => setViewMode('list')}
-                className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md text-sm md:text-base"
-                style={{
-                  backgroundColor: viewMode === 'list' ? 'rgb(var(--color-surface))' : 'transparent',
-                  color: viewMode === 'list' ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
-                  boxShadow: viewMode === 'list' ? '0 1px 3px 0 rgba(0,0,0,0.1)' : 'none',
-                }}
-              >
-                <List data-icon="inline-start" size={16} />
-                <span>Liste</span>
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setViewMode('table')}
-                className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md text-sm md:text-base"
-                style={{
-                  backgroundColor: viewMode === 'table' ? 'rgb(var(--color-surface))' : 'transparent',
-                  color: viewMode === 'table' ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
-                  boxShadow: viewMode === 'table' ? '0 1px 3px 0 rgba(0,0,0,0.1)' : 'none',
-                }}
-              >
-                <Grid3X3 data-icon="inline-start" size={16} />
-                <span>Tableau</span>
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setViewMode('global')}
-                className="flex items-center gap-2 px-3 py-1.5 md:py-2 rounded-md text-sm md:text-base"
-                style={{
-                  backgroundColor: viewMode === 'global' ? 'rgb(var(--color-surface))' : 'transparent',
-                  color: viewMode === 'global' ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
-                  boxShadow: viewMode === 'global' ? '0 1px 3px 0 rgba(0,0,0,0.1)' : 'none',
-                }}
-              >
-                <TrendingUp data-icon="inline-start" size={16} />
-                <span>Suivi global</span>
-              </Button>
+              {VIEW_TABS.map(({ mode, icon: Icon, label }) => (
+                <motion.button
+                  key={mode}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setViewMode(mode)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    backgroundColor: viewMode === mode ? '#2563EB' : 'transparent',
+                    color: viewMode === mode ? 'white' : 'rgb(var(--color-text-secondary))',
+                  }}
+                >
+                  <Icon size={15} />
+                  <span>{label}</span>
+                </motion.button>
+              ))}
             </div>
           )}
 

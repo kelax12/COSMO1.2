@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
@@ -183,15 +183,19 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={onClose}>
+              <div
+                className="flex justify-end gap-3 pt-4 border-t"
+                style={{ borderColor: 'rgb(var(--color-border))' }}
+              >
+                <Button type="button" variant="outline" size="lg" onClick={onClose}>
                   Annuler
                 </Button>
                 <Button
                   type="submit"
-                  variant="default"
-                  className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 !text-white !border-0 gap-2"
                 >
+                  <Check size={16} />
                   {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
                 </Button>
               </div>
