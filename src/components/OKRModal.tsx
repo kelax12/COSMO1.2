@@ -75,10 +75,10 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
       });
       setKeyResults(
         editingObjective.keyResults.map((kr) => ({
-          title: kr.title,
-          targetValue: kr.targetValue.toString(),
-          currentValue: kr.currentValue.toString(),
-          estimatedTime: kr.estimatedTime.toString(),
+          title: kr.title ?? '',
+          targetValue: (kr.targetValue ?? 0).toString(),
+          currentValue: (kr.currentValue ?? 0).toString(),
+          estimatedTime: (kr.estimatedTime ?? 30).toString(),
         }))
       );
     } else {
