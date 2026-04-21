@@ -52,6 +52,10 @@ const DEMO_TASKS: Task[] = [
   // ── SANTÉ (cat-3) ─────────────────────────────────────────────────────
   t('t009','Rendez-vous médecin annuel 2026', 'Check-up + vaccins + renouvellements',     2,'cat-3',-5,   7,  null),
   t('t010','Programme stretching quotidien',  'Mobilité + récupération post-sport',       2,'cat-3',-2,   3,  null, false, 20),
+
+  // ── TÂCHES ASSIGNÉES PAR D'AUTRES ─────────────────────────────────────
+  { ...t('t011','Réviser le pitch deck',      'Intégrer les retours avant lundi',         4,'cat-5',-1,   3,  null, false, 60, true, ['Marie Dupont']), sharedBy: 'Marie Dupont' },
+  { ...t('t012','Tester le prototype mobile', 'Flow onboarding + feedback UX',            3,'cat-5',-2,   5,  null, false, 45, true, ['Jean Martin']),  sharedBy: 'Jean Martin'  },
 ];
 
 export class LocalStorageTasksRepository implements ITasksRepository {
