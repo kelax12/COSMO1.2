@@ -509,8 +509,7 @@ export default function StatisticsPage() {
 
       {/* Graphique principal — Area Chart */}
       <div className="card p-6 mb-8">
-        <div className={selectedSection === 'habits' ? 'flex gap-6 items-start' : ''}>
-        <div className={selectedSection === 'habits' ? 'flex-[3] min-w-0' : ''}>
+        <div className={selectedSection === 'habits' ? 'relative' : ''} style={selectedSection === 'habits' ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
         <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -604,9 +603,9 @@ export default function StatisticsPage() {
             />
           </AreaChart>
         </ChartContainer>
-        </div>
         {selectedSection === 'habits' && (
-          <div className="shrink-0 border-l pl-5 flex flex-col overflow-hidden" style={{ width: '25%', borderColor: 'rgb(var(--color-border))', alignSelf: 'stretch' }}>
+          <div className="absolute top-0 right-0 bottom-0 border-l pl-5 flex flex-col overflow-hidden"
+            style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
             <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
             <div className="flex-1 min-h-0 flex flex-col">
               <HabitHeatmap habits={habits} now={now} embedded />
