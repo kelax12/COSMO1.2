@@ -1036,7 +1036,7 @@ const HabitsStatistics: React.FC<{
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Habitudes actives {periodSuffix}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{activeHabitsCount} / {relevantHabitsCount}</p>
+          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{activeHabitsCount}</p>
         </div>
         <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Taux de succès {periodSuffix}</p>
