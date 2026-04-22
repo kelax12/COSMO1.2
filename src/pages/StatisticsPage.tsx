@@ -121,11 +121,13 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
     }
 
     const result: typeof allCells[] = [];
+    for (let w = 0; w < WEEKS; w++) {
+      result.push(allCells.slice(w * 7, (w + 1) * 7));
+    }
+    result.reverse();
     const mMap = new Map<number, string>();
     for (let w = 0; w < WEEKS; w++) {
-      const week = allCells.slice(w * 7, (w + 1) * 7);
-      result.push(week);
-      const firstOfMonth = week.find(c => c.date.getDate() === 1);
+      const firstOfMonth = result[w].find(c => c.date.getDate() === 1);
       if (firstOfMonth) {
         mMap.set(w, firstOfMonth.date.toLocaleDateString('fr-FR', { month: 'short' }));
       }
@@ -135,7 +137,7 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop = 0;
     }
   }, [weeks]);
 
