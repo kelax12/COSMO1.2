@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { BarChart3, TrendingUp, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
+import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, ReferenceLine } from 'recharts';
 import {
   ChartContainer,
@@ -134,19 +134,21 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
       <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
         Calendrier de complétion
       </h3>
-      <div className="overflow-x-auto pb-1">
-        <div className="flex gap-[3px] min-w-max">
-          <div className="flex flex-col gap-[3px] pt-5 mr-1">
+      <div className="w-full">
+        <div className="flex w-full gap-1">
+          {/* Étiquettes jours */}
+          <div className="flex flex-col gap-1 pt-5 mr-1 flex-shrink-0">
             {dayLetters.map((d, i) => (
-              <div key={i} className="h-[13px] flex items-center">
+              <div key={i} className="flex items-center" style={{ height: 'calc((100% - 20px) / 7)' }}>
                 <span className="text-[10px] font-medium w-3 text-center leading-none"
                   style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
               </div>
             ))}
           </div>
+          {/* Colonnes semaines — flex-1 pour remplir toute la largeur */}
           {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-[3px]">
-              <div className="h-5 flex items-end pb-1">
+            <div key={wi} className="flex flex-col gap-1 flex-1">
+              <div className="h-5 flex items-end pb-1 overflow-hidden">
                 {wi % 4 === 0 && week[0] && (
                   <span className="text-[9px] font-bold leading-none whitespace-nowrap"
                     style={{ color: 'rgb(var(--color-text-muted))' }}>
@@ -158,7 +160,7 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
                 <div
                   key={di}
                   title={`${cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}: ${cell.completed}/${cell.total} habitude${cell.total !== 1 ? 's' : ''}`}
-                  className="w-[13px] h-[13px] rounded-[3px] transition-transform hover:scale-125 cursor-default"
+                  className="w-full aspect-square rounded-[3px] transition-transform hover:scale-110 cursor-default"
                   style={{
                     backgroundColor: getCellColor(cell.rate),
                     border: cell.rate >= 0 ? '1px solid rgba(234,179,8,0.12)' : '1px solid transparent',
@@ -169,10 +171,10 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-4 justify-end">
+      <div className="flex items-center gap-2 mt-3 justify-end">
         <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
         {([0, 0.25, 0.5, 0.75, 1] as const).map((r, i) => (
-          <div key={i} className="w-[13px] h-[13px] rounded-[3px]"
+          <div key={i} className="w-3 h-3 rounded-[3px]"
             style={{ backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.12)' }} />
         ))}
         <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
@@ -359,7 +361,7 @@ export default function StatisticsPage() {
   const sections = [
     { id: 'all', label: "Vue d'ensemble", icon: BarChart3, color: '#8B5CF6' },
     { id: 'tasks', label: 'Tâches', icon: CheckSquare, color: '#3B82F6' },
-    { id: 'agenda', label: 'Agenda', icon: CalendarDays, color: '#F97316' },
+    { id: 'agenda', label: 'Agenda', icon: CalendarDays, color: '#ef4444' },
     { id: 'okr', label: 'OKR', icon: Target, color: '#22C55E' },
     { id: 'habits', label: 'Habitudes', icon: Repeat, color: '#EAB308' },
   ];
@@ -373,7 +375,7 @@ export default function StatisticsPage() {
 
   const sectionColor =
     selectedSection === 'tasks' ? '#3B82F6' :
-    selectedSection === 'agenda' ? '#F97316' :
+    selectedSection === 'agenda' ? '#ef4444' :
     selectedSection === 'habits' ? '#EAB308' :
     selectedSection === 'okr' ? '#22C55E' : '#8B5CF6';
 
@@ -382,11 +384,6 @@ export default function StatisticsPage() {
   const areaChartConfig = useMemo<ChartConfig>(() => ({
     minutes: { label: 'Temps (min)', color: sectionColor },
   }), [sectionColor]);
-
-  const half = Math.floor(areaChartData.length / 2);
-  const firstAvg = half > 0 ? areaChartData.slice(0, half).reduce((s, d) => s + d.minutes, 0) / half : 0;
-  const secondAvg = half > 0 ? areaChartData.slice(half).reduce((s, d) => s + d.minutes, 0) / (areaChartData.length - half) : 0;
-  const trendPct = firstAvg > 0 ? Math.round(((secondAvg - firstAvg) / firstAvg) * 100) : 0;
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
@@ -398,14 +395,14 @@ export default function StatisticsPage() {
       {/* Stat cards — sans icônes */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Aujourd'hui", val: globalStats.today, color: '#3B82F6' },
-          { label: 'Cette semaine', val: globalStats.week, color: '#10B981' },
-          { label: 'Ce mois', val: globalStats.month, color: '#F97316' },
-          { label: 'Cette année', val: globalStats.year, color: '#8B5CF6' },
+          { label: "Aujourd'hui", val: globalStats.today },
+          { label: 'Cette semaine', val: globalStats.week },
+          { label: 'Ce mois', val: globalStats.month },
+          { label: 'Cette année', val: globalStats.year },
         ].map((s, idx) => (
-          <div key={idx} className="card p-5 border-l-4" style={{ borderLeftColor: s.color }}>
+          <div key={idx} className="card p-5">
             <p className="text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{s.label}</p>
-            <p className="text-xl font-bold" style={{ color: s.color }}>{formatTimeShort(s.val)}</p>
+            <p className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTimeShort(s.val)}</p>
           </div>
         ))}
       </div>
@@ -499,7 +496,7 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        <ChartContainer config={areaChartConfig} className="h-[260px]">
+        <ChartContainer config={areaChartConfig} className="h-[260px] w-full" style={{ aspectRatio: 'auto' }}>
           <AreaChart data={areaChartData} margin={{ left: 0, right: 20, top: 16, bottom: 0 }}>
             <defs>
               <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
@@ -546,16 +543,6 @@ export default function StatisticsPage() {
           </AreaChart>
         </ChartContainer>
 
-        <div className="flex items-center gap-2 mt-4 text-sm">
-          <TrendingUp className={`h-4 w-4 flex-shrink-0 ${trendPct >= 0 ? 'text-emerald-500' : 'text-red-400'}`}
-            style={{ transform: trendPct < 0 ? 'rotate(180deg)' : undefined }} />
-          <span className="font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {trendPct >= 0 ? '+' : ''}{trendPct}% vs période précédente
-          </span>
-          <span className="text-xs ml-auto" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            {periodDescriptiveText[selectedPeriod]}
-          </span>
-        </div>
       </div>
 
       <div className="mb-8 text-center">
@@ -597,7 +584,7 @@ const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }> = ({ 
 
   const breakdown = [
     { id: 'tasks', label: 'Tâches', time: totalDetails.tasksTime, color: '#3B82F6' },
-    { id: 'agenda', label: 'Agenda', time: totalDetails.eventsTime, color: '#F97316' },
+    { id: 'agenda', label: 'Agenda', time: totalDetails.eventsTime, color: '#ef4444' },
     { id: 'habits', label: 'Habitudes', time: totalDetails.habitsTime, color: '#EAB308' },
     { id: 'okr', label: 'OKR', time: totalDetails.okrTime, color: '#22C55E' },
   ].sort((a, b) => b.time - a.time);
