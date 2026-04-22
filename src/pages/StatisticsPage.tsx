@@ -87,7 +87,7 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
 // ═══════════════════════════════════════════════════════════════════
 // HEATMAP CALENDRIER — Suivi des habitudes
 // ═══════════════════════════════════════════════════════════════════
-const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }) => {
+const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const WEEKS = 26;
   const CELL = 11;
   const GAP = 2;
@@ -142,11 +142,13 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
 
   const DAY_LABELS = ['L', '', 'M', '', 'J', '', 'D'];
 
-  return (
-    <div className="card p-6">
-      <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
-        Calendrier de complétion
-      </h3>
+  const heatmapContent = (
+    <>
+      {!embedded && (
+        <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          Calendrier de complétion
+        </h3>
+      )}
       <div className="overflow-x-auto pb-1">
         <div className="flex" style={{ gap: GAP, minWidth: 'max-content' }}>
           {/* Day labels */}
@@ -205,8 +207,11 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
         ))}
         <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
       </div>
-    </div>
+    </>
   );
+
+  if (embedded) return <div>{heatmapContent}</div>;
+  return <div className="card p-6">{heatmapContent}</div>;
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -483,6 +488,8 @@ export default function StatisticsPage() {
 
       {/* Graphique principal — Area Chart */}
       <div className="card p-6 mb-8">
+        <div className={selectedSection === 'habits' ? 'flex gap-6 items-start' : ''}>
+        <div className={selectedSection === 'habits' ? 'flex-[3] min-w-0' : ''}>
         <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -576,6 +583,14 @@ export default function StatisticsPage() {
             />
           </AreaChart>
         </ChartContainer>
+        </div>
+        {selectedSection === 'habits' && (
+          <div className="shrink-0 border-l pl-5" style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
+            <p className="text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
+            <HabitHeatmap habits={habits} now={now} embedded />
+          </div>
+        )}
+        </div>
 
       </div>
 
@@ -898,15 +913,15 @@ const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start: Date; 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-5 border-l-4 border-l-blue-500">
+        <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Total Objectifs</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{objectives.length}</p>
         </div>
-        <div className="card p-5 border-l-4 border-l-emerald-500">
+        <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Objectifs travaillés</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{okrWorkTime.length}</p>
         </div>
-        <div className="card p-5 border-l-4 border-l-violet-500">
+        <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Temps total réel</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalWorkedTime)}</p>
         </div>
@@ -997,21 +1012,19 @@ const HabitsStatistics: React.FC<{
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-5 border-l-4 border-l-blue-500">
+        <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Habitudes actives {periodSuffix}</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{activeHabitsCount} / {relevantHabitsCount}</p>
         </div>
-        <div className="card p-5 border-l-4 border-l-emerald-500">
+        <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Taux de succès {periodSuffix}</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{avgRate}%</p>
         </div>
-        <div className="card p-5 border-l-4 border-l-violet-500">
+        <div className="card p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Temps investi {periodSuffix}</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalEstimatedTime)}</p>
         </div>
       </div>
-
-      <HabitHeatmap habits={habits} now={now} />
 
       <div className="card p-6">
         <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
