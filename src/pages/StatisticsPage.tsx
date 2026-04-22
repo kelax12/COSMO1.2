@@ -604,9 +604,9 @@ export default function StatisticsPage() {
         </ChartContainer>
         </div>
         {selectedSection === 'habits' && (
-          <div className="shrink-0 border-l pl-5 flex flex-col" style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
+          <div className="shrink-0 border-l pl-5 flex flex-col overflow-hidden" style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
             <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 flex flex-col">
               <HabitHeatmap habits={habits} now={now} embedded />
             </div>
           </div>
