@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, XAxis, ReferenceLine } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -134,47 +134,59 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
       <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
         Calendrier de complétion
       </h3>
-      <div className="w-full">
-        <div className="flex w-full gap-1">
+      <div className="w-full overflow-visible">
+        <div className="flex w-full gap-[3px]">
           {/* Étiquettes jours */}
-          <div className="flex flex-col gap-1 pt-5 mr-1 flex-shrink-0">
+          <div className="flex flex-col gap-[3px] pt-5 mr-0.5 flex-shrink-0">
             {dayLetters.map((d, i) => (
-              <div key={i} className="flex items-center" style={{ height: 'calc((100% - 20px) / 7)' }}>
-                <span className="text-[10px] font-medium w-3 text-center leading-none"
+              <div key={i} className="h-[7px] flex items-center">
+                <span className="text-[8px] font-medium w-2.5 text-center leading-none"
                   style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
               </div>
             ))}
           </div>
-          {/* Colonnes semaines — flex-1 pour remplir toute la largeur */}
+          {/* Colonnes semaines — flex-1 max-w-[7px] → cellules ~50% plus petites */}
           {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-1 flex-1">
+            <div key={wi} className="flex flex-col gap-[3px] flex-1 min-w-0">
               <div className="h-5 flex items-end pb-1 overflow-hidden">
                 {wi % 4 === 0 && week[0] && (
-                  <span className="text-[9px] font-bold leading-none whitespace-nowrap"
+                  <span className="text-[8px] font-bold leading-none whitespace-nowrap"
                     style={{ color: 'rgb(var(--color-text-muted))' }}>
                     {week[0].date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                   </span>
                 )}
               </div>
               {week.map((cell, di) => (
-                <div
-                  key={di}
-                  title={`${cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}: ${cell.completed}/${cell.total} habitude${cell.total !== 1 ? 's' : ''}`}
-                  className="w-full aspect-square rounded-[3px] transition-transform hover:scale-110 cursor-default"
-                  style={{
-                    backgroundColor: getCellColor(cell.rate),
-                    border: cell.rate >= 0 ? '1px solid rgba(234,179,8,0.12)' : '1px solid transparent',
-                  }}
-                />
+                <div key={di} className="relative group w-full">
+                  <div
+                    className="w-full aspect-square rounded-[4px] cursor-default transition-transform group-hover:scale-125"
+                    style={{
+                      backgroundColor: getCellColor(cell.rate),
+                      border: cell.rate >= 0 ? '1px solid rgba(234,179,8,0.12)' : '1px solid transparent',
+                    }}
+                  />
+                  {cell.rate >= 0 && (
+                    <div
+                      className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      style={{
+                        backgroundColor: 'rgb(var(--color-surface))',
+                        border: '1px solid rgb(var(--color-border))',
+                        color: 'rgb(var(--color-text-primary))',
+                      }}
+                    >
+                      {cell.completed}/{cell.total}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-3 justify-end">
+      <div className="flex items-center gap-1.5 mt-3 justify-end">
         <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
         {([0, 0.25, 0.5, 0.75, 1] as const).map((r, i) => (
-          <div key={i} className="w-3 h-3 rounded-[3px]"
+          <div key={i} className="w-2.5 h-2.5 rounded-[4px]"
             style={{ backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.12)' }} />
         ))}
         <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
@@ -407,7 +419,7 @@ export default function StatisticsPage() {
         ))}
       </div>
 
-      <div className="mb-6 space-y-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         {/* Sélecteur de section */}
         <div className="flex flex-wrap items-center gap-4">
           <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Analyser :</span>
@@ -433,8 +445,8 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        {/* Sélecteur de période — style Agenda */}
-        <div className="flex gap-1 p-1 rounded-xl border w-fit"
+        {/* Sélecteur de période — droite, style Agenda */}
+        <div className="flex gap-1 p-1 rounded-xl border"
           style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
           {periods.map(period => (
             <button
@@ -497,7 +509,7 @@ export default function StatisticsPage() {
         </div>
 
         <ChartContainer config={areaChartConfig} className="h-[260px] w-full" style={{ aspectRatio: 'auto' }}>
-          <AreaChart data={areaChartData} margin={{ left: 0, right: 20, top: 16, bottom: 0 }}>
+          <AreaChart data={areaChartData} margin={{ left: 4, right: 20, top: 16, bottom: 0 }}>
             <defs>
               <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-minutes)" stopOpacity={0.35} />
@@ -506,6 +518,13 @@ export default function StatisticsPage() {
             </defs>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={4}
+              width={38}
+              tickFormatter={(v: number) => formatTimeShort(v)}
+            />
             <ChartTooltip
               cursor={false}
               content={(props: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
