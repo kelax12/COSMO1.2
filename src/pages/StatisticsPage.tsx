@@ -9,6 +9,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { useColorSettings } from '@/modules/ui-states';
+import { useCategories } from '@/modules/categories';
 import { useTasks, Task } from '@/modules/tasks';
 import { useHabits, Habit } from '@/modules/habits';
 import { useEvents, CalendarEvent } from '@/modules/events';
@@ -87,94 +88,108 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
 // HEATMAP CALENDRIER — Suivi des habitudes
 // ═══════════════════════════════════════════════════════════════════
 const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }) => {
-  const WEEKS = 13;
+  const WEEKS = 26;
+  const CELL = 11;
+  const GAP = 2;
 
-  const weeks = useMemo(() => {
+  const { weeks, monthLabelMap } = useMemo(() => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const allCells: { date: Date; dateStr: string; completed: number; total: number; rate: number }[] = [];
+    const firstDay = new Date(today);
+    firstDay.setDate(today.getDate() - (WEEKS * 7 - 1));
+    const dow = firstDay.getDay();
+    firstDay.setDate(firstDay.getDate() + (dow === 0 ? 1 : dow === 1 ? 0 : 8 - dow));
 
-    for (let i = WEEKS * 7 - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
+    const allCells: { date: Date; dateStr: string; completed: number; total: number; rate: number; isFuture: boolean }[] = [];
+    for (let i = 0; i < WEEKS * 7; i++) {
+      const date = new Date(firstDay);
+      date.setDate(firstDay.getDate() + i);
       const dateStr = getLocalDateString(date);
+      const isFuture = date > today;
 
       const activeHabits = habits.filter(h => {
         if (!h.createdAt) return true;
         const created = new Date(h.createdAt);
-        const createdNorm = new Date(created.getFullYear(), created.getMonth(), created.getDate());
-        return date >= createdNorm;
+        const cn = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+        return date >= cn;
       });
 
-      const completed = activeHabits.filter(h => h.completions[dateStr] === true).length;
-      const rate = activeHabits.length > 0 ? completed / activeHabits.length : -1;
-
-      allCells.push({ date, dateStr, completed, total: activeHabits.length, rate });
+      const completed = isFuture ? 0 : activeHabits.filter(h => h.completions[dateStr] === true).length;
+      const rate = isFuture ? -1 : activeHabits.length > 0 ? completed / activeHabits.length : -1;
+      allCells.push({ date, dateStr, completed, total: activeHabits.length, rate, isFuture });
     }
 
-    const result = [];
+    const result: typeof allCells[] = [];
+    const mMap = new Map<number, string>();
     for (let w = 0; w < WEEKS; w++) {
-      result.push(allCells.slice(w * 7, (w + 1) * 7));
+      const week = allCells.slice(w * 7, (w + 1) * 7);
+      result.push(week);
+      const firstOfMonth = week.find(c => c.date.getDate() === 1);
+      if (firstOfMonth) {
+        mMap.set(w, firstOfMonth.date.toLocaleDateString('fr-FR', { month: 'short' }));
+      }
     }
-    return result;
+    return { weeks: result, monthLabelMap: mMap };
   }, [habits, now]);
 
   const getCellColor = (rate: number) => {
     if (rate < 0) return 'transparent';
-    if (rate === 0) return 'rgba(234,179,8,0.07)';
-    if (rate <= 0.25) return 'rgba(234,179,8,0.28)';
-    if (rate <= 0.5) return 'rgba(234,179,8,0.52)';
-    if (rate <= 0.75) return 'rgba(234,179,8,0.76)';
+    if (rate === 0) return 'rgba(234,179,8,0.08)';
+    if (rate <= 0.25) return 'rgba(234,179,8,0.30)';
+    if (rate <= 0.5) return 'rgba(234,179,8,0.55)';
+    if (rate <= 0.75) return 'rgba(234,179,8,0.78)';
     return '#EAB308';
   };
 
-  const dayLetters = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const DAY_LABELS = ['L', '', 'M', '', 'J', '', 'D'];
 
   return (
     <div className="card p-6">
       <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
         Calendrier de complétion
       </h3>
-      <div className="w-full overflow-visible">
-        <div className="flex w-full gap-[3px]">
-          {/* Étiquettes jours */}
-          <div className="flex flex-col gap-[3px] pt-5 mr-0.5 flex-shrink-0">
-            {dayLetters.map((d, i) => (
-              <div key={i} className="h-[7px] flex items-center">
-                <span className="text-[8px] font-medium w-2.5 text-center leading-none"
-                  style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
+      <div className="overflow-x-auto pb-1">
+        <div className="flex" style={{ gap: GAP, minWidth: 'max-content' }}>
+          {/* Day labels */}
+          <div className="flex flex-col shrink-0" style={{ gap: GAP, paddingTop: 20 + GAP }}>
+            {DAY_LABELS.map((d, i) => (
+              <div key={i} style={{ height: CELL, width: 10, display: 'flex', alignItems: 'center' }}>
+                <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
               </div>
             ))}
           </div>
-          {/* Colonnes semaines — flex-1 max-w-[7px] → cellules ~50% plus petites */}
+          {/* Week columns */}
           {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-[3px] flex-1 min-w-0">
-              <div className="h-5 flex items-end pb-1 overflow-hidden">
-                {wi % 4 === 0 && week[0] && (
-                  <span className="text-[8px] font-bold leading-none whitespace-nowrap"
+            <div key={wi} className="flex flex-col shrink-0" style={{ gap: GAP }}>
+              <div style={{ height: 20, width: CELL, display: 'flex', alignItems: 'flex-end' }}>
+                {monthLabelMap.has(wi) && (
+                  <span className="text-[8px] font-semibold leading-none select-none"
                     style={{ color: 'rgb(var(--color-text-muted))' }}>
-                    {week[0].date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    {monthLabelMap.get(wi)}
                   </span>
                 )}
               </div>
               {week.map((cell, di) => (
-                <div key={di} className="relative group w-full">
+                <div key={di} className="relative group" style={{ width: CELL, height: CELL }}>
                   <div
-                    className="w-full aspect-square rounded-[4px] cursor-default transition-transform group-hover:scale-125"
+                    className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-125"
                     style={{
                       backgroundColor: getCellColor(cell.rate),
-                      border: cell.rate >= 0 ? '1px solid rgba(234,179,8,0.12)' : '1px solid transparent',
+                      border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}`,
                     }}
                   />
-                  {cell.rate >= 0 && (
+                  {!cell.isFuture && cell.rate >= 0 && (
                     <div
-                      className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                       style={{
                         backgroundColor: 'rgb(var(--color-surface))',
                         border: '1px solid rgb(var(--color-border))',
                         color: 'rgb(var(--color-text-primary))',
                       }}
                     >
-                      {cell.completed}/{cell.total}
+                      <div className="text-[10px] font-bold text-center">{cell.completed}/{cell.total}</div>
+                      <div className="text-[9px] font-normal text-center mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        {cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -183,13 +198,12 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date }>(({ habits, now }
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 mt-3 justify-end">
-        <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
-        {([0, 0.25, 0.5, 0.75, 1] as const).map((r, i) => (
-          <div key={i} className="w-2.5 h-2.5 rounded-[4px]"
-            style={{ backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.12)' }} />
+      <div className="flex items-center gap-1.5 mt-4 justify-end">
+        <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
+        {[0, 0.26, 0.51, 0.76, 1].map((r, i) => (
+          <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.15)' }} />
         ))}
-        <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
+        <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
       </div>
     </div>
   );
@@ -203,6 +217,7 @@ export default function StatisticsPage() {
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
   const { colorSettings } = useColorSettings();
+  const { data: categories = [] } = useCategories();
   const { data: habits = [] } = useHabits();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
@@ -570,8 +585,8 @@ export default function StatisticsPage() {
         </span>
       </div>
 
-      {selectedSection === 'tasks' && <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} />}
-      {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} colorSettings={colorSettings} />}
+      {selectedSection === 'tasks' && <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />}
+      {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} colorSettings={colorSettings} categories={categories} />}
       {selectedSection === 'okr' && <OKRStatistics objectives={okrs} rollingRange={rollingRange} />}
       {selectedSection === 'habits' && <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />}
       {selectedSection === 'all' && <OverviewStatistics workTimeData={rollingWorkTimeData} />}
@@ -678,9 +693,14 @@ const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }> = ({ 
 // ═══════════════════════════════════════════════════════════════════
 // TÂCHES
 // ═══════════════════════════════════════════════════════════════════
-const TasksStatistics: React.FC<{ tasks: Task[]; colorSettings: Record<string, string> }> = ({ tasks, colorSettings }) => {
-  const colorDistribution = Object.keys(colorSettings).map(color => ({
-    color, name: colorSettings[color], count: tasks.filter(t => t.category === color).length,
+const TasksStatistics: React.FC<{
+  tasks: Task[];
+  colorSettings: Record<string, string>;
+  categories: Array<{ id: string; color: string; name: string }>;
+}> = ({ tasks, colorSettings, categories }) => {
+  const getColorValue = (catId: string) => categories.find(c => c.id === catId)?.color || '#64748B';
+  const colorDistribution = Object.keys(colorSettings).map(catId => ({
+    catId, name: colorSettings[catId], count: tasks.filter(t => t.category === catId).length,
   }));
   const priorityDistribution = [1, 2, 3, 4, 5].map(priority => ({
     priority, count: tasks.filter(t => t.priority === priority).length,
@@ -690,7 +710,6 @@ const TasksStatistics: React.FC<{ tasks: Task[]; colorSettings: Record<string, s
   const avgPriority = tasks.length > 0
     ? (priorityDistribution.reduce((acc, item) => acc + item.priority * item.count, 0) / tasks.length).toFixed(1)
     : '0';
-  const getColorValue = (k: string) => ({ red: '#EF4444', blue: '#3B82F6', green: '#10B981', purple: '#8B5CF6', orange: '#F97316' }[k] || '#64748B');
   const priorityColors = ['#DC2626', '#F97316', '#F59E0B', '#3B82F6', '#6B7280'];
 
   return (
@@ -702,17 +721,17 @@ const TasksStatistics: React.FC<{ tasks: Task[]; colorSettings: Record<string, s
         </div>
         <div className="space-y-4">
           {colorDistribution.map(item => (
-            <div key={item.color} className="space-y-2">
+            <div key={item.catId} className="space-y-2">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getColorValue(item.color) }} />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getColorValue(item.catId) }} />
                   <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.name}</span>
                 </div>
                 <span className="text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.count}</span>
               </div>
               <div className="w-full rounded-full h-2.5" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                 <div className="h-2.5 rounded-full transition-all duration-500"
-                  style={{ backgroundColor: getColorValue(item.color), width: `${(item.count / maxColorCount) * 100}%` }} />
+                  style={{ backgroundColor: getColorValue(item.catId), width: `${(item.count / maxColorCount) * 100}%` }} />
               </div>
             </div>
           ))}
@@ -745,18 +764,26 @@ const TasksStatistics: React.FC<{ tasks: Task[]; colorSettings: Record<string, s
 // ═══════════════════════════════════════════════════════════════════
 // AGENDA
 // ═══════════════════════════════════════════════════════════════════
-const AgendaStatistics: React.FC<{ events: CalendarEvent[]; colorSettings: Record<string, string> }> = ({ events, colorSettings }) => {
-  const getColorValue = (k: string) => ({ red: '#EF4444', blue: '#3B82F6', green: '#10B981', purple: '#8B5CF6', orange: '#F97316', okr: '#6366F1' }[k] || '#64748B');
+const AgendaStatistics: React.FC<{
+  events: CalendarEvent[];
+  colorSettings: Record<string, string>;
+  categories: Array<{ id: string; color: string; name: string }>;
+}> = ({ events, categories }) => {
+  const getColorValue = (hex: string) => hex || '#64748B';
   const formatTime = (minutes: number) => {
     const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
     return h === 0 ? `${m}min` : `${h}h${m < 10 ? '0' : ''}${m}`;
   };
 
-  const timeByColor = Object.keys(colorSettings).map(color => {
-    const colorEvents = events.filter(e => e.color === color);
-    const totalMinutes = colorEvents.reduce((sum, e) => sum + (new Date(e.end).getTime() - new Date(e.start).getTime()) / 60000, 0);
-    return { color, name: colorSettings[color], minutes: totalMinutes, count: colorEvents.length };
-  }).filter(item => item.minutes > 0).sort((a, b) => b.minutes - a.minutes);
+  const timeByColor = useMemo(() => {
+    const uniqueHexColors = [...new Set(events.map(e => e.color).filter(Boolean))];
+    return uniqueHexColors.map(hexColor => {
+      const colorEvents = events.filter(e => e.color === hexColor);
+      const totalMinutes = colorEvents.reduce((sum, e) => sum + (new Date(e.end).getTime() - new Date(e.start).getTime()) / 60000, 0);
+      const cat = categories.find(c => c.color.toLowerCase() === hexColor.toLowerCase());
+      return { color: hexColor, name: cat?.name || hexColor, minutes: totalMinutes, count: colorEvents.length };
+    }).filter(item => item.minutes > 0).sort((a, b) => b.minutes - a.minutes);
+  }, [events, categories]);
 
   const totalMinutesAll = timeByColor.reduce((sum, item) => sum + item.minutes, 0);
   const maxMinutes = Math.max(...timeByColor.map(c => c.minutes), 1);
@@ -829,7 +856,7 @@ const AgendaStatistics: React.FC<{ events: CalendarEvent[]; colorSettings: Recor
                   <div className="overflow-hidden">
                     <p className="font-semibold text-sm truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{event.title}</p>
                     <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {colorSettings[event.color]} · {new Date(event.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      {categories.find(c => c.color.toLowerCase() === event.color?.toLowerCase())?.name || event.color} · {new Date(event.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                     </p>
                   </div>
                 </div>
