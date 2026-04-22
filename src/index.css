@@ -31,8 +31,8 @@
     --nav-item-text: 100 116 139;
     --nav-item-hover-bg: 248 250 252;
     --nav-item-hover-text: 15 23 42;
-    --nav-item-active-bg: 15 23 42;
-    --nav-item-active-text: 255 255 255;
+    --nav-item-active-bg: 226 232 240;
+    --nav-item-active-text: 15 23 42;
     
     /* Calendar specific colors */
     --calendar-bg: 255 255 255;
