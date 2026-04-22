@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
@@ -89,8 +89,9 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
 // ═══════════════════════════════════════════════════════════════════
 const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const WEEKS = 26;
-  const CELL = 11;
+  const CELL = 13;
   const GAP = 2;
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { weeks, monthLabelMap } = useMemo(() => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -131,6 +132,12 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
     return { weeks: result, monthLabelMap: mMap };
   }, [habits, now]);
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [weeks]);
+
   const getCellColor = (rate: number) => {
     if (rate < 0) return 'transparent';
     if (rate === 0) return 'rgba(234,179,8,0.08)';
@@ -142,30 +149,88 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
 
   const DAY_LABELS = ['L', '', 'M', '', 'J', '', 'D'];
 
-  const heatmapContent = (
-    <>
-      {!embedded && (
-        <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          Calendrier de complétion
-        </h3>
-      )}
-      <div className="overflow-x-auto pb-1">
+  const renderTooltip = (cell: { completed: number; total: number; date: Date }) => (
+    <div
+      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+      style={{ backgroundColor: 'rgb(var(--color-surface))', border: '1px solid rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
+    >
+      <div className="text-[10px] font-bold text-center">{cell.completed}/{cell.total}</div>
+      <div className="text-[9px] font-normal text-center mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        {cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+      </div>
+    </div>
+  );
+
+  const legend = (
+    <div className="flex items-center gap-1.5 mt-3 justify-end flex-shrink-0">
+      <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
+      {[0, 0.26, 0.51, 0.76, 1].map((r, i) => (
+        <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.15)', flexShrink: 0 }} />
+      ))}
+      <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex flex-col h-full min-h-0">
+        <div ref={scrollRef} className="overflow-x-auto flex-1 min-h-0" style={{ paddingBottom: 2 }}>
+          <div className="flex h-full" style={{ gap: GAP, minWidth: 'max-content' }}>
+            {/* Day labels — flex-1 height */}
+            <div className="flex flex-col shrink-0" style={{ gap: GAP, paddingTop: 20 + GAP }}>
+              {DAY_LABELS.map((d, i) => (
+                <div key={i} className="flex-1 min-h-0 flex items-center" style={{ minHeight: CELL, width: 12 }}>
+                  <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
+                </div>
+              ))}
+            </div>
+            {/* Week columns — flex-1 cells */}
+            {weeks.map((week, wi) => (
+              <div key={wi} className="flex flex-col shrink-0 h-full" style={{ gap: GAP, width: CELL }}>
+                <div style={{ height: 20, display: 'flex', alignItems: 'flex-end', flexShrink: 0 }}>
+                  {monthLabelMap.has(wi) && (
+                    <span className="text-[8px] font-semibold leading-none select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      {monthLabelMap.get(wi)}
+                    </span>
+                  )}
+                </div>
+                {week.map((cell, di) => (
+                  <div key={di} className="relative group flex-1 min-h-0" style={{ width: CELL, minHeight: CELL }}>
+                    <div
+                      className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-110"
+                      style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}` }}
+                    />
+                    {!cell.isFuture && cell.rate >= 0 && renderTooltip(cell)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        {legend}
+      </div>
+    );
+  }
+
+  return (
+    <div className="card p-6">
+      <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
+        Calendrier de complétion
+      </h3>
+      <div ref={scrollRef} className="overflow-x-auto pb-1">
         <div className="flex" style={{ gap: GAP, minWidth: 'max-content' }}>
-          {/* Day labels */}
           <div className="flex flex-col shrink-0" style={{ gap: GAP, paddingTop: 20 + GAP }}>
             {DAY_LABELS.map((d, i) => (
-              <div key={i} style={{ height: CELL, width: 10, display: 'flex', alignItems: 'center' }}>
+              <div key={i} style={{ height: CELL, width: 12, display: 'flex', alignItems: 'center' }}>
                 <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
               </div>
             ))}
           </div>
-          {/* Week columns */}
           {weeks.map((week, wi) => (
             <div key={wi} className="flex flex-col shrink-0" style={{ gap: GAP }}>
               <div style={{ height: 20, width: CELL, display: 'flex', alignItems: 'flex-end' }}>
                 {monthLabelMap.has(wi) && (
-                  <span className="text-[8px] font-semibold leading-none select-none"
-                    style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  <span className="text-[8px] font-semibold leading-none select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     {monthLabelMap.get(wi)}
                   </span>
                 )}
@@ -174,44 +239,18 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
                 <div key={di} className="relative group" style={{ width: CELL, height: CELL }}>
                   <div
                     className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-125"
-                    style={{
-                      backgroundColor: getCellColor(cell.rate),
-                      border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}`,
-                    }}
+                    style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}` }}
                   />
-                  {!cell.isFuture && cell.rate >= 0 && (
-                    <div
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-surface))',
-                        border: '1px solid rgb(var(--color-border))',
-                        color: 'rgb(var(--color-text-primary))',
-                      }}
-                    >
-                      <div className="text-[10px] font-bold text-center">{cell.completed}/{cell.total}</div>
-                      <div className="text-[9px] font-normal text-center mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        {cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                      </div>
-                    </div>
-                  )}
+                  {!cell.isFuture && cell.rate >= 0 && renderTooltip(cell)}
                 </div>
               ))}
             </div>
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 mt-4 justify-end">
-        <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
-        {[0, 0.26, 0.51, 0.76, 1].map((r, i) => (
-          <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.15)' }} />
-        ))}
-        <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
-      </div>
-    </>
+      {legend}
+    </div>
   );
-
-  if (embedded) return <div>{heatmapContent}</div>;
-  return <div className="card p-6">{heatmapContent}</div>;
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -488,7 +527,7 @@ export default function StatisticsPage() {
 
       {/* Graphique principal — Area Chart */}
       <div className="card p-6 mb-8">
-        <div className={selectedSection === 'habits' ? 'flex gap-6 items-start' : ''}>
+        <div className={selectedSection === 'habits' ? 'flex gap-6 items-stretch' : ''}>
         <div className={selectedSection === 'habits' ? 'flex-[3] min-w-0' : ''}>
         <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
           <div>
@@ -585,9 +624,11 @@ export default function StatisticsPage() {
         </ChartContainer>
         </div>
         {selectedSection === 'habits' && (
-          <div className="shrink-0 border-l pl-5" style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
-            <p className="text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
-            <HabitHeatmap habits={habits} now={now} embedded />
+          <div className="shrink-0 border-l pl-5 flex flex-col" style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
+            <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
+            <div className="flex-1 min-h-0">
+              <HabitHeatmap habits={habits} now={now} embedded />
+            </div>
           </div>
         )}
         </div>
