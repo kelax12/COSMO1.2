@@ -89,8 +89,9 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
 // ═══════════════════════════════════════════════════════════════════
 const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const WEEKS = 26;
-  const CELL = 13;
-  const GAP = 2;
+  const CELL = embedded ? 28 : 13;
+  const GAP = embedded ? 3 : 2;
+  const MONTH_W = embedded ? 24 : 14;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { weeks, monthLabelMap } = useMemo(() => {
@@ -134,7 +135,7 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [weeks]);
 
@@ -147,7 +148,7 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
     return '#EAB308';
   };
 
-  const DAY_LABELS = ['L', '', 'M', '', 'J', '', 'D'];
+  const DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
   const renderTooltip = (cell: { completed: number; total: number; date: Date }) => (
     <div
@@ -171,74 +172,35 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
     </div>
   );
 
-  if (embedded) {
-    return (
-      <div className="flex flex-col h-full min-h-0">
-        <div ref={scrollRef} className="overflow-x-auto flex-1 min-h-0" style={{ paddingBottom: 2 }}>
-          <div className="flex h-full" style={{ gap: GAP, minWidth: 'max-content' }}>
-            {/* Day labels — flex-1 height */}
-            <div className="flex flex-col shrink-0" style={{ gap: GAP, paddingTop: 20 + GAP }}>
-              {DAY_LABELS.map((d, i) => (
-                <div key={i} className="flex-1 min-h-0 flex items-center" style={{ minHeight: CELL, width: 12 }}>
-                  <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
-                </div>
-              ))}
-            </div>
-            {/* Week columns — flex-1 cells */}
-            {weeks.map((week, wi) => (
-              <div key={wi} className="flex flex-col shrink-0 h-full" style={{ gap: GAP, width: CELL }}>
-                <div style={{ height: 20, display: 'flex', alignItems: 'flex-end', flexShrink: 0 }}>
-                  {monthLabelMap.has(wi) && (
-                    <span className="text-[8px] font-semibold leading-none select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {monthLabelMap.get(wi)}
-                    </span>
-                  )}
-                </div>
-                {week.map((cell, di) => (
-                  <div key={di} className="relative group flex-1 min-h-0" style={{ width: CELL, minHeight: CELL }}>
-                    <div
-                      className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-110"
-                      style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}` }}
-                    />
-                    {!cell.isFuture && cell.rate >= 0 && renderTooltip(cell)}
-                  </div>
-                ))}
-              </div>
-            ))}
+  // Vertical layout (rows = weeks, cols = days)
+  const grid = (scrollClass: string) => (
+    <>
+      {/* Day headers */}
+      <div className="flex flex-shrink-0" style={{ gap: GAP, paddingLeft: MONTH_W + GAP, marginBottom: GAP }}>
+        {DAY_LABELS.map((d, i) => (
+          <div key={i} style={{ width: CELL, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
           </div>
-        </div>
-        {legend}
+        ))}
       </div>
-    );
-  }
-
-  return (
-    <div className="card p-6">
-      <h3 className="text-lg font-semibold mb-5" style={{ color: 'rgb(var(--color-text-primary))' }}>
-        Calendrier de complétion
-      </h3>
-      <div ref={scrollRef} className="overflow-x-auto pb-1">
-        <div className="flex" style={{ gap: GAP, minWidth: 'max-content' }}>
-          <div className="flex flex-col shrink-0" style={{ gap: GAP, paddingTop: 20 + GAP }}>
-            {DAY_LABELS.map((d, i) => (
-              <div key={i} style={{ height: CELL, width: 12, display: 'flex', alignItems: 'center' }}>
-                <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
-              </div>
-            ))}
-          </div>
+      {/* Scrollable weeks (rows) */}
+      <div ref={scrollRef} className={scrollClass}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
           {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col shrink-0" style={{ gap: GAP }}>
-              <div style={{ height: 20, width: CELL, display: 'flex', alignItems: 'flex-end' }}>
+            <div key={wi} style={{ display: 'flex', gap: GAP, alignItems: 'center', flexShrink: 0 }}>
+              {/* Month label */}
+              <div style={{ width: MONTH_W, height: CELL, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                 {monthLabelMap.has(wi) && (
                   <span className="text-[8px] font-semibold leading-none select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     {monthLabelMap.get(wi)}
                   </span>
                 )}
               </div>
+              {/* Day cells */}
               {week.map((cell, di) => (
-                <div key={di} className="relative group" style={{ width: CELL, height: CELL }}>
+                <div key={di} className="relative group" style={{ width: CELL, height: CELL, flexShrink: 0 }}>
                   <div
-                    className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-125"
+                    className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-110"
                     style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}` }}
                   />
                   {!cell.isFuture && cell.rate >= 0 && renderTooltip(cell)}
@@ -248,6 +210,24 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
           ))}
         </div>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex flex-col h-full min-h-0">
+        {grid('overflow-y-auto flex-1 min-h-0')}
+        {legend}
+      </div>
+    );
+  }
+
+  return (
+    <div className="card p-6">
+      <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>
+        Calendrier de complétion
+      </h3>
+      {grid('overflow-y-auto')}
       {legend}
     </div>
   );
