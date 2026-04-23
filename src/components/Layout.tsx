@@ -6,7 +6,6 @@ import {
   Calendar,
   Target,
   BarChart2,
-  MessageCircle,
   Crown,
   Settings,
   Repeat,
@@ -17,7 +16,6 @@ import {
   'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useMessages } from '@/modules/user';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 
@@ -100,7 +98,6 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
 
 const Layout: React.FC = () => {
   const { user } = useAuth();
-  const { messages, markMessagesAsRead } = useMessages();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
@@ -126,10 +123,7 @@ const Layout: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Compter les messages non lus
-  const unreadMessages = messages.filter((msg) => !msg.read).length;
-
-  const NavItems = () =>
+const NavItems = () =>
   <>
       <NavItemLink to="/" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
@@ -159,12 +153,6 @@ const Layout: React.FC = () => {
 
   const CompanyItems = () =>
   <>
-      <NavItemLink to="/messages" label="Messagerie" icon={<MessageCircle size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        badge={unreadMessages}
-        onClick={() => { setIsMobileMenuOpen(false); markMessagesAsRead(); }}
-        onMouseEnterExtra={markMessagesAsRead} />
-
       <NavItemLink to="/premium" label="Premium" icon={<Crown size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
         onClick={() => setIsMobileMenuOpen(false)} />

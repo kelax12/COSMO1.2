@@ -1,19 +1,18 @@
 import React from 'react';
-import { Sun, Moon, Circle } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 
-type Theme = 'light' | 'dark' | 'monochrome';
+type Theme = 'light' | 'dark';
 
 interface ThemeToggleProps {
   className?: string;
-  /** true → 3-button segmented control; false (default) → single cycling icon button */
+  /** true → 2-button segmented control; false (default) → single cycling icon button */
   showLabel?: boolean;
 }
 
 const THEMES: { id: Theme; icon: React.ElementType; label: string }[] = [
-  { id: 'light',      icon: Sun,    label: 'Clair'  },
-  { id: 'dark',       icon: Moon,   label: 'Sombre' },
-  { id: 'monochrome', icon: Circle, label: 'N&B'    },
+  { id: 'light', icon: Sun,  label: 'Clair'  },
+  { id: 'dark',  icon: Moon, label: 'Sombre' },
 ];
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {
@@ -52,7 +51,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
                     ? active ? 'text-[rgb(var(--color-accent))]' : ''
                     : active ? 'text-[rgb(var(--color-text-primary))]' : ''
                 }
-                fill={id === 'monochrome' && active ? 'currentColor' : 'none'}
+                fill="none"
               />
               {label}
             </button>
@@ -75,14 +74,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
     >
       <Icon
         size={18}
-        className={
-          theme === 'light'
-            ? 'text-amber-500'
-            : theme === 'dark'
-            ? 'text-[rgb(var(--color-accent))]'
-            : 'text-[rgb(var(--color-text-primary))]'
-        }
-        fill={theme === 'monochrome' ? 'currentColor' : 'none'}
+        className={theme === 'light' ? 'text-amber-500' : 'text-[rgb(var(--color-accent))]'}
+        fill="none"
       />
     </button>
   );
