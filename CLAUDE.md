@@ -1,4 +1,4 @@
-# CLAUDE.md — COSMO 1.2 tst
+# CLAUDE.md — COSMO 1.2 
 
 Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute modification.
 
