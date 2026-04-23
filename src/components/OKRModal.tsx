@@ -71,7 +71,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         title: editingObjective.title,
         description: editingObjective.description,
         category: editingObjective.category,
-        endDate: editingObjective.endDate,
+        endDate: editingObjective.endDate ? editingObjective.endDate.split('T')[0] : '',
       });
       setKeyResults(
         editingObjective.keyResults.map((kr) => ({
