@@ -600,10 +600,10 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
               <motion.div
                 className="flex-1 space-y-6 px-4 lg:px-0"
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                initial={{ opacity: 0, x: -60, y: 20 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-500/30">
                   <CheckCircle size={28} className="text-white" />
@@ -627,10 +627,10 @@ const LandingPage: React.FC = () => {
 
               <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
                 <motion.div
-                  initial={{ rotateY: 25, opacity: 0, scale: 0.92 }}
-                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ rotateY: 48, opacity: 0, scale: 0.78, y: 50 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-3xl blur-2xl" />
@@ -648,10 +648,10 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
               <motion.div
                 className="flex-1 space-y-6 px-4 lg:px-0"
-                initial={{ opacity: 0, x: 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                initial={{ opacity: 0, x: 60, y: 20 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/30">
                   <Calendar size={28} className="text-white" />
@@ -675,10 +675,10 @@ const LandingPage: React.FC = () => {
 
               <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
                 <motion.div
-                  initial={{ rotateY: -25, opacity: 0, scale: 0.92 }}
-                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ rotateY: -48, opacity: 0, scale: 0.78, y: 50 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
@@ -696,10 +696,10 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
               <motion.div
                 className="flex-1 space-y-6 px-4 lg:px-0"
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                initial={{ opacity: 0, x: -60, y: 20 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-lg shadow-green-500/30">
                   <Target size={28} className="text-white" />
@@ -723,10 +723,10 @@ const LandingPage: React.FC = () => {
 
               <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
                 <motion.div
-                  initial={{ rotateY: 25, opacity: 0, scale: 0.92 }}
-                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ rotateY: 48, opacity: 0, scale: 0.78, y: 50 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
@@ -744,10 +744,10 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
               <motion.div
                 className="flex-1 space-y-6 px-4 lg:px-0"
-                initial={{ opacity: 0, x: 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                initial={{ opacity: 0, x: 60, y: 20 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg shadow-orange-500/30">
                   <Zap size={28} className="text-white" />
@@ -771,10 +771,10 @@ const LandingPage: React.FC = () => {
 
               <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
                 <motion.div
-                  initial={{ rotateY: -25, opacity: 0, scale: 0.92 }}
-                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ rotateY: -48, opacity: 0, scale: 0.78, y: 50 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-3xl blur-2xl" />
@@ -792,10 +792,10 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
               <motion.div
                 className="flex-1 space-y-6 px-4 lg:px-0"
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                initial={{ opacity: 0, x: -60, y: 20 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl shadow-lg shadow-indigo-500/30">
                   <BarChart2 size={28} className="text-white" />
@@ -819,10 +819,10 @@ const LandingPage: React.FC = () => {
 
               <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
                 <motion.div
-                  initial={{ rotateY: 25, opacity: 0, scale: 0.92 }}
-                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  initial={{ rotateY: 48, opacity: 0, scale: 0.78, y: 50 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-3xl blur-2xl" />
