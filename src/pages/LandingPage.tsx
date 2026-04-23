@@ -3,26 +3,33 @@ import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckCircle, 
-  Calendar, 
-  Target, 
-  Zap, 
-  Users, 
-  Shield, 
-  Globe, 
-  Star, 
-  Sparkles, 
-  ChevronRight, 
-  Rocket, 
-  ArrowRight, 
-  X, 
-  Brain, 
-  Workflow, 
-  Database, 
-  Layers, 
-  Infinity as InfinityIcon 
+import {
+  CheckCircle,
+  Calendar,
+  Target,
+  Zap,
+  Users,
+  Shield,
+  Globe,
+  Star,
+  Sparkles,
+  ChevronRight,
+  Rocket,
+  ArrowRight,
+  X,
+  Brain,
+  Workflow,
+  Database,
+  Layers,
+  Infinity as InfinityIcon,
+  BarChart2,
+  Eye
 } from 'lucide-react';
+import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
+import AgendaShowcase from '../components/showcase/AgendaShowcase';
+import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
+import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
+import StatsShowcase from '../components/showcase/StatsShowcase';
 
 const FEATURES = [
   {
@@ -559,92 +566,276 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <section id="features" className="py-24">
+      <section id="features" className="py-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="text-4xl lg:text-5xl font-bold mb-6"
             >
               <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                Fonctionnalités qui changent
+                Voyez l'application
               </span>
               <br />
               <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                la donne
+                en action
               </span>
             </motion.h2>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
               className="text-xl text-slate-400 max-w-3xl mx-auto"
             >
-              Découvrez comment Cosmo révolutionne chaque aspect de votre productivité avec des technologies de pointe
+              Chaque module est conçu pour être puissant et intuitif — voici un aperçu réel de l'interface
             </motion.p>
           </div>
 
-          <div className="space-y-32">
-            {FEATURES.map((feature, index) => (
-              <motion.div 
-                key={index} 
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-                className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-8 lg:gap-16`}
+          <div className="space-y-36">
+
+            {/* ── Section 1 : Tâches ── */}
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              <motion.div
+                className="flex-1 space-y-6 px-4 lg:px-0"
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                <div className="flex-1 space-y-6 lg:space-y-8 px-4 lg:px-0">
-                  <div className="space-y-4">
-                    <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r ${feature.gradient} rounded-2xl shadow-lg`}>
-                      <feature.icon size={24} className="text-white sm:w-8 sm:h-8" />
-                    </div>
-                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">{feature.title}</h3>
-                    <p className={`text-lg sm:text-xl font-semibold bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent`}>
-                      {feature.subtitle}
-                    </p>
-                    <p className="text-base sm:text-lg text-slate-300 leading-relaxed">{feature.description}</p>
-                  </div>
-
-                  <div className="space-y-3 sm:space-y-4">
-                    {feature.benefits.map((benefit, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className={`w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-r ${feature.gradient} rounded-full flex items-center justify-center flex-shrink-0`}>
-                          <CheckCircle size={12} className="text-white sm:w-3.5 sm:h-3.5" />
-                        </div>
-                        <span className="text-sm sm:text-base text-slate-300 font-medium">{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button 
-                    onClick={() => handleFeatureClick(feature.path)}
-                    className={`group bg-gradient-to-r ${feature.gradient} hover:shadow-lg hover:shadow-blue-500/25 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center justify-center gap-2 w-full sm:w-auto`}
-                  >
-                    En savoir plus
-                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                  </button>
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-500/30">
+                  <CheckCircle size={28} className="text-white" />
                 </div>
-
-                <div className="flex-1 w-full px-4 lg:px-0">
-                  <div className="relative group">
-                    <div className={`w-full h-64 sm:h-80 lg:h-96 bg-gradient-to-br ${feature.gradient} rounded-2xl sm:rounded-3xl shadow-2xl flex items-center justify-center transform transition-transform duration-500 group-hover:scale-[1.02]`}>
-                      <feature.icon size={80} className="text-white/20 sm:w-24 sm:h-24 lg:w-30 lg:h-30 absolute" />
-                      <div className="absolute inset-0 bg-black/20 rounded-2xl sm:rounded-3xl flex items-center justify-center backdrop-blur-sm">
-                        <div className="flex flex-col items-center justify-center text-center">
-                          <feature.icon size={60} className="text-white mb-3 sm:w-16 sm:h-16 lg:w-20 lg:h-20 sm:mb-4 drop-shadow-lg" />
-                          <div className="text-white font-bold text-lg sm:text-xl px-4 drop-shadow-md">{feature.title}</div>
-                        </div>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Gestion de tâches<br /><span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">nouvelle génération</span></h3>
+                <p className="text-lg text-slate-300 leading-relaxed">Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.</p>
+                <div className="space-y-3">
+                  {['Filtres multi-critères : priorité, catégorie, deadline', 'Vue liste ou tableau selon votre façon de penser', 'Favoris, statuts et durées estimées', 'Partage collaboratif avec rôles Viewer / Editor'].map((b, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={11} className="text-white" />
                       </div>
+                      <span className="text-slate-300 font-medium text-sm">{b}</span>
                     </div>
-                    <div className={`absolute -inset-2 sm:-inset-4 bg-gradient-to-r ${feature.gradient} rounded-2xl sm:rounded-3xl blur-xl sm:blur-2xl opacity-20 animate-pulse`}></div>
-                  </div>
+                  ))}
                 </div>
+                <button onClick={() => handleFeatureClick('/tasks')} className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg hover:shadow-blue-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                  Essayer les tâches <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
               </motion.div>
-            ))}
+
+              <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                <motion.div
+                  initial={{ rotateY: 25, opacity: 0, scale: 0.92 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="relative"
+                >
+                  <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-3xl blur-2xl" />
+                  <div className="relative">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                      <Eye size={11} /> Aperçu live
+                    </div>
+                    <TaskTableShowcase />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* ── Section 2 : Agenda ── */}
+            <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+              <motion.div
+                className="flex-1 space-y-6 px-4 lg:px-0"
+                initial={{ opacity: 0, x: 40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/30">
+                  <Calendar size={28} className="text-white" />
+                </div>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Agenda intégré<br /><span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">avec time-blocking</span></h3>
+                <p className="text-lg text-slate-300 leading-relaxed">Glissez vos tâches directement dans votre calendrier pour bloquer du temps. Vues jour, semaine, mois avec zoom granulaire.</p>
+                <div className="space-y-3">
+                  {['Drag & drop des tâches dans les créneaux horaires', 'Zoom 5 min → 1h pour une précision maximale', 'Vues jour, semaine et mois sur mesure', 'Auto-scroll sur l\'heure courante'].map((b, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={11} className="text-white" />
+                      </div>
+                      <span className="text-slate-300 font-medium text-sm">{b}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => handleFeatureClick('/agenda')} className="group bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-lg hover:shadow-purple-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                  Ouvrir l'agenda <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </motion.div>
+
+              <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                <motion.div
+                  initial={{ rotateY: -25, opacity: 0, scale: 0.92 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="relative"
+                >
+                  <div className="absolute -inset-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
+                  <div className="relative">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-purple-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                      <Eye size={11} /> Aperçu live
+                    </div>
+                    <AgendaShowcase />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* ── Section 3 : OKR ── */}
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              <motion.div
+                className="flex-1 space-y-6 px-4 lg:px-0"
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl shadow-lg shadow-green-500/30">
+                  <Target size={28} className="text-white" />
+                </div>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">OKR & Objectifs<br /><span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">à la Google</span></h3>
+                <p className="text-lg text-slate-300 leading-relaxed">La méthode OKR utilisée par Google, Intel et Netflix — maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.</p>
+                <div className="space-y-3">
+                  {['Objectifs avec Key Results mesurables', 'Progression automatique calculée sur vos KR', 'Journal de complétion append-only', 'Catégories : Carrière, Santé, Apprentissage…'].map((b, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={11} className="text-white" />
+                      </div>
+                      <span className="text-slate-300 font-medium text-sm">{b}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => handleFeatureClick('/okr')} className="group bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-lg hover:shadow-green-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                  Voir les OKRs <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </motion.div>
+
+              <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                <motion.div
+                  initial={{ rotateY: 25, opacity: 0, scale: 0.92 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="relative"
+                >
+                  <div className="absolute -inset-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
+                  <div className="relative">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-green-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                      <Eye size={11} /> Aperçu live
+                    </div>
+                    <OKRCardShowcase />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* ── Section 4 : Habitudes ── */}
+            <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
+              <motion.div
+                className="flex-1 space-y-6 px-4 lg:px-0"
+                initial={{ opacity: 0, x: 40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg shadow-orange-500/30">
+                  <Zap size={28} className="text-white" />
+                </div>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
+                <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi visuel puissant. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
+                <div className="space-y-3">
+                  {['Heatmap 26 semaines style GitHub', 'Streaks de séries consécutives', 'Fréquence quotidienne, hebdo ou mensuelle', 'Taux de complétion & temps investi'].map((b, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={11} className="text-white" />
+                      </div>
+                      <span className="text-slate-300 font-medium text-sm">{b}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => handleFeatureClick('/habits')} className="group bg-gradient-to-r from-orange-600 to-red-600 hover:shadow-lg hover:shadow-orange-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                  Suivre mes habitudes <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </motion.div>
+
+              <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                <motion.div
+                  initial={{ rotateY: -25, opacity: 0, scale: 0.92 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="relative"
+                >
+                  <div className="absolute -inset-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-3xl blur-2xl" />
+                  <div className="relative">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-orange-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                      <Eye size={11} /> Aperçu live
+                    </div>
+                    <HabitHeatmapShowcase />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* ── Section 5 : Statistiques ── */}
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              <motion.div
+                className="flex-1 space-y-6 px-4 lg:px-0"
+                initial={{ opacity: 0, x: -40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl shadow-lg shadow-indigo-500/30">
+                  <BarChart2 size={28} className="text-white" />
+                </div>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Statistiques<br /><span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">multi-modules</span></h3>
+                <p className="text-lg text-slate-300 leading-relaxed">Analysez votre temps investi sur tous vos modules — tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.</p>
+                <div className="space-y-3">
+                  {['Répartition du temps par module', 'Vues jour, semaine, mois, année', 'Tendances et patterns sur 6 mois', 'Analyse de productivité croisée'].map((b, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={11} className="text-white" />
+                      </div>
+                      <span className="text-slate-300 font-medium text-sm">{b}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => handleFeatureClick('/statistics')} className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                  Voir mes stats <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </motion.div>
+
+              <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                <motion.div
+                  initial={{ rotateY: 25, opacity: 0, scale: 0.92 }}
+                  whileInView={{ rotateY: 0, opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="relative"
+                >
+                  <div className="absolute -inset-3 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-3xl blur-2xl" />
+                  <div className="relative">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                      <Eye size={11} /> Aperçu live
+                    </div>
+                    <StatsShowcase />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
