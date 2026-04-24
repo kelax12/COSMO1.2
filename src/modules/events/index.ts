@@ -34,8 +34,6 @@ export {
   useEvents,
   useEvent,
   useEventsByTask,
-  useFilteredEvents,
-  useTodaysEvents,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
