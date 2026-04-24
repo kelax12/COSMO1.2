@@ -355,30 +355,45 @@ const AgendaShowcase: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* ── Selection rectangle (MER 14:00–15:30) ── */}
+              {/* ── Selection rectangle (JEU 12:00–13:30) ── */}
               <AnimatePresence>
                 {selVisible && (
                   <motion.div
                     key="selection"
                     initial={{ opacity: 0, scaleY: 0 }}
                     animate={{ opacity: 1, scaleY: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute z-30 rounded-md border-2 border-blue-400 overflow-hidden"
+                    exit={{ opacity: 0, scaleY: 0 }}
+                    transition={{ type: 'tween', duration: 1.1, ease: 'easeOut' }}
+                    className="absolute z-30 rounded-md overflow-hidden"
                     style={{
                       left: `calc(48px + ${SEL_DAY} * ((100% - 48px) / 7) + 2px)`,
                       top: hourToY(SEL_START) + 1,
                       width: `calc((100% - 48px) / 7 - 4px)`,
                       height: durToH(SEL_DUR) - 2,
-                      backgroundColor: 'rgba(59,130,246,0.18)',
+                      backgroundColor: 'rgba(59,130,246,0.55)',
+                      border: '2px solid #3B82F6',
+                      boxShadow: '0 0 0 1px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
                       transformOrigin: 'top',
                     }}
                   >
+                    {/* Event label inside the selection */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6, duration: 0.4 }}
+                      className="px-1.5 pt-1 text-white text-[10px] font-semibold truncate"
+                    >
+                      Nouvel événement
+                    </motion.div>
+
+                    {/* Tooltip above */}
                     <AnimatePresence>
                       {tooltipVisible && (
                         <motion.div
                           initial={{ opacity: 0, y: -6 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
+                          transition={{ duration: 0.35 }}
                           className="absolute -top-8 left-0 right-0 flex justify-center"
                         >
                           <div className="flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg whitespace-nowrap">
@@ -441,6 +456,8 @@ const AgendaShowcase: React.FC = () => {
                 Projets
               </span>
             </div>
+            <div className="mt-1 text-[10px] text-slate-500">Deadline: {DRAG_TASK.deadline}</div>
+            <div className="mt-1 text-[10px] text-orange-400/60">↗ Glisser vers le calendrier</div>
           </motion.div>
         )}
       </AnimatePresence>
