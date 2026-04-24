@@ -45,7 +45,7 @@ const STATIC_EVENTS: CalEvent[] = [
 ];
 
 const DRAG_TASK = SIDEBAR_TASKS[2]; // "Réviser le pitch deck"
-const DROP_EVENT: CalEvent = { id:'drop', day:0, start:11, dur:1, title:'Réviser le pitch deck', color:'#F97316' };
+const DROP_EVENT: CalEvent = { id:'drop', day:2, start:13, dur:1, title:'Réviser le pitch deck', color:'#F97316' };
 const SEL_DAY = 3;    // JEU — centre horizontal
 const SEL_START = 12; // 12:00 — centre vertical, tooltip visible au-dessus
 const SEL_DUR = 1.5;  // 1h30
@@ -129,7 +129,7 @@ const AgendaShowcase: React.FC = () => {
       {/* ══════════ SIDEBAR ══════════ */}
       <div
         className="flex flex-col border-r border-white/10 shrink-0"
-        style={{ width: 230, backgroundColor: '#0F172A' }}
+        style={{ width: 218, backgroundColor: '#0F172A' }}
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-white/10">
@@ -291,12 +291,12 @@ const AgendaShowcase: React.FC = () => {
                 <div className="flex-1 h-[1.5px] bg-red-500" />
               </div>
 
-              {/* ── Drop zone ref (LUN 11:00) ── */}
+              {/* ── Drop zone ref (MER 13:00) ── */}
               <div
                 ref={dropSlotRef}
                 className="absolute pointer-events-none"
                 style={{
-                  left: `calc(48px + 0 * ((100% - 48px) / 7))`,
+                  left: `calc(48px + ${DROP_EVENT.day} * ((100% - 48px) / 7))`,
                   top: hourToY(DROP_EVENT.start),
                   width: `calc((100% - 48px) / 7)`,
                   height: durToH(DROP_EVENT.dur),
