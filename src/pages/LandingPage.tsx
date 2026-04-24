@@ -647,7 +647,8 @@ const LandingPage: React.FC = () => {
             {/* ── Section 2 : Agenda ── */}
             <div className="flex flex-col lg:flex-row-reverse items-center gap-10 lg:gap-16">
               <motion.div
-                className="flex-1 space-y-6 px-4 lg:px-0"
+                className="space-y-6 px-4 lg:px-0"
+                style={{ flex: '0 1 45%' }}
                 initial={{ opacity: 0, x: 60, y: 20 }}
                 whileInView={{ opacity: 1, x: 0, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
@@ -673,7 +674,7 @@ const LandingPage: React.FC = () => {
                 </button>
               </motion.div>
 
-              <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+              <div className="w-full px-4 lg:px-0" style={{ perspective: 1200, flex: '0 1 55%' }}>
                 <motion.div
                   initial={{ rotateY: -48, opacity: 0, scale: 0.78, y: 50 }}
                   whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
