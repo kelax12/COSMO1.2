@@ -654,22 +654,22 @@ const LandingPage: React.FC = () => {
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/30">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl shadow-lg shadow-red-500/30">
                   <Calendar size={28} className="text-white" />
                 </div>
-                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Agenda intégré<br /><span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">avec time-blocking</span></h3>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Agenda intégré<br /><span className="bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">avec time-blocking</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Glissez vos tâches directement dans votre calendrier pour bloquer du temps. Vues jour, semaine, mois avec zoom granulaire.</p>
                 <div className="space-y-3">
                   {['Drag & drop des tâches dans les créneaux horaires', 'Zoom 5 min → 1h pour une précision maximale', 'Vues jour, semaine et mois sur mesure', 'Auto-scroll sur l\'heure courante'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-rose-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
                       </div>
                       <span className="text-slate-300 font-medium text-sm">{b}</span>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => handleFeatureClick('/agenda')} className="group bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-lg hover:shadow-purple-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                <button onClick={() => handleFeatureClick('/agenda')} className="group bg-gradient-to-r from-red-600 to-rose-600 hover:shadow-lg hover:shadow-red-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
                   Ouvrir l'agenda <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
@@ -682,9 +682,9 @@ const LandingPage: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
-                  <div className="absolute -inset-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
+                  <div className="absolute -inset-3 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-purple-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-red-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
                       <Eye size={11} /> Aperçu live
                     </div>
                     <AgendaShowcase />
@@ -750,22 +750,22 @@ const LandingPage: React.FC = () => {
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg shadow-orange-500/30">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl shadow-lg shadow-yellow-500/30">
                   <Zap size={28} className="text-white" />
                 </div>
-                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi visuel puissant. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
                 <div className="space-y-3">
                   {['Heatmap 26 semaines style GitHub', 'Streaks de séries consécutives', 'Fréquence quotidienne, hebdo ou mensuelle', 'Taux de complétion & temps investi'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
                       </div>
                       <span className="text-slate-300 font-medium text-sm">{b}</span>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => handleFeatureClick('/habits')} className="group bg-gradient-to-r from-orange-600 to-red-600 hover:shadow-lg hover:shadow-orange-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                <button onClick={() => handleFeatureClick('/habits')} className="group bg-gradient-to-r from-yellow-500 to-amber-500 hover:shadow-lg hover:shadow-yellow-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
                   Suivre mes habitudes <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
@@ -778,9 +778,9 @@ const LandingPage: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
-                  <div className="absolute -inset-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-3xl blur-2xl" />
+                  <div className="absolute -inset-3 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-orange-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
                       <Eye size={11} /> Aperçu live
                     </div>
                     <HabitHeatmapShowcase />
@@ -798,22 +798,22 @@ const LandingPage: React.FC = () => {
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl shadow-lg shadow-indigo-500/30">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl shadow-lg shadow-violet-500/30">
                   <BarChart2 size={28} className="text-white" />
                 </div>
-                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Statistiques<br /><span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">multi-modules</span></h3>
+                <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Statistiques<br /><span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">multi-modules</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Analysez votre temps investi sur tous vos modules — tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.</p>
                 <div className="space-y-3">
                   {['Répartition du temps par module', 'Vues jour, semaine, mois, année', 'Tendances et patterns sur 6 mois', 'Analyse de productivité croisée'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
                       </div>
                       <span className="text-slate-300 font-medium text-sm">{b}</span>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => handleFeatureClick('/statistics')} className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
+                <button onClick={() => handleFeatureClick('/statistics')} className="group bg-gradient-to-r from-violet-600 to-purple-600 hover:shadow-lg hover:shadow-violet-500/25 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2">
                   Voir mes stats <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
@@ -826,9 +826,9 @@ const LandingPage: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                   className="relative"
                 >
-                  <div className="absolute -inset-3 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-3xl blur-2xl" />
+                  <div className="absolute -inset-3 bg-gradient-to-r from-violet-500/20 to-purple-600/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-violet-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
                       <Eye size={11} /> Aperçu live
                     </div>
                     <StatsShowcase />
