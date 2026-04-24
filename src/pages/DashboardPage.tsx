@@ -102,21 +102,25 @@ const DashboardPage: React.FC = () => {
       return [
         {
           label: 'Tâches complétées',
+          color: '#3b82f6',
           value: tasks.filter(t => t.completed && t.completedAt?.startsWith(today)).length,
           chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt?.startsWith(date)).length })),
         },
         {
           label: 'Agenda',
+          color: '#ef4444',
           value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === today).length,
           chartData: days.map(date => ({ date, value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === date).length })),
         },
         {
           label: 'KR réalisés',
+          color: '#22c55e',
           value: krCompletedInPeriod(today, today),
           chartData: krChartByDay(days),
         },
         {
           label: 'Habitudes',
+          color: '#eab308',
           value: habits.filter(h => h.completions[today]).length,
           chartData: days.map(date => ({ date, value: habits.filter(h => h.completions[date]).length })),
         },
@@ -140,21 +144,25 @@ const DashboardPage: React.FC = () => {
       return [
         {
           label: 'Tâches complétées',
+          color: '#3b82f6',
           value: tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= thisWeek.start && t.completedAt.split('T')[0] <= thisWeek.end).length,
           chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= w.start && t.completedAt.split('T')[0] <= w.end).length })),
         },
         {
           label: 'Agenda',
+          color: '#ef4444',
           value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= thisWeek.start && d <= thisWeek.end; }).length,
           chartData: weeks.map(w => ({ date: w.label, value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= w.start && d <= w.end; }).length })),
         },
         {
           label: 'KR réalisés',
+          color: '#22c55e',
           value: krCompletedInPeriod(thisWeek.start, thisWeek.end),
           chartData: weeks.map(w => ({ date: w.label, value: krCompletedInPeriod(w.start, w.end) })),
         },
         {
           label: 'Habitudes',
+          color: '#eab308',
           value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= thisWeek.start && d <= thisWeek.end).length, 0),
           chartData: weeks.map(w => ({ date: w.label, value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= w.start && d <= w.end).length, 0) })),
         },
