@@ -20,9 +20,18 @@ import TextType from '../components/TextType';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
-const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[] }> = ({ data }) => {
+const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string }> = ({ data, color = '#2563EB' }) => {
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
+
+  const darken = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    const r = Math.max(0, (n >> 16) - 40);
+    const g = Math.max(0, ((n >> 8) & 0xff) - 40);
+    const b = Math.max(0, (n & 0xff) - 40);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+  };
+
   return (
     <div className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative">
       {data.map((d, i) => {
@@ -45,7 +54,7 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
               }`}
               style={{
                 height: `${Math.max((d.value / max) * 100, 8)}%`,
-                backgroundColor: hovered === i ? '#1d4ed8' : '#2563EB',
+                backgroundColor: hovered === i ? darken(color) : color,
               }}
             />
           </div>
@@ -174,21 +183,25 @@ const DashboardPage: React.FC = () => {
     return [
       {
         label: 'Tâches complétées',
+        color: '#3b82f6',
         value: tasksByMonth(thisMonth),
         chartData: months.map(m => ({ date: m.label, value: tasksByMonth(m) })),
       },
       {
         label: 'Agenda',
+        color: '#ef4444',
         value: eventsByMonth(thisMonth),
         chartData: months.map(m => ({ date: m.label, value: eventsByMonth(m) })),
       },
       {
         label: 'KR réalisés',
+        color: '#22c55e',
         value: krCompletedInPeriod(thisMonthStart, thisMonthEnd),
         chartData: months.map(m => { const { start, end } = monthRange(m); return { date: m.label, value: krCompletedInPeriod(start, end) }; }),
       },
       {
         label: 'Habitudes',
+        color: '#eab308',
         value: habitsByMonth(thisMonth),
         chartData: months.map(m => ({ date: m.label, value: habitsByMonth(m) })),
       },
@@ -303,7 +316,7 @@ const DashboardPage: React.FC = () => {
                       {stat.value}
                     </motion.p>
                   </div>
-                  <MiniBarChart data={stat.chartData} />
+                  <MiniBarChart data={stat.chartData} color={stat.color} />
                 </div>
               </motion.div>
             ))}
