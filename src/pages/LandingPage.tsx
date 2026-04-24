@@ -611,7 +611,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Gestion de tâches<br /><span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">nouvelle génération</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.</p>
                 <div className="space-y-3">
-                  {['Filtres multi-critères : priorité, catégorie, deadline', 'Vue liste ou tableau selon votre façon de penser', 'Favoris, statuts et durées estimées', 'Partage collaboratif avec rôles Viewer / Editor'].map((b, i) => (
+                  {['Filtrez par priorité, catégorie, deadline — en un clic', 'Vue liste épurée ou tableau selon votre façon de travailler', 'Favoris, listes personnalisées et durées estimées', 'Partagez vos tâches avec rôles Viewer / Editor (Premium)'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -660,7 +660,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Agenda intégré<br /><span className="bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">avec time-blocking</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Glissez vos tâches directement dans votre calendrier pour bloquer du temps. Vues jour, semaine, mois avec zoom granulaire.</p>
                 <div className="space-y-3">
-                  {['Drag & drop des tâches dans les créneaux horaires', 'Zoom 5 min → 1h pour une précision maximale', 'Vues jour, semaine et mois sur mesure', 'Auto-scroll sur l\'heure courante'].map((b, i) => (
+                  {['Glissez vos tâches directement dans un créneau horaire', 'Zoom 5 min → 1h pour bloquer du temps avec précision', 'Vues jour, semaine et mois — passez de l\'une à l\'autre', 'Auto-scroll sur l\'heure courante à l\'ouverture'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-rose-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -708,7 +708,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">OKR & Objectifs<br /><span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">à la Google</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">La méthode OKR utilisée par Google, Intel et Netflix — maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.</p>
                 <div className="space-y-3">
-                  {['Objectifs avec Key Results mesurables', 'Progression automatique calculée sur vos KR', 'Journal de complétion append-only', 'Catégories : Carrière, Santé, Apprentissage…'].map((b, i) => (
+                  {['Définissez des objectifs ambitieux avec Key Results chiffrés', 'Des données, pas des suppositions — progression calculée automatiquement', 'Journal immuable : chaque effort enregistré, rien n\'est effacé', '5 catégories : Carrière, Santé, Finance, Apprentissage, Personnel'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -756,7 +756,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi visuel puissant. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
                 <div className="space-y-3">
-                  {['Heatmap 26 semaines style GitHub', 'Streaks de séries consécutives', 'Fréquence quotidienne, hebdo ou mensuelle', 'Taux de complétion & temps investi'].map((b, i) => (
+                  {['Chaque jour compte. Votre heatmap 26 semaines le prouve.', 'Streaks et séries — visualisez votre régularité d\'un coup d\'œil', 'Quotidien, hebdo ou mensuel — chaque habitude à votre rythme', 'Taux de complétion et temps investi : mesurez vos progrès réels'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -804,7 +804,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Statistiques<br /><span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">multi-modules</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Analysez votre temps investi sur tous vos modules — tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.</p>
                 <div className="space-y-3">
-                  {['Répartition du temps par module', 'Vues jour, semaine, mois, année', 'Tendances et patterns sur 6 mois', 'Analyse de productivité croisée'].map((b, i) => (
+                  {['Répartition du temps sur tâches, agenda, OKR et habitudes', 'Vues jour, semaine, mois, année — zoomez où vous voulez', 'Patterns sur 6 mois : repérez ce qui fonctionne vraiment', 'Des données précises pour des décisions éclairées — pas des suppositions'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
