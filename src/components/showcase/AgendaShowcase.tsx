@@ -36,12 +36,12 @@ const HEADER_H   = 40; // px
 // Static events [ dayIndex (0=Mon), startHour (decimal), durationH, title, color ]
 type CalEvent = { day: number; start: number; dur: number; title: string; color: string; id: string };
 const STATIC_EVENTS: CalEvent[] = [
-  { id:'e1', day:0, start:9,    dur:0.5,  title:'Stand-up équipe',        color:'#3B82F6' },
-  { id:'e2', day:0, start:14,   dur:1.5,  title:'Revue de sprint',         color:'#8B5CF6' },
-  { id:'e3', day:1, start:9,    dur:2,    title:'Deep work — Roadmap',     color:'#F59E0B' },
-  { id:'e4', day:2, start:10.5, dur:1,    title:'Call client Acme',        color:'#EF4444' },
-  { id:'e5', day:3, start:14,   dur:2,    title:'Formation TypeScript',    color:'#06B6D4' },
-  { id:'e6', day:4, start:10,   dur:1,    title:'Revue OKR mensuelle',     color:'#22C55E' },
+  { id:'e1', day:0, start:9,    dur:0.5,  title:'Courses épicerie',       color:'#3B82F6' },
+  { id:'e2', day:0, start:14,   dur:1.5,  title:'Réunion équipe',         color:'#8B5CF6' },
+  { id:'e3', day:1, start:9,    dur:2,    title:'Café avec amis',         color:'#F59E0B' },
+  { id:'e4', day:2, start:10.5, dur:1,    title:'Cinéma',                 color:'#EF4444' },
+  { id:'e5', day:3, start:14,   dur:2,    title:'Session de code',        color:'#06B6D4' },
+  { id:'e6', day:4, start:10,   dur:1,    title:'Appel client',           color:'#22C55E' },
 ];
 
 const DRAG_TASK = SIDEBAR_TASKS[2]; // "Réviser le pitch deck"
