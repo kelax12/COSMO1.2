@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Clock, Bookmark, CheckCircle2, X, Plus, Calendar } from 'lucide-react';
+import { Search, Clock, Bookmark, CheckCircle2, Calendar } from 'lucide-react';
 
 // ─── Static data ────────────────────────────────────────────────────
 const CATEGORIES: Record<string, { name: string; color: string }> = {
@@ -46,8 +46,8 @@ const STATIC_EVENTS: CalEvent[] = [
 
 const DRAG_TASK = SIDEBAR_TASKS[2]; // "Réviser le pitch deck"
 const DROP_EVENT: CalEvent = { id:'drop', day:0, start:11, dur:1, title:'Réviser le pitch deck', color:'#F97316' };
-const SEL_DAY = 2;    // MER
-const SEL_START = 14; // 14:00
+const SEL_DAY = 3;    // JEU — centre horizontal
+const SEL_START = 12; // 12:00 — centre vertical, tooltip visible au-dessus
 const SEL_DUR = 1.5;  // 1h30
 
 // Helpers
@@ -97,10 +97,10 @@ const AgendaShowcase: React.FC = () => {
     after(400,  () => setPhase('highlight'));
     after(1000, () => setPhase('dragging'));
     after(2100, () => { setPhase('dropped'); setTaskPlaced(true); });
-    after(2600, () => setPhase('selecting'));    // +0.5s after drop
-    after(3600, () => setPhase('selected'));
-    after(5500, () => { setPhase('idle'); setTaskPlaced(false); });
-    after(6200, () => runCycle());
+    after(3400, () => setPhase('selecting'));    // +1.3s after drop
+    after(4400, () => setPhase('selected'));
+    after(6200, () => { setPhase('idle'); setTaskPlaced(false); });
+    after(7000, () => runCycle());
   }, []);
 
   useEffect(() => {
@@ -142,15 +142,6 @@ const AgendaShowcase: React.FC = () => {
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <div className="w-full pl-9 pr-3 py-1.5 bg-slate-800/70 border border-slate-700/60 rounded-lg text-xs text-slate-500">
               Rechercher une tâche...
-            </div>
-          </div>
-          {/* Filters */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="px-2 py-1.5 bg-slate-800/70 border border-slate-700/60 rounded-md text-xs text-slate-400">
-              Toutes catégo…
-            </div>
-            <div className="px-2 py-1.5 bg-slate-800/70 border border-slate-700/60 rounded-md text-xs text-slate-400">
-              Toutes priorité…
             </div>
           </div>
         </div>
@@ -228,41 +219,10 @@ const AgendaShowcase: React.FC = () => {
           })}
         </div>
 
-        {/* Tutorial tip */}
-        <div className="p-3 border-t border-white/10 bg-slate-800/30 relative">
-          <X size={11} className="absolute top-2 right-2 text-slate-600" />
-          <p className="text-[10px] font-medium text-slate-400 mb-1">💡 Comment utiliser :</p>
-          <p className="text-[10px] text-slate-500">• Glissez une tâche vers le calendrier</p>
-          <p className="text-[10px] text-slate-500">• Les propriétés se transfèrent automatiquement</p>
-        </div>
       </div>
 
       {/* ══════════ CALENDAR ══════════ */}
       <div className="flex-1 flex flex-col overflow-hidden">
-
-        {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#0B1120]/80 shrink-0">
-          <div className="flex items-center gap-2">
-            <button className="p-1 rounded hover:bg-white/5 text-slate-400"><span className="text-xs">‹</span></button>
-            <span className="text-xs font-semibold text-white">Semaine du 20 avr. 2026</span>
-            <button className="p-1 rounded hover:bg-white/5 text-slate-400"><span className="text-xs">›</span></button>
-          </div>
-          <div className="flex items-center gap-2">
-            {['Jour','Semaine','Mois'].map((v, i) => (
-              <span
-                key={v}
-                className={`text-[11px] px-2.5 py-1 rounded-md font-medium cursor-default ${
-                  i === 1 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-white/5'
-                }`}
-              >
-                {v}
-              </span>
-            ))}
-            <button className="flex items-center gap-1 text-[11px] bg-blue-600 text-white px-2.5 py-1 rounded-md ml-1">
-              <Plus size={11} /> Créer
-            </button>
-          </div>
-        </div>
 
         {/* Calendar grid */}
         <div className="flex-1 overflow-hidden relative">
