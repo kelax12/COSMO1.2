@@ -64,11 +64,11 @@ const NAV_GROUPS = [
 /* ─── guide nav ─────────────────────────────────────────────────── */
 const GUIDE_NAV: { id: GuideId; icon: React.ElementType; label: string; color: string }[] = [
   { id: 'dashboard', icon: Layout,      label: 'Dashboard',    color: '#3b82f6' },
-  { id: 'tasks',     icon: CheckSquare, label: 'Tâches',       color: '#8b5cf6' },
-  { id: 'agenda',    icon: Calendar,    label: 'Agenda',       color: '#22c55e' },
-  { id: 'habits',    icon: Activity,    label: 'Habitudes',    color: '#f59e0b' },
-  { id: 'okrs',      icon: Target,      label: 'OKR',          color: '#ef4444' },
-  { id: 'stats',     icon: BarChart2,   label: 'Statistiques', color: '#06b6d4' },
+  { id: 'tasks',     icon: CheckSquare, label: 'To do list',   color: '#3b82f6' },
+  { id: 'agenda',    icon: Calendar,    label: 'Agenda',       color: '#ef4444' },
+  { id: 'habits',    icon: Activity,    label: 'Habitudes',    color: '#eab308' },
+  { id: 'okrs',      icon: Target,      label: 'OKR',          color: '#22c55e' },
+  { id: 'stats',     icon: BarChart2,   label: 'Statistiques', color: '#8b5cf6' },
   { id: 'friends',   icon: Users,       label: 'Amis',         color: '#6366f1' },
   { id: 'premium',   icon: Crown,       label: 'Premium',      color: '#d97706' },
 ];
@@ -120,11 +120,11 @@ const GUIDE_DATA: GuideData[] = [
   {
     id: 'tasks',
     icon: CheckSquare,
-    title: 'Gestion des Tâches',
+    title: 'To do list',
     subtitle: 'Organisez chaque action de votre vie',
     badge: 'Core',
-    color: '#8b5cf6',
-    gradient: 'from-violet-500 to-purple-600',
+    color: '#3b82f6',
+    gradient: 'from-blue-500 to-blue-600',
     description: 'La gestion des tâches est le cœur de Cosmo. Créez, organisez et suivez toutes vos actions avec un système de priorités, catégories et deadlines. Transformez vos projets complexes en actions simples et actionnables.',
     features: [
       { icon: Star,         label: '5 niveaux de priorité',   desc: 'De Critique à Optionnel — hiérarchisez pour focaliser votre énergie sur ce qui compte.' },
@@ -152,8 +152,8 @@ const GUIDE_DATA: GuideData[] = [
     title: 'Agenda & Planification',
     subtitle: 'Visualisez votre temps, maîtrisez votre vie',
     badge: 'Planification',
-    color: '#22c55e',
-    gradient: 'from-green-500 to-emerald-600',
+    color: '#ef4444',
+    gradient: 'from-red-500 to-red-600',
     description: 'L\'Agenda fusionne vos événements et vos tâches planifiées en une vue calendrier unifiée. Naviguez entre les vues Jour, Semaine et Mois pour avoir exactement le niveau de détail dont vous avez besoin.',
     features: [
       { icon: Layout,       label: '3 vues calendrier',        desc: 'Vue Jour pour le détail heure par heure, Semaine pour l\'organisation, Mois pour la vision long terme.' },
@@ -181,8 +181,8 @@ const GUIDE_DATA: GuideData[] = [
     title: 'Suivi des Habitudes',
     subtitle: 'Construisez des routines qui durent',
     badge: 'Routines',
-    color: '#f59e0b',
-    gradient: 'from-amber-500 to-orange-500',
+    color: '#eab308',
+    gradient: 'from-yellow-500 to-yellow-600',
     description: 'Le tracker d\'habitudes vous aide à construire des routines solides grâce au suivi de streak. Définissez vos habitudes, cochez-les chaque jour et visualisez votre progression sur des semaines et des mois.',
     features: [
       { icon: Repeat,       label: 'Fréquences flexibles',     desc: 'Habitudes quotidiennes, hebdomadaires ou mensuelles — choisissez le rythme adapté.' },
@@ -209,8 +209,8 @@ const GUIDE_DATA: GuideData[] = [
     title: 'Objectifs & OKR',
     subtitle: 'Alignez vos actions sur vos ambitions',
     badge: 'Stratégie',
-    color: '#ef4444',
-    gradient: 'from-red-500 to-rose-600',
+    color: '#22c55e',
+    gradient: 'from-green-500 to-emerald-600',
     description: 'Le module OKR (Objectives & Key Results) structure vos ambitions à long terme. Définissez des objectifs inspirants et des résultats clés mesurables pour transformer vos aspirations en plans concrets et suivables.',
     features: [
       { icon: Target,       label: 'Objectifs catégorisés',   desc: 'Organisez vos OKRs par domaine : Personnel, Professionnel, Santé, Finances…' },
@@ -237,8 +237,8 @@ const GUIDE_DATA: GuideData[] = [
     title: 'Statistiques',
     subtitle: 'Comprenez vos patterns, optimisez votre énergie',
     badge: 'Analyse',
-    color: '#06b6d4',
-    gradient: 'from-cyan-500 to-sky-600',
+    color: '#8b5cf6',
+    gradient: 'from-violet-500 to-violet-600',
     description: 'La page Statistiques analyse vos données sur la durée pour révéler des patterns dans votre productivité. Identifiez vos meilleurs moments, vos catégories fortes et les axes d\'amélioration concrets.',
     features: [
       { icon: TrendingUp,   label: 'Taux de complétion',      desc: 'Pourcentage de tâches terminées sur 7, 30 ou 90 jours — avec tendance haussière ou baissière.' },
@@ -382,12 +382,13 @@ function TasksIllustration() {
     { color:'#3b82f6', label:'Moyenne',  name:'Appel avec l\'équipe design',   done:true,  cat:'Réunion', deadline:'Mer 28' },
     { color:'#22c55e', label:'Basse',    name:'Lire article sur React 19',     done:false, cat:'Perso', deadline:'Cette sem.' },
   ];
+  const accent = '#3b82f6';
   return (
     <svg viewBox="0 0 340 190" className="w-full rounded-xl" style={{maxHeight:190}}>
       <rect width="340" height="190" rx="12" style={{fill: bg}} />
       <rect x="10" y="8" width="320" height="32" rx="8" style={{fill: surface, stroke: border, strokeWidth: 1}} />
-      <rect x="20" y="17" width="50" height="14" rx="4" fill="#3b82f6" opacity="0.15" />
-      <text x="45" y="27" fontSize="7.5" textAnchor="middle" fill="#3b82f6" fontWeight="600" fontFamily="sans-serif">Toutes</text>
+      <rect x="20" y="17" width="50" height="14" rx="4" fill={accent} opacity="0.15" />
+      <text x="45" y="27" fontSize="7.5" textAnchor="middle" fill={accent} fontWeight="600" fontFamily="sans-serif">Toutes</text>
       {['Pro','Perso','Sport'].map((cat, i) => (
         <g key={i}>
           <rect x={78+i*68} y="17" width="52" height="14" rx="4" style={{fill: bg, stroke: border, strokeWidth: 1}} />
@@ -432,12 +433,12 @@ function AgendaIllustration() {
       <rect x="10" y="8" width="320" height="24" rx="6" style={{fill: surface, stroke: border, strokeWidth: 1}} />
       {['Jour','Semaine','Mois'].map((v, i) => (
         <g key={i}>
-          <rect x={20+i*66} y="12" width="58" height="16" rx="4" fill={i===1 ? '#3b82f6' : 'transparent'} opacity={i===1 ? 0.2 : 1} />
-          <text x={49+i*66} y="23" textAnchor="middle" fontSize="7.5" fill={i===1 ? '#3b82f6' : undefined} style={i!==1 ? {fill: muted} : undefined} fontWeight={i===1 ? '600' : '400'} fontFamily="sans-serif">{v}</text>
+          <rect x={20+i*66} y="12" width="58" height="16" rx="4" fill={i===1 ? '#ef4444' : 'transparent'} opacity={i===1 ? 0.2 : 1} />
+          <text x={49+i*66} y="23" textAnchor="middle" fontSize="7.5" fill={i===1 ? '#ef4444' : undefined} style={i!==1 ? {fill: muted} : undefined} fontWeight={i===1 ? '600' : '400'} fontFamily="sans-serif">{v}</text>
         </g>
       ))}
       {days.map((d, i) => (
-        <text key={i} x={colStart+i*colW+colW/2} y="46" textAnchor="middle" fontSize="7" fontWeight="600" style={{fill: i===2 ? '#3b82f6' : muted}} fontFamily="sans-serif">{d}</text>
+        <text key={i} x={colStart+i*colW+colW/2} y="46" textAnchor="middle" fontSize="7" fontWeight="600" style={{fill: i===2 ? '#ef4444' : muted}} fontFamily="sans-serif">{d}</text>
       ))}
       <line x1="10" y1="50" x2="330" y2="50" style={{stroke: border, strokeWidth: 0.5}} />
       {[8,10,12,14,16,18].map((h, i) => (
@@ -463,12 +464,12 @@ function HabitsIllustration() {
   const border = 'rgb(var(--color-border))';
   const muted = 'rgb(var(--color-text-muted))';
   const habits = [
-    { color:'#3b82f6', icon:'🏃', name:'Course', streak:12, rate:0.85, freq:'Quotidien' },
-    { color:'#22c55e', icon:'📚', name:'Lecture', streak:7, rate:0.70, freq:'Quotidien' },
-    { color:'#8b5cf6', icon:'🧘', name:'Méditation', streak:21, rate:0.95, freq:'Quotidien' },
-    { color:'#f59e0b', icon:'💪', name:'Musculation', streak:5, rate:0.60, freq:'Hebdo' },
-    { color:'#ef4444', icon:'🥗', name:'Alimentation', streak:3, rate:0.75, freq:'Quotidien' },
-    { color:'#06b6d4', icon:'😴', name:'Sommeil', streak:9, rate:0.90, freq:'Quotidien' },
+    { color:'#eab308', icon:'🏃', name:'Course', streak:12, rate:0.85, freq:'Quotidien' },
+    { color:'#eab308', icon:'📚', name:'Lecture', streak:7, rate:0.70, freq:'Quotidien' },
+    { color:'#eab308', icon:'🧘', name:'Méditation', streak:21, rate:0.95, freq:'Quotidien' },
+    { color:'#eab308', icon:'💪', name:'Musculation', streak:5, rate:0.60, freq:'Hebdo' },
+    { color:'#eab308', icon:'🥗', name:'Alimentation', streak:3, rate:0.75, freq:'Quotidien' },
+    { color:'#eab308', icon:'😴', name:'Sommeil', streak:9, rate:0.90, freq:'Quotidien' },
   ];
   const r = 16;
   const circumference = 2 * Math.PI * r;
@@ -507,23 +508,23 @@ function OKRsIllustration() {
   const muted = 'rgb(var(--color-text-muted))';
   const text = 'rgb(var(--color-text-secondary))';
   const krs = [
-    { label:'Finir 5 projets React',   current:3, target:5, color:'#3b82f6', unit:'projets' },
-    { label:'100 heures de formation', current:67, target:100, color:'#8b5cf6', unit:'heures' },
+    { label:'Finir 5 projets React',   current:3, target:5, color:'#22c55e', unit:'projets' },
+    { label:'100 heures de formation', current:67, target:100, color:'#22c55e', unit:'heures' },
     { label:'Obtenir 4 certifications', current:2, target:4, color:'#22c55e', unit:'certifs' },
   ];
   return (
     <svg viewBox="0 0 340 190" className="w-full rounded-xl" style={{maxHeight:190}}>
       <rect width="340" height="190" rx="12" style={{fill: bg}} />
       <rect x="10" y="8" width="320" height="50" rx="10" style={{fill: surface, stroke: border, strokeWidth: 1}} />
-      <rect x="18" y="16" width="6" height="32" rx="3" fill="#ef4444" />
+      <rect x="18" y="16" width="6" height="32" rx="3" fill="#22c55e" />
       <text x="30" y="26" fontSize="8" fontWeight="700" style={{fill: text}} fontFamily="sans-serif">Devenir Expert React en Q3 2025</text>
       <text x="30" y="37" fontSize="7" style={{fill: muted}} fontFamily="sans-serif">Professionnel · Jan → Sep 2025</text>
       <rect x="30" y="42" width="180" height="8" rx="4" style={{fill: bg, stroke: border, strokeWidth: 1}} />
-      <rect x="30" y="42" width={180*(3/3*0.6+0.1)} height="8" rx="4" fill="#ef4444" opacity="0.7" />
-      <text x="218" y="50" fontSize="7" fill="#ef4444" fontFamily="sans-serif">60%</text>
+      <rect x="30" y="42" width={180*(3/3*0.6+0.1)} height="8" rx="4" fill="#22c55e" opacity="0.7" />
+      <text x="218" y="50" fontSize="7" fill="#22c55e" fontFamily="sans-serif">60%</text>
       <text x="30" y="60" fontSize="6.5" style={{fill: muted}} fontFamily="sans-serif">3 Résultats Clés</text>
-      <rect x="290" y="14" width="32" height="14" rx="5" fill="#ef4444" opacity="0.15" />
-      <text x="306" y="24" textAnchor="middle" fontSize="7" fill="#ef4444" fontWeight="600" fontFamily="sans-serif">Actif</text>
+      <rect x="290" y="14" width="32" height="14" rx="5" fill="#22c55e" opacity="0.15" />
+      <text x="306" y="24" textAnchor="middle" fontSize="7" fill="#22c55e" fontWeight="600" fontFamily="sans-serif">Actif</text>
       {krs.map(({label, current, target, color, unit}, i) => {
         const pct = current / target;
         return (
@@ -555,10 +556,10 @@ function StatsIllustration() {
   const hLabels = ['8h','10h','12h','14h','16h','18h','20h','22h','0h'];
   const maxH = Math.max(...hours);
   const cats = [
-    { label:'Pro', w:120, color:'#3b82f6' },
+    { label:'Pro', w:120, color:'#8b5cf6' },
     { label:'Perso', w:80, color:'#8b5cf6' },
-    { label:'Sport', w:55, color:'#22c55e' },
-    { label:'Santé', w:40, color:'#f59e0b' },
+    { label:'Sport', w:55, color:'#8b5cf6' },
+    { label:'Santé', w:40, color:'#8b5cf6' },
   ];
   return (
     <svg viewBox="0 0 340 190" className="w-full rounded-xl" style={{maxHeight:190}}>
@@ -569,9 +570,9 @@ function StatsIllustration() {
         const h = v * 0.7;
         return (
           <g key={i}>
-            <rect x={24+i*27} y={95-h} width="18" height={h} rx="3" fill="#3b82f6" opacity={0.2+i*0.07} />
+            <rect x={24+i*27} y={95-h} width="18" height={h} rx="3" fill="#8b5cf6" opacity={0.2+i*0.07} />
             <text x={33+i*27} y="108" textAnchor="middle" fontSize="6" style={{fill: muted}} fontFamily="sans-serif">{days[i]}</text>
-            <text x={33+i*27} y={91-h} textAnchor="middle" fontSize="5.5" fill="#3b82f6" fontFamily="sans-serif">{v}%</text>
+            <text x={33+i*27} y={91-h} textAnchor="middle" fontSize="5.5" fill="#8b5cf6" fontFamily="sans-serif">{v}%</text>
           </g>
         );
       })}
