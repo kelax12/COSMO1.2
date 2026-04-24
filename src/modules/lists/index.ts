@@ -33,9 +33,7 @@ export { SupabaseListsRepository } from './supabase.repository';
 export {
   useLists,
   useList,
-  useListsByTask,
-  useTaskListIds,
-  useListLookup,
+  useListsForTask,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
