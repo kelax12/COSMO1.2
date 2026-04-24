@@ -135,7 +135,6 @@ const AgendaShowcase: React.FC = () => {
         <div className="px-4 py-3 border-b border-white/10">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-white">Tâches disponibles</span>
-            <X size={14} className="text-slate-500" />
           </div>
           {/* Search */}
           <div className="relative mb-2.5">
