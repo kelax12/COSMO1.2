@@ -553,7 +553,6 @@ function StatsIllustration() {
   const weeks = [62,78,55,85,71,90,68];
   const days = ['L','M','M','J','V','S','D'];
   const hours = [2,4,8,12,16,10,6,3,1];
-  const hLabels = ['8h','10h','12h','14h','16h','18h','20h','22h','0h'];
   const maxH = Math.max(...hours);
   const cats = [
     { label:'Pro', w:120, color:'#8b5cf6' },
@@ -647,7 +646,7 @@ function FriendsIllustration() {
         { from:'AL', msg:'T\'as fini la partie UX ?', time:'14:32', align:'left' as const },
         { from:'Moi', msg:'Oui, je t\'envoie !', time:'14:35', align:'right' as const },
         { from:'AL', msg:'Super, merci 👌', time:'14:35', align:'left' as const },
-      ].map(({from, msg, time, align}, i) => (
+      ].map(({msg, align}, i) => (
         <g key={i}>
           {align === 'left' ? (
             <>

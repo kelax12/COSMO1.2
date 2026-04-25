@@ -139,11 +139,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     toggleBookmarkMutation.mutate(taskId);
   }, [toggleBookmarkMutation]);
 
-  const handleDeleteTask = useCallback((taskId: string) => {
-    deleteMutation.mutate(taskId);
-    setTaskToDelete(null);
-  }, [deleteMutation]);
-
   // Filtrage et tri mémoïsés
   const filteredAndSortedTasks = useMemo(() => {
     const now = new Date();

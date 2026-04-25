@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Trash2, Edit2, Check, LayoutGrid, Type, Palette } from 'lucide-react';
+import { X, Plus, Trash2, Edit2, Check, LayoutGrid, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Crown, Zap, Play, Check, Star, Users, MessageCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
-import { useDarkMode } from '../hooks/useDarkMode';
 import AdModal from '../components/AdModal';
 import PaymentModal from '../components/PaymentModal';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -34,7 +33,6 @@ const itemVariants = {
 export function PremiumPage() {
   const { user } = useAuth();
   const { isPremium, addTokens, subscription } = useBilling();
-  const { isDark } = useDarkMode();
   const [showAdModal, setShowAdModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -59,7 +57,7 @@ export function PremiumPage() {
     try {
       await addTokens(30, true); // 30 tokens + active premium
       toast.success('Abonnement activé ! Vous êtes maintenant Premium.');
-    } catch (err) {
+    } catch {
       toast.error("Erreur lors de l'activation du Premium");
     }
   };
@@ -68,7 +66,7 @@ export function PremiumPage() {
     try {
       await addTokens(1, true); // +1 token + activation premium
       toast.success('+1 jeton Premium crédité !');
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors du crédit du jeton');
     }
     setShowAdModal(false);

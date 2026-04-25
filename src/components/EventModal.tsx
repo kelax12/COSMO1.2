@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Clock, Plus, CalendarIcon, Check, ArrowRight } from "lucide-react";
+import { X, Clock, Plus, CalendarIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -250,12 +250,6 @@ const EventModal: React.FC<EventModalProps> = ({
       onDeleteEvent(event.id);
       setShowDeleteConfirm(false);
     }
-  };
-
-  const formatTimeDisplay = (timeValue: string) => {
-    if (!timeValue) return "";
-    const [hours, minutes] = timeValue.split(":");
-    return `${hours}h${minutes}`;
   };
 
   const calculateDuration = () => {

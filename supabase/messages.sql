@@ -15,17 +15,17 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Un utilisateur voit ses messages envoyés et reçus
-CREATE POLICY \"Users see their own messages\"
+CREATE POLICY "Users see their own messages"
   ON chat_messages FOR SELECT
   USING (auth.uid() = sender_id OR receiver_id = auth.uid()::text);
 
 -- Un utilisateur peut envoyer des messages
-CREATE POLICY \"Users can send messages\"
+CREATE POLICY "Users can send messages"
   ON chat_messages FOR INSERT
   WITH CHECK (auth.uid() = sender_id);
 
 -- Un utilisateur peut marquer ses messages reçus comme lus
-CREATE POLICY \"Users can mark messages as read\"
+CREATE POLICY "Users can mark messages as read"
   ON chat_messages FOR UPDATE
   USING (receiver_id = auth.uid()::text)
   WITH CHECK (receiver_id = auth.uid()::text);

@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import { cn } from '@/lib/utils';
 import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';

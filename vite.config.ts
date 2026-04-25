@@ -21,6 +21,10 @@ export default defineConfig({
     globals: true,
     setupFiles: [],
   },
+  esbuild: {
+    drop: ['debugger'],
+    pure: ['console.log', 'console.debug', 'console.info'],
+  },
   build: {
     rollupOptions: {
       output: {

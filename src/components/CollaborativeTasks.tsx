@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import CollaboratorAvatars from './CollaboratorAvatars';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import CollaboratorItem from './CollaboratorItem';
 import TaskModal from './TaskModal';

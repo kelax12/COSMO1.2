@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Mail, List, Calendar, ChevronDown } from 'lucide-react';
+import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Mail, List, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import {
   DropdownMenu,
@@ -28,7 +28,6 @@ import { useCategories } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList } from '@/modules/lists';
 
-import { useColorSettings } from '@/modules/ui-states';
 import { useFriends, useShareTask } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -67,7 +66,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const { data: lists = [] } = useLists();
   const addTaskToListMutation = useAddTaskToList();
 
-  const { colorSettings } = useColorSettings();
   const { data: friends = [] } = useFriends();
   const shareTaskMutation = useShareTask();
 

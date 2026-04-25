@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -98,15 +97,6 @@ const OKRPage: React.FC = () => {
   selectedCategory === 'finished' ?
   objectives.filter((obj) => obj.completed) :
   objectives.filter((obj) => obj.category === selectedCategory);
-
-  const stats = {
-    total: objectives.length,
-    completed: objectives.filter((obj) => obj.completed).length,
-    inProgress: objectives.filter((obj) => !obj.completed).length,
-    avgProgress: objectives.length > 0 ?
-      Math.round(objectives.reduce((sum, obj) => sum + getProgress(obj.keyResults), 0) / objectives.length) :
-      0,
-  };
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6' },

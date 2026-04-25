@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2, Sparkles } from 'lucide-react';
+import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {

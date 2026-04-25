@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 
 type Theme = 'light' | 'dark';
 
-const CYCLE: Theme[] = ['light', 'dark'];
-
 export const useDarkMode = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('theme');

@@ -102,7 +102,13 @@
       "Bash(node -e \"const {execSync}=require\\('child_process'\\);try{execSync\\('npx tsc --noEmit',{cwd:'C:/Users/Axel/Documents/COSMO1.1',stdio:'pipe'}\\);console.log\\('OK'\\);}catch\\(e\\){console.log\\(e.stdout?.toString\\(\\)\\);}\")",
       "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\(JSON.stringify\\(p.dependencies['react-day-picker']\\)\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('react-day-picker:', p.dependencies['react-day-picker']\\)\")",
-      "WebFetch(domain:ui.shadcn.com)"
+      "WebFetch(domain:ui.shadcn.com)",
+      "Bash(npx vercel *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(gh api *)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm audit *)"
     ]
   }
 }

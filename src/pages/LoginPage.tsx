@@ -23,7 +23,7 @@ const LoginPage = () => {
         toast.success('Connexion réussie !');
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       toast.error('Une erreur inattendue est survenue');
     } finally {
       setLoading(false);
