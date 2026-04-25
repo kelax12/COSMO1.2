@@ -238,7 +238,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   }, [formData, collaborators, task]);
 
   // Validation rules
-  const validateForm = () => {
+  const computeValidationErrors = (): { [key: string]: string } => {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.name.trim()) {
@@ -250,11 +250,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     }
 
     if (formData.estimatedTime === '' || formData.estimatedTime === null) {
-        newErrors.estimatedTime = 'Le temps estimé est obligatoire';
+      newErrors.estimatedTime = 'Le temps estimé est obligatoire';
     } else if (isNaN(Number(formData.estimatedTime))) {
-        newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
+      newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
     } else if (Number(formData.estimatedTime) < 0) {
-        newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
+      newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
     }
 
     if (formData.priority === 0) {
@@ -265,16 +265,27 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       newErrors.category = 'Veuillez choisir une catégorie';
     }
 
+    // Vérifie "deadline pas dans le passé" uniquement à la création OU
+    // si l'utilisateur a explicitement modifié la deadline (sinon on bloque
+    // l'édition de toute tâche dont la deadline est déjà passée).
     if (formData.deadline) {
       const deadlineDate = new Date(formData.deadline);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      if (deadlineDate < today) {
+      const originalDeadline = task?.deadline ? task.deadline.split('T')[0] : '';
+      const deadlineChanged = formData.deadline !== originalDeadline;
+
+      if (deadlineDate < today && (isCreating || deadlineChanged)) {
         newErrors.deadline = 'La date limite ne peut pas être dans le passé';
       }
     }
 
+    return newErrors;
+  };
+
+  const validateForm = () => {
+    const newErrors = computeValidationErrors();
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -322,7 +333,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    const validationErrors = computeValidationErrors();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
+      // Affiche le premier message d'erreur en toast — sinon l'utilisateur
+      // peut ne pas voir l'erreur inline cachée plus haut dans le modal.
+      toast.error(Object.values(validationErrors)[0]);
+      return;
+    }
     if (!isCreating && !task) return;
 
     if (isCreating) {
