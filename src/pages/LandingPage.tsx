@@ -597,7 +597,12 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Agenda intégré<br /><span className="bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">avec time-blocking</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Glissez vos tâches directement dans votre calendrier pour bloquer du temps. Vues jour, semaine, mois avec zoom granulaire.</p>
                 <div className="space-y-3">
-                  {['Glissez vos tâches directement dans un créneau horaire', 'Zoom 5 min → 1h pour bloquer du temps avec précision', 'Vues jour, semaine et mois — passez de l\'une à l\'autre', 'Auto-scroll sur l\'heure courante à l\'ouverture'].map((b, i) => (
+                  {[
+                    'Glissez une tâche depuis la sidebar vers un créneau : un événement est créé instantanément',
+                    'Couleur de l\'événement = couleur de la catégorie de la tâche, pour repérer vos priorités d\'un coup d\'œil',
+                    'Déplacez ou redimensionnez les événements à la souris : la tâche associée se met à jour automatiquement',
+                    'Vues jour / semaine / mois avec basculement en un clic et navigation rapide entre les périodes',
+                  ].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-rose-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
