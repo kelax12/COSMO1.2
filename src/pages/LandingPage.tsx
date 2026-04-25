@@ -650,7 +650,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">OKR & Objectifs<br /><span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">à la Google</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">La méthode OKR utilisée par Google, Intel et Netflix — maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.</p>
                 <div className="space-y-3">
-                  {['Définissez des objectifs ambitieux avec Key Results chiffrés', 'Des données, pas des suppositions — progression calculée automatiquement', 'Journal immuable : chaque effort enregistré, rien n\'est effacé', '5 catégories : Carrière, Santé, Finance, Apprentissage, Personnel'].map((b, i) => (
+                  {['Définissez des objectifs ambitieux avec des résultats clés chiffrés', 'Votre progression est calculée automatiquement', 'Visualisez l avancée de vos objectifs', 'Découpez vos objectifs en résultats clés pour passer de "un jour" à "maintenant" '].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
