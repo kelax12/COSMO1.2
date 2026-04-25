@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target } from 'lucide-react';
+import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash } from 'lucide-react';
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
-import { useCategories, useCreateCategory } from '@/modules/categories';
+import { useCategories, useCreateCategory, useDeleteCategory } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
@@ -23,6 +23,7 @@ const OKRPage: React.FC = () => {
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
@@ -33,6 +34,18 @@ const OKRPage: React.FC = () => {
   const [showAddObjective, setShowAddObjective] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
+
+  const confirmDeleteCategory = () => {
+    if (!categoryToDeleteId) return;
+    deleteCategoryMutation.mutate(categoryToDeleteId, {
+      onSuccess: () => {
+        if (selectedCategory === categoryToDeleteId) setSelectedCategory('all');
+        setCategoryToDeleteId(null);
+      },
+    });
+  };
 
   const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
@@ -174,21 +187,44 @@ const OKRPage: React.FC = () => {
 
               Tous
             </button>
-            {categories.map((category) =>
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
-              style={{
-                backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
-                borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
-                color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
-                boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
-              }}>
-
-              <span>{category.name}</span>
-            </button>
-          )}
+            {categories.map((category) => {
+              const isHovered = hoveredCategoryId === category.id;
+              return (
+                <div
+                  key={category.id}
+                  className="relative"
+                  onMouseEnter={() => setHoveredCategoryId(category.id)}
+                  onMouseLeave={() => setHoveredCategoryId(null)}
+                >
+                  <AnimatePresence>
+                    {isHovered && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.15 }}
+                        onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
+                        className="absolute -top-7 left-1/2 -translate-x-1/2 p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors z-10"
+                        title="Supprimer la catégorie"
+                      >
+                        <Trash size={14} />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <button
+                    onClick={() => setSelectedCategory(category.id)}
+                    className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
+                    style={{
+                      backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
+                      borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
+                      color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
+                      boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
+                    }}>
+                    <span>{category.name}</span>
+                  </button>
+                </div>
+              );
+            })}
 
           <AnimatePresence mode="wait">
             {!showCreateCategory ? (
@@ -584,6 +620,46 @@ const OKRPage: React.FC = () => {
           }}
         />
       }
+
+      {/* Dialog suppression catégorie */}
+      <AnimatePresence>
+        {categoryToDeleteId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#1e2235] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-700/50"
+            >
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white mb-3">Confirmer la suppression</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                  Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-white">"{categories.find(c => c.id === categoryToDeleteId)?.name}"</strong> ? Les OKR associés conserveront leur catégorie mais ne seront plus filtrables.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setCategoryToDeleteId(null)}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white border border-slate-600 hover:bg-slate-800 transition-all duration-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmDeleteCategory}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>);
 
 };
