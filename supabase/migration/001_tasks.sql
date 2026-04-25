@@ -25,25 +25,25 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- RLS
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own tasks\"
+CREATE POLICY "Users can read own tasks"
   ON tasks FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own tasks\"
+CREATE POLICY "Users can insert own tasks"
   ON tasks FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own tasks\"
+CREATE POLICY "Users can update own tasks"
   ON tasks FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own tasks\"
+CREATE POLICY "Users can delete own tasks"
   ON tasks FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Collaborators can read shared tasks
-CREATE POLICY \"Collaborators can read collaborative tasks\"
+CREATE POLICY "Collaborators can read collaborative tasks"
   ON tasks FOR SELECT
   USING (auth.uid()::text = ANY(collaborators));
 

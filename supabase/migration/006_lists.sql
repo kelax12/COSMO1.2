@@ -16,20 +16,20 @@ CREATE TABLE IF NOT EXISTS lists (
 -- RLS
 ALTER TABLE lists ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own lists\"
+CREATE POLICY "Users can read own lists"
   ON lists FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own lists\"
+CREATE POLICY "Users can insert own lists"
   ON lists FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own lists\"
+CREATE POLICY "Users can update own lists"
   ON lists FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own lists\"
+CREATE POLICY "Users can delete own lists"
   ON lists FOR DELETE
   USING (auth.uid() = user_id);
 

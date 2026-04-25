@@ -108,7 +108,9 @@
       "Bash(git stash *)",
       "Bash(gh api *)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "Bash(grep -c 'POLICY \\\\\\\\\"' supabase/migration/*.sql)",
+      "Bash(grep -rn '\\\\\\\\\"' supabase/)"
     ]
   }
 }
