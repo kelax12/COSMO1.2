@@ -696,9 +696,9 @@ const LandingPage: React.FC = () => {
                   <Zap size={28} className="text-white" />
                 </div>
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
-                <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi visuel puissant. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
+                <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi complet. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
                 <div className="space-y-3">
-                  {['Chaque jour compte. Votre heatmap 26 semaines le prouve.', 'Streaks et séries — visualisez votre régularité d\'un coup d\'œil', 'Quotidien, hebdo ou mensuel — chaque habitude à votre rythme', 'Taux de complétion et temps investi : mesurez vos progrès réels'].map((b, i) => (
+                  {['Mesurez votre régularité grace au système de tableau de suivi.', 'Restez motivé avec le système de série de jour d affilé', 'Tableau de suivi global pour visualiser votre régularité sur toutes vos habitudes en une fois', 'Taux de complétion et temps investi : mesurez votre régularité réelle'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -723,7 +723,7 @@ const LandingPage: React.FC = () => {
                   <div className="absolute -inset-3 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
                     <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                      <Eye size={11} /> Aperçu live
+                      <Eye size={11} />
                     </div>
                     <HabitHeatmapShowcase />
                   </div>
@@ -746,7 +746,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Statistiques<br /><span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">multi-modules</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Analysez votre temps investi sur tous vos modules — tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.</p>
                 <div className="space-y-3">
-                  {['Répartition du temps sur tâches, agenda, OKR et habitudes', 'Vues jour, semaine, mois, année — zoomez où vous voulez', 'Patterns sur 6 mois : repérez ce qui fonctionne vraiment', 'Des données précises pour des décisions éclairées — pas des suppositions'].map((b, i) => (
+                  {['Répartition du temps sur tâches, agenda, OKR et habitudes pour une meilleure clareté', 'Vues jour, semaine, mois, année — zoomez où vous voulez', 'Suivez vas progrés depuis une unique page', 'Visualisez votre productivité en un coup d oeil'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
