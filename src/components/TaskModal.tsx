@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -753,9 +754,13 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
-                                if (!newCategoryName.trim()) return;
+                                const name = newCategoryName.trim();
+                                if (name.length < 2) {
+                                  toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+                                  return;
+                                }
                                 createCategoryMutation.mutate(
-                                  { name: newCategoryName.trim(), color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
+                                  { name, color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
                                   {
                                     onSuccess: (created) => {
                                       handleInputChange('category', created.id);
@@ -777,11 +782,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           />
                           <button
                             type="button"
-                            disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+                            disabled={newCategoryName.trim().length < 2 || createCategoryMutation.isPending}
                             onClick={() => {
-                              if (!newCategoryName.trim()) return;
+                              const name = newCategoryName.trim();
+                              if (name.length < 2) {
+                                toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+                                return;
+                              }
                               createCategoryMutation.mutate(
-                                { name: newCategoryName.trim(), color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
+                                { name, color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
                                 {
                                   onSuccess: (created) => {
                                     handleInputChange('category', created.id);
