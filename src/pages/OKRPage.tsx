@@ -205,7 +205,7 @@ const OKRPage: React.FC = () => {
                         exit={{ opacity: 0, y: 4 }}
                         transition={{ duration: 0.15 }}
                         onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
-                        className="absolute -top-7 left-1/2 -translate-x-1/2 p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors z-10"
+                        className="absolute -top-7 inset-x-0 mx-auto w-fit p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors z-10"
                         title="Supprimer la catégorie"
                       >
                         <Trash size={14} />
@@ -235,7 +235,7 @@ const OKRPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 onClick={() => setShowCreateCategory(true)}
-                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-green-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-all"
+                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
                 title="Nouvelle catégorie"
               >
                 <Plus size={14} />
@@ -279,7 +279,7 @@ const OKRPage: React.FC = () => {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Nom de la catégorie…"
-                  className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-green-500 w-40"
+                  className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
                   style={{
                     backgroundColor: 'rgb(var(--color-surface))',
                     borderColor: 'rgb(var(--color-border))',
@@ -290,7 +290,7 @@ const OKRPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={newCategoryName.trim().length < 2}
-                  className="px-3 py-1 text-sm rounded-full bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-40 transition-all"
+                  className="px-3 py-1 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
                 >
                   Créer
                 </button>
@@ -590,15 +590,16 @@ const OKRPage: React.FC = () => {
           )}
         </AnimatePresence>
 
-      <TaskModal 
-        isOpen={showAddTaskModal} 
-        onClose={() => setShowAddTaskModal(false)} 
+      <TaskModal
+        isOpen={showAddTaskModal}
+        onClose={() => setShowAddTaskModal(false)}
         isCreating={true}
-        initialData={selectedKeyResultForModal ? { 
-          name: selectedKeyResultForModal.kr.title, 
-          estimatedTime: selectedKeyResultForModal.kr.estimatedTime, 
-          isFromOKR: true 
-        } : undefined} 
+        initialData={selectedKeyResultForModal ? {
+          name: selectedKeyResultForModal.kr.title,
+          estimatedTime: selectedKeyResultForModal.kr.estimatedTime,
+          category: selectedKeyResultForModal.obj.category,
+          isFromOKR: true
+        } : undefined}
       />
 
       
@@ -612,7 +613,7 @@ const OKRPage: React.FC = () => {
               name: selectedKeyResultForModal.kr.title,
               completed: selectedKeyResultForModal.kr.completed,
               priority: 0,
-              category: '',
+              category: selectedKeyResultForModal.obj.category,
               estimatedTime: selectedKeyResultForModal.kr.estimatedTime,
               deadline: selectedKeyResultForModal.obj.endDate,
               bookmarked: false,

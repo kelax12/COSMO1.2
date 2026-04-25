@@ -8,9 +8,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCategories } from '@/modules/categories';
+import { useCategories, useCreateCategory } from '@/modules/categories';
+import { toast } from 'sonner';
 
 type KeyResult = {
   id: string;
@@ -54,13 +56,46 @@ type OKRModalProps = {
 
 const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editingObjective, onSubmit }) => {
   const { data: allCategories = [] } = useCategories();
+  const createCategoryMutation = useCreateCategory();
   const [step, setStep] = useState<1 | 2>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [step1Error, setStep1Error] = useState('');
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('blue');
+
+  const colorOptions = [
+    { value: 'blue', color: '#3B82F6' },
+    { value: 'red', color: '#EF4444' },
+    { value: 'green', color: '#10B981' },
+    { value: 'purple', color: '#8B5CF6' },
+    { value: 'orange', color: '#F97316' },
+    { value: 'yellow', color: '#F59E0B' },
+    { value: 'pink', color: '#EC4899' },
+    { value: 'indigo', color: '#6366F1' },
+  ];
+
+  const submitNewCategory = () => {
+    const name = newCategoryName.trim();
+    if (name.length < 2) {
+      toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+      return;
+    }
+    createCategoryMutation.mutate(
+      { name, color: colorOptions.find((c) => c.value === newCategoryColor)?.color || '#3B82F6' },
+      {
+        onSuccess: (created) => {
+          setInfo((i) => ({ ...i, category: created.id }));
+          setShowNewCategoryInput(false);
+          setNewCategoryName('');
+          setNewCategoryColor('blue');
+        },
+      }
+    );
+  };
 
   const [info, setInfo] = useState({ title: '', description: '', category: '', endDate: '' });
   const [keyResults, setKeyResults] = useState<KeyResultForm[]>([
-    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
     { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
     { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
   ]);
@@ -285,7 +320,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                           <ChevronDown size={14} className="text-slate-400 shrink-0 ml-auto" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuContent align="start" className="w-56">
                         {categories.map((c) => (
                           <DropdownMenuItem
                             key={c.id}
@@ -296,8 +331,58 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             {c.name}
                           </DropdownMenuItem>
                         ))}
+                        {categories.length > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuItem
+                          onSelect={(e) => { e.preventDefault(); setShowNewCategoryInput(true); setNewCategoryName(''); }}
+                          className="flex items-center gap-2 cursor-pointer text-blue-600 dark:text-blue-400 font-medium"
+                        >
+                          <Plus size={14} />
+                          Ajouter une catégorie
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+
+                    {showNewCategoryInput && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const idx = colorOptions.findIndex((c) => c.value === newCategoryColor);
+                            setNewCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
+                          }}
+                          className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                          style={{ backgroundColor: colorOptions.find((c) => c.value === newCategoryColor)?.color || '#3B82F6' }}
+                          title="Changer la couleur"
+                        />
+                        <input
+                          type="text"
+                          autoFocus
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); submitNewCategory(); }
+                            else if (e.key === 'Escape') { setShowNewCategoryInput(false); setNewCategoryName(''); }
+                          }}
+                          placeholder="Nom..."
+                          className="flex-1 min-w-0 px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                        />
+                        <button
+                          type="button"
+                          disabled={newCategoryName.trim().length < 2 || createCategoryMutation.isPending}
+                          onClick={submitNewCategory}
+                          className="px-2.5 py-1.5 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all shrink-0"
+                        >
+                          OK
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setShowNewCategoryInput(false); setNewCategoryName(''); }}
+                          className="p-1 rounded text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
