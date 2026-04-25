@@ -16,7 +16,7 @@ import { Task } from '@/modules/tasks';
 // ═══════════════════════════════════════════════════════════════════
 // Module events - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { CalendarEvent } from '@/modules/events';
+import { CalendarEvent, EventRecurrence } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
@@ -34,6 +34,7 @@ type EventData = {
   color: string;
   notes?: string;
   taskId?: string;
+  recurrence?: EventRecurrence;
 };
 
 type EventModalProps = {
@@ -71,6 +72,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const [endTime, setEndTime] = useState("");
   const [notes, setNotes] = useState("");
   const [color, setColor] = useState(categories[0]?.color || "#3B82F6");
+  const [recurrence, setRecurrence] = useState<EventRecurrence>('none');
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
@@ -85,6 +87,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setTitle(event.title || "");
       setNotes(event.notes || "");
       setColor(event.color || "#3B82F6");
+      setRecurrence(event.recurrence ?? 'none');
 
       const start = new Date(event.start);
       const end = new Date(event.end);
@@ -94,6 +97,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndDate(end.toISOString().split("T")[0]);
       setEndTime(end.toTimeString().slice(0, 5));
     } else if (mode === 'add' && task) {
+      setRecurrence('none');
       setTitle(task.name || "");
       if (task.name) prefilled.add("title");
 
@@ -151,6 +155,7 @@ const EventModal: React.FC<EventModalProps> = ({
     } else if (mode === 'convert' && task) {
       setTitle(task.name || "");
       setNotes("");
+      setRecurrence('none');
       setStartDate("");
       setStartTime("");
       setEndDate("");
@@ -212,6 +217,7 @@ const EventModal: React.FC<EventModalProps> = ({
         color,
         notes: notes.trim(),
         taskId: task.id,
+        recurrence,
       });
       onClose();
       resetForm();
@@ -222,6 +228,7 @@ const EventModal: React.FC<EventModalProps> = ({
         end,
         color,
         notes: notes.trim(),
+        recurrence,
       });
     } else if (mode === 'convert' && onConvert) {
       onConvert({
@@ -230,6 +237,7 @@ const EventModal: React.FC<EventModalProps> = ({
         end,
         color,
         notes: notes.trim(),
+        recurrence,
       });
       onClose();
     }
@@ -239,6 +247,7 @@ const EventModal: React.FC<EventModalProps> = ({
     setTitle("");
     setNotes("");
     setColor(categories[0]?.color || "#3B82F6");
+    setRecurrence('none');
   };
 
   const handleDelete = () => {
@@ -493,6 +502,51 @@ const EventModal: React.FC<EventModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Récurrence — sélecteur 3 états discret */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: "rgb(var(--color-text-muted))" }}
+                  >
+                    Récurrence
+                  </span>
+                  <div
+                    className="inline-flex rounded-full p-0.5 border text-[11px]"
+                    style={{
+                      backgroundColor: "rgb(var(--color-chip-bg))",
+                      borderColor: "rgb(var(--color-chip-border))",
+                    }}
+                    role="radiogroup"
+                    aria-label="Récurrence de l'événement"
+                  >
+                    {([
+                      { value: 'none', label: 'Non' },
+                      { value: 'daily', label: 'Tous les jours' },
+                      { value: 'weekly', label: 'Toutes les semaines' },
+                    ] as { value: EventRecurrence; label: string }[]).map((opt) => {
+                      const active = recurrence === opt.value;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.value}
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setRecurrence(opt.value)}
+                          className="px-3 py-1 rounded-full font-medium transition-colors"
+                          style={{
+                            backgroundColor: active ? 'rgb(var(--color-accent))' : 'transparent',
+                            color: active ? '#ffffff' : 'rgb(var(--color-text-secondary))',
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div>

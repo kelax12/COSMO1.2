@@ -6,12 +6,15 @@
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
 
-export type { 
-  CalendarEvent, 
-  CreateEventInput, 
-  UpdateEventInput, 
-  EventFilters 
+export type {
+  CalendarEvent,
+  CreateEventInput,
+  UpdateEventInput,
+  EventFilters,
+  EventRecurrence,
 } from './types';
+
+export { expandRecurringEvents, getMasterId, isInstanceId } from './recurrence';
 
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS & QUERY KEYS
