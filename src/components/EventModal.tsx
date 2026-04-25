@@ -305,7 +305,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const renderContent = () => (
 <div
         className="md:rounded-2xl shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-full md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden opacity-0 scale-95 animate-modal-content"
-      style={{ backgroundColor: "hsl(var(--background))" }}
+      style={{ backgroundColor: "rgb(var(--color-surface))" }}
       onClick={(e) => e.stopPropagation()}
     >
       <div
@@ -347,7 +347,7 @@ const EventModal: React.FC<EventModalProps> = ({
           <div className="md:col-span-7 space-y-3">
             <div>
               <label
-                className="block text-sm font-semibold mb-1 !whitespace-pre-line"
+                className="block text-xs font-semibold uppercase tracking-wider mb-1.5 !whitespace-pre-line"
                 style={{ color: "rgb(var(--color-text-secondary))" }}
               >
                 Titre de l'événement
@@ -385,7 +385,7 @@ const EventModal: React.FC<EventModalProps> = ({
               {/* Sélecteur de date */}
               <div>
                 <label
-                  className="block text-sm font-semibold mb-1.5"
+                  className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                   style={{ color: "rgb(var(--color-text-secondary))" }}
                 >
                   Date
@@ -442,7 +442,7 @@ const EventModal: React.FC<EventModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label
-                    className="block text-sm font-semibold mb-1.5"
+                    className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
                     Début
@@ -464,7 +464,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
                 <div>
                   <label
-                    className="block text-sm font-semibold mb-1.5"
+                    className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
                     Fin
@@ -507,8 +507,8 @@ const EventModal: React.FC<EventModalProps> = ({
               <div className="pt-1">
                 <div className="flex items-center justify-between gap-3">
                   <span
-                    className="text-xs font-medium"
-                    style={{ color: "rgb(var(--color-text-muted))" }}
+                    className="text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
                     Récurrence
                   </span>
@@ -551,7 +551,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
             <div>
               <label
-                className="block text-sm font-semibold mb-1"
+                className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                 style={{ color: "rgb(var(--color-text-secondary))" }}
               >
                 Description
@@ -586,7 +586,7 @@ const EventModal: React.FC<EventModalProps> = ({
               <div className="md:col-span-5 space-y-3">
             <div>
               <label
-                className="flex justify-between items-center text-sm font-semibold mb-2"
+                className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider mb-2"
                 style={{ color: "rgb(var(--color-text-secondary))" }}
               >
                 <span>Couleur de l'événement</span>

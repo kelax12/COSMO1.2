@@ -6,7 +6,7 @@ import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/int
 import { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
-import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, Repeat, X as CloseIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2 } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -440,8 +440,7 @@ setShowTaskSidebar(false);
                     color: 'rgb(var(--color-text-primary))'
                   }}
                 >
-                  <Repeat size={18} />
-                  <span className="hidden sm:inline text-sm lg:text-base">Récurrences</span>
+                  <span className="text-sm lg:text-base">Récurrences</span>
                 </motion.button>
 
                 <motion.button
@@ -573,14 +572,11 @@ setShowTaskSidebar(false);
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border"
-                style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+                className="rounded-2xl shadow-2xl w-full overflow-hidden border"
+                style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', maxWidth: 'calc(32rem * 1.08)' }}
               >
                 <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  <div className="flex items-center gap-2">
-                    <Repeat size={18} style={{ color: 'rgb(var(--color-accent))' }} />
-                    <h3 className="text-base font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements récurrents</h3>
-                  </div>
+                  <h3 className="text-base font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements récurrents</h3>
                   <button
                     onClick={() => setShowRecurringManager(false)}
                     className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -595,7 +591,6 @@ setShowTaskSidebar(false);
                     if (recurring.length === 0) {
                       return (
                         <div className="px-6 py-10 text-center">
-                          <Repeat size={32} className="mx-auto mb-3 opacity-40" style={{ color: 'rgb(var(--color-text-muted))' }} />
                           <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                             Aucun événement récurrent pour le moment.
                           </p>
