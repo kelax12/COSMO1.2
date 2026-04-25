@@ -548,7 +548,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Gestion de tâches<br /><span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">nouvelle génération</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.</p>
                 <div className="space-y-3">
-                  {['Filtrez par priorité, catégorie, deadline — en un clic', 'Ajoutez des catégories pour visualiser votre travail en un coup d oeil', 'Créez des listes de taches pour mieux vous organiser', 'Partagez vos tâches en équipe'].map((b, i) => (
+                  {['Filtrez par priorité, catégorie, deadline en un clic', 'Ajoutez des catégories pour visualiser votre travail en un coup d oeil', 'Créez des listes de tâches pour mieux vous organiser', 'Partagez vos tâches en équipe'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
