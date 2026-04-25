@@ -8,6 +8,11 @@ import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (id: string): boolean => UUID_REGEX.test(id);
+
 // ─── DB row types ────────────────────────────────────────────────────────────
 
 interface OKRRow {
@@ -358,6 +363,13 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   async updateKeyResult(okrId: string, keyResultId: string, updates: UpdateKeyResultInput): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
 
+    // KR avec ancien id non-UUID (héritage avant fix `${Date.now()}-${i}`) :
+    // on ne peut pas requêter la table key_results avec ça → fallback JSONB
+    // qui régénère un UUID et resynchronise.
+    if (!isUuid(keyResultId)) {
+      return this.updateKeyResultViaJsonb(okrId, keyResultId, updates);
+    }
+
     // ── Snapshot AVANT update : pour détecter les transitions completed false→true ──
     let wasPreviouslyCompleted = false;
     let previousKr: KeyResult | null = null;
@@ -456,6 +468,8 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   // Fallback: update KR in JSONB when it's not yet in key_results table
+  // Régénère aussi les ids non-UUID en UUID pour qu'ils deviennent compatibles
+  // avec la table dédiée key_results lors du prochain sync.
   private async updateKeyResultViaJsonb(okrId: string, keyResultId: string, updates: UpdateKeyResultInput): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
 
@@ -467,13 +481,18 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     const wasPreviouslyCompleted = okr.keyResults[krIndex].completed;
 
+    // Migration silencieuse : remplace tous les ids non-UUID par des UUID propres
+    okr.keyResults = okr.keyResults.map(kr =>
+      isUuid(kr.id) ? kr : { ...kr, id: crypto.randomUUID() }
+    );
+    // Le krIndex ne change pas (même position dans le tableau)
     okr.keyResults[krIndex] = { ...okr.keyResults[krIndex], ...updates };
     if (updates.completed) okr.keyResults[krIndex].completedAt = new Date().toISOString();
     if (updates.completed === false) okr.keyResults[krIndex].completedAt = null;
 
     const { progress, completed } = recalcProgress(okr.keyResults);
 
-    // Sync to key_results table for future reads
+    // Sync to key_results table for future reads (ids sont maintenant tous des UUID)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) await this.syncKRsToTable(okrId, user.id, okr.keyResults);
 
