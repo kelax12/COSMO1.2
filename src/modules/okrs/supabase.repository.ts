@@ -332,6 +332,22 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   async updateKeyResult(okrId: string, keyResultId: string, updates: UpdateKeyResultInput): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
 
+    // ── Snapshot AVANT update : pour détecter les transitions completed false→true ──
+    let wasPreviouslyCompleted = false;
+    let previousKr: KeyResult | null = null;
+    {
+      const { data: existing } = await supabase
+        .from('key_results')
+        .select('*')
+        .eq('id', keyResultId)
+        .eq('okr_id', okrId)
+        .maybeSingle();
+      if (existing) {
+        previousKr = mapKRFromDb(existing as KRRow);
+        wasPreviouslyCompleted = previousKr.completed;
+      }
+    }
+
     // Build DB update object (only updatable fields)
     const krDbUpdates: Partial<{
       title: string;
@@ -380,7 +396,37 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
+
+    // ── Append-only journal : enregistre une complétion à chaque transition false→true ──
+    const updatedKr = keyResults.find(kr => kr.id === keyResultId);
+    if (updatedKr && updatedKr.completed && !wasPreviouslyCompleted) {
+      await this.recordKRCompletion(okrId, updatedKr, (data as OKRRow).title);
+    }
+
     return this.mapFromDb(data as OKRRow, keyResults);
+  }
+
+  /**
+   * Append-only : enregistre la complétion d'un KR dans kr_completions.
+   * N'échoue jamais silencieusement — les erreurs sont propagées pour visibilité.
+   */
+  private async recordKRCompletion(okrId: string, kr: KeyResult, okrTitle: string): Promise<void> {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('kr_completions')
+      .insert([{
+        user_id: user.id,
+        kr_id: kr.id,
+        okr_id: okrId,
+        completed_at: kr.completedAt ?? new Date().toISOString(),
+        kr_title: kr.title,
+        okr_title: okrTitle,
+      }]);
+
+    if (error) throw normalizeApiError(error);
   }
 
   // Fallback: update KR in JSONB when it's not yet in key_results table
@@ -392,6 +438,8 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     const krIndex = okr.keyResults.findIndex(kr => kr.id === keyResultId);
     if (krIndex === -1) throw new Error(`KeyResult with id ${keyResultId} not found`);
+
+    const wasPreviouslyCompleted = okr.keyResults[krIndex].completed;
 
     okr.keyResults[krIndex] = { ...okr.keyResults[krIndex], ...updates };
     if (updates.completed) okr.keyResults[krIndex].completedAt = new Date().toISOString();
@@ -411,6 +459,13 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
+
+    // ── Append-only journal (chemin JSONB aussi) ──
+    const updatedKr = okr.keyResults[krIndex];
+    if (updatedKr.completed && !wasPreviouslyCompleted) {
+      await this.recordKRCompletion(okrId, updatedKr, (data as OKRRow).title);
+    }
+
     return this.mapFromDb(data as OKRRow, okr.keyResults);
   }
 }

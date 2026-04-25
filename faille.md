@@ -9,6 +9,22 @@ Légende :
 
 ---
 
+## ✅ Corrigées dans la révision data du 2026-04-25 (2e passe)
+
+### Bug graphique « KR réalisés » du dashboard (signalé par l'utilisateur)
+
+**Cause racine** : double bug dans le module OKRs/KR-completions.
+
+1. **Table `kr_completions` absente des migrations** : aucun fichier `.sql` ne la définissait. Le code lit/écrit dessus, donc en production Supabase la table soit n'existait pas, soit avait été créée à la main via le dashboard (drift DB ↔ migrations).
+2. **`SupabaseOKRsRepository.updateKeyResult` n'insérait jamais de ligne dans `kr_completions`** quand un KR transitionnait `completed: false → true`. Seul le repo localStorage (mode démo) le faisait. Conséquence : pour les utilisateurs réels, `kr_completions` restait vide, et tous les graphiques « KR réalisés » du dashboard (`DashboardPage`, `DashboardChart`, `DashboardBarChart`) affichaient 0 quel que soit le nombre de KR validés.
+
+**Correctif appliqué** :
+- Ajout de `supabase/migration/009_kr_completions.sql` avec RLS scopée à `auth.uid() = user_id`, journal append-only (pas de policy UPDATE).
+- `SupabaseOKRsRepository.updateKeyResult` capture désormais l'état `completed` AVANT la mise à jour, et insère atomiquement une ligne dans `kr_completions` à chaque transition `false → true`. Même chemin pour le fallback JSONB.
+- Pour appliquer le correctif en prod : exécuter `009_kr_completions.sql` sur le projet Supabase (ou recréer la table si elle existe déjà avec un autre schéma).
+
+---
+
 ## 🔴 BLOQUANTS
 
 ### 1. Secrets Supabase dans l'historique git public
