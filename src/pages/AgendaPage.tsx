@@ -218,10 +218,6 @@ setShowTaskSidebar(false);
     createEventMutation.mutate(newEvent);
   };
 
-  const getCategoryColor = (category: string) => {
-    return categories.find(cat => cat.id === category)?.color || '#6B7280';
-  };
-
   const calendarEvents = events.map((event) => ({
     id: event.id,
     title: event.title,

@@ -15,7 +15,6 @@ import {
   X } from
   'lucide-react';
 import Logo from './Logo';
-import { useAuth } from '@/modules/auth/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 
@@ -97,7 +96,6 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
 };
 
 const Layout: React.FC = () => {
-  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;

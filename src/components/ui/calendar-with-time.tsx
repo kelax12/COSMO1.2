@@ -7,7 +7,7 @@ import { CalendarIcon, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 
 interface CalendarWithTimeProps {
   /** ISO date string "yyyy-MM-dd" */

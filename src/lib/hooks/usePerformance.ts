@@ -2,7 +2,7 @@
 // PERFORMANCE HOOKS - Optimizations utilitaires
 // ═══════════════════════════════════════════════════════════════════
 
-import { useMemo, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 
 /**
  * Hook pour filtrer des données avec mémoisation automatique

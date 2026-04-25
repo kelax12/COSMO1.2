@@ -14,11 +14,6 @@ import { useLocation } from 'react-router-dom';
 import { useTasks } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
-// Module categories - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
-import { useCategories } from '@/modules/categories';
-
-// ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useCreateList, useUpdateList, useDeleteList, useAddTaskToList } from '@/modules/lists';
@@ -32,10 +27,6 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // CATEGORIES - Depuis le module categories (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: categories = [] } = useCategories();
 
   // ═══════════════════════════════════════════════════════════════════
   // LISTS - Depuis le module lists (MIGRÉ)
@@ -208,8 +199,6 @@ const TasksPage: React.FC = () => {
 
     return result;
   }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists]);
-
-  const selectedList = selectedListId ? lists.find(list => list.id === selectedListId) : null;
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6', name: 'Bleu' },

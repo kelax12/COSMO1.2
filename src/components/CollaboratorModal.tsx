@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
+import { useTasks, useUpdateTask } from '@/modules/tasks';
 
 import { useFriends, useSendFriendRequest } from '@/modules/friends';
 

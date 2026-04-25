@@ -38,16 +38,6 @@ interface FriendRequestRow {
   user_id?: string;
 }
 
-/**
- * DB input type for friend insert/update operations
- */
-interface FriendDbInput {
-  name?: string;
-  email?: string;
-  avatar?: string;
-  user_id?: string;
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY IMPLEMENTATION
 // ═══════════════════════════════════════════════════════════════════

@@ -131,7 +131,7 @@ export const INITIAL_HABITS: Habit[] = [
   {
     id: 'habit-3',
     name: 'Hydratation (2L/jour)',
-    description: 'Boire au moins 2 litres d'eau par jour',
+    description: "Boire au moins 2 litres d'eau par jour",
     frequency: 'daily',
     estimatedTime: 5,
     color: '#10B981',
@@ -149,7 +149,7 @@ export const INITIAL_OKRS: OKR[] = [
   {
     id: 'okr-1',
     title: 'Devenir Senior Developer Cosmo',
-    description: 'Atteindre un niveau d'expertise exceptionnel sur la stack technique.',
+    description: "Atteindre un niveau d'expertise exceptionnel sur la stack technique.",
     category: 'okrcat-3',
     progress: 45,
     completed: false,

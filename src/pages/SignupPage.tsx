@@ -24,7 +24,7 @@ const SignupPage = () => {
         toast.success('Compte créé avec succès !');
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       toast.error('Une erreur inattendue est survenue');
     } finally {
       setLoading(false);

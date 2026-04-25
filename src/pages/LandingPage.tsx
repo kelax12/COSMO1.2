@@ -31,69 +31,6 @@ import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
 import StatsShowcase from '../components/showcase/StatsShowcase';
 
-const FEATURES = [
-  {
-    icon: CheckCircle,
-    title: 'Gestion de tâches puissante',
-    subtitle: 'Centralisez, priorisez, accomplissez',
-    description: 'Organisez toutes vos tâches dans un espace unique et intuitif conçu pour maximiser votre productivité au quotidien.',
-    benefits: [
-      'Catégorisation par couleurs et étiquettes',
-      'Deadlines avec rappels personnalisables',
-      'Suivi de progression en temps réel',
-      'Organisation avancée de vos projets',
-      'Collaboration en équipe simplifiée'
-    ],
-    gradient: 'from-blue-500 to-cyan-500',
-    path: '/tasks'
-  },
-  {
-    icon: Calendar,
-    title: 'Agenda intégré nouvelle génération',
-    subtitle: 'Planifiez avec une précision chirurgicale',
-    description: "Un calendrier complet qui s'adapte à votre rythme avec synchronisation multi-plateformes et vues personnalisables.",
-    benefits: [
-      'Vue unifiée tâches + événements',
-      'Glissez-déposez vos tâches',
-      "Placez vos tâches directement dans l'agenda",
-      'Synchronisation multi-appareils instantanée',
-      'Vues jour, semaine et mois'
-    ],
-    gradient: 'from-purple-500 to-pink-500',
-    path: '/agenda'
-  },
-  {
-    icon: Target,
-    title: 'OKR & Objectifs stratégiques',
-    subtitle: 'Transformez vos ambitions en résultats',
-    description: 'Définissez et suivez vos objectifs avec la méthodologie OKR utilisée par Google, Intel et les plus grandes entreprises.',
-    benefits: [
-      'Framework OKR professionnel',
-      'Suivi de progression visuel',
-      'Alignement équipe-objectifs',
-      'Métriques de performance détaillées',
-      "Vue d'ensemble sur votre progression"
-    ],
-    gradient: 'from-green-500 to-emerald-500',
-    path: '/okr'
-  },
-  {
-    icon: Zap,
-    title: 'Habitudes & Routines',
-    subtitle: 'Construisez votre succès quotidien',
-    description: 'Développez des habitudes durables avec un système de suivi motivant et des statistiques détaillées.',
-    benefits: [
-      "Suivi d'habitudes quotidien",
-      'Gamification et récompenses',
-      'Statistiques détaillées de progression',
-      'Analyse de productivité intégrée',
-      'Streaks et défis personnalisés'
-    ],
-    gradient: 'from-orange-500 to-red-500',
-    path: '/habits'
-  }
-];
-
 const TESTIMONIALS = [
   {
     name: 'Sarah Chen',
@@ -229,7 +166,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
           navigate('/dashboard');
         }
       }
-    } catch (err) {
+    } catch {
       setError('Une erreur est survenue');
     } finally {
       setLoading(false);

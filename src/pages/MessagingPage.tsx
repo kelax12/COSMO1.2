@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, MessageSquare, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
+import { MessageCircle, Search, MoreHorizontal, Send, Plus, Check, X, UserPlus, Trash2, ChevronLeft, Pin, PinOff, Users } from 'lucide-react';
 import TaskModal from '../components/TaskModal';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
-import { Friend, useAcceptFriendRequest, useRejectFriendRequest, useFriendRequests, useFriends, useSendFriendRequest } from '@/modules/friends';
+import { useAcceptFriendRequest, useRejectFriendRequest, useFriendRequests, useFriends, useSendFriendRequest } from '@/modules/friends';
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -51,24 +51,6 @@ interface GroupConversation {
   lastMessage?: string;
   timestamp?: string;
   time?: string;
-}
-
-interface IndividualConversation {
-  id: string;
-  name: string;
-  avatar?: string;
-  type: 'individual';
-  lastMessage: string;
-  time: string;
-  timestamp: number;
-  unread: number;
-}
-
-type Conversation = GroupConversation | IndividualConversation;
-
-// Type guard pour vérifier si c'est un groupe
-function isGroupConversation(conv: Conversation | GroupConversation | undefined): conv is GroupConversation {
-  return conv !== undefined && 'isGroup' in conv && conv.isGroup === true;
 }
 
 const RenderAvatar = ({ avatar, className = "size-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
@@ -134,7 +116,7 @@ const MessagingPage: React.FC = () => {
   const rejectMutation = useRejectFriendRequest();
   const acceptFriendRequest = (id: string) => acceptMutation.mutate(id);
   const rejectFriendRequest = (id: string) => rejectMutation.mutate(id);
-  const [showLeftSidebar, setShowLeftSidebar] = useState(true);
+  const [, setShowLeftSidebar] = useState(true);
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [pinnedConversations, setPinnedConversations] = useState<string[]>(['equipe-design']);
   const [deletedConversations, setDeletedConversations] = useState<string[]>([]);
@@ -142,30 +124,6 @@ const MessagingPage: React.FC = () => {
   const [selectedFriendsForGroup, setSelectedFriendsForGroup] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
-
-  const clearGroupChanges = (groupId: string) => {
-    setGroupConversations(prev => prev.map(g => {
-      if (g.id === groupId) {
-        let members = g.members;
-        if (groupId === 'equipe-design') {
-          members = [
-            { id: 'user1', name: 'Utilisateur Demo', avatar: '👤' },
-            { id: 'marie-dupont', name: 'Marie Dupont', avatar: '👩‍💼' },
-            { id: 'thomas-laurent', name: 'Thomas Laurent', avatar: '👨‍💻' }
-          ];
-        } else if (groupId === 'dev-produit') {
-          members = [
-            { id: 'marie-dupont', name: 'Marie Dupont', avatar: '👩‍💼' },
-            { id: 'thomas-laurent', name: 'Thomas Laurent', avatar: '👨‍💻' },
-            { id: 'sophia-martin', name: 'Sophia Martin', avatar: '👩‍🔬' }
-          ];
-        }
-        return { ...g, unread: 0, members };
-      }
-      return g;
-    }));
-    setPinnedConversations(prev => prev.filter(id => id !== groupId));
-  };
 
   // État pour les conversations de groupe
   const [groupConversations, setGroupConversations] = useState([
@@ -247,19 +205,7 @@ const MessagingPage: React.FC = () => {
       }
     }, [sortedConversations.length, selectedConversation]);
 
-  const emojiCategories = {
-    smileys: ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘'],
-    gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '🤞', '✌️', '🤟', '🤘', '👌', '🤏', '👈', '👉', '👆', '👇'],
-    hearts: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖'],
-    hearts2: ['🎉', '🎊', '🎈', '🎂', '🎁', '🧨', '🧧', '🎇', '🎆', '🎐', '🎑', '🎍', '🎋', '🎏', '💎', '💍']
-  };
-
-  const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof emojiCategories>('smileys');
   const [showGroupSettings, setShowGroupSettings] = useState(false);
-
-  const emojiCategoryLabels = {
-    smileys: '😀', gestures: '👍', hearts: '❤️', hearts2: '🎉'
-  };
 
   const pendingRequests = friendRequests.filter(r => r.status === 'pending');
 
@@ -348,8 +294,6 @@ const MessagingPage: React.FC = () => {
   };
 
   const currentConversation = allConversations.find(c => c.id === selectedConversation);
-  const totalUnreadCount = sortedConversations.reduce((acc, conv) => acc + (conv.unread || 0), 0);
-
   // Messages Supabase (persistants) mappés pour le JSX
   const currentConversationMessages = conversationMessages.map(m => ({
     id: m.id,

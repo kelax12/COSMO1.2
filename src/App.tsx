@@ -113,7 +113,7 @@ const App: React.FC = () => {
               position="top-right"
               richColors
               closeButton
-              theme="dark"
+              theme="system"
               toastOptions={{
                 duration: 3000,
               }}

@@ -1015,7 +1015,6 @@ const HabitsStatistics: React.FC<{
   const avgRate = totalRelevantDays > 0 ? Math.round((totalCompletions / totalRelevantDays) * 100) : 0;
 
   const activeHabitsCount = useMemo(() => habitsStats.filter(h => h.periodCompletions > 0).length, [habitsStats]);
-  const relevantHabitsCount = useMemo(() => habitsStats.filter(h => h.relevantDaysCount > 0).length, [habitsStats]);
   const sortedRelevantHabits = useMemo(
     () => habitsStats.filter(h => h.relevantDaysCount > 0).sort((a, b) => b.periodTime - a.periodTime),
     [habitsStats]
