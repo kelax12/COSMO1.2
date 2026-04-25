@@ -371,8 +371,11 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     }
 
     // ── Snapshot AVANT update : pour détecter les transitions completed false→true ──
+    // Si le KR n'existe pas encore dans la table dédiée (cas d'OKR créés
+    // avant la table, JSONB-only), on bascule directement sur le fallback
+    // JSONB — sinon l'UPDATE ne touche rien (0 row, pas d'erreur), le SELECT
+    // suivant retourne [], et la JSONB serait écrasée avec un tableau vide.
     let wasPreviouslyCompleted = false;
-    let previousKr: KeyResult | null = null;
     {
       const { data: existing } = await supabase
         .from('key_results')
@@ -380,10 +383,12 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
         .eq('id', keyResultId)
         .eq('okr_id', okrId)
         .maybeSingle();
-      if (existing) {
-        previousKr = mapKRFromDb(existing as KRRow);
-        wasPreviouslyCompleted = previousKr.completed;
+
+      if (!existing) {
+        return this.updateKeyResultViaJsonb(okrId, keyResultId, updates);
       }
+
+      wasPreviouslyCompleted = mapKRFromDb(existing as KRRow).completed;
     }
 
     // Build DB update object (only updatable fields)
