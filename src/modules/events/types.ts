@@ -7,6 +7,14 @@
  * 
  * Events can optionally be linked to a Task via taskId
  */
+/**
+ * EventRecurrence — fréquence de répétition d'un événement
+ * - 'none'   : événement unique (par défaut)
+ * - 'daily'  : tous les jours à la même heure
+ * - 'weekly' : toutes les semaines au même jour de la semaine + heure
+ */
+export type EventRecurrence = 'none' | 'daily' | 'weekly';
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -16,6 +24,7 @@ export interface CalendarEvent {
   description?: string; // Detailed description
   notes?: string;       // Additional notes
   taskId?: string;      // Optional link to a Task
+  recurrence?: EventRecurrence; // Défaut: 'none'
 }
 
 /**

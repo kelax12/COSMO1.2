@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
-import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent } from '@/modules/events';
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
@@ -163,9 +163,10 @@ setShowTaskSidebar(false);
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-    const eventId = clickInfo.event.id;
+    // Pour une instance récurrente, l'id est `${masterId}::${date}` — on récupère le master
+    const masterId = getMasterId(clickInfo.event.id);
     const taskId = clickInfo.event.extendedProps?.taskId;
-    const event = events.find((e) => e.id === eventId || (taskId && e.taskId === taskId));
+    const event = events.find((e) => e.id === masterId || (taskId && e.taskId === taskId));
     if (event) {
       setSelectedEvent(event);
       setShowEditEventModal(true);
@@ -173,11 +174,13 @@ setShowTaskSidebar(false);
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
-    const eventId = dropInfo.event.id;
+    // Pour une instance récurrente : le drag déplace tout le master
+    // (même offset appliqué). Cas simple — on ne split pas la série.
+    const masterId = getMasterId(dropInfo.event.id);
     const taskId = dropInfo.event.extendedProps?.taskId;
-    const event = events.find((e) => e.id === eventId || (taskId && e.taskId === taskId));
+    const event = events.find((e) => e.id === masterId || (taskId && e.taskId === taskId));
     if (!event) return;
-    
+
     const newStart = dropInfo.event.start?.toISOString();
     const newEnd = dropInfo.event.end ? dropInfo.event.end.toISOString() : new Date((dropInfo.event.start?.getTime() ?? Date.now()) + 60 * 60 * 1000).toISOString();
 
@@ -218,7 +221,16 @@ setShowTaskSidebar(false);
     createEventMutation.mutate(newEvent);
   };
 
-  const calendarEvents = events.map((event) => ({
+  // Projette les événements récurrents en instances visibles dans la fenêtre
+  // courante (±13 mois autour d'aujourd'hui). FullCalendar ne charge que ce
+  // qui est dans la vue donc on peut être large sans coût d'affichage.
+  const projectionFrom = new Date();
+  projectionFrom.setMonth(projectionFrom.getMonth() - 13);
+  const projectionTo = new Date();
+  projectionTo.setMonth(projectionTo.getMonth() + 13);
+  const expandedEvents = expandRecurringEvents(events, projectionFrom, projectionTo);
+
+  const calendarEvents = expandedEvents.map((event) => ({
     id: event.id,
     title: event.title,
     start: event.start,
@@ -226,9 +238,13 @@ setShowTaskSidebar(false);
     backgroundColor: event.color,
     borderColor: event.color,
     textColor: '#ffffff',
+    // Empêche le drag/resize sur instance récurrente : trop ambigu (modifier 1 ou la série ?).
+    // Le master (`recurrence === 'none'`) reste éditable normalement.
+    editable: !event.id.includes('::'),
     extendedProps: {
       notes: event.notes,
-      taskId: event.taskId
+      taskId: event.taskId,
+      isRecurringInstance: event.id.includes('::'),
     }
   }));
 
