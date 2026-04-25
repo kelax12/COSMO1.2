@@ -293,10 +293,13 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (input.keyResults?.length) {
       await this.syncKRsToTable(row.id, user.id, input.keyResults);
 
-      // Journal append-only : enregistre toute KR créée déjà complétée
+      // Journal append-only : 1 ligne = 1 rep réalisée. À la création d'un
+      // KR avec currentValue > 0, on enregistre `currentValue` reps comme
+      // déjà faites (le user dit « j'en ai déjà fait N »).
       for (const kr of input.keyResults) {
-        if (kr.completed) {
-          await this.recordKRCompletion(row.id, kr, row.title);
+        const reps = Math.max(0, Math.round(kr.currentValue));
+        if (reps > 0) {
+          await this.recordKRReps(row.id, kr, row.title, reps);
         }
       }
     }
@@ -335,12 +338,14 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
         await this.syncKRsToTable(id, user.id, updates.keyResults);
       }
 
-      // Journal append-only : enregistre les transitions completed false→true
+      // Journal append-only : 1 ligne = 1 rep. Enregistre delta reps pour
+      // chaque KR dont currentValue a augmenté (ex: 5 → 7 = +2 reps).
       for (const kr of updates.keyResults) {
         const previous = previousKRsById.get(kr.id);
-        const wasCompleted = previous?.completed ?? false;
-        if (kr.completed && !wasCompleted) {
-          await this.recordKRCompletion(id, kr, row.title);
+        const previousValue = previous?.currentValue ?? 0;
+        const delta = Math.max(0, Math.round(kr.currentValue - previousValue));
+        if (delta > 0) {
+          await this.recordKRReps(id, kr, row.title, delta);
         }
       }
     }
@@ -370,12 +375,12 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       return this.updateKeyResultViaJsonb(okrId, keyResultId, updates);
     }
 
-    // ── Snapshot AVANT update : pour détecter les transitions completed false→true ──
+    // ── Snapshot AVANT update : pour calculer le delta de reps ──
     // Si le KR n'existe pas encore dans la table dédiée (cas d'OKR créés
     // avant la table, JSONB-only), on bascule directement sur le fallback
     // JSONB — sinon l'UPDATE ne touche rien (0 row, pas d'erreur), le SELECT
     // suivant retourne [], et la JSONB serait écrasée avec un tableau vide.
-    let wasPreviouslyCompleted = false;
+    let previousCurrentValue = 0;
     {
       const { data: existing } = await supabase
         .from('key_results')
@@ -388,7 +393,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
         return this.updateKeyResultViaJsonb(okrId, keyResultId, updates);
       }
 
-      wasPreviouslyCompleted = mapKRFromDb(existing as KRRow).completed;
+      previousCurrentValue = mapKRFromDb(existing as KRRow).currentValue;
     }
 
     // Build DB update object (only updatable fields)
@@ -440,35 +445,41 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     if (error) throw normalizeApiError(error);
 
-    // ── Append-only journal : enregistre une complétion à chaque transition false→true ──
+    // ── Append-only journal : 1 ligne = 1 rep ──
+    // Si currentValue a augmenté de N (ex: 5 → 7 → +2), insère N lignes.
     const updatedKr = keyResults.find(kr => kr.id === keyResultId);
-    if (updatedKr && updatedKr.completed && !wasPreviouslyCompleted) {
-      await this.recordKRCompletion(okrId, updatedKr, (data as OKRRow).title);
+    if (updatedKr) {
+      const delta = Math.max(0, Math.round(updatedKr.currentValue - previousCurrentValue));
+      if (delta > 0) {
+        await this.recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
+      }
     }
 
     return this.mapFromDb(data as OKRRow, keyResults);
   }
 
   /**
-   * Append-only : enregistre la complétion d'un KR dans kr_completions.
-   * N'échoue jamais silencieusement — les erreurs sont propagées pour visibilité.
+   * Append-only : enregistre `count` reps réalisées pour ce KR dans
+   * kr_completions. 1 ligne = 1 rep ; toutes timestampées à l'instant
+   * de l'update (pas de notion d'historique fin-grained par rep).
+   * Les erreurs sont propagées pour visibilité.
    */
-  private async recordKRCompletion(okrId: string, kr: KeyResult, okrTitle: string): Promise<void> {
-    if (!supabase) return;
+  private async recordKRReps(okrId: string, kr: KeyResult, okrTitle: string, count: number): Promise<void> {
+    if (!supabase || count <= 0) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
-      .from('kr_completions')
-      .insert([{
-        user_id: user.id,
-        kr_id: kr.id,
-        okr_id: okrId,
-        completed_at: kr.completedAt ?? new Date().toISOString(),
-        kr_title: kr.title,
-        okr_title: okrTitle,
-      }]);
+    const completedAt = new Date().toISOString();
+    const rows = Array.from({ length: count }, () => ({
+      user_id: user.id,
+      kr_id: kr.id,
+      okr_id: okrId,
+      completed_at: completedAt,
+      kr_title: kr.title,
+      okr_title: okrTitle,
+    }));
 
+    const { error } = await supabase.from('kr_completions').insert(rows);
     if (error) throw normalizeApiError(error);
   }
 
@@ -484,7 +495,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const krIndex = okr.keyResults.findIndex(kr => kr.id === keyResultId);
     if (krIndex === -1) throw new Error(`KeyResult with id ${keyResultId} not found`);
 
-    const wasPreviouslyCompleted = okr.keyResults[krIndex].completed;
+    const previousCurrentValue = okr.keyResults[krIndex].currentValue;
 
     // Migration silencieuse : remplace tous les ids non-UUID par des UUID propres
     okr.keyResults = okr.keyResults.map(kr =>
@@ -510,10 +521,11 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     if (error) throw normalizeApiError(error);
 
-    // ── Append-only journal (chemin JSONB aussi) ──
+    // ── Append-only journal : delta de reps ──
     const updatedKr = okr.keyResults[krIndex];
-    if (updatedKr.completed && !wasPreviouslyCompleted) {
-      await this.recordKRCompletion(okrId, updatedKr, (data as OKRRow).title);
+    const delta = Math.max(0, Math.round(updatedKr.currentValue - previousCurrentValue));
+    if (delta > 0) {
+      await this.recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
     }
 
     return this.mapFromDb(data as OKRRow, okr.keyResults);
