@@ -1,6 +1,8 @@
-# CLAUDE.md — COSMO 1.2 
+# CLAUDE.md — COSMO 1.2
 
 Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute modification.
+
+> **Avant un déploiement** : consulter [`faille.md`](./faille.md) — répertorie les failles de sécurité et bugs bloquants identifiés (Stripe à finaliser, secrets à rotater, RLS à durcir).
 
 ---
 
@@ -16,10 +18,11 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | UI Components | shadcn/ui (Radix UI + Tailwind CSS 3) |
 | Toasts | Sonner |
 | Animations | Framer Motion + GSAP |
-| Paiement | Stripe (@stripe/react-stripe-js) |
+| Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé**, voir `faille.md` |
 | Icônes | lucide-react |
-| Dates | date-fns |
+| Dates | date-fns 2 (à migrer en v3 — voir `faille.md`) |
 | Calendrier | FullCalendar |
+| Hosting | Vercel (configuration `vercel.json` avec headers de sécurité) |
 
 ---
 
@@ -30,22 +33,26 @@ npm run dev        # Serveur dev local (port 5173)
 npm start          # Serveur dev réseau (port 3000)
 npm run build      # Build production → dist/
 npm run preview    # Prévisualiser le build
-npm run lint       # ESLint
+npm run lint       # ESLint (doit retourner 0 erreur)
 ```
+
+> Le build prod **drope automatiquement** `console.log`, `console.info`, `console.debug` et `debugger` (via `vite.config.ts → esbuild.pure/drop`). Les `console.error` / `console.warn` sont **conservés** pour AppErrorBoundary.
 
 ---
 
 ## Variables d'environnement
 
 ```bash
-# .env (non versionné — copie .env.example)
+# .env (non versionné — copier .env.example)
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
+VITE_STRIPE_PUBLISHABLE_KEY=
 ```
 
-- Si les variables sont absentes → mode démo automatique (LocalStorage)
-- Ne jamais utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
+- Si `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` sont absentes → mode démo automatique (LocalStorage)
+- **Ne jamais** utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
 - Toutes les variables exposées au navigateur doivent être préfixées `VITE_`
+- **`.env` est gitignored** — vérifier `git status` avant chaque commit
 
 ---
 
@@ -53,7 +60,7 @@ VITE_SUPABASE_ANON_KEY=
 
 L'app fonctionne en deux modes transparents :
 
-- **Mode démo** : pas de Supabase, données en `localStorage`, activé automatiquement si les env vars sont absentes
+- **Mode démo** : pas de Supabase, données en `localStorage`, activé automatiquement si les env vars sont absentes ou via `loginDemo()`
 - **Mode production** : Supabase, activé si `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` sont définis
 
 Le store de mode est dans `src/lib/app-mode.store.ts` :
@@ -65,22 +72,23 @@ useIsDemo()                  // hook React
 
 Les repositories sont sélectionnés dynamiquement via `src/lib/repository.factory.ts` :
 ```typescript
-getTasksRepository()    // retourne LocalStorage ou Supabase selon le mode
+getTasksRepository()           // retourne LocalStorage ou Supabase selon le mode
 getHabitsRepository()
 getEventsRepository()
 getCategoriesRepository()
 getListsRepository()
 getFriendsRepository()
 getOKRsRepository()
+getKRCompletionsRepository()
 
 resetRepositories()     // nullifie les singletons (appelé au changement de mode)
-clearDemoStorage()      // efface les 9 clés localStorage démo (appelé dans loginDemo)
+clearDemoStorage()      // efface les clés localStorage démo (appelé dans loginDemo)
 ```
 
 ### Parcours d'accès au mode démo
 
 ```
-/welcome (LandingPage) → bouton "Connexion" → MockLoginModal (mode login)
+/welcome (LandingPage) → bouton "Connexion" → LoginModal (mode login)
                        → bouton "Mode Démo (Connexion rapide)"
                        → loginDemo() → clearDemoStorage() + seeds rechargées → /dashboard
 ```
@@ -91,11 +99,12 @@ Alternativement, cliquer sur une feature card de la landing déclenche aussi `lo
 
 ```typescript
 loginDemo() {
-  clearDemoStorage()        // 1. Efface l'ancien localStorage démo
-  appModeStore.setDemo(true) // 2. Active le flag global démo
-  resetRepositories()        // 3. Nullifie les singletons
-  setUser({ id: 'demo-user', email: 'demo@cosmo.app', ... }) // 4. Définit l'utilisateur
-  setIsLoading(false)        // 5. Libère le spinner
+  clearDemoStorage()            // 1. Efface l'ancien localStorage démo
+  appModeStore.setDemo(true)    // 2. Active le flag global démo
+  resetRepositories()           // 3. Nullifie les singletons
+  queryClient.clear()           // 4. Vide le cache React Query
+  setUser({ id: 'demo-user', email: 'demo@cosmo.app', ... })
+  setIsLoading(false)
   // 6. navigate('/dashboard') dans le composant appelant (setTimeout 0ms)
 }
 ```
@@ -121,10 +130,21 @@ Helpers disponibles dans les fichiers seed :
 
 ### Clés localStorage démo effacées par `clearDemoStorage()`
 
+Liste exacte (cf. `src/lib/repository.factory.ts`) :
 ```
-cosmo_demo_tasks · cosmo_demo_habits · cosmo_demo_events · cosmo-okrs · cosmo-okrs-v2 · cosmo-okrs-v3 · cosmo-okrs-v4
-cosmo_demo_kr_completions · cosmo_categories · cosmo_lists · cosmo_friends · cosmo_friend_requests · cosmo_shared_tasks
+cosmo_demo_tasks
+cosmo_demo_habits
+cosmo_demo_events
+cosmo_demo_kr_completions
+cosmo-okrs · cosmo-okrs-v2 · cosmo-okrs-v3 · cosmo-okrs-v4 · cosmo-okrs-v5
+cosmo_categories
+cosmo_lists
+cosmo_friends
+cosmo_friend_requests
+cosmo_shared_tasks
 ```
+
+> **Naming inconsistent** : certaines clés démo ne sont pas préfixées `cosmo_demo_` (categories, lists, friends, okrs). Pas exploitable mais à harmoniser à terme. Aucun risque réel : les utilisateurs Supabase ne lisent pas le localStorage.
 
 > Pour ajouter une nouvelle clé démo, l'ajouter dans `clearDemoStorage()` dans `src/lib/repository.factory.ts`.
 
@@ -143,12 +163,12 @@ Chaque module fonctionnel suit cette structure stricte :
 ```
 src/modules/{module}/
 ├── types.ts               # Interfaces TypeScript
-├── constants.ts           # Clés React Query (factory pattern)
-├── repository.ts          # Interface I{Module}Repository
-├── local.repository.ts    # Implémentation LocalStorage
+├── constants.ts           # Clés React Query (factory pattern) + clés localStorage
+├── repository.ts          # Interface I{Module}Repository (+ implémentation LocalStorage pour certains modules)
+├── local.repository.ts    # Implémentation LocalStorage dédiée (tasks, habits)
 ├── supabase.repository.ts # Implémentation Supabase
 ├── hooks.ts               # Hooks React Query (lecture + écriture)
-├── hooks.derived.ts       # Hooks calculés optimisés (useMemo)
+├── hooks.derived.ts       # Hooks calculés optimisés (useMemo) — quand pertinent
 └── index.ts               # Export public (barrel)
 ```
 
@@ -156,8 +176,8 @@ src/modules/{module}/
 
 | Module | Chemin | Usage principal |
 |---|---|---|
-| auth | `src/modules/auth/` | Authentification, session |
-| billing | `src/modules/billing/` | Abonnement premium |
+| auth | `src/modules/auth/` | Authentification, session, AuthContext |
+| billing | `src/modules/billing/` | Abonnement premium (⚠️ flux Stripe non finalisé) |
 | tasks | `src/modules/tasks/` | Gestion des tâches |
 | events | `src/modules/events/` | Événements calendrier |
 | habits | `src/modules/habits/` | Suivi des habitudes |
@@ -165,7 +185,7 @@ src/modules/{module}/
 | lists | `src/modules/lists/` | Listes de tâches |
 | friends | `src/modules/friends/` | Collaboration sociale |
 | okrs | `src/modules/okrs/` | OKR (Objectives & Key Results) |
-| kr-completions | `src/modules/kr-completions/` | Journal de complétion des KR |
+| kr-completions | `src/modules/kr-completions/` | Journal append-only des complétions de KR |
 | messaging | `src/modules/messaging/` | Messagerie entre amis |
 | ui-states | `src/modules/ui-states/` | État UI persistant (couleurs, priorités) |
 | user | `src/modules/user/` | Profil utilisateur, messages inbox |
@@ -193,6 +213,8 @@ const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
 
 > `useBilling()` doit être utilisé uniquement à l'intérieur de `BillingProvider`.
 
+> ⚠️ La logique d'activation Premium côté client (`addTokens(amount, true)`) écrit directement dans `subscriptions` via Supabase. Tant que le backend Stripe n'existe pas, n'importe quel utilisateur peut s'auto-promouvoir Premium depuis devtools (cf. `faille.md` §2).
+
 ### UI States — couleurs et filtres
 ```typescript
 import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
@@ -210,7 +232,6 @@ const { data: friends = [] } = useFriends();
 const sendFriendRequestMutation = useSendFriendRequest();
 const shareTaskMutation = useShareTask();
 
-// Appels :
 sendFriendRequestMutation.mutate({ email });
 shareTaskMutation.mutate({ taskId, friendId, role: 'editor' });
 ```
@@ -227,7 +248,8 @@ const { messages, markMessagesAsRead } = useMessages();
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
-import { useOkrs } from '@/modules/okrs';
+import { useOkrs, useUpdateKeyResult } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
 import { useCategories } from '@/modules/categories';
 import { useLists } from '@/modules/lists';
 ```
@@ -239,17 +261,19 @@ import { useSendChatMessage, useConversationMessages, useMessagingRealtime } fro
 
 ---
 
-## Hiérarchie des providers (App.tsx)
+## Hiérarchie des providers (`src/App.tsx`)
 
 ```
 QueryClientProvider
   AuthProvider
     BillingProvider        ← dépend de useAuth
       TooltipProvider
-        Routes             ← pas de TaskProvider (supprimé)
+        Routes
 ```
 
-> `context/TaskContext.tsx` existe encore mais n'est plus utilisé. Ne pas le réimporter.
+Configuration React Query (5 min stale, 30 min gc, retry 1, no refetchOnWindowFocus).
+
+> Le `Toaster` Sonner est en `theme="system"` (suit le mode du navigateur).
 
 ---
 
@@ -268,7 +292,7 @@ Travailler sur une zone = importer uniquement les modules de cette zone.
 | UI / Filtres | `ui-states` |
 | Auth | `auth` |
 | Premium | `billing` |
-| Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `auth` |
+| Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
 
 ---
 
@@ -309,6 +333,7 @@ export type User = {
 /settings         → SettingsPage     (protégé)
 /premium          → PremiumPage      (protégé)
 /messages         → MessagingPage    (protégé)
+/*                → redirect /welcome
 ```
 
 Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErrorBoundary`.
@@ -318,18 +343,45 @@ Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErro
 ## Base de données Supabase
 
 Les migrations SQL sont dans `supabase/` :
-- `migration/001_tasks.sql` à `007_friends.sql` — tables principales
-- `messages.sql` — messagerie
-- `subscriptions.sql` — abonnements premium (RLS activé)
 
-Toutes les tables ont Row Level Security (RLS) activé. Les policies utilisent `auth.uid()`.
+| Fichier | Tables créées |
+|---|---|
+| `migration/001_tasks.sql` | `tasks` |
+| `migration/002_habits.sql` | `habits` |
+| `migration/003_okrs.sql` | `okrs` (`key_results` est aussi en JSONB ici, normalisé en 008) |
+| `migration/004_events.sql` | `events` |
+| `migration/005_categories.sql` | `categories` |
+| `migration/006_lists.sql` | `lists` |
+| `migration/007_friends.sql` | `friends`, `friend_requests`, `shared_tasks` |
+| `migration/008_key_results.sql` | `key_results` (table dédiée, remplace progressivement le JSONB) |
+| `migration/009_kr_completions.sql` | `kr_completions` (journal append-only des KR validés — alimente le graphique dashboard) |
+| `subscriptions.sql` | `subscriptions` (premium) |
+| `messages.sql` | `chat_messages` |
 
-**Fonctions SECURITY DEFINER :**
+Toutes les tables ont **Row Level Security (RLS) activée** avec policies `auth.uid() = user_id`. Toutes les `CREATE POLICY` utilisent des guillemets non-échappés (`"..."`) — ne pas réintroduire de `\"`.
+
+**Fonctions SECURITY DEFINER** (créées hors versioning, en dashboard Supabase — voir `faille.md` §8 « drift ») :
 - `accept_friend_request(request_id uuid)` — crée l'amitié bidirectionnelle en bypassant RLS
 
-**Triggers automatiques :**
-- `trg_set_receiver_id` — remplit `receiver_id` dans `friend_requests` via `auth.users`
-- `trg_set_sender_email` — remplit `sender_email` dans `friend_requests`
+**Triggers automatiques** (idem, drift à versionner) :
+- `trg_set_receiver_id` — remplit `friend_requests.receiver_id` depuis `auth.users`
+- `trg_set_sender_email` — remplit `friend_requests.sender_email`
+- `trg_key_result_completed_at` — remplit `key_results.completed_at` automatiquement
+- `update_*_updated_at` — par table, met à jour `updated_at`
+
+---
+
+## Pattern critique : journal append-only `kr_completions`
+
+Quand un KR transitionne `completed: false → true`, **les deux repositories OKR (LocalStorage + Supabase) doivent insérer une ligne dans `kr_completions`** atomiquement. Cette table alimente :
+- Graphique « KR réalisés » de `DashboardPage`
+- `DashboardChart` et `DashboardBarChart` (calcul du temps OKR par période)
+
+Implémentation :
+- **LocalStorage** : `src/modules/okrs/repository.ts → updateKeyResult` → `localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, ...)`
+- **Supabase** : `src/modules/okrs/supabase.repository.ts → recordKRCompletion()` (appelé depuis `updateKeyResult` ET `updateKeyResultViaJsonb`)
+
+> **Ne jamais retirer cette logique** : sans elle, le graphique dashboard reste à 0 en production.
 
 ---
 
@@ -351,23 +403,56 @@ toast.error('Erreur');
 ```
 
 ### Composants UI
-Les composants shadcn/ui sont dans `src/components/ui/` — ne pas les modifier directement.
+Les composants shadcn/ui sont dans `src/components/ui/` — ne pas les modifier directement (gérés par la CLI shadcn).
 
 ### TypeScript
 - Strict mode activé (`noUnusedLocals`, `noUnusedParameters`)
-- Pas de `as any` — typer correctement avec les interfaces existantes
+- **Pas de `as any`** — typer correctement avec les interfaces existantes
 - Préférer `interface` pour les objets, `type` pour les unions
+- Variables/args/catch inutilisés intentionnellement → préfixer par `_` (autorisé par ESLint)
+
+### ESLint
+- Configuration : `eslint.config.js`
+- Lint **doit retourner 0 erreur** avant chaque commit
+- Tests (`src/__test__/`) et showcase (`src/components/showcase/`) sont **ignorés** par ESLint
+- Warnings autorisés : Fast refresh sur les contextes (Auth, Billing) et les fichiers ui shadcn
 
 ### Limites de requêtes
 Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit()` :
 - tasks, events, habits, okrs → `.limit(500)`
 - categories, lists, friends → `.limit(200)`
 
+> Pas de pagination côté UI au-delà de la limite — à 500+ tâches, les données sont silencieusement tronquées (cf. `faille.md` §9).
+
+---
+
+## Tests
+
+Le dossier `src/__test__/` contient des fichiers de tests Vitest, **mais Vitest n'est pas installé** dans `package.json`. Les tests ne tournent pas. Soit :
+1. Installer `vitest @testing-library/react happy-dom` et ajouter `"test": "vitest"` à `package.json`
+2. Supprimer le dossier `src/__test__/` et la section `test:` de `vite.config.ts`
+
+Voir `faille.md` §4.
+
+---
+
+## Déploiement Vercel
+
+`vercel.json` définit :
+- SPA rewrite : `/(.*) → /index.html`
+- Headers de sécurité : `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()`, `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- Cache immuable : `/assets/* → max-age=31536000, immutable`
+
+Variables d'environnement à configurer sur Vercel :
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_STRIPE_PUBLISHABLE_KEY` (quand le flux Stripe sera finalisé)
+
 ---
 
 ## Ce qu'il ne faut jamais faire
 
-- ❌ Importer depuis `context/TaskContext` — migré, ne plus utiliser
+- ❌ Importer depuis `src/context/TaskContext` — **ce fichier a été supprimé**
 - ❌ Créer `supabaseAdmin` avec `SERVICE_ROLE_KEY` côté client
 - ❌ Importer `useAuth` depuis `@/modules/user`
 - ❌ Appeler `toast.error()` depuis un repository ou `normalizeApiError`
@@ -376,3 +461,7 @@ Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit(
 - ❌ Committer le fichier `.env`
 - ❌ Ajouter des `as any` pour contourner les erreurs TypeScript
 - ❌ Recréer un contexte/façade global qui agrège plusieurs modules
+- ❌ Échapper les guillemets dans les `CREATE POLICY` SQL (`\"...\"` casse Postgres)
+- ❌ Modifier la logique `recordKRCompletion()` sans vérifier que le graphique dashboard fonctionne en mode démo ET en mode prod
+- ❌ Forcer `theme="dark"` sur le `Toaster` (utiliser `theme="system"`)
+- ❌ Ajouter un script tiers dans `index.html` sans CSP
