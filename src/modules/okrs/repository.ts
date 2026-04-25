@@ -269,10 +269,12 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     };
     this.saveOKRs([...okrs, newOKR]);
 
-    // Journal append-only : enregistre toute KR créée déjà complétée
+    // Journal append-only : 1 ligne = 1 rep. À la création, currentValue
+    // déjà > 0 = autant de reps déjà faites par l'user.
     for (const kr of newOKR.keyResults ?? []) {
-      if (kr.completed) {
-        this.appendKRCompletion(newOKR.id, kr, newOKR.title);
+      const reps = Math.max(0, Math.round(kr.currentValue));
+      if (reps > 0) {
+        this.appendKRReps(newOKR.id, kr, newOKR.title, reps);
       }
     }
 
@@ -287,7 +289,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       throw new Error(`OKR with id ${id} not found`);
     }
 
-    // Snapshot AVANT update : pour détecter les transitions de KR
+    // Snapshot AVANT update : pour calculer le delta de currentValue par KR
     const previous = okrs[index];
     const previousKRsById = new Map(previous.keyResults.map(kr => [kr.id, kr]));
 
@@ -295,13 +297,14 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     okrs[index] = updatedOKR;
     this.saveOKRs(okrs);
 
-    // Journal append-only : enregistre les transitions completed false→true
+    // Journal append-only : delta de reps par KR
     if (updates.keyResults) {
       for (const kr of updates.keyResults) {
         const prev = previousKRsById.get(kr.id);
-        const wasCompleted = prev?.completed ?? false;
-        if (kr.completed && !wasCompleted) {
-          this.appendKRCompletion(updatedOKR.id, kr, updatedOKR.title);
+        const previousValue = prev?.currentValue ?? 0;
+        const delta = Math.max(0, Math.round(kr.currentValue - previousValue));
+        if (delta > 0) {
+          this.appendKRReps(updatedOKR.id, kr, updatedOKR.title, delta);
         }
       }
     }
@@ -310,21 +313,26 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   }
 
   /**
-   * Append-only : ajoute une ligne dans le journal localStorage des complétions.
-   * Synchrone — utilisé par create() / update() / updateKeyResult().
+   * Append-only : ajoute `count` lignes (1 par rep) dans le journal
+   * localStorage. Toutes timestampées à l'instant — utilisé par
+   * create() / update() / updateKeyResult().
    */
-  private appendKRCompletion(okrId: string, kr: { id: string; title: string; completedAt?: string | null }, okrTitle: string): void {
+  private appendKRReps(okrId: string, kr: { id: string; title: string; completedAt?: string | null }, okrTitle: string, count: number): void {
+    if (count <= 0) return;
     const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
     const completions: KRCompletion[] = raw ? JSON.parse(raw) : [];
-    completions.push({
-      id: crypto.randomUUID(),
-      krId: kr.id,
-      okrId,
-      userId: 'demo-user',
-      completedAt: kr.completedAt ?? new Date().toISOString(),
-      krTitle: kr.title,
-      okrTitle,
-    });
+    const completedAt = kr.completedAt ?? new Date().toISOString();
+    for (let i = 0; i < count; i++) {
+      completions.push({
+        id: crypto.randomUUID(),
+        krId: kr.id,
+        okrId,
+        userId: 'demo-user',
+        completedAt,
+        krTitle: kr.title,
+        okrTitle,
+      });
+    }
     localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
   }
 
@@ -377,8 +385,8 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       throw new Error(`KeyResult with id ${keyResultId} not found`);
     }
 
-    // Snapshot before update
-    const wasPreviouslyCompleted = okr.keyResults[krIndex].completed;
+    // Snapshot before update — capture le currentValue d'origine pour delta
+    const previousCurrentValue = okr.keyResults[krIndex].currentValue;
 
     // Update the key result + auto-set completedAt (equivalent to Supabase trigger)
     const merged = { ...okr.keyResults[krIndex], ...updates };
@@ -402,10 +410,10 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     okrs[okrIndex] = okr;
     this.saveOKRs(okrs);
 
-    // ── ATOMIC: create completion record in the same synchronous call ──
-    // No race condition possible — localStorage writes are synchronous
-    if (merged.completed && !wasPreviouslyCompleted) {
-      this.appendKRCompletion(okrId, merged, okr.title);
+    // ── Journal append-only : delta de reps (1 ligne = 1 rep) ──
+    const delta = Math.max(0, Math.round(merged.currentValue - previousCurrentValue));
+    if (delta > 0) {
+      this.appendKRReps(okrId, merged, okr.title, delta);
     }
 
     return okr;
