@@ -287,6 +287,13 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     // Sync KRs to dedicated table
     if (input.keyResults?.length) {
       await this.syncKRsToTable(row.id, user.id, input.keyResults);
+
+      // Journal append-only : enregistre toute KR créée déjà complétée
+      for (const kr of input.keyResults) {
+        if (kr.completed) {
+          await this.recordKRCompletion(row.id, kr, row.title);
+        }
+      }
     }
 
     return this.mapFromDb(row, input.keyResults ?? []);
@@ -294,6 +301,16 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
   async update(id: string, updates: UpdateOKRInput): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
+
+    // ── Snapshot AVANT update : pour détecter les transitions de KR ──
+    let previousKRsById = new Map<string, KeyResult>();
+    if (updates.keyResults) {
+      const previous = await this.getById(id);
+      if (previous) {
+        previousKRsById = new Map(previous.keyResults.map(kr => [kr.id, kr]));
+      }
+    }
+
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -311,6 +328,15 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await this.syncKRsToTable(id, user.id, updates.keyResults);
+      }
+
+      // Journal append-only : enregistre les transitions completed false→true
+      for (const kr of updates.keyResults) {
+        const previous = previousKRsById.get(kr.id);
+        const wasCompleted = previous?.completed ?? false;
+        if (kr.completed && !wasCompleted) {
+          await this.recordKRCompletion(id, kr, row.title);
+        }
       }
     }
 

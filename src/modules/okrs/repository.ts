@@ -268,6 +268,14 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       id: crypto.randomUUID(),
     };
     this.saveOKRs([...okrs, newOKR]);
+
+    // Journal append-only : enregistre toute KR créée déjà complétée
+    for (const kr of newOKR.keyResults ?? []) {
+      if (kr.completed) {
+        this.appendKRCompletion(newOKR.id, kr, newOKR.title);
+      }
+    }
+
     return newOKR;
   }
 
@@ -279,10 +287,45 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       throw new Error(`OKR with id ${id} not found`);
     }
 
-    const updatedOKR: OKR = { ...okrs[index], ...updates };
+    // Snapshot AVANT update : pour détecter les transitions de KR
+    const previous = okrs[index];
+    const previousKRsById = new Map(previous.keyResults.map(kr => [kr.id, kr]));
+
+    const updatedOKR: OKR = { ...previous, ...updates };
     okrs[index] = updatedOKR;
     this.saveOKRs(okrs);
+
+    // Journal append-only : enregistre les transitions completed false→true
+    if (updates.keyResults) {
+      for (const kr of updates.keyResults) {
+        const prev = previousKRsById.get(kr.id);
+        const wasCompleted = prev?.completed ?? false;
+        if (kr.completed && !wasCompleted) {
+          this.appendKRCompletion(updatedOKR.id, kr, updatedOKR.title);
+        }
+      }
+    }
+
     return updatedOKR;
+  }
+
+  /**
+   * Append-only : ajoute une ligne dans le journal localStorage des complétions.
+   * Synchrone — utilisé par create() / update() / updateKeyResult().
+   */
+  private appendKRCompletion(okrId: string, kr: { id: string; title: string; completedAt?: string | null }, okrTitle: string): void {
+    const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
+    const completions: KRCompletion[] = raw ? JSON.parse(raw) : [];
+    completions.push({
+      id: crypto.randomUUID(),
+      krId: kr.id,
+      okrId,
+      userId: 'demo-user',
+      completedAt: kr.completedAt ?? new Date().toISOString(),
+      krTitle: kr.title,
+      okrTitle,
+    });
+    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
   }
 
   async delete(id: string): Promise<void> {
@@ -362,18 +405,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     // ── ATOMIC: create completion record in the same synchronous call ──
     // No race condition possible — localStorage writes are synchronous
     if (merged.completed && !wasPreviouslyCompleted) {
-      const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-      const completions: KRCompletion[] = raw ? JSON.parse(raw) : [];
-      completions.push({
-        id: crypto.randomUUID(),
-        krId: keyResultId,
-        okrId: okrId,
-        userId: 'demo-user',
-        completedAt: merged.completedAt!,
-        krTitle: merged.title,
-        okrTitle: okr.title,
-      });
-      localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
+      this.appendKRCompletion(okrId, merged, okr.title);
     }
 
     return okr;
