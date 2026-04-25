@@ -183,9 +183,6 @@ export function PremiumPage() {
                   >
                     <div className="relative">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-emerald-500/20 rounded-xl">
-                          <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
-                        </div>
                         <h4 className="font-bold text-emerald-700 dark:text-emerald-300">Regarder une publicité</h4>
                       </div>
                       <p className="text-emerald-600 dark:text-emerald-400/80 mb-4 text-sm font-medium">
@@ -201,7 +198,6 @@ export function PremiumPage() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                        <Play size={20} />
                         <span>Regarder pub (+1 jour)</span>
                       </motion.button>
                     </div>
@@ -213,9 +209,6 @@ export function PremiumPage() {
                   >
                     <div className="relative">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-[rgb(var(--color-accent)/0.2)] rounded-xl">
-                          <Crown size={24} className="text-[rgb(var(--color-accent))]" />
-                        </div>
                         <h4 className="font-bold text-[rgb(var(--color-text-primary))]">Abonnement mensuel</h4>
                       </div>
                       <p className="text-[rgb(var(--color-text-secondary))] mb-4 text-sm font-medium">
@@ -231,7 +224,6 @@ export function PremiumPage() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                        <Crown size={20} />
                         <span>S'abonner maintenant</span>
                       </motion.button>
                     </div>
