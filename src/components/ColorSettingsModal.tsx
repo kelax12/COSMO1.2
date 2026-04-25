@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
@@ -62,6 +63,13 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   };
   
   const handleSave = async () => {
+    // Validation : chaque nom de catégorie doit faire ≥ 2 caractères
+    const invalid = localCategories.find(lc => lc.name.trim().length < 2);
+    if (invalid) {
+      toast.error('Chaque nom de catégorie doit contenir au moins 2 caractères');
+      return;
+    }
+
     setIsSaving(true);
     try {
       // Delete categories that were removed
