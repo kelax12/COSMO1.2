@@ -175,6 +175,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         showCloseButton={false}
@@ -471,12 +472,13 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
           )}
         </div>
       </DialogContent>
-      <ColorSettingsModal
-        isOpen={showColorSettings}
-        onClose={() => setShowColorSettings(false)}
-        isNested
-      />
     </Dialog>
+    <ColorSettingsModal
+      isOpen={showColorSettings}
+      onClose={() => setShowColorSettings(false)}
+      isNested
+    />
+    </>
   );
 };
 

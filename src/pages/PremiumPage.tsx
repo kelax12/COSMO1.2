@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Zap, Play, Check, Star, Users, MessageCircle, Sparkles } from 'lucide-react';
+import { Crown, Zap, Play, Check, Users, Sparkles } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import PaymentModal from '../components/PaymentModal';
@@ -46,11 +46,6 @@ export function PremiumPage() {
         title: 'Collaboration',
         description: 'Partagez vos tâches avec votre équipe',
       },
-      {
-        icon: MessageCircle,
-        title: 'Messagerie',
-        description: 'Communiquez directement avec vos collaborateurs',
-      }
     ];
 
     const handlePaymentSuccess = async () => {
@@ -85,7 +80,7 @@ export function PremiumPage() {
               whileHover={{ scale: 1.02 }}
             >
               <motion.div
-                className="p-4 bg-[rgb(var(--color-accent))] rounded-2xl shadow-xl shadow-[rgb(var(--color-accent)/0.3)]"
+                className="p-4 bg-yellow-400 rounded-2xl shadow-xl shadow-yellow-400/30"
               >
                 <Crown size={32} className="text-white" />
               </motion.div>
@@ -179,9 +174,8 @@ export function PremiumPage() {
           className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 shadow-sm"
           variants={itemVariants}
         >
-          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            Gagner des jetons Premium
+          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">
+            Obtenir un jour Premium
           </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <motion.div
@@ -250,8 +244,7 @@ export function PremiumPage() {
           className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-3xl p-6 sm:p-8 mb-8 shadow-sm"
           variants={itemVariants}
         >
-          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
-            <Star className="w-5 h-5 text-amber-500" />
+          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">
             Fonctionnalités Premium
           </h3>
           <motion.div
@@ -309,15 +302,6 @@ export function PremiumPage() {
                 className="flex flex-col items-center mb-16"
                 variants={itemVariants}
               >
-                <motion.div
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-4"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                  <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">Guide Étape par Étape</span>
-                </motion.div>
                 <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white text-center tracking-tight leading-tight">
                   Comment ça <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400">marche</span> ?
                 </h3>

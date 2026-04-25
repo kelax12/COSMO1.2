@@ -108,7 +108,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 pointer-events-auto">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
