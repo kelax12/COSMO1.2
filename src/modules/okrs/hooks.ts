@@ -30,10 +30,13 @@ const useOKRsRepository = (): IOKRsRepository => {
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * Invalidate all OKR-related queries
+ * Invalidate all OKR-related queries.
+ * Inclut kr-completions car create/update peuvent insérer dans le journal
+ * quand des KR sont créées/transitionnées en complétées.
  */
 const invalidateAllOKRQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: okrsKeys.lists() });
+  queryClient.invalidateQueries({ queryKey: krCompletionKeys.all });
 };
 
 // ═══════════════════════════════════════════════════════════════════
