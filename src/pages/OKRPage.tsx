@@ -9,6 +9,7 @@ import { useCategories, useCreateCategory, useDeleteCategory } from '@/modules/c
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
+import { toast } from 'sonner';
 
 type Objective = OKR & { estimatedTime?: number };
 
@@ -248,8 +249,12 @@ const OKRPage: React.FC = () => {
                 className="flex items-center gap-2"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!newCategoryName.trim()) return;
-                  createCategoryMutation.mutate({ name: newCategoryName.trim(), color: newCategoryColor }, {
+                  const name = newCategoryName.trim();
+                  if (name.length < 2) {
+                    toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+                    return;
+                  }
+                  createCategoryMutation.mutate({ name, color: newCategoryColor }, {
                     onSuccess: () => {
                       setNewCategoryName('');
                       setNewCategoryColor('blue');
@@ -284,7 +289,7 @@ const OKRPage: React.FC = () => {
                 />
                 <button
                   type="submit"
-                  disabled={!newCategoryName.trim()}
+                  disabled={newCategoryName.trim().length < 2}
                   className="px-3 py-1 text-sm rounded-full bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-40 transition-all"
                 >
                   Créer
