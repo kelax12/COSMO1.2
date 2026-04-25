@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { usePendingTasks } from '@/modules/tasks';
+import { usePendingTasks, Task } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, LayoutGrid } from 'lucide-react';
+import TaskModal from './TaskModal';
 
 const DeadlineCalendar: React.FC = () => {
   // Use new module for tasks (read-only)
@@ -10,6 +11,9 @@ const DeadlineCalendar: React.FC = () => {
   const { data: categories = [] } = useCategories();
   const [currentView, setCurrentView] = useState<'month' | 'week'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const tasksById = new Map(tasks.map((t) => [t.id, t]));
 
   const deadlineEvents = tasks.map(task => ({
     id: task.id,
@@ -20,6 +24,11 @@ const DeadlineCalendar: React.FC = () => {
     category: task.category,
     estimatedTime: task.estimatedTime,
   }));
+
+  const openTaskFromEventId = (id: string) => {
+    const task = tasksById.get(id);
+    if (task) setSelectedTask(task);
+  };
 
   function getCategoryColor(category: string) {
     return categories.find(cat => cat.id === category)?.color || '#6B7280';
@@ -221,6 +230,7 @@ const DeadlineCalendar: React.FC = () => {
                     {dayEvents.map((event) => (
                       <div
                         key={event.id}
+                        onClick={() => openTaskFromEventId(event.id)}
                         className="p-2 rounded-lg text-white text-xs font-medium shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                         style={{ backgroundColor: event.backgroundColor }}
                         title={`${event.title}\nPriorité: ${event.priority}\nTemps: ${event.estimatedTime}min`}
@@ -267,7 +277,8 @@ const DeadlineCalendar: React.FC = () => {
                     {dayEvents.slice(0, 2).map((event) => (
                       <div
                         key={event.id}
-                        className="px-2 py-1 rounded text-white text-[10px] font-medium truncate"
+                        onClick={() => openTaskFromEventId(event.id)}
+                        className="px-2 py-1 rounded text-white text-[10px] font-medium truncate cursor-pointer hover:opacity-90"
                         style={{ backgroundColor: event.backgroundColor }}
                         title={event.title}
                       >
@@ -307,6 +318,13 @@ const DeadlineCalendar: React.FC = () => {
           ))}
         </div>
       </div>
+      {selectedTask && (
+        <TaskModal
+          task={selectedTask}
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
   );
 };

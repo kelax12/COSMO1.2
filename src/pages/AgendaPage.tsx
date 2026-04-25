@@ -6,7 +6,7 @@ import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/int
 import { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
-import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, Repeat, X as CloseIcon, Trash2 } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,7 @@ const AgendaPage: React.FC = () => {
   const [isDraggingTask, setIsDraggingTask] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
+  const [showRecurringManager, setShowRecurringManager] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{start: string;end: string;} | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [calendarKey, setCalendarKey] = useState(0);
@@ -425,16 +426,34 @@ setShowTaskSidebar(false);
                 </div>
               </div>
 
-              {/* ── Droite : bouton Nouveau ── */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleOpenAddModal}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black shrink-0 whitespace-nowrap"
-              >
-                <Plus size={18} />
-                <span className="font-medium text-sm lg:text-base">Nouveau</span>
-              </motion.button>
+              {/* ── Droite : Récurrences + Nouveau ── */}
+              <div className="flex items-center gap-2 shrink-0">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowRecurringManager(true)}
+                  title="Gérer les événements récurrents"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-all border shrink-0 whitespace-nowrap"
+                  style={{
+                    backgroundColor: 'rgb(var(--color-chip-bg))',
+                    borderColor: 'rgb(var(--color-chip-border))',
+                    color: 'rgb(var(--color-text-primary))'
+                  }}
+                >
+                  <Repeat size={18} />
+                  <span className="hidden sm:inline text-sm lg:text-base">Récurrences</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleOpenAddModal}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black shrink-0 whitespace-nowrap"
+                >
+                  <Plus size={18} />
+                  <span className="font-medium text-sm lg:text-base">Nouveau</span>
+                </motion.button>
+              </div>
 
             </div>
         </motion.div>
@@ -540,6 +559,83 @@ setShowTaskSidebar(false);
           />
         }
   
+        <AnimatePresence>
+          {showRecurringManager && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowRecurringManager(false)}
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border"
+                style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+              >
+                <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                  <div className="flex items-center gap-2">
+                    <Repeat size={18} style={{ color: 'rgb(var(--color-accent))' }} />
+                    <h3 className="text-base font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements récurrents</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowRecurringManager(false)}
+                    className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    style={{ color: 'rgb(var(--color-text-secondary))' }}
+                  >
+                    <CloseIcon size={18} />
+                  </button>
+                </div>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  {(() => {
+                    const recurring = events.filter((e) => (e.recurrence ?? 'none') !== 'none');
+                    if (recurring.length === 0) {
+                      return (
+                        <div className="px-6 py-10 text-center">
+                          <Repeat size={32} className="mx-auto mb-3 opacity-40" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                          <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                            Aucun événement récurrent pour le moment.
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <ul className="divide-y" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                        {recurring.map((ev) => {
+                          const startDate = new Date(ev.start);
+                          const label = ev.recurrence === 'daily' ? 'Quotidien' : ev.recurrence === 'weekly' ? 'Hebdomadaire' : 'Récurrent';
+                          return (
+                            <li key={ev.id} className="px-6 py-3 flex items-center gap-3" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ev.color || 'rgb(var(--color-accent))' }} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{ev.title}</p>
+                                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                  {label} · démarre le {startDate.toLocaleDateString('fr-FR')} à {startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => updateEventMutation.mutate({ id: ev.id, updates: { recurrence: 'none' } })}
+                                title="Supprimer la récurrence"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 border border-red-200 dark:border-red-800/40 transition-colors shrink-0"
+                              >
+                                <Trash2 size={13} />
+                                <span>Récurrence</span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    );
+                  })()}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {showEditEventModal && selectedEvent &&
           <EventModal
             mode="edit"
