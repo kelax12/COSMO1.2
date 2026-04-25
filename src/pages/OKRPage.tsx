@@ -165,7 +165,7 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-green-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
           aria-label="Créer un nouvel objectif"
         >
           <Plus size={20} />
@@ -234,7 +234,7 @@ const OKRPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 onClick={() => setShowCreateCategory(true)}
-                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-green-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-all"
                 title="Nouvelle catégorie"
               >
                 <Plus size={14} />
@@ -274,7 +274,7 @@ const OKRPage: React.FC = () => {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Nom de la catégorie…"
-                  className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
+                  className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-green-500 w-40"
                   style={{
                     backgroundColor: 'rgb(var(--color-surface))',
                     borderColor: 'rgb(var(--color-border))',
@@ -285,7 +285,7 @@ const OKRPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!newCategoryName.trim()}
-                  className="px-3 py-1 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                  className="px-3 py-1 text-sm rounded-full bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-40 transition-all"
                 >
                   Créer
                 </button>
@@ -309,8 +309,8 @@ const OKRPage: React.FC = () => {
           transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center py-20 px-6 text-center"
         >
-          <div className="w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-100 dark:border-blue-400/20">
-            <Target className="w-10 h-10 text-blue-500 dark:text-blue-400" strokeWidth={1.75} />
+          <div className="w-20 h-20 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center mb-6 border border-green-100 dark:border-green-400/20">
+            <Target className="w-10 h-10 text-green-500 dark:text-green-400" strokeWidth={1.75} />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             {selectedCategory === 'all'
@@ -326,7 +326,7 @@ const OKRPage: React.FC = () => {
           </p>
           <button
             onClick={() => setShowAddObjective(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Créer un OKR
