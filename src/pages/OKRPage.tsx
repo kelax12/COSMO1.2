@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X } from 'lucide-react';
+import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target } from 'lucide-react';
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -265,6 +265,38 @@ const OKRPage: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {filteredObjectives.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center justify-center py-20 px-6 text-center"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-100 dark:border-blue-400/20">
+            <Target className="w-10 h-10 text-blue-500 dark:text-blue-400" strokeWidth={1.75} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            {selectedCategory === 'all'
+              ? 'Aucun OKR pour le moment'
+              : selectedCategory === 'completed'
+              ? 'Aucun OKR complété'
+              : 'Aucun OKR dans cette catégorie'}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
+            {selectedCategory === 'all'
+              ? 'Créez votre premier objectif pour structurer vos résultats clés et suivre votre progression.'
+              : 'Modifiez votre filtre ou créez un nouvel objectif dans cette catégorie.'}
+          </p>
+          <button
+            onClick={() => setShowAddObjective(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Créer un OKR
+          </button>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
