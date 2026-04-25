@@ -60,9 +60,9 @@ export function PremiumPage() {
   const handleAdComplete = async () => {
     try {
       await addTokens(1, true); // +1 token + activation premium
-      toast.success('+1 jeton Premium crédité !');
+      toast.success('+1 jour Premium crédité !');
     } catch {
-      toast.error('Erreur lors du crédit du jeton');
+      toast.error('Erreur lors du crédit du jour');
     }
     setShowAdModal(false);
   };
@@ -190,11 +190,11 @@ export function PremiumPage() {
                         <h4 className="font-bold text-emerald-700 dark:text-emerald-300">Regarder une publicité</h4>
                       </div>
                       <p className="text-emerald-600 dark:text-emerald-400/80 mb-4 text-sm font-medium">
-                        Regardez une courte vidéo pour gagner 1 jeton Premium.
+                        Regardez une courte vidéo pour gagner 1 jour Premium.
                       </p>
                       <div className="text-center mb-4">
                         <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">+1</div>
-                        <div className="text-sm text-emerald-500">jeton Premium</div>
+                        <div className="text-sm text-emerald-500">jour Premium</div>
                       </div>
                         <motion.button
                           onClick={() => setShowAdModal(true)}
@@ -203,7 +203,7 @@ export function PremiumPage() {
                           whileTap={{ scale: 0.98 }}
                         >
                         <Play size={20} />
-                        <span>Regarder pub (+1 jeton)</span>
+                        <span>Regarder pub (+1 jour)</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -328,7 +328,7 @@ export function PremiumPage() {
                               { 
                                 icon: Play, 
                                 title: 'Accumulez', 
-                                desc: 'Regardez des pubs ou souscrivez pour obtenir des jetons Premium', 
+                                desc: 'Regardez des pubs ou souscrivez pour obtenir des jours Premium', 
                                   color: 'from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600',
                                   glow: 'group-hover:shadow-emerald-500/40',
                                     iconColor: 'text-emerald-50',
@@ -340,7 +340,7 @@ export function PremiumPage() {
                                       { 
                                         icon: Zap, 
                                         title: 'Activation', 
-                                        desc: '1 jeton est consommé chaque jour pour maintenir votre statut Premium', 
+                                        desc: '1 jour est consommé chaque jour pour maintenir votre statut Premium', 
                                         color: 'from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
                                         glow: 'group-hover:shadow-blue-500/40',
                                           iconColor: 'text-blue-50',
@@ -352,7 +352,7 @@ export function PremiumPage() {
                                       { 
                                         icon: Crown, 
                                         title: 'Liberté', 
-                                        desc: 'Accédez à toutes les fonctionnalités Premium tant que vous avez des jetons', 
+                                        desc: 'Accédez à toutes les fonctionnalités Premium tant que vous avez des jours', 
                                         color: 'from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600',
                                         glow: 'group-hover:shadow-purple-500/40',
                                           iconColor: 'text-purple-50',
