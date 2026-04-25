@@ -113,7 +113,7 @@ export function PremiumPage() {
               </h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Jetons Premium:</span>
+                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Jours Premium:</span>
                   <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-400/30">
                     <Zap size={18} className="text-amber-500" />
                     <span className="font-bold text-xl text-amber-600 dark:text-amber-300">{subscription?.premiumTokens ?? user.premiumTokens ?? 0}</span>
@@ -340,7 +340,7 @@ export function PremiumPage() {
                                       { 
                                         icon: Zap, 
                                         title: 'Activation', 
-                                        desc: '1 jour est consommé chaque jour pour maintenir votre statut Premium', 
+                                        desc: '1 jour premium est consommé chaque jour pour maintenir votre statut Premium', 
                                         color: 'from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
                                         glow: 'group-hover:shadow-blue-500/40',
                                           iconColor: 'text-blue-50',
