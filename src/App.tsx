@@ -10,22 +10,54 @@ import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
+// ──────────────────────────────────────────────────────────────────
+// Lazy import wrapper — recharge la page si un chunk est obsolète
+// (cas après déploiement : le vieux index.html du navigateur référence
+// des chunks qui n'existent plus sur le CDN). On retry une fois, puis
+// on force un reload pour récupérer un index.html frais.
+// ──────────────────────────────────────────────────────────────────
+const lazyWithRetry = <T extends React.ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>
+) =>
+  lazy(async () => {
+    const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
+    try {
+      const mod = await factory();
+      sessionStorage.removeItem(STORAGE_KEY);
+      return mod;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const isChunkError =
+        message.includes('Failed to fetch dynamically imported module') ||
+        message.includes('Importing a module script failed') ||
+        message.includes('error loading dynamically imported module');
+
+      if (isChunkError && !sessionStorage.getItem(STORAGE_KEY)) {
+        sessionStorage.setItem(STORAGE_KEY, '1');
+        window.location.reload();
+        // Promise jamais résolue : la page va recharger
+        return new Promise<{ default: T }>(() => {});
+      }
+      throw err;
+    }
+  });
+
 // Lazy load pages for code splitting
-const LandingPage = lazy(() => import('@/pages/LandingPage'));
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const SignupPage = lazy(() => import('@/pages/SignupPage'));
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const TasksPage = lazy(() => import('@/pages/TasksPage'));
-const AgendaPage = lazy(() => import('@/pages/AgendaPage'));
-const HabitsPage = lazy(() => import('@/pages/HabitsPage'));
-const OKRPage = lazy(() => import('@/pages/OKRPage'));
-const StatisticsPage = lazy(() => import('@/pages/StatisticsPage'));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-const PremiumPage = lazy(() => import('@/pages/PremiumPage'));
-const MessagingPage = lazy(() => import('@/pages/MessagingPage'));
+const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'));
+const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
+const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'));
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'));
+const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'));
+const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'));
+const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'));
+const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'));
+const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'));
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'));
+const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'));
+const MessagingPage = lazyWithRetry(() => import('@/pages/MessagingPage'));
 
 // Lazy load Layout
-const Layout = lazy(() => import('@/components/Layout'));
+const Layout = lazyWithRetry(() => import('@/components/Layout'));
 
 // Query client config optimized
 const queryClient = new QueryClient({
