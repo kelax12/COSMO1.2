@@ -72,8 +72,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="w-full max-w-lg rounded-2xl shadow-2xl border overflow-hidden"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+            className="w-full rounded-2xl shadow-2xl border overflow-hidden"
+            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', maxWidth: 'calc(32rem * 1.08)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
@@ -91,14 +91,14 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     Nom de l'habitude
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                    className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
                     style={{
                       backgroundColor: 'rgb(var(--color-surface))',
                       color: 'rgb(var(--color-text-primary))',
@@ -110,14 +110,14 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     Temps (min)
                   </label>
                   <input
                     type="number"
                     value={formData.estimatedTime}
                     onChange={(e) => setFormData({ ...formData, estimatedTime: Number(e.target.value) })}
-                    className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                    className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
                     style={{
                       backgroundColor: 'rgb(var(--color-surface))',
                       color: 'rgb(var(--color-text-primary))',
@@ -130,7 +130,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   Couleur
                 </label>
                 <div className="flex flex-wrap gap-2">
