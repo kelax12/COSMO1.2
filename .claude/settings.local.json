@@ -110,7 +110,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npm audit *)",
       "Bash(grep -c 'POLICY \\\\\\\\\"' supabase/migration/*.sql)",
-      "Bash(grep -rn '\\\\\\\\\"' supabase/)"
+      "Bash(grep -rn '\\\\\\\\\"' supabase/)",
+      "Bash(grep -n \"Date.now\\\\|randomUUID\\\\|kr-\\\\|: \\\\`\\\\${\" src/components/OKRModal.tsx)"
     ]
   }
 }

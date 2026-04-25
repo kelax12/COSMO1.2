@@ -134,7 +134,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         completed: false,
         estimatedTime: valid.reduce((s, kr) => s + Number(kr.estimatedTime) * Number(kr.targetValue), 0),
         keyResults: valid.map((kr, i) => ({
-          id: editingObjective ? editingObjective.keyResults[i]?.id || `${Date.now()}-${i}` : `${Date.now()}-${i}`,
+          id: editingObjective?.keyResults[i]?.id ?? crypto.randomUUID(),
           title: kr.title,
           currentValue: Number(kr.currentValue) || 0,
           targetValue: Number(kr.targetValue),
