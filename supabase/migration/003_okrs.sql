@@ -22,20 +22,20 @@ CREATE TABLE IF NOT EXISTS okrs (
 -- RLS
 ALTER TABLE okrs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own okrs\"
+CREATE POLICY "Users can read own okrs"
   ON okrs FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own okrs\"
+CREATE POLICY "Users can insert own okrs"
   ON okrs FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own okrs\"
+CREATE POLICY "Users can update own okrs"
   ON okrs FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own okrs\"
+CREATE POLICY "Users can delete own okrs"
   ON okrs FOR DELETE
   USING (auth.uid() = user_id);
 

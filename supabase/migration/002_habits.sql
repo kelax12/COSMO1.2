@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS habits (
   estimated_time INTEGER NOT NULL DEFAULT 0, -- en minutes
   color TEXT NOT NULL DEFAULT '#3B82F6',
   icon TEXT NOT NULL DEFAULT '⭐',
-  -- NOTE: completions est un JSONB { \"YYYY-MM-DD\": true/false }
+  -- NOTE: completions est un JSONB { "YYYY-MM-DD": true/false }
   -- Voir audit Sprint 2 : à normaliser vers une table habit_completions dédiée
   completions JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -21,20 +21,20 @@ CREATE TABLE IF NOT EXISTS habits (
 -- RLS
 ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own habits\"
+CREATE POLICY "Users can read own habits"
   ON habits FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own habits\"
+CREATE POLICY "Users can insert own habits"
   ON habits FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own habits\"
+CREATE POLICY "Users can update own habits"
   ON habits FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own habits\"
+CREATE POLICY "Users can delete own habits"
   ON habits FOR DELETE
   USING (auth.uid() = user_id);
 

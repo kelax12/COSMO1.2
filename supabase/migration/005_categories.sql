@@ -14,20 +14,20 @@ CREATE TABLE IF NOT EXISTS categories (
 -- RLS
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own categories\"
+CREATE POLICY "Users can read own categories"
   ON categories FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own categories\"
+CREATE POLICY "Users can insert own categories"
   ON categories FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own categories\"
+CREATE POLICY "Users can update own categories"
   ON categories FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own categories\"
+CREATE POLICY "Users can delete own categories"
   ON categories FOR DELETE
   USING (auth.uid() = user_id);
 

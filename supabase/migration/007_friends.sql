@@ -15,15 +15,15 @@ CREATE TABLE IF NOT EXISTS friends (
 
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own friends\"
+CREATE POLICY "Users can read own friends"
   ON friends FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own friends\"
+CREATE POLICY "Users can insert own friends"
   ON friends FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own friends\"
+CREATE POLICY "Users can delete own friends"
   ON friends FOR DELETE
   USING (auth.uid() = user_id);
 
@@ -42,15 +42,15 @@ CREATE TABLE IF NOT EXISTS friend_requests (
 
 ALTER TABLE friend_requests ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own friend requests\"
+CREATE POLICY "Users can read own friend requests"
   ON friend_requests FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own friend requests\"
+CREATE POLICY "Users can insert own friend requests"
   ON friend_requests FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own friend requests\"
+CREATE POLICY "Users can update own friend requests"
   ON friend_requests FOR UPDATE
   USING (auth.uid() = user_id);
 
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS shared_tasks (
 ALTER TABLE shared_tasks ENABLE ROW LEVEL SECURITY;
 
 -- Le propriétaire de la tâche peut voir qui a accès
-CREATE POLICY \"Task owners can manage shared_tasks\"
+CREATE POLICY "Task owners can manage shared_tasks"
   ON shared_tasks FOR ALL
   USING (
     EXISTS (
@@ -81,7 +81,7 @@ CREATE POLICY \"Task owners can manage shared_tasks\"
   );
 
 -- Le collaborateur peut voir ses propres accès
-CREATE POLICY \"Friends can read their shared tasks\"
+CREATE POLICY "Friends can read their shared tasks"
   ON shared_tasks FOR SELECT
   USING (auth.uid() = friend_id);
 

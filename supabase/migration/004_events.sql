@@ -21,20 +21,20 @@ CREATE TABLE IF NOT EXISTS events (
 -- RLS
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY \"Users can read own events\"
+CREATE POLICY "Users can read own events"
   ON events FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY \"Users can insert own events\"
+CREATE POLICY "Users can insert own events"
   ON events FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can update own events\"
+CREATE POLICY "Users can update own events"
   ON events FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY \"Users can delete own events\"
+CREATE POLICY "Users can delete own events"
   ON events FOR DELETE
   USING (auth.uid() = user_id);
 
