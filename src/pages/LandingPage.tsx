@@ -600,7 +600,7 @@ const LandingPage: React.FC = () => {
                   {[
                     'Glissez une tâche depuis la sidebar vers un créneau : un événement est créé instantanément',
                     'Couleur de l\'événement = couleur de la catégorie de la tâche, pour repérer vos priorités d\'un coup d\'œil',
-                    'Déplacez ou redimensionnez les événements à la souris : la tâche associée se met à jour automatiquement',
+                    'Créez, déplacez ou redimensionnez les événements à la souris : la tâche associée se met à jour automatiquement',
                     'Vues jour / semaine / mois avec basculement en un clic et navigation rapide entre les périodes',
                   ].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
