@@ -101,7 +101,6 @@ export function PremiumPage() {
               <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-3 flex items-center gap-2">
                 {premium ? (
                   <>
-                    <Sparkles className="w-6 h-6 text-[rgb(var(--color-accent))]" />
                     Vous êtes Premium !
                   </>
                 ) : (
