@@ -8,7 +8,7 @@ const Logo: React.FC<LogoProps> = ({ showText = true }) => {
   return (
     <div className="flex items-center gap-3">
         <div className="shrink-0 overflow-hidden rounded-xl transition-colors" style={{ backgroundColor: 'rgb(var(--nav-item-active-bg))' }}>
-            <img src="/logo.png" alt="Cosmo" className="w-10 h-10 object-contain" />
+            <img src="/logo.jpg" alt="Cosmo" className="w-10 h-10 object-contain" />
         </div>
         {showText && (
           <div className="overflow-hidden transition-all duration-300 whitespace-nowrap">
