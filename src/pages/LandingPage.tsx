@@ -328,7 +328,7 @@ const LandingPage: React.FC = () => {
               dans un écosystème unifié qui s'adapte à votre rythme.
             </motion.p>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 }}
@@ -341,6 +341,15 @@ const LandingPage: React.FC = () => {
                 <Rocket size={24} />
                 Commencer gratuitement
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button
+                onClick={() => {
+                  loginDemo();
+                  setTimeout(() => navigate('/dashboard'), 0);
+                }}
+                className="group bg-slate-700 hover:bg-slate-600 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-slate-500/20 hover:shadow-slate-500/30 hover:scale-105 transform flex items-center justify-center gap-3"
+              >
+                Essayer la démo
               </button>
             </motion.div>
 
@@ -1015,6 +1024,15 @@ const LandingPage: React.FC = () => {
                   <Rocket size={24} />
                   Commencer maintenant
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button
+                  onClick={() => {
+                    loginDemo();
+                    setTimeout(() => navigate('/dashboard'), 0);
+                  }}
+                  className="group bg-slate-700 hover:bg-slate-600 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-slate-500/20 hover:shadow-slate-500/30 hover:scale-105 transform flex items-center justify-center gap-3"
+                >
+                  Essayer la démo
                 </button>
               </div>
             </div>
