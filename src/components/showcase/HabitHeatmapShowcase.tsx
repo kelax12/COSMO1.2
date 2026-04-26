@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // ─── Static demo data (Habit Table replication) ─────────────────────
 type Habit = {
@@ -56,13 +57,15 @@ const buildCompletions = (pattern: boolean[]): Record<string, boolean> => {
   return out;
 };
 
+// Patterns are aligned with `days` (last index = today). Today is left at false
+// so it can be filled in by the animation cycle.
 const HABITS: Habit[] = [
   {
     id: 'h1',
     name: 'Méditation matinale',
     color: '#3B82F6',
     estimatedTime: 15,
-    completions: buildCompletions([true, true, true, false, true, true, true]),
+    completions: buildCompletions([true, true, true, false, true, true, false]),
   },
   {
     id: 'h2',
@@ -76,21 +79,21 @@ const HABITS: Habit[] = [
     name: 'Hydratation (2L/j)',
     color: '#10B981',
     estimatedTime: 5,
-    completions: buildCompletions([true, true, true, true, true, true, true]),
+    completions: buildCompletions([true, true, true, true, true, true, false]),
   },
   {
     id: 'h4',
     name: 'Sport 3×/semaine',
     color: '#F59E0B',
     estimatedTime: 60,
-    completions: buildCompletions([false, true, false, false, true, false, true]),
+    completions: buildCompletions([false, true, false, false, true, false, false]),
   },
   {
     id: 'h5',
     name: 'Journal de gratitude',
     color: '#EC4899',
     estimatedTime: 10,
-    completions: buildCompletions([true, true, false, true, true, false, true]),
+    completions: buildCompletions([true, true, false, true, true, false, false]),
   },
   {
     id: 'h6',
@@ -100,6 +103,8 @@ const HABITS: Habit[] = [
     completions: buildCompletions([true, false, true, true, true, true, false]),
   },
 ];
+
+const TODAY_ISO = toIso(TODAY);
 
 const calculateStreak = (completions: Record<string, boolean>): number => {
   const completed = Object.entries(completions)
@@ -131,6 +136,30 @@ const PERIODS = [
 ];
 
 const HabitTableShowcase: React.FC = () => {
+  // Animated set of habit IDs that are validated for "today"
+  const [completedToday, setCompletedToday] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const order = HABITS.map((h) => h.id);
+    let i = 0;
+    const id = setInterval(() => {
+      if (i < order.length) {
+        const nextId = order[i];
+        setCompletedToday((prev) => {
+          const n = new Set(prev);
+          n.add(nextId);
+          return n;
+        });
+        i++;
+      } else {
+        // pause on full state then reset
+        setCompletedToday(new Set());
+        i = 0;
+      }
+    }, 900);
+    return () => clearInterval(id);
+  }, []);
+
   // Hardcoded surface tokens to match landing page dark theme
   const surface = 'rgba(30, 41, 59, 0.85)';
   const hoverBg = 'rgba(255,255,255,0.04)';
@@ -277,37 +306,47 @@ const HabitTableShowcase: React.FC = () => {
                   </div>
                 </td>
                 {days.map((day) => {
-                  const isCompleted = habit.completions[day.date];
+                  const animatedToday = day.isToday && completedToday.has(habit.id);
+                  const isCompleted = habit.completions[day.date] || animatedToday;
                   return (
                     <td key={day.date} className="p-1 text-center">
-                      <div
+                      <motion.div
                         className="w-8 h-8 rounded-lg border-2 flex items-center justify-center mx-auto"
-                        style={{
+                        animate={{
                           backgroundColor: isCompleted
                             ? '#2563EB'
                             : day.isFuture
-                            ? 'transparent'
+                            ? 'rgba(0,0,0,0)'
                             : day.isToday
                             ? 'rgba(37, 99, 235, 0.08)'
-                            : 'transparent',
+                            : 'rgba(0,0,0,0)',
                           borderColor: isCompleted
                             ? '#2563EB'
                             : day.isToday
                             ? '#2563EB'
                             : day.isFuture
-                            ? 'transparent'
+                            ? 'rgba(0,0,0,0)'
                             : border,
-                          color: isCompleted ? 'white' : textSecondary,
+                          scale: animatedToday ? [1, 1.18, 1] : 1,
                         }}
+                        transition={{ duration: 0.45, ease: 'easeOut' }}
+                        style={{ color: isCompleted ? 'white' : textSecondary }}
                       >
                         {isCompleted ? (
-                          <CheckCircle size={14} />
+                          <motion.span
+                            initial={animatedToday ? { scale: 0, rotate: -90 } : false}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+                            className="flex"
+                          >
+                            <CheckCircle size={14} />
+                          </motion.span>
                         ) : day.isFuture ? (
                           <Circle size={12} className="opacity-10" />
                         ) : (
                           <Circle size={14} className="opacity-30" />
                         )}
-                      </div>
+                      </motion.div>
                     </td>
                   );
                 })}
@@ -317,9 +356,25 @@ const HabitTableShowcase: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-1">
                     <Flame size={14} className="text-orange-500" />
-                    <span className="font-semibold text-sm" style={{ color: textPrimary }}>
-                      {calculateStreak(habit.completions)}
-                    </span>
+                    <motion.span
+                      key={
+                        completedToday.has(habit.id)
+                          ? `${habit.id}-on`
+                          : `${habit.id}-off`
+                      }
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="font-semibold text-sm"
+                      style={{ color: textPrimary }}
+                    >
+                      {calculateStreak({
+                        ...habit.completions,
+                        ...(completedToday.has(habit.id)
+                          ? { [TODAY_ISO]: true }
+                          : {}),
+                      })}
+                    </motion.span>
                   </div>
                 </td>
               </tr>
