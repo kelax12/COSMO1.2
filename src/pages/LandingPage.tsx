@@ -1035,55 +1035,16 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-16">
+      <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 overflow-hidden rounded-xl flex items-center justify-center">
-                  <img src="/logo.png" alt="Cosmo" className="w-full h-full object-contain bg-white/10" />
-                </div>
-                <span className="text-2xl font-bold text-white">Cosmo</span>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center">
+                <img src="/logo.png" alt="Cosmo" className="w-full h-full object-contain" />
               </div>
-              <p className="text-slate-400">
-                La plateforme de productivité nouvelle génération qui transforme votre façon de travailler.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-white font-bold mb-4">Produit</h3>
-              <div className="space-y-2">
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Fonctionnalités</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Intégrations</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">API</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Sécurité</a>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-white font-bold mb-4">Support</h3>
-              <div className="space-y-2">
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Centre d'aide</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Contact</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Statut</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Communauté</a>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-white font-bold mb-4">Entreprise</h3>
-              <div className="space-y-2">
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">À propos</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Carrières</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Presse</a>
-                <a href="#" className="block text-slate-400 hover:text-white transition-colors">Partenaires</a>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <div className="text-slate-400 text-sm mb-4 md:mb-0">
-              © 2025 Cosmo. Tous droits réservés.
+              <span className="text-lg font-bold text-white">Cosmo</span>
+              <span className="text-slate-600 hidden sm:inline">—</span>
+              <span className="text-slate-400 text-sm hidden sm:inline">© 2025 Tous droits réservés.</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400">
               <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
