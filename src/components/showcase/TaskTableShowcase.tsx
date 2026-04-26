@@ -94,17 +94,11 @@ const TaskTableShowcase: React.FC = () => (
         </thead>
 
         <tbody className="divide-y divide-white/5">
-          {TASKS.map((task, i) => {
+          {TASKS.map((task) => {
             const cat = CATEGORIES[task.category];
             const isLate = task.deadline === d(-1) && !task.completed;
-            const bgColor = isLate
-              ? 'rgba(239,68,68,0.12)'
-              : task.bookmarked
-              ? 'rgba(234,179,8,0.12)'
-              : i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent';
-            const borderLeft = isLate
-              ? '4px solid rgb(239,68,68)'
-              : task.bookmarked
+            const bgColor = task.bookmarked ? 'rgba(234,179,8,0.12)' : 'transparent';
+            const borderLeft = task.bookmarked
               ? '4px solid #EAB308'
               : `3px solid ${cat?.color ?? '#6B7280'}`;
 
