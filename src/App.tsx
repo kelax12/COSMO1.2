@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import CookieBanner from '@/components/CookieBanner';
 
 // ──────────────────────────────────────────────────────────────────
 // Lazy import wrapper — recharge la page si un chunk est obsolète
@@ -55,6 +56,9 @@ const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'));
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'));
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'));
 const MessagingPage = lazyWithRetry(() => import('@/pages/MessagingPage'));
+const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'));
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
+const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -113,6 +117,9 @@ const AppRoutes = () => (
     <Route path="welcome" element={<PageWithSuspense><LandingPage /></PageWithSuspense>} />
     <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
     <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
+    <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
+    <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
+    <Route path="cgu" element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
@@ -151,6 +158,7 @@ const App: React.FC = () => {
               }}
             />
             <AppRoutes />
+            <CookieBanner />
           </TooltipProvider>
         </BillingProvider>
       </AuthProvider>
