@@ -8,8 +8,7 @@ import {
   Calendar,
   Target,
   Repeat,
-  Sparkles,
-  ChevronRight,
+  Star,
   Rocket,
   ArrowRight,
   X,
@@ -380,18 +379,7 @@ const LandingPage: React.FC = () => {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-500/30 rounded-full px-4 py-2 mb-8 cursor-default hover:bg-white/5 transition-colors"
-            >
-              <Sparkles size={16} className="text-blue-400" />
-              <span className="text-sm font-medium text-blue-200">Nouveau : Organisation avancée intégrée</span>
-              <ChevronRight size={14} className="text-blue-400" />
-            </motion.div>
-
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
