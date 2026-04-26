@@ -18,7 +18,10 @@ import {
   Layers,
   Infinity as InfinityIcon,
   Shield,
-  BarChart2
+  BarChart2,
+  GraduationCap,
+  Briefcase,
+  Users
 } from 'lucide-react';
 import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
@@ -64,7 +67,9 @@ const TESTIMONIALS = [
 const USE_CASES = [
   {
     profile: 'Étudiants',
-    icon: '🎓',
+    icon: GraduationCap,
+    gradient: 'from-violet-500 to-purple-600',
+    accent: '#A78BFA',
     title: 'Excellence académique',
     description: "Gérez vos cours, devoirs et révisions avec une planification optimisée qui s'adapte à votre rythme d'apprentissage.",
     features: ['Planning de révisions optimisé', 'Suivi des notes et objectifs', 'Vision globale + réduction du stress'],
@@ -72,7 +77,9 @@ const USE_CASES = [
   },
   {
     profile: 'Professionnels',
-    icon: '💼',
+    icon: Briefcase,
+    gradient: 'from-blue-500 to-cyan-500',
+    accent: '#60A5FA',
     title: 'Performance maximale',
     description: "Boostez votre carrière avec des outils de productivité qui transforment votre façon de travailler et d'atteindre vos objectifs.",
     features: ['Gestion de projets avancée', 'OKR et développement personnel', 'Système de priorisation efficace'],
@@ -80,7 +87,9 @@ const USE_CASES = [
   },
   {
     profile: 'Équipes',
-    icon: '👥',
+    icon: Users,
+    gradient: 'from-green-500 to-emerald-500',
+    accent: '#34D399',
     title: 'Collaboration fluide',
     description: "Synchronisez votre équipe avec des outils collaboratifs qui alignent tous les membres sur les mêmes objectifs stratégiques.",
     features: ['Partage de tâches simplifié', 'Communication intégrée', 'Tableaux de bord équipe'],
@@ -88,12 +97,21 @@ const USE_CASES = [
   },
   {
     profile: 'Entrepreneurs',
-    icon: '🚀',
+    icon: Rocket,
+    gradient: 'from-orange-500 to-amber-500',
+    accent: '#FB923C',
     title: 'Croissance accélérée',
     description: "Pilotez votre startup avec des métriques précises et des automatisations qui vous font gagner un temps précieux.",
     features: ['Organisation multi-projets avancée', 'Délégation et suivi des tâches', 'Planification stratégique intégrée'],
     path: '/okr'
   }
+];
+
+const ENTRY_OFFSETS = [
+  { x: -400, y: -300, rotate: -15 },
+  { x:  400, y: -300, rotate:  15 },
+  { x: -400, y:  300, rotate: -15 },
+  { x:  400, y:  300, rotate:  15 },
 ];
 
 const ADVANCED_FEATURES = [
@@ -701,41 +719,60 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {USE_CASES.map((useCase, index) => (
-              <motion.div 
-                key={index} 
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-                className="group bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:bg-slate-700/80 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10"
-              >
-                <div className="flex flex-col items-center gap-4 mb-6 text-center">
-                  <div className="text-5xl mb-2">{useCase.icon}</div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">{useCase.profile}</h3>
-                    <p className="text-blue-400 font-semibold">{useCase.title}</p>
-                  </div>
-                </div>
-                <p className="text-slate-300 mb-6 leading-relaxed text-center">{useCase.description}</p>
-                <div className="space-y-3 mb-8 flex flex-col items-center">
-                  {useCase.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
-                      <span className="text-slate-300 font-medium">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-                <button 
-                  onClick={() => handleFeatureClick(useCase.path)}
-                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 group"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ perspective: 1500 }}>
+            {USE_CASES.map((useCase, index) => {
+              const Icon = useCase.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.6, ...ENTRY_OFFSETS[index] }}
+                  whileInView={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 65,
+                    damping: 14,
+                    mass: 1,
+                    delay: 0.1 + index * 0.05,
+                  }}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  className="group bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 transition-colors duration-300 hover:bg-slate-700/80 hover:shadow-2xl"
+                  style={{ boxShadow: `0 0 0 transparent` }}
                 >
-                  En savoir plus
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform text-blue-400" />
-                </button>
-              </motion.div>
-            ))}
+                  <div className="flex flex-col items-center gap-4 mb-6 text-center">
+                    <div
+                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${useCase.gradient} flex items-center justify-center shadow-lg mb-2 transition-transform group-hover:scale-110`}
+                      style={{ boxShadow: `0 10px 30px ${useCase.accent}33` }}
+                    >
+                      <Icon size={32} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">{useCase.profile}</h3>
+                      <p className="font-semibold" style={{ color: useCase.accent }}>{useCase.title}</p>
+                    </div>
+                  </div>
+                  <p className="text-slate-300 mb-6 leading-relaxed text-center">{useCase.description}</p>
+                  <div className="space-y-3 mb-8 flex flex-col items-center">
+                    {useCase.features.map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <CheckCircle size={16} className="flex-shrink-0" style={{ color: useCase.accent }} />
+                        <span className="text-slate-300 font-medium">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handleFeatureClick(useCase.path)}
+                    className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = useCase.accent + '80')}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  >
+                    En savoir plus
+                    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" style={{ color: useCase.accent }} />
+                  </button>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
