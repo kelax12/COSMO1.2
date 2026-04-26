@@ -7,11 +7,7 @@ import {
   CheckCircle,
   Calendar,
   Target,
-  Zap,
-  Users,
-  Shield,
-  Globe,
-  Star,
+  Repeat,
   Sparkles,
   ChevronRight,
   Rocket,
@@ -22,8 +18,8 @@ import {
   Database,
   Layers,
   Infinity as InfinityIcon,
-  BarChart2,
-  Eye
+  Shield,
+  BarChart2
 } from 'lucide-react';
 import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
@@ -260,14 +256,6 @@ const LandingPage: React.FC = () => {
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const [userCount, setUserCount] = useState(12847);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUserCount(prev => prev + Math.floor(Math.random() * 3) + 1);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -290,13 +278,6 @@ const LandingPage: React.FC = () => {
     setLoginMode('register');
     setShowLoginModal(true);
   };
-
-  const stats = [
-    { number: userCount.toLocaleString(), label: 'Utilisateurs actifs', icon: Users },
-    { number: '99.9%', label: 'Uptime garanti', icon: Shield },
-    { number: '150+', label: 'Pays utilisateurs', icon: Globe },
-    { number: '4.9/5', label: 'Note moyenne', icon: Star }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden scroll-smooth">
@@ -451,54 +432,6 @@ const LandingPage: React.FC = () => {
               </button>
             </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-8 text-slate-400"
-            >
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  {['👨‍💼', '👩‍💻', '👨‍🎓', '👩‍🔬'].map((avatar, i) => (
-                    <div key={i} className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-sm border-2 border-slate-800">
-                      {avatar}
-                    </div>
-                  ))}
-                </div>
-                <span className="font-medium">
-                  Déjà adopté par <span className="text-blue-400 font-bold">{userCount.toLocaleString()}+</span> utilisateurs
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} className="text-yellow-400 fill-current" />
-                ))}
-                <span className="ml-2 font-medium">4.9/5 sur toutes les plateformes</span>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-black/20 backdrop-blur-xl border-y border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center group"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
-                  <stat.icon size={24} className="text-blue-400" />
-                </div>
-                <div className="text-3xl lg:text-4xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-slate-400 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
@@ -572,9 +505,6 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                      <Eye size={11} /> Aperçu live
-                    </div>
                     <TaskTableShowcase />
                   </div>
                 </motion.div>
@@ -626,9 +556,6 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-red-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                      <Eye size={11} /> Aperçu live
-                    </div>
                     <AgendaShowcase />
                   </div>
                 </motion.div>
@@ -674,9 +601,6 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-green-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                      <Eye size={11} /> Aperçu live
-                    </div>
                     <OKRCardShowcase />
                   </div>
                 </motion.div>
@@ -693,7 +617,7 @@ const LandingPage: React.FC = () => {
                 transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl shadow-lg shadow-yellow-500/30">
-                  <Zap size={28} className="text-white" />
+                  <Repeat size={28} className="text-white" />
                 </div>
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi complet. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
@@ -722,9 +646,6 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                      <Eye size={11} />
-                    </div>
                     <HabitHeatmapShowcase />
                   </div>
                 </motion.div>
@@ -770,9 +691,6 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-violet-500/20 to-purple-600/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-violet-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
-                      <Eye size={11} /> Aperçu live
-                    </div>
                     <StatsShowcase />
                   </div>
                 </motion.div>
