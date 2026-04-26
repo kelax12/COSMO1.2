@@ -1086,9 +1086,9 @@ const LandingPage: React.FC = () => {
               © 2025 Cosmo. Tous droits réservés.
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400">
-              <a href="#" className="hover:text-white transition-colors">Confidentialité</a>
-              <a href="#" className="hover:text-white transition-colors">Conditions</a>
-              <a href="#" className="hover:text-white transition-colors">Cookies</a>
+              <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
+              <a href="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</a>
+              <a href="/cgu" className="hover:text-white transition-colors">CGU</a>
             </div>
           </div>
         </div>
