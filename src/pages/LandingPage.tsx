@@ -215,7 +215,7 @@ const LandingPage: React.FC = () => {
             <div className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
               <div className="relative group">
                 <div className="w-10 h-10 overflow-hidden rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-105">
-                  <img src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/b4ddfaeb-2a04-4c84-84c7-5a56cde957c5/image-1767984831202.png?width=8000&height=8000&resize=contain" alt="Cosmo" className="w-full h-full object-contain bg-white/10" />
+                  <img src="/logo.png" alt="Cosmo" className="w-full h-full object-contain bg-white/10" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur-lg opacity-30 animate-pulse"></div>
               </div>
@@ -1041,7 +1041,7 @@ const LandingPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 overflow-hidden rounded-xl flex items-center justify-center">
-                  <img src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/b4ddfaeb-2a04-4c84-84c7-5a56cde957c5/image-1767984831202.png?width=8000&height=8000&resize=contain" alt="Cosmo" className="w-full h-full object-contain bg-white/10" />
+                  <img src="/logo.png" alt="Cosmo" className="w-full h-full object-contain bg-white/10" />
                 </div>
                 <span className="text-2xl font-bold text-white">Cosmo</span>
               </div>
