@@ -42,7 +42,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               <strong className="text-white">Données de productivité :</strong> tâches, catégories, listes, habitudes et leur historique de complétion, événements agenda, OKR (objectifs et résultats clés) et leurs progressions
             </li>
             <li>
-              <strong className="text-white">Données sociales :</strong> liste d'amis, demandes d'amitié, tâches partagées avec d'autres utilisateurs, messages de chat échangés via la messagerie intégrée
+              <strong className="text-white">Données sociales :</strong> liste d'amis, demandes d'amitié, tâches partagées avec d'autres utilisateurs
             </li>
             <li>
               <strong className="text-white">Données d'abonnement :</strong> statut Premium, tokens, date de fin d'abonnement — les données bancaires sont gérées exclusivement par Stripe, Cosmo n'y a pas accès
@@ -91,8 +91,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         <Section title="6. Durée de conservation">
           <ul className="list-disc list-inside space-y-1">
             <li>Données de compte et de contenu : conservées pendant toute la durée d'activité du compte, puis supprimées définitivement sous 90 jours après clôture</li>
-            <li>Messages de chat : supprimés à la demande ou à la clôture du compte</li>
-            <li>Tokens de session : expiration automatique selon la configuration Supabase</li>
+<li>Tokens de session : expiration automatique selon la configuration Supabase</li>
             <li>Données de paiement : conservées selon les obligations légales (10 ans pour la comptabilité)</li>
           </ul>
         </Section>
