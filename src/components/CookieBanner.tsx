@@ -60,7 +60,7 @@ const CookieBanner: React.FC = () => {
             </div>
 
             <p className="text-slate-400 text-xs leading-relaxed mb-4">
-              Nous utilisons des cookies essentiels pour le fonctionnement de l'application et des cookies analytiques pour améliorer votre expérience. Consultez notre{' '}
+              Nous utilisons uniquement des cookies <strong className="text-white">strictement nécessaires</strong> au fonctionnement de l'application (session, préférences). Aucun cookie publicitaire ni de tracking. Consultez notre{' '}
               <Link to="/politique-confidentialite" className="text-blue-400 hover:underline">
                 politique de confidentialité
               </Link>.
