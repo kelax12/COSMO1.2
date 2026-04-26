@@ -23,7 +23,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
           Retour
         </button>
 
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2">Politique de confidentialité</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">Politique de confidentialité</h1>
         <p className="text-slate-400 mb-10">Dernière mise à jour : 26 avril 2026</p>
 
         <Section title="1. Responsable du traitement">
