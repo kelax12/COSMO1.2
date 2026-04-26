@@ -18,10 +18,7 @@ import {
   Layers,
   Infinity as InfinityIcon,
   Shield,
-  BarChart2,
-  GraduationCap,
-  Briefcase,
-  Users
+  BarChart2
 } from 'lucide-react';
 import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
@@ -67,8 +64,6 @@ const TESTIMONIALS = [
 const USE_CASES = [
   {
     profile: 'Étudiants',
-    icon: GraduationCap,
-    gradient: 'from-violet-500 to-purple-600',
     accent: '#A78BFA',
     title: 'Excellence académique',
     description: "Gérez vos cours, devoirs et révisions avec une planification optimisée qui s'adapte à votre rythme d'apprentissage.",
@@ -77,8 +72,6 @@ const USE_CASES = [
   },
   {
     profile: 'Professionnels',
-    icon: Briefcase,
-    gradient: 'from-blue-500 to-cyan-500',
     accent: '#60A5FA',
     title: 'Performance maximale',
     description: "Boostez votre carrière avec des outils de productivité qui transforment votre façon de travailler et d'atteindre vos objectifs.",
@@ -87,8 +80,6 @@ const USE_CASES = [
   },
   {
     profile: 'Équipes',
-    icon: Users,
-    gradient: 'from-green-500 to-emerald-500',
     accent: '#34D399',
     title: 'Collaboration fluide',
     description: "Synchronisez votre équipe avec des outils collaboratifs qui alignent tous les membres sur les mêmes objectifs stratégiques.",
@@ -97,8 +88,6 @@ const USE_CASES = [
   },
   {
     profile: 'Entrepreneurs',
-    icon: Rocket,
-    gradient: 'from-orange-500 to-amber-500',
     accent: '#FB923C',
     title: 'Croissance accélérée',
     description: "Pilotez votre startup avec des métriques précises et des automatisations qui vous font gagner un temps précieux.",
@@ -719,9 +708,9 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ perspective: 1500 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {USE_CASES.map((useCase, index) => {
-              const Icon = useCase.icon;
+              const num = String(index + 1).padStart(2, '0');
               return (
                 <motion.div
                   key={index}
@@ -735,40 +724,87 @@ const LandingPage: React.FC = () => {
                     mass: 1,
                     delay: 0.1 + index * 0.05,
                   }}
-                  whileHover={{ y: -6, scale: 1.02 }}
-                  className="group bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 transition-colors duration-300 hover:bg-slate-700/80 hover:shadow-2xl"
-                  style={{ boxShadow: `0 0 0 transparent` }}
+                  whileHover={{ y: -4 }}
+                  className="group relative overflow-hidden p-8 lg:p-10"
+                  style={{
+                    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+                    border: '1px solid rgba(148, 163, 184, 0.12)',
+                  }}
                 >
-                  <div className="flex flex-col items-center gap-4 mb-6 text-center">
-                    <div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${useCase.gradient} flex items-center justify-center shadow-lg mb-2 transition-transform group-hover:scale-110`}
-                      style={{ boxShadow: `0 10px 30px ${useCase.accent}33` }}
+                  {/* Top hairline accent */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-px transition-all duration-500 group-hover:h-[3px]"
+                    style={{ backgroundColor: useCase.accent, opacity: 0.6 }}
+                  />
+
+                  {/* Watermark index */}
+                  <div
+                    className="absolute -top-2 -right-2 select-none pointer-events-none font-bold tabular-nums leading-none transition-colors duration-500"
+                    style={{
+                      fontSize: '8rem',
+                      color: 'rgba(148, 163, 184, 0.06)',
+                      letterSpacing: '-0.05em',
+                    }}
+                  >
+                    {num}
+                  </div>
+
+                  {/* Kicker row */}
+                  <div className="relative flex items-baseline gap-3 mb-6">
+                    <span
+                      className="text-xs font-mono tabular-nums tracking-widest"
+                      style={{ color: useCase.accent }}
                     >
-                      <Icon size={32} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-white">{useCase.profile}</h3>
-                      <p className="font-semibold" style={{ color: useCase.accent }}>{useCase.title}</p>
-                    </div>
+                      {num}
+                    </span>
+                    <span
+                      className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+                      style={{ color: useCase.accent }}
+                    >
+                      {useCase.profile}
+                    </span>
+                    <span
+                      className="flex-1 h-px"
+                      style={{ backgroundColor: useCase.accent, opacity: 0.25 }}
+                    />
                   </div>
-                  <p className="text-slate-300 mb-6 leading-relaxed text-center">{useCase.description}</p>
-                  <div className="space-y-3 mb-8 flex flex-col items-center">
+
+                  {/* Title */}
+                  <h3 className="relative text-3xl lg:text-4xl font-semibold text-white mb-5 leading-[1.1] tracking-tight">
+                    {useCase.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="relative text-base text-slate-400 leading-relaxed mb-8 max-w-md">
+                    {useCase.description}
+                  </p>
+
+                  {/* Features as em-dash list */}
+                  <ul className="relative space-y-2.5 mb-10">
                     {useCase.features.map((feature, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <CheckCircle size={16} className="flex-shrink-0" style={{ color: useCase.accent }} />
-                        <span className="text-slate-300 font-medium">{feature}</span>
-                      </div>
+                      <li
+                        key={i}
+                        className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed"
+                      >
+                        <span
+                          className="select-none mt-[2px]"
+                          style={{ color: useCase.accent }}
+                        >
+                          —
+                        </span>
+                        <span>{feature}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
+
+                  {/* Editorial link */}
                   <button
                     onClick={() => handleFeatureClick(useCase.path)}
-                    className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = useCase.accent + '80')}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+                    className="relative inline-flex items-center gap-2 text-sm font-semibold tracking-wide transition-all duration-300 hover:gap-3"
+                    style={{ color: useCase.accent }}
                   >
                     En savoir plus
-                    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" style={{ color: useCase.accent }} />
+                    <ArrowRight size={14} />
                   </button>
                 </motion.div>
               );
