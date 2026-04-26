@@ -79,11 +79,7 @@ export function PremiumPage() {
               className="inline-flex items-center gap-3 mb-4"
               whileHover={{ scale: 1.02 }}
             >
-              <motion.div
-                className="p-4 bg-yellow-400 rounded-2xl shadow-xl shadow-yellow-400/30"
-              >
-                <Crown size={32} className="text-white" />
-              </motion.div>
+              <Crown size={36} style={{ color: '#eab308' }} />
               <h1 className="text-3xl sm:text-5xl font-bold text-[rgb(var(--color-text-primary))]">
                 Cosmo Premium
               </h1>
