@@ -85,6 +85,20 @@ const HABITS: Habit[] = [
     estimatedTime: 60,
     completions: buildCompletions([false, true, false, false, true, false, true]),
   },
+  {
+    id: 'h5',
+    name: 'Journal de gratitude',
+    color: '#EC4899',
+    estimatedTime: 10,
+    completions: buildCompletions([true, true, false, true, true, false, true]),
+  },
+  {
+    id: 'h6',
+    name: 'Apprentissage langue',
+    color: '#EF4444',
+    estimatedTime: 20,
+    completions: buildCompletions([true, false, true, true, true, true, false]),
+  },
 ];
 
 const calculateStreak = (completions: Record<string, boolean>): number => {
@@ -133,50 +147,45 @@ const HabitTableShowcase: React.FC = () => {
     >
       {/* Header */}
       <div
-        className="p-4 md:p-5 border-b"
+        className="px-4 py-2.5 border-b"
         style={{ backgroundColor: hoverBg, borderColor: border }}
       >
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <h2 className="text-lg font-semibold" style={{ color: textPrimary }}>
-              Tableau de suivi
-            </h2>
-            <p className="text-xs mt-1" style={{ color: textSecondary }}>
-              Vue d'ensemble de toutes vos habitudes
-            </p>
-          </div>
+        <div className="flex flex-row justify-between items-center gap-3">
+          <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
+            Tableau de suivi
+          </h2>
 
           {/* Period nav */}
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center gap-1.5">
             <button
-              className="p-2 rounded-md border cursor-default"
+              className="p-1.5 rounded-md border cursor-default"
               style={{ color: textSecondary, borderColor: border }}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             </button>
             <div
-              className="text-xs font-medium min-w-[120px] text-center"
+              className="text-xs font-medium min-w-[110px] text-center"
               style={{ color: textPrimary }}
             >
               Semaine du 20 avr.
             </div>
             <button
-              className="p-2 rounded-md border cursor-default"
+              className="p-1.5 rounded-md border cursor-default"
               style={{ color: textMuted, borderColor: border }}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             </button>
           </div>
 
           {/* Period selector */}
           <div
-            className="flex items-center rounded-lg p-1 shadow-sm border"
+            className="flex items-center rounded-lg p-0.5 shadow-sm border"
             style={{ backgroundColor: surface, borderColor: border }}
           >
             {PERIODS.map((opt) => (
               <div
                 key={opt.value}
-                className="px-3 py-1.5 rounded-md text-xs font-medium cursor-default"
+                className="px-2.5 py-1 rounded-md text-xs font-medium cursor-default"
                 style={{
                   backgroundColor: opt.value === 'week' ? '#2563EB' : 'transparent',
                   color: opt.value === 'week' ? 'white' : textSecondary,

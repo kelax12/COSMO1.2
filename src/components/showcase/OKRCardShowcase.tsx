@@ -37,20 +37,6 @@ const OKRS: OKR[] = [
       { id: 'kr3', title: 'Taux de rétention J30', currentValue: 71, targetValue: 85, estimatedTime: 60, completed: false },
     ],
   },
-  {
-    id: '2',
-    title: 'Excellence technique & performance',
-    description: "Réduire la dette technique et garantir une expérience fluide à l'échelle.",
-    category: 'Engineering',
-    categoryColor: '#10B981',
-    startDate: '2026-04-01',
-    endDate: '2026-06-30',
-    keyResults: [
-      { id: 'kr4', title: 'Couverture de tests', currentValue: 54, targetValue: 80, estimatedTime: 90, completed: false },
-      { id: 'kr5', title: 'Temps de chargement initial', currentValue: 60, targetValue: 100, estimatedTime: 45, completed: false },
-      { id: 'kr6', title: 'Incidents critiques en prod', currentValue: 8, targetValue: 10, estimatedTime: 30, completed: false },
-    ],
-  },
 ];
 
 const formatTime = (minutes: number) => {

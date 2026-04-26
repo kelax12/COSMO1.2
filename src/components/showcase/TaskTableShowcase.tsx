@@ -98,9 +98,7 @@ const TaskTableShowcase: React.FC = () => (
             const cat = CATEGORIES[task.category];
             const isLate = task.deadline === d(-1) && !task.completed;
             const bgColor = task.bookmarked ? 'rgba(234,179,8,0.12)' : 'transparent';
-            const borderLeft = task.bookmarked
-              ? '4px solid #EAB308'
-              : `3px solid ${cat?.color ?? '#6B7280'}`;
+            const borderLeft = task.bookmarked ? '4px solid #EAB308' : 'none';
 
             return (
               <tr
