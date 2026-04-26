@@ -332,24 +332,24 @@ const LandingPage: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-6 justify-center mb-16"
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
             >
-              <button
-                onClick={handleRegisterClick}
-                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3"
-              >
-                <Rocket size={24} />
-                Commencer gratuitement
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
               <button
                 onClick={() => {
                   loginDemo();
                   setTimeout(() => navigate('/dashboard'), 0);
                 }}
-                className="group bg-slate-700 hover:bg-slate-600 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-slate-500/20 hover:shadow-slate-500/30 hover:scale-105 transform flex items-center justify-center gap-3"
+                className="group bg-white hover:bg-slate-100 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
               >
                 Essayer la démo
+              </button>
+              <button
+                onClick={handleRegisterClick}
+                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3"
+              >
+                <Rocket size={20} />
+                Commencer gratuitement
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
 
@@ -1016,22 +1016,23 @@ const LandingPage: React.FC = () => {
               <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
                 Rejoignez des milliers de professionnels qui ont déjà transformé leur façon de travailler avec Cosmo
               </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <button
-                  onClick={handleRegisterClick}
-                  className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3"
-                >
-                  <Rocket size={24} />
-                  Commencer maintenant
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => {
                     loginDemo();
                     setTimeout(() => navigate('/dashboard'), 0);
                   }}
-                  className="group bg-slate-700 hover:bg-slate-600 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg shadow-slate-500/20 hover:shadow-slate-500/30 hover:scale-105 transform flex items-center justify-center gap-3"
+                  className="group bg-white hover:bg-slate-100 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
                 >
+                  Essayer la démo
+                </button>
+                <button
+                  onClick={handleRegisterClick}
+                  className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3"
+                >
+                  <Rocket size={20} />
+                  Commencer maintenant
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   Essayer la démo
                 </button>
               </div>
