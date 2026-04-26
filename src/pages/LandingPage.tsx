@@ -8,7 +8,6 @@ import {
   Calendar,
   Target,
   Repeat,
-  Rocket,
   ArrowRight,
   X,
   BarChart2
@@ -339,17 +338,15 @@ const LandingPage: React.FC = () => {
                   loginDemo();
                   setTimeout(() => navigate('/dashboard'), 0);
                 }}
-                className="group bg-white hover:bg-slate-100 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
+                className="group bg-slate-200 hover:bg-slate-300 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
               >
                 Essayer la démo
               </button>
               <button
                 onClick={handleRegisterClick}
-                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3"
+                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
               >
-                <Rocket size={20} />
                 Commencer gratuitement
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
 
@@ -1022,18 +1019,15 @@ const LandingPage: React.FC = () => {
                     loginDemo();
                     setTimeout(() => navigate('/dashboard'), 0);
                   }}
-                  className="group bg-white hover:bg-slate-100 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
+                  className="group bg-slate-200 hover:bg-slate-300 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
                 >
                   Essayer la démo
                 </button>
                 <button
                   onClick={handleRegisterClick}
-                  className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3"
+                  className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
                 >
-                  <Rocket size={20} />
                   Commencer maintenant
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                  Essayer la démo
                 </button>
               </div>
             </div>
