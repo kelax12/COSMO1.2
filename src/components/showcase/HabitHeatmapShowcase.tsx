@@ -1,105 +1,325 @@
-import React, { useMemo } from 'react';
-import { Flame, TrendingUp } from 'lucide-react';
+import React from 'react';
+import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const HABITS_STATIC = [
-  { name: 'Méditation Matinale', icon: '🧘', color: '#3B82F6', rate: 0.85, streak: 21 },
-  { name: 'Lecture du soir', icon: '📚', color: '#8B5CF6', rate: 0.72, streak: 8 },
-  { name: 'Hydratation (2L/j)', icon: '💧', color: '#10B981', rate: 0.91, streak: 34 },
-  { name: 'Sport 3×/semaine', icon: '🏋️', color: '#F59E0B', rate: 0.68, streak: 5 },
-];
+// ─── Static demo data (Habit Table replication) ─────────────────────
+type Habit = {
+  id: string;
+  name: string;
+  color: string;
+  estimatedTime: number;
+  completions: Record<string, boolean>; // yyyy-mm-dd → done
+};
 
-const WEEKS = 18;
-const DAYS = 7;
-const TODAY = new Date();
+// Reference "today" for the showcase
+const TODAY = new Date('2026-04-26');
 TODAY.setHours(0, 0, 0, 0);
 
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed + 1) * 10000;
-  return x - Math.floor(x);
-}
+const toIso = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
-function buildCompletions(rate: number, habitIdx: number): boolean[][] {
-  const grid: boolean[][] = [];
-  for (let w = 0; w < WEEKS; w++) {
-    const week: boolean[] = [];
-    for (let d = 0; d < DAYS; d++) {
-      const dayOffset = (WEEKS - 1 - w) * 7 + (DAYS - 1 - d);
-      const cellDate = new Date(TODAY);
-      cellDate.setDate(cellDate.getDate() - dayOffset);
-      if (cellDate > TODAY) {
-        week.push(false);
-      } else {
-        week.push(seededRandom(habitIdx * 1000 + w * 7 + d) < rate);
-      }
-    }
-    grid.push(week);
+// Build 7-day window ending today
+const DAYS_COUNT = 7;
+const days = (() => {
+  const arr: {
+    date: string;
+    dayName: string;
+    dayNumber: number;
+    isToday: boolean;
+    isFuture: boolean;
+  }[] = [];
+  const start = new Date(TODAY);
+  start.setDate(TODAY.getDate() - DAYS_COUNT + 1);
+  for (let i = 0; i < DAYS_COUNT; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    arr.push({
+      date: toIso(d),
+      dayName: d.toLocaleDateString('fr-FR', { weekday: 'short' }),
+      dayNumber: d.getDate(),
+      isToday: d.toDateString() === TODAY.toDateString(),
+      isFuture: d > TODAY,
+    });
   }
-  return grid;
-}
+  return arr;
+})();
 
-const HabitHeatmapShowcase: React.FC = () => {
-  const grids = useMemo(() =>
-    HABITS_STATIC.map((h, i) => buildCompletions(h.rate, i)),
-    []
-  );
+// Static completions per habit: array of booleans aligned with `days`
+const buildCompletions = (pattern: boolean[]): Record<string, boolean> => {
+  const out: Record<string, boolean> = {};
+  days.forEach((d, i) => {
+    if (pattern[i]) out[d.date] = true;
+  });
+  return out;
+};
+
+const HABITS: Habit[] = [
+  {
+    id: 'h1',
+    name: 'Méditation matinale',
+    color: '#3B82F6',
+    estimatedTime: 15,
+    completions: buildCompletions([true, true, true, false, true, true, true]),
+  },
+  {
+    id: 'h2',
+    name: 'Lecture du soir',
+    color: '#8B5CF6',
+    estimatedTime: 30,
+    completions: buildCompletions([true, false, true, true, false, true, false]),
+  },
+  {
+    id: 'h3',
+    name: 'Hydratation (2L/j)',
+    color: '#10B981',
+    estimatedTime: 5,
+    completions: buildCompletions([true, true, true, true, true, true, true]),
+  },
+  {
+    id: 'h4',
+    name: 'Sport 3×/semaine',
+    color: '#F59E0B',
+    estimatedTime: 60,
+    completions: buildCompletions([false, true, false, false, true, false, true]),
+  },
+];
+
+const calculateStreak = (completions: Record<string, boolean>): number => {
+  const completed = Object.entries(completions)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .sort()
+    .reverse();
+  if (completed.length === 0) return 0;
+  const today = toIso(TODAY);
+  const yest = new Date(TODAY);
+  yest.setDate(TODAY.getDate() - 1);
+  const yestStr = toIso(yest);
+  if (completed[0] !== today && completed[0] !== yestStr) return 0;
+  let streak = 1;
+  for (let i = 1; i < completed.length; i++) {
+    const diff = Math.round(
+      (new Date(completed[i - 1]).getTime() - new Date(completed[i]).getTime()) / 86400000
+    );
+    if (diff === 1) streak++;
+    else break;
+  }
+  return streak;
+};
+
+const PERIODS = [
+  { value: 'week', label: 'Semaine' },
+  { value: 'month', label: 'Mois' },
+  { value: 'all', label: 'Tout' },
+];
+
+const HabitTableShowcase: React.FC = () => {
+  // Hardcoded surface tokens to match landing page dark theme
+  const surface = 'rgba(30, 41, 59, 0.85)';
+  const hoverBg = 'rgba(255,255,255,0.04)';
+  const border = 'rgba(255,255,255,0.08)';
+  const textPrimary = '#F1F5F9';
+  const textSecondary = '#94A3B8';
+  const textMuted = '#64748B';
+  const accent = '#3B82F6';
 
   return (
-    <div className="w-full space-y-3">
-      {HABITS_STATIC.map((habit, hi) => (
-        <div
-          key={hi}
-          className="rounded-2xl bg-slate-800/80 border border-white/10 px-4 py-3 shadow-xl"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-2.5">
-              <span className="text-lg leading-none">{habit.icon}</span>
-              <div>
-                <p className="text-white font-semibold text-sm leading-tight">{habit.name}</p>
-                <p className="text-slate-500 text-xs">{Math.round(habit.rate * 100)}% ce mois</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-orange-400 text-xs font-bold">
-                <Flame size={13} className="fill-orange-400" />
-                {habit.streak}
-              </div>
-              <div className="flex items-center gap-1 text-xs font-semibold" style={{ color: habit.color }}>
-                <TrendingUp size={12} />
-                {Math.round(habit.rate * 100)}%
-              </div>
-            </div>
+    <div
+      className="rounded-xl overflow-hidden border shadow-2xl"
+      style={{ backgroundColor: surface, borderColor: border }}
+    >
+      {/* Header */}
+      <div
+        className="p-4 md:p-5 border-b"
+        style={{ backgroundColor: hoverBg, borderColor: border }}
+      >
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h2 className="text-lg font-semibold" style={{ color: textPrimary }}>
+              Tableau de suivi
+            </h2>
+            <p className="text-xs mt-1" style={{ color: textSecondary }}>
+              Vue d'ensemble de toutes vos habitudes
+            </p>
           </div>
 
-          {/* Heatmap grid */}
-          <div className="flex gap-[3px]">
-            {grids[hi].map((week, wi) => (
-              <div key={wi} className="flex flex-col gap-[3px]">
-                {week.map((done, di) => {
-                  const dayOffset = (WEEKS - 1 - wi) * 7 + (DAYS - 1 - di);
-                  const isFuture = dayOffset < 0;
-                  return (
-                    <div
-                      key={di}
-                      className="w-3 h-3 rounded-[2px] flex-shrink-0"
-                      style={{
-                        backgroundColor: isFuture
-                          ? 'transparent'
-                          : done
-                          ? habit.color
-                          : 'rgba(255,255,255,0.06)',
-                        opacity: isFuture ? 0 : done ? 1 : 0.7,
-                      }}
-                    />
-                  );
-                })}
+          {/* Period nav */}
+          <div className="flex items-center justify-end gap-2">
+            <button
+              className="p-2 rounded-md border cursor-default"
+              style={{ color: textSecondary, borderColor: border }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div
+              className="text-xs font-medium min-w-[120px] text-center"
+              style={{ color: textPrimary }}
+            >
+              Semaine du 20 avr.
+            </div>
+            <button
+              className="p-2 rounded-md border cursor-default"
+              style={{ color: textMuted, borderColor: border }}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          {/* Period selector */}
+          <div
+            className="flex items-center rounded-lg p-1 shadow-sm border"
+            style={{ backgroundColor: surface, borderColor: border }}
+          >
+            {PERIODS.map((opt) => (
+              <div
+                key={opt.value}
+                className="px-3 py-1.5 rounded-md text-xs font-medium cursor-default"
+                style={{
+                  backgroundColor: opt.value === 'week' ? '#2563EB' : 'transparent',
+                  color: opt.value === 'week' ? 'white' : textSecondary,
+                }}
+              >
+                {opt.label}
               </div>
             ))}
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead className="border-b" style={{ borderColor: border }}>
+            <tr>
+              <th
+                className="text-left p-3 font-semibold sticky left-0 z-20 min-w-[180px] border-r"
+                style={{
+                  color: textSecondary,
+                  backgroundColor: surface,
+                  borderColor: border,
+                }}
+              >
+                Habitude
+              </th>
+              {days.map((day) => (
+                <th
+                  key={day.date}
+                  className="text-center p-2 font-medium min-w-[44px]"
+                  style={{ color: textSecondary }}
+                >
+                  <div className="text-[10px] mb-1" style={{ color: textMuted }}>
+                    {day.dayName}
+                  </div>
+                  <div
+                    className={`text-xs ${day.isToday ? 'font-bold' : ''}`}
+                    style={{ color: day.isToday ? accent : textPrimary }}
+                  >
+                    {day.dayNumber}
+                  </div>
+                </th>
+              ))}
+              <th
+                className="text-center p-3 font-semibold min-w-[70px] border-l"
+                style={{ color: textSecondary, borderColor: border }}
+              >
+                Série
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {HABITS.map((habit, index) => (
+              <tr
+                key={habit.id}
+                className="border-b"
+                style={{
+                  borderColor: border,
+                  backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                }}
+              >
+                <td
+                  className="p-3 sticky left-0 z-10 border-r"
+                  style={{
+                    borderColor: border,
+                    backgroundColor: index % 2 === 0 ? surface : 'rgba(30, 41, 59, 0.92)',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: habit.color }}
+                    />
+                    <div className="min-w-0">
+                      <div
+                        className="font-medium truncate text-sm leading-tight"
+                        style={{ color: textPrimary }}
+                      >
+                        {habit.name}
+                      </div>
+                      <div
+                        className="text-xs flex items-center gap-2 mt-0.5"
+                        style={{ color: textSecondary }}
+                      >
+                        <span>{habit.estimatedTime} min</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                {days.map((day) => {
+                  const isCompleted = habit.completions[day.date];
+                  return (
+                    <td key={day.date} className="p-1 text-center">
+                      <div
+                        className="w-8 h-8 rounded-lg border-2 flex items-center justify-center mx-auto"
+                        style={{
+                          backgroundColor: isCompleted
+                            ? '#2563EB'
+                            : day.isFuture
+                            ? 'transparent'
+                            : day.isToday
+                            ? 'rgba(37, 99, 235, 0.08)'
+                            : 'transparent',
+                          borderColor: isCompleted
+                            ? '#2563EB'
+                            : day.isToday
+                            ? '#2563EB'
+                            : day.isFuture
+                            ? 'transparent'
+                            : border,
+                          color: isCompleted ? 'white' : textSecondary,
+                        }}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle size={14} />
+                        ) : day.isFuture ? (
+                          <Circle size={12} className="opacity-10" />
+                        ) : (
+                          <Circle size={14} className="opacity-30" />
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
+                <td
+                  className="p-3 text-center border-l"
+                  style={{ borderColor: border }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <Flame size={14} className="text-orange-500" />
+                    <span className="font-semibold text-sm" style={{ color: textPrimary }}>
+                      {calculateStreak(habit.completions)}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
 
-export default HabitHeatmapShowcase;
+export default HabitTableShowcase;

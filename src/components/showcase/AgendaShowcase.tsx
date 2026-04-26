@@ -123,13 +123,13 @@ const AgendaShowcase: React.FC = () => {
     <div
       ref={containerRef}
       className="relative flex overflow-hidden rounded-2xl border border-white/10 shadow-2xl select-none"
-      style={{ height: 520, backgroundColor: '#0F172A' }}
+      style={{ height: 520, backgroundColor: '#132237' }}
     >
 
       {/* ══════════ SIDEBAR ══════════ */}
       <div
         className="flex flex-col border-r border-white/10 shrink-0"
-        style={{ width: 218, backgroundColor: '#0F172A' }}
+        style={{ width: 218, backgroundColor: '#132237' }}
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-white/10">
@@ -236,7 +236,7 @@ const AgendaShowcase: React.FC = () => {
               {/* ── Day headers ── */}
               <div
                 className="sticky top-0 z-20 flex border-b border-white/10"
-                style={{ height: HEADER_H, backgroundColor: '#0F172A' }}
+                style={{ height: HEADER_H, backgroundColor: '#132237' }}
               >
                 {/* Time gutter */}
                 <div className="shrink-0 border-r border-white/10" style={{ width: 48 }} />
