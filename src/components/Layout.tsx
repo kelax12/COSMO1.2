@@ -14,7 +14,7 @@ import {
   Menu,
   X } from
   'lucide-react';
-import Logo from './logo';
+import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 
