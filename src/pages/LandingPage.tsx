@@ -149,35 +149,6 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
           {mode === 'login' ? 'Bon retour sur Cosmo' : 'Commencez gratuitement'}
         </p>
 
-        {/* Social buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm font-medium text-white transition-colors"
-          >
-            <GoogleIcon />
-            Google
-          </button>
-          <button
-            type="button"
-            onClick={() => toast.info('Apple Sign-In bientôt disponible')}
-            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm font-medium text-white transition-colors"
-          >
-            <AppleIcon />
-            Apple
-          </button>
-        </div>
-
-        <div className="relative mb-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-700" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="px-3 bg-slate-800 text-slate-500">ou continuer avec un email</span>
-          </div>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'register' && (
             <div>
@@ -187,7 +158,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Votre nom"
-                className="w-full bg-slate-700 border-0 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                className="w-full bg-slate-700/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
               />
             </div>
           )}
@@ -198,7 +169,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="exemple@cosmo.app"
-              className="w-full bg-slate-700 border-0 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+              className="w-full bg-slate-700/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
               required
             />
           </div>
@@ -210,7 +181,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-700 border-0 rounded-xl px-4 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                className="w-full bg-slate-700/60 rounded-xl px-4 pr-11 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
                 required
               />
               <button
@@ -240,12 +211,42 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
             <button
               type="button"
               onClick={handleDemoLogin}
-              className="w-full py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 transition-all"
+              className="w-full py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white bg-slate-700/60 hover:bg-slate-700 transition-all"
             >
               Mode Démo (Connexion rapide)
             </button>
           )}
         </form>
+
+        {/* Séparateur */}
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-700" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="px-3 bg-slate-800 text-slate-500">ou continuer avec</span>
+          </div>
+        </div>
+
+        {/* Social buttons */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
+          >
+            <GoogleIcon />
+            Google
+          </button>
+          <button
+            type="button"
+            onClick={() => toast.info('Apple Sign-In bientôt disponible')}
+            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
+          >
+            <AppleIcon />
+            Apple
+          </button>
+        </div>
       </motion.div>
     </div>
   );
