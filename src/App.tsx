@@ -56,6 +56,7 @@ const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'));
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'));
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'));
 const MessagingPage = lazyWithRetry(() => import('@/pages/MessagingPage'));
+const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'));
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'));
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
@@ -117,6 +118,7 @@ const AppRoutes = () => (
     <Route path="welcome" element={<PageWithSuspense><LandingPage /></PageWithSuspense>} />
     <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
     <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
+    <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
     <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
     <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
     <Route path="cgu" element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
