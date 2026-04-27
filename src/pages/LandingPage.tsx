@@ -234,6 +234,9 @@ const LandingPage: React.FC = () => {
               <a href="#why" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
                 Pourquoi Cosmo
               </a>
+              <a href="/guide" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
+                Guide
+              </a>
             </nav>
 
             <div className="flex items-center gap-3 lg:gap-4">
@@ -1047,6 +1050,7 @@ const LandingPage: React.FC = () => {
               <span className="text-slate-400 text-sm hidden sm:inline">© 2025 Tous droits réservés.</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400">
+              <a href="/guide" className="hover:text-white transition-colors">Guide</a>
               <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
               <a href="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</a>
               <a href="/cgu" className="hover:text-white transition-colors">CGU</a>
