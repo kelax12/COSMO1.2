@@ -4,6 +4,7 @@ import {
   User, Palette, BookOpen, LogOut,
   HelpCircle, Shield, Monitor, Camera,
   Eye, EyeOff, Loader2, Mail, ChevronRight,
+  CheckSquare, Calendar, Activity, Target, BarChart2, Crown, ArrowUpRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
@@ -414,7 +415,7 @@ const SettingsPage: React.FC = () => {
 
           {/* ── GUIDE ── */}
           {activeTab === 'guide' && (
-            <motion.div key="guide" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-5">
+            <motion.div key="guide" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
 
               <div>
                 <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
@@ -425,43 +426,72 @@ const SettingsPage: React.FC = () => {
                 </p>
               </div>
 
-              <div
-                className="flex flex-col gap-6 p-6 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
-                style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 60%)' }}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
-                    <BookOpen size={22} className="text-white" />
+              {/* ── hero card ── */}
+              <div className="relative overflow-hidden rounded-2xl border border-[rgb(var(--color-border))]">
+                {/* gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-indigo-600/85 to-violet-700/90" />
+                <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(139,92,246,0.4) 0%, transparent 50%), radial-gradient(circle at 10% 80%, rgba(59,130,246,0.3) 0%, transparent 40%)' }} />
+
+                <div className="relative p-6 flex flex-col gap-5">
+                  {/* top row */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/20">
+                        <BookOpen size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-extrabold text-white leading-tight">Guide complet</p>
+                        <p className="text-white/65 text-xs mt-0.5">8 sections · toutes les fonctionnalités</p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 px-2.5 py-1 rounded-full bg-white/15 border border-white/20 text-white text-[10px] font-bold tracking-wide backdrop-blur-sm">
+                      Interactif
+                    </span>
                   </div>
-                  <div>
-                    <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))]">Guide complet</p>
-                    <p className="text-sm text-[rgb(var(--color-text-muted))] mt-0.5">Tâches, Agenda, Habitudes, OKR, Statistiques, Premium — tout y est.</p>
+
+                  {/* feature pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { icon: CheckSquare, label: 'Tâches',       color: 'rgba(59,130,246,0.35)'  },
+                      { icon: Calendar,    label: 'Agenda',        color: 'rgba(239,68,68,0.35)'   },
+                      { icon: Activity,    label: 'Habitudes',     color: 'rgba(234,179,8,0.35)'   },
+                      { icon: Target,      label: 'OKR',           color: 'rgba(34,197,94,0.35)'   },
+                      { icon: BarChart2,   label: 'Statistiques',  color: 'rgba(139,92,246,0.35)'  },
+                      { icon: Crown,       label: 'Premium',       color: 'rgba(217,119,6,0.35)'   },
+                    ].map(({ icon: Icon, label, color }) => (
+                      <span key={label} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white border border-white/15 backdrop-blur-sm" style={{ background: color }}>
+                        <Icon size={10} />
+                        {label}
+                      </span>
+                    ))}
                   </div>
+
+                  {/* CTA */}
+                  <button
+                    onClick={() => navigate('/guide')}
+                    style={{ minHeight: '46px', fontFamily: "'DM Sans', sans-serif" }}
+                    className="group inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-white text-slate-900 rounded-xl text-sm font-bold hover:bg-white/90 active:scale-[0.98] transition-all duration-150 shadow-lg shadow-black/20"
+                  >
+                    Ouvrir le guide
+                    <ArrowUpRight size={15} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigate('/guide')}
-                  style={{ minHeight: '48px', fontFamily: "'DM Sans', sans-serif" }}
-                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] rounded-xl text-sm font-semibold hover:opacity-85 active:scale-[0.97] transition-all duration-150"
-                >
-                  Ouvrir le guide <ChevronRight size={15} />
-                </button>
               </div>
 
               {/* support card */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-[rgb(var(--color-border))]"
-                style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 60%)' }}>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
-                    <HelpCircle size={17} className="text-white" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
+                    <HelpCircle size={15} className="text-white" />
                   </div>
                   <div>
                     <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Besoin d'aide ?</p>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))]">Notre équipe est disponible pour vous aider.</p>
+                    <p className="text-xs text-[rgb(var(--color-text-muted))]">Notre équipe répond sous 24h.</p>
                   </div>
                 </div>
-                <button onClick={handleOpenSupport} style={{ minHeight: '44px', fontFamily: "'DM Sans', sans-serif" }}
-                  className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] rounded-xl text-sm font-semibold hover:opacity-85 active:scale-[0.97] transition-all duration-150 shrink-0">
-                  Contacter le support <ChevronRight size={13} />
+                <button onClick={handleOpenSupport} style={{ minHeight: '40px', fontFamily: "'DM Sans', sans-serif" }}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
+                  Contacter le support <ChevronRight size={12} />
                 </button>
               </div>
             </motion.div>
