@@ -337,6 +337,14 @@ body {
       display: none;
       -webkit-appearance: none;
     }
+
+    /* Inputs sans bordure (modals landing) */
+    input.borderless-input,
+    input.borderless-input:hover,
+    input.borderless-input:focus {
+      border: none !important;
+      box-shadow: none !important;
+    }
   }
   
   @layer components {
