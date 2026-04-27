@@ -149,6 +149,36 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
           {mode === 'login' ? 'Bon retour sur Cosmo' : 'Commencez gratuitement'}
         </p>
 
+        {/* Social buttons */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
+          >
+            <GoogleIcon />
+            Google
+          </button>
+          <button
+            type="button"
+            onClick={() => toast.info('Apple Sign-In bientôt disponible')}
+            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
+          >
+            <AppleIcon />
+            Apple
+          </button>
+        </div>
+
+        {/* Séparateur */}
+        <div className="relative mb-5">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-700" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="px-3 bg-slate-800 text-slate-500">ou continuer avec un email</span>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'register' && (
             <div>
@@ -199,13 +229,15 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
 
           {error && <p className="text-red-400 text-xs text-center pt-1">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-500/20"
-          >
-            {loading ? 'Chargement...' : (mode === 'login' ? 'Se connecter' : "Créer mon compte")}
-          </button>
+          <div className="pt-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-500/20"
+            >
+              {loading ? 'Chargement...' : (mode === 'login' ? 'Se connecter' : "Créer mon compte")}
+            </button>
+          </div>
 
           {mode === 'login' && (
             <button
@@ -217,36 +249,6 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
             </button>
           )}
         </form>
-
-        {/* Séparateur */}
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-700" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="px-3 bg-slate-800 text-slate-500">ou continuer avec</span>
-          </div>
-        </div>
-
-        {/* Social buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
-          >
-            <GoogleIcon />
-            Google
-          </button>
-          <button
-            type="button"
-            onClick={() => toast.info('Apple Sign-In bientôt disponible')}
-            className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
-          >
-            <AppleIcon />
-            Apple
-          </button>
-        </div>
       </motion.div>
     </div>
   );
