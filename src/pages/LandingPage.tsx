@@ -188,7 +188,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Votre nom"
-                className="w-full bg-slate-700/60 border-0 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                className="borderless-input w-full bg-slate-700/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
               />
             </div>
           )}
@@ -199,7 +199,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="exemple@cosmo.app"
-              className="w-full bg-slate-700/60 border-0 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+              className="borderless-input w-full bg-slate-700/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
               required
             />
           </div>
@@ -211,7 +211,7 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-700/60 rounded-xl px-4 pr-11 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                className="borderless-input w-full bg-slate-700/60 rounded-xl px-4 pr-11 py-3 text-sm text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
                 required
               />
               <button
