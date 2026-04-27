@@ -4,7 +4,8 @@ import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
   Rocket, Star, Lightbulb, ArrowRight, ChevronRight,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
-  Flame, CircleDot, Layers, PlusCircle, Filter, Bell
+  Flame, CircleDot, Layers, Filter, Bell, List,
+  GripVertical, PlayCircle
 } from 'lucide-react';
 import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
@@ -13,7 +14,7 @@ import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
 import StatsShowcase from '../components/showcase/StatsShowcase';
 
 // ─── Types ────────────────────────────────────────────────────────────
-type SectionId = 'demarrage' | 'taches' | 'agenda' | 'habitudes' | 'okr' | 'statistiques' | 'premium';
+type SectionId = 'demarrage' | 'taches' | 'listes' | 'agenda' | 'habitudes' | 'okr' | 'statistiques' | 'premium';
 
 interface NavItem {
   id: SectionId;
@@ -22,14 +23,16 @@ interface NavItem {
   color: string;
 }
 
+// Couleurs identiques à Layout.tsx (CHART_COLORS + hoverColor)
 const NAV_ITEMS: NavItem[] = [
-  { id: 'demarrage',    label: 'Prise en main',  icon: <Rocket size={16} />,     color: '#A78BFA' },
-  { id: 'taches',       label: 'Tâches',          icon: <CheckSquare size={16} />, color: '#60A5FA' },
-  { id: 'agenda',       label: 'Agenda',           icon: <Calendar size={16} />,   color: '#34D399' },
-  { id: 'habitudes',    label: 'Habitudes',        icon: <Repeat size={16} />,     color: '#FB923C' },
-  { id: 'okr',          label: 'OKR',              icon: <Target size={16} />,     color: '#F472B6' },
-  { id: 'statistiques', label: 'Statistiques',     icon: <BarChart2 size={16} />,  color: '#FBBF24' },
-  { id: 'premium',      label: 'Premium',          icon: <Star size={16} />,       color: '#E879F9' },
+  { id: 'demarrage',    label: 'Prise en main',  icon: <Rocket size={16} />,      color: '#94a3b8' },
+  { id: 'taches',       label: 'Tâches',          icon: <CheckSquare size={16} />, color: '#3b82f6' },
+  { id: 'listes',       label: 'Listes',           icon: <List size={16} />,        color: '#3b82f6' },
+  { id: 'agenda',       label: 'Agenda',           icon: <Calendar size={16} />,    color: '#ef4444' },
+  { id: 'habitudes',    label: 'Habitudes',        icon: <Repeat size={16} />,      color: '#eab308' },
+  { id: 'okr',          label: 'OKR',              icon: <Target size={16} />,      color: '#22c55e' },
+  { id: 'statistiques', label: 'Statistiques',     icon: <BarChart2 size={16} />,   color: '#8b5cf6' },
+  { id: 'premium',      label: 'Premium',          icon: <Star size={16} />,        color: '#eab308' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────
@@ -179,7 +182,7 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="demarrage"
                 icon={<Rocket size={24} />}
-                color="#A78BFA"
+                color="#94a3b8"
                 title="Prise en main"
                 subtitle="Créer votre compte et découvrir l'application en 2 minutes."
               />
@@ -207,7 +210,7 @@ const GuidePage: React.FC = () => {
                   { icon: <Flag size={18} />, label: 'Paramètres', desc: 'Thème, compte, préférences' },
                 ].map((item) => (
                   <div key={item.label} className="bg-slate-800/60 border border-white/8 rounded-xl p-4">
-                    <div className="text-violet-400 mb-2">{item.icon}</div>
+                    <div className="text-slate-400 mb-2">{item.icon}</div>
                     <p className="font-semibold text-white text-sm">{item.label}</p>
                     <p className="text-slate-400 text-xs mt-1">{item.desc}</p>
                   </div>
@@ -220,7 +223,7 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="taches"
                 icon={<CheckSquare size={24} />}
-                color="#60A5FA"
+                color="#3b82f6"
                 title="Tâches"
                 subtitle="Organisez, priorisez et suivez tout ce que vous avez à faire."
               />
@@ -248,9 +251,38 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<Users size={15} />}      label="Collaboration"  desc="Partagez une tâche avec un ami via l'icône de partage. Il peut la voir et la valider depuis son compte." />
                 <FeatureRow icon={<Flag size={15} />}       label="Catégories"     desc="Associez chaque tâche à une catégorie colorée (Travail, Personnel, Santé...) pour mieux visualiser votre temps." />
               </div>
+            </section>
+
+            {/* ══ LISTES ═════════════════════════════════════════════════ */}
+            <section>
+              <SectionHeader
+                id="listes"
+                icon={<List size={24} />}
+                color="#3b82f6"
+                title="Listes"
+                subtitle="Regroupez vos tâches par projet ou contexte pour une organisation sans effort."
+              />
+
+              <div className="space-y-6">
+                <Step n={1} title="Créer une liste">
+                  Dans la barre latérale gauche de la page Tâches, cliquez sur <strong className="text-white">+ Nouvelle liste</strong>. Donnez-lui un nom et une couleur. La liste apparaît instantanément dans le panneau de navigation.
+                </Step>
+                <Step n={2} title="Ajouter des tâches à une liste">
+                  Lors de la création ou de l'édition d'une tâche, sélectionnez la liste à laquelle elle appartient dans le champ prévu à cet effet. Une tâche peut appartenir à une seule liste.
+                </Step>
+                <Step n={3} title="Filtrer par liste">
+                  Cliquez sur une liste dans le panneau latéral pour n'afficher que les tâches qu'elle contient. Le compteur à droite du nom indique le nombre de tâches actives dans la liste.
+                </Step>
+              </div>
+
+              <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
+                <FeatureRow icon={<List size={15} />}       label="Vue par liste"    desc="Chaque liste affiche uniquement ses tâches, avec ses propres filtres et tri." />
+                <FeatureRow icon={<Flag size={15} />}       label="Couleur de liste" desc="Attribuez une couleur distinctive à chaque liste pour les différencier visuellement." />
+                <FeatureRow icon={<Filter size={15} />}     label="Toutes les tâches" desc="La vue 'Toutes les tâches' regroupe l'ensemble des tâches toutes listes confondues." />
+              </div>
 
               <Tip>
-                Utilisez la <strong>deadline d'aujourd'hui</strong> (d+0) pour vos tâches du jour. Elles apparaîtront en premier dans les vues filtrées et dans le widget Dashboard.
+                Utilisez les listes pour séparer vos projets : une liste <strong>Travail</strong>, une liste <strong>Personnel</strong>, une liste par client ou par projet actif. Cela évite de mélanger des contextes différents dans une vue unique.
               </Tip>
             </section>
 
@@ -259,7 +291,7 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="agenda"
                 icon={<Calendar size={24} />}
-                color="#34D399"
+                color="#ef4444"
                 title="Agenda"
                 subtitle="Planifiez vos événements et visualisez votre semaine d'un coup d'œil."
               />
@@ -272,18 +304,19 @@ const GuidePage: React.FC = () => {
                 <Step n={1} title="Créer un événement">
                   Cliquez sur un créneau horaire dans la vue semaine, ou sur le bouton <strong className="text-white">+ Événement</strong>. Définissez le titre, la date, l'heure de début et de fin, et la catégorie.
                 </Step>
-                <Step n={2} title="Changer de vue">
-                  Basculez entre la vue <strong className="text-white">Jour</strong>, <strong className="text-white">Semaine</strong> ou <strong className="text-white">Mois</strong> via les boutons en haut à droite de l'agenda. La vue Semaine est la plus efficace au quotidien.
+                <Step n={2} title="Déplacer par glisser-déposer">
+                  Saisissez un événement existant et faites-le glisser vers un autre créneau ou une autre journée directement dans la grille. Relâchez pour confirmer le déplacement — la sauvegarde est automatique.
                 </Step>
-                <Step n={3} title="Déplacer un événement">
-                  Glissez-déposez un événement directement dans la grille pour le reprogrammer. Le changement est sauvegardé automatiquement.
+                <Step n={3} title="Changer de vue">
+                  Basculez entre la vue <strong className="text-white">Jour</strong>, <strong className="text-white">Semaine</strong> ou <strong className="text-white">Mois</strong> via les boutons en haut à droite. La vue Semaine offre le meilleur équilibre entre détail et vue d'ensemble.
                 </Step>
               </div>
 
               <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<Repeat size={15} />}    label="Événements récurrents" desc="Créez un événement hebdomadaire ou quotidien une seule fois — il se répète automatiquement." />
-                <FeatureRow icon={<Flag size={15} />}      label="Catégories couleur"    desc="Chaque catégorie a sa couleur. Votre agenda devient un tableau de bord visuel de votre temps." />
-                <FeatureRow icon={<Clock size={15} />}     label="Vue compressée"        desc="Les créneaux sans événements sont réduits automatiquement pour maximiser la lisibilité." />
+                <FeatureRow icon={<GripVertical size={15} />} label="Drag & drop"             desc="Glissez-déposez n'importe quel événement pour le reprogrammer en quelques secondes sans ouvrir de formulaire." />
+                <FeatureRow icon={<Repeat size={15} />}       label="Événements récurrents"   desc="Créez un événement hebdomadaire ou quotidien une seule fois — il se répète automatiquement." />
+                <FeatureRow icon={<Flag size={15} />}         label="Catégories couleur"      desc="Chaque catégorie a sa couleur. Votre agenda devient un tableau de bord visuel de votre temps." />
+                <FeatureRow icon={<Clock size={15} />}        label="Vue compressée"          desc="Les créneaux sans événements sont réduits automatiquement pour maximiser la lisibilité." />
               </div>
 
               <Tip>
@@ -300,7 +333,7 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="habitudes"
                 icon={<Repeat size={24} />}
-                color="#FB923C"
+                color="#eab308"
                 title="Habitudes"
                 subtitle="Construisez des routines durables et suivez votre progression jour après jour."
               />
@@ -348,7 +381,7 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="okr"
                 icon={<Target size={24} />}
-                color="#F472B6"
+                color="#22c55e"
                 title="OKR — Objectifs & Résultats Clés"
                 subtitle="Définissez des objectifs ambitieux et mesurez votre progression avec des indicateurs concrets."
               />
@@ -361,7 +394,7 @@ const GuidePage: React.FC = () => {
                 <p className="text-sm font-semibold text-white mb-3">C'est quoi un OKR ?</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-pink-400 font-medium mb-1">O — Objectif</p>
+                    <p className="text-green-400 font-medium mb-1">O — Objectif</p>
                     <p className="text-slate-400">Une ambition qualitative et inspirante. Ex : <em>"Accélérer la croissance produit"</em></p>
                   </div>
                   <div>
@@ -399,7 +432,7 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="statistiques"
                 icon={<BarChart2 size={24} />}
-                color="#FBBF24"
+                color="#8b5cf6"
                 title="Statistiques"
                 subtitle="Analysez votre productivité et identifiez vos points d'amélioration."
               />
@@ -422,10 +455,10 @@ const GuidePage: React.FC = () => {
 
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { color: '#3B82F6', label: 'Tâches',    desc: 'Nombre de tâches complétées par période' },
-                  { color: '#EF4444', label: 'Agenda',    desc: 'Temps passé sur des événements planifiés' },
-                  { color: '#22C55E', label: 'OKR',       desc: 'Résultats clés validés dans la période' },
-                  { color: '#EAB308', label: 'Habitudes', desc: 'Taux de complétion moyen des habitudes actives' },
+                  { color: '#3b82f6', label: 'Tâches',    desc: 'Nombre de tâches complétées par période' },
+                  { color: '#ef4444', label: 'Agenda',    desc: 'Temps passé sur des événements planifiés' },
+                  { color: '#22c55e', label: 'OKR',       desc: 'Résultats clés validés dans la période' },
+                  { color: '#eab308', label: 'Habitudes', desc: 'Taux de complétion moyen des habitudes actives' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-3 bg-slate-800/40 border border-white/8 rounded-xl p-4">
                     <div className="w-3 h-3 rounded-full mt-1 shrink-0" style={{ backgroundColor: item.color }} />
@@ -447,22 +480,47 @@ const GuidePage: React.FC = () => {
               <SectionHeader
                 id="premium"
                 icon={<Star size={24} />}
-                color="#E879F9"
+                color="#eab308"
                 title="Premium"
-                subtitle="Débloquez toutes les fonctionnalités avancées de Cosmo."
+                subtitle="Obtenez l'accès Premium gratuitement en quelques secondes."
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 {[
-                  { icon: <PlusCircle size={18} />,  label: 'Tâches illimitées',       desc: 'Aucune limite sur le nombre de tâches, listes et catégories.' },
-                  { icon: <Target size={18} />,       label: 'OKR avancés',             desc: 'Objectifs illimités et résultats clés avec historique complet.' },
-                  { icon: <Repeat size={18} />,       label: 'Habitudes illimitées',    desc: 'Créez autant d\'habitudes que vous souhaitez avec tous les modes de fréquence.' },
-                  { icon: <Users size={18} />,        label: 'Collaboration',           desc: 'Partagez des tâches avec vos amis et travaillez ensemble en temps réel.' },
-                  { icon: <BarChart2 size={18} />,    label: 'Statistiques étendues',   desc: 'Accédez à l\'historique complet et aux analyses sur 12 mois.' },
-                  { icon: <Star size={18} />,         label: 'Priorité au support',     desc: 'Assistance prioritaire en cas de problème.' },
+                  {
+                    icon: <PlayCircle size={18} />,
+                    label: 'Accès par visionnage de publicité',
+                    desc: 'Regardez une courte publicité depuis la page Premium pour obtenir immédiatement une journée d\'accès Premium. Renouvelable à volonté, sans aucun paiement.',
+                    highlight: true,
+                  },
+                  {
+                    icon: <Users size={18} />,
+                    label: 'Collaboration',
+                    desc: 'Partagez des tâches avec vos amis et travaillez ensemble en temps réel.',
+                    highlight: false,
+                  },
+                  {
+                    icon: <Star size={18} />,
+                    label: 'Priorité au support',
+                    desc: 'Assistance prioritaire en cas de problème.',
+                    highlight: false,
+                  },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-start gap-3 bg-slate-800/40 border border-white/8 rounded-xl p-4">
-                    <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 flex items-center justify-center shrink-0 text-fuchsia-400">
+                  <div
+                    key={item.label}
+                    className="flex items-start gap-3 rounded-xl p-4 border"
+                    style={{
+                      backgroundColor: item.highlight ? 'rgba(234,179,8,0.08)' : 'rgba(30,41,59,0.4)',
+                      borderColor: item.highlight ? 'rgba(234,179,8,0.25)' : 'rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: item.highlight ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.08)',
+                        color: '#eab308',
+                      }}
+                    >
                       {item.icon}
                     </div>
                     <div>
@@ -477,17 +535,13 @@ const GuidePage: React.FC = () => {
                 <Step n={1} title="Accéder à la page Premium">
                   Dans la barre latérale, cliquez sur l'icône <strong className="text-white">Couronne</strong> (Premium). Vous y trouverez les détails de l'offre et le bouton d'activation.
                 </Step>
-                <Step n={2} title="Activer votre abonnement">
-                  Choisissez la formule mensuelle ou annuelle, puis procédez au paiement via <strong className="text-white">Stripe</strong> (paiement 100 % sécurisé). L'accès Premium est activé immédiatement après confirmation.
+                <Step n={2} title="Obtenir une journée Premium gratuitement">
+                  Cliquez sur <strong className="text-white">Obtenir 1 jour Premium</strong> puis regardez la publicité jusqu'à la fin. L'accès Premium est activé immédiatement pour 24 heures. Vous pouvez répéter l'opération autant de fois que vous le souhaitez.
                 </Step>
-                <Step n={3} title="Gérer votre abonnement">
-                  Depuis la page Premium, vous pouvez consulter la date de renouvellement et annuler à tout moment. En cas d'annulation, vous conservez l'accès Premium jusqu'à la fin de la période payée.
+                <Step n={3} title="Gérer votre accès">
+                  Depuis la page Premium, vous pouvez consulter votre statut actuel et le temps restant. Renouvelez votre accès à tout moment en visionnant une nouvelle publicité.
                 </Step>
               </div>
-
-              <Tip>
-                L'offre annuelle représente une économie significative par rapport au mensuel. Si vous êtes convaincu après la démo, c'est le choix le plus avantageux.
-              </Tip>
             </section>
 
             {/* ── Footer guide ── */}
