@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Users, Lock, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2, Crown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import CollaboratorItem from './CollaboratorItem';
 import TaskModal from './TaskModal';
@@ -46,6 +47,7 @@ const CollaborativeTasks: React.FC = () => {
   const { data: friends = [] } = useFriends();
   const { priorityRange } = usePriorityRange();
   const sendFriendRequestMutation = useSendFriendRequest();
+  const navigate = useNavigate();
   
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
@@ -216,20 +218,76 @@ const CollaborativeTasks: React.FC = () => {
   }
 
   if (!premium) {
+    const dummyTasks = [
+      { id: '1', name: 'Refonte site web — Sprint 2', collaborators: ['Alice', 'Bob'], color: '#3B82F6' },
+      { id: '2', name: 'Préparer la présentation client', collaborators: ['Charlie'], color: '#10B981' },
+      { id: '3', name: 'Revue des performances Q2', collaborators: ['Alice', 'Bob', 'Charlie'], color: '#8B5CF6' },
+    ];
     return (
-      <div className="p-8 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
-        <div className="text-center">
-          <div className="p-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-2xl inline-block mb-4">
-            <Lock size={32} className="text-yellow-600 dark:text-yellow-400" />
+      <div className="relative p-8 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden">
+        {/* Preview content — blurred */}
+        <div className="select-none pointer-events-none blur-[3px] opacity-60">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Tâches collaboratives</h2>
+              <p className="text-[rgb(var(--color-text-secondary))] text-sm">3 tâches partagées</p>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-sm font-medium text-white bg-blue-600">
+              <UserPlus size={16} />
+              <span>Gérer</span>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Tâches collaboratives</h2>
-          <p className="text-[rgb(var(--color-text-secondary))] mb-6">
-            Débloquez Premium pour accéder aux tâches collaboratives et travailler en équipe
-          </p>
-          <button className="btn-primary">
-            <Plus size={20} />
-            <span>Débloquer Premium</span>
-          </button>
+          <div className="space-y-4">
+            {dummyTasks.map(t => (
+              <div
+                key={t.id}
+                className="p-4 rounded-2xl border"
+                style={{ backgroundColor: `${t.color}25`, borderColor: `${t.color}60` }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-[rgb(var(--color-text-primary))]">{t.name}</h3>
+                    <div className="flex items-center gap-1.5 mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                      <Users size={14} />
+                      <span>{t.collaborators.length} collaborateur{t.collaborators.length > 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                  <div className="flex -space-x-2">
+                    {t.collaborators.slice(0, 3).map((c, i) => (
+                      <div
+                        key={i}
+                        className="w-8 h-8 rounded-full bg-blue-500 border-2 border-[rgb(var(--color-surface))] flex items-center justify-center text-white text-xs font-bold"
+                      >
+                        {c[0]}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Lock overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[rgb(var(--color-surface))]/60 backdrop-blur-[2px] rounded-2xl z-10">
+          <div className="text-center px-6 py-8 rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] shadow-2xl max-w-xs mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-yellow-500/30">
+              <Lock size={28} className="text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-2">
+              Fonctionnalité Premium
+            </h3>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-5 leading-relaxed">
+              Travaillez en équipe sur vos tâches. Invitez des collaborateurs et suivez l'avancement en temps réel.
+            </p>
+            <button
+              onClick={() => navigate('/premium')}
+              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl font-bold text-white text-sm bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg shadow-yellow-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Crown size={16} />
+              Activer Premium
+            </button>
+          </div>
         </div>
       </div>
     );

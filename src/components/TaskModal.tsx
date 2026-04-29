@@ -608,7 +608,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                   {/* Task Name */}
                   <div>
-                    <label htmlFor="task-name" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                    <label htmlFor="task-name" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Nom de la tâche *
                     </label>
                     <input
@@ -640,7 +640,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   {/* Priority and Category */}
                   <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="task-priority" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        <label htmlFor="task-priority" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Priorité
                         </label>
                         <div className="relative">
@@ -673,7 +673,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                      <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Catégorie
                       </label>
                         <DropdownMenu>
@@ -846,7 +846,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   {/* Deadline and Estimated Time */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="task-deadline" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Échéance
                         </label>
                         <DatePicker
@@ -865,7 +865,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                       </div>
 
                       <div>
-                        <label htmlFor="task-time" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        <label htmlFor="task-time" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Temps estimé (min)
                         </label>
                           <input
@@ -945,7 +945,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             <ChevronDown size={14} className="text-blue-500" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56 bg-[#1e293b] border-slate-700 text-white shadow-xl">
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-56 shadow-xl border"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-surface))',
+                            borderColor: 'rgb(var(--color-border))',
+                            color: 'rgb(var(--color-text-primary))',
+                          }}
+                        >
                           {lists.map(list => (
                             <DropdownMenuCheckboxItem
                               key={list.id}
@@ -958,16 +966,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 }
                                 setHasChanges(true);
                               }}
-                              className="focus:bg-slate-700 focus:text-white"
+                              className="focus:bg-blue-500/10"
+                              style={{ color: 'rgb(var(--color-text-primary))' }}
                             >
                               {list.name}
                             </DropdownMenuCheckboxItem>
                           ))}
-                          {lists.length > 0 && <DropdownMenuSeparator className="bg-slate-700" />}
+                          {lists.length > 0 && (
+                            <DropdownMenuSeparator style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                          )}
                           <DropdownMenuItem asChild>
                             <button
                               type="button"
-                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 transition-colors"
+                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                               onClick={() => { setShowNewListInput(true); setNewListName(''); }}
                             >
                               <Plus size={15} />

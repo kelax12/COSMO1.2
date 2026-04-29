@@ -298,7 +298,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                 selectedForListIds.includes(task.id)
                   ? 'bg-blue-500 border-blue-500'
-                  : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
+                  : 'border-slate-600 dark:border-slate-600 hover:border-blue-400'
               }`}
             >
               {selectedForListIds.includes(task.id) && (
@@ -552,7 +552,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                             className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
                               selectedForListIds.includes(task.id)
                                 ? 'bg-blue-500 border-blue-500'
-                                : 'border-slate-300 dark:border-slate-400'
+                                : 'border-slate-600 dark:border-slate-400'
                             }`}
                           >
                             <motion.svg
@@ -676,7 +676,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {sortedTasks.length === 0 && (
         <div className="text-center py-12" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <div className="text-6xl mb-4">📝</div>
           <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
             {showCompleted ? 'Aucune tâche complétée' : 'Aucune tâche'}
           </h3>

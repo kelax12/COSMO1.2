@@ -127,8 +127,9 @@ const HabitsPage: React.FC = () => {
               </p>
               <Button
                 variant="default"
+                size="lg"
                 onClick={() => setShowModal(true)}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
               >
                 Créer une habitude
               </Button>
