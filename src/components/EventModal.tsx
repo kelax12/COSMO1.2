@@ -596,48 +596,49 @@ const EventModal: React.FC<EventModalProps> = ({
                 />
               </label>
 
-                <div className="grid grid-cols-4 gap-1.5 mb-2 h-[92px] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="grid grid-cols-4 gap-1.5 mb-6 pb-1 pr-1">
                   {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() =>
-                        handleFieldChange("color", setColor, cat.color)
-                      }
-                      className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 group shrink-0"
-                    style={{
-                      backgroundColor: cat.color,
-                      borderColor:
-                        color === cat.color
-                          ? "rgb(var(--color-text-primary))"
-                          : "rgb(var(--color-border))",
-                      boxShadow:
-                        color === cat.color
-                          ? "0 4px 10px rgba(0,0,0,0.15)"
-                          : "none",
-                    }}
-                    title={cat.name}
-                  >
-                    {color === cat.color && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div
-                          className="w-3.5 h-3.5 rounded-full"
-                          style={{
-                            backgroundColor: "rgb(var(--color-surface))",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                          }}
-                        />
-                      </div>
-                    )}
-                    <span
-                      className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10"
-                      style={{ color: "rgb(var(--color-text-muted))" }}
-                    >
-                      {cat.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                    <div key={cat.id} className="relative group" style={{ zIndex: 'auto' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleFieldChange("color", setColor, cat.color)
+                        }
+                        className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 shrink-0"
+                        style={{
+                          backgroundColor: cat.color,
+                          borderColor:
+                            color === cat.color
+                              ? "rgb(var(--color-text-primary))"
+                              : "rgb(var(--color-border))",
+                          boxShadow:
+                            color === cat.color
+                              ? "0 4px 10px rgba(0,0,0,0.15)"
+                              : "none",
+                        }}
+                        title={cat.name}
+                      >
+                        {color === cat.color && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div
+                              className="w-3.5 h-3.5 rounded-full"
+                              style={{
+                                backgroundColor: "rgb(var(--color-surface))",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </button>
+                      <span
+                        className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
+                        style={{ color: "rgb(var(--color-text-muted))", zIndex: 9999 }}
+                      >
+                        {cat.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
 
                 {categories.length > 0 && (
                   <div

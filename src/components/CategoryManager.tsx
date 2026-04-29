@@ -383,35 +383,45 @@ export const getColorFr = (colorName: string) => {
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
               {categoryToDelete && (
-                <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-                  <motion.div 
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[110] p-4" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                  <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+                    className="rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border"
+                    style={{
+                      backgroundColor: 'rgb(var(--color-surface))',
+                      borderColor: 'rgb(var(--color-border))',
+                    }}
                   >
                     <div className="p-6">
-                      <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                        <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}>
+                        <Trash2 className="text-red-500" size={24} />
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la catégorie</h3>
-                      <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                      <h3 className="text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Supprimer la catégorie</h3>
+                      <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
                       </p>
                       <div className="flex gap-3">
                         <button
                           onClick={() => setCategoryToDelete(null)}
-                          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold border transition-all duration-200"
+                          style={{
+                            color: 'rgb(var(--color-text-primary))',
+                            borderColor: 'rgb(var(--color-border))',
+                            backgroundColor: 'rgb(var(--color-hover))',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))')}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
                         >
                           Annuler
                         </button>
-                          <button
-                            onClick={confirmDelete}
-                            className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
-                          >
-                            Confirmer
-                          </button>
-
+                        <button
+                          onClick={confirmDelete}
+                          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
+                        >
+                          Confirmer
+                        </button>
                       </div>
                     </div>
                   </motion.div>
