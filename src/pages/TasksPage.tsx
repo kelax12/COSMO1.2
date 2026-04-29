@@ -432,7 +432,7 @@ const TasksPage: React.FC = () => {
                                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
                                 }`}
                               >
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colorOption?.color || '#3B82F6' }} />
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colorOption?.color || list.color || '#3B82F6' }} />
                                 <span>{list.name}</span>
                                 <span className="text-xs opacity-60 ml-1 monochrome:text-neutral-400">
                                   {list.taskIds.filter(taskId => {
