@@ -697,19 +697,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             align="start" 
                             className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
                           >
-                            {categories.length === 0 && (
-                              <DropdownMenuItem asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowCategoryModal(true)}
-                                  className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                >
-                                  <Plus size={18} />
-                                  Ajouter une catégorie
-                                </button>
-                              </DropdownMenuItem>
-                            )}
-                            {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
+                              {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
                             <DropdownMenuItem asChild>
                               <button
                                 type="button"
@@ -954,7 +942,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             color: 'rgb(var(--color-text-primary))',
                           }}
                         >
-                          {lists.map(list => (
+                          {lists.map(list => {
+                            const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
+                            return (
                             <DropdownMenuCheckboxItem
                               key={list.id}
                               checked={selectedListIds.includes(list.id)}
@@ -969,9 +959,13 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               className="focus:bg-blue-500/10"
                               style={{ color: 'rgb(var(--color-text-primary))' }}
                             >
-                              {list.name}
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: listColorHex }} />
+                                {list.name}
+                              </div>
                             </DropdownMenuCheckboxItem>
-                          ))}
+                            );
+                          })}
                           {lists.length > 0 && (
                             <DropdownMenuSeparator style={{ backgroundColor: 'rgb(var(--color-border))' }} />
                           )}
@@ -1010,7 +1004,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 e.preventDefault();
                                 if (!newListName.trim()) return;
                                 createListMutation.mutate(
-                                  { name: newListName.trim(), color: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' },
+                                  { name: newListName.trim(), color: newListColor },
                                   {
                                     onSuccess: (created) => {
                                       setSelectedListIds(prev => [...prev, created.id]);
@@ -1037,7 +1031,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             onClick={() => {
                               if (!newListName.trim()) return;
                               createListMutation.mutate(
-                                { name: newListName.trim(), color: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' },
+                                { name: newListName.trim(), color: newListColor },
                                 {
                                   onSuccess: (created) => {
                                     setSelectedListIds(prev => [...prev, created.id]);
