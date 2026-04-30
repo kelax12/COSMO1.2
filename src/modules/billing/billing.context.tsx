@@ -56,13 +56,15 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { data: subscription, isLoading } = useQuery({
     queryKey: billingKeys.subscription,
     queryFn: async (): Promise<SubscriptionRow | null> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
-        .single();
-      if (error && error.code === 'PGRST116') {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return null;
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) return null;
+      if (!data) {
         const { data: created } = await supabase
           .from('subscriptions')
           .insert([{ user_id: user.id, plan: 'free', status: 'active', premium_tokens: 0, win_streak: 0 }])
@@ -70,8 +72,7 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           .single();
         return created ? mapRow(created as Record<string, unknown>) : null;
       }
-      if (error) return null;
-      return data ? mapRow(data as Record<string, unknown>) : null;
+      return mapRow(data as Record<string, unknown>);
     },
     enabled: isAuthenticated && !isDemo,
     staleTime: 1000 * 60 * 5,
@@ -89,7 +90,9 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updates.current_period_end = end.toISOString();
         updates.win_streak = (subscription.win_streak ?? 0) + 1;
       }
-      await supabase.from('subscriptions').update(updates).eq('id', subscription.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from('subscriptions').update(updates).eq('id', subscription.id).eq('user_id', user.id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: billingKeys.subscription }),
   });

@@ -184,7 +184,6 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     if (input.color !== undefined) result.color = input.color;
     if (input.icon !== undefined) result.icon = input.icon;
     if (input.completions !== undefined) result.completions = input.completions;
-    if (input.userId !== undefined) result.user_id = input.userId;
     return result;
   }
 }

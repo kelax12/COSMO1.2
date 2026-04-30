@@ -33,20 +33,18 @@ export class BillingRepository {
   async getSubscription(): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data: existing, error: fetchError } = await supabase
       .from('subscriptions')
       .select('*')
-      .single();
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw normalizeApiError(fetchError);
-    }
+    if (fetchError) throw normalizeApiError(fetchError);
 
-    // Crée la ligne si elle n'existe pas
     if (!existing) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data: created, error: createError } = await supabase
         .from('subscriptions')
         .insert([{ user_id: user.id, plan: 'free', status: 'active', premium_tokens: 0, win_streak: 0 }])
