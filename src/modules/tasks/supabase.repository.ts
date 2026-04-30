@@ -46,6 +46,9 @@ interface TaskDbInput {
   user_id?: string;
 }
 
+/** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
+type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
+
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
@@ -176,7 +179,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...this.mapToDb(input), user_id: user.id };
+    const dbInput: TaskDbCreateInput = { ...this.mapToDb(input), user_id: user.id };
 
     const { data, error } = await supabase
       .from('tasks')
@@ -290,7 +293,6 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (input.collaborators !== undefined) result.collaborators = input.collaborators;
     if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
     if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;
-    if (input.userId !== undefined) result.user_id = input.userId;
     return result;
   }
 }

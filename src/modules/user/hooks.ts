@@ -5,6 +5,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { User, Message } from './types';
 import { DEMO_USER, USER_STORAGE_KEY, MESSAGES_STORAGE_KEY } from './constants';
+import { appModeStore } from '@/lib/app-mode.store';
+import { billingRepository } from '@/modules/billing/billing.repository';
 
 // ═══════════════════════════════════════════════════════════════════
 // USER HOOK
@@ -47,16 +49,20 @@ export const useUpdateUserSettings = () => {
 // ═══════════════════════════════════════════════════════════════════
 
 export const useWatchAd = () => {
-  return useCallback(() => {
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
-    const user = stored ? JSON.parse(stored) : { ...DEMO_USER };
-    const updated = {
-      ...user,
-      premiumTokens: (user.premiumTokens || 0) + 1,
-      lastTokenConsumption: new Date().toISOString(),
-    };
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new StorageEvent('storage', { key: USER_STORAGE_KEY }));
+  return useCallback(async () => {
+    if (appModeStore.isDemo) {
+      const stored = localStorage.getItem(USER_STORAGE_KEY);
+      const user = stored ? JSON.parse(stored) : { ...DEMO_USER };
+      const updated = {
+        ...user,
+        premiumTokens: (user.premiumTokens || 0) + 1,
+        lastTokenConsumption: new Date().toISOString(),
+      };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new StorageEvent('storage', { key: USER_STORAGE_KEY }));
+      return;
+    }
+    await billingRepository.addTokens(1);
   }, []);
 };
 

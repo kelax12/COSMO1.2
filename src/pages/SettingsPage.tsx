@@ -181,11 +181,49 @@ const SettingsPage: React.FC = () => {
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => { updateUserSettings({ avatar: reader.result as string }); toast.success('Photo de profil mise à jour'); };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const MAX_BYTES = 500_000;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Format non supporté', { description: 'Utilisez JPEG, PNG, WebP ou GIF.' });
+      e.target.value = '';
+      return;
     }
+    if (file.size > MAX_BYTES) {
+      toast.error('Image trop grande', { description: 'Taille maximale : 500 Ko.' });
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result.startsWith('data:image/')) {
+        toast.error('Fichier invalide');
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIM = 256;
+        const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          updateUserSettings({ avatar: result });
+        } else {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          updateUserSettings({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
+        }
+        toast.success('Photo de profil mise à jour');
+      };
+      img.onerror = () => toast.error('Image illisible');
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveAvatar = () => {
@@ -206,8 +244,7 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleOpenSupport = () => {
-    window.parent.postMessage({ type: 'OPEN_EXTERNAL_URL', data: { url: 'mailto:support@cosmo.app' } }, '*');
-    toast.info('Ouverture de votre messagerie...');
+    window.location.href = 'mailto:support@cosmo.app';
   };
 
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
