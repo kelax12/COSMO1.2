@@ -20,12 +20,12 @@ Légende :
 | §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
 | §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| 🟢 Partiel  | `011_security_hardening_v2.sql` (verrou user_id) — Stripe restant |
 | §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🔴 Ouvert    | Edge Function à écrire |
-| §4  | 🟠 Important | Tests Vitest référencés mais non installés      | 🔴 Ouvert    | `src/__test__/` |
-| §5  | 🟠 Important | CI absente                                     | 🔴 Ouvert    | `.github/workflows/` |
-| §6  | 🟠 Important | CSP absente                                    | 🔴 Ouvert    | `vercel.json` |
-| §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | 🔴 Ouvert    | `vite < 6.4.1` |
-| §8  | 🟠 Important | Drift DB ↔ migrations (`friend_requests`)      | 🔴 Ouvert    | Migration manquante |
-| §9  | 🟠 Important | Pagination absente côté UI                     | 🔴 Ouvert    | `useInfiniteQuery` |
+| §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | `src/__test__/` supprimé |
+| §5  | 🟠 Important | CI absente                                     | ✅ Corrigé   | `.github/workflows/ci.yml` |
+| §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
+| §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | 🔴 Ouvert    | `vite < 6.4.1` (breaking) |
+| §8  | 🟠 Important | Drift DB ↔ migrations (`friend_requests`)      | ✅ Corrigé   | `012_friend_requests_align.sql` |
+| §9  | 🟠 Important | Pagination absente côté UI                     | 🟢 Partiel   | Warning console (`pagination.warning.ts`) |
 | §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | 🔴 Ouvert    | Refactor progressif |
 | §11 | 🟡 À plan.   | Bundles JS lourds                              | 🔴 Ouvert    | Tree-shaking |
 | §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | 🔴 Ouvert    | Migration v3 |
@@ -44,8 +44,8 @@ Légende :
 | V15 | 🟡 Info      | `.eq('user_id')` defense-in-depth manquant     | ✅ Corrigé   | `d545808` + `464d1ce` |
 | N1  | 🟠 High      | `subscriptions.UPDATE` sans WITH CHECK         | ✅ Corrigé   | `011_security_hardening_v2.sql` |
 | N2  | 🟡 Medium    | `shared_tasks.UPDATE` sans WITH CHECK          | ✅ Corrigé   | `011_security_hardening_v2.sql` |
-| N5  | 🟡 Low       | `AuthContext.isPremium` lit `user_metadata`    | 🔴 Ouvert    | À retirer du context |
-| N6  | 🟡 Low       | `useUser()` lit identité depuis localStorage   | 🔴 Ouvert    | DashboardPage à migrer |
+| N5  | 🟡 Low       | `AuthContext.isPremium` lit `user_metadata`    | ✅ Corrigé   | Retiré du context |
+| N6  | 🟡 Low       | `useUser()` lit identité depuis localStorage   | ✅ Corrigé   | `DashboardPage` migré sur `useAuth` |
 
 ---
 
@@ -220,21 +220,37 @@ Fichier : `supabase/migration/011_security_hardening_v2.sql`
 - ✅ **N2** — `shared_tasks.UPDATE` policy : ajout `WITH CHECK` empêchant la réécriture de `task_id`
 - ✅ **V15 (complet)** — `.eq('user_id')` ajouté dans `billing.repository.ts.consumeToken` et `addTokens`
 
+### Cycle de finalisation du 2026-05-01
+
+Tout ce qui restait dans `faille.md` hors scope OAuth/Stripe/rotation manuelle :
+
+- ✅ **§4** — `src/__test__/` supprimé (12 fichiers Vitest morts), section `test:` retirée de `vite.config.ts`
+- ✅ **§5** — `.github/workflows/ci.yml` créé : `npm ci → lint → build` sur push/PR vers main
+- ✅ **§6** — CSP ajoutée dans `vercel.json` : `default-src 'self'` + Stripe + Supabase + Google Fonts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`
+- ✅ **§8** — Migration `012_friend_requests_align.sql` : reproduit l'état drift de prod (colonnes `sender_id`/`receiver_id`/`sender_email`, triggers, fonction `accept_friend_request` SECURITY DEFINER), idempotente
+- 🟢 **§9 (partiel)** — Helper `src/lib/pagination.warning.ts` + `warnIfTruncated()` dans 8 repos (`tasks`, `habits`, `okrs`, `events`, `categories`, `lists`, `friends`, `kr-completions`). `console.warn` quand `data.length === limit`. Pagination UI complète à implémenter à terme.
+- ✅ **N5** — `isPremium` retiré de `AuthContextType` et du provider value. Tous les consommateurs utilisent déjà `useBilling().isPremium`.
+- ✅ **N6** — `DashboardPage.tsx` ne lit plus `useUser()` (localStorage), utilise `useAuth().user` (Supabase session).
+
+Vérification finale par re-audit indépendant :
+- 19/19 fixes vérifiés en place
+- 0 régression introduite
+- 0 nouvelle faille bloquante
+- Lint : 0 erreur, 25 warnings pré-existants
+- Build : OK (~30 s)
+
 ---
 
 ## Ordre de priorité avant déploiement prod
 
 | # | Action | Effort | Bloque déploiement ? |
 |---|---|---|---|
-| 1 | Rotation clés Supabase (§1) | 15 min | **Oui** |
-| 2 | Edge Function Stripe + verrouillage RLS subscriptions (§2 + §3) | 1-2 j | **Oui** si paiements |
-| 3 | CI GitHub Actions (§5) | 30 min | Recommandé |
-| 4 | CSP (§6) | 1-2 h test | Non |
-| 5 | Migration `012_friend_requests_align.sql` (§8) | 1 h | Non, sauf nouveau projet Supabase |
-| 6 | Tests Vitest (§4) | 15 min ou 1 j | Non |
-| 7 | Retrait `AuthContext.isPremium` + migration `useUser` (N5/N6) | 30 min | Non |
-| 8 | npm audit fix (§7) | 2 h test | Non |
-| 9 | Refactor monolithes / bundles / date-fns v3 (§10-12) | continu | Non |
+| 1 | Rotation clés Supabase (§1) | 15 min | **Oui** — manuel, dashboard |
+| 2 | Edge Function Stripe + verrouillage RLS subscriptions (§2 + §3) | 1-2 j | **Oui** si paiements activés |
+| 3 | npm audit fix --force (§7) | 2 h test | Non — affecte uniquement dev |
+| 4 | Pagination UI complète (§9) | 1 j | Non — warning console actif |
+| 5 | Refactor monolithes / bundles / date-fns v3 (§10-12) | continu | Non |
+| 6 | console.error → Sentry (§14) | 1 j | Non |
 
 ---
 
@@ -249,6 +265,6 @@ Dans l'ordre, sur le projet de prod :
 -- 2. Compléments (déjà appliqué le 2026-04-30)
 \i supabase/migration/011_security_hardening_v2.sql
 
--- 3. À écrire : alignement friend_requests (§8)
--- supabase/migration/012_friend_requests_align.sql
+-- 3. Alignement friend_requests (à appliquer pour tout nouveau projet Supabase)
+\i supabase/migration/012_friend_requests_align.sql
 ```

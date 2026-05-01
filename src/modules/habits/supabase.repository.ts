@@ -3,6 +3,7 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 /**
  * Supabase DB row type for habits table (snake_case)
@@ -45,7 +46,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     if (error) throw normalizeApiError(error);
 
     // Map snake_case to camelCase
-    return (data || []).map(this.mapFromDb);
+    return warnIfTruncated(data || [], 500, 'habits').map(this.mapFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Habit>> {
