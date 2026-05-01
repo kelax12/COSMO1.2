@@ -76,6 +76,9 @@ export class BillingRepository {
   async consumeToken(): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const sub = await this.getSubscription();
     const newTokens = Math.max(0, sub.premiumTokens - 1);
     const newStatus = newTokens === 0 ? 'expired' : sub.status;
@@ -84,6 +87,7 @@ export class BillingRepository {
       .from('subscriptions')
       .update({ premium_tokens: newTokens, status: newStatus })
       .eq('id', sub.id)
+      .eq('user_id', user.id)
       .select()
       .single();
 
@@ -96,6 +100,9 @@ export class BillingRepository {
    */
   async addTokens(amount: number, activatePremium = false): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
     const sub = await this.getSubscription();
     const updates: Partial<SubscriptionRow> = {
@@ -116,6 +123,7 @@ export class BillingRepository {
       .from('subscriptions')
       .update(updates)
       .eq('id', sub.id)
+      .eq('user_id', user.id)
       .select()
       .single();
 
