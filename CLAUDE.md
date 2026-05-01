@@ -450,6 +450,110 @@ Variables d'environnement à configurer sur Vercel :
 
 ---
 
+## Règles de sécurité (non négociables)
+
+Ces règles découlent d'audits de sécurité et de failles déjà corrigées. Les
+réintroduire = régression. Voir `faille.md` pour l'historique complet.
+
+### RLS Supabase — pattern obligatoire pour toute nouvelle table
+
+Toute nouvelle table avec des données utilisateur **doit** avoir :
+
+```sql
+ALTER TABLE <name> ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own <name>"
+  ON <name> FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own <name>"
+  ON <name> FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own <name>"
+  ON <name> FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);  -- ⚠️ WITH CHECK obligatoire (faille N1)
+
+CREATE POLICY "Users can delete own <name>"
+  ON <name> FOR DELETE USING (auth.uid() = user_id);
+```
+
+> **`WITH CHECK` est obligatoire sur tout UPDATE.** Sans, un attaquant peut
+> rewriter `user_id` ou n'importe quel champ vers une valeur arbitraire (la
+> policy `USING` n'inspecte que la ligne OLD). Cf. faille N1 sur `subscriptions`.
+
+Et appliquer le trigger anti-mutation :
+```sql
+CREATE TRIGGER trg_prevent_user_id_change
+  BEFORE UPDATE ON <name>
+  FOR EACH ROW EXECUTE FUNCTION prevent_user_id_change();
+```
+
+### Repositories Supabase — anti-mass-assignment
+
+Dans tous les `mapToDb(input)` :
+- ❌ **Ne jamais** copier `user_id` depuis l'input client (faille V1)
+- ✅ Le `user_id` est ajouté **explicitement** dans `create()` à partir de `supabase.auth.getUser()`
+- ❌ **Ne jamais** spreader `...input` directement dans un `.update()` ou `.insert()`
+- ✅ Whitelist des champs un par un avec `if (input.X !== undefined) result.X = input.X`
+
+Pour toute requête `subscriptions` (et tables sensibles à la propriété) :
+- ✅ **Toujours** ajouter `.eq('user_id', user.id)` même quand RLS scope déjà (defense-in-depth, faille V15)
+
+### Pas d'écriture client directe sur tables financières
+
+❌ **Interdit** : `supabase.from('subscriptions').update({plan: 'premium', ...})` côté client.
+✅ Une fois Stripe en place, passer par une Edge Function avec service_role.
+Cf. faille §2 — pour l'instant la policy UPDATE existe mais doit disparaître.
+
+### Sources de vérité authentification & premium
+
+- `useAuth().user` — identité (depuis Supabase session, **pas** localStorage en prod)
+- `useBilling().isPremium()` — premium (depuis table `subscriptions`)
+- ❌ **Ne jamais** lire `premiumTokens` ou état premium depuis `localStorage` ou `user_metadata` (faille N5/N6)
+- ❌ **Ne jamais** ré-exposer `isPremium` dans `AuthContext` — un seul hook fait foi : `useBilling`
+
+### Uploads de fichiers (avatars, etc.)
+
+Pour tout `<input type="file">` :
+- ✅ Whitelist MIME (ex. `['image/jpeg','image/png','image/webp','image/gif']`)
+- ❌ **Jamais** de `image/svg+xml` (peut contenir du JS)
+- ✅ Cap `file.size` (avatar : 500 KB)
+- ✅ Re-encoder via canvas avant stockage pour neutraliser un payload caché
+- Voir `src/pages/SettingsPage.tsx → handleAvatarUpload` comme référence
+
+### Surface client — pas de leak
+
+- ❌ **Jamais** `window.parent.postMessage(payload, '*')` — fuite vers iframe parente (faille V6)
+- ❌ **Jamais** afficher `error.message` brut dans l'UI (`AppErrorBoundary` doit montrer un message générique — faille V7)
+- ❌ Pas de fichier dead-code style Next.js (`ErrorReporter.tsx` était supprimé pour cette raison — faille V9)
+- ✅ `console.error` reste autorisé pour `AppErrorBoundary`, mais à terme → Sentry
+
+### Navigation & redirections
+
+- ❌ **Jamais** `navigate(X)` ou `window.location.href = X` avec X provenant d'une URL param ou d'input utilisateur sans validation
+- ✅ `redirectTo` OAuth doit être restreint (Supabase Auth → URL Configuration)
+
+### Système d'amis & partage (RLS social)
+
+- ✅ `friends.INSERT` exige une `friend_requests` acceptée
+- ✅ `shared_tasks.INSERT` exige une amitié confirmée
+- ✅ `friend_requests.UPDATE` est split : sender peut seulement `cancel`, receiver peut seulement `accept/reject`
+- ❌ **Ne pas** ajouter une policy permissive sur ces tables sans repenser le modèle de confiance
+
+### CSP & headers
+
+- ✅ Tous les headers de sécurité Vercel doivent rester (HSTS, X-Frame-Options, etc.)
+- 🟠 CSP à ajouter (faille §6) — toute nouvelle origine externe (CDN, Stripe, etc.) doit y être whitelistée
+
+### Avant tout commit qui touche `supabase/migration/*.sql`
+
+- ✅ Vérifier `WITH CHECK` sur tous les UPDATE
+- ✅ Idempotence : `DROP POLICY IF EXISTS ... CREATE POLICY ...` (la prod a déjà des policies appliquées)
+- ✅ Si la table a `user_id`, attacher le trigger `prevent_user_id_change`
+- ⚠️ Le schéma réel de prod peut diverger des migrations (ex. `friend_requests` utilise `sender_id`/`receiver_id`, voir `faille.md` §8) — vérifier avant d'écrire des policies qui réfèrent à des colonnes
+
+---
+
 ## Ce qu'il ne faut jamais faire
 
 - ❌ Importer depuis `src/context/TaskContext` — **ce fichier a été supprimé**
@@ -465,3 +569,11 @@ Variables d'environnement à configurer sur Vercel :
 - ❌ Modifier la logique `recordKRCompletion()` sans vérifier que le graphique dashboard fonctionne en mode démo ET en mode prod
 - ❌ Forcer `theme="dark"` sur le `Toaster` (utiliser `theme="system"`)
 - ❌ Ajouter un script tiers dans `index.html` sans CSP
+- ❌ Réintroduire `user_id` dans `mapToDb()` d'un repository (faille V1)
+- ❌ Créer une policy `UPDATE` sans `WITH CHECK` (faille N1, N2)
+- ❌ Spreader l'input client dans un `.update()` Supabase (mass-assignment)
+- ❌ `window.parent.postMessage(*, '*')` (faille V6)
+- ❌ Afficher `error.message` brut dans l'UI (faille V7)
+- ❌ Accepter `image/svg+xml` dans un upload utilisateur (faille V5)
+- ❌ Lire `premiumTokens` ou identité depuis `localStorage`/`user_metadata` (faille N5, N6)
+- ❌ Insérer dans `friends`, `shared_tasks` sans vérifier le lien d'amitié côté SQL (faille V12, V13)
