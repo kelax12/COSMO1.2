@@ -1,33 +1,57 @@
-# Failles à corriger avant déploiement — COSMO 1.2
+# Failles & roadmap sécurité — COSMO 1.2
 
-Document de suivi des failles de sécurité et bugs bloquants identifiés lors de l'audit pré-déploiement du 2026-04-25.
+Document historique et opérationnel des failles identifiées sur le projet.
+Sert à la fois d'archive (preuve de ce qui a été corrigé, comment, et pourquoi)
+et de roadmap (ce qu'il reste à faire avant déploiement).
 
 Légende :
+- ✅ **Corrigé** — fix mergé sur `main`, vérifié par lint + build
+- 🟢 **Partiellement corrigé** — fix appliqué mais portée incomplète
 - 🔴 **Bloquant** — ne pas déployer en l'état
 - 🟠 **Important** — à corriger rapidement après déploiement
 - 🟡 **À planifier** — dette technique sans risque immédiat
 
 ---
 
-## ✅ Corrigées dans la révision data du 2026-04-25 (2e passe)
+## ✅ Tableau récapitulatif
 
-### Bug graphique « KR réalisés » du dashboard (signalé par l'utilisateur)
-
-**Cause racine** : double bug dans le module OKRs/KR-completions.
-
-1. **Table `kr_completions` absente des migrations** : aucun fichier `.sql` ne la définissait. Le code lit/écrit dessus, donc en production Supabase la table soit n'existait pas, soit avait été créée à la main via le dashboard (drift DB ↔ migrations).
-2. **`SupabaseOKRsRepository.updateKeyResult` n'insérait jamais de ligne dans `kr_completions`** quand un KR transitionnait `completed: false → true`. Seul le repo localStorage (mode démo) le faisait. Conséquence : pour les utilisateurs réels, `kr_completions` restait vide, et tous les graphiques « KR réalisés » du dashboard (`DashboardPage`, `DashboardChart`, `DashboardBarChart`) affichaient 0 quel que soit le nombre de KR validés.
-
-**Correctif appliqué** :
-- Ajout de `supabase/migration/009_kr_completions.sql` avec RLS scopée à `auth.uid() = user_id`, journal append-only (pas de policy UPDATE).
-- `SupabaseOKRsRepository.updateKeyResult` capture désormais l'état `completed` AVANT la mise à jour, et insère atomiquement une ligne dans `kr_completions` à chaque transition `false → true`. Même chemin pour le fallback JSONB.
-- Pour appliquer le correctif en prod : exécuter `009_kr_completions.sql` sur le projet Supabase (ou recréer la table si elle existe déjà avec un autre schéma).
+| ID  | Sévérité     | Sujet                                          | État         | Commit / Fichier |
+|-----|--------------|------------------------------------------------|--------------|------------------|
+| §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
+| §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| 🟢 Partiel  | `011_security_hardening_v2.sql` (verrou user_id) — Stripe restant |
+| §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🔴 Ouvert    | Edge Function à écrire |
+| §4  | 🟠 Important | Tests Vitest référencés mais non installés      | 🔴 Ouvert    | `src/__test__/` |
+| §5  | 🟠 Important | CI absente                                     | 🔴 Ouvert    | `.github/workflows/` |
+| §6  | 🟠 Important | CSP absente                                    | 🔴 Ouvert    | `vercel.json` |
+| §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | 🔴 Ouvert    | `vite < 6.4.1` |
+| §8  | 🟠 Important | Drift DB ↔ migrations (`friend_requests`)      | 🔴 Ouvert    | Migration manquante |
+| §9  | 🟠 Important | Pagination absente côté UI                     | 🔴 Ouvert    | `useInfiniteQuery` |
+| §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | 🔴 Ouvert    | Refactor progressif |
+| §11 | 🟡 À plan.   | Bundles JS lourds                              | 🔴 Ouvert    | Tree-shaking |
+| §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | 🔴 Ouvert    | Migration v3 |
+| §13 | 🟡 À plan.   | 25 warnings ESLint résiduels                   | 🔴 Ouvert    | Bénin |
+| §14 | 🟡 À plan.   | `console.error` conservés en prod              | 🔴 Ouvert    | Sentry futur |
+| V1  | 🟠 High      | Mass-assignment `user_id` (tasks/habits)       | ✅ Corrigé   | `d545808` + `010` trigger |
+| V2  | 🟡 Medium    | Pending invites email leak (collaborators)     | ✅ Corrigé   | `010` view restreinte |
+| V5  | 🟡 Medium    | Avatar upload sans validation                  | ✅ Corrigé   | `d545808` SettingsPage |
+| V6  | 🟡 Medium    | `postMessage(*, '*')` leak                     | ✅ Corrigé   | `d545808` main.tsx |
+| V7  | 🟡 Low       | Raw error messages dans UI                     | ✅ Corrigé   | `d545808` AppErrorBoundary |
+| V9  | 🟡 Low       | Dead `ErrorReporter.tsx` Next.js               | ✅ Corrigé   | `d545808` (supprimé) |
+| V10 | 🟡 Low       | `useWatchAd` écrit en localStorage uniquement   | ✅ Corrigé   | `d545808` user/hooks.ts |
+| V11 | 🟡 Low       | `friend_requests` UPDATE sans split rôle       | ✅ Corrigé   | `010` policies split |
+| V12 | 🟡 Low/Med   | `friends.INSERT` non lié à demande acceptée    | ✅ Corrigé   | `010` WITH CHECK |
+| V13 | 🟡 Medium    | `shared_tasks.INSERT` non lié à amitié          | ✅ Corrigé   | `010` WITH CHECK + `011` UPDATE |
+| V15 | 🟡 Info      | `.eq('user_id')` defense-in-depth manquant     | ✅ Corrigé   | `d545808` + `464d1ce` |
+| N1  | 🟠 High      | `subscriptions.UPDATE` sans WITH CHECK         | ✅ Corrigé   | `011_security_hardening_v2.sql` |
+| N2  | 🟡 Medium    | `shared_tasks.UPDATE` sans WITH CHECK          | ✅ Corrigé   | `011_security_hardening_v2.sql` |
+| N5  | 🟡 Low       | `AuthContext.isPremium` lit `user_metadata`    | 🔴 Ouvert    | À retirer du context |
+| N6  | 🟡 Low       | `useUser()` lit identité depuis localStorage   | 🔴 Ouvert    | DashboardPage à migrer |
 
 ---
 
-## 🔴 BLOQUANTS
+## 🔴 BLOQUANTS (avant déploiement prod)
 
-### 1. Secrets Supabase dans l'historique git public
+### §1. Secrets Supabase dans l'historique git public
 
 **Risque** : compromission totale de la base de données.
 
@@ -41,233 +65,190 @@ L'historique du repo public https://github.com/kelax12/COSMO1.2 contient encore 
 - `DATABASE_URL` avec mot de passe Postgres en clair
 - `VITE_SUPABASE_ANON_KEY`
 
-N'importe qui peut récupérer ces clés via `git log -p`.
-
 **Correctif** :
-1. Aller sur https://supabase.com/dashboard/project/pzrpwyqwultyenvqfyhg/settings/api
-2. **Reset le JWT secret** (régénère anon + service_role)
-3. Settings → Database → **Reset database password**
-4. Mettre à jour `.env` local + variables d'environnement Vercel
-5. Optionnel : purger l'historique git
-   ```bash
-   git filter-repo --path .env --invert-paths
-   git push --force origin main
-   ```
-   À faire après la rotation (sinon les clés restent valides en cache GitHub).
+1. Settings → API → **Reset le JWT secret** (régénère anon + service_role)
+2. Settings → Database → **Reset database password**
+3. Mettre à jour `.env` local + variables Vercel
+4. Optionnel : `git filter-repo --path .env --invert-paths && git push --force origin main`
 
 ---
 
-### 2. Auto-upgrade Premium gratuit (faille de paiement)
+### §2. Auto-upgrade Premium gratuit
 
-**Risque** : tout utilisateur authentifié peut s'octroyer Premium sans payer.
+**Statut** : 🟢 partiellement mitigé.
 
-`supabase/subscriptions.sql` :
-```sql
-CREATE POLICY "Users can update own subscription"
-  ON subscriptions FOR UPDATE USING (auth.uid() = user_id);
-```
+Avant : `subscriptions.UPDATE` policy `USING (auth.uid() = user_id)` sans WITH CHECK ; n'importe qui pouvait `update({plan:'premium', premium_tokens:9999})` depuis la console.
 
-Combiné avec `src/modules/billing/billing.context.tsx:84-90` qui passe `plan = 'premium'` côté client, n'importe qui peut exécuter dans la console :
-```js
-await supabase.from('subscriptions').update({
-  plan: 'premium',
-  status: 'active',
-  current_period_end: '2099-01-01',
-  premium_tokens: 9999
-}).eq('user_id', currentUserId)
-```
+Mitigations appliquées :
+- Migration `011_security_hardening_v2.sql` ajoute `WITH CHECK (auth.uid() = user_id)` + trigger `prevent_user_id_change` sur `subscriptions`.
+- Defense-in-depth `.eq('user_id', user.id)` ajouté dans `billing.repository.ts` et `billing.context.tsx`.
 
-**Correctif** (lié à la mise en place de Stripe) :
-1. Créer une Edge Function Supabase `stripe-webhook` qui consomme l'événement `checkout.session.completed`
-2. Cette fonction utilise le service_role pour mettre à jour `subscriptions`
-3. Restreindre la policy UPDATE côté DB : interdire les modifications de `plan`, `status`, `current_period_end`, `premium_tokens`, `win_streak` aux utilisateurs (ou retirer la policy UPDATE complète)
-4. Côté client : appeler l'Edge Function au lieu de `supabase.from('subscriptions').update()`
+**Reste à faire** (lié à §3 Stripe) :
+1. Edge Function `stripe-webhook` qui consomme `checkout.session.completed` avec service_role.
+2. Restreindre les colonnes mutables côté client : interdire `plan`, `status`, `current_period_end`, `premium_tokens`, `win_streak` aux utilisateurs (ou retirer la policy UPDATE complète).
+3. Côté client : appeler l'Edge Function au lieu de `supabase.from('subscriptions').update()`.
 
 ---
 
-### 3. Stripe non fonctionnel (paiement en mode démo permanent)
+### §3. Stripe non fonctionnel
 
-**Risque** : aucun paiement ne sera réellement traité.
-
-`src/components/PaymentModal.tsx` utilise Stripe Elements en mode `payment` côté client uniquement, sans backend pour créer un `PaymentIntent` ni de webhook. Aucun token Premium ne sera attribué après un vrai paiement, et aucune trace côté serveur.
+**Risque** : aucun paiement ne sera traité. Pas de PaymentIntent serveur, pas de webhook.
 
 **Correctif** :
-1. Edge Function `create-payment-intent` qui appelle l'API Stripe avec la secret key et retourne le `client_secret`
-2. Côté client : récupérer le `client_secret` avant d'instancier `Elements`
-3. Edge Function `stripe-webhook` (cf. faille #2) pour confirmer le paiement et créditer les tokens
-4. Variables d'env à ajouter sur Vercel : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+1. Edge Function `create-payment-intent` (Stripe Secret Key → `client_secret`).
+2. Côté client : récupérer `client_secret` avant d'instancier `<Elements>`.
+3. Edge Function `stripe-webhook` pour confirmer paiement et créditer tokens.
+4. Variables Vercel : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 
 ---
 
 ## 🟠 IMPORTANTS
 
-### 4. Tests Vitest référencés mais non installés
+### §4. Tests Vitest référencés mais non installés
+`src/__test__/` contient ~12 fichiers `vitest`/`@testing-library` mais aucun de ces packages n'est dans `package.json`.
+**Correctif** : installer Vitest OU supprimer le dossier + la section `test` de `vite.config.ts`.
 
-`src/__test__/` contient ~12 fichiers de tests utilisant `vitest` et `@testing-library`, mais aucun de ces packages n'est dans `package.json`. La config `vite.config.ts` (`test.environment: 'happy-dom'`) est morte.
+### §5. CI absente
+**Correctif** : `.github/workflows/ci.yml` avec `lint` + `build` sur push/PR.
 
-**Correctif** : soit installer `vitest @testing-library/react happy-dom` et ajouter `"test": "vitest"`, soit supprimer le dossier et la section `test` de `vite.config.ts`.
-
----
-
-### 5. CI absente
-
-Pas de `.github/workflows/`. Aucun garde-fou avant merge.
-
-**Correctif** : créer `.github/workflows/ci.yml` :
-```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-```
-
----
-
-### 6. CSP (Content-Security-Policy) absente
-
-Les headers de sécurité ont été ajoutés à `vercel.json` (HSTS, X-Frame-Options, nosniff, Permissions-Policy) mais aucune CSP n'est définie. Une CSP réduit l'impact d'une éventuelle XSS.
-
-**Correctif** : ajouter dans `vercel.json` (à tester soigneusement, GSAP/Stripe imposent des origines) :
+### §6. CSP (Content-Security-Policy) absente
+**Correctif** : ajouter dans `vercel.json` :
 ```json
 { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://js.stripe.com; connect-src 'self' https://*.supabase.co https://api.stripe.com; frame-src https://js.stripe.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" }
 ```
 
----
+### §7. Vulnérabilités npm résiduelles
+`npm audit` → 2 modérées sur esbuild via `vite < 6.4.1` (dev seulement).
+**Correctif** : `npm audit fix --force` (passe vite v8, breaking) en PR dédiée.
 
-### 7. Vulnérabilités npm résiduelles
-
-`npm audit` → 2 modérées sur esbuild via vite < 6.4.1. Affecte uniquement le serveur de dev (pas le build prod).
-
-**Correctif** : `npm audit fix --force` (passe à vite v8, breaking) — à faire dans une PR dédiée pour tester les régressions Tailwind/PostCSS.
-
----
-
-### 8. friend_requests : le destinataire ne peut pas voir ses demandes reçues
-
-La migration `007_friends.sql` ne contient qu'une policy SELECT pour l'expéditeur (`auth.uid() = user_id`). Le destinataire de la demande ne peut pas la lister depuis son côté.
-
-`CLAUDE.md` mentionne un champ `receiver_id` rempli par un trigger `trg_set_receiver_id` et une fonction `accept_friend_request` SECURITY DEFINER, mais **rien de tout cela n'est dans les migrations** — ces objets ont été créés directement via le dashboard Supabase. Le repo diverge de l'état réel de la DB.
-
-**Correctif** : créer une migration `009_friend_requests_receiver.sql` qui ajoute :
-- Colonne `receiver_id UUID REFERENCES auth.users(id)`
-- Trigger `trg_set_receiver_id` qui résout l'email vers user_id
-- Policy SELECT supplémentaire : `USING (auth.uid() = receiver_id)`
+### §8. Drift DB ↔ migrations (`friend_requests`)
+La table `friend_requests` en prod utilise `sender_id` / `receiver_id` / `sender_email`, alors que `007_friends.sql` utilise `user_id`. Plusieurs objets DB existent uniquement en prod :
+- Colonnes `receiver_id`, `sender_email`, `sender_id`
+- Triggers `trg_set_receiver_id`, `trg_set_sender_email`
 - Fonction `accept_friend_request(uuid)` SECURITY DEFINER
 
-Cela permet aux migrations d'être réexécutables proprement et au repo de refléter la réalité.
+**Correctif** : créer `supabase/migration/012_friend_requests_align.sql` qui ajoute ces colonnes/triggers/fonction et reflète l'état réel. Tester sur projet Supabase neuf.
 
----
-
-### 9. Pagination absente côté UI
-
-Les repositories Supabase ont une `.limit(500)` (tasks, events, habits, okrs) ou `.limit(200)` (categories, lists, friends). Au-delà, **les données sont silencieusement tronquées**. Pas de pagination dans l'UI.
-
-**Correctif** : implémenter `useInfiniteQuery` de TanStack ou afficher un avertissement utilisateur quand `data.length === 500`. À prioriser pour les power-users.
+### §9. Pagination absente côté UI
+`.limit(500)` sur tasks/events/habits/okrs, `.limit(200)` sur categories/lists/friends. Au-delà, données silencieusement tronquées.
+**Correctif** : `useInfiniteQuery` ou avertissement quand `data.length === limit`.
 
 ---
 
 ## 🟡 À PLANIFIER
 
-### 10. Fichiers monolithiques difficiles à maintenir
+### §10. Fichiers monolithiques (> 1000 lignes)
+`TaskModal.tsx` 1339, `SettingsPage.tsx` 1300, `LandingPage.tsx` 1027, `StatisticsPage.tsx` 1064, `MessagingPage.tsx` 1010.
+**Correctif** : refactor progressif en sous-composants + hooks dédiés.
 
-Plusieurs fichiers > 1000 lignes :
-- `src/components/TaskModal.tsx` — 1339 lignes
-- `src/pages/SettingsPage.tsx` — 1300 lignes
-- `src/pages/LandingPage.tsx` — 1027 lignes
-- `src/pages/StatisticsPage.tsx` — 1064 lignes
-- `src/pages/MessagingPage.tsx` — 1010 lignes
+### §11. Bundles JS lourds
+`vendor-react` 254 kB, `vendor-calendar` 263 kB, `index` 297 kB, `CartesianChart` 320 kB.
+**Pistes** : auditer GSAP, migrer `date-fns@^3`, code-splitter Recharts, importer les plugins FullCalendar minimaux.
 
-**Correctif** : refactor progressif en sous-composants + hooks dédiés. Pas bloquant.
+### §12. `react-day-picker@^9.14.0` ↔ `date-fns@^2.30.0`
+v9 attend `date-fns@^3.x` — risque de bug runtime.
+**Correctif** : tester le sélecteur partout, migrer `date-fns` à v3 si bug.
 
----
+### §13. 25 warnings ESLint résiduels
+Tous bénins (Fast refresh sur contextes, `isDemo` deps intentionnelles).
 
-### 11. Bundles JavaScript lourds
+### §14. `console.error` conservés en prod
+`vite.config.ts` drop seulement log/info/debug. `console.error` peut leak des infos sensibles.
+**Correctif** : router vers Sentry / Edge Function logging.
 
-Plusieurs chunks > 250 kB après build :
-- `vendor-react` : 254 kB
-- `vendor-calendar` (FullCalendar) : 263 kB
-- `index` : 297 kB
-- `CartesianChart` (Recharts) : 320 kB
+### N5. `AuthContext.isPremium()` lit `user_metadata` (client-writable)
+Un utilisateur peut `supabase.auth.updateUser({ data: { premiumTokens: 9999 } })` puis `useAuth().isPremium()` → true. Aujourd'hui non utilisé pour gating (tout passe par `useBilling`), mais le hook reste exposé.
+**Correctif** : retirer `isPremium` de `AuthContextType` et forcer les consommateurs sur `useBilling`.
 
-`vite.config.ts` fixe `chunkSizeWarningLimit: 400` mais c'est un cache-misère.
-
-**Pistes** :
-- Auditer l'usage réel de **GSAP** (`package.json` ligne 35) — si seul Framer Motion est utilisé, économie ~70 kB
-- Migrer `date-fns@^2.30.0` → `^3.x` (tree-shaking ESM natif)
-- Code-splitter Recharts par graphique
-- FullCalendar : importer uniquement les plugins utilisés
+### N6. `useUser()` lit identité depuis localStorage
+Utilisateur peut éditer `localStorage["cosmo_user"]` pour spoofer son nom/email/avatar dans l'UI. Pas de privilege escalation.
+**Correctif** : remplacer par `useAuth().user` dans `DashboardPage.tsx:71`.
 
 ---
 
-### 12. `react-day-picker` v9 avec `date-fns` v2
+## ✅ Failles corrigées (audits du 2026-04-25 et 2026-04-30)
 
-`react-day-picker@^9.14.0` requiert `date-fns@^3.x`. Le projet a `date-fns@^2.30.0`. Risque de bug runtime sur le sélecteur de dates.
+### Audit data du 2026-04-25 (1ère passe)
 
-**Correctif** : tester le sélecteur de date partout (modals tâches, événements, OKR, agenda). Migrer `date-fns` à v3 si bug.
+- ✅ Migrations SQL inutilisables (`\"` dans toutes les CREATE POLICY) — fixé sur 8 fichiers
+- ✅ Script tiers `route-messenger-vite.js` chargé depuis Supabase distant — retiré de `index.html`
+- ✅ Favicon distant Supabase — remplacé par `/logo.svg` local
+- ✅ Headers Vercel : HSTS + X-Frame-Options + X-Content-Type-Options + Referrer-Policy + Permissions-Policy + cache immuable `/assets/*`
+- ✅ postcss XSS (GHSA-qx2v-qp2m-jg93) — bumpé à `^8.5.10`
+- ✅ Console.log/info/debug + debugger drop en prod via vite `esbuild.pure`
+- ✅ 64 erreurs ESLint → 0
+- ✅ `src/context/TaskContext.tsx` mort — supprimé
+- ✅ `src/lib/mockData.ts` parsing errors
+- ✅ Toaster `theme="dark"` forcé → `theme="system"`
+- ✅ `.env.example` format correct + `VITE_STRIPE_PUBLISHABLE_KEY`
+- ✅ ESLint configuré : ignore tests + showcase, pattern `^_`
+- ✅ `billing.repository.ts` guillemet orphelin
+
+### Audit data du 2026-04-25 (2e passe)
+
+- ✅ Bug graphique « KR réalisés » du dashboard
+  - Cause : table `kr_completions` absente des migrations + `SupabaseOKRsRepository.updateKeyResult` n'insérait jamais
+  - Fix : `009_kr_completions.sql` + insertion atomique dans `recordKRCompletion()`
+
+### Audit sécurité du 2026-04-30 — commit `d545808`
+
+- ✅ **V1 (High)** — Mass-assignment `user_id` retiré de `mapToDb` (tasks + habits)
+- ✅ **V5** — Validation upload avatar : MIME whitelist (jpeg/png/webp/gif), 500 KB cap, canvas resize 256 px (neutralise SVG/script)
+- ✅ **V6** — `window.parent.postMessage(*, '*')` retiré de `main.tsx` et `SettingsPage`
+- ✅ **V7** — `AppErrorBoundary` affiche un message générique
+- ✅ **V9** — `src/components/ErrorReporter.tsx` (Next.js dead code) supprimé
+- ✅ **V10** — `useWatchAd` persiste via `billingRepository.addTokens(1)` en mode prod
+- ✅ **V15 (partiel)** — `.eq('user_id')` ajouté dans `billing.context.tsx`
+
+### Audit sécurité du 2026-04-30 — migration `010`
+
+Fichier : `supabase/migration/010_security_hardening.sql`
+
+- ✅ **V1** — Trigger `prevent_user_id_change` sur 8 tables (tasks, habits, okrs, events, categories, lists, key_results, kr_completions)
+- ✅ **V2** — Vue `tasks_pending_invites` réservée au propriétaire
+- ✅ **V11** — `friend_requests` UPDATE split sender (cancel) / receiver (accept/reject) avec WITH CHECK
+- ✅ **V12** — `friends.INSERT` exige une `friend_requests` acceptée correspondante
+- ✅ **V13** — `shared_tasks.INSERT` exige une amitié
+
+Hotfix migration `010` (commit `80265ae`) : alignement sur le schéma prod réel (`sender_id`/`receiver_id` au lieu de `user_id`).
+
+### Audit sécurité du 2026-04-30 — migration `011` + commit `464d1ce`
+
+Fichier : `supabase/migration/011_security_hardening_v2.sql`
+
+- ✅ **N1 (High)** — `subscriptions.UPDATE` policy : ajout `WITH CHECK (auth.uid() = user_id)` + trigger `prevent_user_id_change`
+- ✅ **N2** — `shared_tasks.UPDATE` policy : ajout `WITH CHECK` empêchant la réécriture de `task_id`
+- ✅ **V15 (complet)** — `.eq('user_id')` ajouté dans `billing.repository.ts.consumeToken` et `addTokens`
 
 ---
 
-### 13. 25 warnings ESLint résiduels
-
-Tous bénins, classés en deux catégories :
-- **Fast refresh** sur fichiers exportant à la fois composants et constantes/contextes (Auth, Billing, ui/badge, ui/button, ui/form, ui/sidebar, ui/toggle, CategoryManager) — non bloquant pour le build, ralentit juste HMR en dev
-- **`isDemo` dépendance "inutile"** dans les `useMemo` des modules tasks/habits/okrs/kr-completions — pattern intentionnel pour resélectionner le repository quand le mode change
-
-**Correctif** : extraire les constantes/contextes vers des fichiers dédiés (vrai refactor, ~1 jour). Pour les `isDemo`, ajouter `// eslint-disable-next-line react-hooks/exhaustive-deps`.
-
----
-
-### 14. Console.error en production conservés (intentionnel)
-
-`vite.config.ts` drop uniquement `console.log/info/debug` et `debugger`. Les `console.error` restent — utiles pour AppErrorBoundary mais peuvent leak des informations sensibles (stacktraces, IDs).
-
-**Correctif** : router les `console.error` vers un service d'error tracking (Sentry, LogRocket, ou Supabase Edge Function logging) au lieu de la console du navigateur.
-
----
-
-### 15. Drift DB ↔ migrations
-
-Comme noté pour la faille #8, plusieurs objets DB existent uniquement en prod (champ `receiver_id`, trigger `trg_set_receiver_id`, trigger `trg_set_sender_email`, fonction `accept_friend_request`). Si quelqu'un déploie sur un nouveau projet Supabase à partir du repo, l'app sera cassée.
-
-**Correctif** : créer les migrations manquantes pour reproduire l'état DB réel. Tester en spinning up un projet Supabase neuf.
-
----
-
-## ✅ Déjà corrigé dans la session du 2026-04-25
-
-- Migrations SQL inutilisables (`\"` au lieu de `"` dans toutes les CREATE POLICY) — fixé sur 8 fichiers
-- Script tiers `route-messenger-vite.js` chargé depuis Supabase distant — retiré de `index.html`
-- Favicon distant Supabase — remplacé par `/logo.svg` local
-- Headers Vercel : HSTS + X-Frame-Options + X-Content-Type-Options + Referrer-Policy + Permissions-Policy + cache immuable `/assets/*`
-- postcss XSS (GHSA-qx2v-qp2m-jg93) — bumpé à `^8.5.10`
-- Console.log/info/debug + debugger drop en prod via vite `esbuild.pure`
-- 64 erreurs ESLint → 0
-- `src/context/TaskContext.tsx` mort — supprimé
-- `src/lib/mockData.ts` parsing errors — apostrophes corrigées
-- Toaster `theme="dark"` forcé → `theme="system"`
-- `.env.example` format `KEY=` correct + ajout `VITE_STRIPE_PUBLISHABLE_KEY`
-- ESLint configuré : ignore tests + showcase, pattern `^_` pour catch/args/vars
-- `billing.repository.ts` guillemet orphelin en fin de fichier
-
----
-
-## Ordre de priorité suggéré avant prod
+## Ordre de priorité avant déploiement prod
 
 | # | Action | Effort | Bloque déploiement ? |
 |---|---|---|---|
-| 1 | Rotation clés Supabase (faille #1) | 15 min | **Oui** |
-| 2 | Edge Function Stripe + verrouillage RLS subscriptions (failles #2 + #3) | 1-2 j | **Oui** si on accepte les paiements |
-| 3 | CI GitHub Actions (faille #5) | 30 min | Non, mais fortement recommandé |
-| 4 | CSP (faille #6) | 1-2 h test | Non |
-| 5 | Migration `009_friend_requests_receiver.sql` (faille #8) | 1 h | Non, sauf nouveau projet Supabase |
-| 6 | Suppression / installation des tests Vitest (faille #4) | 15 min ou 1 j | Non |
-| 7 | npm audit fix --force (faille #7) | 2 h test | Non |
-| 8 | Refactor monolithes / bundles / date-fns v3 (failles #10-12) | continu | Non |
+| 1 | Rotation clés Supabase (§1) | 15 min | **Oui** |
+| 2 | Edge Function Stripe + verrouillage RLS subscriptions (§2 + §3) | 1-2 j | **Oui** si paiements |
+| 3 | CI GitHub Actions (§5) | 30 min | Recommandé |
+| 4 | CSP (§6) | 1-2 h test | Non |
+| 5 | Migration `012_friend_requests_align.sql` (§8) | 1 h | Non, sauf nouveau projet Supabase |
+| 6 | Tests Vitest (§4) | 15 min ou 1 j | Non |
+| 7 | Retrait `AuthContext.isPremium` + migration `useUser` (N5/N6) | 30 min | Non |
+| 8 | npm audit fix (§7) | 2 h test | Non |
+| 9 | Refactor monolithes / bundles / date-fns v3 (§10-12) | continu | Non |
+
+---
+
+## Migrations sécurité à exécuter dans Supabase SQL editor
+
+Dans l'ordre, sur le projet de prod :
+
+```sql
+-- 1. Hardening initial (déjà appliqué le 2026-04-30)
+\i supabase/migration/010_security_hardening.sql
+
+-- 2. Compléments (déjà appliqué le 2026-04-30)
+\i supabase/migration/011_security_hardening_v2.sql
+
+-- 3. À écrire : alignement friend_requests (§8)
+-- supabase/migration/012_friend_requests_align.sql
+```
