@@ -22,6 +22,7 @@ import { krCompletionKeys } from '@/modules/kr-completions/constants';
  */
 const useOKRsRepository = (): IOKRsRepository => {
   const isDemo = useIsDemo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => getOKRsRepository(), [isDemo]);
 };
 

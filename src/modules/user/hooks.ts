@@ -34,11 +34,29 @@ export const useUser = () => {
 // UPDATE USER SETTINGS HOOK
 // ═══════════════════════════════════════════════════════════════════
 
+// Whitelist : champs dont l'utilisateur peut modifier la valeur localement.
+// Les champs financiers / d'autorisation (premiumTokens, subscriptionEndDate,
+// premiumWinStreak, lastTokenConsumption) sont volontairement exclus — la
+// source de vérité est Supabase `subscriptions` via `useBilling` (faille B1).
+type UpdatableUserField = 'name' | 'email' | 'avatar' | 'autoValidation';
+const UPDATABLE_USER_FIELDS: ReadonlySet<UpdatableUserField> = new Set([
+  'name',
+  'email',
+  'avatar',
+  'autoValidation',
+]);
+
+type UserSettingsPatch = Partial<Pick<User, UpdatableUserField>>;
+
 export const useUpdateUserSettings = () => {
-  return useCallback((settings: Record<string, unknown>) => {
+  return useCallback((settings: UserSettingsPatch) => {
     const stored = localStorage.getItem(USER_STORAGE_KEY);
     const user = stored ? JSON.parse(stored) : { ...DEMO_USER };
-    const updated = { ...user, ...settings };
+    const safe: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(settings)) {
+      if (UPDATABLE_USER_FIELDS.has(k as UpdatableUserField)) safe[k] = v;
+    }
+    const updated = { ...user, ...safe };
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
     window.dispatchEvent(new StorageEvent('storage', { key: USER_STORAGE_KEY }));
   }, []);

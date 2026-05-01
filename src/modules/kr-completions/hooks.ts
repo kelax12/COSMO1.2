@@ -17,6 +17,7 @@ import { krCompletionKeys } from './constants';
 
 const useKRCompletionsRepository = (): IKRCompletionsRepository => {
   const isDemo = useIsDemo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => getKRCompletionsRepository(), [isDemo]);
 };
 

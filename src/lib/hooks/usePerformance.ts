@@ -38,7 +38,6 @@ export const useGroupedData = <T, K extends string | number>(
   keyFn: (item: T) => K,
   deps: unknown[] = []
 ): Record<K, T[]> => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => {
     const result = {} as Record<K, T[]>;
     data.forEach((item) => {
@@ -47,6 +46,8 @@ export const useGroupedData = <T, K extends string | number>(
       result[key].push(item);
     });
     return result;
+    // keyFn is intentionally omitted — caller passes deps explicitly via the deps arg
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, ...deps]);
 };
 

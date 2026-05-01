@@ -13,6 +13,8 @@ import { PaginationParams } from '@/lib/pagination.types';
 // ═══════════════════════════════════════════════════════════════════
 const useTasksRepository = (): ITasksRepository => {
   const isDemo = useIsDemo();
+  // isDemo dependency is intentional: re-select repository on mode switch
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => getTasksRepository(), [isDemo]);
 };
 
