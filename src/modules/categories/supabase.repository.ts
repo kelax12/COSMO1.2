@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ICategoriesRepository } from './repository';
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -49,7 +50,7 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
       .limit(200); // Sécurité — les catégories ne devraient jamais dépasser 200
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return warnIfTruncated(data || [], 200, 'categories').map(this.mapFromDb);
   }
 
   async getById(id: string): Promise<Category | null> {

@@ -7,6 +7,7 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 /**
  * Supabase DB row type for events table (snake_case)
@@ -54,7 +55,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       .limit(500);
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return warnIfTruncated(data || [], 500, 'events').map(this.mapFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<CalendarEvent>> {

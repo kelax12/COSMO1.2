@@ -7,6 +7,7 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -180,7 +181,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       .limit(500);
 
     if (error) throw normalizeApiError(error);
-    const rows = (data || []) as OKRRow[];
+    const rows = warnIfTruncated((data || []) as OKRRow[], 500, 'okrs');
     const krMap = await this.fetchKRsForOkrs(rows);
     return rows.map(row => this.mapFromDb(row, krMap.get(row.id) ?? []));
   }

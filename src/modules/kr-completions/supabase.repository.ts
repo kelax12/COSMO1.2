@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IKRCompletionsRepository } from './repository';
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ─── DB row type ────────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ export class SupabaseKRCompletionsRepository implements IKRCompletionsRepository
       .limit(500);
 
     if (error) throw normalizeApiError(error);
-    return ((data || []) as KRCompletionRow[]).map(mapFromDb);
+    return warnIfTruncated((data || []) as KRCompletionRow[], 500, 'kr_completions').map(mapFromDb);
   }
 
   async getFiltered(filters: KRCompletionFilters): Promise<KRCompletion[]> {

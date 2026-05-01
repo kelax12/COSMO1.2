@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus } from './types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -56,7 +57,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       .limit(200); // Sécurité — les amis ne devraient jamais dépasser 200
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return warnIfTruncated(data || [], 200, 'friends').map(this.mapFromDb);
   }
 
   async getById(id: string): Promise<Friend | null> {

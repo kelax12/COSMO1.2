@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { resetRepositories, clearDemoStorage } from '../../lib/repository.factory';
@@ -22,11 +22,10 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isDemo: boolean;
   isLoading: boolean;
-  isPremium: () => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => void;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 };
 
@@ -134,17 +133,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
-      if (error) throw error;
+      if (error) {
+        return { success: false, error: error.message || 'Erreur lors de la connexion Google' };
+      }
+      return { success: true };
     } catch (err) {
-      console.error('Google login error:', err);
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue';
+      return { success: false, error: message };
     }
   };
 
@@ -160,15 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  const isPremium = useCallback((): boolean => {
-    if (!user) return false;
-    if (isDemo) return true;
-    if (!user.subscriptionEndDate) return false;
-    return new Date(user.subscriptionEndDate) > new Date() && (user.premiumTokens ?? 0) > 0;
-  }, [user, isDemo]);
-
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, isPremium, login, loginDemo, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, login, loginDemo, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

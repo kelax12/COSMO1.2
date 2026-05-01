@@ -3,6 +3,7 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 
 /**
  * Supabase DB row type for tasks table (snake_case)
@@ -63,7 +64,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .limit(500);
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return warnIfTruncated(data || [], 500, 'tasks').map(this.mapFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Task>> {

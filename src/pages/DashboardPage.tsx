@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/modules/user';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
@@ -68,11 +67,10 @@ const DashboardPage: React.FC = () => {
   const { data: tasks = [] } = useTasks();
   const { data: krCompletions = [] } = useKRCompletions();
   const { data: events = [] } = useEvents();
-  const { user } = useUser();
   const { user: authUser } = useAuth();
   const { data: habits = [] } = useHabits();
 
-  const displayUser = authUser || user || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
+  const displayUser = authUser || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
 
   const today = new Date().toISOString().split('T')[0];
 
