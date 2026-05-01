@@ -18,7 +18,9 @@ export default defineConfig({
   },
   esbuild: {
     drop: ['debugger'],
-    pure: ['console.log', 'console.debug', 'console.info'],
+    // En prod, drop tous les console.* — évite le leak de stack traces / IDs
+    // (cf. faille §14). Pour debug en local, utiliser le serveur dev (vite).
+    pure: ['console.log', 'console.debug', 'console.info', 'console.warn', 'console.error'],
   },
   build: {
     rollupOptions: {

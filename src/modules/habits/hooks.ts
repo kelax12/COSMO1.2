@@ -10,6 +10,7 @@ import { habitKeys } from './constants';
 // Repository - Via centralized factory (demo/production mode)
 const useHabitsRepository = (): IHabitsRepository => {
   const isDemo = useIsDemo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => getHabitsRepository(), [isDemo]);
 };
 

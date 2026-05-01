@@ -18,19 +18,19 @@ Légende :
 | ID  | Sévérité     | Sujet                                          | État         | Commit / Fichier |
 |-----|--------------|------------------------------------------------|--------------|------------------|
 | §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
-| §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| 🟢 Partiel  | `011_security_hardening_v2.sql` (verrou user_id) — Stripe restant |
-| §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🔴 Ouvert    | Edge Function à écrire |
+| §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `013_subscriptions_lockdown.sql` — trigger verrouille plan/status/win_streak/period_end |
+| §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🔴 Ouvert    | Edge Function à écrire (hors scope) |
 | §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | `src/__test__/` supprimé |
 | §5  | 🟠 Important | CI absente                                     | ✅ Corrigé   | `.github/workflows/ci.yml` |
 | §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
-| §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | 🔴 Ouvert    | `vite < 6.4.1` (breaking) |
+| §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | ✅ Corrigé   | `vite ^7.x` — 0 vulns |
 | §8  | 🟠 Important | Drift DB ↔ migrations (`friend_requests`)      | ✅ Corrigé   | `012_friend_requests_align.sql` |
-| §9  | 🟠 Important | Pagination absente côté UI                     | 🟢 Partiel   | Warning console (`pagination.warning.ts`) |
-| §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | 🔴 Ouvert    | Refactor progressif |
-| §11 | 🟡 À plan.   | Bundles JS lourds                              | 🔴 Ouvert    | Tree-shaking |
-| §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | 🔴 Ouvert    | Migration v3 |
-| §13 | 🟡 À plan.   | 25 warnings ESLint résiduels                   | 🔴 Ouvert    | Bénin |
-| §14 | 🟡 À plan.   | `console.error` conservés en prod              | 🔴 Ouvert    | Sentry futur |
+| §9  | 🟠 Important | Pagination absente côté UI                     | 🟢 Partiel   | Warning dev-only (`pagination.warning.ts`), pagination UI à terme |
+| §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | 🔴 Ouvert    | Refactor progressif (continu) |
+| §11 | 🟡 À plan.   | Bundles JS lourds                              | 🟢 Partiel   | date-fns v3 (-4 KB), GSAP/Recharts à auditer |
+| §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | ✅ Corrigé   | `date-fns ^3.x` migré |
+| §13 | 🟡 À plan.   | 25 warnings ESLint résiduels                   | 🟢 Partiel   | 25 → 18 (fast-refresh restant = refactor structurel) |
+| §14 | 🟡 À plan.   | `console.error` conservés en prod              | ✅ Corrigé   | Drop dans `vite.config.ts` (`pure: console.error/warn`) |
 | V1  | 🟠 High      | Mass-assignment `user_id` (tasks/habits)       | ✅ Corrigé   | `d545808` + `010` trigger |
 | V2  | 🟡 Medium    | Pending invites email leak (collaborators)     | ✅ Corrigé   | `010` view restreinte |
 | V5  | 🟡 Medium    | Avatar upload sans validation                  | ✅ Corrigé   | `d545808` SettingsPage |
@@ -228,9 +228,22 @@ Tout ce qui restait dans `faille.md` hors scope OAuth/Stripe/rotation manuelle :
 - ✅ **§5** — `.github/workflows/ci.yml` créé : `npm ci → lint → build` sur push/PR vers main
 - ✅ **§6** — CSP ajoutée dans `vercel.json` : `default-src 'self'` + Stripe + Supabase + Google Fonts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`
 - ✅ **§8** — Migration `012_friend_requests_align.sql` : reproduit l'état drift de prod (colonnes `sender_id`/`receiver_id`/`sender_email`, triggers, fonction `accept_friend_request` SECURITY DEFINER), idempotente
-- 🟢 **§9 (partiel)** — Helper `src/lib/pagination.warning.ts` + `warnIfTruncated()` dans 8 repos (`tasks`, `habits`, `okrs`, `events`, `categories`, `lists`, `friends`, `kr-completions`). `console.warn` quand `data.length === limit`. Pagination UI complète à implémenter à terme.
+- 🟢 **§9 (partiel)** — Helper `src/lib/pagination.warning.ts` + `warnIfTruncated()` dans 8 repos. `console.warn` dev-only (droppé en prod). Pagination UI complète à implémenter à terme.
 - ✅ **N5** — `isPremium` retiré de `AuthContextType` et du provider value. Tous les consommateurs utilisent déjà `useBilling().isPremium`.
 - ✅ **N6** — `DashboardPage.tsx` ne lit plus `useUser()` (localStorage), utilise `useAuth().user` (Supabase session).
+
+### Deuxième cycle de finalisation du 2026-05-01
+
+Reprise des derniers items hors §1 (rotation clés) et §3 (Stripe) :
+
+- ✅ **§2** — Migration `013_subscriptions_lockdown.sql` : trigger `subscriptions_guard` qui rejette toute mutation client de `plan`, `status`, `current_period_end`, `win_streak` et limite `premium_tokens` à un delta ∈ [-1, +1]. Bloque l'auto-upgrade Premium même sans Stripe. Quand l'Edge Function Stripe sera en place, elle utilisera `service_role` pour bypasser ce trigger (ou le trigger sera adapté).
+- ✅ **§7** — `vite ^5.4.2 → ^7.x` : `npm audit` retourne désormais 0 vulnérabilité (avant : 2 modérées via esbuild). Build et lint OK.
+- ✅ **§12** — `date-fns ^2.30.0 → ^3.x` : compatible `react-day-picker@9`, build -4 KB sur `vendor-utils`. Imports inchangés (`format`, `formatDistanceToNow`, `fr` locale).
+- ✅ **§13 (partiel)** — 25 → 18 warnings ESLint. Corrigés : 4 warnings `isDemo` (commentaire eslint-disable + justification) + directive inutilisée dans `usePerformance.ts`. Restant : warnings Fast refresh (séparation composants/constantes = refactor structurel).
+- ✅ **§14** — `console.error` et `console.warn` ajoutés au `pure` de vite. Tous les `console.*` sont droppés en build prod : plus de leak de stack traces / IDs.
+- ✅ **B1** — `useUpdateUserSettings` n'accepte plus qu'une whitelist `{name, email, avatar, autoValidation}`. Les champs financiers (`premiumTokens`, `subscriptionEndDate`, `premiumWinStreak`, `lastTokenConsumption`) ne peuvent plus être modifiés via ce hook depuis localStorage.
+
+Vérification finale : `npm audit` 0 vulns, ESLint 0 erreur 18 warnings, build OK (~45 s).
 
 Vérification finale par re-audit indépendant :
 - 19/19 fixes vérifiés en place
@@ -246,11 +259,12 @@ Vérification finale par re-audit indépendant :
 | # | Action | Effort | Bloque déploiement ? |
 |---|---|---|---|
 | 1 | Rotation clés Supabase (§1) | 15 min | **Oui** — manuel, dashboard |
-| 2 | Edge Function Stripe + verrouillage RLS subscriptions (§2 + §3) | 1-2 j | **Oui** si paiements activés |
-| 3 | npm audit fix --force (§7) | 2 h test | Non — affecte uniquement dev |
-| 4 | Pagination UI complète (§9) | 1 j | Non — warning console actif |
-| 5 | Refactor monolithes / bundles / date-fns v3 (§10-12) | continu | Non |
-| 6 | console.error → Sentry (§14) | 1 j | Non |
+| 2 | Edge Function Stripe (§3) | 1-2 j | **Oui** si paiements activés |
+| 3 | Pagination UI complète (§9) | 1 j | Non — warning dev-only actif |
+| 4 | Refactor monolithes (§10) | continu | Non |
+| 5 | Bundles : audit GSAP + code-split Recharts (§11) | continu | Non |
+| 6 | Warnings Fast refresh (§13 résiduel) | ~1 j refactor | Non |
+| 7 | Sentry pour `console.error` runtime (§14 v2) | 1 j | Non — droppés en prod |
 
 ---
 
@@ -267,4 +281,7 @@ Dans l'ordre, sur le projet de prod :
 
 -- 3. Alignement friend_requests (à appliquer pour tout nouveau projet Supabase)
 \i supabase/migration/012_friend_requests_align.sql
+
+-- 4. Verrouillage subscriptions (À EXÉCUTER — ferme l'auto-upgrade Premium côté client)
+\i supabase/migration/013_subscriptions_lockdown.sql
 ```

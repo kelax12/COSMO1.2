@@ -2,8 +2,8 @@ const warned = new Set<string>();
 
 /**
  * Avertit (console.warn) quand un getAll() Supabase atteint sa limite et que
- * les données peuvent être tronquées. À implémenter en pagination UI à terme
- * (cf. faille.md §9). console.warn n'est PAS droppé par vite en prod.
+ * les données peuvent être tronquées. Dev-only : console.warn est droppé en
+ * build prod (faille §14). À remplacer par une pagination UI (faille §9).
  */
 export function warnIfTruncated<T>(rows: T[], limit: number, table: string): T[] {
   if (rows.length >= limit && !warned.has(table)) {
