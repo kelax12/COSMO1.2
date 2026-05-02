@@ -144,7 +144,7 @@ export function PremiumPage() {
                   </>
                 ) : (
                   <>
-                    <span className="text-[rgb(var(--color-text-muted))]">🔒</span>
+                    <span className="text-[rgb(var(--color-text-muted))]"></span>
                     Version Gratuite
                   </>
                 )}
