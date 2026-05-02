@@ -75,9 +75,10 @@ const AppleIcon = () => (
   </svg>
 );
 
-const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: 'login' | 'register' }) => {
+const MockLoginModal = ({ isOpen, onClose, mode: initialMode }: { isOpen: boolean; onClose: () => void; mode: 'login' | 'register' }) => {
   const { login, register, loginDemo, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -249,6 +250,19 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
             </button>
           )}
         </form>
+
+        <div className="mt-6 pt-5 border-t border-slate-700/50 text-center">
+          <p className="text-sm text-slate-500">
+            {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}
+          </p>
+          <button
+            type="button"
+            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+            className="mt-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+          >
+            {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
+          </button>
+        </div>
       </motion.div>
     </div>
   );
