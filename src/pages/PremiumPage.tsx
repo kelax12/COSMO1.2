@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Zap, Play, Check, Users, Sparkles } from 'lucide-react';
+import { Crown, Zap, Play, Check, Users, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
-import PaymentModal from '../components/PaymentModal';
 import { useBilling } from '@/modules/billing/billing.context';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 const containerVariants = {
@@ -32,34 +32,77 @@ const itemVariants = {
 
 export function PremiumPage() {
   const { user } = useAuth();
-  const { isPremium, addTokens, subscription } = useBilling();
+  const { isPremium, addTokens, subscription, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+
+  // Handle return from Stripe Checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('checkout');
+    if (status === 'success') {
+      toast.success('Abonnement activé ! Bienvenue chez Cosmo Premium.');
+      // Refresh billing immediately then once more after a short delay
+      // to account for webhook processing time
+      refreshBillingStatus();
+      const t = setTimeout(() => refreshBillingStatus(), 3000);
+      window.history.replaceState({}, '', '/premium');
+      return () => clearTimeout(t);
+    }
+    if (status === 'cancelled') {
+      toast.info('Paiement annulé.');
+      window.history.replaceState({}, '', '/premium');
+    }
+  }, [refreshBillingStatus]);
 
   if (!user) return null;
 
   const premium = isPremium();
 
-    const features = [
-      {
-        icon: Users,
-        title: 'Collaboration',
-        description: 'Partagez vos tâches avec votre équipe',
-      },
-    ];
+  const features = [
+    {
+      icon: Users,
+      title: 'Collaboration',
+      description: 'Partagez vos tâches avec votre équipe',
+    },
+  ];
 
-    const handlePaymentSuccess = async () => {
+  const handleCheckout = async () => {
+    setIsCheckoutLoading(true);
     try {
-      await addTokens(30, true); // 30 tokens + active premium
-      toast.success('Abonnement activé ! Vous êtes maintenant Premium.');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Veuillez vous reconnecter.');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (error) throw error;
+
+      if (data?.error === 'already_subscribed') {
+        toast.info('Vous avez déjà un abonnement actif.');
+        await refreshBillingStatus();
+        return;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch {
-      toast.error("Erreur lors de l'activation du Premium");
+      toast.error("Erreur lors de la création du paiement. Réessayez.");
+    } finally {
+      setIsCheckoutLoading(false);
     }
   };
 
   const handleAdComplete = async () => {
     try {
-      await addTokens(1, true); // +1 token + activation premium
+      await addTokens(1);
       toast.success('+1 jour Premium crédité !');
     } catch {
       toast.error('Erreur lors du crédit du jour');
@@ -111,20 +154,20 @@ export function PremiumPage() {
                   <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Jours Premium:</span>
                   <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-400/30">
                     <Zap size={18} className="text-amber-500" />
-                    <span className="font-bold text-xl text-amber-600 dark:text-amber-300">{subscription?.premiumTokens ?? user.premiumTokens ?? 0}</span>
+                    <span className="font-bold text-xl text-amber-600 dark:text-amber-300">{subscription?.premiumTokens ?? 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Win Streak:</span>
                   <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-400/30">
                     <span className="text-lg">🔥</span>
-                    <span className="font-bold text-xl text-orange-600 dark:text-orange-300">{subscription?.winStreak ?? user.premiumWinStreak ?? 0}</span>
+                    <span className="font-bold text-xl text-orange-600 dark:text-orange-300">{subscription?.winStreak ?? 0}</span>
                     <span className="text-orange-500 dark:text-orange-400/70 text-sm font-medium">jours</span>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="w-full sm:w-auto">
               {premium ? (
                             <motion.div
@@ -152,13 +195,23 @@ export function PremiumPage() {
                 </motion.div>
               ) : (
                 <motion.button
-                  onClick={() => setShowPaymentModal(true)}
-                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCheckout}
+                  disabled={isCheckoutLoading}
+                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
                 >
-                  <Crown size={24} />
-                  <span>Passer Premium</span>
+                  {isCheckoutLoading ? (
+                    <>
+                      <Loader2 size={24} className="animate-spin" />
+                      <span>Chargement...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Crown size={24} />
+                      <span>Passer Premium</span>
+                    </>
+                  )}
                 </motion.button>
               )}
             </div>
@@ -194,11 +247,12 @@ export function PremiumPage() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
+                        <Play size={18} />
                         <span>Regarder pub (+1 jour)</span>
                       </motion.button>
                     </div>
                   </motion.div>
-                
+
                 <motion.div
                     className="relative overflow-hidden bg-[rgb(var(--color-accent)/0.1)] p-6 rounded-2xl border border-[rgb(var(--color-accent)/0.3)]"
                     whileHover={{ scale: 1.02, backgroundColor: 'rgb(var(--color-accent)/0.15)' }}
@@ -215,11 +269,15 @@ export function PremiumPage() {
                         <div className="text-sm text-[rgb(var(--color-text-secondary))]">par mois</div>
                       </div>
                         <motion.button
-                          onClick={() => setShowPaymentModal(true)}
-                          className="w-full bg-[rgb(var(--color-accent))] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)]"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          onClick={handleCheckout}
+                          disabled={isCheckoutLoading}
+                          className="w-full bg-[rgb(var(--color-accent))] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
+                          whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
+                          whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
                         >
+                        {isCheckoutLoading ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : null}
                         <span>S'abonner maintenant</span>
                       </motion.button>
                     </div>
@@ -279,13 +337,13 @@ export function PremiumPage() {
                 ))}
               </motion.div>
             </motion.div>
-            
+
             <motion.div
               className="mt-12 backdrop-blur-2xl bg-white/40 dark:bg-white/[0.06] border border-slate-200 dark:border-white/20 rounded-[2.5rem] p-8 sm:p-12 shadow-xl dark:shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] relative overflow-hidden group/section"
             variants={itemVariants}
           >
           <div className="relative">
-              <motion.div 
+              <motion.div
                 className="flex flex-col items-center mb-16"
                 variants={itemVariants}
               >
@@ -295,123 +353,94 @@ export function PremiumPage() {
               </motion.div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-16 relative">
-                  {/* Animated Desktop Connector Line */}
                   <div className="hidden md:block absolute top-[100px] left-[10%] right-[10%] h-[2px] overflow-hidden z-0">
                     <div className="absolute inset-0 bg-slate-200 dark:bg-white/5" />
-                    <motion.div 
+                    <motion.div
                       className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent blur-sm"
-                      animate={{
-                        left: ['-100%', '200%']
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
+                      animate={{ left: ['-100%', '200%'] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                     />
                   </div>
 
                   {[
-                              { 
-                                icon: Play, 
-                                title: 'Accumulez', 
-                                desc: 'Regardez des pubs ou souscrivez pour obtenir des jours Premium', 
-                                  color: 'from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600',
-                                  glow: 'group-hover:shadow-emerald-500/40',
-                                    iconColor: 'text-emerald-50',
-                                            bgBase: 'bg-emerald-100/80 dark:bg-emerald-500/40',
-                                            bgHover: 'hover:bg-emerald-200/95 dark:hover:bg-emerald-500/60',
-                                            borderColor: 'border-emerald-200 dark:border-emerald-500/40',
-                                        borderHover: 'hover:border-emerald-400 dark:hover:border-emerald-400'
-                                      },
-                                      { 
-                                        icon: Zap, 
-                                        title: 'Activation', 
-                                        desc: '1 jour premium est consommé chaque jour pour maintenir votre statut Premium', 
-                                        color: 'from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
-                                        glow: 'group-hover:shadow-blue-500/40',
-                                          iconColor: 'text-blue-50',
-                                            bgBase: 'bg-blue-100/80 dark:bg-blue-500/40',
-                                            bgHover: 'hover:bg-blue-200/95 dark:hover:bg-blue-500/60',
-                                            borderColor: 'border-blue-200 dark:border-blue-500/40',
-                                        borderHover: 'hover:border-blue-400 dark:hover:border-blue-400'
-                                      },
-                                      { 
-                                        icon: Crown, 
-                                        title: 'Liberté', 
-                                        desc: 'Accédez à toutes les fonctionnalités Premium tant que vous avez des jours', 
-                                        color: 'from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600',
-                                        glow: 'group-hover:shadow-purple-500/40',
-                                          iconColor: 'text-purple-50',
-                                            bgBase: 'bg-purple-100/80 dark:bg-purple-500/40',
-                                            bgHover: 'hover:bg-purple-200/95 dark:hover:bg-purple-500/60',
-                                            borderColor: 'border-purple-200 dark:border-purple-500/40',
-                                        borderHover: 'hover:border-purple-400 dark:hover:border-purple-400'
-                                      },
-
-                    ].map((item, i) => (
-                          <motion.div
-                            key={i}
-                            className={`relative group backdrop-blur-xl ${item.bgBase} ${item.borderColor} border rounded-[2.5rem] p-8 ${item.bgHover} ${item.borderHover} transition-all duration-500 shadow-lg hover:shadow-xl`}
-
+                    {
+                      icon: Play,
+                      title: 'Accumulez',
+                      desc: 'Regardez des pubs ou souscrivez pour obtenir des jours Premium',
+                      color: 'from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600',
+                      glow: 'group-hover:shadow-emerald-500/40',
+                      iconColor: 'text-emerald-50',
+                      bgBase: 'bg-emerald-100/80 dark:bg-emerald-500/40',
+                      bgHover: 'hover:bg-emerald-200/95 dark:hover:bg-emerald-500/60',
+                      borderColor: 'border-emerald-200 dark:border-emerald-500/40',
+                      borderHover: 'hover:border-emerald-400 dark:hover:border-emerald-400'
+                    },
+                    {
+                      icon: Zap,
+                      title: 'Activation',
+                      desc: '1 jour premium est consommé chaque jour pour maintenir votre statut Premium',
+                      color: 'from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
+                      glow: 'group-hover:shadow-blue-500/40',
+                      iconColor: 'text-blue-50',
+                      bgBase: 'bg-blue-100/80 dark:bg-blue-500/40',
+                      bgHover: 'hover:bg-blue-200/95 dark:hover:bg-blue-500/60',
+                      borderColor: 'border-blue-200 dark:border-blue-500/40',
+                      borderHover: 'hover:border-blue-400 dark:hover:border-blue-400'
+                    },
+                    {
+                      icon: Crown,
+                      title: 'Liberté',
+                      desc: 'Accédez à toutes les fonctionnalités Premium tant que vous avez des jours',
+                      color: 'from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600',
+                      glow: 'group-hover:shadow-purple-500/40',
+                      iconColor: 'text-purple-50',
+                      bgBase: 'bg-purple-100/80 dark:bg-purple-500/40',
+                      bgHover: 'hover:bg-purple-200/95 dark:hover:bg-purple-500/60',
+                      borderColor: 'border-purple-200 dark:border-purple-500/40',
+                      borderHover: 'hover:border-purple-400 dark:hover:border-purple-400'
+                    },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      className={`relative group backdrop-blur-xl ${item.bgBase} ${item.borderColor} border rounded-[2.5rem] p-8 ${item.bgHover} ${item.borderHover} transition-all duration-500 shadow-lg hover:shadow-xl`}
                       variants={itemVariants}
-                  >
-                    <div className="flex flex-col items-center text-center relative z-10">
-                      <motion.div
-                        className={`w-28 h-28 bg-gradient-to-br ${item.color} rounded-[2rem] flex items-center justify-center mb-8 border border-white/10 shadow-2xl relative z-10 transition-all duration-500 ${item.glow}`}
-                        animate={{
-                          y: [0, -8, 0],
-                        }}
-                          transition={{
-                            duration: 4,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                            delay: i * 0.5
-                          }}
+                    >
+                      <div className="flex flex-col items-center text-center relative z-10">
+                        <motion.div
+                          className={`w-28 h-28 bg-gradient-to-br ${item.color} rounded-[2rem] flex items-center justify-center mb-8 border border-white/10 shadow-2xl relative z-10 transition-all duration-500 ${item.glow}`}
+                          animate={{ y: [0, -8, 0] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
                         >
                           <item.icon size={44} className={`${item.iconColor} filter drop-shadow-[0_0_8px_currentColor]`} />
-                          
-                          {/* Step Number Badge */}
-                          <motion.div 
+                          <motion.div
                             className="absolute -top-4 -right-4 w-12 h-12 bg-slate-100 dark:bg-slate-950 border-2 border-slate-200 dark:border-white/20 rounded-2xl flex items-center justify-center text-xl font-black text-slate-900 dark:text-white shadow-2xl"
                           >
                             {i + 1}
                           </motion.div>
-  
-                          {/* Animated Rings */}
-                          <motion.div 
+                          <motion.div
                             className="absolute inset-0 border border-white/20 rounded-[2rem]"
                             animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
                             transition={{ duration: 2, repeat: Infinity, delay: i * 0.7 }}
                           />
                         </motion.div>
-                        
-                        <motion.h4 
-                          className="font-black text-slate-900 dark:text-white text-2xl mb-4 tracking-tight transition-transform duration-300"
-                        >
+                        <motion.h4 className="font-black text-slate-900 dark:text-white text-2xl mb-4 tracking-tight transition-transform duration-300">
                           {item.title}
                         </motion.h4>
-                          <p className="text-base text-slate-600 dark:text-blue-50 leading-relaxed font-medium">
-                            {item.desc}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))}
-                </div>
-            </div>
-          </motion.div>
+                        <p className="text-base text-slate-600 dark:text-blue-50 leading-relaxed font-medium">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+              </div>
+          </div>
         </motion.div>
+      </motion.div>
 
-        <AdModal
-          isOpen={showAdModal}
+      <AdModal
+        isOpen={showAdModal}
         onClose={() => setShowAdModal(false)}
         onAdComplete={handleAdComplete}
-      />
-
-      <PaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        onPaymentSuccess={handlePaymentSuccess}
       />
     </div>
   );
