@@ -1103,13 +1103,13 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                       <div ref={collaboratorRef}>
                         {!isPremium() ? (
                           <div className="text-center py-6">
-                            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                              <Users size={24} className="text-yellow-600 dark:text-yellow-400" />
+                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                              <Users size={24} className="text-blue-600 dark:text-blue-400" />
                             </div>
                             <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               Fonctionnalité Premium requise
                             </p>
-                                            <Button type="button" size="sm" onClick={() => navigate('/premium')} className="bg-yellow-500 hover:bg-yellow-600 text-white border-0">
+                            <Button type="button" size="sm" onClick={() => navigate('/premium')} className="bg-blue-600 hover:bg-blue-500 text-white border-0">
                               Débloquer Premium
                             </Button>
                           </div>
