@@ -1,5 +1,5 @@
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import Stripe from 'npm:stripe@14.21.0'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -124,25 +124,39 @@ async function applySubscriptionToDb(
     ? Math.max(1, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0
 
-  const { error } = await supabaseAdmin
-    .from('subscriptions')
-    .upsert(
-      {
-        user_id: userId,
-        plan: isActive ? 'premium' : 'free',
-        status: isActive ? 'active' : 'cancelled',
-        current_period_end: isActive ? periodEnd.toISOString() : null,
-        premium_tokens: daysLeft,
-        win_streak: isActive ? 1 : 0,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscription.id,
-      },
-      { onConflict: 'user_id' },
-    )
+  const payload = {
+    plan: isActive ? 'premium' : 'free',
+    status: isActive ? 'active' : 'cancelled',
+    current_period_end: isActive ? periodEnd.toISOString() : null,
+    premium_tokens: daysLeft,
+    win_streak: isActive ? 1 : 0,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscription.id,
+  }
 
-  if (error) {
-    console.error('applySubscriptionToDb error:', error)
-    throw error
+  // Try UPDATE first
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from('subscriptions')
+    .update(payload)
+    .eq('user_id', userId)
+    .select('id')
+    .maybeSingle()
+
+  if (updateError) {
+    console.error('applySubscriptionToDb update error:', updateError)
+    throw updateError
+  }
+
+  // If no row existed, INSERT
+  if (!updated) {
+    const { error: insertError } = await supabaseAdmin
+      .from('subscriptions')
+      .insert({ user_id: userId, ...payload })
+
+    if (insertError) {
+      console.error('applySubscriptionToDb insert error:', insertError)
+      throw insertError
+    }
   }
 }
 
