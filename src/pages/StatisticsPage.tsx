@@ -16,6 +16,8 @@ import { useEvents, CalendarEvent } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 import { useVisibilityInterval } from '../lib/hooks/usePerformance';
+import { useBilling } from '@/modules/billing/billing.context';
+import PremiumGateModal from '@/components/PremiumGateModal';
 
 type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
 type TimePeriod = 'day' | 'week' | 'month' | 'year';
@@ -245,11 +247,13 @@ export default function StatisticsPage() {
   const { colorSettings } = useColorSettings();
   const { data: categories = [] } = useCategories();
   const { data: habits = [] } = useHabits();
+  const { isPremium } = useBilling();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
   const [showReferenceBar, setShowReferenceBar] = useState(true);
   const [referenceValue, setReferenceValue] = useState(60);
   const [now, setNow] = useState(new Date());
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   useVisibilityInterval(useCallback(() => setNow(new Date()), []), 60000, true);
 
@@ -460,6 +464,45 @@ export default function StatisticsPage() {
         ))}
       </div>
 
+      {/* Gate premium — graphiques et détails */}
+      {!isPremium() ? (
+        <div className="relative">
+          {/* Aperçu flouté */}
+          <div className="pointer-events-none select-none blur-sm opacity-40 space-y-4">
+            <div className="card p-6 h-48 flex items-center justify-center">
+              <div className="w-full h-32 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 dark:from-blue-800/30 dark:via-purple-800/30 dark:to-pink-800/30 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2].map(i => (
+                <div key={i} className="card p-6 h-32 flex flex-col gap-2">
+                  <div className="h-3 rounded bg-slate-200 dark:bg-slate-700 w-1/2" />
+                  <div className="h-3 rounded bg-slate-200 dark:bg-slate-700 w-3/4" />
+                  <div className="h-3 rounded bg-slate-200 dark:bg-slate-700 w-2/3 mt-2" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Overlay */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <BarChart3 size={24} className="text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="font-bold text-slate-800 dark:text-white mb-1">Analyses détaillées</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                Accédez aux graphiques et aux statistiques avancées avec un compte Premium.
+              </p>
+              <button
+                onClick={() => setShowPremiumGate(true)}
+                className="w-full px-4 py-2.5 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/30"
+              >
+                Débloquer — pub ou abonnement
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+      <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         {/* Sélecteur de section */}
         <div className="flex flex-wrap items-center gap-4">
@@ -627,6 +670,14 @@ export default function StatisticsPage() {
       {selectedSection === 'okr' && <OKRStatistics objectives={okrs} rollingRange={rollingRange} />}
       {selectedSection === 'habits' && <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />}
       {selectedSection === 'all' && <OverviewStatistics workTimeData={rollingWorkTimeData} />}
+      </>
+      )}
+
+      <PremiumGateModal
+        isOpen={showPremiumGate}
+        onClose={() => setShowPremiumGate(false)}
+        featureName="les analyses détaillées"
+      />
     </div>
   );
 }

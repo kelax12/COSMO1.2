@@ -94,9 +94,15 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const isPremium = useCallback((): boolean => {
     if (isDemo) return true;
     if (!subscription) return false;
-    if (subscription.plan !== 'premium' || subscription.status !== 'active') return false;
-    if (subscription.current_period_end && new Date(subscription.current_period_end) < new Date()) return false;
-    return (subscription.premium_tokens ?? 0) > 0;
+    if (subscription.status === 'cancelled') return false;
+    const tokens = subscription.premium_tokens ?? 0;
+    if (tokens <= 0) return false;
+    // Paid subscription: also validate period_end hasn't expired
+    if (subscription.plan === 'premium' && subscription.current_period_end) {
+      return new Date(subscription.current_period_end) >= new Date();
+    }
+    // Ad-based tokens: active as long as tokens > 0 and not cancelled
+    return subscription.status === 'active';
   }, [subscription, isDemo]);
 
   const stats: BillingStats = {

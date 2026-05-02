@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import PremiumGateModal from './PremiumGateModal';
 import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -85,7 +85,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
-  const navigate = useNavigate();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -552,6 +552,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || deleteTaskMutation.isPending;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         showCloseButton={false}
@@ -1109,7 +1110,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               Fonctionnalité Premium requise
                             </p>
-                            <Button type="button" size="sm" onClick={() => navigate('/premium')} className="bg-blue-600 hover:bg-blue-500 text-white border-0">
+                            <Button type="button" size="sm" onClick={() => setShowPremiumGate(true)} className="bg-blue-600 hover:bg-blue-500 text-white border-0">
                               Débloquer Premium
                             </Button>
                           </div>
@@ -1358,14 +1359,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
           )}
             </AnimatePresence>
             
-            <ColorSettingsModal 
-              isOpen={showCategoryModal} 
-              onClose={() => setShowCategoryModal(false)} 
+            <ColorSettingsModal
+              isOpen={showCategoryModal}
+              onClose={() => setShowCategoryModal(false)}
               isNested={true}
             />
           </DialogContent>
         </Dialog>
 
+        <PremiumGateModal
+          isOpen={showPremiumGate}
+          onClose={() => setShowPremiumGate(false)}
+          featureName="la collaboration"
+        />
+    </>
     );
   };
 
