@@ -30,6 +30,7 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitchMode }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -90,11 +91,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
   };
 
   const handleGoogleLogin = async () => {
+    if (isGoogleLoading) return;
+    setIsGoogleLoading(true);
     try {
-      await loginWithGoogle();
-    } catch (error) {
-      console.error('Erreur Google Login:', error);
+      const result = await loginWithGoogle();
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors de la connexion avec Google');
+        setIsGoogleLoading(false);
+        return;
+      }
+      // En cas de succès, le navigateur est redirigé vers Google — pas de reset nécessaire
+    } catch {
       toast.error('Erreur lors de la connexion avec Google');
+      setIsGoogleLoading(false);
     }
   };
 
@@ -137,10 +146,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             <button
               type="button"
               onClick={() => handleGoogleLogin()}
-              className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium text-white transition-colors"
+              disabled={isGoogleLoading}
+              className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-white transition-colors"
             >
               <GoogleIcon />
-              Google
+              {isGoogleLoading ? 'Redirection...' : 'Google'}
             </button>
             <button
               type="button"

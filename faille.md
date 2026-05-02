@@ -19,7 +19,7 @@ Légende :
 |-----|--------------|------------------------------------------------|--------------|------------------|
 | §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
 | §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `013_subscriptions_lockdown.sql` — trigger verrouille plan/status/win_streak/period_end |
-| §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🔴 Ouvert    | Edge Function à écrire (hors scope) |
+| §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🟢 Partiel   | Edge Functions écrites — déploiement + secrets Supabase restants |
 | §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | `src/__test__/` supprimé |
 | §5  | 🟠 Important | CI absente                                     | ✅ Corrigé   | `.github/workflows/ci.yml` |
 | §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
@@ -92,13 +92,28 @@ Mitigations appliquées :
 
 ### §3. Stripe non fonctionnel
 
-**Risque** : aucun paiement ne sera traité. Pas de PaymentIntent serveur, pas de webhook.
+**Statut** : 🟢 Edge Functions écrites, déploiement en attente.
 
-**Correctif** :
-1. Edge Function `create-payment-intent` (Stripe Secret Key → `client_secret`).
-2. Côté client : récupérer `client_secret` avant d'instancier `<Elements>`.
-3. Edge Function `stripe-webhook` pour confirmer paiement et créditer tokens.
-4. Variables Vercel : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
+**Ce qui a été fait (2026-05-01)** :
+- `PaymentModal.tsx` supprimé (mode `Elements` sans `client_secret` — ne fonctionnait pas).
+- `@stripe/react-stripe-js` et `@stripe/stripe-js` retirés du bundle client.
+- `supabase/functions/stripe-create-checkout/index.ts` : crée ou récupère le customer Stripe, crée une Checkout Session (mode subscription), retourne l'URL.
+- `supabase/functions/stripe-webhook/index.ts` : vérifie la signature Stripe, gère `checkout.session.completed`, `customer.subscription.updated/deleted`, `invoice.payment_succeeded/failed`, écrit en DB via service_role.
+- `supabase/migration/014_stripe_columns.sql` : ajoute `stripe_customer_id` et `stripe_subscription_id` + bypass service_role dans `subscriptions_guard`.
+- `PremiumPage.tsx` : bouton → appel Edge Function → redirect Stripe Checkout → retour `/premium?checkout=success` → refresh billing.
+
+**Reste à faire (manuel)** :
+1. Appliquer `014_stripe_columns.sql` dans le SQL editor Supabase.
+2. Déployer les Edge Functions : `supabase functions deploy stripe-create-checkout` et `supabase functions deploy stripe-webhook`.
+3. Configurer les secrets dans Supabase (Dashboard → Edge Functions → Secrets) :
+   - `STRIPE_SECRET_KEY` = clé secrète Stripe
+   - `STRIPE_PRICE_ID` = `price_1TSLU9HEm0kmXgy9JLkWHFmv`
+   - `STRIPE_WEBHOOK_SECRET` = signing secret du webhook Stripe
+   - `APP_URL` = URL de l'app en production (ex: `https://cosmo.vercel.app`)
+4. Dans Stripe Dashboard → Webhooks → Add endpoint :
+   - URL : `https://<project-ref>.supabase.co/functions/v1/stripe-webhook`
+   - Événements : `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`
+5. `VITE_STRIPE_PUBLISHABLE_KEY` n'est plus utilisé côté client — peut être retiré des variables Vercel.
 
 ---
 
