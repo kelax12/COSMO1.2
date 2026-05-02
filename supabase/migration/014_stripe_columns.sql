@@ -16,9 +16,14 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer_id
 -- Mise à jour du guard : service_role bypass (webhook Stripe)
 CREATE OR REPLACE FUNCTION subscriptions_guard()
 RETURNS TRIGGER AS $$
+DECLARE
+  jwt_role TEXT;
 BEGIN
-  -- Bypass complet pour le service_role (Edge Functions Stripe)
-  IF current_setting('request.jwt.claim.role', true) = 'service_role' THEN
+  -- Bypass complet pour le service_role (Edge Functions Stripe).
+  -- On lit la claim JWT ET on vérifie le current_user Postgres pour couvrir
+  -- toutes les façons dont une Edge Function peut s'authentifier.
+  jwt_role := current_setting('request.jwt.claim.role', true);
+  IF jwt_role = 'service_role' OR current_user::text = 'service_role' OR session_user::text = 'service_role' THEN
     RETURN NEW;
   END IF;
 

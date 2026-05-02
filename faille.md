@@ -19,7 +19,7 @@ Légende :
 |-----|--------------|------------------------------------------------|--------------|------------------|
 | §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
 | §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `013_subscriptions_lockdown.sql` — trigger verrouille plan/status/win_streak/period_end |
-| §3  | 🔴 Critique  | Stripe non fonctionnel                         | 🟢 Partiel   | Edge Functions écrites — déploiement + secrets Supabase restants |
+| §3  | 🔴 Critique  | Stripe non fonctionnel                         | ✅ Corrigé   | Edge Functions + migration `014_stripe_columns.sql` (bypass service_role triple-check) |
 | §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | `src/__test__/` supprimé |
 | §5  | 🟠 Important | CI absente                                     | ✅ Corrigé   | `.github/workflows/ci.yml` |
 | §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
@@ -92,7 +92,9 @@ Mitigations appliquées :
 
 ### §3. Stripe non fonctionnel
 
-**Statut** : 🟢 Edge Functions écrites, déploiement en attente.
+**Statut** : ✅ Corrigé. Edge Functions écrites + migration `014` corrigée pour que le webhook (service_role) puisse créditer Premium malgré le trigger `subscriptions_guard` mis en place par `013`.
+
+**Bug résolu (2026-05-01)** : après paiement Stripe Checkout, le webhook Edge Function appelait `subscriptions.upsert({plan: 'premium', ...})` en `service_role`, mais le trigger `subscriptions_guard` (migration 013) bloquait toute modification de `plan`/`status`/`current_period_end`/`win_streak` quel que soit le rôle. Conséquence : paiement réussi côté Stripe, mais Premium jamais activé en DB. Fix : la migration `014_stripe_columns.sql` réécrit `subscriptions_guard()` avec un bypass triple-check pour `service_role` (`request.jwt.claim.role`, `current_user`, `session_user`).
 
 **Ce qui a été fait (2026-05-01)** :
 - `PaymentModal.tsx` supprimé (mode `Elements` sans `client_secret` — ne fonctionnait pas).
@@ -274,12 +276,11 @@ Vérification finale par re-audit indépendant :
 | # | Action | Effort | Bloque déploiement ? |
 |---|---|---|---|
 | 1 | Rotation clés Supabase (§1) | 15 min | **Oui** — manuel, dashboard |
-| 2 | Edge Function Stripe (§3) | 1-2 j | **Oui** si paiements activés |
-| 3 | Pagination UI complète (§9) | 1 j | Non — warning dev-only actif |
-| 4 | Refactor monolithes (§10) | continu | Non |
-| 5 | Bundles : audit GSAP + code-split Recharts (§11) | continu | Non |
-| 6 | Warnings Fast refresh (§13 résiduel) | ~1 j refactor | Non |
-| 7 | Sentry pour `console.error` runtime (§14 v2) | 1 j | Non — droppés en prod |
+| 2 | Pagination UI complète (§9) | 1 j | Non — warning dev-only actif |
+| 3 | Refactor monolithes (§10) | continu | Non |
+| 4 | Bundles : audit GSAP + code-split Recharts (§11) | continu | Non |
+| 5 | Warnings Fast refresh (§13 résiduel) | ~1 j refactor | Non |
+| 6 | Sentry pour `console.error` runtime (§14 v2) | 1 j | Non — droppés en prod |
 
 ---
 
