@@ -75,58 +75,23 @@ export class BillingRepository {
    */
   async consumeToken(): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const sub = await this.getSubscription();
-    const newTokens = Math.max(0, sub.premiumTokens - 1);
-    const newStatus = newTokens === 0 ? 'expired' : sub.status;
-
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .update({ premium_tokens: newTokens, status: newStatus })
-      .eq('id', sub.id)
-      .eq('user_id', user.id)
-      .select()
-      .single();
-
+    // RPC SECURITY DEFINER — les clients n'ont plus le droit d'UPDATE direct.
+    const { data, error } = await supabase.rpc('consume_premium_token');
     if (error) throw normalizeApiError(error);
     return this.mapFromDb(data as SubscriptionRow);
   }
 
   /**
-   * Ajoute des tokens (après paiement ou pub regardée)
+   * Crédite 1 token premium suite au visionnage d'une publicité.
+   * L'activation Premium (plan/status/period_end) ne peut se faire que
+   * via le webhook Stripe (service_role), `activatePremium` est ignoré.
    */
-  async addTokens(amount: number, activatePremium = false): Promise<Subscription> {
+  async addTokens(amount: number, _activatePremium = false): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const sub = await this.getSubscription();
-    const updates: Partial<SubscriptionRow> = {
-      premium_tokens: sub.premiumTokens + amount,
-    };
-
-    if (activatePremium) {
-      updates.plan = 'premium';
-      updates.status = 'active';
-      // Expire dans 30 jours
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 30);
-      updates.current_period_end = endDate.toISOString();
-      updates.win_streak = sub.winStreak + 1;
+    if (amount !== 1) {
+      throw new Error('Client-side token credit is limited to +1 per call (use Stripe Checkout)');
     }
-
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .update(updates)
-      .eq('id', sub.id)
-      .eq('user_id', user.id)
-      .select()
-      .single();
-
+    const { data, error } = await supabase.rpc('credit_premium_token_from_ad');
     if (error) throw normalizeApiError(error);
     return this.mapFromDb(data as SubscriptionRow);
   }
