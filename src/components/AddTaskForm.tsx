@@ -562,7 +562,11 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                         <div className="rounded-lg p-4 border transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
                           {!isPremium() ? (
                             <div className="text-center py-6">
-                              <button type="button" onClick={() => navigate('/premium')} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-md">Débloquer Premium</button>
+                              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <Users size={24} className="text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Fonctionnalité Premium requise</p>
+                              <button type="button" onClick={() => navigate('/premium')} className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-colors">Débloquer Premium</button>
                             </div>
                           ) : (
                             <>
