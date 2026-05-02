@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Lock, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2, Crown } from 'lucide-react';
+import { Users, X, UserPlus, Check, Search, AlertTriangle, Mail, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import CollaboratorItem from './CollaboratorItem';
@@ -268,26 +268,14 @@ const CollaborativeTasks: React.FC = () => {
           </div>
         </div>
 
-        {/* Lock overlay */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[rgb(var(--color-surface))]/60 backdrop-blur-[2px] rounded-2xl z-10">
-          <div className="text-center px-6 py-8 rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] shadow-2xl max-w-xs mx-auto">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-yellow-500/30">
-              <Lock size={28} className="text-white" />
-            </div>
-            <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-2">
-              Fonctionnalité Premium
-            </h3>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-5 leading-relaxed">
-              Travaillez en équipe sur vos tâches. Invitez des collaborateurs et suivez l'avancement en temps réel.
-            </p>
-            <button
-              onClick={() => navigate('/premium')}
-              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl font-bold text-white text-sm bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg shadow-yellow-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Crown size={16} />
-              Activer Premium
-            </button>
-          </div>
+        {/* Premium overlay */}
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[3px] bg-[rgb(var(--color-surface))]/50 rounded-2xl z-10">
+          <button
+            onClick={() => navigate('/premium')}
+            className="px-6 py-3 rounded-xl font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 active:scale-[0.97] transition-all shadow-lg"
+          >
+            Débloquer Premium
+          </button>
         </div>
       </div>
     );

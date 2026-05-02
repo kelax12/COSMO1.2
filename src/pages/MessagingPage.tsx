@@ -311,20 +311,15 @@ const MessagingPage: React.FC = () => {
   if (!user) return null;
   if (!isPremium()) {
     return (
-      <div className="p-8">
-        <div className="card p-16 text-center">
-          <div className="w-16 h-16 bg-yellow-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <MessageCircle size={32} className="text-yellow-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-4">Messagerie Premium</h1>
-          <p className="text-xl text-slate-600 mb-8">
-            Débloquez Premium pour accéder à la messagerie et aux fonctionnalités collaboratives
-          </p>
-          <button onClick={() => navigate('/premium')} className="btn-primary text-lg px-8 py-4">
-            Débloquer Premium
-          </button>
-        </div>
-      </div>);
+      <div className="flex items-center justify-center h-full p-8">
+        <button
+          onClick={() => navigate('/premium')}
+          className="px-6 py-3 rounded-xl font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 active:scale-[0.97] transition-all shadow-lg"
+        >
+          Débloquer Premium
+        </button>
+      </div>
+    );
   }
 
   return (

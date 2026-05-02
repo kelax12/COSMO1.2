@@ -253,17 +253,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
           )}
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-slate-400 dark:text-slate-400">
-            {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
-            <Button
-              variant="link"
-              onClick={() => onSwitchMode(mode === 'login' ? 'register' : 'login')}
-              className="text-blue-400 hover:text-blue-300 font-semibold ml-1 p-0 h-auto"
-            >
-              {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
-            </Button>
+        <div className="mt-6 pt-6 border-t border-slate-700/50 text-center">
+          <p className="text-sm text-slate-500">
+            {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}
           </p>
+          <button
+            type="button"
+            onClick={() => onSwitchMode(mode === 'login' ? 'register' : 'login')}
+            className="mt-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+          >
+            {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
+          </button>
         </div>
       </div>
     </div>

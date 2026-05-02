@@ -561,7 +561,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
         </DialogTitle>
-        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'hsl(var(--background))' }}>
+        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'hsl(var(--card))' }}>
           {/* Header */}
           <div className="flex justify-between items-center px-6 py-4 border-b transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <div className="flex items-center gap-3">
