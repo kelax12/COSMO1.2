@@ -79,20 +79,14 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
 
   const addTokensMutation = useMutation({
-    mutationFn: async ({ amount, activatePremium }: { amount: number; activatePremium?: boolean }) => {
-      if (!subscription) return;
-      const updates: Partial<Record<string, unknown>> = { premium_tokens: (subscription.premium_tokens ?? 0) + amount };
-      if (activatePremium) {
-        updates.plan = 'premium';
-        updates.status = 'active';
-        const end = new Date();
-        end.setDate(end.getDate() + 30);
-        updates.current_period_end = end.toISOString();
-        updates.win_streak = (subscription.win_streak ?? 0) + 1;
+    mutationFn: async ({ amount }: { amount: number; activatePremium?: boolean }) => {
+      // L'activation Premium ne peut se faire qu'via Stripe webhook (service_role).
+      // Ici on autorise uniquement +1 (vidéo regardée) via la RPC SECURITY DEFINER.
+      if (amount !== 1) {
+        throw new Error('Client-side token credit is limited to +1 per call (use Stripe Checkout)');
       }
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      await supabase.from('subscriptions').update(updates).eq('id', subscription.id).eq('user_id', user.id);
+      const { error } = await supabase.rpc('credit_premium_token_from_ad');
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: billingKeys.subscription }),
   });

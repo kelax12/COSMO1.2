@@ -18,7 +18,7 @@ Légende :
 | ID  | Sévérité     | Sujet                                          | État         | Commit / Fichier |
 |-----|--------------|------------------------------------------------|--------------|------------------|
 | §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
-| §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `013_subscriptions_lockdown.sql` — trigger verrouille plan/status/win_streak/period_end |
+| §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `015_subscriptions_rpc.sql` — DROP UPDATE policy + RPCs SECURITY DEFINER |
 | §3  | 🔴 Critique  | Stripe non fonctionnel                         | ✅ Corrigé   | Edge Functions + migration `014_stripe_columns.sql` (bypass service_role triple-check) |
 | §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | `src/__test__/` supprimé |
 | §5  | 🟠 Important | CI absente                                     | ✅ Corrigé   | `.github/workflows/ci.yml` |
@@ -94,7 +94,19 @@ Mitigations appliquées :
 
 **Statut** : ✅ Corrigé. Edge Functions écrites + migration `014` corrigée pour que le webhook (service_role) puisse créditer Premium malgré le trigger `subscriptions_guard` mis en place par `013`.
 
-**Bug résolu (2026-05-01)** : après paiement Stripe Checkout, le webhook Edge Function appelait `subscriptions.upsert({plan: 'premium', ...})` en `service_role`, mais le trigger `subscriptions_guard` (migration 013) bloquait toute modification de `plan`/`status`/`current_period_end`/`win_streak` quel que soit le rôle. Conséquence : paiement réussi côté Stripe, mais Premium jamais activé en DB. Fix : la migration `014_stripe_columns.sql` réécrit `subscriptions_guard()` avec un bypass triple-check pour `service_role` (`request.jwt.claim.role`, `current_user`, `session_user`).
+**Bug résolu (2026-05-01)** : après paiement Stripe Checkout, le webhook Edge Function appelait `subscriptions.upsert({plan: 'premium', ...})` en `service_role`, mais le trigger `subscriptions_guard` (migration 013) bloquait toute modification de `plan`/`status`/`current_period_end`/`win_streak` quel que soit le rôle. Conséquence : paiement réussi côté Stripe, mais Premium jamais activé en DB.
+
+**Fix v1 (014_stripe_columns.sql)** — bypass `service_role` du trigger via triple-check (`request.jwt.claim.role`, `current_user`, `session_user`). N'a pas suffi : selon le contexte d'auth de l'Edge Function, aucun des trois ne résolvait à `'service_role'` de manière fiable.
+
+**Fix v2 (015_subscriptions_rpc.sql)** — abandon de l'approche trigger :
+- DROP du trigger `trg_subscriptions_guard` et de la policy `Users can update own subscription`.
+- Les clients ne peuvent plus UPDATE `subscriptions` directement (RLS deny par défaut).
+- Le webhook Stripe (service_role) bypasse RLS naturellement → upsert OK.
+- 2 RPCs SECURITY DEFINER pour les opérations légitimes côté client :
+  - `consume_premium_token()` — décrémente `premium_tokens` de 1, met `status='expired'` si 0
+  - `credit_premium_token_from_ad()` — incrémente de 1, rate limit 30 s
+- Aucune RPC ne permet de modifier `plan`/`status`/`current_period_end`/`win_streak` → §2 fermé proprement.
+- `billing.repository.ts` et `billing.context.tsx` mis à jour pour appeler les RPCs au lieu de `.update()`.
 
 **Ce qui a été fait (2026-05-01)** :
 - `PaymentModal.tsx` supprimé (mode `Elements` sans `client_secret` — ne fonctionnait pas).
@@ -298,6 +310,12 @@ Dans l'ordre, sur le projet de prod :
 -- 3. Alignement friend_requests (à appliquer pour tout nouveau projet Supabase)
 \i supabase/migration/012_friend_requests_align.sql
 
--- 4. Verrouillage subscriptions (À EXÉCUTER — ferme l'auto-upgrade Premium côté client)
+-- 4. Verrouillage subscriptions v1 — trigger (déprécié par 015)
 \i supabase/migration/013_subscriptions_lockdown.sql
+
+-- 5. Colonnes Stripe + tentative bypass service_role (déprécié par 015)
+\i supabase/migration/014_stripe_columns.sql
+
+-- 6. Verrouillage subscriptions v2 (À EXÉCUTER) — RPCs au lieu de trigger
+\i supabase/migration/015_subscriptions_rpc.sql
 ```
