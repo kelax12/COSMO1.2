@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import PremiumGateModal from './PremiumGateModal';
 import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Mail, List, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import {
@@ -71,7 +71,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
-  const navigate = useNavigate();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(expanded);
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -566,7 +566,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                                 <Users size={24} className="text-blue-600 dark:text-blue-400" />
                               </div>
                               <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Fonctionnalité Premium requise</p>
-                              <button type="button" onClick={() => navigate('/premium')} className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-colors">Débloquer Premium</button>
+                              <button type="button" onClick={() => setShowPremiumGate(true)} className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-colors">Débloquer Premium</button>
                             </div>
                           ) : (
                             <>
@@ -678,9 +678,15 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
         </div>
       </DialogContent>
 
-      <ColorSettingsModal 
-        isOpen={showCategoryModal} 
-        onClose={() => setShowCategoryModal(false)} 
+      <ColorSettingsModal
+        isOpen={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+      />
+
+      <PremiumGateModal
+        isOpen={showPremiumGate}
+        onClose={() => setShowPremiumGate(false)}
+        featureName="la collaboration"
       />
 
     </Dialog>

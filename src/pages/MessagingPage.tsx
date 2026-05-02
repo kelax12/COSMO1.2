@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Search, MoreHorizontal, Send, Plus, Check, X, UserPlus, Trash2, ChevronLeft, Pin, PinOff, Users } from 'lucide-react';
+import { MessageCircle, Search, MoreHorizontal, Send, Plus, Check, X, UserPlus, Trash2, ChevronLeft, Pin, PinOff, Users, Lock } from 'lucide-react';
+import PremiumGateModal from '@/components/PremiumGateModal';
 import TaskModal from '../components/TaskModal';
 import { motion } from 'framer-motion';
 
@@ -81,6 +82,7 @@ const MessagingPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const { isPremium } = useBilling();
   const navigate = useNavigate();
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   // State — déclaré avant les hooks qui en dépendent
   const [selectedConversation, setSelectedConversation] = useState<string>('');
@@ -311,13 +313,27 @@ const MessagingPage: React.FC = () => {
   if (!user) return null;
   if (!isPremium()) {
     return (
-      <div className="flex items-center justify-center h-full p-8">
+      <div className="flex flex-col items-center justify-center h-full p-8 gap-6 text-center">
+        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center">
+          <Lock size={32} className="text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Messagerie Premium</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs">
+            Envoyez des messages à vos amis et collaborateurs. Fonctionnalité réservée aux membres Premium.
+          </p>
+        </div>
         <button
-          onClick={() => navigate('/premium')}
-          className="px-6 py-3 rounded-xl font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 active:scale-[0.97] transition-all shadow-lg"
+          onClick={() => setShowPremiumGate(true)}
+          className="px-6 py-3 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 active:scale-[0.97] transition-all shadow-lg shadow-amber-500/30"
         >
-          Débloquer Premium
+          Débloquer — regarder une pub ou s'abonner
         </button>
+        <PremiumGateModal
+          isOpen={showPremiumGate}
+          onClose={() => setShowPremiumGate(false)}
+          featureName="la messagerie"
+        />
       </div>
     );
   }
