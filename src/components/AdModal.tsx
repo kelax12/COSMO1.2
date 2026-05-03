@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Play, X, Zap, Clock } from 'lucide-react';
 
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
+
 interface AdModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,13 +26,22 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
       return;
     }
 
-    // Simulation du chargement de la pub
     const loadingTimer = setTimeout(() => {
       setAdState('playing');
     }, 2000);
 
     return () => clearTimeout(loadingTimer);
   }, [isOpen]);
+
+  // Initialise l'unité AdSense dès que l'état passe à 'playing'
+  useEffect(() => {
+    if (adState !== 'playing') return;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (_e) {
+      // AdSense non disponible (adblocker, dev) — le countdown continue quand même
+    }
+  }, [adState]);
 
   useEffect(() => {
     if (adState !== 'playing') return;
@@ -62,8 +77,9 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[300]">
       <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl mx-4 overflow-hidden transition-colors">
+
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -78,38 +94,39 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
           </button>
         </div>
 
-        {/* Contenu de la pub */}
+        {/* Zone pub */}
         <div className="aspect-video bg-slate-900 relative flex items-center justify-center">
+
           {adState === 'loading' && (
             <div className="text-center text-white">
-              <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+              <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4" />
               <p className="text-lg">Chargement de la publicité...</p>
             </div>
           )}
 
           {adState === 'playing' && (
-            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center relative">
-              {/* Simulation d'une pub */}
-              <div className="text-center text-white">
-                <div className="text-6xl mb-4">🚀</div>
-                <h2 className="text-3xl font-bold mb-2">Cosmo Pro</h2>
-                <p className="text-xl mb-4">Boostez votre productivité !</p>
-                <div className="bg-white bg-opacity-20 px-6 py-3 rounded-full">
-                  <span className="text-lg font-bold">Essai gratuit 7 jours</span>
-                </div>
-              </div>
+            <div className="w-full h-full flex flex-col items-center justify-center relative bg-white dark:bg-slate-900 p-4">
+              {/* Unité AdSense — remplacer data-ad-slot par l'ID de ton bloc pub AdSense */}
+              <ins
+                className="adsbygoogle"
+                style={{ display: 'block', width: '100%', minHeight: '200px' }}
+                data-ad-client="ca-pub-2572718224166714"
+                data-ad-slot="VOTRE_AD_SLOT_ID"
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+              />
 
               {/* Compteur */}
-              <div className="absolute top-4 right-4 bg-black bg-opacity-50 px-3 py-2 rounded-lg flex items-center gap-2">
-                <Clock size={16} />
-                <span className="font-mono">{countdown}s</span>
+              <div className="absolute top-3 right-3 bg-black/60 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm">
+                <Clock size={14} />
+                <span className="font-mono font-bold">{countdown}s</span>
               </div>
 
-              {/* Bouton Skip */}
+              {/* Bouton skip */}
               {canSkip && (
                 <button
                   onClick={handleSkip}
-                  className="absolute bottom-4 right-4 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
+                  className="absolute bottom-3 right-3 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm transition-colors"
                 >
                   Passer →
                 </button>
