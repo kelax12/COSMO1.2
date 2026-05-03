@@ -111,7 +111,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
                 className="adsbygoogle"
                 style={{ display: 'block', width: '100%', minHeight: '200px' }}
                 data-ad-client="ca-pub-2572718224166714"
-                data-ad-slot="VOTRE_AD_SLOT_ID"
+                data-ad-slot="1757980001"
                 data-ad-format="auto"
                 data-full-width-responsive="true"
               />
