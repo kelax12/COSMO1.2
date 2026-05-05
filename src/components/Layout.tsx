@@ -10,13 +10,13 @@ import {
   Settings,
   Repeat,
   ChevronLeft,
-  ChevronRight,
-  Menu,
-  X } from
+  ChevronRight } from
   'lucide-react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
+import MobileTabBar from './layout/MobileTabBar';
 
 // Couleurs du graphique "Répartition du temps"
 const CHART_COLORS = {
@@ -32,8 +32,6 @@ interface NavItemLinkProps {
   icon: React.ReactNode;
   hoverColor: string;
   collapsed: boolean;
-  mobileOpen: boolean;
-  onClick?: () => void;
   onMouseEnterExtra?: () => void;
   badge?: number;
   end?: boolean;
@@ -45,8 +43,6 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   icon,
   hoverColor,
   collapsed,
-  mobileOpen,
-  onClick,
   onMouseEnterExtra,
   badge,
   end,
@@ -56,7 +52,6 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   const resolved = useResolvedPath(to);
   const match = useMatch({ path: resolved.pathname, end: end ?? false });
   const isActive = !!match;
-  const isCollapsedMode = collapsed && !mobileOpen;
   const isColored = iconHovered || groupHovered || isActive;
 
   return (
@@ -64,10 +59,9 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       to={to}
       end={end}
       className={({ isActive }) =>
-        `sidebar-item ${isActive ? 'active' : ''} ${isCollapsedMode ? 'justify-center px-0' : ''}`
+        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
       }
       style={groupHovered ? { transform: 'translateX(6.2px)' } : undefined}
-      onClick={onClick}
       onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); }}
       onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
     >
@@ -84,120 +78,82 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         {icon}
         {badge !== undefined && badge > 0 && (
           <span
-            className={`absolute ${isCollapsedMode ? '-top-1 -right-1' : '-top-2 -right-2'} bg-red-500 text-white text-[10px] rounded-full ${isCollapsedMode ? 'w-4 h-4' : 'w-5 h-5'} flex items-center justify-center`}
+            className={`absolute ${collapsed ? '-top-1 -right-1' : '-top-2 -right-2'} bg-red-500 text-white text-[10px] rounded-full ${collapsed ? 'w-4 h-4' : 'w-5 h-5'} flex items-center justify-center`}
           >
             {badge}
           </span>
         )}
       </div>
-      {(!collapsed || mobileOpen) && <span className="ml-3 truncate">{label}</span>}
+      {!collapsed && <span className="ml-3 truncate">{label}</span>}
     </NavLink>
   );
 };
 
 const Layout: React.FC = () => {
+  const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
   });
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
 
-  // Responsive: collapse on small screens
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 768);
-      if (width < 768) {
-        setIsCollapsed(true);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
 const NavItems = () =>
   <>
       <NavItemLink to="/" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
-        hoverColor="#94a3b8" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} end />
+        hoverColor="#94a3b8" collapsed={isCollapsed} end />
 
       <NavItemLink to="/tasks" label="To do list" icon={<CheckSquare size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} />
 
       <NavItemLink to="/agenda" label="Agenda" icon={<Calendar size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.events} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
 
       <NavItemLink to="/okr" label="OKR" icon={<Target size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
 
       <NavItemLink to="/habits" label="Habitudes" icon={<Repeat size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
 
       <NavItemLink to="/statistics" label="Statistiques" icon={<BarChart2 size={20} aria-hidden="true" />}
-        hoverColor="#8b5cf6" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor="#8b5cf6" collapsed={isCollapsed} />
     </>;
 
 
   const CompanyItems = () =>
   <>
       <NavItemLink to="/premium" label="Premium" icon={<Crown size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
 
       <NavItemLink to="/settings" label="Paramètres" icon={<Settings size={20} aria-hidden="true" />}
-        hoverColor="#94a3b8" collapsed={isCollapsed} mobileOpen={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen(false)} />
+        hoverColor="#94a3b8" collapsed={isCollapsed} />
     </>;
 
 
+  if (isMobile) {
+    return (
+      <div
+        className="flex flex-col h-[100dvh] overflow-hidden"
+        style={{ backgroundColor: 'rgb(var(--color-background))' }}
+      >
+        <main
+          className="flex-1 overflow-auto pb-20"
+          style={{ backgroundColor: 'rgb(var(--color-background))' }}
+        >
+          <Outlet />
+        </main>
+        <MobileTabBar />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-      {/* Mobile Header */}
-        {isMobile &&
-      <header className="fixed top-0 left-0 right-0 h-16 bg-[rgb(var(--color-surface))] border-b border-[rgb(var(--color-border))] flex items-center justify-between px-4 z-40">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              style={{ color: 'rgb(var(--color-text-primary))' }}
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </Button>
-            <Logo showText={true} />
-          </header>
-      }
-
-      {/* Sidebar Overlay for Mobile */}
-      {isMobile && isMobileMenuOpen &&
-      <div
-        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-        onClick={() => setIsMobileMenuOpen(false)} />
-
-      }
-
       {/* Sidebar */}
       <aside
-        className={`
-          ${isMobile ?
-        `fixed inset-y-0 left-0 z-50 w-64 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out` :
-        `${isCollapsed ? 'w-20' : 'w-64'} relative transition-all duration-300 ease-in-out`}
-          nav-container border-r flex flex-col group
-        `
-        }>
+        className={`${isCollapsed ? 'w-20' : 'w-64'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
 
-        {/* Toggle Button - Only Desktop */}
-        {!isMobile &&
         <Button
           variant="ghost"
           size="icon"
@@ -208,32 +164,31 @@ const NavItems = () =>
         >
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </Button>
-        }
 
-        <div className={`p-6 border-b flex flex-col items-center ${isCollapsed && !isMobile ? 'px-2' : ''}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
-          <div className={`${isCollapsed && !isMobile ? 'scale-75' : ''} transition-transform duration-300`}>
-            <Logo showText={!isCollapsed || isMobile} />
+        <div className={`p-6 border-b flex flex-col items-center ${isCollapsed ? 'px-2' : ''}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
+          <div className={`${isCollapsed ? 'scale-75' : ''} transition-transform duration-300`}>
+            <Logo showText={!isCollapsed} />
           </div>
-          
+
             <div className="mt-6 flex justify-center w-full">
               <ThemeToggle />
             </div>
         </div>
-      
-        <nav className={`flex-1 ${isCollapsed && !isMobile ? 'px-2' : 'px-4'} py-6 space-y-2 overflow-x-hidden overflow-y-auto`}>
+
+        <nav className={`flex-1 ${isCollapsed ? 'px-2' : 'px-4'} py-6 space-y-2 overflow-x-hidden overflow-y-auto`}>
           {NavItems()}
         </nav>
 
         {/* Section Company */}
-        <div className={`border-t ${isCollapsed && !isMobile ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
-          {(!isCollapsed || isMobile) && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-muted))' }}>AUTRE</div>}
+        <div className={`border-t ${isCollapsed ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
+          {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-muted))' }}>AUTRE</div>}
           {CompanyItems()}
         </div>
       </aside>
 
       {/* Main content */}
       <main
-        className={`flex-1 overflow-auto relative ${isMobile ? 'pt-16' : ''}`}
+        className="flex-1 overflow-auto relative"
         style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
         <Outlet />
