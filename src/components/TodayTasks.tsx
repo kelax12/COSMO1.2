@@ -102,8 +102,8 @@ const TodayTasks: React.FC = () => {
 
   return (
     <>
-      <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
-        <div className="mb-6">
+      <div className="p-4 sm:p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
+        <div className="mb-4 sm:mb-6">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
           <p className="text-[rgb(var(--color-text-secondary))] text-sm">
             {todayTasks.length} tâches • {Math.floor(totalTime / 60)}h{totalTime % 60}min
@@ -117,7 +117,7 @@ const TodayTasks: React.FC = () => {
             return (
               <div
                 key={task.id}
-                className={`group p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
+                className={`group p-3 sm:p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
                   !task.bookmarked && task.isCollaborative ? 'collaborative-task' : ''
                 } ${completedTaskId === task.id ? 'animate-task-complete' : ''}`}
                 style={{
@@ -152,13 +152,13 @@ const TodayTasks: React.FC = () => {
                         <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-[rgb(var(--color-text-secondary))]">
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-[rgb(var(--color-text-secondary))]">
                       <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
                       <div className="flex items-center gap-1">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
                         <span>Priorité {task.priority}</span>
                       </div>
-                      <div className="text-xs">{new Date(task.deadline).toLocaleDateString('fr-FR')}</div>
+                      <div className="text-xs whitespace-nowrap">{new Date(task.deadline).toLocaleDateString('fr-FR')}</div>
                     </div>
                   </div>
 
@@ -167,8 +167,8 @@ const TodayTasks: React.FC = () => {
                     <CollaboratorAvatars collaborators={task.collaborators} friends={friends} size="sm" />
                   )}
 
-                  {/* Action icons — visible on hover */}
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
+                  {/* Action icons — desktop hover only */}
+                  <div className="hidden md:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
                     <button onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Favori">
                       <Bookmark size={15} className={task.bookmarked ? 'text-amber-500 fill-amber-500' : 'text-[rgb(var(--color-text-muted))]'} />
                     </button>

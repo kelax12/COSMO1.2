@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Target, BarChart2, MessageSquare, Crown, Settings, LogOut } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -17,11 +17,10 @@ interface MobileMoreSheetProps {
 }
 
 const links = [
-  { to: '/okr',        label: 'OKR',          icon: Target,        color: '#22c55e' },
-  { to: '/statistics', label: 'Statistiques', icon: BarChart2,     color: '#8b5cf6' },
-  { to: '/messages',   label: 'Messages',     icon: MessageSquare, color: '#3b82f6' },
-  { to: '/premium',    label: 'Premium',      icon: Crown,         color: '#eab308' },
-  { to: '/settings',   label: 'Paramètres',   icon: Settings,      color: '#94a3b8' },
+  { to: '/okr',        label: 'OKR',          icon: Target,    color: '#22c55e' },
+  { to: '/statistics', label: 'Statistiques', icon: BarChart2, color: '#8b5cf6' },
+  { to: '/premium',    label: 'Premium',      icon: Crown,     color: '#eab308' },
+  { to: '/settings',   label: 'Paramètres',   icon: Settings,  color: '#94a3b8' },
 ];
 
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
