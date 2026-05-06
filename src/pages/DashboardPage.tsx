@@ -14,6 +14,7 @@ import TodayTasks from '../components/TodayTasks';
 import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
+import MobileCollapsible from '../components/MobileCollapsible';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
@@ -237,19 +238,19 @@ const DashboardPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-background))] p-4 sm:p-6 lg:p-8 transition-colors duration-300">
-      <motion.div 
-        className="max-w-[1600px] mx-auto space-y-6 lg:space-y-8"
+    <div className="min-h-screen bg-[rgb(var(--color-background))] p-3 sm:p-6 lg:p-8 transition-colors duration-300">
+      <motion.div
+        className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header avec salutation */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
           >
             <div className="flex-1">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-2 lg:mb-3">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2 lg:mb-3">
                   <span>Bonjour, </span>
                 <TextType
                         text={displayUser.name}
@@ -263,8 +264,8 @@ const DashboardPage: React.FC = () => {
                         textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
                       />
                 </h1>
-              <motion.p 
-                className="text-[rgb(var(--color-text-secondary))] text-base lg:text-lg"
+              <motion.p
+                className="text-[rgb(var(--color-text-secondary))] text-sm sm:text-base lg:text-lg"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -276,14 +277,14 @@ const DashboardPage: React.FC = () => {
 
         {/* Toggle vue + Statistiques rapides */}
         <motion.div variants={itemVariants}>
-          <div className="flex items-center justify-end mb-4">
-            <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
+          <div className="flex items-center justify-stretch sm:justify-end mb-3 sm:mb-4">
+            <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl w-full sm:w-auto">
               {(['jour', 'semaine', 'mois'] as const).map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    'px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
+                    'flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
                       ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
@@ -295,7 +296,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {statCards.map((stat, index) => (
               <motion.div
                 key={index}
@@ -305,14 +306,14 @@ const DashboardPage: React.FC = () => {
                 transition={{ delay: index * 0.05, type: 'spring', stiffness: 100 }}
                 whileHover={{ y: -4, scale: 1.02 }}
               >
-                <div className="p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] monochrome:group-hover:border-white/20">
-                  <div className="space-y-1 mb-3">
-                    <p className="text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors monochrome:group-hover:text-white">
+                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] monochrome:group-hover:border-white/20">
+                  <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
+                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors monochrome:group-hover:text-white truncate">
                       {stat.label}
                     </p>
                     <motion.p
                       key={`${stat.label}-${viewMode}`}
-                      className="text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
+                      className="text-2xl sm:text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: 'spring' }}
@@ -329,28 +330,38 @@ const DashboardPage: React.FC = () => {
 
         {/* Contenu principal en grille */}
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
           variants={containerVariants}
         >
           {/* Colonne gauche - Graphiques + Tâches + OKR */}
           <motion.div
-            className="lg:col-span-2 flex flex-col gap-6 lg:gap-8"
+            className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
             <DashboardChart viewMode={viewMode} />
             <DashboardBarChart viewMode={viewMode} />
-            <TodayTasks />
-            <CollaborativeTasks />
-            <ActiveOKRs />
+            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
+              <TodayTasks />
+            </MobileCollapsible>
+            <MobileCollapsible title="Tâches collaboratives">
+              <CollaborativeTasks />
+            </MobileCollapsible>
+            <MobileCollapsible title="OKR en cours">
+              <ActiveOKRs />
+            </MobileCollapsible>
           </motion.div>
 
           {/* Colonne droite - Habitudes du jour + Demandes sociales */}
           <motion.div
-            className="lg:col-span-1 flex flex-col gap-6 lg:gap-8"
+            className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
-            <TodayHabits />
-            <SocialRequests />
+            <MobileCollapsible title="Habitudes du jour">
+              <TodayHabits />
+            </MobileCollapsible>
+            <MobileCollapsible title="Demandes sociales">
+              <SocialRequests />
+            </MobileCollapsible>
           </motion.div>
         </motion.div>
 
