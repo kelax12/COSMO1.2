@@ -69,9 +69,9 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
     return (
       <div className="space-y-3">
         {/* Single row: Search + Sort + Filters + Reset */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           {/* Search Bar */}
-          <div className="relative w-80 shrink-0">
+          <div className="relative flex-1 min-w-[180px] sm:flex-none sm:w-80 shrink-0">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" aria-hidden="true" />
             <input
               id="search-tasks-main"
@@ -105,7 +105,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             <label htmlFor="task-filter" className="text-sm font-medium whitespace-nowrap hidden sm:block" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Trier par :
             </label>
-            <div className="relative w-44">
+            <div className="relative w-36 sm:w-44">
               <select
                 id="task-filter"
                 className="w-full appearance-none border rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"

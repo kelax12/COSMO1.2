@@ -232,12 +232,12 @@ const TasksPage: React.FC = () => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="p-4 sm:p-8 h-fit"
+      className="p-3 sm:p-8 h-fit"
     >
-      <div className="flex flex-col gap-6 sm:gap-8">
+      <div className="flex flex-col gap-4 sm:gap-8">
         <motion.header 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -305,25 +305,25 @@ const TasksPage: React.FC = () => {
             transition={{ delay: 0.4 }}
             className={summaryAtBottom ? "" : "xl:col-span-3"}
           >
-            <div className="card p-6">
+            <div className="card p-3 sm:p-6">
               {!showCompleted && !showAddTaskForm && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="mb-8"
+                  className="mb-4 sm:mb-8"
                 >
                   <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Accès rapide aux listes</h3>
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">Accès rapide aux listes</h3>
 
-                    <div className="flex flex-wrap gap-3 pt-8">
+                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => {
                           clearListFilter();
                         }}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                        className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
                           !selectedListId
                             ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
                             : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
@@ -342,7 +342,7 @@ const TasksPage: React.FC = () => {
                         return (
                           <div
                             key={list.id}
-                            className="relative"
+                            className="relative shrink-0"
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
@@ -586,7 +586,7 @@ const TasksPage: React.FC = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
-                      className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black monochrome:hover:from-neutral-100 monochrome:hover:to-neutral-300"
+                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black monochrome:hover:from-neutral-100 monochrome:hover:to-neutral-300"
                       aria-label="Créer une nouvelle tâche"
                     >
                       <Plus size={20} />
@@ -666,6 +666,20 @@ const TasksPage: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* FAB Nouvelle tâche — mobile only */}
+      {!showCompleted && !showAddTaskForm && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          whileTap={{ scale: 0.92 }}
+          onClick={() => setShowAddTaskForm(true)}
+          aria-label="Nouvelle tâche"
+          className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <Plus size={28} />
+        </motion.button>
+      )}
 
       {/* Dialog suppression liste */}
       <AnimatePresence>
