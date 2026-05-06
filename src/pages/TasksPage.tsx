@@ -4,7 +4,7 @@ import TaskFilter from '../components/TaskFilter';
 import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
-import { CalendarDays, X, Plus, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, X, Plus, Pencil, Trash2, Bookmark, CheckCheck, Clock, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -59,6 +59,8 @@ const TasksPage: React.FC = () => {
   const [filter, setFilter] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'favoris' | 'retard' | 'collab' | ''>('');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -197,8 +199,18 @@ const TasksPage: React.FC = () => {
       }
     }
 
+    // Quick filters
+    if (activeQuickFilter === 'favoris') {
+      result = result.filter(task => task.bookmarked);
+    } else if (activeQuickFilter === 'retard') {
+      const now = new Date();
+      result = result.filter(task => !task.completed && new Date(task.deadline) < now);
+    } else if (activeQuickFilter === 'collab') {
+      result = result.filter(task => task.isCollaborative || (task.collaborators && task.collaborators.length > 0));
+    }
+
     return result;
-  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists]);
+  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists, activeQuickFilter]);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6', name: 'Bleu' },
@@ -238,52 +250,120 @@ const TasksPage: React.FC = () => {
       className="p-3 sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
     >
       <div className="flex flex-col gap-4 sm:gap-8">
-        <motion.header 
+        <motion.header
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+          className="flex flex-col gap-2"
         >
-          <div>
-            <motion.h1 
-              initial={{ x: -20, opacity: 0 }}
+          {/* Title row: H1 + Calendrier + shortcuts toggle */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <motion.h1
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-50"
+              >
+                To do list
+              </motion.h1>
+              <motion.p
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-base hidden sm:block"
+              >
+                Gérez vos tâches efficacement
+              </motion.p>
+            </div>
+
+            <motion.div
+              initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-50 mb-1 sm:mb-2"
+              className="flex items-center gap-2 shrink-0"
             >
-              To do list
-            </motion.h1>
-            <motion.p 
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-base"
-            >
-              Gérez vos tâches efficacement
-            </motion.p>
+              {/* Calendrier button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
+                aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
+                className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
+                  showDeadlineCalendar
+                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                }`}
+              >
+                <CalendarDays size={18} className={showDeadlineCalendar ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
+                <span className="hidden sm:inline">Calendrier</span>
+              </motion.button>
+
+              {/* Shortcuts toggle button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowShortcuts(!showShortcuts)}
+                aria-label={showShortcuts ? 'Masquer les raccourcis' : 'Afficher les raccourcis'}
+                aria-pressed={showShortcuts}
+                className={`flex items-center justify-center rounded-lg min-w-11 min-h-11 px-3 py-2 transition-all shadow-sm border font-medium text-sm ${
+                  showShortcuts || activeQuickFilter
+                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                }`}
+              >
+                <Plus size={18} className={showShortcuts || activeQuickFilter ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
+              </motion.button>
+            </motion.div>
           </div>
-          
-          <motion.div 
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto"
-          >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
-              aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
-              className={`flex-none flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 sm:py-2.5 transition-all shadow-sm border font-medium text-sm sm:text-base ${
-                showDeadlineCalendar
-                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-              }`}
-            >
-              <CalendarDays size={18} className={showDeadlineCalendar ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
-              <span className="hidden sm:inline">Calendrier</span>
-            </motion.button>
-          </motion.div>
+
+          {/* Quick filter chips — visible when shortcuts active */}
+          <AnimatePresence>
+            {showShortcuts && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  {[
+                    { key: 'favoris', label: 'Favoris', icon: <Bookmark size={14} /> },
+                    { key: 'fait', label: 'Fait', icon: <CheckCheck size={14} /> },
+                    { key: 'retard', label: 'Retard', icon: <Clock size={14} /> },
+                    { key: 'collab', label: 'Collab', icon: <Users size={14} /> },
+                  ].map(({ key, label, icon }) => {
+                    const isActive = key === 'fait' ? showCompleted : activeQuickFilter === key;
+                    return (
+                      <motion.button
+                        key={key}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          if (key === 'fait') {
+                            setShowCompleted(!showCompleted);
+                            setActiveQuickFilter('');
+                          } else {
+                            const next = activeQuickFilter === key ? '' : key as 'favoris' | 'retard' | 'collab';
+                            setActiveQuickFilter(next);
+                            setShowCompleted(false);
+                          }
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                          isActive
+                            ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700'
+                        }`}
+                      >
+                        {icon}
+                        {label}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.header>
 
         <AnimatePresence>
