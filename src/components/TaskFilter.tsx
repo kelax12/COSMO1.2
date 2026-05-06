@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 
 import { useCategories } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
@@ -32,6 +33,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
 }) => {
   const { data: categories = [] } = useCategories();
   const { priorityRange, setPriorityRange } = usePriorityRange();
+  const isMobile = useIsMobile();
 
   // État local de secours si pas contrôlé (rétrocompatibilité)
   const [localSearchTerm, setLocalSearchTerm] = useState('');
@@ -127,7 +129,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 value={showCompleted ? 'completed' : currentFilter}
                 aria-label="Trier les tâches par"
               >
-                <option value="">Toutes les tâches</option>
+                <option value="">{isMobile ? 'Tout' : 'Toutes les tâches'}</option>
                 <option value="priority">Par priorité</option>
                 <option value="deadline">Par échéance</option>
                 <option value="createdAt">Par date de création</option>
