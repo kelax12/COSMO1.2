@@ -4,7 +4,7 @@ import TaskFilter from '../components/TaskFilter';
 import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
-import { CalendarDays, X, Plus, Pencil, Trash2, Bookmark, CheckCheck, Clock, Users } from 'lucide-react';
+import { CalendarDays, X, Plus, Pencil, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -59,7 +59,6 @@ const TasksPage: React.FC = () => {
   const [filter, setFilter] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
   const [activeQuickFilter, setActiveQuickFilter] = useState<'favoris' | 'retard' | 'collab' | ''>('');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
@@ -298,72 +297,8 @@ const TasksPage: React.FC = () => {
                 <CalendarDays size={18} className={showDeadlineCalendar ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
                 <span className="hidden sm:inline">Calendrier</span>
               </motion.button>
-
-              {/* Shortcuts toggle button */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowShortcuts(!showShortcuts)}
-                aria-label={showShortcuts ? 'Masquer les raccourcis' : 'Afficher les raccourcis'}
-                aria-pressed={showShortcuts}
-                className={`flex items-center justify-center rounded-lg min-w-11 min-h-11 px-3 py-2 transition-all shadow-sm border font-medium text-sm ${
-                  showShortcuts || activeQuickFilter
-                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-                }`}
-              >
-                <Plus size={18} className={showShortcuts || activeQuickFilter ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
-              </motion.button>
             </motion.div>
           </div>
-
-          {/* Quick filter chips — visible when shortcuts active */}
-          <AnimatePresence>
-            {showShortcuts && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  {[
-                    { key: 'favoris', label: 'Favoris', icon: <Bookmark size={14} /> },
-                    { key: 'fait', label: 'Fait', icon: <CheckCheck size={14} /> },
-                    { key: 'retard', label: 'Retard', icon: <Clock size={14} /> },
-                    { key: 'collab', label: 'Collab', icon: <Users size={14} /> },
-                  ].map(({ key, label, icon }) => {
-                    const isActive = key === 'fait' ? showCompleted : activeQuickFilter === key;
-                    return (
-                      <motion.button
-                        key={key}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          if (key === 'fait') {
-                            setShowCompleted(!showCompleted);
-                            setActiveQuickFilter('');
-                          } else {
-                            const next = activeQuickFilter === key ? '' : key as 'favoris' | 'retard' | 'collab';
-                            setActiveQuickFilter(next);
-                            setShowCompleted(false);
-                          }
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                          isActive
-                            ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700'
-                        }`}
-                      >
-                        {icon}
-                        {label}
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.header>
 
         <AnimatePresence>
@@ -652,8 +587,8 @@ const TasksPage: React.FC = () => {
                   className="flex flex-col md:flex-row justify-between items-stretch md:items-start mb-8 gap-6"
                 >
                   <div className="flex-1 w-full">
-                    <TaskFilter 
-                      onFilterChange={handleFilterChange} 
+                    <TaskFilter
+                      onFilterChange={handleFilterChange}
                       currentFilter={filter}
                       showCompleted={showCompleted}
                       onShowCompletedChange={handleShowCompletedChange}
@@ -661,6 +596,11 @@ const TasksPage: React.FC = () => {
                       onSearchTermChange={setSearchTerm}
                       selectedCategories={selectedCategories}
                       onSelectedCategoriesChange={setSelectedCategories}
+                      activeQuickFilter={activeQuickFilter}
+                      onActiveQuickFilterChange={(f) => {
+                        setActiveQuickFilter(f);
+                        if (f !== '') setShowCompleted(false);
+                      }}
                     />
                   </div>
                   {!showCompleted && (

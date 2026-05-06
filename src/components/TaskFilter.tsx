@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Filter, X, Search } from 'lucide-react';
+import { ChevronDown, Filter, X, Search, Plus, Bookmark, CheckCheck, Clock, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
@@ -18,18 +18,24 @@ type TaskFilterProps = {
   onSearchTermChange?: (value: string) => void;
   selectedCategories?: string[];
   onSelectedCategoriesChange?: (categories: string[]) => void;
+  // Quick filters
+  activeQuickFilter?: 'favoris' | 'retard' | 'collab' | '';
+  onActiveQuickFilterChange?: (filter: 'favoris' | 'retard' | 'collab' | '') => void;
 };
 
-const TaskFilter: React.FC<TaskFilterProps> = ({ 
-  onFilterChange, 
-  currentFilter, 
+const TaskFilter: React.FC<TaskFilterProps> = ({
+  onFilterChange,
+  currentFilter,
   showCompleted = false,
   onShowCompletedChange,
   // Props contrôlés avec valeurs par défaut
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
   selectedCategories: controlledSelectedCategories,
-  onSelectedCategoriesChange
+  onSelectedCategoriesChange,
+  // Quick filters
+  activeQuickFilter = '',
+  onActiveQuickFilterChange,
 }) => {
   const { data: categories = [] } = useCategories();
   const { priorityRange, setPriorityRange } = usePriorityRange();
@@ -46,6 +52,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   const setSelectedCategories = onSelectedCategoriesChange || setLocalSelectedCategories;
 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showQuickFilters, setShowQuickFilters] = useState(false);
 
   const toggleCategory = (category: string) => {
     const newCategories = selectedCategories.includes(category) 
@@ -60,13 +67,14 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
     setPriorityRange?.([1, 5]);
     onFilterChange('');
     onShowCompletedChange?.(false);
+    onActiveQuickFilterChange?.('');
   };
 
   const safePriorityRange = priorityRange || [1, 5];
 
-  const hasActiveFilters = searchTerm || selectedCategories.length > 0 || 
-                          safePriorityRange[0] !== 1 || safePriorityRange[1] !== 5 || 
-                          showCompleted;
+  const hasActiveFilters = searchTerm || selectedCategories.length > 0 ||
+                          safePriorityRange[0] !== 1 || safePriorityRange[1] !== 5 ||
+                          showCompleted || activeQuickFilter;
 
     return (
       <div className="space-y-3">
@@ -143,6 +151,31 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             </div>
           </div>
 
+          {/* Quick filters toggle */}
+          <Button
+            variant={showQuickFilters || !!activeQuickFilter ? 'default' : 'outline'}
+            onClick={() => setShowQuickFilters(!showQuickFilters)}
+            aria-label={showQuickFilters ? 'Masquer les filtres rapides' : 'Afficher les filtres rapides'}
+            aria-pressed={showQuickFilters}
+            className={`flex items-center justify-center gap-1.5 shrink-0 px-3 py-2.5 text-sm min-h-11 ${
+              showQuickFilters || !!activeQuickFilter
+                ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
+                : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+            }`}
+          >
+            <Plus size={16} aria-hidden="true" />
+            <span className="hidden sm:inline">Options</span>
+            {!!activeQuickFilter && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold"
+              >
+                1
+              </motion.span>
+            )}
+          </Button>
+
           {/* Advanced Filters Toggle */}
           <Button
             variant={showAdvancedFilters || hasActiveFilters ? 'default' : 'outline'}
@@ -189,6 +222,54 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             )}
           </AnimatePresence>
         </div>
+
+      {/* Quick filter chips */}
+      <AnimatePresence>
+        {showQuickFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              {([
+                { key: 'favoris' as const, label: 'Favoris', icon: <Bookmark size={14} /> },
+                { key: 'fait' as const, label: 'Fait', icon: <CheckCheck size={14} /> },
+                { key: 'retard' as const, label: 'Retard', icon: <Clock size={14} /> },
+                { key: 'collab' as const, label: 'Collab', icon: <Users size={14} /> },
+              ]).map(({ key, label, icon }) => {
+                const isActive = key === 'fait' ? showCompleted : activeQuickFilter === key;
+                return (
+                  <motion.button
+                    key={key}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (key === 'fait') {
+                        onShowCompletedChange?.(!showCompleted);
+                        onActiveQuickFilterChange?.('');
+                      } else {
+                        const next = activeQuickFilter === key ? '' : key;
+                        onActiveQuickFilterChange?.(next);
+                        if (next !== '') onShowCompletedChange?.(false);
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700'
+                    }`}
+                  >
+                    {icon}
+                    {label}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Advanced Filters Panel */}
       <AnimatePresence>
