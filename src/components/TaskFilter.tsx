@@ -81,7 +81,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Filtrer par nom..."
-              className="w-full pl-9 pr-8 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-sm"
+              className="w-full pl-9 pr-12 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-sm"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
@@ -92,20 +92,21 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             {searchTerm && (
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-9 w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 monochrome:bg-neutral-800 monochrome:hover:bg-neutral-700"
                 aria-label="Effacer la recherche"
               >
-                <X size={14} aria-hidden="true" />
+                <X size={16} aria-hidden="true" />
               </Button>
             )}
           </div>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
-            <label htmlFor="task-filter" className="text-sm font-medium whitespace-nowrap hidden sm:block" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Trier par :
+            <label htmlFor="task-filter" className="text-xs sm:text-sm font-medium whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+              <span className="hidden sm:inline">Trier par :</span>
+              <span className="sm:hidden">Tri :</span>
             </label>
             <div className="relative w-36 sm:w-44">
               <select

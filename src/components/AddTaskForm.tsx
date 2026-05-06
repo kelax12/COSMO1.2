@@ -258,12 +258,15 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
       <DialogContent showCloseButton={false} className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl lg:max-w-5xl w-full max-h-[90vh] sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-y-auto">
         <div className="sm:rounded-2xl sm:shadow-2xl w-full transition-colors overflow-hidden h-full min-h-inherit" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+            <div className="flex justify-between items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
                   <CheckCircle size={24} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
                 </div>
-                <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Créer une nouvelle tâche</h2>
+                <h2 className="text-base sm:text-xl font-bold leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  <span className="hidden sm:inline">Créer une nouvelle tâche</span>
+                  <span className="sm:hidden">Nouvelle tâche</span>
+                </h2>
                 {hasChanges && (
                   <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm">
                     <AlertCircle size={16} aria-hidden="true" />
@@ -273,7 +276,8 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
               </div>
               <button
                 onClick={() => handleFormToggle(false)}
-                className="p-2 rounded-lg transition-colors"
+                aria-label="Fermer le formulaire"
+                className="min-w-11 min-h-11 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
                 style={{ color: 'rgb(var(--color-text-muted))' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = 'rgb(var(--color-accent))';
@@ -289,7 +293,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {errors.general && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
                   <div className="flex items-center gap-2 text-red-700 dark:text-red-300">

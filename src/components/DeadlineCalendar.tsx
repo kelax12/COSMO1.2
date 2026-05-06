@@ -149,16 +149,18 @@ const DeadlineCalendar: React.FC = () => {
           <div className="flex items-center gap-2 justify-center sm:justify-start">
             <button
               onClick={navigatePrev}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label={currentView === 'week' ? 'Semaine précédente' : 'Mois précédent'}
+              className="min-w-11 min-h-11 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
             >
               <ChevronLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
             </button>
-            <h2 className="text-base sm:text-lg font-semibold capitalize min-w-[150px] sm:min-w-[200px] text-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            <h2 className="text-sm sm:text-lg font-semibold capitalize min-w-[140px] sm:min-w-[200px] text-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {currentView === 'week' ? formatWeekRange(currentDate) : formatMonth(currentDate)}
             </h2>
             <button
               onClick={navigateNext}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label={currentView === 'week' ? 'Semaine suivante' : 'Mois suivant'}
+              className="min-w-11 min-h-11 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
             >
               <ChevronRight className="w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
             </button>
@@ -167,9 +169,11 @@ const DeadlineCalendar: React.FC = () => {
           <div className="inline-flex self-center sm:self-auto rounded-xl p-1 gap-1" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
             <button
               onClick={() => setCurrentView('week')}
-              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                currentView === 'week' 
-                  ? 'bg-blue-500 text-white shadow-md' 
+              aria-label="Vue Semaine"
+              aria-pressed={currentView === 'week'}
+              className={`min-h-11 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                currentView === 'week'
+                  ? 'bg-blue-500 text-white shadow-md'
                   : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
               }`}
               style={{
@@ -182,9 +186,11 @@ const DeadlineCalendar: React.FC = () => {
             </button>
             <button
               onClick={() => setCurrentView('month')}
-              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                currentView === 'month' 
-                  ? 'bg-blue-500 text-white shadow-md' 
+              aria-label="Vue Mois"
+              aria-pressed={currentView === 'month'}
+              className={`min-h-11 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                currentView === 'month'
+                  ? 'bg-blue-500 text-white shadow-md'
                   : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
               }`}
               style={{
@@ -265,7 +271,7 @@ const DeadlineCalendar: React.FC = () => {
               return (
                 <div 
                   key={idx} 
-                  className={`min-h-[100px] p-2 border-r border-b last:border-r-0 ${
+                  className={`min-h-[70px] sm:min-h-[100px] p-1.5 sm:p-2 border-r border-b last:border-r-0 ${
                     !isCurrentMonth ? 'opacity-40' : ''
                   } ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                   style={{ borderColor: 'rgb(var(--color-border))' }}

@@ -235,7 +235,7 @@ const TasksPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="p-3 sm:p-8 h-fit"
+      className="p-3 sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
     >
       <div className="flex flex-col gap-4 sm:gap-8">
         <motion.header 
@@ -273,14 +273,15 @@ const TasksPage: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 transition-all shadow-sm border font-medium text-sm sm:text-base ${
+              aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
+              className={`flex-none flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 sm:py-2.5 transition-all shadow-sm border font-medium text-sm sm:text-base ${
                 showDeadlineCalendar
                   ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
               }`}
             >
               <CalendarDays size={18} className={showDeadlineCalendar ? 'text-white monochrome:text-black' : 'text-blue-600 monochrome:text-neutral-300'} />
-              <span>Calendrier</span>
+              <span className="hidden sm:inline">Calendrier</span>
             </motion.button>
           </motion.div>
         </motion.header>
@@ -316,7 +317,7 @@ const TasksPage: React.FC = () => {
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">Accès rapide aux listes</h3>
 
-                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
