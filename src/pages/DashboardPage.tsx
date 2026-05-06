@@ -22,6 +22,13 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
 
+  React.useEffect(() => {
+    if (hovered === null) return;
+    const handler = () => setHovered(null);
+    window.addEventListener('touchstart', handler, { passive: true });
+    return () => window.removeEventListener('touchstart', handler);
+  }, [hovered]);
+
   const darken = (hex: string) => {
     const n = parseInt(hex.slice(1), 16);
     const r = Math.max(0, (n >> 16) - 40);
@@ -40,6 +47,10 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
             className="flex-1 relative flex flex-col items-center justify-end h-full"
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              setHovered(prev => prev === i ? null : i);
+            }}
           >
             {hovered === i && (
               <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
