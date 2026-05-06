@@ -255,8 +255,8 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   return (
     <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
-      <DialogContent showCloseButton={false} className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl lg:max-w-5xl w-full max-h-[90vh] sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-y-auto">
-        <div className="sm:rounded-2xl sm:shadow-2xl w-full transition-colors overflow-hidden h-full min-h-inherit" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+      <DialogContent showCloseButton={false} className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl lg:max-w-5xl w-full h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="sm:rounded-2xl sm:shadow-2xl w-full transition-colors overflow-hidden h-full flex flex-col flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header */}
             <div className="flex justify-between items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
               <div className="flex items-center gap-3">
@@ -293,7 +293,8 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
               </button>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {errors.general && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
                   <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
@@ -303,7 +304,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                 </div>
               )}
 
-              <form onSubmit={handleSubmit}>
+              <div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Left Column */}
                   <div className="space-y-5">
@@ -647,38 +648,46 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-10 pt-6 border-t" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleFormToggle(false)}
-                    disabled={isLoading}
-                    className="px-6 py-3 rounded-lg transition-colors disabled:opacity-50 font-semibold"
-                    style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
-                    onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))'; }}
-                    onMouseLeave={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))'; }}
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLoading || !isFormValid()}
-                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px]"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                        <span>Création...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={18} />
-                        <span>Créer la tâche</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
+
+            {/* Sticky footer */}
+            <div
+              className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t shrink-0"
+              style={{
+                borderColor: 'rgb(var(--color-border))',
+                backgroundColor: 'rgb(var(--color-surface))',
+                paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => handleFormToggle(false)}
+                disabled={isLoading}
+                className="w-full sm:w-auto min-h-11 px-6 py-3 rounded-lg transition-colors disabled:opacity-50 font-semibold"
+                style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading || !isFormValid()}
+                className="w-full sm:w-auto sm:min-w-[160px] min-h-11 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    <span>Création...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus size={18} />
+                    <span>Créer la tâche</span>
+                  </>
+                )}
+              </button>
+            </div>
+            </form>
         </div>
       </DialogContent>
 

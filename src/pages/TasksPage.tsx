@@ -698,29 +698,50 @@ const TasksPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
+            onClick={() => setListToDeleteId(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-[#1e2235] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-700/50"
+              initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: '100%', scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+              }}
             >
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-3">Confirmer la suppression</h3>
-                <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                  Êtes-vous sûr de vouloir supprimer la liste <strong className="text-white">"{lists.find(l => l.id === listToDeleteId)?.name}"</strong> ? Les tâches associées resteront mais ne seront plus groupées.
+              <div className="sm:hidden flex justify-center pt-2 pb-1">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+              <div className="p-5 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  Confirmer la suppression
+                </h3>
+                <p className="text-sm leading-relaxed mb-5 sm:mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Êtes-vous sûr de vouloir supprimer la liste{' '}
+                  <strong style={{ color: 'rgb(var(--color-text-primary))' }}>
+                    "{lists.find(l => l.id === listToDeleteId)?.name}"
+                  </strong>
+                  {' ? Les tâches associées resteront mais ne seront plus groupées.'}
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => setListToDeleteId(null)}
-                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white border border-slate-600 hover:bg-slate-800 transition-all duration-200"
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold border transition-all"
+                    style={{
+                      borderColor: 'rgb(var(--color-border))',
+                      color: 'rgb(var(--color-text-primary))',
+                    }}
                   >
                     Annuler
                   </button>
                   <button
                     onClick={confirmDeleteList}
-                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200"
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all"
                   >
                     Supprimer
                   </button>

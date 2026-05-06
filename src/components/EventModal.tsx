@@ -309,34 +309,25 @@ const EventModal: React.FC<EventModalProps> = ({
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors"
+        className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors gap-2"
         style={{ borderColor: "rgb(var(--color-border))" }}
       >
         <h2
-          className="text-xl font-bold"
+          className="text-base md:text-xl font-bold truncate"
           style={{ color: "rgb(var(--color-text-primary))" }}
         >
           {getHeaderTitle()}
         </h2>
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={onClose}
           type="button"
-          style={{ color: "rgb(var(--color-text-muted))" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "rgb(var(--color-text-primary))";
-            e.currentTarget.style.backgroundColor = "rgb(var(--color-hover))";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "rgb(var(--color-text-muted))";
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
           aria-label="Fermer"
+          className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+          style={{ color: "rgb(var(--color-text-muted))" }}
         >
-          <X size={20} />
-        </Button>
+          <X size={22} />
+        </button>
       </div>
 
       <form
@@ -699,19 +690,26 @@ const EventModal: React.FC<EventModalProps> = ({
                 )}
               </div>
 
-            <div className={`pt-6 ${mode === 'edit' ? 'flex gap-2' : ''}`}>
+            <div
+              className={`sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 md:mt-6 border-t flex ${mode === 'edit' ? 'flex-col-reverse sm:flex-row gap-2 sm:gap-3' : ''}`}
+              style={{
+                borderColor: 'rgb(var(--color-border))',
+                backgroundColor: 'rgb(var(--color-surface))',
+                paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+              }}
+            >
               {mode === 'edit' && (
                 <Button
                   type="button"
                   onClick={handleDelete}
-                  className="h-11 flex-1 text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
+                  className="min-h-11 sm:flex-1 text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
                 >
                   Supprimer
                 </Button>
               )}
               <Button
                 type="submit"
-                className={`h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'flex-1' : 'w-full'}`}
+                className={`min-h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:flex-1' : 'w-full'}`}
               >
                 {getSubmitButtonText()}
               </Button>
@@ -742,44 +740,54 @@ const EventModal: React.FC<EventModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
             onClick={() => setShowDeleteConfirm(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="rounded-xl shadow-2xl w-full max-w-md p-6 transition-colors"
-              style={{ backgroundColor: "rgb(var(--color-surface))" }}
+              initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: '100%', scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+              className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md transition-colors"
+              style={{
+                backgroundColor: "rgb(var(--color-surface))",
+                paddingBottom: 'env(safe-area-inset-bottom)',
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h2
-                className="text-lg font-semibold mb-2"
-                style={{ color: "rgb(var(--color-text-primary))" }}
-              >
-                Confirmer la suppression
-              </h2>
-              <p
-                className="text-sm mb-6"
-                style={{ color: "rgb(var(--color-text-secondary))" }}
-              >
-                Êtes-vous sûr de vouloir supprimer cet événement ? Cette action
-                est irréversible.
-              </p>
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteConfirm(false)}
+              <div className="sm:hidden flex justify-center pt-2 pb-1">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+              <div className="p-5 sm:p-6">
+                <h2
+                  className="text-lg font-semibold mb-2"
+                  style={{ color: "rgb(var(--color-text-primary))" }}
                 >
-                  Annuler
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={confirmDelete}
+                  Confirmer la suppression
+                </h2>
+                <p
+                  className="text-sm mb-5 sm:mb-6"
+                  style={{ color: "rgb(var(--color-text-secondary))" }}
                 >
-                  Supprimer
-                </Button>
+                  Êtes-vous sûr de vouloir supprimer cet événement ? Cette action
+                  est irréversible.
+                </p>
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+                  <Button
+                    variant="outline"
+                    className="min-h-11 w-full sm:w-auto"
+                    onClick={() => setShowDeleteConfirm(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="min-h-11 w-full sm:w-auto"
+                    onClick={confirmDelete}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
