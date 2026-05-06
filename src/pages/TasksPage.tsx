@@ -59,7 +59,7 @@ const TasksPage: React.FC = () => {
   const [filter, setFilter] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
-  const [activeQuickFilter, setActiveQuickFilter] = useState<'favoris' | 'retard' | 'collab' | ''>('');
+  const [showQuickFilters, setShowQuickFilters] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -198,18 +198,8 @@ const TasksPage: React.FC = () => {
       }
     }
 
-    // Quick filters
-    if (activeQuickFilter === 'favoris') {
-      result = result.filter(task => task.bookmarked);
-    } else if (activeQuickFilter === 'retard') {
-      const now = new Date();
-      result = result.filter(task => !task.completed && new Date(task.deadline) < now);
-    } else if (activeQuickFilter === 'collab') {
-      result = result.filter(task => task.isCollaborative || (task.collaborators && task.collaborators.length > 0));
-    }
-
     return result;
-  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists, activeQuickFilter]);
+  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists]);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6', name: 'Bleu' },
@@ -596,11 +586,8 @@ const TasksPage: React.FC = () => {
                       onSearchTermChange={setSearchTerm}
                       selectedCategories={selectedCategories}
                       onSelectedCategoriesChange={setSelectedCategories}
-                      activeQuickFilter={activeQuickFilter}
-                      onActiveQuickFilterChange={(f) => {
-                        setActiveQuickFilter(f);
-                        if (f !== '') setShowCompleted(false);
-                      }}
+                      showQuickFilters={showQuickFilters}
+                      onShowQuickFiltersChange={setShowQuickFilters}
                     />
                   </div>
                   {!showCompleted && (
@@ -638,6 +625,7 @@ const TasksPage: React.FC = () => {
                   addToListMode={!!selectingTasksForListId}
                   selectedForListIds={selectedTasksForList}
                   onToggleTaskForList={toggleTaskForList}
+                  showQuickFilters={showQuickFilters}
                 />
               </motion.div>
             </div>

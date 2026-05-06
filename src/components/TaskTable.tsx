@@ -44,6 +44,7 @@ type TaskTableProps = {
   addToListMode?: boolean;
   selectedForListIds?: string[];
   onToggleTaskForList?: (taskId: string) => void;
+  showQuickFilters?: boolean;
 };
 
 const TaskTable: React.FC<TaskTableProps> = ({
@@ -55,6 +56,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   addToListMode = false,
   selectedForListIds = [],
   onToggleTaskForList,
+  showQuickFilters = true,
 }) => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -428,6 +430,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <>
+      {showQuickFilters && (
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -471,6 +474,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </Button>
         </div>
       </div>
+      )}
 
       {/* Desktop View (Table) */}
       <div className="hidden md:block table-container shadow-sm overflow-x-auto">
