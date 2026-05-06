@@ -295,17 +295,23 @@ const TaskTable: React.FC<TaskTableProps> = ({
           {addToListMode ? (
             <button
               onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
-              className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                selectedForListIds.includes(task.id)
-                  ? 'bg-blue-500 border-blue-500'
-                  : 'border-slate-600 dark:border-slate-600 hover:border-blue-400'
-              }`}
+              className="min-w-11 min-h-11 -m-2 p-2 flex items-center justify-center"
+              aria-label={selectedForListIds.includes(task.id) ? 'Retirer de la liste' : 'Ajouter à la liste'}
+              aria-pressed={selectedForListIds.includes(task.id)}
             >
-              {selectedForListIds.includes(task.id) && (
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
+              <span
+                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                  selectedForListIds.includes(task.id)
+                    ? 'bg-blue-500 border-blue-500'
+                    : 'border-slate-600 dark:border-slate-600 hover:border-blue-400'
+                }`}
+              >
+                {selectedForListIds.includes(task.id) && (
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </span>
             </button>
           ) : (
             <button
@@ -313,23 +319,29 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 e.stopPropagation();
                 handleToggleComplete(task.id);
               }}
-              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                task.completed
-                  ? 'bg-blue-500 border-blue-500'
-                  : 'border-gray-400 hover:border-blue-500'
-              }`}
+              className="min-w-11 min-h-11 -m-2 p-2 flex items-center justify-center"
+              aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+              aria-pressed={task.completed}
             >
-              {task.completed && (
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
+              <span
+                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                  task.completed
+                    ? 'bg-blue-500 border-blue-500'
+                    : 'border-gray-400 hover:border-blue-500'
+                }`}
+              >
+                {task.completed && (
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </span>
             </button>
           )}
           <TaskCategoryIndicator category={task.category} />
         </div>
         <div className="flex items-center gap-1">
-          <span className={`inline-flex justify-center items-center w-7 h-7 rounded-full task-priority-${task.priority} text-xs font-bold`}>
+          <span className={`inline-flex justify-center items-center w-8 h-8 sm:w-7 sm:h-7 rounded-full task-priority-${task.priority} text-sm sm:text-xs font-bold`}>
             {task.priority}
           </span>
         </div>
@@ -356,22 +368,26 @@ const TaskTable: React.FC<TaskTableProps> = ({
       
       <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--color-border))]">
         <div className="flex gap-1">
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleToggleBookmark(task.id); }} 
-            className={`p-2 rounded ${task.bookmarked ? 'text-amber-500' : 'text-slate-400'}`}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleToggleBookmark(task.id); }}
+            className={`min-w-11 min-h-11 p-2 rounded flex items-center justify-center ${task.bookmarked ? 'text-amber-500' : 'text-slate-400'}`}
+            aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            aria-pressed={task.bookmarked}
           >
             <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
           </button>
-            <button 
+            <button
               onClick={(e) => { e.stopPropagation(); handleOpenCollaborator(task.id); }}
-              className="p-2 text-slate-400"
+              className="min-w-11 min-h-11 p-2 text-slate-400 flex items-center justify-center"
+              aria-label="Ajouter un collaborateur"
             >
               <UserPlus size={18} />
             </button>
             {!task.completed && (
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }}
-                className="p-2 text-slate-400"
+                className="min-w-11 min-h-11 p-2 text-slate-400 flex items-center justify-center"
+                aria-label="Planifier dans l'agenda"
               >
                 <Calendar size={18} />
               </button>
@@ -380,13 +396,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <div className="flex gap-1">
             <button
               onClick={(e) => { e.stopPropagation(); setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
-              className="p-2 text-slate-400"
+              className="min-w-11 min-h-11 p-2 text-slate-400 flex items-center justify-center"
+              aria-label="Plus d'options"
             >
               <MoreHorizontal size={18} />
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }} 
-              className="p-2 text-red-400"
+            <button
+              onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }}
+              className="min-w-11 min-h-11 p-2 text-red-400 flex items-center justify-center"
+              aria-label="Supprimer la tâche"
             >
               <Trash2 size={18} />
             </button>
