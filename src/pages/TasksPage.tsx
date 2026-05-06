@@ -329,7 +329,8 @@ const TasksPage: React.FC = () => {
                             : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
                         }`}
                       >
-                        Toutes les tâches
+                        <span className="hidden sm:inline">Toutes les tâches</span>
+                        <span className="sm:hidden">Tout</span>
                       </motion.button>
 
                       {lists.map((list) => {
