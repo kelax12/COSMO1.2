@@ -360,6 +360,11 @@ body {
   }
   
   @layer components {
+  /* Mobile collapsible body — hide the inner card's title block to avoid duplicating the collapsible header */
+  .mobile-collapsible-body > div > div:first-child:has(h2) {
+    display: none;
+  }
+
   /* Design moderne et sobre */
   .card {
     background-color: rgb(var(--color-surface));

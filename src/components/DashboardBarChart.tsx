@@ -129,7 +129,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-3xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] p-6 lg:p-8 shadow-lg dark:shadow-2xl"
+      className="relative overflow-hidden rounded-3xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] p-4 sm:p-6 lg:p-8 shadow-lg dark:shadow-2xl"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
@@ -141,19 +141,19 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       </div>
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between mb-6">
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
         <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
             Répartition du temps
           </h2>
-          <p className="text-[rgb(var(--color-text-secondary))] text-sm flex items-center gap-2 mt-0.5">
+          <p className="text-[rgb(var(--color-text-secondary))] text-xs sm:text-sm flex items-center gap-2 mt-0.5">
             <Calendar size={14} />
             {periodLabel}
           </p>
         </div>
 
         {/* Legend */}
-        <div className="hidden sm:flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-4">
           {keys.map(k => (
             <div key={k} className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig[k].color }} />
@@ -167,7 +167,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
 
       {/* Chart */}
       <div className="relative z-10">
-        <ChartContainer config={chartConfig} className="h-[280px] w-full">
+        <ChartContainer config={chartConfig} className="h-[200px] sm:h-[280px] w-full">
           <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeOpacity={0.4} />
             <XAxis
