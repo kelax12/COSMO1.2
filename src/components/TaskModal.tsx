@@ -563,31 +563,34 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
         </DialogTitle>
         <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'hsl(var(--card))' }}>
-          {/* Header */}
-          <div className="flex justify-between items-center px-6 py-4 border-b transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {/* Header — sticky */}
+          <div
+            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
+            style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'hsl(var(--card))' }}
+          >
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
               </h2>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <div className={`w-2 h-2 rounded-full transition-colors ${step === 1 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                 <div className={`w-2 h-2 rounded-full transition-colors ${step === 2 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
               </div>
               {hasChanges &&
-                <div className="flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md">
+                <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
                   <AlertCircle size={12} aria-hidden="true" />
-                  <span>Non sauvegardé</span>
+                  <span className="hidden sm:inline">Non sauvegardé</span>
                 </div>
               }
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={handleClose}
               aria-label="Fermer le formulaire"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
             >
-              <X size={18} aria-hidden="true" />
-            </Button>
+              <X size={22} aria-hidden="true" />
+            </button>
           </div>
 
           <div className="p-6 overflow-y-auto h-[calc(100%-72px)] md:h-auto">
@@ -1250,17 +1253,24 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 )} {/* end step 2 */}
 
                 {/* ── Action Buttons ── */}
-                <div className="flex justify-between items-center pt-6 border-t mt-6" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                <div
+                  className="sticky bottom-0 -mx-6 px-4 sm:px-6 pt-3 pb-3 sm:pb-4 mt-6 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3"
+                  style={{
+                    borderColor: 'rgb(var(--color-border))',
+                    backgroundColor: 'hsl(var(--card))',
+                    paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+                  }}
+                >
                   {step === 1 ? (
                     <>
                       {!isCreating ? (
-                        <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
+                        <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                           <Trash2 size={14} data-icon="inline-start" />
-                          <span className="hidden sm:inline">Supprimer</span>
+                          <span>Supprimer</span>
                         </Button>
-                      ) : <div />}
-                      <div className="flex gap-2 sm:gap-3">
-                        <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading}>
+                      ) : <div className="hidden sm:block" />}
+                      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                           Annuler
                         </Button>
                         <Button
@@ -1268,7 +1278,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           size="lg"
                           onClick={(e) => { e.preventDefault(); if (validateForm()) setStep(2); }}
                           disabled={!isStep1Valid()}
-                          className={!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}
+                          className={`min-h-11 w-full sm:w-auto ${!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}`}
                         >
                           Suivant
                           <ChevronRight size={16} data-icon="inline-end" />
@@ -1277,25 +1287,25 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     </>
                   ) : (
                     <>
-                      <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)} disabled={isLoading}>
+                      <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                         ← Retour
                       </Button>
-                      <div className="flex gap-2 sm:gap-3">
+                      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                         {!isCreating && (
-                          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
+                          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                             <Trash2 size={14} data-icon="inline-start" />
-                            <span className="hidden sm:inline">Supprimer</span>
+                            <span>Supprimer</span>
                           </Button>
                         )}
                         <Button
                           type="submit"
                           size="lg"
                           disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
-                          className={
+                          className={`min-h-11 w-full sm:w-auto ${
                             isLoading || !isFormValid() || (!hasChanges && !isCreating)
                               ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed'
                               : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
-                          }
+                          }`}
                         >
                           {isLoading ? (
                             <>
@@ -1316,26 +1326,38 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         
         <AnimatePresence>
           {showDeleteConfirm && (
-            <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[70] p-4 sm:rounded-2xl">
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-[70] sm:p-4"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              <motion.div
+                initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: '100%', scale: 0.95, opacity: 0 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               >
-                <div className="p-6">
+                <div className="sm:hidden flex justify-center pt-2 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                </div>
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
                     Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                     <Button
                       type="button"
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 min-h-11"
                       onClick={() => setShowDeleteConfirm(false)}
                     >
                       Annuler
@@ -1343,7 +1365,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     <Button
                       type="button"
                       variant="destructive"
-                      className="flex-1"
+                      className="flex-1 min-h-11"
                       onClick={confirmDelete}
                       disabled={isLoading}
                     >
@@ -1355,7 +1377,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   </div>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           )}
             </AnimatePresence>
             
