@@ -108,35 +108,44 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 pointer-events-auto">
-      <motion.div 
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:px-4 pointer-events-auto">
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-        onClick={onClose} 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
       />
-      
-        <motion.div 
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-            className={`relative w-full overflow-hidden rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-2xl border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all duration-300 ${
-              isNested ? 'max-w-[510px]' : 'max-w-[572px]'
+
+        <motion.div
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            className={`relative w-full overflow-hidden rounded-t-[20px] sm:rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all flex flex-col max-h-[92vh] sm:max-h-[85vh] ${
+              isNested ? 'sm:max-w-[510px]' : 'sm:max-w-[572px]'
             }`}
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700">
-            <h2 className="text-xl font-medium text-slate-800 dark:text-white">Modifier les catégories</h2>
+          {/* Drag handle (mobile only) */}
+          <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
+            <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+          </div>
+
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0">
+            <h2 className="text-base sm:text-xl font-medium text-slate-800 dark:text-white">Modifier les catégories</h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-blue-600 monochrome:hover:text-white transition-colors"
+              aria-label="Fermer"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 monochrome:hover:text-white transition-colors"
             >
-              <X size={28} strokeWidth={3} />
+              <X size={22} strokeWidth={2.5} />
             </button>
           </div>
 
-          <div 
+          <div
             ref={scrollRef}
-            className="px-6 py-6 overflow-y-auto max-h-[60vh] custom-scrollbar scroll-smooth"
+            className="px-4 sm:px-6 py-4 sm:py-6 overflow-y-auto flex-1 custom-scrollbar scroll-smooth"
           >
             <div className="flex justify-end mb-4">
               <button 
@@ -193,11 +202,11 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             </div>
           </div>
 
-            <div className="px-6 pb-8 pt-2 flex justify-center">
+            <div className="px-4 sm:px-6 pt-3 pb-3 sm:pb-6 border-t border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0 flex justify-center">
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-48 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 monochrome:bg-white monochrome:hover:bg-neutral-200 text-white monochrome:text-black font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20 monochrome:shadow-white/10 flex items-center justify-center"
+                className="w-full sm:w-48 min-h-11 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 monochrome:bg-white monochrome:hover:bg-neutral-200 text-white monochrome:text-black font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20 monochrome:shadow-white/10 flex items-center justify-center"
               >
                 {isSaving ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -211,49 +220,59 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
 
         <AnimatePresence>
           {categoryToDelete && (
-            <div className="fixed inset-0 monochrome:bg-black/80 backdrop-blur-sm flex items-center justify-center z-[90] p-4" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 monochrome:bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[90] sm:p-4"
+              onClick={() => setCategoryToDelete(null)}
+            >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border monochrome:border-neutral-700"
+                initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: '100%', scale: 0.95, opacity: 0 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border monochrome:border-neutral-700"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
+                  paddingBottom: 'env(safe-area-inset-bottom)',
                 }}
               >
-                <div className="p-6">
+                <div className="sm:hidden flex justify-center pt-2 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                </div>
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4 monochrome:bg-neutral-800" style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}>
                     <Trash2 className="text-red-500 monochrome:text-neutral-300" size={24} />
                   </div>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Supprimer la catégorie</h3>
-                  <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Supprimer la catégorie</h3>
+                  <p className="text-sm leading-relaxed mb-5 sm:mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                     <button
                       onClick={() => setCategoryToDelete(null)}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold border transition-all duration-200 monochrome:border-neutral-600 monochrome:hover:bg-neutral-800"
+                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold border transition-all monochrome:border-neutral-600 monochrome:hover:bg-neutral-800"
                       style={{
                         color: 'rgb(var(--color-text-primary))',
                         borderColor: 'rgb(var(--color-border))',
                         backgroundColor: 'rgb(var(--color-hover))',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))')}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
                     >
                       Annuler
                     </button>
                     <button
                       onClick={confirmDeleteLocal}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black monochrome:hover:bg-neutral-200 transition-all duration-200 shadow-md shadow-red-500/20 monochrome:shadow-white/10"
+                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black monochrome:hover:bg-neutral-200 transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
                     >
                       Confirmer
                     </button>
                   </div>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
     </div>

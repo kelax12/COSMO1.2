@@ -252,7 +252,7 @@ const TasksPage: React.FC = () => {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-50"
+                className="text-lg sm:text-3xl font-bold text-slate-900 dark:text-slate-50"
               >
                 To do list
               </motion.h1>
@@ -320,7 +320,7 @@ const TasksPage: React.FC = () => {
                   className="mb-4 sm:mb-8"
                 >
                   <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">Accès rapide aux listes</h3>
+                    <h3 className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">Accès rapide aux listes</h3>
 
                     <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] sm:[mask-image:none]">
                       <motion.button
