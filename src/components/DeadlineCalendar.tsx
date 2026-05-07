@@ -209,7 +209,7 @@ const DeadlineCalendar: React.FC = () => {
             </button>
           </div>
 
-          <div className="inline-flex self-stretch sm:self-auto rounded-xl p-1 gap-1" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+          <div className="hidden sm:inline-flex self-stretch sm:self-auto rounded-xl p-1 gap-1" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
             <button
               onClick={() => setCurrentView('agenda')}
               aria-label="Vue Agenda"
