@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
-import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -557,7 +557,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       <DialogContent
         showCloseButton={false}
         fullScreenMobile={true}
-        className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] w-full h-full md:h-auto md:min-h-[50vh] 3xl:min-h-[85vh] md:max-h-[90vh] overflow-y-auto"
+        className="p-0 rounded-none border-0 top-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[100dvh] max-h-[100dvh] sm:rounded-2xl sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:bg-transparent sm:shadow-none lg:max-h-[85vh] overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
@@ -889,21 +889,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                   {/* Status toggles */}
                   <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
-                      {!isCreating && (
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, completed: !prev.completed }))}
-                          className={`flex items-center justify-between w-full sm:w-auto sm:min-w-[140px] p-3 sm:p-4 rounded-lg border transition-colors ${formData.completed ? 'bg-green-500 text-white border-green-600' : ''}`}
-                          style={!formData.completed ? { backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' } : {}}
-                        >
-                          <div className="flex items-center gap-2 sm:gap-3">
-                            <CheckCircle size={18} className={formData.completed ? 'text-white' : 'text-green-500'} aria-hidden="true" />
-                            <span className="font-semibold text-xs sm:text-sm">
-                              {formData.completed ? '✓ Complétée — Annuler' : 'Marquer complétée'}
-                            </span>
-                          </div>
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}

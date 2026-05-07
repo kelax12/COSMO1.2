@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -263,156 +263,209 @@ const TaskTable: React.FC<TaskTableProps> = ({
   }
 
   const TaskCard = React.memo(({ task }: { task: Task }) => {
-    const [isHovered, setIsHovered] = useState(false);
     const category = categories.find(c => c.id === task.category);
     const categoryColor = category?.color || '#3B82F6';
-    
+
+    const [actionsVisible, setActionsVisible] = useState(false);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isLongPress = useRef(false);
+
+    const startLongPress = (e: React.PointerEvent) => {
+      if (addToListMode) return;
+      // Only respond to touch / pen / mouse-primary
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      isLongPress.current = false;
+      longPressTimer.current = setTimeout(() => {
+        isLongPress.current = true;
+        setActionsVisible(true);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+      }, 500);
+    };
+    const cancelLongPress = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+    const handleCardClick = () => {
+      if (isLongPress.current) {
+        isLongPress.current = false;
+        return;
+      }
+      if (addToListMode) return;
+      setSelectedTaskForCollaborators(null);
+      setSelectedTask(task.id);
+    };
+
+    const isOverdue = !task.completed && new Date(task.deadline) < new Date();
+
     return (
+      <div className="relative mb-2">
       <div
-        className={`p-4 rounded-xl border mb-3 transition-all ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
-        onClick={() => { if (!addToListMode) { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); } }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-all ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
+        onClick={handleCardClick}
+        onPointerDown={startLongPress}
+        onPointerUp={cancelLongPress}
+        onPointerLeave={cancelLongPress}
+        onPointerCancel={cancelLongPress}
+        onContextMenu={(e) => { e.preventDefault(); }}
         style={{
           backgroundColor: addToListMode
-            ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
-            : (activeQuickFilter === 'retard'
-                ? (isHovered ? 'rgb(var(--color-error) / 0.25)' : 'rgb(var(--color-error) / 0.15)')
-                : (task.bookmarked
-                    ? (isHovered ? 'rgba(234, 179, 8, 0.25)' : 'rgba(234, 179, 8, 0.15)')
-                    : (isHovered ? `${categoryColor}25` : `${categoryColor}10`))),
-          borderColor: addToListMode
-            ? (selectedForListIds.includes(task.id) ? '#3B82F6' : 'rgb(var(--color-border))')
-            : (activeQuickFilter === 'retard'
-                ? (isHovered ? 'rgb(var(--color-error))' : 'rgb(var(--color-error) / 0.7)')
-                : (task.bookmarked
-                    ? (isHovered ? '#EAB308' : 'rgba(234, 179, 8, 0.6)')
-                    : (isHovered ? categoryColor : 'rgb(var(--color-border))'))),
-          borderLeftWidth: '4px',
-          borderLeftColor: activeQuickFilter === 'retard' ? 'rgb(var(--color-error))' : (task.bookmarked ? '#EAB308' : categoryColor)
+            ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgb(var(--color-surface))')
+            : 'rgb(var(--color-surface))',
+          borderColor: addToListMode && selectedForListIds.includes(task.id)
+            ? '#3B82F6'
+            : 'rgb(var(--color-border))',
+          minHeight: '60px',
+          touchAction: 'manipulation',
         }}
       >
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-2">
-          {addToListMode ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
-              className="min-w-11 min-h-11 -m-2 p-2 flex items-center justify-center"
-              aria-label={selectedForListIds.includes(task.id) ? 'Retirer de la liste' : 'Ajouter à la liste'}
-              aria-pressed={selectedForListIds.includes(task.id)}
+        {/* Color bar (left) — like agenda items */}
+        <div
+          className="w-1 self-stretch rounded-full shrink-0"
+          style={{ backgroundColor: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor) }}
+        />
+
+        {/* Checkbox — vertically aligned with title row */}
+        {addToListMode ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
+            className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+            aria-label={selectedForListIds.includes(task.id) ? 'Retirer de la liste' : 'Ajouter à la liste'}
+            aria-pressed={selectedForListIds.includes(task.id)}
+          >
+            <span
+              className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                selectedForListIds.includes(task.id)
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'border-slate-400 dark:border-slate-500'
+              }`}
             >
-              <span
-                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                  selectedForListIds.includes(task.id)
-                    ? 'bg-blue-500 border-blue-500'
-                    : 'border-slate-600 dark:border-slate-600 hover:border-blue-400'
-                }`}
-              >
-                {selectedForListIds.includes(task.id) && (
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </span>
-            </button>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleComplete(task.id);
-              }}
-              className="min-w-11 min-h-11 -m-2 p-2 flex items-center justify-center"
-              aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
-              aria-pressed={task.completed}
+              {selectedForListIds.includes(task.id) && (
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </span>
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              cancelLongPress();
+              handleToggleComplete(task.id);
+            }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+            aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+            aria-pressed={task.completed}
+          >
+            <span
+              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                task.completed
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'border-gray-400'
+              }`}
             >
-              <span
-                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                  task.completed
-                    ? 'bg-blue-500 border-blue-500'
-                    : 'border-gray-400 hover:border-blue-500'
-                }`}
-              >
-                {task.completed && (
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </span>
-            </button>
-          )}
-          <TaskCategoryIndicator category={task.category} />
+              {task.completed && (
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </span>
+          </button>
+        )}
+
+        {/* Title + meta */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <p className={`font-semibold text-sm leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+            {task.name}
+          </p>
+          <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <span>{formatDate(task.deadline)}</span>
+            <span>·</span>
+            <span>{task.estimatedTime}min</span>
+            {task.isCollaborative && (
+              <>
+                <span>·</span>
+                <Users size={11} className="opacity-70" />
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <span className={`inline-flex justify-center items-center w-8 h-8 sm:w-7 sm:h-7 rounded-full task-priority-${task.priority} text-sm sm:text-xs font-bold`}>
-            {task.priority}
-          </span>
+
+        {/* Px badge */}
+        <div
+          className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
+          style={{
+            backgroundColor: `${isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)}20`,
+            color: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)
+          }}
+        >
+          P{task.priority}
         </div>
-      </div>
-      
-      <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-        <h4 className={`font-semibold text-sm sm:text-lg leading-snug ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {task.name}
-        </h4>
-        {task.isCollaborative && (
-          <span className="text-[10px] sm:text-xs bg-[rgb(var(--color-accent))] text-white px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
+
+        {task.bookmarked && (
+          <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2 text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] mb-2 sm:mb-3">
-        <div className="flex items-center gap-1">
-          <Calendar size={12} className="sm:hidden" />
-          <Calendar size={14} className="hidden sm:block" />
-          <span>{formatDate(task.deadline)}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="font-medium">{task.estimatedTime}h</span>
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--color-border))]">
-        <div className="flex gap-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleToggleBookmark(task.id); }}
-            className={`min-w-11 min-h-11 p-2 rounded flex items-center justify-center ${task.bookmarked ? 'text-amber-500' : 'text-slate-400'}`}
-            aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-            aria-pressed={task.bookmarked}
+      {/* Actions row — revealed on long press */}
+      <AnimatePresence>
+        {actionsVisible && !addToListMode && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
-          </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleOpenCollaborator(task.id); }}
-              className="min-w-11 min-h-11 p-2 text-slate-400 flex items-center justify-center"
-              aria-label="Ajouter un collaborateur"
-            >
-              <UserPlus size={18} />
-            </button>
-            {!task.completed && (
+            <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-xl border" style={{
+              borderColor: 'rgb(var(--color-border))',
+              backgroundColor: 'rgb(var(--color-hover))'
+            }}>
               <button
-                onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }}
-                className="min-w-11 min-h-11 p-2 text-slate-400 flex items-center justify-center"
-                aria-label="Planifier dans l'agenda"
+                onClick={(e) => { e.stopPropagation(); handleToggleBookmark(task.id); setActionsVisible(false); }}
+                className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
+                aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
               >
-                <Calendar size={18} />
+                <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
               </button>
-            )}
-          </div>
-          <div className="flex gap-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); setSelectedTaskForCollaborators(null); setSelectedTask(task.id); }}
-              className="min-w-11 min-h-11 p-2 text-slate-400 flex items-center justify-center"
-              aria-label="Plus d'options"
-            >
-              <MoreHorizontal size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }}
-              className="min-w-11 min-h-11 p-2 text-red-400 flex items-center justify-center"
-              aria-label="Supprimer la tâche"
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-      </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleOpenCollaborator(task.id); setActionsVisible(false); }}
+                className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+                aria-label="Ajouter un collaborateur"
+              >
+                <UserPlus size={18} />
+              </button>
+              {!task.completed && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); setActionsVisible(false); }}
+                  className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+                  aria-label="Planifier dans l'agenda"
+                >
+                  <Calendar size={18} />
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setSelectedTaskForCollaborators(null); setSelectedTask(task.id); setActionsVisible(false); }}
+                className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+                aria-label="Plus d'options"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); setActionsVisible(false); }}
+                className="min-w-11 min-h-11 p-2 rounded-lg text-red-500 flex items-center justify-center"
+                aria-label="Supprimer la tâche"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
     );
   }, (prevProps, nextProps) => {
