@@ -642,7 +642,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   </div>
 
                   {/* Priority and Category */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="task-priority" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Priorité
@@ -836,7 +836,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   </div>
 
                   {/* Deadline and Estimated Time */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Échéance
@@ -888,17 +888,17 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                   </div>
 
                   {/* Status toggles */}
-                  <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
                       {!isCreating && (
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, completed: !prev.completed }))}
-                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors min-w-[140px] ${formData.completed ? 'bg-green-500 text-white border-green-600' : ''}`}
+                          className={`flex items-center justify-between w-full sm:w-auto sm:min-w-[140px] p-3 sm:p-4 rounded-lg border transition-colors ${formData.completed ? 'bg-green-500 text-white border-green-600' : ''}`}
                           style={!formData.completed ? { backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' } : {}}
                         >
-                          <div className="flex items-center gap-3">
-                            <CheckCircle size={20} className={formData.completed ? 'text-white' : 'text-green-500'} aria-hidden="true" />
-                            <span className="font-semibold text-sm">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <CheckCircle size={18} className={formData.completed ? 'text-white' : 'text-green-500'} aria-hidden="true" />
+                            <span className="font-semibold text-xs sm:text-sm">
                               {formData.completed ? '✓ Complétée — Annuler' : 'Marquer complétée'}
                             </span>
                           </div>

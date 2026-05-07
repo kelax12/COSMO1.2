@@ -87,7 +87,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Filtrer par nom..."
-              className="w-full pl-9 pr-12 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-sm"
+              className="w-full pl-9 pr-12 py-2 sm:py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-xs sm:text-sm"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
@@ -117,7 +117,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             <div className="relative w-36 sm:w-44">
               <select
                 id="task-filter"
-                className="w-full appearance-none border rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                className="w-full appearance-none border rounded-lg pl-3 pr-10 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',

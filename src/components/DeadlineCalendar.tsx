@@ -13,6 +13,13 @@ const DeadlineCalendar: React.FC = () => {
   const { data: categories = [] } = useCategories();
   const isMobile = useIsMobile();
   const [currentView, setCurrentView] = useState<'month' | 'week' | 'agenda'>(isMobile ? 'agenda' : 'week');
+
+  // Force agenda view if user shrinks to mobile while in week/month
+  React.useEffect(() => {
+    if (isMobile && currentView !== 'agenda') {
+      setCurrentView('agenda');
+    }
+  }, [isMobile, currentView]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -221,7 +228,7 @@ const DeadlineCalendar: React.FC = () => {
               onClick={() => setCurrentView('week')}
               aria-label="Vue Semaine"
               aria-pressed={currentView === 'week'}
-              className={`min-h-11 flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              className={`hidden sm:flex min-h-11 sm:flex-none items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 currentView === 'week'
                   ? 'bg-blue-500 text-white shadow-md'
                   : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
@@ -235,7 +242,7 @@ const DeadlineCalendar: React.FC = () => {
               onClick={() => setCurrentView('month')}
               aria-label="Vue Mois"
               aria-pressed={currentView === 'month'}
-              className={`min-h-11 flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              className={`hidden sm:flex min-h-11 sm:flex-none items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 currentView === 'month'
                   ? 'bg-blue-500 text-white shadow-md'
                   : 'hover:bg-white/50 dark:hover:bg-slate-700/50'

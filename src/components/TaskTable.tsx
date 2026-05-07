@@ -349,18 +349,19 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mb-2">
-        <h4 className={`font-semibold text-lg ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+      <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+        <h4 className={`font-semibold text-sm sm:text-lg leading-snug ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
           {task.name}
         </h4>
         {task.isCollaborative && (
-          <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
+          <span className="text-[10px] sm:text-xs bg-[rgb(var(--color-accent))] text-white px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
         )}
       </div>
-      
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[rgb(var(--color-text-secondary))] mb-3">
+
+      <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2 text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] mb-2 sm:mb-3">
         <div className="flex items-center gap-1">
-          <Calendar size={14} />
+          <Calendar size={12} className="sm:hidden" />
+          <Calendar size={14} className="hidden sm:block" />
           <span>{formatDate(task.deadline)}</span>
         </div>
         <div className="flex items-center gap-1">
