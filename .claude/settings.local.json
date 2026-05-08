@@ -113,7 +113,8 @@
       "Bash(grep -rn '\\\\\\\\\"' supabase/)",
       "Bash(grep -n \"Date.now\\\\|randomUUID\\\\|kr-\\\\|: \\\\`\\\\${\" src/components/OKRModal.tsx)",
       "Bash(grep -v \"import\\\\|//\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "WebSearch"
     ]
   }
 }
