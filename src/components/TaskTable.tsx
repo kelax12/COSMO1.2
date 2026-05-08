@@ -553,8 +553,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <>
-      {showQuickFilters && (
-      <div className="flex flex-col gap-4 mb-6">
+      <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
@@ -597,7 +596,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </Button>
         </div>
       </div>
-      )}
 
       {/* Desktop View (Table) */}
       <div className="hidden md:block table-container shadow-sm overflow-x-auto">
