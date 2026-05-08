@@ -907,6 +907,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         />
                       </button>
 
+                      {!isCreating && (
+                        <button
+                          type="button"
+                          onClick={handleDelete}
+                          disabled={isLoading}
+                          aria-label="Supprimer la tâche"
+                          className="p-2.5 rounded-lg border border-red-200 dark:border-red-900/40 hover:border-red-400/60 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                          style={{ backgroundColor: 'rgb(var(--color-hover))' }}
+                        >
+                          <Trash2 size={20} className="text-red-500" />
+                        </button>
+                      )}
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -1248,13 +1261,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 >
                   {step === 1 ? (
                     <>
-                      {!isCreating ? (
-                        <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                          <Trash2 size={14} data-icon="inline-start" />
-                          <span>Supprimer</span>
-                        </Button>
-                      ) : <div className="hidden sm:block" />}
-                      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
                         <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                           Annuler
                         </Button>
@@ -1276,12 +1283,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         ← Retour
                       </Button>
                       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                        {!isCreating && (
-                          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                            <Trash2 size={14} data-icon="inline-start" />
-                            <span>Supprimer</span>
-                          </Button>
-                        )}
                         <Button
                           type="submit"
                           size="lg"

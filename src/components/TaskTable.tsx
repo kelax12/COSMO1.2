@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
+import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
@@ -269,10 +269,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
     const [actionsVisible, setActionsVisible] = useState(false);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isLongPress = useRef(false);
+    const isDragging = useRef(false);
+
+    // Swipe gestures
+    const x = useMotionValue(0);
+    const validateOpacity = useTransform(x, [0, 40, 80], [0, 0.4, 1]);
+    const validateScale = useTransform(x, [0, 80], [0.8, 1]);
+    const optionsOpacity = useTransform(x, [-80, -40, 0], [1, 0.4, 0]);
+    const optionsScale = useTransform(x, [-80, 0], [1, 0.8]);
 
     const startLongPress = (e: React.PointerEvent) => {
       if (addToListMode) return;
-      // Only respond to touch / pen / mouse-primary
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       isLongPress.current = false;
       longPressTimer.current = setTimeout(() => {
@@ -288,6 +295,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
       }
     };
     const handleCardClick = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        return;
+      }
       if (isLongPress.current) {
         isLongPress.current = false;
         return;
@@ -300,13 +311,60 @@ const TaskTable: React.FC<TaskTableProps> = ({
     const isOverdue = !task.completed && new Date(task.deadline) < new Date();
 
     return (
-      <div className="relative mb-2">
-      <div
-        className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-all ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
+      <div className="relative mb-2 overflow-hidden rounded-xl">
+      {/* Swipe indicators (background) */}
+      {!addToListMode && (
+        <>
+          {/* Right swipe = validate (green) */}
+          <motion.div
+            style={{ opacity: validateOpacity }}
+            className="absolute inset-0 rounded-xl flex items-center justify-start pl-6 pointer-events-none bg-green-500/15 dark:bg-green-500/20"
+          >
+            <motion.div style={{ scale: validateScale }} className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <CheckCircle2 size={28} strokeWidth={2.5} />
+              <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
+            </motion.div>
+          </motion.div>
+          {/* Left swipe = options (slate/red) */}
+          <motion.div
+            style={{ opacity: optionsOpacity }}
+            className="absolute inset-0 rounded-xl flex items-center justify-end pr-6 pointer-events-none bg-slate-500/15 dark:bg-slate-500/25"
+          >
+            <motion.div style={{ scale: optionsScale, color: 'rgb(var(--color-text-secondary))' }} className="flex items-center gap-2">
+              <span className="text-sm font-bold">Options</span>
+              <ChevronLeft size={28} strokeWidth={2.5} />
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+      <motion.div
+        drag={addToListMode ? false : 'x'}
+        style={{ x }}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.5}
+        dragDirectionLock
+        onDragStart={() => {
+          isDragging.current = true;
+          cancelLongPress();
+        }}
+        onDragEnd={(_, info) => {
+          // Right swipe → validate
+          if (info.offset.x > 80) {
+            handleToggleComplete(task.id);
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+          }
+          // Left swipe → reveal options
+          else if (info.offset.x < -80) {
+            setActionsVisible(true);
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+          }
+          // Reset isDragging slightly later so click handler skips
+          setTimeout(() => { isDragging.current = false; }, 50);
+        }}
+        className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
         onClick={handleCardClick}
         onPointerDown={startLongPress}
         onPointerUp={cancelLongPress}
-        onPointerLeave={cancelLongPress}
         onPointerCancel={cancelLongPress}
         onContextMenu={(e) => { e.preventDefault(); }}
         style={{
@@ -317,7 +375,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             ? '#3B82F6'
             : 'rgb(var(--color-border))',
           minHeight: '60px',
-          touchAction: 'manipulation',
+          touchAction: 'pan-y',
         }}
       >
         {/* Color bar (left) — like agenda items */}
@@ -408,7 +466,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         {task.bookmarked && (
           <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
         )}
-      </div>
+      </motion.div>
 
       {/* Actions row — revealed on long press */}
       <AnimatePresence>

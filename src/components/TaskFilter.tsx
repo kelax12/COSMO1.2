@@ -149,22 +149,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             </div>
           </div>
 
-          {/* + d'options — toggles TaskTable's quick filter buttons */}
-          <Button
-            variant={showQuickFilters ? 'default' : 'outline'}
-            onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
-            aria-label={showQuickFilters ? "Masquer les options" : "Afficher les options"}
-            aria-pressed={showQuickFilters}
-            className={`flex items-center justify-center gap-1.5 shrink-0 px-3 py-2.5 text-sm min-h-11 ${
-              showQuickFilters
-                ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-            }`}
-          >
-            <Plus size={16} aria-hidden="true" />
-            <span>d'options</span>
-          </Button>
-
           {/* Advanced Filters Toggle */}
           <Button
             variant={showAdvancedFilters || hasActiveFilters ? 'default' : 'outline'}
@@ -189,6 +173,22 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               </motion.span>
             )}
           </Button>
+
+          {/* + d'options — clickable blue text, toggles TaskTable's quick filter buttons */}
+          <button
+            type="button"
+            onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
+            aria-label={showQuickFilters ? "Masquer les options" : "Afficher les options"}
+            aria-pressed={showQuickFilters}
+            className={`shrink-0 flex items-center gap-1 px-2 py-2 text-sm font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
+              showQuickFilters
+                ? 'text-blue-700 dark:text-blue-300 monochrome:text-white'
+                : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 monochrome:text-neutral-300 monochrome:hover:text-white'
+            }`}
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span>d'options</span>
+          </button>
 
           {/* Reset - inline next to Filters */}
           <AnimatePresence>
