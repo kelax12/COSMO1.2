@@ -314,39 +314,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     return (
       <div className="relative mb-2">
-      {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
+      {/* Swipe wrapper — isolates card + overlay layers from the action row below */}
       <div className="relative overflow-hidden rounded-xl">
-      {/* Swipe reveal layers — anchored to opposite sides, grow with drag */}
-      {!addToListMode && (
-        <>
-          {/* Right swipe → full-width green panel behind */}
-          <motion.div
-            style={{ opacity: greenOpacity }}
-            className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5"
-          >
-            <motion.div
-              style={{ opacity: greenIconOpacity }}
-              className="flex items-center gap-2 text-white whitespace-nowrap"
-            >
-              <CheckCircle2 size={22} strokeWidth={2.5} />
-              <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
-            </motion.div>
-          </motion.div>
-          {/* Left swipe → full-width gray panel behind */}
-          <motion.div
-            style={{ opacity: grayOpacity }}
-            className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5"
-          >
-            <motion.div
-              style={{ opacity: grayIconOpacity }}
-              className="flex items-center gap-2 text-white whitespace-nowrap"
-            >
-              <MoreHorizontal size={22} strokeWidth={2.5} />
-              <span className="text-sm font-bold">Options</span>
-            </motion.div>
-          </motion.div>
-        </>
-      )}
       <motion.div
         drag={addToListMode ? false : 'x'}
         style={{ x }}
@@ -477,6 +446,38 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
         )}
       </motion.div>
+
+      {/* Swipe overlay layers — sit ON TOP of the card, full width */}
+      {!addToListMode && (
+        <>
+          {/* Right swipe → full-width green overlay */}
+          <motion.div
+            style={{ opacity: greenOpacity }}
+            className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-xl"
+          >
+            <motion.div
+              style={{ opacity: greenIconOpacity }}
+              className="flex items-center gap-2 text-white whitespace-nowrap"
+            >
+              <CheckCircle2 size={22} strokeWidth={2.5} />
+              <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
+            </motion.div>
+          </motion.div>
+          {/* Left swipe → full-width gray overlay */}
+          <motion.div
+            style={{ opacity: grayOpacity }}
+            className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-xl"
+          >
+            <motion.div
+              style={{ opacity: grayIconOpacity }}
+              className="flex items-center gap-2 text-white whitespace-nowrap"
+            >
+              <MoreHorizontal size={22} strokeWidth={2.5} />
+              <span className="text-sm font-bold">Options</span>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
       </div>
 
       {/* Actions row — revealed on long press */}
