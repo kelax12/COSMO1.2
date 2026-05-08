@@ -3,6 +3,8 @@
 Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute modification.
 
 > **Avant un déploiement** : consulter [`faille.md`](./faille.md) — répertorie les failles de sécurité et bugs bloquants identifiés (Stripe à finaliser, secrets à rotater, RLS à durcir).
+>
+> **Avant de toucher la version mobile** : consulter [`a-faire.md`](./a-faire.md) — répertorie les bugs/régressions mobile non résolus (notamment le panneau de couleur swipe TaskCard).
 
 ---
 
@@ -433,6 +435,125 @@ Le dossier `src/__test__/` contient des fichiers de tests Vitest, **mais Vitest 
 2. Supprimer le dossier `src/__test__/` et la section `test:` de `vite.config.ts`
 
 Voir `faille.md` §4.
+
+---
+
+## Mobile-first — patterns et conventions
+
+> **Avant de toucher une page mobile** : consulter [`a-faire.md`](./a-faire.md) — répertorie les bugs/régressions mobile non résolus (notamment le panneau de couleur swipe qui ne s'affiche pas).
+
+### Breakpoint et hook
+
+- Tailwind breakpoint mobile = `< md` (768 px). Le `sm` (640 px) sépare "petit mobile" et "grand mobile / phablette".
+- Hook React : `useIsMobile()` depuis `@/lib/hooks/use-mobile` — retourne un boolean réactif basé sur `window.innerWidth < 768`. À utiliser quand une logique JS doit diverger entre mobile/desktop (ex. vue par défaut d'un calendrier). Préférer Tailwind responsive classes (`md:hidden`, `md:flex`) quand c'est purement visuel.
+- Détection viewport en JS pur : `window.matchMedia('(min-width: 768px)')`.
+
+### Layout shell mobile
+
+- **`MobileTabBar`** (bottom tab bar, hauteur ~64 px) — visible sur mobile uniquement, contient `Accueil / Tâches / Agenda / Habitudes / Plus`.
+- **Padding-bottom obligatoire** sur les pages : `pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8` pour libérer la zone du tab bar + FAB + safe-area iOS.
+- **FAB (Floating Action Button)** : `fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14`. Doit être au-dessus de la tab bar.
+
+### Modals — pattern bottom-sheet
+
+Tous les modals tâche (TaskModal, AddTaskForm, CollaboratorModal, AddToListModal, EventModal, ColorSettingsModal, et les confirms de suppression) suivent ce pattern :
+
+```tsx
+<motion.div
+  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
+  onClick={onClose}
+>
+  <motion.div
+    initial={{ y: '100%', opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    exit={{ y: '100%', opacity: 0 }}
+    transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+    onClick={(e) => e.stopPropagation()}
+    className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh]"
+    style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+  >
+    {/* Drag handle (mobile only) */}
+    <div className="sm:hidden flex justify-center pt-2 pb-1">
+      <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+    </div>
+    {/* Sticky header */}
+    <div className="px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0">…</div>
+    {/* Scrollable body */}
+    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">…</div>
+    {/* Sticky footer */}
+    <div className="px-4 pt-3 pb-3 border-t shrink-0 flex flex-col-reverse sm:flex-row gap-2">…</div>
+  </motion.div>
+</motion.div>
+```
+
+Règles non négociables :
+- ✅ ESC pour fermer + clic backdrop pour fermer + verrouillage `body.overflow` quand ouvert
+- ✅ Drag handle visuel sur mobile (`<div className="w-10 h-1 rounded-full bg-slate-300" />`)
+- ✅ Sticky header + sticky footer ; le body scrolle seul
+- ✅ Boutons footer empilés sur mobile (`flex-col-reverse`), inline sur desktop
+- ✅ Touch targets ≥ 44×44 px (`min-w-11 min-h-11` ou icônes ≥ 22 px dans wrapper 11)
+- ✅ `env(safe-area-inset-bottom)` partout pour le notch / bottom bar iOS
+- ❌ Pas de modal centré avec marge sur mobile — toujours bottom-sheet
+
+`TaskModal` et `AddTaskForm` sont **full-screen** sur mobile (override des classes shadcn Dialog avec `top-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[100dvh] sm:rounded-2xl sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-2xl`). Utiliser `100dvh` (dynamic viewport height) plutôt que `100vh` pour gérer correctement la barre d'URL mobile.
+
+### TaskCard mobile (`src/components/TaskTable.tsx → TaskCard`)
+
+Layout style "agenda" :
+- Barre verticale colorée à gauche (`w-1` rounded, hauteur via `self-stretch`) — rouge pour retard, jaune pour favori, sinon couleur de catégorie
+- Checkbox de complétion **inline avec le titre** (même ligne horizontale, pas de ligne dédiée)
+- Titre tronqué + ligne meta `date · temps` en dessous
+- Badge `P{priorité}` à droite (couleur dérivée de la même palette)
+- **Pas de TaskCategoryIndicator** (carré coloré supprimé sur mobile)
+- **Toutes les icônes d'action cachées par défaut** (Bookmark, UserPlus, Calendar, MoreHorizontal, Trash2). Révélation uniquement via :
+  1. **Long press** (500 ms, `onPointerDown` + `setTimeout`) — vibration haptique via `navigator.vibrate(15)` si dispo
+  2. **Swipe à gauche** > 80 px (Framer Motion `drag="x"`) — déclenche aussi `setActionsVisible(true)`
+- **Swipe à droite** > 80 px → bascule `completed` (haptique + handle dans `onDragEnd`)
+- Le `<TaskCard>` est wrappé dans `md:hidden` ; la `<table>` desktop est dans `hidden md:block`
+
+### TaskFilter mobile (`src/components/TaskFilter.tsx`)
+
+- Lien `+ d'options` (texte bleu cliquable, `md:hidden`) toggle l'état `showQuickFilters` qui contrôle la visibilité de la rangée Favoris/Terminées/Retard/Collaboration dans `<TaskTable>`.
+- Sur desktop (`md:flex`), ces 4 boutons sont **toujours** visibles dans `TaskTable` indépendamment de `showQuickFilters`.
+- Bouton "Filtres" caché sur mobile (`hidden sm:inline-flex`).
+- Label de tri compacté : `<span className="hidden sm:inline">Trier par :</span><span className="sm:hidden">Tri :</span>`.
+
+### DeadlineCalendar mobile (`src/components/DeadlineCalendar.tsx`)
+
+- Mobile = vue **agenda** (liste verticale par jour) **uniquement**. Les boutons Sem./Mois sont masqués (`hidden sm:flex`).
+- Le toggle "Agenda" est lui-même masqué sur mobile (`hidden sm:inline-flex`) puisqu'il n'y a qu'une vue.
+- `useEffect` force `currentView = 'agenda'` quand `isMobile` devient true.
+- Bouton "Aujourd'hui" pour retour rapide à la semaine en cours.
+
+### Modules touchés par les conventions mobile
+
+| Composant | Particularité mobile |
+|---|---|
+| `TasksPage.tsx` | H1 réduit (`text-lg sm:text-3xl`), Calendrier inline avec titre, padding-bottom safe-area |
+| `TaskTable.tsx → TaskCard` | Voir section dédiée ci-dessus |
+| `TaskFilter.tsx` | Voir section dédiée ci-dessus |
+| `TaskModal.tsx` | Full-screen, single-column inputs, Supprimer comme icône à côté de Bookmark, pas de "Marquer complétée" |
+| `AddTaskForm.tsx` | `h-[100dvh]` full-screen, sticky footer avec boutons empilés |
+| `DeadlineCalendar.tsx` | Vue agenda forcée |
+| `CollaboratorModal.tsx`, `AddToListModal.tsx`, `EventModal.tsx`, `ColorSettingsModal.tsx` | Bottom-sheet pattern |
+
+### Tester le mobile
+
+- DevTools responsive → viewport **375 × 812 (iPhone SE/12 mini)**, **393 × 852 (iPhone 14 Pro)**, **412 × 915 (Pixel 7)**
+- Vérifier touch targets avec `document.querySelectorAll('button').forEach(b => { const r = b.getBoundingClientRect(); if (r.width < 44 || r.height < 44) console.warn(b); })`
+- En mode démo (`loginDemo()`), 100 tâches sont seedées sur 12 mois — utile pour stress-tester le rendu
+
+### Ce qu'il ne faut jamais faire (mobile)
+
+- ❌ Modal centré sur mobile (toujours bottom-sheet — voir pattern ci-dessus)
+- ❌ Touch target < 44 × 44 px (WCAG 2.5.5)
+- ❌ Lire `window.innerWidth` en boucle dans le render — utiliser `useIsMobile()` (memoizé)
+- ❌ `100vh` pour un modal full-screen (utiliser `100dvh`)
+- ❌ Ajouter une logique d'action (validation, suppression) qui ne soit accessible **que** par swipe — toujours offrir un fallback visible (bouton long-press, modal d'édition)
+- ❌ Faire diverger le mobile et le desktop dans le même composant sans utiliser `md:hidden` / `md:flex` ou `useIsMobile()` — éviter le code dupliqué
+- ❌ Modifier `<TaskCard>` (`md:hidden`) sans vérifier que la table desktop reste intacte (`hidden md:block`)
+- ❌ Réintroduire `TaskCategoryIndicator` ou des icônes inline sur la TaskCard mobile — l'épuration est délibérée
 
 ---
 
