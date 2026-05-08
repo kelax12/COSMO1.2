@@ -273,10 +273,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     // Swipe gestures
     const x = useMotionValue(0);
-    // Reveal widths grow with drag offset → visible space behind the card
-    const greenWidth = useTransform(x, (val) => Math.max(val, 0));
-    const grayWidth = useTransform(x, (val) => Math.max(-val, 0));
-    // Icons fade in once user has dragged at least 24px
+    // Full-width reveal panels — fade in based on swipe direction
+    const greenOpacity = useTransform(x, [0, 8, 80], [0, 1, 1]);
+    const grayOpacity = useTransform(x, [-80, -8, 0], [1, 1, 0]);
+    // Icons + labels fade in once user has dragged at least 24px
     const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
     const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
 
@@ -319,27 +319,27 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {/* Swipe reveal layers — anchored to opposite sides, grow with drag */}
       {!addToListMode && (
         <>
-          {/* Right swipe → green panel revealed on the LEFT */}
+          {/* Right swipe → full-width green panel behind */}
           <motion.div
-            style={{ width: greenWidth }}
-            className="absolute left-0 top-0 bottom-0 bg-green-500 pointer-events-none overflow-hidden"
+            style={{ opacity: greenOpacity }}
+            className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5"
           >
             <motion.div
               style={{ opacity: greenIconOpacity }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-white whitespace-nowrap"
+              className="flex items-center gap-2 text-white whitespace-nowrap"
             >
               <CheckCircle2 size={22} strokeWidth={2.5} />
               <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
             </motion.div>
           </motion.div>
-          {/* Left swipe → gray panel revealed on the RIGHT */}
+          {/* Left swipe → full-width gray panel behind */}
           <motion.div
-            style={{ width: grayWidth }}
-            className="absolute right-0 top-0 bottom-0 bg-slate-500 dark:bg-slate-600 pointer-events-none overflow-hidden"
+            style={{ opacity: grayOpacity }}
+            className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5"
           >
             <motion.div
               style={{ opacity: grayIconOpacity }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-white whitespace-nowrap"
+              className="flex items-center gap-2 text-white whitespace-nowrap"
             >
               <MoreHorizontal size={22} strokeWidth={2.5} />
               <span className="text-sm font-bold">Options</span>
