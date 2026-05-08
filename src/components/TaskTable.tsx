@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, ChevronLeft } from 'lucide-react';
+import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -273,10 +273,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     // Swipe gestures
     const x = useMotionValue(0);
-    const validateOpacity = useTransform(x, [0, 40, 80], [0, 0.4, 1]);
-    const validateScale = useTransform(x, [0, 80], [0.8, 1]);
-    const optionsOpacity = useTransform(x, [-80, -40, 0], [1, 0.4, 0]);
-    const optionsScale = useTransform(x, [-80, 0], [1, 0.8]);
+    // Reveal widths grow with drag offset → visible space behind the card
+    const greenWidth = useTransform(x, (val) => Math.max(val, 0));
+    const grayWidth = useTransform(x, (val) => Math.max(-val, 0));
+    // Icons fade in once user has dragged at least 24px
+    const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
+    const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
 
     const startLongPress = (e: React.PointerEvent) => {
       if (addToListMode) return;
@@ -311,28 +313,36 @@ const TaskTable: React.FC<TaskTableProps> = ({
     const isOverdue = !task.completed && new Date(task.deadline) < new Date();
 
     return (
-      <div className="relative mb-2 overflow-hidden rounded-xl">
-      {/* Swipe indicators (background) */}
+      <div className="relative mb-2">
+      {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
+      <div className="relative overflow-hidden rounded-xl">
+      {/* Swipe reveal layers — anchored to opposite sides, grow with drag */}
       {!addToListMode && (
         <>
-          {/* Right swipe = validate (green) */}
+          {/* Right swipe → green panel revealed on the LEFT */}
           <motion.div
-            style={{ opacity: validateOpacity }}
-            className="absolute inset-0 rounded-xl flex items-center justify-start pl-6 pointer-events-none bg-green-500/15 dark:bg-green-500/20"
+            style={{ width: greenWidth }}
+            className="absolute left-0 top-0 bottom-0 bg-green-500 pointer-events-none overflow-hidden"
           >
-            <motion.div style={{ scale: validateScale }} className="flex items-center gap-2 text-green-600 dark:text-green-400">
-              <CheckCircle2 size={28} strokeWidth={2.5} />
+            <motion.div
+              style={{ opacity: greenIconOpacity }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-white whitespace-nowrap"
+            >
+              <CheckCircle2 size={22} strokeWidth={2.5} />
               <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
             </motion.div>
           </motion.div>
-          {/* Left swipe = options (slate/red) */}
+          {/* Left swipe → gray panel revealed on the RIGHT */}
           <motion.div
-            style={{ opacity: optionsOpacity }}
-            className="absolute inset-0 rounded-xl flex items-center justify-end pr-6 pointer-events-none bg-slate-500/15 dark:bg-slate-500/25"
+            style={{ width: grayWidth }}
+            className="absolute right-0 top-0 bottom-0 bg-slate-500 dark:bg-slate-600 pointer-events-none overflow-hidden"
           >
-            <motion.div style={{ scale: optionsScale, color: 'rgb(var(--color-text-secondary))' }} className="flex items-center gap-2">
+            <motion.div
+              style={{ opacity: grayIconOpacity }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-white whitespace-nowrap"
+            >
+              <MoreHorizontal size={22} strokeWidth={2.5} />
               <span className="text-sm font-bold">Options</span>
-              <ChevronLeft size={28} strokeWidth={2.5} />
             </motion.div>
           </motion.div>
         </>
@@ -467,6 +477,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
         )}
       </motion.div>
+      </div>
 
       {/* Actions row — revealed on long press */}
       <AnimatePresence>
