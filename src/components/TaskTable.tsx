@@ -32,6 +32,7 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 // Module categories - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useCategories } from '@/modules/categories';
+import type { Category } from '@/modules/categories';
 
 import { usePriorityRange } from '@/modules/ui-states';
 
@@ -46,6 +47,337 @@ type TaskTableProps = {
   onToggleTaskForList?: (taskId: string) => void;
   showQuickFilters?: boolean;
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════
+const formatDate = (dateString: string | undefined) => {
+  try {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), 'dd/MM/yyyy', { locale: fr });
+  } catch {
+    return 'N/A';
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Mobile TaskCard — extracted at module level for stable identity
+// (prevents useMotionValue from being re-created on parent renders)
+// ═══════════════════════════════════════════════════════════════════
+interface TaskCardProps {
+  task: Task;
+  categories: Category[];
+  addToListMode: boolean;
+  selectedForListIds: string[];
+  onToggleTaskForList?: (id: string) => void;
+  onToggleComplete: (id: string) => void;
+  onToggleBookmark: (id: string) => void;
+  onOpenCollaborator: (id: string) => void;
+  onSelectTask: (id: string) => void;
+  onDeleteTask: (id: string) => void;
+  onScheduleTask: (task: Task) => void;
+}
+
+const TaskCard = React.memo(({
+  task,
+  categories,
+  addToListMode,
+  selectedForListIds,
+  onToggleTaskForList,
+  onToggleComplete,
+  onToggleBookmark,
+  onOpenCollaborator,
+  onSelectTask,
+  onDeleteTask,
+  onScheduleTask,
+}: TaskCardProps) => {
+  const category = categories.find(c => c.id === task.category);
+  const categoryColor = category?.color || '#3B82F6';
+
+  const [actionsVisible, setActionsVisible] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPress = useRef(false);
+  const isDragging = useRef(false);
+
+  // Swipe gestures — x must be in the SAME style object as other style props
+  const x = useMotionValue(0);
+  const greenOpacity = useTransform(x, [0, 8, 80], [0, 1, 1]);
+  const grayOpacity = useTransform(x, [-80, -8, 0], [1, 1, 0]);
+  const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
+  const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
+
+  const startLongPress = (e: React.PointerEvent) => {
+    if (addToListMode) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      setActionsVisible(true);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    }, 500);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  const handleCardClick = () => {
+    if (isDragging.current) {
+      isDragging.current = false;
+      return;
+    }
+    if (isLongPress.current) {
+      isLongPress.current = false;
+      return;
+    }
+    if (addToListMode) return;
+    onSelectTask(task.id);
+  };
+
+  const isOverdue = !task.completed && new Date(task.deadline) < new Date();
+
+  return (
+    <div className="relative mb-2">
+    {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
+    <div className="relative overflow-hidden rounded-xl">
+    {/* Reveal layers BEHIND the card — full size, full color */}
+    {!addToListMode && (
+      <>
+        {/* Right swipe → green bg behind */}
+        <motion.div
+          style={{ opacity: greenOpacity }}
+          animate={isValidating ? { scale: [1, 1.04, 1] } : {}}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-xl"
+        >
+          <motion.div
+            style={{ opacity: greenIconOpacity }}
+            className="flex items-center gap-2 text-white whitespace-nowrap"
+          >
+            <CheckCircle2 size={22} strokeWidth={2.5} />
+            <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
+          </motion.div>
+        </motion.div>
+        {/* Left swipe → gray bg behind */}
+        <motion.div
+          style={{ opacity: grayOpacity }}
+          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-xl"
+        >
+          <motion.div
+            style={{ opacity: grayIconOpacity }}
+            className="flex items-center gap-2 text-white whitespace-nowrap"
+          >
+            <MoreHorizontal size={22} strokeWidth={2.5} />
+            <span className="text-sm font-bold">Options</span>
+          </motion.div>
+        </motion.div>
+      </>
+    )}
+    {/* Draggable card — x MotionValue merged into the single style object */}
+    <motion.div
+      drag={addToListMode ? false : 'x'}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.5}
+      dragDirectionLock
+      onDragStart={() => {
+        isDragging.current = true;
+        cancelLongPress();
+      }}
+      onDragEnd={(_, info) => {
+        if (info.offset.x > 80) {
+          setIsValidating(true);
+          setTimeout(() => setIsValidating(false), 400);
+          onToggleComplete(task.id);
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+        } else if (info.offset.x < -80) {
+          setActionsVisible(true);
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+        }
+        setTimeout(() => { isDragging.current = false; }, 50);
+      }}
+      className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
+      onClick={handleCardClick}
+      onPointerDown={startLongPress}
+      onPointerUp={cancelLongPress}
+      onPointerCancel={cancelLongPress}
+      onContextMenu={(e) => { e.preventDefault(); }}
+      style={{
+        x,
+        backgroundColor: addToListMode
+          ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgb(var(--color-surface))')
+          : 'rgb(var(--color-surface))',
+        borderColor: addToListMode && selectedForListIds.includes(task.id)
+          ? '#3B82F6'
+          : 'rgb(var(--color-border))',
+        minHeight: '60px',
+        touchAction: 'pan-y',
+      }}
+    >
+      {/* Color bar (left) */}
+      <div
+        className="w-1 self-stretch rounded-full shrink-0"
+        style={{ backgroundColor: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor) }}
+      />
+
+      {/* Checkbox */}
+      {addToListMode ? (
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
+          className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+          aria-label={selectedForListIds.includes(task.id) ? 'Retirer de la liste' : 'Ajouter à la liste'}
+          aria-pressed={selectedForListIds.includes(task.id)}
+        >
+          <span
+            className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+              selectedForListIds.includes(task.id)
+                ? 'bg-blue-500 border-blue-500'
+                : 'border-slate-400 dark:border-slate-500'
+            }`}
+          >
+            {selectedForListIds.includes(task.id) && (
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </span>
+        </button>
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            cancelLongPress();
+            onToggleComplete(task.id);
+          }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+          aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+          aria-pressed={task.completed}
+        >
+          <span
+            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+              task.completed
+                ? 'bg-blue-500 border-blue-500'
+                : 'border-gray-400'
+            }`}
+          >
+            {task.completed && (
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </span>
+        </button>
+      )}
+
+      {/* Title + meta */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <p className={`font-semibold text-sm leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {task.name}
+        </p>
+        <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          <span>{formatDate(task.deadline)}</span>
+          <span>·</span>
+          <span>{task.estimatedTime}min</span>
+          {task.isCollaborative && (
+            <>
+              <span>·</span>
+              <Users size={11} className="opacity-70" />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Priority badge */}
+      <div
+        className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
+        style={{
+          backgroundColor: `${isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)}20`,
+          color: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)
+        }}
+      >
+        P{task.priority}
+      </div>
+
+      {task.bookmarked && (
+        <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
+      )}
+    </motion.div>
+    </div>
+
+    {/* Actions row — revealed on long press or left swipe */}
+    <AnimatePresence>
+      {actionsVisible && !addToListMode && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.18 }}
+          className="overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-xl border" style={{
+            borderColor: 'rgb(var(--color-border))',
+            backgroundColor: 'rgb(var(--color-hover))'
+          }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleBookmark(task.id); setActionsVisible(false); }}
+              className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
+              aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            >
+              <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenCollaborator(task.id); setActionsVisible(false); }}
+              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              aria-label="Ajouter un collaborateur"
+            >
+              <UserPlus size={18} />
+            </button>
+            {!task.completed && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onScheduleTask(task); setActionsVisible(false); }}
+                className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+                aria-label="Planifier dans l'agenda"
+              >
+                <Calendar size={18} />
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
+              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              aria-label="Plus d'options"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
+              className="min-w-11 min-h-11 p-2 rounded-lg text-red-500 flex items-center justify-center"
+              aria-label="Supprimer la tâche"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.name === nextProps.task.name &&
+    prevProps.task.completed === nextProps.task.completed &&
+    prevProps.task.bookmarked === nextProps.task.bookmarked &&
+    prevProps.task.priority === nextProps.task.priority &&
+    prevProps.task.deadline === nextProps.task.deadline &&
+    prevProps.task.estimatedTime === nextProps.task.estimatedTime &&
+    prevProps.task.category === nextProps.task.category &&
+    prevProps.addToListMode === nextProps.addToListMode &&
+    prevProps.selectedForListIds === nextProps.selectedForListIds
+  );
+});
 
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
@@ -232,14 +564,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
     });
   };
 
-  const formatDate = (dateString: string | undefined) => {
-    try {
-      if (!dateString) return 'N/A';
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: fr });
-    } catch {
-      return 'N/A';
-    }
-  };
+  const handleSelectTask = useCallback((id: string) => {
+    setSelectedTaskForCollaborators(null);
+    setSelectedTask(id);
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════════
   // Loading State
@@ -262,294 +590,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     );
   }
 
-  const TaskCard = React.memo(({ task }: { task: Task }) => {
-    const category = categories.find(c => c.id === task.category);
-    const categoryColor = category?.color || '#3B82F6';
-
-    const [actionsVisible, setActionsVisible] = useState(false);
-    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const isLongPress = useRef(false);
-    const isDragging = useRef(false);
-
-    // Swipe gestures
-    const x = useMotionValue(0);
-    // Full-width reveal panels — fade in based on swipe direction
-    const greenOpacity = useTransform(x, [0, 8, 80], [0, 1, 1]);
-    const grayOpacity = useTransform(x, [-80, -8, 0], [1, 1, 0]);
-    // Icons + labels fade in once user has dragged at least 24px
-    const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
-    const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
-
-    const startLongPress = (e: React.PointerEvent) => {
-      if (addToListMode) return;
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      isLongPress.current = false;
-      longPressTimer.current = setTimeout(() => {
-        isLongPress.current = true;
-        setActionsVisible(true);
-        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-      }, 500);
-    };
-    const cancelLongPress = () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
-    };
-    const handleCardClick = () => {
-      if (isDragging.current) {
-        isDragging.current = false;
-        return;
-      }
-      if (isLongPress.current) {
-        isLongPress.current = false;
-        return;
-      }
-      if (addToListMode) return;
-      setSelectedTaskForCollaborators(null);
-      setSelectedTask(task.id);
-    };
-
-    const isOverdue = !task.completed && new Date(task.deadline) < new Date();
-
-    return (
-      <div className="relative mb-2">
-      {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
-      <div className="relative overflow-hidden rounded-xl">
-      {/* Reveal layers BEHIND the card — full size, full color */}
-      {!addToListMode && (
-        <>
-          {/* Right swipe → green bg behind */}
-          <motion.div
-            style={{ opacity: greenOpacity }}
-            className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-xl"
-          >
-            <motion.div
-              style={{ opacity: greenIconOpacity }}
-              className="flex items-center gap-2 text-white whitespace-nowrap"
-            >
-              <CheckCircle2 size={22} strokeWidth={2.5} />
-              <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
-            </motion.div>
-          </motion.div>
-          {/* Left swipe → gray bg behind */}
-          <motion.div
-            style={{ opacity: grayOpacity }}
-            className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-xl"
-          >
-            <motion.div
-              style={{ opacity: grayIconOpacity }}
-              className="flex items-center gap-2 text-white whitespace-nowrap"
-            >
-              <MoreHorizontal size={22} strokeWidth={2.5} />
-              <span className="text-sm font-bold">Options</span>
-            </motion.div>
-          </motion.div>
-        </>
-      )}
-      <motion.div
-        drag={addToListMode ? false : 'x'}
-        style={{ x }}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.5}
-        dragDirectionLock
-        onDragStart={() => {
-          isDragging.current = true;
-          cancelLongPress();
-        }}
-        onDragEnd={(_, info) => {
-          // Right swipe → validate
-          if (info.offset.x > 80) {
-            handleToggleComplete(task.id);
-            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-          }
-          // Left swipe → reveal options
-          else if (info.offset.x < -80) {
-            setActionsVisible(true);
-            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-          }
-          // Reset isDragging slightly later so click handler skips
-          setTimeout(() => { isDragging.current = false; }, 50);
-        }}
-        className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
-        onClick={handleCardClick}
-        onPointerDown={startLongPress}
-        onPointerUp={cancelLongPress}
-        onPointerCancel={cancelLongPress}
-        onContextMenu={(e) => { e.preventDefault(); }}
-        style={{
-          backgroundColor: addToListMode
-            ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgb(var(--color-surface))')
-            : 'rgb(var(--color-surface))',
-          borderColor: addToListMode && selectedForListIds.includes(task.id)
-            ? '#3B82F6'
-            : 'rgb(var(--color-border))',
-          minHeight: '60px',
-          touchAction: 'pan-y',
-        }}
-      >
-        {/* Color bar (left) — like agenda items */}
-        <div
-          className="w-1 self-stretch rounded-full shrink-0"
-          style={{ backgroundColor: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor) }}
-        />
-
-        {/* Checkbox — vertically aligned with title row */}
-        {addToListMode ? (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
-            className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-            aria-label={selectedForListIds.includes(task.id) ? 'Retirer de la liste' : 'Ajouter à la liste'}
-            aria-pressed={selectedForListIds.includes(task.id)}
-          >
-            <span
-              className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                selectedForListIds.includes(task.id)
-                  ? 'bg-blue-500 border-blue-500'
-                  : 'border-slate-400 dark:border-slate-500'
-              }`}
-            >
-              {selectedForListIds.includes(task.id) && (
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </span>
-          </button>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              cancelLongPress();
-              handleToggleComplete(task.id);
-            }}
-            onPointerDown={(e) => { e.stopPropagation(); }}
-            className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-            aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
-            aria-pressed={task.completed}
-          >
-            <span
-              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                task.completed
-                  ? 'bg-blue-500 border-blue-500'
-                  : 'border-gray-400'
-              }`}
-            >
-              {task.completed && (
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </span>
-          </button>
-        )}
-
-        {/* Title + meta */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <p className={`font-semibold text-sm leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {task.name}
-          </p>
-          <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <span>{formatDate(task.deadline)}</span>
-            <span>·</span>
-            <span>{task.estimatedTime}min</span>
-            {task.isCollaborative && (
-              <>
-                <span>·</span>
-                <Users size={11} className="opacity-70" />
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Px badge */}
-        <div
-          className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
-          style={{
-            backgroundColor: `${isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)}20`,
-            color: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)
-          }}
-        >
-          P{task.priority}
-        </div>
-
-        {task.bookmarked && (
-          <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
-        )}
-      </motion.div>
-      </div>
-
-      {/* Actions row — revealed on long press */}
-      <AnimatePresence>
-        {actionsVisible && !addToListMode && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-xl border" style={{
-              borderColor: 'rgb(var(--color-border))',
-              backgroundColor: 'rgb(var(--color-hover))'
-            }}>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleToggleBookmark(task.id); setActionsVisible(false); }}
-                className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
-                aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              >
-                <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleOpenCollaborator(task.id); setActionsVisible(false); }}
-                className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
-                aria-label="Ajouter un collaborateur"
-              >
-                <UserPlus size={18} />
-              </button>
-              {!task.completed && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); setActionsVisible(false); }}
-                  className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
-                  aria-label="Planifier dans l'agenda"
-                >
-                  <Calendar size={18} />
-                </button>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); setSelectedTaskForCollaborators(null); setSelectedTask(task.id); setActionsVisible(false); }}
-                className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
-                aria-label="Plus d'options"
-              >
-                <MoreHorizontal size={18} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); setActionsVisible(false); }}
-                className="min-w-11 min-h-11 p-2 rounded-lg text-red-500 flex items-center justify-center"
-                aria-label="Supprimer la tâche"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-    );
-  }, (prevProps, nextProps) => {
-    // Comparaison optimisée pour éviter les re-renders inutiles
-    return (
-      prevProps.task.id === nextProps.task.id &&
-      prevProps.task.name === nextProps.task.name &&
-      prevProps.task.completed === nextProps.task.completed &&
-      prevProps.task.bookmarked === nextProps.task.bookmarked &&
-      prevProps.task.priority === nextProps.task.priority &&
-      prevProps.task.deadline === nextProps.task.deadline &&
-      prevProps.task.estimatedTime === nextProps.task.estimatedTime &&
-      prevProps.task.category === nextProps.task.category
-    );
-  });
 
   return (
     <>
@@ -813,7 +853,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {/* Mobile View (Cards) */}
       <div className="md:hidden">
         {sortedTasks.map(task => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            categories={categories}
+            addToListMode={addToListMode}
+            selectedForListIds={selectedForListIds}
+            onToggleTaskForList={onToggleTaskForList}
+            onToggleComplete={handleToggleComplete}
+            onToggleBookmark={handleToggleBookmark}
+            onOpenCollaborator={handleOpenCollaborator}
+            onSelectTask={handleSelectTask}
+            onDeleteTask={setTaskToDelete}
+            onScheduleTask={setTaskToEventModal}
+          />
         ))}
       </div>
 

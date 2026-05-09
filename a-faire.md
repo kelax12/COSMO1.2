@@ -4,7 +4,7 @@ Ce fichier répertorie les bugs et régressions identifiés pendant la refonte m
 
 ---
 
-## 🔴 1. Panneaux de couleur swipe TaskCard ne s'affichent pas
+## ✅ 1. Panneaux de couleur swipe TaskCard — RÉSOLU
 
 ### Symptôme
 
@@ -110,19 +110,15 @@ Cette version a déjà été testée pendant la session (commit `832c505`) mais 
 - [ ] Long press 500 ms sans bouger → rangée d'actions visible (alternative au swipe gauche)
 - [ ] Aucune régression sur la version desktop (`<table>` dans `hidden md:block`)
 
-### Critères d'acceptation
+### Résolution
 
-- Le panneau coloré (vert ou gris) est **visible à 100% d'opacité** dès que l'utilisateur drag de plus de 8 px
-- L'icône + label apparaît à partir de 24 px de drag
-- Aucun flicker / blanc visible pendant le drag
-- Pattern reproductible sur Chrome / Safari iOS / Chrome Android
+**Deux causes identifiées et corrigées :**
 
-### Fichiers impactés
+1. **Double `style` prop** sur le `motion.div` draggable — le second `style={{...}}` (backgroundColor, borderColor…) écrasait le premier `style={{ x }}`, déconnectant le `useMotionValue` des `useTransform`. Fix : fusion en un seul objet `style={{ x, backgroundColor, ... }}`.
 
-| Fichier | Rôle |
-|---|---|
-| `src/components/TaskTable.tsx` | Composant `TaskCard` (le bug est ici) |
-| `src/components/TaskTable.tsx` (memo compare) | Vérifier que `React.memo` ne casse pas les motion values |
+2. **`TaskCard` défini à l'intérieur de `TaskTable`** — nouvelle référence de fonction à chaque render parent → React remontait tous les `TaskCard` → `useMotionValue` réinitialisés. Fix : `TaskCard` extrait au niveau module (avant `TaskTable`), avec `TaskCardProps` explicites.
+
+**Bonus** : animation de validation au swipe droit (pulse vert via `isValidating` state + `animate={isValidating ? { scale: [1, 1.04, 1] } : {}}`).
 
 ---
 
