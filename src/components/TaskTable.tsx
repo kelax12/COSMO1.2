@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
+import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -363,6 +363,13 @@ const TaskCard = React.memo(({
               aria-label="Supprimer la tâche"
             >
               <Trash2 size={18} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setActionsVisible(false); }}
+              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-400 dark:text-slate-500 flex items-center justify-center"
+              aria-label="Fermer"
+            >
+              <X size={18} />
             </button>
           </div>
         </motion.div>
