@@ -458,26 +458,105 @@ const TasksPage: React.FC = () => {
                         );
                       })}
 
-                      {/* Bouton + nouvelle liste */}
+                      {/* Bouton + nouvelle liste — desktop uniquement inline dans le scroll */}
+                      <div className="hidden sm:contents">
+                        <AnimatePresence mode="wait">
+                          {!showCreateList ? (
+                            <motion.button
+                              key="add-btn"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              onClick={() => setShowCreateList(true)}
+                              className="flex items-center justify-center w-9 h-9 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                              title="Nouvelle liste"
+                            >
+                              <Plus size={16} />
+                            </motion.button>
+                          ) : (
+                            <motion.form
+                              key="add-form"
+                              initial={{ opacity: 0, width: 0 }}
+                              animate={{ opacity: 1, width: 'auto' }}
+                              exit={{ opacity: 0, width: 0 }}
+                              className="flex items-center gap-2"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                if (!newListName.trim()) return;
+                                createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
+                                  onSuccess: () => {
+                                    setNewListName('');
+                                    setNewListColor('blue');
+                                    setShowCreateList(false);
+                                  }
+                                });
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const idx = colorOptions.findIndex(c => c.value === newListColor);
+                                  setNewListColor(colorOptions[(idx + 1) % colorOptions.length].value);
+                                }}
+                                className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                                style={{ backgroundColor: colorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
+                                title="Changer la couleur"
+                              />
+                              <input
+                                autoFocus
+                                type="text"
+                                value={newListName}
+                                onChange={(e) => setNewListName(e.target.value)}
+                                placeholder="Nom de la liste…"
+                                className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  borderColor: 'rgb(var(--color-border))',
+                                  color: 'rgb(var(--color-text-primary))'
+                                }}
+                                onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateList(false); setNewListName(''); } }}
+                              />
+                              <button
+                                type="submit"
+                                disabled={!newListName.trim()}
+                                className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                              >
+                                Créer
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setShowCreateList(false); setNewListName(''); }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                              >
+                                <X size={14} />
+                              </button>
+                            </motion.form>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    {/* Bouton + nouvelle liste — mobile pleine largeur */}
+                    <div className="sm:hidden mt-2">
                       <AnimatePresence mode="wait">
                         {!showCreateList ? (
                           <motion.button
-                            key="add-btn"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
+                            key="add-btn-mobile"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             onClick={() => setShowCreateList(true)}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
-                            title="Nouvelle liste"
+                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all"
                           >
                             <Plus size={16} />
+                            <span className="text-sm font-medium">Nouvelle liste</span>
                           </motion.button>
                         ) : (
                           <motion.form
-                            key="add-form"
-                            initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: 'auto' }}
-                            exit={{ opacity: 0, width: 0 }}
+                            key="add-form-mobile"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             className="flex items-center gap-2"
                             onSubmit={(e) => {
                               e.preventDefault();
@@ -491,7 +570,6 @@ const TasksPage: React.FC = () => {
                               });
                             }}
                           >
-                            {/* Sélecteur couleur */}
                             <button
                               type="button"
                               onClick={() => {
@@ -508,7 +586,7 @@ const TasksPage: React.FC = () => {
                               value={newListName}
                               onChange={(e) => setNewListName(e.target.value)}
                               placeholder="Nom de la liste…"
-                              className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+                              className="flex-1 px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
                               style={{
                                 backgroundColor: 'rgb(var(--color-surface))',
                                 borderColor: 'rgb(var(--color-border))',
@@ -519,7 +597,7 @@ const TasksPage: React.FC = () => {
                             <button
                               type="submit"
                               disabled={!newListName.trim()}
-                              className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                              className="px-3 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
                             >
                               Créer
                             </button>
