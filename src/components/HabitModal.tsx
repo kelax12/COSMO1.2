@@ -63,22 +63,34 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     <>
       <AnimatePresence>
         {isOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4"
             onClick={onClose}
             onKeyDown={handleKeyDown}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="w-full rounded-2xl shadow-2xl border overflow-hidden"
-              style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', maxWidth: 'calc(32rem * 1.08)' }}
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+              className="w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh]"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+              }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Drag handle (mobile only) */}
+              <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+
+              {/* Sticky header */}
               <div
-                className="flex justify-between items-center px-6 py-4 border-b"
+                className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
                 style={{ borderColor: 'rgb(var(--color-border))' }}
               >
                 <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -89,7 +101,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                 </Button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Scrollable body */}
+              <form id="habit-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -183,26 +196,28 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     </div>
                   )}
                 </div>
-
-                <div
-                  className="flex justify-end gap-3 pt-4 border-t"
-                  style={{ borderColor: 'rgb(var(--color-border))' }}
-                >
-                  <Button type="button" variant="outline" size="lg" onClick={onClose}>
-                    Annuler
-                  </Button>
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 !text-white !border-0 gap-2"
-                  >
-                    <Check size={16} />
-                    {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
-                  </Button>
-                </div>
               </form>
+
+              {/* Sticky footer */}
+              <div
+                className="px-4 sm:px-6 pt-3 pb-3 border-t shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
+                style={{ borderColor: 'rgb(var(--color-border))' }}
+              >
+                <Button type="button" variant="outline" size="lg" onClick={onClose} className="sm:w-auto">
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  form="habit-form"
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 !text-white !border-0 gap-2 sm:w-auto"
+                >
+                  <Check size={16} />
+                  {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
+                </Button>
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

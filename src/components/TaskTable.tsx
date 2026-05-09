@@ -74,6 +74,7 @@ interface TaskCardProps {
   onToggleBookmark: (id: string) => void;
   onOpenCollaborator: (id: string) => void;
   onSelectTask: (id: string) => void;
+  onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
 }
@@ -88,6 +89,7 @@ const TaskCard = React.memo(({
   onToggleBookmark,
   onOpenCollaborator,
   onSelectTask,
+  onAddToList,
   onDeleteTask,
   onScheduleTask,
 }: TaskCardProps) => {
@@ -351,9 +353,9 @@ const TaskCard = React.memo(({
               </button>
             )}
             <button
-              onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
+              onClick={(e) => { e.stopPropagation(); onAddToList(task.id); setActionsVisible(false); }}
               className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
-              aria-label="Plus d'options"
+              aria-label="Ajouter à une liste"
             >
               <MoreHorizontal size={18} />
             </button>
@@ -878,6 +880,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               onToggleBookmark={handleToggleBookmark}
               onOpenCollaborator={handleOpenCollaborator}
               onSelectTask={handleSelectTask}
+              onAddToList={setAddToListTask}
               onDeleteTask={setTaskToDelete}
               onScheduleTask={setTaskToEventModal}
             />

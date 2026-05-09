@@ -141,7 +141,8 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0">
+          <div className="flex items-center justify-between sm:justify-end gap-1 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0">
+            {/* Historique — gauche sur mobile, inline sur desktop */}
             <Button
               variant="ghost"
               size="icon"
@@ -153,12 +154,15 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               <Calendar size={18} className="md:w-4 md:h-4" />
               <span className="text-xs font-medium md:hidden">Historique</span>
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
-              <Edit2 size={18} className="md:w-4 md:h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsDeleting(true)}>
-              <Trash2 size={18} className="md:w-4 md:h-4" />
-            </Button>
+            {/* Edit + Delete — droite sur mobile */}
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
+                <Edit2 size={18} className="md:w-4 md:h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsDeleting(true)}>
+                <Trash2 size={18} className="md:w-4 md:h-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
