@@ -145,13 +145,13 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             {/* Historique — gauche sur mobile, inline sur desktop */}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={() => setShowDetails(!showDetails)}
-              className={`flex items-center gap-2 md:px-3 md:w-auto ${
+              className={`flex items-center gap-1.5 px-2 h-9 ${
                 showDetails ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : ''
               }`}
             >
-              <Calendar size={18} className="md:w-4 md:h-4" />
+              <Calendar size={16} />
               <span className="text-xs font-medium md:hidden">Historique</span>
             </Button>
             {/* Edit + Delete — droite sur mobile */}
