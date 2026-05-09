@@ -6,7 +6,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from '@/components/ui/sheet';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { cn } from '@/lib/utils';
@@ -48,25 +47,25 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
         <nav className="flex flex-col gap-1">
           {links.map(({ to, label, icon: Icon, bg, color }) => (
-            <SheetClose asChild key={to}>
-              <NavLink
-                to={to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-2 py-3 rounded-xl min-h-[52px] transition-colors',
-                    'hover:bg-[rgb(var(--color-hover))]',
-                    isActive && 'bg-[rgb(var(--color-active))]'
-                  )
-                }
-              >
-                <span className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', bg)}>
-                  <Icon size={20} style={{ color }} aria-hidden="true" />
-                </span>
-                <span className="text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {label}
-                </span>
-              </NavLink>
-            </SheetClose>
+            <NavLink
+              key={to}
+              to={to}
+              onClick={() => onOpenChange(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 px-2 py-3 rounded-xl min-h-[52px] transition-colors',
+                  'hover:bg-[rgb(var(--color-hover))]',
+                  isActive && 'bg-[rgb(var(--color-active))]'
+                )
+              }
+            >
+              <span className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', bg)}>
+                <Icon size={20} style={{ color }} aria-hidden="true" />
+              </span>
+              <span className="text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {label}
+              </span>
+            </NavLink>
           ))}
 
           <div className="my-1 border-t" style={{ borderColor: 'rgb(var(--color-border))' }} />
