@@ -96,6 +96,7 @@ const TaskCard = React.memo(({
 
   const [actionsVisible, setActionsVisible] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
   const isDragging = useRef(false);
@@ -139,7 +140,12 @@ const TaskCard = React.memo(({
   const isOverdue = !task.completed && new Date(task.deadline) < new Date();
 
   return (
-    <div className="relative mb-2">
+    <motion.div
+      className="relative mb-2"
+      layout
+      animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+    >
     {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
     <div className="relative overflow-hidden rounded-xl">
     {/* Reveal layers BEHIND the card — full size, full color */}
@@ -188,8 +194,8 @@ const TaskCard = React.memo(({
       onDragEnd={(_, info) => {
         if (info.offset.x > 80) {
           setIsValidating(true);
-          setTimeout(() => setIsValidating(false), 400);
-          onToggleComplete(task.id);
+          setIsExiting(true);
+          setTimeout(() => onToggleComplete(task.id), 300);
           if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
         } else if (info.offset.x < -80) {
           setActionsVisible(true);
@@ -362,7 +368,7 @@ const TaskCard = React.memo(({
         </motion.div>
       )}
     </AnimatePresence>
-  </div>
+  </motion.div>
   );
 }, (prevProps, nextProps) => {
   return (
@@ -852,22 +858,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {/* Mobile View (Cards) */}
       <div className="md:hidden">
-        {sortedTasks.map(task => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            categories={categories}
-            addToListMode={addToListMode}
-            selectedForListIds={selectedForListIds}
-            onToggleTaskForList={onToggleTaskForList}
-            onToggleComplete={handleToggleComplete}
-            onToggleBookmark={handleToggleBookmark}
-            onOpenCollaborator={handleOpenCollaborator}
-            onSelectTask={handleSelectTask}
-            onDeleteTask={setTaskToDelete}
-            onScheduleTask={setTaskToEventModal}
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {sortedTasks.map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              categories={categories}
+              addToListMode={addToListMode}
+              selectedForListIds={selectedForListIds}
+              onToggleTaskForList={onToggleTaskForList}
+              onToggleComplete={handleToggleComplete}
+              onToggleBookmark={handleToggleBookmark}
+              onOpenCollaborator={handleOpenCollaborator}
+              onSelectTask={handleSelectTask}
+              onDeleteTask={setTaskToDelete}
+              onScheduleTask={setTaskToEventModal}
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       {sortedTasks.length === 0 && (
