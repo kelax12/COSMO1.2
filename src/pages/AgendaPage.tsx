@@ -164,9 +164,26 @@ const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectD
   useEffect(() => {
     const key = format(selectedDate, 'yyyy-MM-dd');
     const el = dayRefs.current.get(key);
-    if (el && scrollRef.current) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
+    const container = scrollRef.current;
+    if (!el || !container) return;
+
+    const targetScroll = el.offsetLeft - container.clientWidth / 2 + el.offsetWidth / 2;
+    const startScroll = container.scrollLeft;
+    const distance = targetScroll - startScroll;
+    const duration = 520;
+    const startTime = performance.now();
+
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      container.scrollLeft = startScroll + distance * easeInOutCubic(progress);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
   }, [selectedDate]);
 
   return (
