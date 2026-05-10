@@ -390,13 +390,15 @@ const EventModal: React.FC<EventModalProps> = ({
                     handleFieldChange("startDate", setStartDate, e.target.value);
                     handleFieldChange("endDate", setEndDate, e.target.value);
                   }}
-                  className={`md:hidden w-full px-4 py-2.5 border rounded-lg text-sm transition-colors bg-transparent ${
+                  placeholder="Sélectionner une date"
+                  className={`md:hidden w-full px-4 h-11 border rounded-lg text-sm transition-colors ${
                     isPrefilledMode && prefilledFields.has("startDate")
                       ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                       : ""
                   }`}
                   style={{
                     color: "rgb(var(--color-text-primary))",
+                    backgroundColor: "rgb(var(--color-surface))",
                     borderColor: isPrefilledMode && prefilledFields.has("startDate") ? undefined : "rgb(var(--color-border))",
                   }}
                 />
@@ -465,7 +467,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     type="time"
                     value={startTime}
                     onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
-                    className="md:hidden w-full px-3 py-2.5 border rounded-lg text-sm"
+                    className="md:hidden w-full px-3 h-11 border rounded-lg text-sm"
                     style={{
                       color: "rgb(var(--color-text-primary))",
                       borderColor: "rgb(var(--color-border))",
@@ -500,7 +502,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     type="time"
                     value={endTime}
                     onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
-                    className="md:hidden w-full px-3 py-2.5 border rounded-lg text-sm"
+                    className="md:hidden w-full px-3 h-11 border rounded-lg text-sm"
                     style={{
                       color: "rgb(var(--color-text-primary))",
                       borderColor: "rgb(var(--color-border))",

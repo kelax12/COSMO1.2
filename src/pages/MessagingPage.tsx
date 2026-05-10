@@ -81,7 +81,7 @@ const MessagingPage: React.FC = () => {
   // Premium — vérification côté serveur via BillingContext
   // ═══════════════════════════════════════════════════════════════════
   const { isPremium } = useBilling();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   // State — déclaré avant les hooks qui en dépendent
