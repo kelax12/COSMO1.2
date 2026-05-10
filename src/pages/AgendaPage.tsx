@@ -152,26 +152,14 @@ interface MobileDayStripProps {
 }
 
 const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectDate }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const dayRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-
   // 60 jours : 30 avant + today + 29 après
   const days: Date[] = [];
   for (let i = -30; i <= 29; i++) {
     days.push(addDays(selectedDate, i));
   }
 
-  useEffect(() => {
-    const key = format(selectedDate, 'yyyy-MM-dd');
-    const el = dayRefs.current.get(key);
-    const container = scrollRef.current;
-    if (!el || !container) return;
-    container.scrollLeft = el.offsetLeft - container.clientWidth / 2 + el.offsetWidth / 2;
-  }, [selectedDate]);
-
   return (
     <div
-      ref={scrollRef}
       className="flex overflow-x-auto px-2"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
     >
@@ -185,7 +173,6 @@ const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectD
         return (
           <button
             key={key}
-            ref={(el) => { if (el) dayRefs.current.set(key, el); }}
             onClick={() => onSelectDate(day)}
             className="flex flex-col items-center gap-1 min-w-[44px] py-2 flex-shrink-0"
           >
