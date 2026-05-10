@@ -118,7 +118,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md relative">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full sm:max-w-md relative">
         <Button
           variant="ghost"
           size="icon"
