@@ -82,7 +82,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[300]">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl mx-4 overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full sm:max-w-2xl overflow-hidden transition-colors">
 
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex items-center justify-between">

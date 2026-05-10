@@ -80,7 +80,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
 
             {/* Modal */}
             <motion.div
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden"
+              className="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
