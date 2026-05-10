@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +16,7 @@ type CollaboratorModalProps = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, taskId }) => {
+  const dragControls = useDragControls();
   const { data: tasks = [] } = useTasks();
   const updateTaskMutation = useUpdateTask();
 
@@ -178,6 +179,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
           aria-labelledby="collab-modal-title"
         >
           <motion.div
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0 }}
+            dragElastic={{ top: 0, bottom: 0.3 }}
+            onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) onClose(); }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -189,8 +196,11 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
-            {/* Drag handle (mobile only) */}
-            <div className="sm:hidden flex justify-center pt-2 pb-1">
+            {/* Drag handle (mobile only) — déclenche le swipe-to-dismiss */}
+            <div
+              className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
               <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 

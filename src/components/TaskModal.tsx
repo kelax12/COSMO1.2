@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
 import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -58,6 +58,7 @@ interface TaskModalProps {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }) => {
+  const deleteConfirmDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -680,6 +681,27 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Catégorie
                       </label>
+                      {/* Mobile : select natif système */}
+                      <div className="sm:hidden relative">
+                        <select
+                          value={formData.category || ''}
+                          onChange={(e) => handleInputChange('category', e.target.value)}
+                          className="w-full h-12 px-4 pr-10 border rounded-lg appearance-none text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-surface))',
+                            color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
+                            borderColor: errors.category ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))',
+                          }}
+                        >
+                          <option value="">Choisir...</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500" />
+                      </div>
+                      {/* Desktop : dropdown custom */}
+                      <div className="hidden sm:block">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                                 <button
@@ -743,6 +765,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
 
                       {showNewCategoryInput && (
                         <div className="flex items-center gap-2 mt-2">
@@ -1320,6 +1343,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               onClick={() => setShowDeleteConfirm(false)}
             >
               <motion.div
+                drag="y"
+                dragControls={deleteConfirmDragControls}
+                dragListener={false}
+                dragConstraints={{ top: 0 }}
+                dragElastic={{ top: 0, bottom: 0.3 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setShowDeleteConfirm(false); }}
                 initial={{ y: '100%', scale: 0.95, opacity: 0 }}
                 animate={{ y: 0, scale: 1, opacity: 1 }}
                 exit={{ y: '100%', scale: 0.95, opacity: 0 }}
@@ -1328,7 +1357,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               >
-                <div className="sm:hidden flex justify-center pt-2 pb-1">
+                <div
+                  className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
+                >
                   <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                 </div>
                 <div className="p-5 sm:p-6">

@@ -365,6 +365,27 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                         </div>
                           <div>
                             <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Catégorie</label>
+                            {/* Mobile : select natif système */}
+                            <div className="sm:hidden relative">
+                              <select
+                                value={formData.category || ''}
+                                onChange={(e) => handleInputChange('category', e.target.value)}
+                                className="w-full h-12 px-4 pr-10 border rounded-lg appearance-none text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
+                                  borderColor: errors.category ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))',
+                                }}
+                              >
+                                <option value="">Choisir...</option>
+                                {categories.map((cat) => (
+                                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                              </select>
+                              <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500" />
+                            </div>
+                            {/* Desktop : dropdown custom */}
+                            <div className="hidden sm:block">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                           <button
@@ -428,6 +449,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                                     ))}
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            </div>
                           {errors.category && (
                             <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
                               <AlertCircle size={14} aria-hidden="true" />
