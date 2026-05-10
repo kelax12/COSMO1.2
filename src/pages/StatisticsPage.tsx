@@ -16,6 +16,7 @@ import { useEvents, CalendarEvent } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 import { useVisibilityInterval } from '../lib/hooks/usePerformance';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 
@@ -246,6 +247,7 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
 // PAGE PRINCIPALE
 // ═══════════════════════════════════════════════════════════════════
 export default function StatisticsPage() {
+  const isMobile = useIsMobile();
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
@@ -461,7 +463,7 @@ export default function StatisticsPage() {
   }), [sectionColor]);
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Statistiques</h1>
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Analysez votre productivité et vos performances</p>
@@ -521,11 +523,11 @@ export default function StatisticsPage() {
         </div>
       ) : (
       <>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
         {/* Sélecteur de section */}
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Analyser :</span>
-          <div className="flex rounded-xl p-1" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+        <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+          <span className="text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Analyser :</span>
+          <div className="flex rounded-xl p-1 overflow-x-auto flex-nowrap flex-1 md:flex-none" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
             {sections.map(section => {
               const Icon = section.icon;
               const isSelected = selectedSection === section.id;
@@ -548,13 +550,13 @@ export default function StatisticsPage() {
         </div>
 
         {/* Sélecteur de période — droite, style Agenda */}
-        <div className="flex gap-1 p-1 rounded-xl border"
+        <div className="flex gap-1 p-1 rounded-xl border flex-nowrap overflow-x-auto w-full md:w-auto"
           style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
           {periods.map(period => (
             <button
               key={period.id}
               onClick={() => setSelectedPeriod(period.id as TimePeriod)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
+              className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
                 selectedPeriod === period.id ? 'shadow-sm' : ''
               }`}
               style={{
@@ -570,8 +572,8 @@ export default function StatisticsPage() {
 
       {/* Graphique principal — Area Chart */}
       <div className="card p-6 mb-8">
-        <div className={selectedSection === 'habits' ? 'relative' : ''} style={selectedSection === 'habits' ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
-        <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
+        <div className={(!isMobile && selectedSection === 'habits') ? 'relative' : ''} style={(!isMobile && selectedSection === 'habits') ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {selectedSection === 'agenda' ? 'Durée totale des événements' : 'Temps investi'}
@@ -664,7 +666,7 @@ export default function StatisticsPage() {
             />
           </AreaChart>
         </ChartContainer>
-        {selectedSection === 'habits' && (
+        {!isMobile && selectedSection === 'habits' && (
           <div className="absolute top-0 right-0 bottom-0 border-l pl-5 flex flex-col overflow-hidden"
             style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
             <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
@@ -676,6 +678,13 @@ export default function StatisticsPage() {
         </div>
 
       </div>
+
+      {/* Heatmap habitudes sur mobile — card standalone sous le graphique */}
+      {isMobile && selectedSection === 'habits' && (
+        <div className="mb-6">
+          <HabitHeatmap habits={habits} now={now} />
+        </div>
+      )}
 
       <div className="mb-8 text-center">
         <span className="text-xl md:text-2xl font-black text-slate-400 dark:text-white not-italic uppercase tracking-tight">
@@ -761,7 +770,7 @@ const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }> = ({ 
         </div>
 
         <div className="card p-6 flex flex-col items-center justify-center text-center">
-          <div className="relative w-48 h-48 mb-6">
+          <div className="relative w-36 h-36 sm:w-48 sm:h-48 mb-6">
             <svg viewBox="-1.1 -1.1 2.2 2.2" className="w-full h-full rotate-[-90deg]">
               {totalTime > 0 ? (() => {
                 let cum = 0;
@@ -907,8 +916,8 @@ const AgendaStatistics: React.FC<{
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>Répartition par catégorie</h3>
-          <div className="flex flex-wrap items-center justify-center gap-10 lg:gap-16">
-            <div className="relative w-56 h-56 shrink-0">
+          <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-16">
+            <div className="relative w-44 h-44 sm:w-56 sm:h-56 shrink-0">
               <svg viewBox="-1.1 -1.1 2.2 2.2" className="w-full h-full">
                 {timeByColor.length > 0 ? timeByColor.map((item, idx) => {
                   const pct = item.minutes / totalMinutesAll;
@@ -949,23 +958,24 @@ const AgendaStatistics: React.FC<{
         </div>
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements par temps de travail</h3>
-          <div className="space-y-3">
-            {sortedEvents.length > 0 ? sortedEvents.map(event => (
+          <div className="space-y-2">
+            {sortedEvents.length > 0 ? sortedEvents.slice(0, 20).map(event => (
               <div key={event.id} className="flex items-center justify-between p-3 rounded-xl border transition-all hover:bg-muted/30"
                 style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                <div className="flex items-center gap-3 overflow-hidden min-w-0">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0"
                     style={{ backgroundColor: `${getColorValue(event.color)}20` }}>
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getColorValue(event.color) }} />
                   </div>
-                  <div className="overflow-hidden">
+                  <div className="overflow-hidden min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{event.title}</p>
-                    <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {categories.find(c => c.color.toLowerCase() === event.color?.toLowerCase())?.name || event.color} · {new Date(event.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    <p className="text-[10px] uppercase tracking-wider font-bold truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      {categories.find(c => c.color.toLowerCase() === event.color?.toLowerCase())?.name || event.color}
+                      <span className="hidden sm:inline"> · {new Date(event.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                     </p>
                   </div>
                 </div>
-                <p className="font-black text-sm shrink-0 ml-4" style={{ color: getColorValue(event.color) }}>{formatTime(event.duration)}</p>
+                <p className="font-black text-sm shrink-0 ml-3" style={{ color: getColorValue(event.color) }}>{formatTime(event.duration)}</p>
               </div>
             )) : <div className="py-8 text-center text-muted-foreground">Aucun événement</div>}
           </div>
