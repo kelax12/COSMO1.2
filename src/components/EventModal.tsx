@@ -460,8 +460,21 @@ const EventModal: React.FC<EventModalProps> = ({
                   >
                     Début
                   </label>
+                  {/* Mobile : input natif direct (pas de wrapper pour éviter conflits touch iOS) */}
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
+                    className="md:hidden w-full px-3 py-2.5 border rounded-lg text-sm"
+                    style={{
+                      color: "rgb(var(--color-text-primary))",
+                      borderColor: "rgb(var(--color-border))",
+                      backgroundColor: "rgb(var(--color-surface))",
+                    }}
+                  />
+                  {/* Desktop : wrapper avec icône */}
                   <div
-                    className="time-input-wrapper flex items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    className="hidden md:flex time-input-wrapper items-center gap-2 px-3 py-2.5 border rounded-lg"
                     style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
                   >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
@@ -482,8 +495,21 @@ const EventModal: React.FC<EventModalProps> = ({
                   >
                     Fin
                   </label>
+                  {/* Mobile : input natif direct */}
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
+                    className="md:hidden w-full px-3 py-2.5 border rounded-lg text-sm"
+                    style={{
+                      color: "rgb(var(--color-text-primary))",
+                      borderColor: "rgb(var(--color-border))",
+                      backgroundColor: "rgb(var(--color-surface))",
+                    }}
+                  />
+                  {/* Desktop : wrapper avec icône */}
                   <div
-                    className="time-input-wrapper flex items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    className="hidden md:flex time-input-wrapper items-center gap-2 px-3 py-2.5 border rounded-lg"
                     style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
                   >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
