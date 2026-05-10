@@ -48,13 +48,18 @@ interface HabitStatItemProps {
     periodCompletions: number;
     periodTime: number;
     relevantDaysCount: number;
+    frequency?: 'daily' | 'weekly' | 'monthly';
   };
   formatTime: (minutes: number) => string;
 }
 
 const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => {
-  const rate = habit.relevantDaysCount > 0
-    ? Math.min(100, Math.round((habit.periodCompletions / habit.relevantDaysCount) * 100))
+  const expectedCompletions =
+    habit.frequency === 'weekly'  ? Math.ceil(habit.relevantDaysCount / 7) :
+    habit.frequency === 'monthly' ? Math.max(1, Math.round(habit.relevantDaysCount / 30)) :
+    habit.relevantDaysCount;
+  const rate = expectedCompletions > 0
+    ? Math.min(100, Math.round((habit.periodCompletions / expectedCompletions) * 100))
     : 0;
 
   return (
@@ -264,7 +269,7 @@ export default function StatisticsPage() {
       startDate = new Date(periodDate); startDate.setHours(0, 0, 0, 0);
       endDate = new Date(periodDate); endDate.setHours(23, 59, 59, 999);
     } else if (period === 'week') {
-      startDate = new Date(periodDate);
+      startDate = new Date(periodDate); startDate.setHours(0, 0, 0, 0);
       endDate = new Date(periodDate); endDate.setDate(endDate.getDate() + 6); endDate.setHours(23, 59, 59, 999);
     } else if (period === 'month') {
       startDate = new Date(periodDate.getFullYear(), periodDate.getMonth(), 1);
@@ -389,12 +394,23 @@ export default function StatisticsPage() {
   const totalWorkTime = workTimeData.reduce((sum, d) => sum + d.totalTime, 0);
   const avgWorkTime = workTimeData.length > 0 ? Math.round(totalWorkTime / workTimeData.length) : 0;
 
-  const globalStats = {
-    today: workTimeData[workTimeData.length - 1]?.totalTime || 0,
-    week: workTimeData.slice(-7).reduce((sum, d) => sum + d.totalTime, 0),
-    month: workTimeData.slice(-30).reduce((sum, d) => sum + d.totalTime, 0),
-    year: totalWorkTime,
-  };
+  const fixedStats = useMemo(() => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eod = new Date(d); eod.setHours(23, 59, 59, 999);
+    const pick = (data: ReturnType<typeof calculateWorkTimeForPeriod>) => {
+      if (selectedSection === 'tasks')  return data.tasksTime;
+      if (selectedSection === 'agenda') return data.eventsTime;
+      if (selectedSection === 'habits') return data.habitsTime;
+      if (selectedSection === 'okr')    return data.okrTime;
+      return data.totalTime;
+    };
+    return {
+      today: pick(calculateWorkTimeForPeriod(d, eod, { tasks, events, habits, okrs })),
+      week:  pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 6),   eod, { tasks, events, habits, okrs })),
+      month: pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 29),  eod, { tasks, events, habits, okrs })),
+      year:  pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 364), eod, { tasks, events, habits, okrs })),
+    };
+  }, [tasks, events, habits, okrs, now, selectedSection]);
 
   const formatTime = (minutes: number) => {
     const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
@@ -404,8 +420,10 @@ export default function StatisticsPage() {
   };
 
   const formatTimeShort = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    return h > 0 ? `${h}h` : `${minutes}min`;
+    const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
+    if (h === 0) return `${m}min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h${m < 10 ? '0' : ''}${m}`;
   };
 
   const periodDescriptiveText: Record<TimePeriod, string> = {
@@ -452,10 +470,10 @@ export default function StatisticsPage() {
       {/* Stat cards — sans icônes */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Aujourd'hui", val: globalStats.today },
-          { label: 'Cette semaine', val: globalStats.week },
-          { label: 'Ce mois', val: globalStats.month },
-          { label: 'Cette année', val: globalStats.year },
+          { label: "Aujourd'hui", val: fixedStats.today },
+          { label: 'Cette semaine', val: fixedStats.week },
+          { label: 'Ce mois', val: fixedStats.month },
+          { label: 'Cette année', val: fixedStats.year },
         ].map((s, idx) => (
           <div key={idx} className="card p-5">
             <p className="text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{s.label}</p>
@@ -666,7 +684,7 @@ export default function StatisticsPage() {
       </div>
 
       {selectedSection === 'tasks' && <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />}
-      {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} colorSettings={colorSettings} categories={categories} />}
+      {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} categories={categories} />}
       {selectedSection === 'okr' && <OKRStatistics objectives={okrs} rollingRange={rollingRange} />}
       {selectedSection === 'habits' && <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />}
       {selectedSection === 'all' && <OverviewStatistics workTimeData={rollingWorkTimeData} />}
@@ -854,7 +872,6 @@ const TasksStatistics: React.FC<{
 // ═══════════════════════════════════════════════════════════════════
 const AgendaStatistics: React.FC<{
   events: CalendarEvent[];
-  colorSettings: Record<string, string>;
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ events, categories }) => {
   const getColorValue = (hex: string) => hex || '#64748B';
@@ -1057,13 +1074,17 @@ const HabitsStatistics: React.FC<{
       ? Math.floor((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
       : 0;
 
-    return { ...habit, periodCompletions: completionsCount, periodTime: completionsCount * habit.estimatedTime, relevantDaysCount };
+    return { ...habit, periodCompletions: completionsCount, periodTime: completionsCount * habit.estimatedTime, relevantDaysCount, frequency: habit.frequency };
   }), [habits, rollingRange, now]);
 
   const totalCompletions = habitsStats.reduce((sum, h) => sum + h.periodCompletions, 0);
   const totalEstimatedTime = habitsStats.reduce((sum, h) => sum + h.periodTime, 0);
-  const totalRelevantDays = habitsStats.reduce((sum, h) => sum + h.relevantDaysCount, 0);
-  const avgRate = totalRelevantDays > 0 ? Math.round((totalCompletions / totalRelevantDays) * 100) : 0;
+  const totalExpected = habitsStats.reduce((sum, h) => {
+    if (h.frequency === 'weekly')  return sum + Math.ceil(h.relevantDaysCount / 7);
+    if (h.frequency === 'monthly') return sum + Math.max(1, Math.round(h.relevantDaysCount / 30));
+    return sum + h.relevantDaysCount;
+  }, 0);
+  const avgRate = totalExpected > 0 ? Math.round((totalCompletions / totalExpected) * 100) : 0;
 
   const activeHabitsCount = useMemo(() => habitsStats.filter(h => h.periodCompletions > 0).length, [habitsStats]);
   const sortedRelevantHabits = useMemo(
