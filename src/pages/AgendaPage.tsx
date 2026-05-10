@@ -195,19 +195,26 @@ const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectD
             >
               {initial}
             </span>
-            <span
-              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-semibold transition-colors ${
-                selected ? 'bg-black text-white dark:bg-white dark:text-black' : ''
-              }`}
-              style={
-                !selected && today
-                  ? { color: 'rgb(var(--color-accent))' }
-                  : !selected
-                  ? { color: 'rgb(var(--color-text-primary))' }
-                  : {}
-              }
-            >
-              {num}
+            <span className="relative w-8 h-8 flex items-center justify-center">
+              {selected && (
+                <motion.span
+                  layoutId="mobile-day-indicator"
+                  className="absolute inset-0 rounded-full bg-black dark:bg-white"
+                  transition={{ type: 'spring', damping: 28, stiffness: 380 }}
+                />
+              )}
+              <span
+                className={`relative z-10 text-sm font-semibold ${selected ? 'text-white dark:text-black' : ''}`}
+                style={
+                  !selected && today
+                    ? { color: 'rgb(var(--color-accent))' }
+                    : !selected
+                    ? { color: 'rgb(var(--color-text-primary))' }
+                    : {}
+                }
+              >
+                {num}
+              </span>
             </span>
           </button>
         );
