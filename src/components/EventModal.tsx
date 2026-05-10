@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Clock, Plus, CalendarIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import ColorSettingsModal from "./ColorSettingsModal";
@@ -76,6 +76,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+  const deleteConfirmDragControls = useDragControls();
 
 
   useEffect(() => {
@@ -381,52 +382,73 @@ const EventModal: React.FC<EventModalProps> = ({
                 >
                   Date
                 </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className={`w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-sm transition-colors ${
-                        isPrefilledMode && prefilledFields.has("startDate")
-                          ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
-                          : ""
-                      }`}
-                      style={{
-                        backgroundColor:
+                {/* Mobile : input natif système (iOS/Android wheel picker) */}
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    handleFieldChange("startDate", setStartDate, e.target.value);
+                    handleFieldChange("endDate", setEndDate, e.target.value);
+                  }}
+                  className={`md:hidden w-full px-4 py-2.5 border rounded-lg text-sm transition-colors bg-transparent ${
+                    isPrefilledMode && prefilledFields.has("startDate")
+                      ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                      : ""
+                  }`}
+                  style={{
+                    color: "rgb(var(--color-text-primary))",
+                    borderColor: isPrefilledMode && prefilledFields.has("startDate") ? undefined : "rgb(var(--color-border))",
+                  }}
+                />
+                {/* Desktop : calendrier custom */}
+                <div className="hidden md:block">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={`w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-sm transition-colors ${
                           isPrefilledMode && prefilledFields.has("startDate")
-                            ? undefined
-                            : "rgb(var(--color-surface))",
-                        borderColor:
-                          isPrefilledMode && prefilledFields.has("startDate")
-                            ? undefined
-                            : "rgb(var(--color-border))",
-                        color: startDate
-                          ? "rgb(var(--color-text-primary))"
-                          : "rgb(var(--color-text-muted))",
-                      }}
-                    >
-                      <span>
-                        {startDate
-                          ? format(new Date(startDate + "T12:00:00"), "dd MMMM yyyy", { locale: fr })
-                          : "Choisir une date"}
-                      </span>
-                      <CalendarIcon size={16} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[100]" align="start" sideOffset={8}>
-                    <Calendar
-                      mode="single"
-                      selected={startDate ? new Date(startDate + "T12:00:00") : undefined}
-                      onSelect={(d) => {
-                        if (!d) return;
-                        const formatted = format(d, "yyyy-MM-dd");
-                        handleFieldChange("startDate", setStartDate, formatted);
-                        handleFieldChange("endDate", setEndDate, formatted);
-                      }}
-                      locale={fr}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                            ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                            : ""
+                        }`}
+                        style={{
+                          backgroundColor:
+                            isPrefilledMode && prefilledFields.has("startDate")
+                              ? undefined
+                              : "rgb(var(--color-surface))",
+                          borderColor:
+                            isPrefilledMode && prefilledFields.has("startDate")
+                              ? undefined
+                              : "rgb(var(--color-border))",
+                          color: startDate
+                            ? "rgb(var(--color-text-primary))"
+                            : "rgb(var(--color-text-muted))",
+                        }}
+                      >
+                        <span>
+                          {startDate
+                            ? format(new Date(startDate + "T12:00:00"), "dd MMMM yyyy", { locale: fr })
+                            : "Choisir une date"}
+                        </span>
+                        <CalendarIcon size={16} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[100]" align="start" sideOffset={8}>
+                      <Calendar
+                        mode="single"
+                        selected={startDate ? new Date(startDate + "T12:00:00") : undefined}
+                        onSelect={(d) => {
+                          if (!d) return;
+                          const formatted = format(d, "yyyy-MM-dd");
+                          handleFieldChange("startDate", setStartDate, formatted);
+                          handleFieldChange("endDate", setEndDate, formatted);
+                        }}
+                        locale={fr}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
               {/* Sélecteurs d'heure */}
@@ -744,6 +766,12 @@ const EventModal: React.FC<EventModalProps> = ({
             onClick={() => setShowDeleteConfirm(false)}
           >
             <motion.div
+              drag="y"
+              dragControls={deleteConfirmDragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.3 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setShowDeleteConfirm(false); }}
               initial={{ y: '100%', scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: '100%', scale: 0.95, opacity: 0 }}
@@ -755,7 +783,10 @@ const EventModal: React.FC<EventModalProps> = ({
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sm:hidden flex justify-center pt-2 pb-1">
+              <div
+                className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => deleteConfirmDragControls.start(e)}
+              >
                 <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
               <div className="p-5 sm:p-6">

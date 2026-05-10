@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
@@ -14,6 +14,7 @@ interface HabitModalProps {
 }
 
 const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
+  const dragControls = useDragControls();
   const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
   const createHabitMutation = useCreateHabit();
@@ -72,6 +73,12 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             onKeyDown={handleKeyDown}
           >
             <motion.div
+              drag="y"
+              dragControls={dragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.3 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) onClose(); }}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
@@ -83,8 +90,11 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Drag handle (mobile only) */}
-              <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
+              {/* Drag handle (mobile only) — déclenche le swipe-to-dismiss */}
+              <div
+                className="sm:hidden flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => dragControls.start(e)}
+              >
                 <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
 

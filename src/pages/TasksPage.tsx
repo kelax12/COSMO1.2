@@ -5,7 +5,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import { CalendarDays, X, Plus, Pencil, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -22,6 +22,7 @@ import { useLists, useCreateList, useUpdateList, useDeleteList, useAddTaskToList
 import { usePriorityRange } from '@/modules/ui-states';
 
 const TasksPage: React.FC = () => {
+  const deleteListDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -780,6 +781,12 @@ const TasksPage: React.FC = () => {
             onClick={() => setListToDeleteId(null)}
           >
             <motion.div
+              drag="y"
+              dragControls={deleteListDragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.3 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setListToDeleteId(null); }}
               initial={{ y: '100%', scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: '100%', scale: 0.95, opacity: 0 }}
@@ -792,7 +799,10 @@ const TasksPage: React.FC = () => {
                 paddingBottom: 'env(safe-area-inset-bottom)',
               }}
             >
-              <div className="sm:hidden flex justify-center pt-2 pb-1">
+              <div
+                className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => deleteListDragControls.start(e)}
+              >
                 <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
               <div className="p-5 sm:p-6">
