@@ -327,10 +327,10 @@ body {
       @apply border-2 border-blue-600 outline-none !ring-0 !ring-offset-0 !important;
     }
 
-    /* Suppress all focus styling on time inputs */
-    input[type="time"],
-    input[type="time"]:focus,
-    input[type="time"]:focus-visible {
+    /* Suppress focus styling only on time inputs inside desktop wrapper */
+    .time-input-wrapper input[type="time"],
+    .time-input-wrapper input[type="time"]:focus,
+    .time-input-wrapper input[type="time"]:focus-visible {
       outline: none !important;
       box-shadow: none !important;
       border: none !important;
@@ -344,8 +344,8 @@ body {
       box-shadow: none !important;
     }
 
-    /* Hide native time picker icon */
-    input[type="time"]::-webkit-calendar-picker-indicator {
+    /* Hide native time picker icon only inside desktop wrapper */
+    .time-input-wrapper input[type="time"]::-webkit-calendar-picker-indicator {
       display: none;
       -webkit-appearance: none;
     }
