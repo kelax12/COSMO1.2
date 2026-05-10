@@ -97,10 +97,29 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
 // ═══════════════════════════════════════════════════════════════════
 const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const WEEKS = 26;
-  const CELL = embedded ? 28 : 13;
   const GAP = embedded ? 3 : 2;
   const MONTH_W = embedded ? 24 : 14;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [cellSize, setCellSize] = useState(embedded ? 28 : 13);
+  const CELL = cellSize;
+
+  useEffect(() => {
+    if (embedded) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+    const compute = () => {
+      const w = el.clientWidth;
+      if (w > 0) {
+        const size = Math.min(42, Math.floor((w - 14 - 7 * 2) / 7));
+        setCellSize(Math.max(13, size));
+      }
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [embedded]);
 
   const { weeks, monthLabelMap } = useMemo(() => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -237,7 +256,9 @@ const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean
       <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>
         Calendrier de complétion
       </h3>
-      {grid('overflow-y-auto')}
+      <div ref={wrapperRef}>
+        {grid('overflow-y-auto')}
+      </div>
       {legend}
     </div>
   );
