@@ -166,24 +166,7 @@ const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectD
     const el = dayRefs.current.get(key);
     const container = scrollRef.current;
     if (!el || !container) return;
-
-    const targetScroll = el.offsetLeft - container.clientWidth / 2 + el.offsetWidth / 2;
-    const startScroll = container.scrollLeft;
-    const distance = targetScroll - startScroll;
-    const duration = 520;
-    const startTime = performance.now();
-
-    const easeInOutCubic = (t: number) =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    const step = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      container.scrollLeft = startScroll + distance * easeInOutCubic(progress);
-      if (progress < 1) requestAnimationFrame(step);
-    };
-
-    requestAnimationFrame(step);
+    container.scrollLeft = el.offsetLeft - container.clientWidth / 2 + el.offsetWidth / 2;
   }, [selectedDate]);
 
   return (
@@ -465,9 +448,9 @@ const AgendaPage: React.FC = () => {
     api.gotoDate(date);
   };
 
-  const handleMobileGoToMonth = () => { handleMobileSetView('dayGridMonth'); };
+  const _handleMobileGoToMonth = () => { handleMobileSetView('dayGridMonth'); };
 
-  const handleMobileGoToday = () => {
+  const _handleMobileGoToday = () => {
     const today = new Date();
     setMobileSelectedDate(today);
     handleMobileSetView('timeGridDay');
