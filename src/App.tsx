@@ -55,7 +55,6 @@ const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'));
 const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'));
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'));
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'));
-const MessagingPage = lazyWithRetry(() => import('@/pages/MessagingPage'));
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'));
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'));
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
@@ -135,7 +134,6 @@ const AppRoutes = () => (
         <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
         <Route path="premium" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
-        <Route path="messages" element={<PageWithSuspense><MessagingPage /></PageWithSuspense>} />
       </Route>
     </Route>
 

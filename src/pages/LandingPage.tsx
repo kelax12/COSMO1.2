@@ -40,8 +40,8 @@ const USE_CASES = [
     accent: '#34D399',
     title: 'Collaboration fluide',
     description: "Synchronisez votre équipe avec des outils collaboratifs qui alignent tous les membres sur les mêmes objectifs stratégiques.",
-    features: ['Partage de tâches simplifié', 'Communication intégrée', 'Tableaux de bord équipe'],
-    path: '/messaging'
+    features: ['Partage de tâches simplifié', 'Suivi partagé des objectifs', 'Tableaux de bord équipe'],
+    path: '/okr'
   },
   {
     profile: 'Entrepreneurs',
