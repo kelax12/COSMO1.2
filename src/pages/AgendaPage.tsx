@@ -152,10 +152,12 @@ interface MobileDayStripProps {
 }
 
 const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectDate }) => {
-  // 60 jours : 30 avant + today + 29 après
+  // Tableau ancré sur aujourd'hui : 3 jours passés + 90 jours futurs
+  // Aujourd'hui est à l'index 3, visible sans scroll dès le premier rendu
+  const todayRef = new Date();
   const days: Date[] = [];
-  for (let i = -30; i <= 29; i++) {
-    days.push(addDays(selectedDate, i));
+  for (let i = -3; i <= 90; i++) {
+    days.push(addDays(todayRef, i));
   }
 
   return (
