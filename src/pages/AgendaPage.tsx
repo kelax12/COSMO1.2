@@ -38,8 +38,6 @@ interface MobileAgendaHeaderProps {
   showTaskSidebar: boolean;
   onToggleSidebar: () => void;
   onSetView: (v: MobileView) => void;
-  onGoToMonth: () => void;
-  onGoToday: () => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onAddEvent: () => void;
@@ -51,14 +49,10 @@ const MobileAgendaHeader: React.FC<MobileAgendaHeaderProps> = ({
   showTaskSidebar,
   onToggleSidebar,
   onSetView,
-  onGoToMonth,
-  onGoToday,
   onPrevMonth,
   onNextMonth,
   onAddEvent,
 }) => {
-  const monthName = format(currentDate, 'MMMM', { locale: fr });
-  const capitalMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: fr });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
   const isMonthView = viewMode === 'dayGridMonth';
@@ -77,43 +71,21 @@ const MobileAgendaHeader: React.FC<MobileAgendaHeaderProps> = ({
     >
       {/* Row 1: main controls */}
       <div className="flex items-center justify-between px-3 py-1">
-        {/* Left */}
-        {isMonthView ? (
-          <button
-            onClick={onGoToday}
-            className="min-h-[44px] px-2 flex items-center text-sm font-semibold"
-            style={{ color: 'rgb(var(--color-accent))' }}
-          >
-            Aujourd&apos;hui
-          </button>
-        ) : (
-          <button
-            onClick={onGoToMonth}
-            className="flex items-center gap-0.5 min-h-[44px]"
-            style={{ color: 'rgb(var(--color-accent))' }}
-          >
-            <ChevronLeft size={18} />
-            <span className="font-semibold text-base">{capitalMonth}</span>
-          </button>
-        )}
+        {/* Left: Tâches toggle */}
+        <button
+          onClick={onToggleSidebar}
+          className={`flex items-center gap-1 px-2 min-h-[44px] rounded-lg text-xs font-medium transition-colors`}
+          style={{
+            backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'transparent',
+            color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
+          }}
+        >
+          <Calendar size={15} />
+          <span>Tâches</span>
+        </button>
 
         {/* Right */}
         <div className="flex items-center gap-1">
-          {/* Tâches toggle */}
-          <button
-            onClick={onToggleSidebar}
-            className={`flex items-center gap-1 px-2 min-h-[44px] rounded-lg text-xs font-medium transition-colors ${
-              showTaskSidebar ? 'text-white' : ''
-            }`}
-            style={{
-              backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'transparent',
-              color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
-            }}
-          >
-            <Calendar size={15} />
-            <span>Tâches</span>
-          </button>
-
           {/* 3-way view selector */}
           <div
             className="flex rounded-lg overflow-hidden border text-xs"
@@ -537,8 +509,6 @@ const AgendaPage: React.FC = () => {
           showTaskSidebar={showTaskSidebar}
           onToggleSidebar={() => setShowTaskSidebar(prev => !prev)}
           onSetView={handleMobileSetView}
-          onGoToMonth={handleMobileGoToMonth}
-          onGoToday={handleMobileGoToday}
           onPrevMonth={handleMobileMonthPrev}
           onNextMonth={handleMobileMonthNext}
           onAddEvent={handleOpenAddModal}
