@@ -29,7 +29,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const handleLogout = async () => {
     onOpenChange(false);
     await logout();
-    navigate('/welcome');
+    navigate('/');
   };
 
   return (

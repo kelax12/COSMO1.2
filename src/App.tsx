@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
@@ -111,10 +112,20 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
   </AppErrorBoundary>
 );
 
+const RootRoute = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <LoadingSpinner />;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <PageWithSuspense><LandingPage /></PageWithSuspense>;
+};
+
 const AppRoutes = () => (
   <Routes>
+    {/* Racine — LandingPage publique, redirect /dashboard si connecté */}
+    <Route index element={<RootRoute />} />
+
     {/* Public pages — accessibles sans authentification */}
-    <Route path="welcome" element={<PageWithSuspense><LandingPage /></PageWithSuspense>} />
+    <Route path="welcome" element={<Navigate to="/" replace />} />
     <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
     <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
     <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
@@ -125,7 +136,6 @@ const AppRoutes = () => (
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
       <Route element={<LayoutWithSuspense />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
         <Route path="tasks" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
         <Route path="agenda" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
@@ -138,7 +148,7 @@ const AppRoutes = () => (
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/welcome" replace />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );
 

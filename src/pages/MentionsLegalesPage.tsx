@@ -16,7 +16,7 @@ const MentionsLegalesPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <button
-          onClick={() => navigate('/welcome')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-10 group"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
