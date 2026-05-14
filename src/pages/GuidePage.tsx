@@ -125,7 +125,7 @@ const GuidePage: React.FC = () => {
       <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/welcome" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
               <img src="/logo.png" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
               <span className="font-semibold text-white">Cosmo</span>
             </Link>
@@ -136,7 +136,7 @@ const GuidePage: React.FC = () => {
             </span>
           </div>
           <Link
-            to="/welcome"
+            to="/"
             className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
           >
             Retour à l'accueil
@@ -548,7 +548,7 @@ const GuidePage: React.FC = () => {
             <div className="border-t border-white/10 pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-slate-500 text-sm">Une question ? Contactez-nous à <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a></p>
               <Link
-                to="/welcome"
+                to="/"
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
               >
                 Commencer gratuitement

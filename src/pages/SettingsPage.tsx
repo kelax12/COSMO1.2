@@ -173,7 +173,7 @@ const SettingsPage: React.FC = () => {
       variant: 'destructive', showInput: true, confirmationText: 'DELETE',
       onConfirm: async () => {
         try { toast.info('Demande enregistrée', { description: 'Contactez support@cosmo.app si nécessaire.' }); }
-        finally { await logout(); navigate('/welcome'); }
+        finally { await logout(); navigate('/'); }
       },
     });
     setConfirmInput('');
@@ -239,7 +239,7 @@ const SettingsPage: React.FC = () => {
     setConfirmConfig({
       isOpen: true, title: 'Déconnexion ?', description: 'Voulez-vous vraiment vous déconnecter ?',
       variant: 'default',
-      onConfirm: () => { logout(); toast.success('Déconnexion réussie'); navigate('/welcome'); },
+      onConfirm: () => { logout(); toast.success('Déconnexion réussie'); navigate('/'); },
     });
   };
 
