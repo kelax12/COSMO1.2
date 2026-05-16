@@ -43,6 +43,15 @@ export const useFriendRequests = () => {
   });
 };
 
+export const useSentFriendRequests = () => {
+  const repository = useFriendsRepository();
+  return useQuery({
+    queryKey: friendKeys.sentRequests(),
+    queryFn: () => repository.getSentRequests(),
+    refetchInterval: 15000,
+  });
+};
+
 // `useSharedTasks` removed — the underlying `getSharedTasks()` method does not
 // exist on any repository implementation. The feature isn't built yet; the
 // hook will be re-added when the backing implementation lands. Faille B4.

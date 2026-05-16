@@ -56,6 +56,40 @@ const DEMO_TASKS: Task[] = [
   // ── TÂCHES ASSIGNÉES PAR D'AUTRES ─────────────────────────────────────
   { ...t('t011','Réviser le pitch deck',      'Intégrer les retours avant lundi',         4,'cat-5',-1,   3,  null, false, 60, true, ['Marie Dupont']), sharedBy: 'Marie Dupont' },
   { ...t('t012','Tester le prototype mobile', 'Flow onboarding + feedback UX',            3,'cat-5',-2,   5,  null, false, 45, true, ['Jean Martin']),  sharedBy: 'Jean Martin'  },
+
+  // ── TÂCHES PARTAGÉES (shared TO the demo user) ────────────────────────
+  {
+    id: 'shared-001',
+    name: 'Réviser le rapport mensuel',
+    description: 'Vérifier les chiffres et commenter',
+    priority: 3,
+    category: 'cat-1',
+    deadline: getDate(5),
+    estimatedTime: 45,
+    createdAt: getDate(-1),
+    bookmarked: false,
+    completed: false,
+    isCollaborative: true,
+    collaborators: [],
+    pendingInvites: [],
+    sharedBy: 'Marie Dupont',
+  },
+  {
+    id: 'shared-002',
+    name: 'Préparer la réunion de lancement',
+    description: 'Agenda + présentation + invitations',
+    priority: 2,
+    category: 'cat-5',
+    deadline: getDate(3),
+    estimatedTime: 90,
+    createdAt: getDate(-2),
+    bookmarked: false,
+    completed: false,
+    isCollaborative: true,
+    collaborators: [],
+    pendingInvites: [],
+    sharedBy: 'Jean Martin',
+  },
 ];
 
 export class LocalStorageTasksRepository implements ITasksRepository {

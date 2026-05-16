@@ -44,6 +44,7 @@ export interface IFriendsRepository {
   getById(id: string): Promise<Friend | null>;
   getByEmail(email: string): Promise<Friend | null>;
   getPendingRequests(): Promise<PendingFriendRequest[]>;
+  getSentRequests(): Promise<PendingFriendRequest[]>;
 
   // Write operations
   sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest>;
@@ -139,6 +140,11 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
 
   async getPendingRequests(): Promise<PendingFriendRequest[]> {
     return this.getRequests().filter(r => r.status === 'pending');
+  }
+
+  async getSentRequests(): Promise<PendingFriendRequest[]> {
+    // Outgoing requests: created by current user = no senderEmail
+    return this.getRequests().filter(r => r.status === 'pending' && !r.senderEmail);
   }
 
   // ═══════════════════════════════════════════════════════════════════

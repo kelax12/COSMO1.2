@@ -110,6 +110,22 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     return (data || []).map(this.mapRequestFromDb);
   }
 
+  async getSentRequests(): Promise<PendingFriendRequest[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('friend_requests')
+      .select('*')
+      .eq('status', 'pending')
+      .eq('sender_id', user.id)
+      .order('sent_at', { ascending: false });
+
+    if (error) throw normalizeApiError(error);
+    return (data || []).map(this.mapRequestFromDb);
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
