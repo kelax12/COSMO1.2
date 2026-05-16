@@ -2,11 +2,12 @@
  * Wraps a promise with a hard timeout. If the promise doesn't resolve or
  * reject within `ms`, it rejects with a clear error message.
  *
- * Used to guard React Query `queryFn`s against indefinitely-hanging
- * Supabase requests — on mobile Safari fetches can stall silently for
- * minutes after a backgrounding event, leaving pages stuck on their
- * loading skeleton. With this wrapper, the query errors out fast and
- * the page's error UI takes over.
+ * Belt-and-suspenders with the fetch-level AbortController in
+ * `src/lib/supabase.ts` (8 s per HTTP request). That inner timeout trips
+ * first and produces a concrete AbortError React Query can retry on a fresh
+ * socket; this outer 10 s wrapper is the safety net if a `queryFn` ever runs
+ * code other than a Supabase fetch (e.g. LocalStorage in demo mode) that
+ * could still hang.
  */
 export function withTimeout<T>(
   promise: Promise<T>,
