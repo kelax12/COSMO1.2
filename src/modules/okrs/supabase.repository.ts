@@ -82,9 +82,14 @@ const mapKRToDb = (kr: KeyResult, okrId: string, userId: string) => ({
 
 const recalcProgress = (keyResults: KeyResult[]): { progress: number; completed: boolean } => {
   if (keyResults.length === 0) return { progress: 0, completed: false };
-  const total = keyResults.reduce((sum, kr) => sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100), 0);
+  // Guard against `targetValue <= 0` (division by zero / Infinity / NaN) —
+  // a 0-target KR contributes 0% rather than corrupting the aggregate. Faille B17.
+  const total = keyResults.reduce((sum, kr) => {
+    if (!kr.targetValue || kr.targetValue <= 0) return sum;
+    return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);
+  }, 0);
   const progress = Math.round(total / keyResults.length);
-  const completed = keyResults.every(kr => kr.currentValue >= kr.targetValue);
+  const completed = keyResults.every(kr => kr.targetValue > 0 && kr.currentValue >= kr.targetValue);
   return { progress, completed };
 };
 
@@ -158,14 +163,36 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   // ─── Sync KRs to dedicated table (upsert) ───────────────────────────────
 
   private async syncKRsToTable(okrId: string, userId: string, keyResults: KeyResult[]): Promise<void> {
-    if (!supabase || keyResults.length === 0) return;
+    if (!supabase) return;
 
-    const rows = keyResults.map(kr => mapKRToDb(kr, okrId, userId));
-    const { error } = await supabase
-      .from('key_results')
-      .upsert(rows, { onConflict: 'id' });
+    // Faille B6 — `upsert` alone never DELETEs KRs removed client-side; the
+    // orphaned rows then reappear on the next read via `fetchKRsForOkrs`.
+    // Mirror the canonical state: (1) upsert the new/updated rows, then
+    // (2) delete any rows in `key_results` whose id is no longer present.
+    if (keyResults.length > 0) {
+      const rows = keyResults.map(kr => mapKRToDb(kr, okrId, userId));
+      const { error: upsertError } = await supabase
+        .from('key_results')
+        .upsert(rows, { onConflict: 'id' });
+      if (upsertError) throw normalizeApiError(upsertError);
 
-    if (error) throw normalizeApiError(error);
+      const keepIds = keyResults.map(kr => kr.id);
+      const { error: deleteError } = await supabase
+        .from('key_results')
+        .delete()
+        .eq('okr_id', okrId)
+        .eq('user_id', userId)
+        .not('id', 'in', `(${keepIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteError) throw normalizeApiError(deleteError);
+    } else {
+      // All KRs removed → drop every row for this OKR.
+      const { error } = await supabase
+        .from('key_results')
+        .delete()
+        .eq('okr_id', okrId)
+        .eq('user_id', userId);
+      if (error) throw normalizeApiError(error);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -198,6 +225,15 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       .limit(limit + 1);
 
     if (params.cursor && params.cursorDate) {
+      // Validate cursor params before template-interpolating them into the
+      // PostgREST `.or()` filter — comma/paren/operator injection would let
+      // a malicious caller (e.g. someone crafting a URL search param) bypass
+      // the cursor cutoff or perturb the query. Faille N6.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/;
+      if (!UUID_RE.test(params.cursor) || !ISO_RE.test(params.cursorDate)) {
+        throw new Error('Invalid pagination cursor');
+      }
       query = query.or(
         `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
       );
@@ -467,11 +503,20 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
    */
   private async recordKRReps(okrId: string, kr: KeyResult, okrTitle: string, count: number): Promise<void> {
     if (!supabase || count <= 0) return;
+    // Clamp the row count: a client setting currentValue to e.g. 100_000 would
+    // otherwise insert 100k rows in one call (storage abuse + dashboard
+    // overcount). 100 reps per write is more than enough for any real use.
+    // Faille B18.
+    const MAX_REPS_PER_WRITE = 100;
+    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.warn('recordKRReps: no auth user; KR journal entry skipped');
+      return;
+    }
 
     const completedAt = new Date().toISOString();
-    const rows = Array.from({ length: count }, () => ({
+    const rows = Array.from({ length: safeCount }, () => ({
       user_id: user.id,
       kr_id: kr.id,
       okr_id: okrId,

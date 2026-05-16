@@ -97,6 +97,21 @@ clearDemoStorage()      // efface les clés localStorage démo (appelé dans log
 
 Alternativement, cliquer sur une feature card de la landing déclenche aussi `loginDemo()`.
 
+### Edge Functions Supabase (à déployer)
+
+| Function | Rôle | Sécurité notable |
+|---|---|---|
+| `stripe-create-checkout` | Crée une session Checkout Stripe | CORS allowlist (`APP_URL`), upsert sur `subscriptions` (B0/N7/U1) |
+| `stripe-webhook` | Reçoit les events Stripe | Idempotence via `processed_stripe_events` (PK event.id), upsert atomique, event-type specific token updates (B10/W6/N8/N9/U2) |
+| `delete-account` | Supprime compte + données utilisateur | Anon JWT pour l'identité, service_role pour purger toutes les tables user-owned + `auth.admin.deleteUser` (B9) |
+
+```bash
+supabase functions deploy stripe-create-checkout
+supabase functions deploy stripe-webhook
+supabase functions deploy delete-account
+supabase db push  # applique 017_processed_stripe_events.sql
+```
+
 ### loginDemo() — séquence exacte (`src/modules/auth/AuthContext.tsx`)
 
 ```typescript
@@ -698,3 +713,23 @@ Pour tout `<input type="file">` :
 - ❌ Accepter `image/svg+xml` dans un upload utilisateur (faille V5)
 - ❌ Lire `premiumTokens` ou identité depuis `localStorage`/`user_metadata` (faille N5, N6)
 - ❌ Insérer dans `friends`, `shared_tasks` sans vérifier le lien d'amitié côté SQL (faille V12, V13)
+- ❌ Dériver `isDemo` de l'email (`user?.email === 'demo@cosmo.app'`) — utiliser `useIsDemo()` / `appModeStore.isDemo` (faille B0)
+- ❌ Réintroduire `premiumTokens` / `subscriptionEndDate` / `premiumWinStreak` dans le type `User` ou dans `mapSupabaseUserToAppUser` — source unique = `subscriptions` via `useBilling()` (faille N5)
+- ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (TaskModal, AddTaskForm, CollaboratorModal) sinon `shareTaskMutation` reçoit un nom au lieu d'un UUID (faille B6/B22)
+- ❌ Appeler `repository.getFriends()` depuis un hook — l'interface expose `getAll()` ; `getFriends()` est privé sur le repo local et absent en prod (faille B3)
+- ❌ Lire `habit.completedDates` — le champ canonique est `habit.completions: Record<string, boolean>` (faille B5)
+- ❌ Lire `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser `task.completed`, `task.name`, `task.deadline`, `task.bookmarked` (faille B6)
+- ❌ Appeler `supabase.auth.updateUser({ password })` sans réauthentification via `signInWithPassword` (faille B8)
+- ❌ Faire un read-then-write sur `subscriptions` dans une Edge Function — utiliser `upsert({ ... }, { onConflict: 'user_id' })` pour éviter les races (faille U1/U2)
+- ❌ Reset `premium_tokens` ou `win_streak` sur tous les events Stripe — ces champs ne se touchent que sur `checkout.session.completed` (init) et `invoice.payment_succeeded` (renouvellement) (faille B10/W6)
+- ❌ Échouer la validation signature webhook avec `return new Response(err.message, ...)` — toujours renvoyer `'Invalid signature'` générique (faille N9)
+- ❌ Renvoyer `Access-Control-Allow-Origin: '*'` sur une Edge Function authentifiée — utiliser une allowlist liée à `APP_URL` (faille N7)
+- ❌ Interpoler `params.cursor` / `params.cursorDate` directement dans un filtre PostgREST `.or()` sans validation regex UUID + ISO (faille N6)
+- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — toujours `JSON.parse(JSON.stringify(...))` avant retour (faille B12)
+- ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser un helper `safeParse<T>` (faille B14)
+- ❌ Appeler `kr.currentValue / kr.targetValue` sans guard `targetValue > 0` (faille B17 — divide-by-zero → NaN → row corrupt)
+- ❌ Insérer N lignes dans `kr_completions` à partir d'un `count` client non clampé (faille B18 — clamp à 100/write)
+- ❌ Whitelist manuelle de clés `cosmo_demo_*` dans `clearDemoStorage` — sweep par prefix `cosmo_*` (faille B21)
+- ❌ Surfacer `error.message` brut de Supabase/Postgres dans un toast — `normalizeApiError().message` est désormais toujours générique, l'original passe en `originalMessage` (log only, faille V7)
+- ❌ `allowedHosts: true` dans `vite.config.ts` — toujours une allowlist explicite (faille N10)
+- ❌ Ne supprimer qu'un côté d'une amitié — `accept_friend_request` insère 2 lignes, `removeFriend` doit les supprimer toutes les deux (faille B15)

@@ -2,20 +2,25 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { resetRepositories, clearDemoStorage } from '../../lib/repository.factory';
-import { appModeStore } from '../../lib/app-mode.store';
+import { appModeStore, useIsDemo } from '../../lib/app-mode.store';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+// User type — identity fields only.
+// Premium/financial state (premiumTokens, subscriptionEndDate, win_streak, …) lives
+// exclusively in the Supabase `subscriptions` table and is consumed via useBilling().
+// `autoValidation` is a UI preference stored locally in demo mode (see user/hooks.ts).
 export type User = {
   id: string;
   name: string;
   email: string;
   avatar?: string;
-  premiumTokens?: number;
-  premiumWinStreak?: number;
-  lastTokenConsumption?: string;
-  subscriptionEndDate?: string;
+  // Optional local-only preference (demo mode). Never sourced from user_metadata.
   autoValidation?: boolean;
 };
+
+// Sentinel email reserved for the local demo session. We block it at signup so an
+// attacker can't register a real Supabase account using this address (faille B0).
+const DEMO_SENTINEL_EMAIL = 'demo@cosmo.app';
 
 type AuthContextType = {
   user: User | null;
@@ -36,19 +41,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isDemo = user?.email === 'demo@cosmo.app';
+  // Source de vérité unique : appModeStore (faille B0 — l'ancien check sur l'email
+  // était contournable en s'inscrivant avec demo@cosmo.app via supabase.auth.signUp).
+  const isDemo = useIsDemo();
   const isAuthenticated = !!user;
 
+  // Map a Supabase session user to our App user type.
+  // We deliberately read ONLY identity fields. Premium/authorization state must
+  // come from the `subscriptions` table via useBilling() — never from user_metadata
+  // (which is user-writable from the client and trivially spoofable). Faille N5/N6.
   const mapSupabaseUserToAppUser = (supabaseUser: SupabaseUser): User => ({
     id: supabaseUser.id,
     name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Utilisateur',
     email: supabaseUser.email || '',
     avatar: supabaseUser.user_metadata?.avatar_url,
-    premiumTokens: supabaseUser.user_metadata?.premiumTokens ?? 0,
-    premiumWinStreak: supabaseUser.user_metadata?.premiumWinStreak ?? 0,
-    lastTokenConsumption: supabaseUser.user_metadata?.lastTokenConsumption ?? new Date().toISOString(),
-    subscriptionEndDate: supabaseUser.user_metadata?.subscriptionEndDate,
-    autoValidation: supabaseUser.user_metadata?.autoValidation ?? false,
   });
 
   useEffect(() => {
@@ -68,8 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Ne pas override le mode démo déclenché manuellement
-      if (appModeStore.isDemo && !session) return;
+      // Demo mode is sticky once entered. Without this guard, a token-refresh event
+      // racing with loginDemo() would snap the user out of demo and start hitting
+      // Supabase repositories mid-session (faille B7).
+      if (appModeStore.isDemo) return;
       appModeStore.setDemo(!session && !isSupabaseConfigured);
       resetRepositories();
       queryClient.clear();
@@ -101,6 +109,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
+    // Block the sentinel email at signup to prevent the email-based isDemo bypass
+    // even on Supabase projects where email confirmation is disabled. Faille B0.
+    if (email.trim().toLowerCase() === DEMO_SENTINEL_EMAIL) {
+      return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
+    }
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -118,7 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginDemo = () => {
+  const loginDemo = (): void => {
+    // Set demo state synchronously so callers can navigate immediately
+    // (existing callsites do not await this function).
     clearDemoStorage();
     appModeStore.setDemo(true);
     resetRepositories();
@@ -126,11 +141,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser({
       id: 'demo-user',
       name: 'Utilisateur Démo',
-      email: 'demo@cosmo.app',
-      premiumTokens: 100,
-      subscriptionEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      email: DEMO_SENTINEL_EMAIL,
     });
     setIsLoading(false);
+    // Sign out any real Supabase session in the background. Without this we'd
+    // leave the device in a hybrid state where `appModeStore.isDemo === true`
+    // but a valid Supabase refresh token still sits in localStorage — on next
+    // load onAuthStateChange would silently revive the previous user (B2/B7).
+    // We don't await: the onAuthStateChange handler is now guarded by
+    // `if (appModeStore.isDemo) return;` so it cannot revert the local state.
+    void supabase.auth.signOut().catch(() => {
+      /* no-op — signing out without a session is harmless */
+    });
   };
 
   const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
@@ -159,15 +181,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    // ALWAYS sign out from Supabase, regardless of whether we think we're in demo
+    // mode. Without this, a stranded real Supabase session can survive a "logout"
+    // and silently re-authenticate the user on next mount. Faille B2.
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — signOut on no session is a no-op
+    }
     if (appModeStore.isDemo) {
       clearDemoStorage();
       appModeStore.setDemo(false);
       resetRepositories();
       queryClient.clear();
-      setUser(null);
-      return;
     }
-    await supabase.auth.signOut();
+    setUser(null);
   };
 
   return (

@@ -471,14 +471,24 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const handleAddEmail = () => {
     const value = emailInput.trim().toLowerCase();
     if (!value) return;
-    
+
     const friend = friends.find(f => f.email.toLowerCase() === value);
-    
+
     if (friend) {
-      if (!collaborators.includes(friend.name)) {
-        setCollaborators([...collaborators, friend.name]);
+      // Store collaborators by stable friend.id (matches AddTaskForm and
+      // CollaboratorModal) so the downstream shareTaskMutation receives a
+      // real UUID rather than a display name. Faille B6/B22.
+      if (!collaborators.includes(friend.id)) {
+        setCollaborators([...collaborators, friend.id]);
       }
     } else {
+      // Reject input that doesn't look like an email — prevents garbage
+      // entries in `pendingInvites`. Faille D2.
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRe.test(value)) {
+        setEmailInput('');
+        return;
+      }
       if (collaborators.includes(value)) {
         setEmailInput('');
         return;
@@ -526,22 +536,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   };
 
   const toggleCollaborator = (friendId: string) => {
-    const friend = friends.find(f => f.id === friendId);
-    const name = friend?.name || friendId;
-    
-    if (collaborators.includes(name)) {
-      handleRemoveCollaborator(name);
+    // Store by stable friend.id. Faille B6/B22.
+    if (collaborators.includes(friendId)) {
+      handleRemoveCollaborator(friendId);
     } else {
-      setCollaborators((prev) => [...prev, name]);
+      setCollaborators((prev) => [...prev, friendId]);
       if (task) {
         updateTaskMutation.mutate({
           id: task.id,
           updates: {
             isCollaborative: true,
-            collaborators: [...collaborators, name],
+            collaborators: [...collaborators, friendId],
             collaboratorValidations: {
               ...task.collaboratorValidations,
-              [name]: false
+              [friendId]: false
             }
           }
         });

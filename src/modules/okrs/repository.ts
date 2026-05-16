@@ -293,7 +293,18 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const previous = okrs[index];
     const previousKRsById = new Map(previous.keyResults.map(kr => [kr.id, kr]));
 
-    const updatedOKR: OKR = { ...previous, ...updates };
+    // Whitelist updatable fields rather than spreading raw `updates` — keeps
+    // the localStorage path aligned with the Supabase repo's `mapToDb` and
+    // prevents accidental id/userId mutation via stray fields. Faille B19.
+    const allowed: Partial<OKR> = {};
+    if (updates.title !== undefined) allowed.title = updates.title;
+    if (updates.description !== undefined) allowed.description = updates.description;
+    if (updates.category !== undefined) allowed.category = updates.category;
+    if (updates.endDate !== undefined) allowed.endDate = updates.endDate;
+    if (updates.keyResults !== undefined) allowed.keyResults = updates.keyResults;
+    if (updates.completed !== undefined) allowed.completed = updates.completed;
+    if (updates.progress !== undefined) allowed.progress = updates.progress;
+    const updatedOKR: OKR = { ...previous, ...allowed };
     okrs[index] = updatedOKR;
     this.saveOKRs(okrs);
 
@@ -398,14 +409,19 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     }
     okr.keyResults[krIndex] = merged;
 
-    // Recalculate OKR progress
+    // Recalculate OKR progress — guard divide-by-zero on KRs with no target.
+    // Without this, `0/0 = NaN` propagates to localStorage as `null` and the
+    // entire OKR's progress becomes unreadable. Faille B17.
     const totalProgress = okr.keyResults.reduce((sum, kr) => {
+      if (!kr.targetValue || kr.targetValue <= 0) return sum;
       return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);
     }, 0);
-    okr.progress = Math.round(totalProgress / okr.keyResults.length);
+    okr.progress = okr.keyResults.length > 0
+      ? Math.round(totalProgress / okr.keyResults.length)
+      : 0;
 
     // Check if all key results are completed
-    okr.completed = okr.keyResults.every(kr => kr.currentValue >= kr.targetValue);
+    okr.completed = okr.keyResults.every(kr => kr.targetValue > 0 && kr.currentValue >= kr.targetValue);
 
     okrs[okrIndex] = okr;
     this.saveOKRs(okrs);

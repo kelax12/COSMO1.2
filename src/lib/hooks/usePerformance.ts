@@ -5,8 +5,18 @@
 import { useMemo, useEffect, useRef } from 'react';
 
 /**
- * Hook pour filtrer des données avec mémoisation automatique
- * Évite les re-calculs inutiles à chaque render
+ * Hook pour filtrer des données avec mémoisation automatique.
+ *
+ * ⚠️ CONTRACT (faille B16): `filterFn` is intentionally excluded from the
+ * memo deps to allow inline arrow predicates without forcing the caller into
+ * `useCallback`. As a consequence, callers MUST pass every value the
+ * predicate captures via the `deps` array, exactly like the standard
+ * `useEffect` rule of "list every captured dep". If you forget, the result
+ * will silently go stale until `data` changes identity.
+ *
+ * Example:
+ *   useFilteredData(items, (i) => i.priority >= min, [min])  // ✅
+ *   useFilteredData(items, (i) => i.priority >= min, [])     // ❌ stale
  */
 export const useFilteredData = <T>(
   data: T[],
@@ -18,7 +28,8 @@ export const useFilteredData = <T>(
 };
 
 /**
- * Hook pour filtrer et trier des données avec mémoisation
+ * Hook pour filtrer et trier des données avec mémoisation.
+ * Même contrat que `useFilteredData` ci-dessus. Faille B16.
  */
 export const useFilteredAndSortedData = <T>(
   data: T[],

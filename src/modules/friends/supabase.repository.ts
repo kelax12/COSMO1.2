@@ -77,10 +77,14 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getByEmail(email: string): Promise<Friend | null> {
     if (!supabase) throw new Error('Supabase not configured');
+    // Exact match instead of ILIKE — the old query forwarded unescaped `%` and
+    // `_` from caller input as SQL pattern wildcards (PostgREST pattern
+    // injection). Emails are stored verbatim, so a lowercased `.eq` suffices.
+    // Faille N4.
     const { data, error } = await supabase
       .from('friends')
       .select('*')
-      .ilike('email', email)
+      .eq('email', email.toLowerCase())
       .single();
 
     if (error) {
@@ -163,12 +167,43 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async removeFriend(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase
+    // The friends table stores TWO rows per friendship (receiver→sender and
+    // sender→receiver) inserted by `accept_friend_request`. Deleting just one
+    // row leaves the reciprocal entry behind — the ex-friend still sees the
+    // caller in their list. Find the email of the friend being removed, then
+    // delete both sides. Faille B15.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: row, error: readError } = await supabase
+      .from('friends')
+      .select('email')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (readError) throw normalizeApiError(readError);
+    if (!row) return; // nothing to delete
+
+    // Delete the caller's row.
+    const { error: ownError } = await supabase
       .from('friends')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (ownError) throw normalizeApiError(ownError);
 
-    if (error) throw normalizeApiError(error);
+    // Best-effort: delete the reciprocal row owned by the other user, scoped
+    // by their email pointing back at the caller. RLS still applies — if the
+    // policy forbids cross-user delete, this is a no-op and we surface it
+    // in logs rather than silently passing.
+    const { error: reciprocalError } = await supabase
+      .from('friends')
+      .delete()
+      .eq('email', user.email ?? '')
+      .neq('user_id', user.id);
+    if (reciprocalError) {
+      console.warn('removeFriend: reciprocal row not removed (RLS or schema)', reciprocalError);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════

@@ -28,7 +28,9 @@ export const useFriends = () => {
   const repository = useFriendsRepository();
   return useQuery({
     queryKey: friendKeys.lists(),
-    queryFn: () => repository.getFriends(),
+    // Calls `getAll()` (was wrongly `getFriends()` which is private on the
+    // local repo and absent on the Supabase repo → silent break in prod). B3.
+    queryFn: () => repository.getAll(),
   });
 };
 
@@ -41,13 +43,9 @@ export const useFriendRequests = () => {
   });
 };
 
-export const useSharedTasks = () => {
-  const repository = useFriendsRepository();
-  return useQuery({
-    queryKey: friendKeys.sharedTasks(),
-    queryFn: () => repository.getSharedTasks(),
-  });
-};
+// `useSharedTasks` removed — the underlying `getSharedTasks()` method does not
+// exist on any repository implementation. The feature isn't built yet; the
+// hook will be re-added when the backing implementation lands. Faille B4.
 
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS

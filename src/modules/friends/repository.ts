@@ -67,10 +67,22 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   private getFriends(): Friend[] {
     const data = localStorage.getItem(FRIENDS_STORAGE_KEY);
     if (!data) {
-      this.saveFriends(DEMO_FRIENDS);
-      return DEMO_FRIENDS;
+      // Defensive clone — DEMO_FRIENDS is a module-level constant. The old
+      // code returned it directly and later code mutated the result, leaving
+      // the constant in a corrupted state for the rest of the JS module's
+      // life (visible across multiple loginDemo() calls). Faille B12.
+      const seed = JSON.parse(JSON.stringify(DEMO_FRIENDS)) as Friend[];
+      this.saveFriends(seed);
+      return seed;
     }
-    return JSON.parse(data);
+    try {
+      return JSON.parse(data);
+    } catch {
+      // Corrupted storage — reseed defensively. Faille B14.
+      const seed = JSON.parse(JSON.stringify(DEMO_FRIENDS)) as Friend[];
+      this.saveFriends(seed);
+      return seed;
+    }
   }
 
   /**
@@ -86,10 +98,18 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   private getRequests(): PendingFriendRequest[] {
     const data = localStorage.getItem(FRIEND_REQUESTS_STORAGE_KEY);
     if (!data) {
-      this.saveRequests(DEMO_INCOMING_REQUESTS);
-      return DEMO_INCOMING_REQUESTS;
+      // Defensive clone — see getFriends() above. Faille B12.
+      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_REQUESTS)) as PendingFriendRequest[];
+      this.saveRequests(seed);
+      return seed;
     }
-    return JSON.parse(data);
+    try {
+      return JSON.parse(data);
+    } catch {
+      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_REQUESTS)) as PendingFriendRequest[];
+      this.saveRequests(seed);
+      return seed;
+    }
   }
 
   /**
@@ -148,17 +168,22 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   async acceptFriendRequest(requestId: string): Promise<Friend> {
     const requests = this.getRequests();
     const request = requests.find(r => r.id === requestId);
-    
+
     if (!request) {
       throw new Error(`Friend request ${requestId} not found`);
+    }
+    // Only incoming requests carry `senderEmail`. Outgoing demo requests have
+    // only the recipient's email and must not be acceptable as "you befriend
+    // yourself" — reject those explicitly. Faille B13.
+    if (!request.senderEmail) {
+      throw new Error('Cannot accept an outgoing friend request');
     }
 
     // Update request status
     request.status = 'accepted';
     this.saveRequests(requests);
 
-    // Create new friend from request — use senderEmail for incoming requests
-    const friendEmail = request.senderEmail || request.email;
+    const friendEmail = request.senderEmail;
     const friends = this.getFriends();
     const newFriend: Friend = {
       id: crypto.randomUUID(),
@@ -196,7 +221,13 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       sharedTasks[input.taskId] = [];
     }
     
-    if (!sharedTasks[input.taskId].includes(input.friendId)) {
+    // Faille B11 — the previous check did `array.includes(friendId)` against
+    // entries that are `{ friendId, role }` objects, so it never matched and
+    // every call appended a duplicate. Use a property-aware lookup.
+    const alreadyShared = sharedTasks[input.taskId].some(
+      (s: { friendId: string }) => s.friendId === input.friendId
+    );
+    if (!alreadyShared) {
       sharedTasks[input.taskId].push({ friendId: input.friendId, role: input.role || 'viewer' });
     }
     

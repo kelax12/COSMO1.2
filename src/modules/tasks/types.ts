@@ -22,6 +22,10 @@ export type CreateTaskInput = Omit<Task, 'id' | 'createdAt'>;
 
 export type UpdateTaskInput = Partial<Omit<Task, 'id' | 'createdAt'>>;
 
+// Derived bucket type for grouping. The canonical model stores a boolean
+// `completed`; status is computed from it (faille B6).
+export type TaskStatus = 'todo' | 'completed';
+
 // Filter types for queries
 export interface TaskFilters {
   completed?: boolean;

@@ -1,8 +1,10 @@
+export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
+
 export interface Habit {
   id: string;
   name: string;
   description?: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
+  frequency: HabitFrequency;
   estimatedTime: number;
   color: string;
   icon: string;
