@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Crown, Zap, Play, Check, Users, Sparkles, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Crown, Zap, Play, Check, Users, Sparkles, Loader2, X } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -34,6 +34,7 @@ export function PremiumPage() {
   const { user } = useAuth();
   const { isPremium, addTokens, subscription, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
+  const [showChoiceModal, setShowChoiceModal] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   // Handle return from Stripe Checkout
@@ -195,23 +196,13 @@ export function PremiumPage() {
                 </motion.div>
               ) : (
                 <motion.button
-                  onClick={handleCheckout}
-                  disabled={isCheckoutLoading}
-                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-                  whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
-                  whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
+                  onClick={() => setShowChoiceModal(true)}
+                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  {isCheckoutLoading ? (
-                    <>
-                      <Loader2 size={24} className="animate-spin" />
-                      <span>Chargement...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Crown size={24} />
-                      <span>Passer Premium</span>
-                    </>
-                  )}
+                  <Crown size={24} />
+                  <span>Passer Premium</span>
                 </motion.button>
               )}
             </div>
@@ -436,6 +427,100 @@ export function PremiumPage() {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Choice modal — bottom-sheet on mobile, centered on desktop */}
+      <AnimatePresence>
+        {showChoiceModal && (
+          <motion.div
+            key="choice-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
+            onClick={() => setShowChoiceModal(false)}
+          >
+            <motion.div
+              key="choice-sheet"
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh]"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              {/* Drag handle */}
+              <div className="sm:hidden flex justify-center pt-2 pb-1">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+
+              {/* Header */}
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
+                  Comment veux-tu passer Premium ?
+                </h2>
+                <button
+                  onClick={() => setShowChoiceModal(false)}
+                  className="p-2 rounded-lg hover:bg-[rgb(var(--color-surface-hover,var(--color-border)))] transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X size={20} className="text-[rgb(var(--color-text-muted))]" />
+                </button>
+              </div>
+
+              {/* Body — two choices */}
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 flex flex-col gap-4">
+                {/* Option 1 — Pub */}
+                <motion.button
+                  onClick={() => {
+                    setShowChoiceModal(false);
+                    setShowAdModal(true);
+                  }}
+                  className="w-full text-left p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4 hover:bg-emerald-500/20 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">Regarder une pub</p>
+                    <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
+                      Gratuit · Gagne +1 jour Premium
+                    </p>
+                  </div>
+                </motion.button>
+
+                {/* Option 2 — Abonnement */}
+                <motion.button
+                  onClick={() => {
+                    setShowChoiceModal(false);
+                    void handleCheckout();
+                  }}
+                  disabled={isCheckoutLoading}
+                  className="w-full text-left p-5 rounded-2xl bg-[rgb(var(--color-accent)/0.1)] border border-[rgb(var(--color-accent)/0.3)] flex items-center gap-4 hover:bg-[rgb(var(--color-accent)/0.18)] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isCheckoutLoading ? 1 : 0.97 }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent)/0.15)] flex items-center justify-center shrink-0">
+                    {isCheckoutLoading ? (
+                      <Loader2 size={24} className="text-[rgb(var(--color-accent))] animate-spin" />
+                    ) : (
+                      <Crown size={24} className="text-[rgb(var(--color-accent))]" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">S'abonner</p>
+                    <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
+                      3,50 € / mois · 30 jours Premium
+                    </p>
+                  </div>
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AdModal
         isOpen={showAdModal}
