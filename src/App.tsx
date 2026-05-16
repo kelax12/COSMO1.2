@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 
 // Providers
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -70,7 +71,17 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,    // 5 minutes
       gcTime: 1000 * 60 * 30,      // 30 minutes
-      retry: 1,
+      // Skip retry on definitive RLS / Postgrest errors — they won't pass on a
+      // retry and just delay the error UI. Retry once on network/abort errors;
+      // after the fetch-level AbortController kicks in (src/lib/supabase.ts),
+      // the second attempt lands on a fresh socket.
+      retry: (failureCount, error) => {
+        if (failureCount >= 1) return false;
+        const msg = error instanceof Error ? error.message : '';
+        if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
+        return true;
+      },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
       refetchOnWindowFocus: false,
       // `networkMode: 'always'` runs queries regardless of `navigator.onLine`.
       // The default ('online') pauses queries when the browser thinks it's
@@ -86,6 +97,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+installMobileFocusRecovery(queryClient);
 
 // Loading spinner component
 const LoadingSpinner = () => (
