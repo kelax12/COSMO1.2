@@ -261,7 +261,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       }
       promotedNames.push(friend.name);
       if (isPremium()) {
-        shareTaskMutation.mutate({ taskId: task.id, friendId: friend.id, role: 'editor' });
+        shareTaskMutation.mutate({
+          taskId: task.id,
+          friendId: friend.userId ?? friend.id,
+          friendEmail: friend.email,
+          role: 'editor'
+        });
       }
     });
 
@@ -464,7 +469,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             if (isPremium()) {
               collaborators.forEach(userId => {
                 if (!task.collaborators?.includes(userId)) {
-                  shareTaskMutation.mutate({ taskId: task.id, friendId: userId, role: 'editor' });
+                  // Find the friend's email so shareTask can resolve the
+                  // canonical auth.uid via profiles, even when userId is
+                  // actually a friends-table row id (no profile lookup yet).
+                  const friend = friends.find(
+                    f => (f.userId ?? f.id) === userId || f.id === userId
+                  );
+                  shareTaskMutation.mutate({
+                    taskId: task.id,
+                    friendId: userId,
+                    friendEmail: friend?.email,
+                    role: 'editor'
+                  });
                 }
               });
             }

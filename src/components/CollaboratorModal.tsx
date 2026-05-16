@@ -89,7 +89,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
           }
         });
         if (isPremium()) {
-          shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, role: 'editor' });
+          shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, friendEmail: friend.email, role: 'editor' });
         }
       }
     } else {

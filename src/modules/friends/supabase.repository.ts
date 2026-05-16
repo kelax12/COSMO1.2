@@ -271,15 +271,44 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async shareTask(input: ShareTaskInput): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
+
+    // Resolve the canonical auth.uid for the friend. The frontend may pass
+    // either the friend's auth.uid (preferred — works directly) or, when the
+    // profile lookup hasn't populated friend.userId, the friends-table row
+    // id (random UUID, fails the FK to auth.users). To handle both cases
+    // robustly, we always try to look up the auth.uid from the profiles
+    // table by email when an email is provided.
+    let friendUserId = input.friendId;
+    if (input.friendEmail) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', input.friendEmail.toLowerCase())
+        .maybeSingle();
+      if (profile?.id) friendUserId = profile.id as string;
+    }
+
     const { error } = await supabase
       .from('shared_tasks')
-      .upsert([{ 
-        task_id: input.taskId, 
-        friend_id: input.friendId, 
-        role: input.role || 'viewer' 
+      .upsert([{
+        task_id: input.taskId,
+        friend_id: friendUserId,
+        role: input.role || 'viewer'
       }]);
 
-    if (error) throw normalizeApiError(error);
+    if (error) {
+      // FK violation usually means we couldn't resolve auth.uid (profile
+      // missing). Surface a clearer message so the user knows the friend
+      // hasn't fully registered yet rather than a generic error.
+      const code = (error as { code?: string }).code;
+      if (code === '23503') {
+        throw new Error(
+          "Le collaborateur n'est pas (encore) inscrit sur Cosmo. " +
+          "Demande-lui de se connecter au moins une fois, puis réessaie."
+        );
+      }
+      throw normalizeApiError(error);
+    }
   }
 
   async unshareTask(taskId: string, friendId: string): Promise<void> {
