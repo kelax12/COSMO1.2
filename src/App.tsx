@@ -72,9 +72,17 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 30,      // 30 minutes
       retry: 1,
       refetchOnWindowFocus: false,
+      // `networkMode: 'always'` runs queries regardless of `navigator.onLine`.
+      // The default ('online') pauses queries when the browser thinks it's
+      // offline — and `navigator.onLine` is notoriously unreliable on mobile
+      // Safari (often falsely reports offline after a backgrounding event),
+      // leaving every page stuck on its loading skeleton even though the
+      // network is fine. Faille: TasksPage + HabitsPage stuck loading on iOS.
+      networkMode: 'always',
     },
     mutations: {
       retry: 1,
+      networkMode: 'always',
     },
   },
 });
