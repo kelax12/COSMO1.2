@@ -272,12 +272,12 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   async shareTask(input: ShareTaskInput): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
 
-    // Resolve the canonical auth.uid for the friend. The frontend may pass
-    // either the friend's auth.uid (preferred — works directly) or, when the
-    // profile lookup hasn't populated friend.userId, the friends-table row
-    // id (random UUID, fails the FK to auth.users). To handle both cases
-    // robustly, we always try to look up the auth.uid from the profiles
-    // table by email when an email is provided.
+    // Convention DB (migration fix_task_sharing_unified) :
+    //   shared_tasks.friend_id = auth.users.id du destinataire
+    //   shared_tasks.shared_by = auth.users.id du partageur (= caller)
+    // Le FK shared_tasks.friend_id → auth.users(id) interdit toute autre
+    // valeur (notamment friends.id). On résout donc l'auth.uid canonique
+    // via la table profiles, par email.
     let friendUserId = input.friendId;
     if (input.friendEmail) {
       const { data: profile } = await supabase
@@ -288,20 +288,26 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       if (profile?.id) friendUserId = profile.id as string;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { error } = await supabase
       .from('shared_tasks')
-      .upsert([{
-        task_id: input.taskId,
-        friend_id: friendUserId,
-        role: input.role || 'viewer'
-      }]);
+      .upsert(
+        [{
+          task_id: input.taskId,
+          friend_id: friendUserId,
+          shared_by: user.id,
+          role: input.role || 'viewer',
+        }],
+        { onConflict: 'task_id,friend_id' },
+      );
 
     if (error) {
-      // FK violation usually means we couldn't resolve auth.uid (profile
-      // missing). Surface a clearer message so the user knows the friend
-      // hasn't fully registered yet rather than a generic error.
       const code = (error as { code?: string }).code;
       if (code === '23503') {
+        // FK violation : friend_id n'existe pas dans auth.users — le copain
+        // n'est pas inscrit ou son profil n'a pas été résolu.
         throw new Error(
           "Le collaborateur n'est pas (encore) inscrit sur Cosmo. " +
           "Demande-lui de se connecter au moins une fois, puis réessaie."
