@@ -73,17 +73,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Demo mode is sticky once entered. Without this guard, a token-refresh event
       // racing with loginDemo() would snap the user out of demo and start hitting
       // Supabase repositories mid-session (faille B7).
       if (appModeStore.isDemo) return;
-      appModeStore.setDemo(!session && !isSupabaseConfigured);
-      resetRepositories();
-      queryClient.clear();
+
+      // Only blow away the query cache + repositories on an actual identity
+      // change. Token refresh fires periodically (and on mobile, also on
+      // visibility/focus events), and INITIAL_SESSION fires once on mount —
+      // both of these are NOT identity changes. Clearing the React Query
+      // cache on every refresh cancelled the in-flight `useTasks` query
+      // mid-fetch, leaving the page stuck on the loading skeleton on mobile
+      // where these events are more frequent.
+      const isIdentityChange = event === 'SIGNED_IN' || event === 'SIGNED_OUT';
+      if (isIdentityChange) {
+        appModeStore.setDemo(!session && !isSupabaseConfigured);
+        resetRepositories();
+        queryClient.clear();
+      }
+
       if (session?.user) {
         setUser(mapSupabaseUserToAppUser(session.user));
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
       }
       setIsLoading(false);
