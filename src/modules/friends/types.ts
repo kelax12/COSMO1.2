@@ -25,7 +25,15 @@ export interface FriendRequestInput {
  */
 export interface ShareTaskInput {
   taskId: string;
+  /**
+   * The friend's auth.users.id. If the caller only has the friends-table
+   * row id (e.g. when migration 018 hasn't backfilled the friend's
+   * profile yet), pass `friendEmail` as well so shareTask can resolve
+   * the canonical auth.uid before inserting into shared_tasks.
+   */
   friendId: string;
+  /** Optional fallback resolver — resolved via the profiles table. */
+  friendEmail?: string;
   role?: 'viewer' | 'editor';
 }
 

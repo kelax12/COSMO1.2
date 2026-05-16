@@ -235,9 +235,19 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
           addTaskToListMutation.mutate({ taskId: newTask.id, listId });
         });
         
-        // Partager avec les collaborateurs si Premium
+        // Partager avec les collaborateurs si Premium. Passe l'email pour
+        // que shareTask puisse résoudre le auth.uid canonique via profiles,
+        // même si `userId` est en réalité le friend.id (pas le auth.uid).
         if (collaborators.length > 0 && isPremium()) {
-          collaborators.forEach((userId) => shareTaskMutation.mutate({ taskId: newTask.id, friendId: userId, role: 'editor' }));
+          collaborators.forEach((userId) => {
+            const friend = friends?.find(f => (f.userId ?? f.id) === userId || f.id === userId);
+            shareTaskMutation.mutate({
+              taskId: newTask.id,
+              friendId: userId,
+              friendEmail: friend?.email,
+              role: 'editor'
+            });
+          });
         }
         
         handleFormToggle(false);
