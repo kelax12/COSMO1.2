@@ -292,6 +292,13 @@ const SettingsPage: React.FC = () => {
         } else {
           const { error } = await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
           if (error) { toast.error('Impossible de mettre à jour la photo'); return; }
+          // Mirror to `profiles` so other users can see the updated avatar
+          // (auth.user_metadata is private and not visible to other users).
+          await supabase.from('profiles').upsert({
+            id: (await supabase.auth.getUser()).data.user?.id,
+            email: (await supabase.auth.getUser()).data.user?.email,
+            avatar_url: dataUrl,
+          });
         }
         toast.success('Photo de profil mise à jour');
       };
@@ -312,6 +319,12 @@ const SettingsPage: React.FC = () => {
         } else {
           const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
           if (error) { toast.error('Impossible de supprimer la photo'); return; }
+          // Also clear in profiles so friends see the removal immediately.
+          await supabase.from('profiles').upsert({
+            id: (await supabase.auth.getUser()).data.user?.id,
+            email: (await supabase.auth.getUser()).data.user?.email,
+            avatar_url: null,
+          });
         }
         toast.success('Photo supprimée');
       },
