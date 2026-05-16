@@ -15,6 +15,7 @@ import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 import MobileCollapsible from '../components/MobileCollapsible';
+import SharedTasksHistory from '../components/SharedTasksHistory';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
@@ -373,6 +374,7 @@ const DashboardPage: React.FC = () => {
             <MobileCollapsible title="Demandes sociales">
               <SocialRequests />
             </MobileCollapsible>
+            <SharedTasksHistory />
           </motion.div>
         </motion.div>
 

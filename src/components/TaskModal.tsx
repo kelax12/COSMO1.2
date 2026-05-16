@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
-import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react';
+import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2, Clock } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -40,7 +40,7 @@ import { useCategories, useCreateCategory } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
-import { useFriends, useSendFriendRequest, useShareTask } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useShareTask, useSentFriendRequests } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -81,6 +81,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const createListMutation = useCreateList();
 
   const { data: friends = [] } = useFriends();
+  const { data: sentRequests = [] } = useSentFriendRequests();
   const shareTaskMutation = useShareTask();
   const sendFriendRequestMutation = useSendFriendRequest();
 
@@ -133,6 +134,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   ];
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
+  const autoPromoteDoneRef = useRef<Set<string>>(new Set());
 
   const getCategoryColor = (id: string) => {
     return categories.find((cat) => cat.id === id)?.color || '#9CA3AF';
@@ -233,6 +235,49 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     // to step 1 mid-flow.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, task?.id, isCreating, showCollaborators, lists.length]);
+
+  // Auto-promote pending invites that have since become friends
+  useEffect(() => {
+    if (!isOpen || !task || isCreating || !friends.length) return;
+    const pending = task.pendingInvites ?? [];
+    if (!pending.length) return;
+
+    const toPromote = pending.filter(email => {
+      const key = `${task.id}:${email}`;
+      if (autoPromoteDoneRef.current.has(key)) return false;
+      return friends.some(f => f.email.toLowerCase() === email.toLowerCase());
+    });
+    if (!toPromote.length) return;
+
+    toPromote.forEach(email => autoPromoteDoneRef.current.add(`${task.id}:${email}`));
+
+    const promotedNames: string[] = [];
+    const extraCollaborators: string[] = [];
+    toPromote.forEach(email => {
+      const friend = friends.find(f => f.email.toLowerCase() === email.toLowerCase());
+      if (!friend) return;
+      if (!(task.collaborators ?? []).includes(friend.id)) {
+        extraCollaborators.push(friend.id);
+      }
+      promotedNames.push(friend.name);
+      if (isPremium()) {
+        shareTaskMutation.mutate({ taskId: task.id, friendId: friend.id, role: 'editor' });
+      }
+    });
+
+    const newPendingEmails = new Set(toPromote.map(e => e.toLowerCase()));
+    const newPendingInvites = pending.filter(e => !newPendingEmails.has(e.toLowerCase()));
+
+    updateTaskMutation.mutate({
+      id: task.id,
+      updates: {
+        pendingInvites: newPendingInvites,
+        collaborators: [...(task.collaborators ?? []), ...extraCollaborators],
+      }
+    });
+    toast.success(`🎉 ${promotedNames.join(', ')} ${promotedNames.length > 1 ? 'ont rejoint' : 'a rejoint'} la tâche !`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, task?.id, friends.length]);
 
   // Track changes
   useEffect(() => {
@@ -1228,6 +1273,50 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 <p className="text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
                               )}
                             </div>
+
+                            {/* Pending outgoing friend requests — selectable as future collaborators */}
+                            {(() => {
+                              const pendingContacts = sentRequests.filter(req =>
+                                !collaborators.includes(req.email) &&
+                                !pendingInvitesLocal.includes(req.email) &&
+                                !friends.some(f => f.email.toLowerCase() === req.email.toLowerCase()) &&
+                                (searchUser === '' || req.email.toLowerCase().includes(searchUser.toLowerCase()))
+                              );
+                              if (!pendingContacts.length) return null;
+                              return (
+                                <div className="mt-3">
+                                  <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5 mb-2">
+                                    <Clock size={12} />
+                                    Demandes d'amis en attente
+                                  </p>
+                                  <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                                    {pendingContacts.map(req => (
+                                      <button
+                                        key={req.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const email = req.email.toLowerCase();
+                                          if (!collaborators.includes(email)) {
+                                            setCollaborators(prev => [...prev, email]);
+                                            setPendingInvitesLocal(prev => [...prev, email]);
+                                          }
+                                        }}
+                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-left"
+                                      >
+                                        <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                                          <Clock size={14} className="text-amber-600 dark:text-amber-400" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{req.email}</p>
+                                          <p className="text-xs text-amber-600 dark:text-amber-400">En attente d'acceptation</p>
+                                        </div>
+                                        <UserPlus size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                             {/* Selected collaborators */}
                             {collaborators.length > 0 && (
