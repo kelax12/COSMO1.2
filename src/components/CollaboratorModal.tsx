@@ -33,10 +33,15 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const assignedCollaborators = task?.collaborators || [];
 
+  // A friend's canonical "collaborator id" is their auth.users.id (userId),
+  // required by Supabase RLS + shared_tasks FK. Falls back to friend.id in
+  // demo mode where there's no auth.
+  const collabIdOf = (f: { id: string; userId?: string }) => f.userId ?? f.id;
+
   const availableFriends = useMemo(
     () =>
       (friends || []).filter(
-        (friend) => !assignedCollaborators.includes(friend.id) &&
+        (friend) => !assignedCollaborators.includes(collabIdOf(friend)) &&
           (search.trim() === '' ||
             friend.name.toLowerCase().includes(search.toLowerCase()) ||
             friend.email.toLowerCase().includes(search.toLowerCase()))
@@ -67,24 +72,24 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     const friend = friends.find(f => f.email.toLowerCase() === value);
 
     if (friend) {
-      // Store collaborator by stable friend.id (UUID), not by name (which can
-      // collide / change). Aligns with AddTaskForm + TaskModal. Faille D1/D3.
-      if (!assignedCollaborators.includes(friend.id)) {
+      // Store the friend's auth.uid (via userId) — required so RLS on
+      // tasks.collaborators and the shared_tasks.friend_id FK accept it.
+      // Falls back to friend.id in demo mode.
+      const collabId = collabIdOf(friend);
+      if (!assignedCollaborators.includes(collabId)) {
         updateTaskMutation.mutate({
           id: task.id,
           updates: {
             isCollaborative: true,
-            collaborators: [...assignedCollaborators, friend.id],
+            collaborators: [...assignedCollaborators, collabId],
             collaboratorValidations: {
               ...task.collaboratorValidations,
-              [friend.id]: false
+              [collabId]: false
             }
           }
         });
-        // Actually grant RLS access by inserting a shared_tasks row.
-        // Gated by premium status, matching AddTaskForm behaviour. Faille B1.
         if (isPremium()) {
-          shareTaskMutation.mutate({ taskId: task.id, friendId: friend.id, role: 'editor' });
+          shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, role: 'editor' });
         }
       }
     } else {
@@ -118,13 +123,13 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     setInput('');
   };
 
-  const handleToggleFriend = (friendId: string) => {
+  const handleToggleFriend = (collabId: string) => {
     if (!task) return;
-    // Always operate on the stable friend.id. Faille D1/D3.
-    if (assignedCollaborators.includes(friendId)) {
-      const newCollaborators = assignedCollaborators.filter((c) => c !== friendId);
+    // `collabId` = friend's auth.uid (or friend.id in demo).
+    if (assignedCollaborators.includes(collabId)) {
+      const newCollaborators = assignedCollaborators.filter((c) => c !== collabId);
       const newValidations = { ...task.collaboratorValidations };
-      delete newValidations[friendId];
+      delete newValidations[collabId];
       updateTaskMutation.mutate({
         id: task.id,
         updates: {
@@ -138,16 +143,15 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         id: task.id,
         updates: {
           isCollaborative: true,
-          collaborators: [...assignedCollaborators, friendId],
+          collaborators: [...assignedCollaborators, collabId],
           collaboratorValidations: {
             ...task.collaboratorValidations,
-            [friendId]: false
+            [collabId]: false
           }
         }
       });
-      // Actually grant RLS access — premium-gated. Faille B1.
       if (isPremium()) {
-        shareTaskMutation.mutate({ taskId: task.id, friendId, role: 'editor' });
+        shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, role: 'editor' });
       }
     }
   };
@@ -171,7 +175,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   };
 
   const displayInfo = (id: string) => {
-    const friend = friends?.find((f) => f.id === id || f.name === id);
+    const friend = friends?.find((f) => collabIdOf(f) === id || f.id === id || f.name === id);
     if (friend) {
       return { name: friend.name, email: friend.email, avatar: friend.avatar, isPending: false };
     }
@@ -371,17 +375,20 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                    {availableFriends.map((friend) => (
-                      <CollaboratorItem
-                        key={friend.id}
-                        id={friend.id}
-                        name={friend.name}
-                        email={friend.email}
-                        avatar={friend.avatar}
-                        onAction={() => handleToggleFriend(friend.id)}
-                        variant="add"
-                      />
-                    ))}
+                    {availableFriends.map((friend) => {
+                      const collabId = collabIdOf(friend);
+                      return (
+                        <CollaboratorItem
+                          key={friend.id}
+                          id={collabId}
+                          name={friend.name}
+                          email={friend.email}
+                          avatar={friend.avatar}
+                          onAction={() => handleToggleFriend(collabId)}
+                          variant="add"
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </section>

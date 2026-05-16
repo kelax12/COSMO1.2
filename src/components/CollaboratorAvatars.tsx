@@ -27,7 +27,7 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
   return (
     <AvatarGroup className={className}>
       {visible.map((name, index) => {
-        const friend = friends.find(f => f.name === name || f.id === name);
+        const friend = friends.find(f => f.userId === name || f.id === name || f.name === name);
         const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
         return (
