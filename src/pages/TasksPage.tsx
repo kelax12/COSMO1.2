@@ -26,7 +26,7 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
-  const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
+  const { data: tasks = [], isLoading: isLoadingTasks, isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
 
 
   // ═══════════════════════════════════════════════════════════════════
@@ -212,6 +212,29 @@ const TasksPage: React.FC = () => {
     { value: 'pink', color: '#EC4899', name: 'Rose' },
     { value: 'indigo', color: '#6366F1', name: 'Indigo' },
   ];
+
+  // Error state — shows up if useTasks fails (network, RLS denial, etc.)
+  // Without this, an error was silently swallowed and the page sat on the
+  // loading skeleton, looking blank to the user.
+  if (isTasksError) {
+    return (
+      <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
+        <div className="text-5xl">⚠️</div>
+        <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">
+          Impossible de charger les tâches
+        </h2>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
+          {(tasksError as Error)?.message || 'Vérifie ta connexion internet, puis réessaie.'}
+        </p>
+        <button
+          onClick={() => refetchTasks()}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   // Loading state
   if (isLoadingTasks) {
