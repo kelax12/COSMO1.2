@@ -17,7 +17,7 @@ import { useHabits } from '@/modules/habits';
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
-  const { data: habits = [], isLoading } = useHabits();
+  const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
@@ -27,6 +27,26 @@ const HabitsPage: React.FC = () => {
     const completedToday = habits.filter(habit => habit.completions[today]).length;
     return Math.round((completedToday / habits.length) * 100);
   };
+
+  if (isError) {
+    return (
+      <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
+        <div className="text-5xl">⚠️</div>
+        <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">
+          Impossible de charger les habitudes
+        </h2>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
+          {(error as Error)?.message || 'Vérifie ta connexion internet, puis réessaie.'}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
