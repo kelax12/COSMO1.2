@@ -153,10 +153,17 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     };
   }, [showCollaboratorSection]);
 
+  // Reset to step 1 ONLY when the modal opens. Putting `setStep(1)` inside
+  // the form-init effect (with `lists`/`task` in its deps) caused the modal
+  // to bounce back to step 1 every time a mutation invalidated the React
+  // Query cache — typically when sending a friend request from step 2.
+  useEffect(() => {
+    if (isOpen) setStep(1);
+  }, [isOpen]);
+
   // Initialize form data when task changes
   useEffect(() => {
     if (!isOpen) return;
-    setStep(1);
 
     if (isCreating) {
       setFormData({
@@ -219,7 +226,13 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       setErrors({});
       setShowCollaboratorSection(showCollaborators || (task.collaborators && task.collaborators.length > 0) || false);
     }
-  }, [isOpen, task, isCreating, showCollaborators, lists]);
+    // Use `task?.id` and `lists.length` instead of full-object/full-array
+    // references — those churn on every React Query refetch and would
+    // wipe in-flight form edits. Also de-tied from `setStep` (see effect
+    // above) so a friend-request mutation no longer kicks the user back
+    // to step 1 mid-flow.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, task?.id, isCreating, showCollaborators, lists.length]);
 
   // Track changes
   useEffect(() => {
