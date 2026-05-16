@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { toast } from 'sonner';
 import { getTasksRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
+import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { taskKeys } from './constants';
@@ -29,7 +30,7 @@ export const useTasks = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
   return useQuery({
     queryKey: taskKeys.lists(),
-    queryFn: () => repository.getAll(),
+    queryFn: () => withTimeout(repository.getAll(), 10_000),
     enabled: options?.enabled ?? true,
   });
 };

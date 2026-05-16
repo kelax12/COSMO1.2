@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getHabitsRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
+import { withTimeout } from '@/lib/withTimeout';
 import { IHabitsRepository } from './repository';
 import { CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
@@ -21,7 +22,7 @@ export const useHabits = () => {
   const repository = useHabitsRepository();
   return useQuery({
     queryKey: habitKeys.lists(),
-    queryFn: () => repository.fetchHabits(),
+    queryFn: () => withTimeout(repository.fetchHabits(), 10_000),
     staleTime: 1000 * 60 * 2, // 2 minutes — les habitudes se cochent souvent
   });
 };
