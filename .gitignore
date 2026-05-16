@@ -89,3 +89,6 @@ vite.config.ts.timestamp-*
 .env
 .env.local
 .env.production
+
+# Deepsec scanner workspace — local-only, contains ANTHROPIC_API_KEY
+.deepsec/

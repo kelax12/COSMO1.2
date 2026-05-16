@@ -121,13 +121,14 @@ function SectionCard({ children, className = '' }: { children: React.ReactNode; 
 const SettingsPage: React.FC = () => {
   useFonts();
 
-  const { user, logout } = useAuth();
+  const { user, logout, isDemo } = useAuth();
   const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
@@ -138,14 +139,41 @@ const SettingsPage: React.FC = () => {
   const [confirmInput, setConfirmInput] = useState('');
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
 
+  // Local edit state for the profile form. The inputs are now controlled
+  // independently from `user.*` (which is the Supabase session truth) so
+  // typing has a visible effect, and we push the change to Supabase on save
+  // rather than to a localStorage key the production identity never reads.
+  // Faille B7.
+  const [profileDraft, setProfileDraft] = useState({ name: '', email: '' });
+  useEffect(() => {
+    if (user) setProfileDraft({ name: user.name, email: user.email });
+  }, [user?.id, user?.name, user?.email]);
+
   if (!user) return null;
 
   const handleSaveProfile = async () => {
+    const name = profileDraft.name.trim();
+    const email = profileDraft.email.trim();
+    if (!name) { toast.error('Le nom ne peut pas être vide'); return; }
+    if (!email) { toast.error("L'email ne peut pas être vide"); return; }
     setSavingProfile(true);
     try {
-      const { error } = await supabase.auth.updateUser({ data: { name: user?.name } });
-      if (error) { toast.error(error.message); return; }
-      toast.success('Profil mis à jour !');
+      if (isDemo) {
+        // Demo mode: persist locally so the UI reflects the change for the
+        // session. Real users go through Supabase.
+        updateUserSettings({ name, email });
+        toast.success('Profil mis à jour (mode démo)');
+        return;
+      }
+      const payload: { data: { name: string }; email?: string } = { data: { name } };
+      if (email !== user.email) payload.email = email;
+      const { error } = await supabase.auth.updateUser(payload);
+      if (error) { console.error('[SettingsPage] updateUser:', error); toast.error('Impossible de mettre à jour le profil'); return; }
+      if (payload.email) {
+        toast.success('Profil mis à jour — vérifiez votre boîte mail pour confirmer le changement d\'email.');
+      } else {
+        toast.success('Profil mis à jour !');
+      }
     } catch { toast.error('Une erreur inattendue est survenue'); }
     finally { setSavingProfile(false); }
   };
@@ -155,11 +183,24 @@ const SettingsPage: React.FC = () => {
     if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error('Veuillez remplir tous les champs'); return; }
     if (passwords.new !== passwords.confirm) { toast.error('Les nouveaux mots de passe ne correspondent pas'); return; }
     if (passwords.new.length < 8) { toast.error('Le mot de passe doit contenir au moins 8 caractères'); return; }
+    if (passwords.current === passwords.new) { toast.error('Le nouveau mot de passe doit différer de l\'actuel'); return; }
     setSavingPassword(true);
     try {
       if (!supabase) { toast.error('Service non disponible'); return; }
+      if (isDemo) { toast.info('Changement de mot de passe désactivé en mode démo'); return; }
+      // Verify the current password before rotating. supabase.auth.updateUser
+      // does NOT enforce knowledge of the current password — without this step
+      // anyone with a hijacked session can lock the user out. Faille B8.
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwords.current,
+      });
+      if (reauthError) {
+        toast.error('Mot de passe actuel incorrect');
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password: passwords.new });
-      if (error) { toast.error(error.message || 'Erreur lors de la mise à jour'); return; }
+      if (error) { console.error('[SettingsPage] password update:', error); toast.error('Erreur lors de la mise à jour du mot de passe'); return; }
       toast.success('Mot de passe mis à jour !');
       setPasswords({ current: '', new: '', confirm: '' });
     } catch { toast.error('Une erreur inattendue est survenue'); }
@@ -169,11 +210,38 @@ const SettingsPage: React.FC = () => {
   const handleDeleteAccount = () => {
     setConfirmConfig({
       isOpen: true, title: 'Supprimer le compte ?',
-      description: 'Cette action est irréversible. Toutes vos données seront perdues. Tapez "DELETE" pour confirmer.',
+      description: 'Cette action est irréversible. Toutes vos données (tâches, habitudes, OKRs, événements, amis) seront supprimées définitivement. Tapez "DELETE" pour confirmer.',
       variant: 'destructive', showInput: true, confirmationText: 'DELETE',
       onConfirm: async () => {
-        try { toast.info('Demande enregistrée', { description: 'Contactez support@cosmo.app si nécessaire.' }); }
-        finally { await logout(); navigate('/'); }
+        setDeletingAccount(true);
+        try {
+          if (isDemo) {
+            toast.success('Compte démo effacé');
+            await logout();
+            navigate('/');
+            return;
+          }
+          // Call the `delete-account` Edge Function (uses service_role to
+          // remove the auth user + all user-owned rows). Falls back to a
+          // support-email message if the function isn't deployed yet —
+          // honest copy rather than silently doing nothing. Faille B9.
+          const { error } = await supabase.functions.invoke('delete-account');
+          if (error) {
+            toast.error('La suppression automatique a échoué', {
+              description: 'Contactez support@cosmo.app — votre demande sera traitée manuellement.',
+            });
+            return;
+          }
+          toast.success('Compte supprimé');
+          await logout();
+          navigate('/');
+        } catch {
+          toast.error('Erreur réseau', {
+            description: 'Réessayez ou contactez support@cosmo.app.',
+          });
+        } finally {
+          setDeletingAccount(false);
+        }
       },
     });
     setConfirmInput('');
@@ -205,18 +273,25 @@ const SettingsPage: React.FC = () => {
         return;
       }
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const MAX_DIM = 256;
         const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          updateUserSettings({ avatar: result });
+        const dataUrl = ctx
+          ? (ctx.drawImage(img, 0, 0, canvas.width, canvas.height), canvas.toDataURL('image/jpeg', 0.85))
+          : result;
+        // Persist avatar to the same source the UI reads from. In demo mode
+        // that's localStorage via useUpdateUserSettings; in prod that's the
+        // Supabase user_metadata. The old path always wrote to localStorage
+        // which `useAuth` never reads → silent loss on reload. Faille B7.
+        if (isDemo) {
+          updateUserSettings({ avatar: dataUrl });
         } else {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          updateUserSettings({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
+          const { error } = await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
+          if (error) { toast.error('Impossible de mettre à jour la photo'); return; }
         }
         toast.success('Photo de profil mise à jour');
       };
@@ -231,7 +306,15 @@ const SettingsPage: React.FC = () => {
       isOpen: true, title: 'Supprimer la photo ?',
       description: 'Êtes-vous sûr de vouloir supprimer votre photo de profil ?',
       variant: 'destructive',
-      onConfirm: () => { updateUserSettings({ avatar: undefined }); toast.success('Photo supprimée'); },
+      onConfirm: async () => {
+        if (isDemo) {
+          updateUserSettings({ avatar: undefined });
+        } else {
+          const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
+          if (error) { toast.error('Impossible de supprimer la photo'); return; }
+        }
+        toast.success('Photo supprimée');
+      },
     });
   };
 
@@ -384,8 +467,8 @@ const SettingsPage: React.FC = () => {
               <SectionCard>
                 <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <LabeledInput label="Nom complet" icon={User} value={user.name} onChange={(e) => updateUserSettings({ name: e.target.value })} placeholder="Votre nom" />
-                  <LabeledInput label="Adresse email" type="email" icon={Mail} value={user.email} onChange={(e) => updateUserSettings({ email: e.target.value })} placeholder="votre@email.com" />
+                  <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
+                  <LabeledInput label="Adresse email" type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" />
                 </div>
                 <div className="flex justify-end mt-5">
                   <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
@@ -519,10 +602,13 @@ const SettingsPage: React.FC = () => {
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">Annuler</AlertDialogCancel>
             <AlertDialogAction
-              disabled={confirmConfig.showInput && confirmInput !== confirmConfig.confirmationText}
+              disabled={
+                deletingAccount ||
+                (confirmConfig.showInput && confirmInput !== confirmConfig.confirmationText)
+              }
               onClick={() => { confirmConfig.onConfirm(); setConfirmConfig(prev => ({ ...prev, isOpen: false })); }}
               className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50">
-              Confirmer
+              {deletingAccount ? 'Suppression…' : 'Confirmer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

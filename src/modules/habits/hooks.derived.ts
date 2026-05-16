@@ -1,31 +1,45 @@
 // ═══════════════════════════════════════════════════════════════════
 // HABITS MODULE - Derived/Computed Hooks (Performance Optimized)
+//
+// All helpers consume the canonical Habit shape (`completions:
+// Record<string, boolean>`) — the previous version of this file read a
+// non-existent `completedDates` field which silently returned zeros.
+// Faille B5.
 // ═══════════════════════════════════════════════════════════════════
 
 import { useMemo } from 'react';
 import { useHabits } from './hooks';
 import { Habit, HabitFrequency } from './types';
 
+// Convert the completions map to a list of ISO date strings (only the keys
+// where the value is true).
+const completedDatesFromCompletions = (
+  completions: Record<string, boolean> | undefined
+): string[] => {
+  if (!completions) return [];
+  const result: string[] = [];
+  for (const date in completions) {
+    if (completions[date]) result.push(date);
+  }
+  return result;
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // STREAK CALCULATIONS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Calculate current streak for a habit
- */
 const calculateStreak = (completedDates: string[]): number => {
   if (completedDates.length === 0) return 0;
 
   const sorted = [...completedDates].sort().reverse();
   const today = new Date().toISOString().split('T')[0];
-  
-  // Check if today or yesterday is completed
+
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
-  
+
   if (sorted[0] !== today && sorted[0] !== yesterdayStr) {
-    return 0; // Streak broken
+    return 0;
   }
 
   let streak = 1;
@@ -33,21 +47,14 @@ const calculateStreak = (completedDates: string[]): number => {
     const curr = new Date(sorted[i - 1]);
     const prev = new Date(sorted[i]);
     const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diffDays === 1) {
-      streak++;
-    } else {
-      break;
-    }
+    if (diffDays === 1) streak++;
+    else break;
   }
-
   return streak;
 };
 
-/**
- * Calculate completion rate for last N days
- */
 const calculateCompletionRate = (completedDates: string[], days: number): number => {
+  if (days <= 0) return 0;
   const now = new Date();
   const startDate = new Date();
   startDate.setDate(now.getDate() - days);
@@ -64,28 +71,25 @@ const calculateCompletionRate = (completedDates: string[], days: number): number
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get habits with calculated streaks and stats
- */
 export const useHabitsWithStats = () => {
   const { data: habits = [], ...rest } = useHabits();
 
   const enriched = useMemo(() => {
-    return habits.map((habit) => ({
-      ...habit,
-      currentStreak: calculateStreak(habit.completedDates || []),
-      completionRate7Days: calculateCompletionRate(habit.completedDates || [], 7),
-      completionRate30Days: calculateCompletionRate(habit.completedDates || [], 30),
-      totalCompletions: habit.completedDates?.length || 0,
-    }));
+    return habits.map((habit) => {
+      const dates = completedDatesFromCompletions(habit.completions);
+      return {
+        ...habit,
+        currentStreak: calculateStreak(dates),
+        completionRate7Days: calculateCompletionRate(dates, 7),
+        completionRate30Days: calculateCompletionRate(dates, 30),
+        totalCompletions: dates.length,
+      };
+    });
   }, [habits]);
 
   return { data: enriched, ...rest };
 };
 
-/**
- * Get habits grouped by frequency
- */
 export const useHabitsByFrequency = () => {
   const { data: habits = [], ...rest } = useHabits();
 
@@ -95,62 +99,39 @@ export const useHabitsByFrequency = () => {
       weekly: [],
       monthly: [],
     };
-
     habits.forEach((habit) => {
-      const freq = habit.frequency || 'daily';
-      if (result[freq]) {
-        result[freq].push(habit);
-      }
+      const freq: HabitFrequency = habit.frequency || 'daily';
+      if (result[freq]) result[freq].push(habit);
     });
-
     return result;
   }, [habits]);
 
   return { data: grouped, ...rest };
 };
 
-/**
- * Get habit statistics
- */
 export const useHabitStats = () => {
   const { data: habits = [], ...rest } = useHabits();
 
   const stats = useMemo(() => {
     const total = habits.length;
     const today = new Date().toISOString().split('T')[0];
-    
-    const completedToday = habits.filter((h) =>
-      h.completedDates?.includes(today)
-    ).length;
 
-    const totalCompletions = habits.reduce(
-      (sum, h) => sum + (h.completedDates?.length || 0),
-      0
-    );
+    const dateLists = habits.map((h) => completedDatesFromCompletions(h.completions));
+
+    const completedToday = dateLists.filter((dates) => dates.includes(today)).length;
+    const totalCompletions = dateLists.reduce((sum, dates) => sum + dates.length, 0);
 
     const avgStreak =
       total > 0
-        ? Math.round(
-            habits.reduce(
-              (sum, h) => sum + calculateStreak(h.completedDates || []),
-              0
-            ) / total
-          )
+        ? Math.round(dateLists.reduce((sum, dates) => sum + calculateStreak(dates), 0) / total)
         : 0;
 
-    const longestStreak = habits.reduce(
-      (max, h) => Math.max(max, calculateStreak(h.completedDates || [])),
-      0
-    );
+    const longestStreak = dateLists.reduce((max, dates) => Math.max(max, calculateStreak(dates)), 0);
 
     const avgCompletionRate7Days =
       total > 0
         ? Math.round(
-            habits.reduce(
-              (sum, h) =>
-                sum + calculateCompletionRate(h.completedDates || [], 7),
-              0
-            ) / total
+            dateLists.reduce((sum, dates) => sum + calculateCompletionRate(dates, 7), 0) / total
           )
         : 0;
 
@@ -168,15 +149,13 @@ export const useHabitStats = () => {
   return { data: stats, ...rest };
 };
 
-/**
- * Get habits that need attention (low completion rate)
- */
 export const useHabitsNeedingAttention = (thresholdPercent: number = 50) => {
   const { data: habits = [], ...rest } = useHabits();
 
   const filtered = useMemo(() => {
     return habits.filter((habit) => {
-      const rate = calculateCompletionRate(habit.completedDates || [], 7);
+      const dates = completedDatesFromCompletions(habit.completions);
+      const rate = calculateCompletionRate(dates, 7);
       return rate < thresholdPercent;
     });
   }, [habits, thresholdPercent]);
@@ -184,22 +163,21 @@ export const useHabitsNeedingAttention = (thresholdPercent: number = 50) => {
   return { data: filtered, ...rest };
 };
 
-/**
- * Get today's habit status
- */
 export const useTodaysHabitStatus = () => {
   const { data: habits = [], ...rest } = useHabits();
 
   const status = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    
-    return habits.map((habit) => ({
-      id: habit.id,
-      name: habit.name,
-      color: habit.color,
-      isCompletedToday: habit.completedDates?.includes(today) || false,
-      currentStreak: calculateStreak(habit.completedDates || []),
-    }));
+    return habits.map((habit) => {
+      const dates = completedDatesFromCompletions(habit.completions);
+      return {
+        id: habit.id,
+        name: habit.name,
+        color: habit.color,
+        isCompletedToday: dates.includes(today),
+        currentStreak: calculateStreak(dates),
+      };
+    });
   }, [habits]);
 
   return { data: status, ...rest };

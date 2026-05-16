@@ -57,6 +57,20 @@ let friendsRepository: IFriendsRepository | null = null;
 let okrsRepository: IOKRsRepository | null = null;
 let krCompletionsRepository: IKRCompletionsRepository | null = null;
 
+// Auto-reset singletons whenever the demo flag flips. Without this, any
+// code path that calls `appModeStore.setDemo(...)` outside `loginDemo()`
+// leaves stale repositories pointing at the wrong backend (faille B20).
+appModeStore.subscribe(() => {
+  tasksRepository = null;
+  habitsRepository = null;
+  eventsRepository = null;
+  categoriesRepository = null;
+  listsRepository = null;
+  friendsRepository = null;
+  okrsRepository = null;
+  krCompletionsRepository = null;
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // FACTORY FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════
@@ -183,24 +197,29 @@ export function resetRepositories(): void {
 }
 
 /**
- * Efface les données démo du localStorage pour forcer le rechargement des seeds
+ * Efface les données démo du localStorage pour forcer le rechargement des seeds.
+ *
+ * Faille B21 — the previous version enumerated keys manually and silently
+ * skipped any new demo key. Sweep every `cosmo_*` key plus the legacy
+ * un-prefixed ones the older modules wrote.
  */
 export function clearDemoStorage(): void {
-  const DEMO_KEYS = [
-    'cosmo_demo_tasks',
-    'cosmo_demo_habits',
-    'cosmo_demo_events',
+  const LEGACY_KEYS = [
     'cosmo-okrs',
     'cosmo-okrs-v2',
     'cosmo-okrs-v3',
     'cosmo-okrs-v4',
     'cosmo-okrs-v5',
-    'cosmo_demo_kr_completions',
-    'cosmo_categories',
-    'cosmo_lists',
-    'cosmo_friends',
-    'cosmo_friend_requests',
-    'cosmo_shared_tasks',
+    'cosmo_user',
+    'cosmo_messages',
   ];
-  DEMO_KEYS.forEach(key => localStorage.removeItem(key));
+  LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
+  // Sweep every cosmo-namespaced key so newly-added demo modules are covered
+  // without having to remember to update this list.
+  const allKeys = Object.keys(localStorage);
+  for (const key of allKeys) {
+    if (key.startsWith('cosmo_demo_') || key.startsWith('cosmo_') || key.startsWith('cosmo-')) {
+      localStorage.removeItem(key);
+    }
+  }
 }

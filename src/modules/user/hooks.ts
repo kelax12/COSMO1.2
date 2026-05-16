@@ -8,20 +8,30 @@ import { DEMO_USER, USER_STORAGE_KEY, MESSAGES_STORAGE_KEY } from './constants';
 import { appModeStore } from '@/lib/app-mode.store';
 import { billingRepository } from '@/modules/billing/billing.repository';
 
+// Safe JSON.parse helper. Without this, a corrupted localStorage value (from
+// a browser extension, abrupt close mid-write, or manual devtools edit) makes
+// the settings page throw on mount via AppErrorBoundary. Faille B14.
+function safeParse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // USER HOOK
 // ═══════════════════════════════════════════════════════════════════
 
 export const useUser = () => {
-  const [user, setUser] = useState<User>(() => {
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : DEMO_USER;
-  });
+  const [user, setUser] = useState<User>(() =>
+    safeParse<User>(localStorage.getItem(USER_STORAGE_KEY), DEMO_USER)
+  );
 
   useEffect(() => {
     const handler = () => {
-      const stored = localStorage.getItem(USER_STORAGE_KEY);
-      setUser(stored ? JSON.parse(stored) : DEMO_USER);
+      setUser(safeParse<User>(localStorage.getItem(USER_STORAGE_KEY), DEMO_USER));
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
@@ -50,8 +60,7 @@ type UserSettingsPatch = Partial<Pick<User, UpdatableUserField>>;
 
 export const useUpdateUserSettings = () => {
   return useCallback((settings: UserSettingsPatch) => {
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
-    const user = stored ? JSON.parse(stored) : { ...DEMO_USER };
+    const user = safeParse<User>(localStorage.getItem(USER_STORAGE_KEY), { ...DEMO_USER });
     const safe: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(settings)) {
       if (UPDATABLE_USER_FIELDS.has(k as UpdatableUserField)) safe[k] = v;
@@ -69,11 +78,13 @@ export const useUpdateUserSettings = () => {
 export const useWatchAd = () => {
   return useCallback(async () => {
     if (appModeStore.isDemo) {
-      const stored = localStorage.getItem(USER_STORAGE_KEY);
-      const user = stored ? JSON.parse(stored) : { ...DEMO_USER };
+      const user = safeParse<Record<string, unknown>>(
+        localStorage.getItem(USER_STORAGE_KEY),
+        { ...DEMO_USER },
+      );
       const updated = {
         ...user,
-        premiumTokens: (user.premiumTokens || 0) + 1,
+        premiumTokens: ((user.premiumTokens as number | undefined) || 0) + 1,
         lastTokenConsumption: new Date().toISOString(),
       };
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
@@ -89,10 +100,9 @@ export const useWatchAd = () => {
 // ═══════════════════════════════════════════════════════════════════
 
 export const useMessages = () => {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const stored = localStorage.getItem(MESSAGES_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [messages, setMessages] = useState<Message[]>(() =>
+    safeParse<Message[]>(localStorage.getItem(MESSAGES_STORAGE_KEY), [])
+  );
 
   const markMessagesAsRead = useCallback(() => {
     setMessages(prev => {

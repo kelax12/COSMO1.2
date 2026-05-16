@@ -57,10 +57,15 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async getById(id: string): Promise<TaskList | null> {
     if (!supabase) throw new Error('Supabase not configured');
+    // Defense-in-depth: also scope by user_id even though RLS already does.
+    // Faille V15.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
     const { data, error } = await supabase
       .from('lists')
       .select('*')
       .eq('id', id)
+      .eq('user_id', user.id)
       .single();
 
     if (error) {
@@ -72,9 +77,12 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async getByTaskId(taskId: string): Promise<TaskList[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
     const { data, error } = await supabase
       .from('lists')
       .select('*')
+      .eq('user_id', user.id)
       .contains('task_ids', [taskId]);
 
     if (error) throw normalizeApiError(error);
@@ -107,12 +115,15 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async update(id: string, updates: UpdateListInput): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
       .from('lists')
       .update(dbUpdates)
       .eq('id', id)
+      .eq('user_id', user.id) // defense-in-depth, faille V15
       .select()
       .single();
 
@@ -122,10 +133,13 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async delete(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const { error } = await supabase
       .from('lists')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id); // defense-in-depth, faille V15
 
     if (error) throw normalizeApiError(error);
   }

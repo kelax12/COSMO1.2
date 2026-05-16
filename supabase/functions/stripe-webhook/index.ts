@@ -24,8 +24,33 @@ Deno.serve(async (req) => {
       Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '',
     )
   } catch (err) {
+    // Log the full error server-side, but never echo it back to anonymous
+    // callers — the message reveals webhook secret configuration state and
+    // SDK internals. Faille N9.
     console.error('Webhook signature verification failed:', err)
-    return new Response(`Webhook error: ${err.message}`, { status: 400 })
+    return new Response('Invalid signature', { status: 400 })
+  }
+
+  // Idempotency: Stripe retries events on transient failures and may deliver
+  // out-of-order. Persist event.id with PK conflict to short-circuit replays.
+  // Requires the `processed_stripe_events` table (migration 016). Faille N8.
+  const { error: dedupError } = await supabaseAdmin
+    .from('processed_stripe_events')
+    .insert({
+      id: event.id,
+      event_type: event.type,
+      created_at: new Date(event.created * 1000).toISOString(),
+    })
+  if (dedupError) {
+    // 23505 = unique_violation → already processed; safely skip.
+    const code = (dedupError as { code?: string }).code
+    if (code === '23505') {
+      return new Response(JSON.stringify({ received: true, deduped: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    // Other errors: log but don't drop the event — Stripe will retry.
+    console.error('processed_stripe_events insert error:', dedupError)
   }
 
   try {
@@ -59,6 +84,8 @@ Deno.serve(async (req) => {
   })
 })
 
+// ─── Event handlers ────────────────────────────────────────────────
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.mode !== 'subscription' || !session.subscription) return
 
@@ -69,13 +96,24 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-  await applySubscriptionToDb(supabaseUid, subscription, session.customer as string)
+  // Initial subscription: set tokens + reset win_streak to 1.
+  await applySubscriptionToDb(supabaseUid, subscription, session.customer as string, {
+    resetTokens: true,
+    resetWinStreak: true,
+  })
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const uid = await getUidFromCustomer(subscription.customer as string)
   if (!uid) return
-  await applySubscriptionToDb(uid, subscription, subscription.customer as string)
+  // Generic update event (billing address, payment method, etc.). Only sync
+  // plan/status/period_end — preserve tokens and win_streak. The previous
+  // implementation reset both on every event, destroying ad-earned tokens and
+  // clamping win_streak to {0, 1}. Faille B10/W6.
+  await applySubscriptionToDb(uid, subscription, subscription.customer as string, {
+    resetTokens: false,
+    resetWinStreak: false,
+  })
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -99,7 +137,11 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string)
   const uid = await getUidFromCustomer(invoice.customer as string)
   if (!uid) return
-  await applySubscriptionToDb(uid, subscription, invoice.customer as string)
+  // Renewal: refresh tokens AND increment win_streak by 1.
+  await applySubscriptionToDb(uid, subscription, invoice.customer as string, {
+    resetTokens: true,
+    incrementWinStreak: true,
+  })
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -113,10 +155,19 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     .eq('user_id', uid)
 }
 
+// ─── Persistence ───────────────────────────────────────────────────
+
+type ApplyOpts = {
+  resetTokens?: boolean
+  resetWinStreak?: boolean
+  incrementWinStreak?: boolean
+}
+
 async function applySubscriptionToDb(
   userId: string,
   subscription: Stripe.Subscription,
   customerId: string,
+  opts: ApplyOpts = {},
 ) {
   const isActive = subscription.status === 'active' || subscription.status === 'trialing'
   const periodEnd = new Date(subscription.current_period_end * 1000)
@@ -124,39 +175,45 @@ async function applySubscriptionToDb(
     ? Math.max(1, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0
 
+  // Read the existing row so we can preserve fields that should not be touched
+  // on every event (faille B10/W6).
+  const { data: existing } = await supabaseAdmin
+    .from('subscriptions')
+    .select('premium_tokens, win_streak')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  const currentTokens = existing?.premium_tokens ?? 0
+  const currentWinStreak = existing?.win_streak ?? 0
+
+  let nextTokens = currentTokens
+  if (opts.resetTokens) nextTokens = daysLeft
+  else if (!isActive) nextTokens = 0
+
+  let nextWinStreak = currentWinStreak
+  if (opts.resetWinStreak) nextWinStreak = isActive ? 1 : 0
+  else if (opts.incrementWinStreak && isActive) nextWinStreak = currentWinStreak + 1
+  else if (!isActive) nextWinStreak = 0
+
   const payload = {
+    user_id: userId,
     plan: isActive ? 'premium' : 'free',
     status: isActive ? 'active' : 'cancelled',
     current_period_end: isActive ? periodEnd.toISOString() : null,
-    premium_tokens: daysLeft,
-    win_streak: isActive ? 1 : 0,
+    premium_tokens: nextTokens,
+    win_streak: nextWinStreak,
     stripe_customer_id: customerId,
     stripe_subscription_id: subscription.id,
   }
 
-  // Try UPDATE first
-  const { data: updated, error: updateError } = await supabaseAdmin
+  // Atomic upsert keyed by user_id — replaces the previous UPDATE-then-INSERT
+  // pattern that had a race window producing duplicate-key errors. Faille U2.
+  const { error } = await supabaseAdmin
     .from('subscriptions')
-    .update(payload)
-    .eq('user_id', userId)
-    .select('id')
-    .maybeSingle()
-
-  if (updateError) {
-    console.error('applySubscriptionToDb update error:', updateError)
-    throw updateError
-  }
-
-  // If no row existed, INSERT
-  if (!updated) {
-    const { error: insertError } = await supabaseAdmin
-      .from('subscriptions')
-      .insert({ user_id: userId, ...payload })
-
-    if (insertError) {
-      console.error('applySubscriptionToDb insert error:', insertError)
-      throw insertError
-    }
+    .upsert(payload, { onConflict: 'user_id' })
+  if (error) {
+    console.error('applySubscriptionToDb upsert error:', error)
+    throw error
   }
 }
 

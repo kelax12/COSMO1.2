@@ -6,10 +6,14 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '0.0.0.0',
+    // Bind to all interfaces only when explicitly requested (mobile testing).
+    // Otherwise loopback to keep the dev server off shared networks. Faille N10.
+    host: process.env.VITE_HOST_ALL === 'true' ? '0.0.0.0' : 'localhost',
     port: 3000,
     strictPort: true,
-    allowedHosts: true
+    // Replaces `allowedHosts: true` (DNS-rebinding bypass). Add hostnames
+    // here when developing on a LAN, e.g. ['my-laptop.local'].
+    allowedHosts: ['localhost', '127.0.0.1'],
   },
   resolve: {
     alias: {

@@ -5,7 +5,8 @@ import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
 import { useTasks, useUpdateTask } from '@/modules/tasks';
-import { useFriends, useSendFriendRequest } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useShareTask } from '@/modules/friends';
+import { useBilling } from '@/modules/billing/billing.context';
 
 type CollaboratorModalProps = {
   isOpen: boolean;
@@ -22,6 +23,8 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const { data: friends = [] } = useFriends();
   const sendFriendRequestMutation = useSendFriendRequest();
+  const shareTaskMutation = useShareTask();
+  const { isPremium } = useBilling();
 
   const task = tasks.find((t) => t.id === taskId);
 
@@ -64,20 +67,33 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     const friend = friends.find(f => f.email.toLowerCase() === value);
 
     if (friend) {
-      if (!assignedCollaborators.includes(friend.name)) {
+      // Store collaborator by stable friend.id (UUID), not by name (which can
+      // collide / change). Aligns with AddTaskForm + TaskModal. Faille D1/D3.
+      if (!assignedCollaborators.includes(friend.id)) {
         updateTaskMutation.mutate({
           id: task.id,
           updates: {
             isCollaborative: true,
-            collaborators: [...assignedCollaborators, friend.name],
+            collaborators: [...assignedCollaborators, friend.id],
             collaboratorValidations: {
               ...task.collaboratorValidations,
-              [friend.name]: false
+              [friend.id]: false
             }
           }
         });
+        // Actually grant RLS access by inserting a shared_tasks row.
+        // Gated by premium status, matching AddTaskForm behaviour. Faille B1.
+        if (isPremium()) {
+          shareTaskMutation.mutate({ taskId: task.id, friendId: friend.id, role: 'editor' });
+        }
       }
     } else {
+      // Non-friend invite: must be a valid email. Reject garbage input that
+      // would otherwise pollute `pendingInvites` with non-resolvable values.
+      if (!emailRegex.test(value)) {
+        setInput('');
+        return;
+      }
       if (assignedCollaborators.includes(value)) {
         setInput('');
         return;
@@ -104,13 +120,11 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const handleToggleFriend = (friendId: string) => {
     if (!task) return;
-    const friend = friends.find(f => f.id === friendId);
-    const name = friend?.name || friendId;
-
-    if (assignedCollaborators.includes(name)) {
-      const newCollaborators = assignedCollaborators.filter((c) => c !== name);
+    // Always operate on the stable friend.id. Faille D1/D3.
+    if (assignedCollaborators.includes(friendId)) {
+      const newCollaborators = assignedCollaborators.filter((c) => c !== friendId);
       const newValidations = { ...task.collaboratorValidations };
-      delete newValidations[name];
+      delete newValidations[friendId];
       updateTaskMutation.mutate({
         id: task.id,
         updates: {
@@ -124,22 +138,26 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         id: task.id,
         updates: {
           isCollaborative: true,
-          collaborators: [...assignedCollaborators, name],
+          collaborators: [...assignedCollaborators, friendId],
           collaboratorValidations: {
             ...task.collaboratorValidations,
-            [name]: false
+            [friendId]: false
           }
         }
       });
+      // Actually grant RLS access — premium-gated. Faille B1.
+      if (isPremium()) {
+        shareTaskMutation.mutate({ taskId: task.id, friendId, role: 'editor' });
+      }
     }
   };
 
-  const handleRemove = (collaboratorName: string) => {
+  const handleRemove = (collaboratorId: string) => {
     if (!task) return;
-    const newCollaborators = assignedCollaborators.filter((c) => c !== collaboratorName);
+    const newCollaborators = assignedCollaborators.filter((c) => c !== collaboratorId);
     const newValidations = { ...task.collaboratorValidations };
-    delete newValidations[collaboratorName];
-    const newPendingInvites = (task.pendingInvites || []).filter(e => e !== collaboratorName);
+    delete newValidations[collaboratorId];
+    const newPendingInvites = (task.pendingInvites || []).filter(e => e !== collaboratorId);
 
     updateTaskMutation.mutate({
       id: task.id,
@@ -303,7 +321,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   <Button
                     variant="default"
                     onClick={handleAdd}
-                    disabled={!input.trim()}
+                    disabled={!input.trim() || (input.includes('@') && !emailRegex.test(input.trim()))}
                     className={`inline-flex items-center justify-center gap-2 min-h-11 ${input.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
                   >
                     <UserPlus size={16} data-icon="inline-start" />

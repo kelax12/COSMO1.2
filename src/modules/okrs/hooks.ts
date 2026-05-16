@@ -184,15 +184,6 @@ export const useUpdateOkr = () => {
 
 /**
  * Delete an OKR with optimistic update
-        queryClient.setQueryData(okrsKeys.detail(updatedOKR.id), updatedOKR);
-      }
-      invalidateAllOKRQueries(queryClient);
-    },
-  });
-};
-
-/**
- * Delete an OKR with optimistic update
  */
 export const useDeleteOkr = () => {
   const queryClient = useQueryClient();

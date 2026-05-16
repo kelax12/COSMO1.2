@@ -1,83 +1,62 @@
 // ═══════════════════════════════════════════════════════════════════
 // TASKS MODULE - Derived/Computed Hooks (Performance Optimized)
+//
+// All hooks consume the canonical Task shape: `name`, `category`, `deadline`,
+// `bookmarked`, `completed`. The previous version of this file referenced
+// `title`, `categoryId`, `dueDate`, `isBookmarked`, and a `status` enum that
+// don't exist on Task — every hook returned wrong data, and `useSearchTasks`
+// crashed on first run. Faille B6.
 // ═══════════════════════════════════════════════════════════════════
 
 import { useMemo, useCallback } from 'react';
 import { useTasks } from './hooks';
 import { Task, TaskStatus } from './types';
 
+const statusOf = (task: Task): TaskStatus => (task.completed ? 'completed' : 'todo');
+
 // ═══════════════════════════════════════════════════════════════════
-// SELECTORS - Memoized data transformations
+// SELECTORS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get tasks grouped by status with memoization
- * Prevents unnecessary recalculations on re-renders
- */
 export const useTasksByStatus = () => {
   const { data: tasks = [], ...rest } = useTasks();
 
   const grouped = useMemo(() => {
-    const result: Record<TaskStatus, Task[]> = {
-      todo: [],
-      in_progress: [],
-      completed: [],
-    };
-
+    const result: Record<TaskStatus, Task[]> = { todo: [], completed: [] };
     tasks.forEach((task) => {
-      const status = task.status || 'todo';
-      if (result[status]) {
-        result[status].push(task);
-      }
+      result[statusOf(task)].push(task);
     });
-
     return result;
   }, [tasks]);
 
   return { data: grouped, ...rest };
 };
 
-/**
- * Get tasks grouped by category with memoization
- */
 export const useTasksByCategory = () => {
   const { data: tasks = [], ...rest } = useTasks();
 
   const grouped = useMemo(() => {
     const result: Record<string, Task[]> = {};
-
     tasks.forEach((task) => {
-      const categoryId = task.categoryId || 'uncategorized';
-      if (!result[categoryId]) {
-        result[categoryId] = [];
-      }
+      const categoryId = task.category || 'uncategorized';
+      if (!result[categoryId]) result[categoryId] = [];
       result[categoryId].push(task);
     });
-
     return result;
   }, [tasks]);
 
   return { data: grouped, ...rest };
 };
 
-/**
- * Get tasks grouped by priority with memoization
- */
 export const useTasksByPriority = () => {
   const { data: tasks = [], ...rest } = useTasks();
 
   const grouped = useMemo(() => {
-    const result: Record<number, Task[]> = {
-      1: [], 2: [], 3: [], 4: [], 5: [],
-    };
-
+    const result: Record<number, Task[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
     tasks.forEach((task) => {
       const priority = task.priority || 3;
-      if (result[priority]) {
-        result[priority].push(task);
-      }
+      if (result[priority]) result[priority].push(task);
     });
-
     return result;
   }, [tasks]);
 
@@ -85,29 +64,25 @@ export const useTasksByPriority = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// STATISTICS - Computed metrics
+// STATISTICS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get task statistics with memoization
- */
 export const useTaskStats = () => {
   const { data: tasks = [], ...rest } = useTasks();
 
   const stats = useMemo(() => {
     const total = tasks.length;
-    const completed = tasks.filter((t) => t.status === 'completed').length;
-    const inProgress = tasks.filter((t) => t.status === 'in_progress').length;
-    const todo = tasks.filter((t) => t.status === 'todo').length;
-    const bookmarked = tasks.filter((t) => t.isBookmarked).length;
+    const completed = tasks.filter((t) => t.completed).length;
+    const todo = total - completed;
+    const bookmarked = tasks.filter((t) => t.bookmarked).length;
+    const now = new Date();
     const overdue = tasks.filter((t) => {
-      if (!t.dueDate || t.status === 'completed') return false;
-      return new Date(t.dueDate) < new Date();
+      if (!t.deadline || t.completed) return false;
+      return new Date(t.deadline) < now;
     }).length;
 
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Priority distribution
     const byPriority = tasks.reduce((acc, t) => {
       const p = t.priority || 3;
       acc[p] = (acc[p] || 0) + 1;
@@ -117,7 +92,6 @@ export const useTaskStats = () => {
     return {
       total,
       completed,
-      inProgress,
       todo,
       bookmarked,
       overdue,
@@ -130,32 +104,25 @@ export const useTaskStats = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// SEARCH & FILTER - Client-side filtering
+// SEARCH & FILTER
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Search tasks by title/description with debounced memoization
- */
 export const useSearchTasks = (searchTerm: string) => {
   const { data: tasks = [], ...rest } = useTasks();
 
   const filtered = useMemo(() => {
     if (!searchTerm.trim()) return tasks;
-
     const term = searchTerm.toLowerCase();
     return tasks.filter(
       (task) =>
-        task.title.toLowerCase().includes(term) ||
-        task.description?.toLowerCase().includes(term)
+        (task.name || '').toLowerCase().includes(term) ||
+        (task.description || '').toLowerCase().includes(term)
     );
   }, [tasks, searchTerm]);
 
   return { data: filtered, ...rest };
 };
 
-/**
- * Filter tasks by priority range
- */
 export const useTasksInPriorityRange = (min: number, max: number) => {
   const { data: tasks = [], ...rest } = useTasks();
 
@@ -169,9 +136,6 @@ export const useTasksInPriorityRange = (min: number, max: number) => {
   return { data: filtered, ...rest };
 };
 
-/**
- * Filter tasks due within N days
- */
 export const useTasksDueWithinDays = (days: number) => {
   const { data: tasks = [], ...rest } = useTasks();
 
@@ -181,8 +145,8 @@ export const useTasksDueWithinDays = (days: number) => {
     futureDate.setDate(now.getDate() + days);
 
     return tasks.filter((task) => {
-      if (!task.dueDate || task.status === 'completed') return false;
-      const dueDate = new Date(task.dueDate);
+      if (!task.deadline || task.completed) return false;
+      const dueDate = new Date(task.deadline);
       return dueDate >= now && dueDate <= futureDate;
     });
   }, [tasks, days]);
@@ -191,13 +155,9 @@ export const useTasksDueWithinDays = (days: number) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// LOOKUP - Fast ID-based access
+// LOOKUP
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get a memoized lookup function for tasks by ID
- * Useful for components that need to look up multiple tasks
- */
 export const useTaskLookup = () => {
   const { data: tasks = [] } = useTasks();
 

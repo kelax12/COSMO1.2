@@ -318,4 +318,94 @@ Dans l'ordre, sur le projet de prod :
 
 -- 6. Verrouillage subscriptions v2 (À EXÉCUTER) — RPCs au lieu de trigger
 \i supabase/migration/015_subscriptions_rpc.sql
+
+-- 7. Stripe webhook idempotency (NEW — fix N8)
+\i supabase/migration/017_processed_stripe_events.sql
 ```
+
+---
+
+## 🛡️ Audit Deepsec (2026-05-15) — 51 findings analysés, 41 corrigés
+
+Audit complet via Deepsec (Vercel Labs) sur les 114 fichiers du codebase.
+51 findings classés. Workspace : `.deepsec/data/COSMO1.1/reports/report.md`.
+
+### Tableau récapitulatif (post-fix)
+
+| ID  | Sévérité       | Sujet                                                    | État         | Fichier |
+|-----|----------------|----------------------------------------------------------|--------------|---------|
+| B0  | 🟠 HIGH        | `isDemo` dérivé de l'email → premium gratuit via signup  | ✅ Corrigé   | `auth/AuthContext.tsx` |
+| B1  | 🟠 HIGH_BUG    | CollaboratorModal ne crée jamais `shared_tasks`          | ✅ Corrigé   | `CollaboratorModal.tsx` |
+| B2  | 🟡 MEDIUM      | `logout()` skip `signOut()` en mode démo                 | ✅ Corrigé   | `auth/AuthContext.tsx` |
+| B3  | 🟠 HIGH_BUG    | `useFriends()` appelle `getFriends` inexistant en prod   | ✅ Corrigé   | `friends/hooks.ts` |
+| B4  | 🟠 HIGH_BUG    | `useSharedTasks()` méthode inexistante                   | ✅ Corrigé   | `friends/hooks.ts` (hook supprimé) |
+| B5  | 🟠 HIGH_BUG    | `habits/hooks.derived.ts` lit `completedDates` inexistant| ✅ Corrigé   | `habits/hooks.derived.ts` |
+| B6  | 🟠 HIGH_BUG    | `tasks/hooks.derived.ts` champs inexistants (title/status)| ✅ Corrigé  | `tasks/hooks.derived.ts` + `types.ts` |
+| B7  | 🟠 HIGH_BUG    | SettingsPage profile edit écrit en localStorage uniquement| ✅ Corrigé  | `SettingsPage.tsx` (local state + Supabase save) |
+| B8  | 🟡 MEDIUM      | Changement de mot de passe sans réauth                   | ✅ Corrigé   | `SettingsPage.tsx` (signInWithPassword préalable) |
+| B9  | 🟠 HIGH_BUG    | "Supprimer le compte" ne supprime rien                   | ✅ Corrigé   | Edge Function `delete-account` + UI |
+| B10 | 🟠 HIGH_BUG    | `premium_tokens` reset à chaque event Stripe             | ✅ Corrigé   | `stripe-webhook/index.ts` (event-type specific) |
+| B11 | 🐛 BUG         | `shareTask` dédup cassé (`includes` sur objets)          | ✅ Corrigé   | `friends/repository.ts` |
+| B12 | 🐛 BUG         | `DEMO_FRIENDS` mutated in place                          | ✅ Corrigé   | `friends/repository.ts` (clone défensif) |
+| B13 | 🐛 BUG         | `acceptFriendRequest` fallback sur email recipient        | ✅ Corrigé   | `friends/repository.ts` (reject si pas senderEmail) |
+| B14 | 🐛 BUG         | `JSON.parse(localStorage)` sans try/catch                | ✅ Corrigé   | `user/hooks.ts` (helper `safeParse`) |
+| B15 | 🐛 BUG         | `removeFriend` ne supprime qu'un côté                    | ✅ Corrigé   | `friends/supabase.repository.ts` (delete bidirectionnel) |
+| B16 | 🐛 BUG         | `useFilteredData` filterFn hors deps (stale-closure)     | ✅ Corrigé   | `usePerformance.ts` (JSDoc contract) |
+| B17 | 🐛 BUG         | Division par zéro dans `recalcProgress`                   | ✅ Corrigé   | `okrs/supabase.repository.ts` + `okrs/repository.ts` |
+| B18 | 🐛 BUG         | `recordKRReps` rows unbounded (storage abuse)            | ✅ Corrigé   | `okrs/supabase.repository.ts` (clamp à 100/write) |
+| B19 | 🐛 BUG         | LocalStorage OKR `update()` spread non whitelisté        | ✅ Corrigé   | `okrs/repository.ts` (whitelist explicite) |
+| B20 | 🐛 BUG         | Repository singletons stale si `setDemo()` hors loginDemo| ✅ Corrigé   | `repository.factory.ts` (subscribe → reset) |
+| B21 | 🐛 BUG         | `clearDemoStorage` whitelist incomplète                  | ✅ Corrigé   | `repository.factory.ts` (sweep prefix `cosmo_*`) |
+| B22 | 🐛 BUG         | TaskModal collaborators par nom au lieu d'id             | ✅ Corrigé   | `TaskModal.tsx` |
+| D1  | 🐛 BUG         | CollaboratorModal stocke par `friend.name`               | ✅ Corrigé   | `CollaboratorModal.tsx` |
+| D2  | 🐛 BUG         | `handleAdd` accepte strings non-email                    | ✅ Corrigé   | `CollaboratorModal.tsx` + `TaskModal.tsx` |
+| D3  | 🐛 BUG         | OKRModal step content rendu en double                    | ✅ Corrigé   | `OKRModal.tsx` (premier bloc supprimé) |
+| D5  | 🐛 BUG         | `okrs/hooks.ts` orphan code dans commentaire             | ✅ Corrigé   | `okrs/hooks.ts` |
+| N4  | 🟡 MEDIUM      | `getByEmail` injection ILIKE                              | ✅ Corrigé   | `friends/supabase.repository.ts` (eq + lowercase) |
+| N5/N6| 🟡 MEDIUM     | Premium fields lus depuis `user_metadata`                | ✅ Corrigé   | `auth/AuthContext.tsx` (User type réduit identité) |
+| N6  | 🟡 MEDIUM      | OKR `getPage` cursor injection PostgREST                 | ✅ Corrigé   | `okrs/supabase.repository.ts` (regex UUID + ISO) |
+| N7  | 🟡 MEDIUM      | Stripe checkout CORS wildcard                            | ✅ Corrigé   | `stripe-create-checkout/index.ts` (allowlist) |
+| N8  | 🟡 MEDIUM      | Stripe webhook pas d'idempotence event.id                | ✅ Corrigé   | `stripe-webhook` + migration `017` |
+| N9  | 🟡 MEDIUM      | Webhook leak `err.message` dans 400                      | ✅ Corrigé   | `stripe-webhook/index.ts` (générique `Invalid signature`) |
+| N10 | 🟡 MEDIUM      | Vite dev server `allowedHosts: true`                     | ✅ Corrigé   | `vite.config.ts` (allowlist localhost) |
+| U1  | 🐛 BUG         | Stripe customer ID pas persisté (UPDATE 0 rows)          | ✅ Corrigé   | `stripe-create-checkout` (upsert onConflict) |
+| U2  | 🐛 BUG         | UPDATE-then-INSERT race window                            | ✅ Corrigé   | `stripe-webhook` (upsert) |
+| V7  | 🟡 MEDIUM      | `normalizeApiError` fallback sur message brut             | ✅ Corrigé   | `lib/normalizeApiError.ts` (log only) |
+| V15 | 🟡 MEDIUM      | `lists` repo sans `user_id` filter                       | ✅ Corrigé   | `lists/supabase.repository.ts` |
+| W6  | 🐛 BUG         | `win_streak` clampé à {0, 1} à chaque event              | ✅ Corrigé   | `stripe-webhook` (event-type specific) |
+
+### Findings non corrigés / nécessitent action manuelle
+
+| ID  | Sévérité   | Sujet                                                    | Pourquoi pas auto-fixé |
+|-----|------------|----------------------------------------------------------|------------------------|
+| TOCTOU-1 | 🐛 BUG | `toggleCompletion` habit JSONB read-modify-write          | Nécessite RPC SQL (`jsonb_set` atomique) à écrire et déployer |
+| TOCTOU-2 | 🐛 BUG | `addTaskToList`/`removeTaskFromList` race                | Nécessite RPC `array_append/array_remove` SECURITY INVOKER |
+| TOCTOU-3 | 🐛 BUG | `toggleComplete`/`toggleBookmark` tasks read-then-write  | Nécessite RPC `UPDATE ... SET completed = NOT completed RETURNING *` |
+| TOCTOU-4 | 🐛 BUG | OKR/KR update snapshot vs write non atomique             | Nécessite Postgres function pour write + journal en une transaction |
+| RACE-5  | 🐛 BUG  | `acceptFriendRequest` fetch `ORDER BY created_at` race    | Nécessite modifier RPC `accept_friend_request` pour RETURNING |
+| 25      | 🐛 BUG  | `useUpdateUserSettings` orphelin en prod                  | À supprimer ou réécrire — usage résiduel dans demo |
+
+### Déploiement requis (manuel — Supabase dashboard / CLI)
+
+```bash
+# Edge Functions (nouvelles + mises à jour)
+supabase functions deploy delete-account
+supabase functions deploy stripe-create-checkout   # nouvelle version (CORS, upsert)
+supabase functions deploy stripe-webhook            # nouvelle version (dedup, no leak)
+
+# Migration SQL
+supabase db push  # applique 017_processed_stripe_events.sql
+
+# Variables d'environnement Edge Functions
+APP_URL=https://<votre-domaine-vercel.app>
+# (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID inchangés)
+```
+
+### Validation
+
+- ✅ `npm run lint` : 0 erreurs, 18 warnings (inchangé)
+- ✅ `npm run build` : 41.66 s, 4847 modules, 0 erreur
+- ✅ `tsc --noEmit` : 122 erreurs (vs 174 avant — 52 résolues, le reste est pré-existant et non lié)
+
+---
+
