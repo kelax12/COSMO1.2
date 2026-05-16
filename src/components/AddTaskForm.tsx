@@ -127,15 +127,19 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     return categories.find(cat => cat.id === id)?.color || '#9CA3AF';
   };
 
+  // A friend's "collaborator id" = auth.users.id (userId) in Supabase mode,
+  // friend.id in demo. Required for tasks.collaborators RLS + shared_tasks FK.
+  const collabIdOf = (f: { id: string; userId?: string }) => f.userId ?? f.id;
+
   const filteredFriends = (friends || []).filter((friend) =>
-    !collaborators.includes(friend.id) && (
+    !collaborators.includes(collabIdOf(friend)) && (
       friend.name.toLowerCase().includes(searchUser.toLowerCase()) ||
       friend.email.toLowerCase().includes(searchUser.toLowerCase())
     )
   );
 
   const displayInfo = (id: string) => {
-    const friend = friends?.find((f) => f.id === id);
+    const friend = friends?.find((f) => collabIdOf(f) === id || f.id === id);
     if (friend) return { name: friend.name, email: friend.email, avatar: friend.avatar };
     if (emailRegex.test(id)) return { name: id.split('@')[0], email: id, avatar: undefined };
     return { name: id, email: undefined, avatar: undefined };
@@ -628,7 +632,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
                               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                                 {filteredFriends.map(friend => (
-                                  <CollaboratorItem key={friend.id} id={friend.id} name={friend.name} email={friend.email} avatar={friend.avatar} isSelected={collaborators.includes(friend.id)} onAction={() => toggleCollaborator(friend.id)} variant="toggle" />
+                                  <CollaboratorItem key={friend.id} id={collabIdOf(friend)} name={friend.name} email={friend.email} avatar={friend.avatar} isSelected={collaborators.includes(collabIdOf(friend))} onAction={() => toggleCollaborator(collabIdOf(friend))} variant="toggle" />
                                 ))}
                                 {filteredFriends.length === 0 && searchUser && (
                                   <p className="text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>

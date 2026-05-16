@@ -7,6 +7,7 @@
  */
 export interface Friend {
   id: string;
+  userId?: string; // The friend's auth.users.id — required for RLS/FK on tasks.collaborators and shared_tasks.friend_id. Resolved via profiles table in Supabase mode; falls back to id in demo mode.
   name: string;
   email: string;
   avatar?: string;

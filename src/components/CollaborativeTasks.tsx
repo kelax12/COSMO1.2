@@ -193,7 +193,7 @@ const CollaborativeTasks: React.FC = () => {
   };
 
   const displayInfo = (id: string) => {
-    const friend = friends?.find((f) => f.id === id || f.name === id);
+    const friend = friends?.find((f) => f.userId === id || f.id === id || f.name === id);
     if (friend) {
       return { name: friend.name, email: friend.email, avatar: friend.avatar, isPending: false };
     }
@@ -382,7 +382,7 @@ const CollaborativeTasks: React.FC = () => {
                     <AvatarGroup>
                     {task.collaborators?.map((collaborator, index) => {
                       const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
-                      const friend = friends.find(f => f.name === collaborator || f.id === collaborator);
+                      const friend = friends.find(f => f.userId === collaborator || f.id === collaborator || f.name === collaborator);
                       const initials = collaborator.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                       const isEmoji = friend?.avatar && friend.avatar.length <= 2;
 

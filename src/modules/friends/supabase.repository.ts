@@ -59,25 +59,32 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (error) throw normalizeApiError(error);
     const friends = warnIfTruncated(data || [], 200, 'friends').map(this.mapFromDb);
 
-    // Enrich with up-to-date avatars from `profiles` (auth.user_metadata is
-    // private — other users can't read it directly, so we mirror avatar_url
-    // into the public `profiles` table whenever a user saves their settings).
+    // Enrich with avatar + userId from public `profiles` (auth.user_metadata
+    // is private; profiles mirrors it AND exposes the friend's auth.uid by
+    // email so we can correctly populate tasks.collaborators and
+    // shared_tasks.friend_id with real auth.uids — required by RLS and FK.).
     if (friends.length === 0) return friends;
     const emails = friends.map(f => f.email).filter(Boolean);
     const { data: profilesData } = await supabase
       .from('profiles')
-      .select('email, avatar_url')
+      .select('id, email, avatar_url')
       .in('email', emails);
 
     if (!profilesData?.length) return friends;
     const byEmail = new Map(
-      profilesData.map(p => [p.email as string, p.avatar_url as string | null])
+      profilesData.map(p => [
+        (p.email as string).toLowerCase(),
+        { id: p.id as string, avatarUrl: p.avatar_url as string | null }
+      ])
     );
-    return friends.map(f => ({
-      ...f,
-      // profiles.avatar_url wins over the stale friends.avatar snapshot
-      avatar: byEmail.get(f.email) ?? f.avatar,
-    }));
+    return friends.map(f => {
+      const profile = byEmail.get(f.email.toLowerCase());
+      return {
+        ...f,
+        userId: profile?.id ?? f.userId,
+        avatar: profile?.avatarUrl ?? f.avatar,
+      };
+    });
   }
 
   async getById(id: string): Promise<Friend | null> {
@@ -101,17 +108,33 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     // `_` from caller input as SQL pattern wildcards (PostgREST pattern
     // injection). Emails are stored verbatim, so a lowercased `.eq` suffices.
     // Faille N4.
+    const lower = email.toLowerCase();
     const { data, error } = await supabase
       .from('friends')
       .select('*')
-      .eq('email', email.toLowerCase())
+      .eq('email', lower)
       .single();
 
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw normalizeApiError(error);
     }
-    return data ? this.mapFromDb(data) : null;
+    if (!data) return null;
+    const friend = this.mapFromDb(data);
+
+    // Resolve the friend's auth.uid via the public profiles table — required
+    // so tasks.collaborators / shared_tasks.friend_id are populated with real
+    // auth.uids (RLS + FK).
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, avatar_url')
+      .eq('email', lower)
+      .maybeSingle();
+    if (profile) {
+      friend.userId = profile.id as string;
+      friend.avatar = (profile.avatar_url as string | null) ?? friend.avatar;
+    }
+    return friend;
   }
 
   async getPendingRequests(): Promise<PendingFriendRequest[]> {

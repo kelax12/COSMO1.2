@@ -506,16 +506,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     onClose();
   };
 
+  // A friend's canonical "collaborator id" is their auth.users.id (userId),
+  // which is what Supabase RLS (auth.uid()::text = ANY(collaborators)) and
+  // the shared_tasks.friend_id FK require. Falls back to friend.id in demo
+  // mode where there's no auth.
+  const collabIdOf = (f: { id: string; userId?: string }) => f.userId ?? f.id;
   const availableFriends = friends || [];
   const filteredFriends = availableFriends.filter((friend) =>
-    !collaborators.includes(friend.id) && (
+    !collaborators.includes(collabIdOf(friend)) && (
       friend.name.toLowerCase().includes(searchUser.toLowerCase()) ||
       friend.email.toLowerCase().includes(searchUser.toLowerCase())
     )
   );
 
   const displayInfo = (id: string) => {
-    const friend = friends?.find((f) => f.id === id || f.name === id);
+    const friend = friends?.find((f) => collabIdOf(f) === id || f.id === id || f.name === id);
     if (friend) {
       return { name: friend.name, email: friend.email, avatar: friend.avatar, isPending: false };
     }
@@ -533,11 +538,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     const friend = friends.find(f => f.email.toLowerCase() === value);
 
     if (friend) {
-      // Store collaborators by stable friend.id (matches AddTaskForm and
-      // CollaboratorModal) so the downstream shareTaskMutation receives a
-      // real UUID rather than a display name. Faille B6/B22.
-      if (!collaborators.includes(friend.id)) {
-        setCollaborators([...collaborators, friend.id]);
+      // Store the friend's auth.uid (via userId) so RLS / shared_tasks FK
+      // accept it. Falls back to friend.id in demo mode.
+      const collabId = collabIdOf(friend);
+      if (!collaborators.includes(collabId)) {
+        setCollaborators([...collaborators, collabId]);
       }
     } else {
       // Reject input that doesn't look like an email — prevents garbage
@@ -572,13 +577,13 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     // update, set hasChanges=false, and disable the save button.
   };
 
-  const toggleCollaborator = (friendId: string) => {
-    // Store by stable friend.id. Faille B6/B22.
-    if (collaborators.includes(friendId)) {
-      handleRemoveCollaborator(friendId);
+  const toggleCollaborator = (collabId: string) => {
+    // `collabId` is the friend's auth.users.id (or friend.id in demo).
+    if (collaborators.includes(collabId)) {
+      handleRemoveCollaborator(collabId);
     } else {
-      // Same reason as above: defer to handleSave(), no immediate mutation.
-      setCollaborators((prev) => [...prev, friendId]);
+      // Defer to handleSave(), no immediate mutation.
+      setCollaborators((prev) => [...prev, collabId]);
     }
   };
 
@@ -1224,19 +1229,22 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                             {/* Friends list — 2 columns */}
                             <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
-                              {filteredFriends.map((friend) => (
-                                <CollaboratorItem
-                                  key={friend.id}
-                                  id={friend.id}
-                                  name={friend.name}
-                                  email={friend.email}
-                                  avatar={friend.avatar}
-                                  isSelected={collaborators.includes(friend.id)}
-                                  onAction={() => toggleCollaborator(friend.id)}
-                                  variant="toggle"
-                                  compact
-                                />
-                              ))}
+                              {filteredFriends.map((friend) => {
+                                const collabId = collabIdOf(friend);
+                                return (
+                                  <CollaboratorItem
+                                    key={friend.id}
+                                    id={collabId}
+                                    name={friend.name}
+                                    email={friend.email}
+                                    avatar={friend.avatar}
+                                    isSelected={collaborators.includes(collabId)}
+                                    onAction={() => toggleCollaborator(collabId)}
+                                    variant="toggle"
+                                    compact
+                                  />
+                                );
+                              })}
                               {filteredFriends.length === 0 && searchUser && (
                                 <p className="col-span-2 text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
                               )}
