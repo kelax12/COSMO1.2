@@ -554,19 +554,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       sendFriendRequestMutation.mutate({ email: value });
       setCollaborators([...collaborators, value]);
       setPendingInvitesLocal([...pendingInvitesLocal, value]);
-      if (task) {
-        updateTaskMutation.mutate({
-          id: task.id,
-          updates: {
-            isCollaborative: true,
-            pendingInvites: [...pendingInvitesLocal, value],
-            collaboratorValidations: {
-              ...task.collaboratorValidations,
-              [value]: false
-            }
-          }
-        });
-      }
+      // No immediate updateTaskMutation — deferred to handleSave() to avoid
+      // cache invalidation that would set hasChanges=false.
     }
     setEmailInput('');
   };
@@ -576,21 +565,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     setCollaborators(newCollaborators);
     const newPendingInvites = pendingInvitesLocal.filter(e => e !== collaboratorName);
     setPendingInvitesLocal(newPendingInvites);
-    
-    if (task) {
-      const newValidations = { ...task.collaboratorValidations };
-      delete newValidations[collaboratorName];
-      
-      updateTaskMutation.mutate({
-        id: task.id,
-        updates: {
-          collaborators: newCollaborators,
-          isCollaborative: newCollaborators.length > 0,
-          collaboratorValidations: newValidations,
-          pendingInvites: newPendingInvites
-        }
-      });
-    }
+    // NOTE: no immediate updateTaskMutation here — changes are batched into
+    // handleSave() when the user clicks "Sauvegarder", which already includes
+    // collaborators and pendingInvites in the payload. Calling the mutation
+    // here would invalidate the React Query cache, cause the `task` prop to
+    // update, set hasChanges=false, and disable the save button.
   };
 
   const toggleCollaborator = (friendId: string) => {
@@ -598,20 +577,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     if (collaborators.includes(friendId)) {
       handleRemoveCollaborator(friendId);
     } else {
+      // Same reason as above: defer to handleSave(), no immediate mutation.
       setCollaborators((prev) => [...prev, friendId]);
-      if (task) {
-        updateTaskMutation.mutate({
-          id: task.id,
-          updates: {
-            isCollaborative: true,
-            collaborators: [...collaborators, friendId],
-            collaboratorValidations: {
-              ...task.collaboratorValidations,
-              [friendId]: false
-            }
-          }
-        });
-      }
     }
   };
 
@@ -1255,8 +1222,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               />
                             </div>
 
-                            {/* Friends list */}
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            {/* Friends list — 2 columns */}
+                            <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
                               {filteredFriends.map((friend) => (
                                 <CollaboratorItem
                                   key={friend.id}
@@ -1267,10 +1234,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                   isSelected={collaborators.includes(friend.id)}
                                   onAction={() => toggleCollaborator(friend.id)}
                                   variant="toggle"
+                                  compact
                                 />
                               ))}
                               {filteredFriends.length === 0 && searchUser && (
-                                <p className="text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
+                                <p className="col-span-2 text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
                               )}
                             </div>
 

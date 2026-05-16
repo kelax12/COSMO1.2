@@ -288,7 +288,7 @@ const TaskCard = React.memo(({
           <span>{formatDate(task.deadline)}</span>
           <span>·</span>
           <span>{task.estimatedTime}min</span>
-          {task.isCollaborative && (
+          {task.isCollaborative && (task.collaborators?.length ?? 0) > 0 && (
             <>
               <span>·</span>
               <Users size={11} className="opacity-70" />
@@ -794,7 +794,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
                   <div className="flex items-center gap-2">
                     <span className="truncate" title={task.name}>{task.name}</span>
-                    {task.isCollaborative && (
+                    {task.isCollaborative && (task.collaborators?.length ?? 0) > 0 && (
                       <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
                     )}
                   </div>

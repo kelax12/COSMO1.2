@@ -54,10 +54,30 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       .from('friends')
       .select('*')
       .order('name', { ascending: true })
-      .limit(200); // Sécurité — les amis ne devraient jamais dépasser 200
+      .limit(200);
 
     if (error) throw normalizeApiError(error);
-    return warnIfTruncated(data || [], 200, 'friends').map(this.mapFromDb);
+    const friends = warnIfTruncated(data || [], 200, 'friends').map(this.mapFromDb);
+
+    // Enrich with up-to-date avatars from `profiles` (auth.user_metadata is
+    // private — other users can't read it directly, so we mirror avatar_url
+    // into the public `profiles` table whenever a user saves their settings).
+    if (friends.length === 0) return friends;
+    const emails = friends.map(f => f.email).filter(Boolean);
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('email, avatar_url')
+      .in('email', emails);
+
+    if (!profilesData?.length) return friends;
+    const byEmail = new Map(
+      profilesData.map(p => [p.email as string, p.avatar_url as string | null])
+    );
+    return friends.map(f => ({
+      ...f,
+      // profiles.avatar_url wins over the stale friends.avatar snapshot
+      avatar: byEmail.get(f.email) ?? f.avatar,
+    }));
   }
 
   async getById(id: string): Promise<Friend | null> {
