@@ -88,6 +88,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (appModeStore.isDemo) return;
 
       const currentUserId = session?.user?.id ?? null;
+
+      // INITIAL_SESSION fires once on subscribe with the restored session. There
+      // are no stale cache entries from a previous user at this point — clearing
+      // the cache here aborts the very first useTasks/useHabits query that the
+      // page already mounted, making /tasks and /habits load "1 in 4" on mobile.
+      // Just snapshot the user id and bail.
+      if (event === 'INITIAL_SESSION') {
+        lastUserId = currentUserId;
+        if (session?.user) setUser(mapSupabaseUserToAppUser(session.user));
+        setIsLoading(false);
+        return;
+      }
+
       const userIdChanged = currentUserId !== lastUserId;
 
       if (userIdChanged) {
