@@ -16,7 +16,9 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   const updateCategoryMutation = useUpdateCategory();
   const deleteCategoryMutation = useDeleteCategory();
   
-  const [localCategories, setLocalCategories] = useState<Category[]>([]);
+  // Initialize directly from cached data so the list is populated on first
+  // render when categories are already in the React Query cache.
+  const [localCategories, setLocalCategories] = useState<Category[]>(categories);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

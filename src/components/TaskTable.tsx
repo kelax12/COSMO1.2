@@ -584,26 +584,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setSelectedTask(id);
   }, []);
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Loading State
-  // ═══════════════════════════════════════════════════════════════════
-  if (isLoadingTasks && !propTasks) {
-    return (
-      <div className="animate-pulse">
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-10 w-24 bg-[rgb(var(--color-border))] rounded-lg"></div>
-          ))}
-        </div>
-        <div className="hidden md:block">
-          <div className="h-12 bg-[rgb(var(--color-border))] rounded-t-lg mb-1"></div>
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="h-16 bg-[rgb(var(--color-border)/0.5)] mb-1 rounded"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
 
   return (
