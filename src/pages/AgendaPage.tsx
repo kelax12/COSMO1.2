@@ -235,7 +235,6 @@ const AgendaPage: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const categoriesRef = useRef(categories);
-  const [isDraggingCalendarEvent, setIsDraggingCalendarEvent] = useState(false);
   // Timestamp pour suppression du clic résiduel après un drag — auto-expire après 300ms
   // (jamais "stuck" même si le cleanup ne tourne pas).
   const lastDragEndAtRef = useRef<number>(0);
@@ -355,7 +354,6 @@ const AgendaPage: React.FC = () => {
 
   const handleEventDragStart = (info: EventDragStartArg) => {
     draggedEventIdRef.current = info.event.id;
-    setIsDraggingCalendarEvent(true);
 
     const je = info.jsEvent as MouseEvent | undefined;
     const startPos = je && typeof je.clientX === 'number' ? { x: je.clientX, y: je.clientY } : null;
@@ -387,11 +385,6 @@ const AgendaPage: React.FC = () => {
       removeWindowListeners();
       draggedEventIdRef.current = null;
       lastDragEndAtRef.current = Date.now();
-      // ⚠️ Différer le setState : si on le fait ici (synchroniquement),
-      // React peut re-render AVANT que l'optimistic update React Query de
-      // useUpdateEvent ait propagé. FC reçoit alors un events prop avec
-      // l'ANCIENNE position et revert l'event → "drag and drop ne marche pas".
-      setTimeout(() => setIsDraggingCalendarEvent(false), 0);
 
       const x = typeof clientX === 'number' ? clientX : lastX;
       const y = typeof clientY === 'number' ? clientY : lastY;
@@ -613,7 +606,6 @@ const AgendaPage: React.FC = () => {
               <TaskSidebar
                 onClose={() => setShowTaskSidebar(false)}
                 onDragStart={() => { if (window.innerWidth < 768) setIsDraggingTask(true); }}
-                isCalendarEventBeingDragged={isDraggingCalendarEvent}
               />
             </motion.div>
           </>
