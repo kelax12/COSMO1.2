@@ -57,9 +57,12 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async getAll(): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    // Exclude `description` (long text, not shown in list) and
+    // `collaborator_validations` (JSONB, only needed in TaskModal detail view).
+    // getById() keeps select('*') so TaskModal always has the full payload.
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select('id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,collaborators,pending_invites,user_id')
       .order('created_at', { ascending: false })
       .limit(500);
 
