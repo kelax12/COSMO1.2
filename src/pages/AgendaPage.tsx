@@ -386,8 +386,12 @@ const AgendaPage: React.FC = () => {
       dragEndHandlerRef.current = null;
       removeWindowListeners();
       draggedEventIdRef.current = null;
-      setIsDraggingCalendarEvent(false);
       lastDragEndAtRef.current = Date.now();
+      // ⚠️ Différer le setState : si on le fait ici (synchroniquement),
+      // React peut re-render AVANT que l'optimistic update React Query de
+      // useUpdateEvent ait propagé. FC reçoit alors un events prop avec
+      // l'ANCIENNE position et revert l'event → "drag and drop ne marche pas".
+      setTimeout(() => setIsDraggingCalendarEvent(false), 0);
 
       const x = typeof clientX === 'number' ? clientX : lastX;
       const y = typeof clientY === 'number' ? clientY : lastY;
