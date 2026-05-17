@@ -8,6 +8,11 @@ import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
+const dlog = (msg: string) => {
+  if (DEBUG) console.warn(`[AUTH] @${Math.round(performance.now())}ms ${msg}`);
+};
+
 // ─── Offline-first cache helpers ─────────────────────────────────────────────
 // Persist tasks/habits to localStorage so the app feels instant on cold start.
 // Each entry is keyed by userId to avoid cross-user leakage.
@@ -122,37 +127,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const restoreAndRefresh = (userId: string, alreadySetupWriter: boolean) => {
       const cachedTasks = readLocalCache(userId, 'tasks');
       if (cachedTasks) queryClient.setQueryData(taskKeys.lists(), cachedTasks);
+      dlog(`restoreAndRefresh: tasks cache hit=${!!cachedTasks}`);
 
       const cachedHabits = readLocalCache(userId, 'habits');
       if (cachedHabits) queryClient.setQueryData(habitKeys.lists(), cachedHabits);
+      dlog(`restoreAndRefresh: habits cache hit=${!!cachedHabits}`);
 
       if (!alreadySetupWriter) setupCacheWriter(userId);
 
       // staleTime:0 forces a background refresh even though setQueryData just
       // stamped the data as "fresh". User sees stale data immediately, then
       // the fresh payload arrives silently in ~400–700 ms.
+      dlog('restoreAndRefresh: prefetchQuery(tasks) START');
+      const tTasks = performance.now();
       queryClient.prefetchQuery({
         queryKey: taskKeys.lists(),
         queryFn: () => withTimeout(getTasksRepository().getAll(), 10_000),
         staleTime: 0,
-      });
+      }).then(() => dlog(`restoreAndRefresh: prefetchQuery(tasks) DONE in ${Math.round(performance.now() - tTasks)}ms`))
+        .catch((err) => dlog(`restoreAndRefresh: prefetchQuery(tasks) FAIL — ${(err as Error).message}`));
+
+      dlog('restoreAndRefresh: prefetchQuery(habits) START');
+      const tHabits = performance.now();
       queryClient.prefetchQuery({
         queryKey: habitKeys.lists(),
         queryFn: () => withTimeout(getHabitsRepository().fetchHabits(), 10_000),
         staleTime: 0,
-      });
+      }).then(() => dlog(`restoreAndRefresh: prefetchQuery(habits) DONE in ${Math.round(performance.now() - tHabits)}ms`))
+        .catch((err) => dlog(`restoreAndRefresh: prefetchQuery(habits) FAIL — ${(err as Error).message}`));
     };
 
     const initializeAuth = async () => {
+      dlog('initializeAuth: start');
       try {
+        dlog('initializeAuth: calling getSession()');
         const { data: { session } } = await supabase.auth.getSession();
+        dlog(`initializeAuth: getSession() resolved — session=${!!session?.user}`);
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
+          dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
+          dlog('initializeAuth: restoreAndRefresh() returned');
         }
-      } catch {
-        // Supabase non configuré ou erreur réseau — le mode démo prendra le relais
+      } catch (err) {
+        dlog(`initializeAuth: caught error — ${(err as Error)?.message}`);
       } finally {
+        dlog('initializeAuth: setIsLoading(false) — done');
         setIsLoading(false);
       }
     };
@@ -168,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let lastUserId: string | null = null;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      dlog(`onAuthStateChange: ${event} — session=${!!session?.user}`);
       // Demo mode is sticky once entered. Without this guard, a token-refresh event
       // racing with loginDemo() would snap the user out of demo and start hitting
       // Supabase repositories mid-session (faille B7).

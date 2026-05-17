@@ -11,6 +11,8 @@ const hasSupabaseConfig = !!(supabaseUrl && supabaseAnonKey && supabaseUrl !== '
 // socket and the page stays stuck on its loading skeleton.
 const FETCH_TIMEOUT_MS = 8_000;
 
+const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
+
 const timeoutFetch: typeof fetch = (input, init) => {
   const ctrl = new AbortController();
   const userSignal = init?.signal;
@@ -25,6 +27,26 @@ const timeoutFetch: typeof fetch = (input, init) => {
     () => ctrl.abort(new DOMException('Request timeout', 'TimeoutError')),
     FETCH_TIMEOUT_MS,
   );
+
+  if (DEBUG) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const shortUrl = url.replace(/^https?:\/\/[^/]+/, '').split('?')[0];
+    const t0 = performance.now();
+    console.warn(`[FETCH→] ${init?.method ?? 'GET'} ${shortUrl} @${Math.round(t0)}ms`);
+    return fetch(input, { ...init, signal: ctrl.signal })
+      .then((res) => {
+        const dt = Math.round(performance.now() - t0);
+        console.warn(`[FETCH✓] ${shortUrl} ${res.status} in ${dt}ms`);
+        return res;
+      })
+      .catch((err) => {
+        const dt = Math.round(performance.now() - t0);
+        console.warn(`[FETCH✗] ${shortUrl} FAIL in ${dt}ms — ${(err as Error).message}`);
+        throw err;
+      })
+      .finally(() => clearTimeout(timer));
+  }
+
   return fetch(input, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 };
 
