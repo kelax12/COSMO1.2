@@ -300,7 +300,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                         </div>
                         <div className={`h-2 w-2 rounded-full transition-all duration-300 ${isActive ? 'bg-blue-500 monochrome:bg-white ring-4 ring-blue-500/20 monochrome:ring-white/20' : 'bg-slate-800'}`} />
                         <span className="text-[10px] text-slate-500 font-medium">
-                          {p === 1 ? 'Basse' : p === 5 ? 'Critique' : ''}
+                          {p === 1 ? 'Très haute' : p === 5 ? 'Très basse' : ''}
                         </span>
                       </div>
                     );

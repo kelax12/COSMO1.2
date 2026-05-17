@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2 } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 
@@ -24,9 +24,12 @@ import { useFriends } from '@/modules/friends';
 type TaskSidebarProps = {
   onClose?: () => void;
   onDragStart?: () => void;
+  isCalendarEventBeingDragged?: boolean;
 };
 
-const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
+const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
+
+const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart, isCalendarEventBeingDragged = false }) => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -49,7 +52,13 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [showTutorial, setShowTutorialState] = useState<boolean>(() => {
+    try { return localStorage.getItem(TUTORIAL_KEY) === '1'; } catch { return false; }
+  });
+  const setShowTutorial = useCallback((next: boolean) => {
+    setShowTutorialState(next);
+    try { localStorage.setItem(TUTORIAL_KEY, next ? '1' : '0'); } catch { /* ignore */ }
+  }, []);
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
 
   // Filter tasks (exclude completed ones and respect priority range)
@@ -81,7 +90,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   };
 
     return (
-      <div className="w-56 lg:w-72 lg:sm:w-80 border-r flex flex-col h-full" style={{ backgroundColor: 'rgb(var(--nav-bg))', borderColor: 'rgb(var(--nav-border))' }}>
+      <div
+        id="agenda-task-sidebar-dropzone"
+        className={`w-56 lg:w-72 lg:sm:w-80 border-r flex flex-col h-full relative transition-colors ${isCalendarEventBeingDragged ? 'ring-2 ring-red-500 ring-inset' : ''}`}
+        style={{ backgroundColor: 'rgb(var(--nav-bg))', borderColor: 'rgb(var(--nav-border))' }}
+      >
         {/* Sidebar Header */}
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--nav-border))' }}>
         <div className="flex items-center justify-between mb-4">
@@ -249,9 +262,9 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
       </div>
 
       {/* Instructions */}
-      {showTutorial && (
+      {showTutorial ? (
         <div className="p-4 border-t relative group/tuto" style={{ borderColor: 'rgb(var(--nav-border))', backgroundColor: 'rgb(var(--color-hover))' }}>
-          <button 
+          <button
             onClick={() => setShowTutorial(false)}
             className="absolute top-2 right-2 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-60 hover:opacity-100"
             style={{ color: 'rgb(var(--color-text-muted))' }}
@@ -265,8 +278,24 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <p>• Les propriétés se transfèrent automatiquement</p>
             <p>• La durée définit la longueur de l'événement</p>
           </div>
-          </div>
-        )}
+        </div>
+      ) : (
+        <div className="px-3 py-2 border-t flex justify-end" style={{ borderColor: 'rgb(var(--nav-border))' }}>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+            title="Afficher le guide"
+            aria-label="Afficher le guide d'utilisation"
+          >
+            <span
+              className="w-7 h-7 flex items-center justify-center rounded-full border"
+              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }}
+            >
+              <Info size={16} />
+            </span>
+          </button>
+        </div>
+      )}
 
         {selectedTaskForModal && (
           <TaskModal 
