@@ -339,7 +339,7 @@ const AgendaPage: React.FC = () => {
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     if (isDraggingCalendarEventRef.current) return;
-    document.querySelectorAll('.fc-event-dragging, .fc-event-mirror, .fc-event-resizer-dragging').forEach(el => el.remove());
+    document.querySelectorAll('.fc-event-mirror').forEach(el => el.remove());
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
     const masterId = getMasterId(clickInfo.event.id);
     const taskId = clickInfo.event.extendedProps?.taskId;
@@ -364,7 +364,7 @@ const AgendaPage: React.FC = () => {
       if (t) lastPointerRef.current = { x: t.clientX, y: t.clientY };
     };
     const cleanup = () => {
-      document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
+      document.querySelectorAll('.fc-event-mirror').forEach(el => el.remove());
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('pointerup', onPointerUp);
@@ -400,7 +400,7 @@ const AgendaPage: React.FC = () => {
   };
 
   const handleEventDragStop = () => {
-    document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
+    document.querySelectorAll('.fc-event-mirror').forEach(el => el.remove());
     // Safety net : if window pointerup never fired (rare), clear the ref shortly after.
     setTimeout(() => {
       isDraggingCalendarEventRef.current = false;
