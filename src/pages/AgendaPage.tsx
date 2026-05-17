@@ -347,36 +347,102 @@ const AgendaPage: React.FC = () => {
   };
 
   const draggedEventIdRef = useRef<string | null>(null);
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const lastPointerPosRef = useRef<{ x: number; y: number } | null>(null);
+  const dragPointerCleanupRef = useRef<(() => void) | null>(null);
 
   const handleEventDragStart = (info: EventDragStartArg) => {
     isDraggingCalendarEventRef.current = true;
     draggedEventIdRef.current = info.event.id;
     setIsDraggingCalendarEvent(true);
+
+    const je = info.jsEvent as MouseEvent | undefined;
+    const startPos = je && typeof je.clientX === 'number' ? { x: je.clientX, y: je.clientY } : null;
+    dragStartPosRef.current = startPos;
+    lastPointerPosRef.current = startPos;
+
+    // Tracker passif (PAS de manipulation DOM/FC) pour secourir info.jsEvent
+    // au cas où il manquerait à dragStop, et pour mesurer le déplacement total.
+    const onPointerMove = (e: PointerEvent) => {
+      lastPointerPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0] || e.changedTouches[0];
+      if (t) lastPointerPosRef.current = { x: t.clientX, y: t.clientY };
+    };
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    dragPointerCleanupRef.current = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('touchmove', onTouchMove);
+    };
   };
 
   const handleEventDragStop = (info: EventDragStopArg) => {
-    const draggedId = info.event.id;
+    dragPointerCleanupRef.current?.();
+    dragPointerCleanupRef.current = null;
+
     const je = info.jsEvent as MouseEvent | undefined;
-    const clientX = je?.clientX;
-    const clientY = je?.clientY;
+    let clientX: number | undefined = typeof je?.clientX === 'number' ? je!.clientX : undefined;
+    let clientY: number | undefined = typeof je?.clientY === 'number' ? je!.clientY : undefined;
+    if (clientX === undefined || clientY === undefined) {
+      const last = lastPointerPosRef.current;
+      if (last) { clientX = last.x; clientY = last.y; }
+    }
+
+    const startPos = dragStartPosRef.current;
+    const draggedId = info.event.id;
     setIsDraggingCalendarEvent(false);
-    // Ref cleared après le tick courant pour bloquer un éventuel eventClick résiduel.
-    setTimeout(() => {
+
+    const clearRefs = () => {
       isDraggingCalendarEventRef.current = false;
       draggedEventIdRef.current = null;
-    }, 0);
-    if (typeof clientX !== 'number' || typeof clientY !== 'number') return;
-    const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
-    if (!sidebar) return;
-    const rect = sidebar.getBoundingClientRect();
-    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-      const masterId = getMasterId(draggedId);
-      const ev = events.find(e2 => e2.id === masterId);
-      if (ev) {
-        // Laisse FC finir son auto-revert avant le delete pour éviter un flash.
-        setTimeout(() => deleteEventMutation.mutate(ev.id), 0);
+      dragStartPosRef.current = null;
+      lastPointerPosRef.current = null;
+    };
+
+    // 1) Drop sur la sidebar → suppression
+    if (typeof clientX === 'number' && typeof clientY === 'number') {
+      const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
+      if (sidebar) {
+        const rect = sidebar.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+          const masterId = getMasterId(draggedId);
+          const ev = events.find(e2 => e2.id === masterId);
+          if (ev) {
+            // Retire immédiatement de FC pour éviter le flash de l'auto-revert,
+            // puis lance la mutation pour persister la suppression.
+            try { info.event.remove(); } catch { /* ignore */ }
+            deleteEventMutation.mutate(ev.id);
+          }
+          clearRefs();
+          return;
+        }
       }
     }
+
+    // 2) Long-press sans mouvement → traiter comme un clic (ouvrir EventModal)
+    if (
+      startPos &&
+      typeof clientX === 'number' &&
+      typeof clientY === 'number' &&
+      Math.abs(clientX - startPos.x) < 5 &&
+      Math.abs(clientY - startPos.y) < 5
+    ) {
+      clearRefs();
+      const masterId = getMasterId(draggedId);
+      const taskId = info.event.extendedProps?.taskId;
+      const ev = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
+      if (ev) {
+        setSelectedEvent(ev);
+        setShowEditEventModal(true);
+      }
+      return;
+    }
+
+    // 3) Drag intra-calendar normal → FC gère eventDrop. On nettoie après le tick
+    //    pour bloquer un eventClick résiduel.
+    setTimeout(clearRefs, 0);
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
