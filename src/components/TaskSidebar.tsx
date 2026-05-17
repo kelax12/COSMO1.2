@@ -24,12 +24,11 @@ import { useFriends } from '@/modules/friends';
 type TaskSidebarProps = {
   onClose?: () => void;
   onDragStart?: () => void;
-  isCalendarEventBeingDragged?: boolean;
 };
 
 const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
 
-const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart, isCalendarEventBeingDragged = false }) => {
+const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -92,7 +91,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart, isCalen
     return (
       <div
         id="agenda-task-sidebar-dropzone"
-        className={`w-56 lg:w-72 lg:sm:w-80 border-r flex flex-col h-full relative transition-colors ${isCalendarEventBeingDragged ? 'ring-2 ring-red-500 ring-inset' : ''}`}
+        className="w-56 lg:w-72 lg:sm:w-80 border-r flex flex-col h-full relative"
         style={{ backgroundColor: 'rgb(var(--nav-bg))', borderColor: 'rgb(var(--nav-border))' }}
       >
         {/* Sidebar Header */}
