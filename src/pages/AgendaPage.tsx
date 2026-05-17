@@ -401,12 +401,22 @@ const AgendaPage: React.FC = () => {
             const masterId = getMasterId(draggedId);
             const ev = events.find(e2 => e2.id === masterId);
             if (ev) {
-              // useDeleteEvent fait un optimistic update React Query qui retire
-              // l'event du cache immédiatement → AgendaPage re-rend → FC re-sync
-              // sans l'event. On défère la mutation au prochain tick pour
-              // laisser FC finir son auto-revert AVANT le re-sync (sinon FC
-              // reste figé dans un état d'animation orpheline).
-              setTimeout(() => deleteEventMutation.mutate(ev.id), 0);
+              // Quand un event FC est droppé hors de ses drop zones, FC entre
+              // dans un état d'auto-revert qui retient la référence DOM de
+              // l'event. Même si React Query retire l'event de son cache
+              // (optimistic update de useDeleteEvent), FC ne se re-sync pas et
+              // garde un ghost visible + bloque tous les pointer events suivants.
+              //
+              // Solution nucléaire mais fiable : bumper la key de FullCalendar
+              // pour forcer un remount complet (qui se re-initialise sur la
+              // bonne date via mobileSelectedDate / currentView). On défère
+              // mutation + remount au prochain tick pour laisser FC sortir
+              // proprement de son pointerup handler.
+              setTimeout(() => {
+                deleteEventMutation.mutate(ev.id);
+                setCalendarKey(k => k + 1);
+                setMobileCalendarKey(k => k + 1);
+              }, 0);
             }
             return;
           }
