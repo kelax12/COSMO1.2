@@ -363,6 +363,18 @@ const AgendaPage: React.FC = () => {
       const t = e.touches[0] || e.changedTouches[0];
       if (t) lastPointerRef.current = { x: t.clientX, y: t.clientY };
     };
+    const cleanup = () => {
+      document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('mouseup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerCancel);
+      setIsDraggingCalendarEvent(false);
+      isDraggingCalendarEventRef.current = false;
+      draggedEventIdRef.current = null;
+      lastPointerRef.current = null;
+    };
     const onPointerUp = (e: PointerEvent | MouseEvent) => {
       const last = lastPointerRef.current || { x: (e as PointerEvent).clientX, y: (e as PointerEvent).clientY };
       const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
@@ -377,22 +389,24 @@ const AgendaPage: React.FC = () => {
           }
         }
       }
-      document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('mouseup', onPointerUp);
+      cleanup();
     };
+    const onPointerCancel = () => cleanup();
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerCancel);
   };
 
   const handleEventDragStop = () => {
-    setIsDraggingCalendarEvent(false);
-    setTimeout(() => { isDraggingCalendarEventRef.current = false; draggedEventIdRef.current = null; }, 50);
     document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
+    // Safety net : if window pointerup never fired (rare), clear the ref shortly after.
+    setTimeout(() => {
+      isDraggingCalendarEventRef.current = false;
+      draggedEventIdRef.current = null;
+      setIsDraggingCalendarEvent(false);
+    }, 50);
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
