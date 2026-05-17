@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/interaction';
-import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
+import { DateSelectArg, EventClickArg, EventDropArg, EventDragStartArg, EventDragStopArg, DatesSetArg } from '@fullcalendar/core';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2 } from 'lucide-react';
@@ -339,7 +339,6 @@ const AgendaPage: React.FC = () => {
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     if (isDraggingCalendarEventRef.current) return;
-    document.querySelectorAll('.fc-event-mirror').forEach(el => el.remove());
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
     const masterId = getMasterId(clickInfo.event.id);
     const taskId = clickInfo.event.extendedProps?.taskId;
@@ -348,65 +347,36 @@ const AgendaPage: React.FC = () => {
   };
 
   const draggedEventIdRef = useRef<string | null>(null);
-  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handleEventDragStart = (info: { event: { id: string } }) => {
+  const handleEventDragStart = (info: EventDragStartArg) => {
     isDraggingCalendarEventRef.current = true;
     draggedEventIdRef.current = info.event.id;
-    lastPointerRef.current = null;
     setIsDraggingCalendarEvent(true);
-
-    const onPointerMove = (e: PointerEvent) => {
-      lastPointerRef.current = { x: e.clientX, y: e.clientY };
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0] || e.changedTouches[0];
-      if (t) lastPointerRef.current = { x: t.clientX, y: t.clientY };
-    };
-    const cleanup = () => {
-      document.querySelectorAll('.fc-event-mirror').forEach(el => el.remove());
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('mouseup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerCancel);
-      setIsDraggingCalendarEvent(false);
-      isDraggingCalendarEventRef.current = false;
-      draggedEventIdRef.current = null;
-      lastPointerRef.current = null;
-    };
-    const onPointerUp = (e: PointerEvent | MouseEvent) => {
-      const last = lastPointerRef.current || { x: (e as PointerEvent).clientX, y: (e as PointerEvent).clientY };
-      const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
-      if (sidebar && last) {
-        const rect = sidebar.getBoundingClientRect();
-        if (last.x >= rect.left && last.x <= rect.right && last.y >= rect.top && last.y <= rect.bottom) {
-          const draggedId = draggedEventIdRef.current;
-          if (draggedId) {
-            const masterId = getMasterId(draggedId);
-            const ev = events.find(e2 => e2.id === masterId);
-            if (ev) deleteEventMutation.mutate(ev.id);
-          }
-        }
-      }
-      cleanup();
-    };
-    const onPointerCancel = () => cleanup();
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('mouseup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerCancel);
   };
 
-  const handleEventDragStop = () => {
-    document.querySelectorAll('.fc-event-mirror').forEach(el => el.remove());
-    // Safety net : if window pointerup never fired (rare), clear the ref shortly after.
+  const handleEventDragStop = (info: EventDragStopArg) => {
+    const draggedId = info.event.id;
+    const je = info.jsEvent as MouseEvent | undefined;
+    const clientX = je?.clientX;
+    const clientY = je?.clientY;
+    setIsDraggingCalendarEvent(false);
+    // Ref cleared après le tick courant pour bloquer un éventuel eventClick résiduel.
     setTimeout(() => {
       isDraggingCalendarEventRef.current = false;
       draggedEventIdRef.current = null;
-      setIsDraggingCalendarEvent(false);
-    }, 50);
+    }, 0);
+    if (typeof clientX !== 'number' || typeof clientY !== 'number') return;
+    const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
+    if (!sidebar) return;
+    const rect = sidebar.getBoundingClientRect();
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      const masterId = getMasterId(draggedId);
+      const ev = events.find(e2 => e2.id === masterId);
+      if (ev) {
+        // Laisse FC finir son auto-revert avant le delete pour éviter un flash.
+        setTimeout(() => deleteEventMutation.mutate(ev.id), 0);
+      }
+    }
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
