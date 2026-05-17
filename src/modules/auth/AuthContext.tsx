@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { resetRepositories, clearDemoStorage } from '../../lib/repository.factory';
+import { resetRepositories, clearDemoStorage, getTasksRepository, getHabitsRepository } from '../../lib/repository.factory';
 import { appModeStore, useIsDemo } from '../../lib/app-mode.store';
+import { taskKeys } from '../../modules/tasks/constants';
+import { habitKeys } from '../../modules/habits/constants';
+import { withTimeout } from '../../lib/withTimeout';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
 // User type — identity fields only.
@@ -63,6 +66,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
+          // Kick data fetches immediately once we know the user is authenticated,
+          // before the page even mounts. React Query deduplicates: if the page
+          // mounts shortly after and calls useTasks/useHabits, it will read from
+          // this already-in-flight (or resolved) cache entry — no extra request.
+          queryClient.prefetchQuery({
+            queryKey: taskKeys.lists(),
+            queryFn: () => withTimeout(getTasksRepository().getAll(), 10_000),
+            staleTime: 1000 * 60 * 5,
+          });
+          queryClient.prefetchQuery({
+            queryKey: habitKeys.lists(),
+            queryFn: () => withTimeout(getHabitsRepository().fetchHabits(), 10_000),
+            staleTime: 1000 * 60 * 5,
+          });
         }
       } catch {
         // Supabase non configuré ou erreur réseau — le mode démo prendra le relais
