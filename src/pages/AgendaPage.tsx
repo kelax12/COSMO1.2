@@ -235,6 +235,8 @@ const AgendaPage: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const categoriesRef = useRef(categories);
+  const isDraggingCalendarEventRef = useRef(false);
+  const [isDraggingCalendarEvent, setIsDraggingCalendarEvent] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -336,10 +338,39 @@ const AgendaPage: React.FC = () => {
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
+    if (isDraggingCalendarEventRef.current) return;
+    document.querySelectorAll('.fc-event-dragging, .fc-event-mirror, .fc-event-resizer-dragging').forEach(el => el.remove());
+    try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
     const masterId = getMasterId(clickInfo.event.id);
     const taskId = clickInfo.event.extendedProps?.taskId;
     const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
     if (event) { setSelectedEvent(event); setShowEditEventModal(true); }
+  };
+
+  const handleEventDragStart = () => {
+    isDraggingCalendarEventRef.current = true;
+    setIsDraggingCalendarEvent(true);
+  };
+
+  const handleEventDragStop = (info: { event: { id: string }, jsEvent: MouseEvent | PointerEvent | TouchEvent }) => {
+    const wasDragging = isDraggingCalendarEventRef.current;
+    setIsDraggingCalendarEvent(false);
+    setTimeout(() => { isDraggingCalendarEventRef.current = false; }, 50);
+    document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
+    if (!wasDragging) return;
+    const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
+    if (!sidebar) return;
+    const rect = sidebar.getBoundingClientRect();
+    const je = info.jsEvent as MouseEvent;
+    const touch = (info.jsEvent as TouchEvent).changedTouches?.[0];
+    const clientX = touch ? touch.clientX : je.clientX;
+    const clientY = touch ? touch.clientY : je.clientY;
+    if (typeof clientX !== 'number' || typeof clientY !== 'number') return;
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      const masterId = getMasterId(info.event.id);
+      const ev = events.find(e => e.id === masterId);
+      if (ev) deleteEventMutation.mutate(ev.id);
+    }
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
@@ -490,6 +521,7 @@ const AgendaPage: React.FC = () => {
               <TaskSidebar
                 onClose={() => setShowTaskSidebar(false)}
                 onDragStart={() => { if (window.innerWidth < 768) setIsDraggingTask(true); }}
+                isCalendarEventBeingDragged={isDraggingCalendarEvent}
               />
             </motion.div>
           </>
@@ -639,14 +671,16 @@ const AgendaPage: React.FC = () => {
               allDaySlot={false}
               nowIndicator={true}
               eventDisplay="block"
-              eventLongPressDelay={50}
-              selectLongPressDelay={50}
+              eventLongPressDelay={250}
+              selectLongPressDelay={250}
               slotDuration="00:30:00"
               slotLabelInterval="01:00:00"
               snapDuration="00:15:00"
               slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
               select={handleDateSelect}
               eventClick={handleEventClick}
+              eventDragStart={handleEventDragStart}
+              eventDragStop={handleEventDragStop}
               eventDrop={handleEventDrop}
               eventReceive={handleEventReceive}
               unselectAuto={true}
@@ -696,8 +730,8 @@ const AgendaPage: React.FC = () => {
                 allDaySlot={false}
                 nowIndicator={true}
                 eventDisplay="block"
-                eventLongPressDelay={50}
-                selectLongPressDelay={50}
+                eventLongPressDelay={250}
+                selectLongPressDelay={250}
                 dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
                 slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
                 slotDuration={zoomDurations[zoomLevel]}
@@ -705,6 +739,8 @@ const AgendaPage: React.FC = () => {
                 snapDuration={zoomDurations[zoomLevel]}
                 select={handleDateSelect}
                 eventClick={handleEventClick}
+                eventDragStart={handleEventDragStart}
+                eventDragStop={handleEventDragStop}
                 eventDrop={handleEventDrop}
                 eventReceive={handleEventReceive}
                 unselectAuto={true}

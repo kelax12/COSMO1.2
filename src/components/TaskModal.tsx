@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
-import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Loader2, Clock } from 'lucide-react';
+import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -937,23 +937,55 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         <label htmlFor="task-time" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Temps estimé (min)
                         </label>
-                          <input
-                            id="task-time"
-                            type="number"
-                            value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
-                            onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
-                            placeholder="Estimation en minute"
-                            className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
-                              errors.estimatedTime ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
-                            } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
-                            style={{
-                              backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
-                              color: 'rgb(var(--color-text-primary))',
-                              borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : undefined)
-                            }}
-                            aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
-                            aria-invalid={!!errors.estimatedTime}
-                          />
+                          <div className="flex items-stretch gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => {
+                                  const cur = typeof prev.estimatedTime === 'number' ? prev.estimatedTime : 0;
+                                  return { ...prev, estimatedTime: Math.max(0, cur - 5) };
+                                });
+                                if (errors.estimatedTime) setErrors((prev) => ({ ...prev, estimatedTime: '' }));
+                              }}
+                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-blue-500 transition-colors shrink-0"
+                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
+                              aria-label="Diminuer le temps estimé de 5 minutes"
+                            >
+                              <Minus size={18} />
+                            </button>
+                            <input
+                              id="task-time"
+                              type="number"
+                              value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
+                              onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
+                              placeholder="Estimation en minute"
+                              className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base text-center ${
+                                errors.estimatedTime ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
+                              } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
+                              style={{
+                                backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
+                                color: 'rgb(var(--color-text-primary))',
+                                borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : undefined)
+                              }}
+                              aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
+                              aria-invalid={!!errors.estimatedTime}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => {
+                                  const cur = typeof prev.estimatedTime === 'number' ? prev.estimatedTime : 0;
+                                  return { ...prev, estimatedTime: cur + 5 };
+                                });
+                                if (errors.estimatedTime) setErrors((prev) => ({ ...prev, estimatedTime: '' }));
+                              }}
+                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-blue-500 transition-colors shrink-0"
+                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
+                              aria-label="Augmenter le temps estimé de 5 minutes"
+                            >
+                              <Plus size={18} />
+                            </button>
+                          </div>
 
                       {errors.estimatedTime &&
                         <div id="time-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
