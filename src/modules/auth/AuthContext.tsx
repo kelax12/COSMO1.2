@@ -8,6 +8,40 @@ import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+// ─── Offline-first cache helpers ─────────────────────────────────────────────
+// Persist tasks/habits to localStorage so the app feels instant on cold start.
+// Each entry is keyed by userId to avoid cross-user leakage.
+// Max age: 24 h — stale data is shown immediately then silently replaced.
+
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function readLocalCache<T>(userId: string, key: string): T | null {
+  try {
+    const raw = localStorage.getItem(`cosmo:qcache:${userId}:${key}`);
+    if (!raw) return null;
+    const { data, at } = JSON.parse(raw) as { data: T; at: number };
+    if (Date.now() - at > CACHE_MAX_AGE) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalCache(userId: string, key: string, data: unknown): void {
+  try {
+    localStorage.setItem(`cosmo:qcache:${userId}:${key}`, JSON.stringify({ data, at: Date.now() }));
+  } catch {
+    // localStorage full — ignore silently
+  }
+}
+
+function clearLocalCache(userId: string): void {
+  try {
+    localStorage.removeItem(`cosmo:qcache:${userId}:tasks`);
+    localStorage.removeItem(`cosmo:qcache:${userId}:habits`);
+  } catch { /* ignore */ }
+}
+
 // User type — identity fields only.
 // Premium/financial state (premiumTokens, subscriptionEndDate, win_streak, …) lives
 // exclusively in the Supabase `subscriptions` table and is consumed via useBilling().
@@ -61,25 +95,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
+    // Unsubscribe fn for the queryCache write-back listener.
+    let cacheWriteUnsub: (() => void) | undefined;
+
+    // Registers a queryCache subscriber that persists tasks/habits to localStorage
+    // whenever a successful fetch completes. Called once per authenticated user.
+    const setupCacheWriter = (userId: string) => {
+      cacheWriteUnsub?.();
+      const taskKeyStr = JSON.stringify(taskKeys.lists());
+      const habitKeyStr = JSON.stringify(habitKeys.lists());
+      cacheWriteUnsub = queryClient.getQueryCache().subscribe((event) => {
+        if (event.type !== 'updated') return;
+        const action = event.action as { type: string };
+        if (action.type !== 'success') return;
+        const qk = JSON.stringify(event.query.queryKey);
+        if (qk === taskKeyStr) {
+          writeLocalCache(userId, 'tasks', event.query.state.data);
+        } else if (qk === habitKeyStr) {
+          writeLocalCache(userId, 'habits', event.query.state.data);
+        }
+      });
+    };
+
+    // Pre-populates the React Query cache from localStorage so the page renders
+    // instantly with stale data, then fires a background refetch.
+    const restoreAndRefresh = (userId: string, alreadySetupWriter: boolean) => {
+      const cachedTasks = readLocalCache(userId, 'tasks');
+      if (cachedTasks) queryClient.setQueryData(taskKeys.lists(), cachedTasks);
+
+      const cachedHabits = readLocalCache(userId, 'habits');
+      if (cachedHabits) queryClient.setQueryData(habitKeys.lists(), cachedHabits);
+
+      if (!alreadySetupWriter) setupCacheWriter(userId);
+
+      // staleTime:0 forces a background refresh even though setQueryData just
+      // stamped the data as "fresh". User sees stale data immediately, then
+      // the fresh payload arrives silently in ~400–700 ms.
+      queryClient.prefetchQuery({
+        queryKey: taskKeys.lists(),
+        queryFn: () => withTimeout(getTasksRepository().getAll(), 10_000),
+        staleTime: 0,
+      });
+      queryClient.prefetchQuery({
+        queryKey: habitKeys.lists(),
+        queryFn: () => withTimeout(getHabitsRepository().fetchHabits(), 10_000),
+        staleTime: 0,
+      });
+    };
+
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
-          // Kick data fetches immediately once we know the user is authenticated,
-          // before the page even mounts. React Query deduplicates: if the page
-          // mounts shortly after and calls useTasks/useHabits, it will read from
-          // this already-in-flight (or resolved) cache entry — no extra request.
-          queryClient.prefetchQuery({
-            queryKey: taskKeys.lists(),
-            queryFn: () => withTimeout(getTasksRepository().getAll(), 10_000),
-            staleTime: 1000 * 60 * 5,
-          });
-          queryClient.prefetchQuery({
-            queryKey: habitKeys.lists(),
-            queryFn: () => withTimeout(getHabitsRepository().fetchHabits(), 10_000),
-            staleTime: 1000 * 60 * 5,
-          });
+          restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
       } catch {
         // Supabase non configuré ou erreur réseau — le mode démo prendra le relais
@@ -110,10 +179,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // are no stale cache entries from a previous user at this point — clearing
       // the cache here aborts the very first useTasks/useHabits query that the
       // page already mounted, making /tasks and /habits load "1 in 4" on mobile.
-      // Just snapshot the user id and bail.
+      // Also restore the localStorage cache here because INITIAL_SESSION may fire
+      // before initializeAuth()'s getSession() resolves — whichever runs first
+      // wins; the second call is idempotent (setQueryData is a no-op if data
+      // already matches, prefetchQuery deduplicates in-flight requests).
       if (event === 'INITIAL_SESSION') {
         lastUserId = currentUserId;
-        if (session?.user) setUser(mapSupabaseUserToAppUser(session.user));
+        if (session?.user) {
+          setUser(mapSupabaseUserToAppUser(session.user));
+          restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
+        }
         setIsLoading(false);
         return;
       }
@@ -121,10 +196,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userIdChanged = currentUserId !== lastUserId;
 
       if (userIdChanged) {
+        if (lastUserId) clearLocalCache(lastUserId);
         appModeStore.setDemo(!session && !isSupabaseConfigured);
         resetRepositories();
         queryClient.clear();
         lastUserId = currentUserId;
+        if (currentUserId) restoreAndRefresh(currentUserId, false);
       }
 
       if (session?.user) {
@@ -135,7 +212,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      cacheWriteUnsub?.();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -227,6 +307,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    // Clear the persisted query cache for this user before signing out.
+    if (user && !appModeStore.isDemo) clearLocalCache(user.id);
+
     // ALWAYS sign out from Supabase, regardless of whether we think we're in demo
     // mode. Without this, a stranded real Supabase session can survive a "logout"
     // and silently re-authenticate the user on next mount. Faille B2.
