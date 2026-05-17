@@ -48,22 +48,6 @@ const HabitsPage: React.FC = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="p-4 md:p-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-        <div className="animate-pulse space-y-6">
-          <div className="h-10 w-48 bg-slate-200 dark:bg-slate-700 rounded"></div>
-          <div className="h-6 w-64 bg-slate-200 dark:bg-slate-700 rounded"></div>
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 md:p-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
@@ -124,11 +108,17 @@ const HabitsPage: React.FC = () => {
 
       {viewMode === 'list' && (
         <div className="space-y-4 md:space-y-6">
+          {isLoading && habits.length === 0 && (
+            [1, 2, 3].map(i => (
+              <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            ))
+          )}
+
           {habits.map(habit => (
             <HabitCard key={habit.id} habit={habit} />
           ))}
 
-          {habits.length === 0 && (
+          {!isLoading && habits.length === 0 && (
             <div className="card p-8 md:p-12 text-center">
               <div
                 className="w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"

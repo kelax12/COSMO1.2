@@ -26,7 +26,7 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
-  const { data: tasks = [], isLoading: isLoadingTasks, isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
+  const { data: tasks = [], isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
 
 
   // ═══════════════════════════════════════════════════════════════════
@@ -232,26 +232,6 @@ const TasksPage: React.FC = () => {
         >
           Réessayer
         </button>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoadingTasks) {
-    return (
-      <div className="p-4 sm:p-8 h-fit">
-        <div className="animate-pulse space-y-6">
-          <div className="h-10 w-48 bg-slate-200 dark:bg-slate-700 rounded"></div>
-          <div className="h-6 w-64 bg-slate-200 dark:bg-slate-700 rounded"></div>
-          <div className="card p-6">
-            <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
