@@ -424,10 +424,6 @@ const AgendaPage: React.FC = () => {
       }
 
       // 2) Long-press sans mouvement → traiter comme un clic (ouvrir EventModal)
-      //    FC a enclenché son mode drag (mirror créé, event original masqué).
-      //    Sur release sans mouvement, FC ne restaure pas toujours l'event
-      //    visuel proprement → on bump calendarKey pour forcer un remount
-      //    et garantir que l'event reste visible une fois le modal fermé.
       if (
         startPos &&
         typeof x === 'number' && typeof y === 'number' &&
@@ -438,11 +434,6 @@ const AgendaPage: React.FC = () => {
         if (ev) {
           setSelectedEvent(ev);
           setShowEditEventModal(true);
-          // Remount FC au tick suivant pour effacer son état drag orphelin.
-          setTimeout(() => {
-            setCalendarKey(k => k + 1);
-            setMobileCalendarKey(k => k + 1);
-          }, 0);
         }
         return;
       }
