@@ -47,11 +47,14 @@ if (supabaseUrl) {
   dnsPrefetch.href = supabaseUrl;
   document.head.appendChild(dnsPrefetch);
 
-  // Real HTTP warmup — fire a cheap unauthenticated request to wake the socket.
-  // /auth/v1/health returns ~30 bytes and doesn't need any header. We fully ignore
-  // the result; the only goal is to make iOS Safari commit to the connection
-  // before any meaningful fetch runs.
+  // Real HTTP warmup — fire cheap unauthenticated requests to wake the socket
+  // AND warm up the per-origin HTTP/2 streams. One fetch alone is not enough on
+  // iOS Safari: it accepts the first stream but rejects the next 3-4 parallel
+  // streams with "Load failed" if they fire too close to first paint. We hit
+  // both /auth/v1 and /rest/v1 to amorce both subdomains paths used by the app.
   fetch(`${supabaseUrl}/auth/v1/health`, { method: 'GET', mode: 'cors', credentials: 'omit' })
+    .catch(() => { /* expected to sometimes fail — we don't care */ });
+  fetch(`${supabaseUrl}/rest/v1/`, { method: 'GET', mode: 'cors', credentials: 'omit' })
     .catch(() => { /* expected to sometimes fail — we don't care */ });
 }
 
