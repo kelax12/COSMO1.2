@@ -553,6 +553,47 @@ Layout style "agenda" :
 | `DeadlineCalendar.tsx` | Vue agenda forcée |
 | `CollaboratorModal.tsx`, `AddToListModal.tsx`, `EventModal.tsx`, `ColorSettingsModal.tsx` | Bottom-sheet pattern |
 
+### iOS Safari — bug WebKit fetches parallèles (`src/main.tsx`)
+
+iOS Safari WebKit a un bug documenté ([WebKit #171501](https://bugs.webkit.org/show_bug.cgi?id=171501), [supabase-js #684](https://github.com/supabase/supabase-js/issues/684)) :
+quand une page charge et lance **plusieurs fetches cross-origin en parallèle** avant que la connection HTTP/2 soit stabilisée, le navigateur accepte le 1er stream mais **rejette silencieusement les suivants** avec `TypeError: Load failed` / DOMException.
+
+**Symptômes** : page `/tasks` ou `/habits` plante après ~8 s sur iOS Safari uniquement (pas Chrome, pas Firefox), message "Impossible de charger les tâches", **aucune requête Supabase visible** dans le Network tab d'Eruda, console montre `Load failed` + `DOMException {}`. Le bug ne se reproduit **que** la première fois (la connection HTTP/2 ensuite est en keep-alive). Pas reproductible sur desktop.
+
+**Fix obligatoire** dans `src/main.tsx`, **avant `createRoot()`** :
+
+```ts
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+if (supabaseUrl) {
+  // 1) DNS + TLS handshake (gain marginal mais utile)
+  const preconnect = document.createElement('link');
+  preconnect.rel = 'preconnect';
+  preconnect.href = supabaseUrl;
+  preconnect.crossOrigin = 'anonymous';
+  document.head.appendChild(preconnect);
+
+  // 2) Real HTTP warmup — commit la connection HTTP/2 avant React mount.
+  //    Sans ces deux fetches, iOS Safari refuse les requêtes parallèles
+  //    (tasks + habits + categories + friends + lists) lancées juste après.
+  fetch(`${supabaseUrl}/auth/v1/health`, { method: 'GET', mode: 'cors', credentials: 'omit' }).catch(() => {});
+  fetch(`${supabaseUrl}/rest/v1/`,        { method: 'GET', mode: 'cors', credentials: 'omit' }).catch(() => {});
+}
+```
+
+⚠️ **Règles non négociables** :
+- ✅ Garder **les deux** warmup fetches — un seul (`/auth` ou `/rest`) n'amorce qu'un seul pool de streams
+- ✅ Garder le `.catch(() => {})` — la requête peut échouer (401, CORS), peu importe, on veut juste que iOS accepte la connection
+- ✅ Tester sur un vrai iPhone (Eruda console + `?debug=1` pour les logs `[FETCH→]/[FETCH✓]/[FETCH✗]`)
+- ❌ **Ne JAMAIS** retirer ces fetches — la régression est invisible en CI/dev/desktop, elle ne casse que la prod iOS
+- ❌ Remplacer par `<link rel="preconnect">` seul — preconnect fait DNS+TLS mais ne committe pas de stream HTTP, iOS Safari rejette quand même les streams parallèles
+- ❌ Centraliser les premières requêtes dans un seul fetch (par exemple "tout dans un RPC") — fragile, et le bug reviendra dès qu'une autre fetch sera ajoutée plus tard
+
+**Cache localStorage complémentaire** : `src/modules/auth/AuthContext.tsx` persiste `tasks` et `habits` dans `localStorage` (clés `cosmo:qcache:{userId}:{key}`, TTL 24 h, write-through via `queryCache.subscribe`). Combiné au warmup, les ouvertures ≥ 2 sont instantanées même offline. Cleaning : `clearLocalCache(userId)` est appelé sur logout et user-change.
+
+**Skip retry sur timeout** : `src/App.tsx` retire le retry sur `timeout` / `aborted` / `Délai` — sinon une fetch qui timeout à 8 s déclenche un retry, et le worst-case devient 17 s avant erreur.
+
+**Debug iOS sans Mac** : ajouter `?debug=1` à n'importe quelle URL → Eruda console flottante chargée depuis CDN (voir `src/main.tsx`). Affiche les logs `[AUTH] @Xms ...` et `[FETCH→] /path ...` qui mesurent où le temps est dépensé. Zéro overhead sans le query param.
+
 ### Tester le mobile
 
 - DevTools responsive → viewport **375 × 812 (iPhone SE/12 mini)**, **393 × 852 (iPhone 14 Pro)**, **412 × 915 (Pixel 7)**
@@ -569,6 +610,8 @@ Layout style "agenda" :
 - ❌ Faire diverger le mobile et le desktop dans le même composant sans utiliser `md:hidden` / `md:flex` ou `useIsMobile()` — éviter le code dupliqué
 - ❌ Modifier `<TaskCard>` (`md:hidden`) sans vérifier que la table desktop reste intacte (`hidden md:block`)
 - ❌ Réintroduire `TaskCategoryIndicator` ou des icônes inline sur la TaskCard mobile — l'épuration est délibérée
+- ❌ Retirer les **warmup fetches** vers `${VITE_SUPABASE_URL}/auth/v1/health` et `/rest/v1/` dans `src/main.tsx` — sans eux, iOS Safari rejette les requêtes parallèles au mount (bug WebKit, voir section "iOS Safari — bug WebKit fetches parallèles")
+- ❌ Ajouter de nouvelles requêtes Supabase dans l'init de l'app (`AuthContext.initializeAuth`, `BillingProvider`, hooks de pages) sans vérifier sur un vrai iPhone que la connection HTTP/2 absorbe le surplus — au-delà de 5-6 streams parallèles initiaux, le warmup actuel peut ne plus suffire
 
 ---
 
@@ -733,3 +776,7 @@ Pour tout `<input type="file">` :
 - ❌ Surfacer `error.message` brut de Supabase/Postgres dans un toast — `normalizeApiError().message` est désormais toujours générique, l'original passe en `originalMessage` (log only, faille V7)
 - ❌ `allowedHosts: true` dans `vite.config.ts` — toujours une allowlist explicite (faille N10)
 - ❌ Ne supprimer qu'un côté d'une amitié — `accept_friend_request` insère 2 lignes, `removeFriend` doit les supprimer toutes les deux (faille B15)
+- ❌ Retirer les warmup `fetch()` vers `${VITE_SUPABASE_URL}/auth/v1/health` et `/rest/v1/` dans `src/main.tsx` — bug WebKit iOS Safari qui rejette les fetches parallèles initiales avec `TypeError: Load failed`. Régression invisible en dev/desktop, casse uniquement la prod iOS (voir section "iOS Safari — bug WebKit fetches parallèles")
+- ❌ Lancer `> 5-6 requêtes Supabase en parallèle` au mount de l'app sans vérifier sur iPhone réel — au-delà, le warmup actuel peut ne plus suffire et il faudra sérialiser ou ajouter un 3e fetch warmup
+- ❌ Retirer le cache localStorage par userId (`cosmo:qcache:{userId}:tasks` / `cosmo:qcache:{userId}:habits`) dans `AuthContext.tsx` — c'est lui qui rend les ouvertures ≥ 2 instantanées et permet de fonctionner offline brièvement
+- ❌ Retirer le skip retry sur `timeout` / `aborted` / `Délai` dans le `retry()` de `App.tsx` — sinon un fetch qui timeout à 8 s déclenche un retry, le worst-case devient ~17 s avant erreur visible
