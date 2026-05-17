@@ -71,14 +71,18 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,    // 5 minutes
       gcTime: 1000 * 60 * 30,      // 30 minutes
-      // Skip retry on definitive RLS / Postgrest errors — they won't pass on a
-      // retry and just delay the error UI. Retry once on network/abort errors;
-      // after the fetch-level AbortController kicks in (src/lib/supabase.ts),
-      // the second attempt lands on a fresh socket.
+      // Skip retry on definitive RLS / Postgrest errors AND on timeout/abort —
+      // on iOS Safari, the first cold connection routinely stalls past our 8 s
+      // fetch timeout. A blind retry serializes 8 s + 1 s + 8 s = ~17 s before
+      // we surface the error, which the user perceives as "loading 20 seconds".
+      // Better to fail fast: the localStorage cache (AuthContext) keeps every
+      // subsequent open instant, and visibilitychange → refetchQueries (mobileFocus)
+      // recovers the stale state without making the user wait for a second 8 s window.
       retry: (failureCount, error) => {
         if (failureCount >= 1) return false;
         const msg = error instanceof Error ? error.message : '';
         if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
+        if (msg.includes('timeout') || msg.includes('Timeout') || msg.includes('aborted') || msg.includes('Délai')) return false;
         return true;
       },
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
