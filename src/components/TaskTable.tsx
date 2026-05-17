@@ -888,7 +888,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </AnimatePresence>
       </div>
 
-      {sortedTasks.length === 0 && (
+      {sortedTasks.length === 0 && isLoadingTasks && (
+        <div className="space-y-2 p-2">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="h-14 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {sortedTasks.length === 0 && !isLoadingTasks && (
         <div className="text-center py-12" style={{ color: 'rgb(var(--color-text-muted))' }}>
           <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
             {showCompleted ? 'Aucune tâche complétée' : 'Aucune tâche'}
