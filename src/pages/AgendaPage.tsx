@@ -400,7 +400,20 @@ const AgendaPage: React.FC = () => {
           if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
             const masterId = getMasterId(draggedId);
             const ev = events.find(e2 => e2.id === masterId);
-            if (ev) deleteEventMutation.mutate(ev.id);
+            if (ev) {
+              // Retire de FC AVANT la mutation pour éviter que FC reste dans son
+              // état d'auto-revert (qui bloque tous les pointer events suivants).
+              [calendarRef.current, mobileCalendarRef.current].forEach(ref => {
+                try {
+                  const api = ref?.getApi();
+                  // Cherche par id master ou par n'importe quelle instance dérivée
+                  api?.getEvents().forEach(fcEv => {
+                    if (getMasterId(fcEv.id) === masterId) fcEv.remove();
+                  });
+                } catch { /* ignore */ }
+              });
+              deleteEventMutation.mutate(ev.id);
+            }
             return;
           }
         }
