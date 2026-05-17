@@ -938,6 +938,23 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           Temps estimé (min)
                         </label>
                           <div className="flex items-stretch gap-2">
+                            <input
+                              id="task-time"
+                              type="number"
+                              value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
+                              onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
+                              placeholder="Estimation en minute"
+                              className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
+                                errors.estimatedTime ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
+                              } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
+                              style={{
+                                backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
+                                color: 'rgb(var(--color-text-primary))',
+                                borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : undefined)
+                              }}
+                              aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
+                              aria-invalid={!!errors.estimatedTime}
+                            />
                             <button
                               type="button"
                               onClick={() => {
@@ -953,23 +970,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             >
                               <Minus size={18} />
                             </button>
-                            <input
-                              id="task-time"
-                              type="number"
-                              value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
-                              onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
-                              placeholder="Estimation en minute"
-                              className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base text-center ${
-                                errors.estimatedTime ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
-                              } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
-                              style={{
-                                backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : undefined)
-                              }}
-                              aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
-                              aria-invalid={!!errors.estimatedTime}
-                            />
                             <button
                               type="button"
                               onClick={() => {
