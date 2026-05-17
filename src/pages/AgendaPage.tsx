@@ -347,30 +347,52 @@ const AgendaPage: React.FC = () => {
     if (event) { setSelectedEvent(event); setShowEditEventModal(true); }
   };
 
-  const handleEventDragStart = () => {
+  const draggedEventIdRef = useRef<string | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleEventDragStart = (info: { event: { id: string } }) => {
     isDraggingCalendarEventRef.current = true;
+    draggedEventIdRef.current = info.event.id;
+    lastPointerRef.current = null;
     setIsDraggingCalendarEvent(true);
+
+    const onPointerMove = (e: PointerEvent) => {
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0] || e.changedTouches[0];
+      if (t) lastPointerRef.current = { x: t.clientX, y: t.clientY };
+    };
+    const onPointerUp = (e: PointerEvent | MouseEvent) => {
+      const last = lastPointerRef.current || { x: (e as PointerEvent).clientX, y: (e as PointerEvent).clientY };
+      const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
+      if (sidebar && last) {
+        const rect = sidebar.getBoundingClientRect();
+        if (last.x >= rect.left && last.x <= rect.right && last.y >= rect.top && last.y <= rect.bottom) {
+          const draggedId = draggedEventIdRef.current;
+          if (draggedId) {
+            const masterId = getMasterId(draggedId);
+            const ev = events.find(e2 => e2.id === masterId);
+            if (ev) deleteEventMutation.mutate(ev.id);
+          }
+        }
+      }
+      document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('mouseup', onPointerUp);
+    };
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('mouseup', onPointerUp);
   };
 
-  const handleEventDragStop = (info: { event: { id: string }, jsEvent: MouseEvent | PointerEvent | TouchEvent }) => {
-    const wasDragging = isDraggingCalendarEventRef.current;
+  const handleEventDragStop = () => {
     setIsDraggingCalendarEvent(false);
-    setTimeout(() => { isDraggingCalendarEventRef.current = false; }, 50);
+    setTimeout(() => { isDraggingCalendarEventRef.current = false; draggedEventIdRef.current = null; }, 50);
     document.querySelectorAll('.fc-event-dragging, .fc-event-mirror').forEach(el => el.remove());
-    if (!wasDragging) return;
-    const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
-    if (!sidebar) return;
-    const rect = sidebar.getBoundingClientRect();
-    const je = info.jsEvent as MouseEvent;
-    const touch = (info.jsEvent as TouchEvent).changedTouches?.[0];
-    const clientX = touch ? touch.clientX : je.clientX;
-    const clientY = touch ? touch.clientY : je.clientY;
-    if (typeof clientX !== 'number' || typeof clientY !== 'number') return;
-    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-      const masterId = getMasterId(info.event.id);
-      const ev = events.find(e => e.id === masterId);
-      if (ev) deleteEventMutation.mutate(ev.id);
-    }
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
