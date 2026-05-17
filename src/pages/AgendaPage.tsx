@@ -235,8 +235,10 @@ const AgendaPage: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const categoriesRef = useRef(categories);
-  const isDraggingCalendarEventRef = useRef(false);
   const [isDraggingCalendarEvent, setIsDraggingCalendarEvent] = useState(false);
+  // Timestamp pour suppression du clic résiduel après un drag — auto-expire après 300ms
+  // (jamais "stuck" même si le cleanup ne tourne pas).
+  const lastDragEndAtRef = useRef<number>(0);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -338,7 +340,9 @@ const AgendaPage: React.FC = () => {
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-    if (isDraggingCalendarEventRef.current) return;
+    // Suppress le click résiduel qui peut firer juste après un drag (long-press
+    // sans mouvement notamment). Auto-expire après 300ms : pas de blocage permanent.
+    if (Date.now() - lastDragEndAtRef.current < 300) return;
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
     const masterId = getMasterId(clickInfo.event.id);
     const taskId = clickInfo.event.extendedProps?.taskId;
@@ -350,7 +354,6 @@ const AgendaPage: React.FC = () => {
   const dragEndHandlerRef = useRef<((clientX?: number, clientY?: number) => void) | null>(null);
 
   const handleEventDragStart = (info: EventDragStartArg) => {
-    isDraggingCalendarEventRef.current = true;
     draggedEventIdRef.current = info.event.id;
     setIsDraggingCalendarEvent(true);
 
@@ -382,9 +385,9 @@ const AgendaPage: React.FC = () => {
       handled = true;
       dragEndHandlerRef.current = null;
       removeWindowListeners();
-      isDraggingCalendarEventRef.current = false;
       draggedEventIdRef.current = null;
       setIsDraggingCalendarEvent(false);
+      lastDragEndAtRef.current = Date.now();
 
       const x = typeof clientX === 'number' ? clientX : lastX;
       const y = typeof clientY === 'number' ? clientY : lastY;
