@@ -56,7 +56,11 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { data: subscription, isLoading } = useQuery({
     queryKey: billingKeys.subscription,
     queryFn: async (): Promise<SubscriptionRow | null> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // getSession() reads from local storage — no network round-trip.
+      // getUser() would validate the JWT with Supabase on every call, adding
+      // an extra RTT that serialises behind other in-flight requests.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return null;
       const { data, error } = await supabase
         .from('subscriptions')
