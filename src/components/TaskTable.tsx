@@ -31,8 +31,7 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useCategories } from '@/modules/categories';
-import type { Category } from '@/modules/categories';
+import { useCategoryLookup } from '@/modules/categories';
 
 import { usePriorityRange } from '@/modules/ui-states';
 
@@ -66,7 +65,6 @@ const formatDate = (dateString: string | undefined) => {
 // ═══════════════════════════════════════════════════════════════════
 interface TaskCardProps {
   task: Task;
-  categories: Category[];
   addToListMode: boolean;
   selectedForListIds: string[];
   onToggleTaskForList?: (id: string) => void;
@@ -81,7 +79,6 @@ interface TaskCardProps {
 
 const TaskCard = React.memo(({
   task,
-  categories,
   addToListMode,
   selectedForListIds,
   onToggleTaskForList,
@@ -93,7 +90,10 @@ const TaskCard = React.memo(({
   onDeleteTask,
   onScheduleTask,
 }: TaskCardProps) => {
-  const category = categories.find(c => c.id === task.category);
+  // Lookup catégorie via hook React Query — re-render automatique quand
+  // les catégories Supabase finissent de charger (asynchrone en prod).
+  const getCategoryById = useCategoryLookup();
+  const category = getCategoryById(task.category);
   const categoryColor = category?.color || '#3B82F6';
 
   const [actionsVisible, setActionsVisible] = useState(false);
@@ -389,7 +389,6 @@ const TaskCard = React.memo(({
     prevProps.task.deadline === nextProps.task.deadline &&
     prevProps.task.estimatedTime === nextProps.task.estimatedTime &&
     prevProps.task.category === nextProps.task.category &&
-    prevProps.categories === nextProps.categories &&
     prevProps.addToListMode === nextProps.addToListMode &&
     prevProps.selectedForListIds === nextProps.selectedForListIds
   );
@@ -418,11 +417,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // EVENTS - Depuis le module events (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const createEventMutation = useCreateEvent();
-
-  // ═══════════════════════════════════════════════════════════════════
-  // CATEGORIES - Depuis le module categories (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
-  const { data: categories = [] } = useCategories();
 
   const { priorityRange } = usePriorityRange();
   const { isPremium } = useBilling();
@@ -853,7 +847,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <TaskCard
               key={task.id}
               task={task}
-              categories={categories}
               addToListMode={addToListMode}
               selectedForListIds={selectedForListIds}
               onToggleTaskForList={onToggleTaskForList}
