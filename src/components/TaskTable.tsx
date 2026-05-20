@@ -389,6 +389,7 @@ const TaskCard = React.memo(({
     prevProps.task.deadline === nextProps.task.deadline &&
     prevProps.task.estimatedTime === nextProps.task.estimatedTime &&
     prevProps.task.category === nextProps.task.category &&
+    prevProps.categories === nextProps.categories &&
     prevProps.addToListMode === nextProps.addToListMode &&
     prevProps.selectedForListIds === nextProps.selectedForListIds
   );
