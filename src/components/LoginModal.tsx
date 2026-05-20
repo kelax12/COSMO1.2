@@ -117,8 +117,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full sm:max-w-md relative">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center sm:p-4" onClick={onClose}>
+      <div
+        className="bg-slate-900 border-t sm:border border-slate-700 rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sm:hidden flex justify-center -mt-3 mb-3">
+          <div className="w-9 h-[5px] rounded-full bg-slate-600/80" />
+        </div>
         <Button
           variant="ghost"
           size="icon"

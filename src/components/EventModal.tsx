@@ -305,10 +305,13 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const renderContent = () => (
 <div
-        className="md:rounded-2xl shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-full md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden opacity-0 scale-95 animate-modal-content"
-      style={{ backgroundColor: "rgb(var(--color-surface))" }}
+        className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden opacity-0 scale-95 animate-modal-content flex flex-col"
+      style={{ backgroundColor: "rgb(var(--color-surface))", paddingBottom: 'env(safe-area-inset-bottom)' }}
       onClick={(e) => e.stopPropagation()}
     >
+      <div className="md:hidden flex justify-center pt-3 pb-2 shrink-0">
+        <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+      </div>
       <div
         className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors gap-2"
         style={{ borderColor: "rgb(var(--color-border))" }}
@@ -773,7 +776,7 @@ const EventModal: React.FC<EventModalProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 md:p-4 opacity-0 animate-modal-backdrop"
+        className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
         onClick={onClose}
       >
         {renderContent()}
@@ -790,7 +793,7 @@ const EventModal: React.FC<EventModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
+            className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
             onClick={() => setShowDeleteConfirm(false)}
           >
             <motion.div
@@ -798,13 +801,13 @@ const EventModal: React.FC<EventModalProps> = ({
               dragControls={deleteConfirmDragControls}
               dragListener={false}
               dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0, bottom: 0.3 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setShowDeleteConfirm(false); }}
+              dragElastic={{ top: 0.05, bottom: 0.5 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setShowDeleteConfirm(false); }}
               initial={{ y: '100%', scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: '100%', scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md transition-colors"
+              transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+              className="rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-md transition-colors"
               style={{
                 backgroundColor: "rgb(var(--color-surface))",
                 paddingBottom: 'env(safe-area-inset-bottom)',
@@ -815,7 +818,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
                 onPointerDown={(e) => deleteConfirmDragControls.start(e)}
               >
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               <div className="p-5 sm:p-6">
                 <h2

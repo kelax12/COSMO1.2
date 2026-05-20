@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'sonner';
 
 type ColorSettingsModalProps = {
@@ -22,6 +22,8 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
+  const deleteConfirmDragControls = useDragControls();
 
   // Sync local state with fetched categories
   useEffect(() => {
@@ -115,23 +117,32 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/30 backdrop-blur-md"
         onClick={onClose}
       />
 
         <motion.div
+          drag="y"
+          dragControls={dragControls}
+          dragListener={false}
+          dragConstraints={{ top: 0 }}
+          dragElastic={{ top: 0.05, bottom: 0.5 }}
+          onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className={`relative w-full overflow-hidden rounded-t-[20px] sm:rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all flex flex-col max-h-[92vh] sm:max-h-[85vh] ${
+          transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+            className={`relative w-full overflow-hidden rounded-t-[28px] sm:rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all flex flex-col max-h-[88vh] sm:max-h-[85vh] ${
               isNested ? 'sm:max-w-[510px]' : 'sm:max-w-[572px]'
             }`}
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           {/* Drag handle (mobile only) */}
-          <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
-            <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+          <div
+            className="sm:hidden flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            onPointerDown={(e) => dragControls.start(e)}
+          >
+            <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
           </div>
 
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0">
@@ -226,24 +237,33 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 monochrome:bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[90] sm:p-4"
+              className="fixed inset-0 bg-black/30 monochrome:bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center z-[90] sm:p-4"
               onClick={() => setCategoryToDelete(null)}
             >
               <motion.div
+                drag="y"
+                dragControls={deleteConfirmDragControls}
+                dragListener={false}
+                dragConstraints={{ top: 0 }}
+                dragElastic={{ top: 0.05, bottom: 0.5 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setCategoryToDelete(null); }}
                 initial={{ y: '100%', scale: 0.95, opacity: 0 }}
                 animate={{ y: 0, scale: 1, opacity: 1 }}
                 exit={{ y: '100%', scale: 0.95, opacity: 0 }}
-                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border monochrome:border-neutral-700"
+                className="rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border monochrome:border-neutral-700"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
                   paddingBottom: 'env(safe-area-inset-bottom)',
                 }}
               >
-                <div className="sm:hidden flex justify-center pt-2 pb-1">
-                  <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div
+                  className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
+                >
+                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
                 <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4 monochrome:bg-neutral-800" style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}>
