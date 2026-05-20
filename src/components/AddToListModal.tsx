@@ -94,8 +94,12 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
 
             {/* Header */}
             <div
-              className="flex justify-between items-center px-5 py-3 sm:py-4 border-b shrink-0"
+              className="flex justify-between items-center px-5 py-3 sm:py-4 border-b shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
               style={{ borderColor: 'rgb(var(--color-border))' }}
+              onPointerDown={(e) => {
+                if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+                dragControls.start(e);
+              }}
             >
               <h2
                 id="add-to-list-title"

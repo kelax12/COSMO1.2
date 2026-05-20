@@ -228,8 +228,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
             {/* Header */}
             <div
-              className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
+              className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
               style={{ borderColor: 'rgb(var(--color-border))' }}
+              onPointerDown={(e) => {
+                if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+                dragControls.start(e);
+              }}
             >
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold" style={{ color: 'rgb(var(--color-text-muted))' }}>

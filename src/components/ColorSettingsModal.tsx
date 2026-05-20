@@ -145,7 +145,13 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
           </div>
 
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0">
+          <div
+            className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
+            onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+              dragControls.start(e);
+            }}
+          >
             <h2 className="text-base sm:text-xl font-medium text-slate-800 dark:text-white">Modifier les catégories</h2>
             <button
               onClick={onClose}
