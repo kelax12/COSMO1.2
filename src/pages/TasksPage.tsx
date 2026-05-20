@@ -191,8 +191,9 @@ const TasksPage: React.FC = () => {
       task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
     );
 
-    // Filtre par liste sélectionnée
-    if (selectedListId) {
+    // Filtre par liste sélectionnée — désactivé en mode "ajouter à une liste"
+    // pour permettre de sélectionner n'importe quelle tâche.
+    if (selectedListId && !selectingTasksForListId) {
       const selectedList = lists.find(list => list.id === selectedListId);
       if (selectedList) {
         result = result.filter(task => selectedList.taskIds.includes(task.id));
@@ -200,7 +201,7 @@ const TasksPage: React.FC = () => {
     }
 
     return result;
-  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists]);
+  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists]);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6', name: 'Bleu' },
