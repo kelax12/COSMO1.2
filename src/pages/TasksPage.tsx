@@ -337,7 +337,7 @@ const TasksPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] sm:[mask-image:none]">
+                    <div className="flex sm:flex-wrap gap-3 pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -375,7 +375,7 @@ const TasksPage: React.FC = () => {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-7 inset-x-0 hidden sm:flex justify-center gap-2 z-10"
+                                  className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
                                 >
                                   <button
                                     onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
