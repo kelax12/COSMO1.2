@@ -238,7 +238,7 @@ const TaskCard = React.memo(({
           aria-pressed={selectedForListIds.includes(task.id)}
         >
           <span
-            className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
               selectedForListIds.includes(task.id)
                 ? 'bg-blue-500 border-blue-500'
                 : 'border-slate-400 dark:border-slate-500'
@@ -264,7 +264,7 @@ const TaskCard = React.memo(({
           aria-pressed={task.completed}
         >
           <span
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
               task.completed
                 ? 'bg-blue-500 border-blue-500'
                 : 'border-gray-400'
