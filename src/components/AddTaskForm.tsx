@@ -271,7 +271,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   return (
     <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
-      <DialogContent showCloseButton={false} className="p-0 border-0 top-auto bottom-0 left-0 translate-x-0 translate-y-0 rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:rounded-2xl sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bg-transparent sm:shadow-none sm:max-w-4xl lg:max-w-5xl w-full h-[94vh] max-h-[94vh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-4xl lg:max-w-5xl w-full h-[94vh] max-h-[94vh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col">
         <motion.div
           drag="y"
           dragControls={mainDragControls}
@@ -279,7 +279,8 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
           dragConstraints={{ top: 0 }}
           dragElastic={{ top: 0.05, bottom: 0.5 }}
           onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleFormToggle(false); }}
-          className="flex flex-col h-full w-full"
+          className="flex flex-col h-full w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
+          style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
         <div
           className="sm:hidden flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
