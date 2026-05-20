@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +55,7 @@ type OKRModalProps = {
 
 const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editingObjective, onSubmit }) => {
   const { data: allCategories = [] } = useCategories();
+  const dragControls = useDragControls();
   const [step, setStep] = useState<1 | 2>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [step1Error, setStep1Error] = useState('');
@@ -178,14 +179,20 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   return (
     <>
     <motion.div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-md"
       onClick={handleClose}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="w-full sm:max-w-[624px] sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden"
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0.05, bottom: 0.5 }}
+        onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleClose(); }}
+        className="w-full sm:max-w-[624px] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden"
         style={{
           backgroundColor: 'rgb(var(--color-surface))',
           paddingBottom: 'env(safe-area-inset-bottom)',
@@ -194,11 +201,14 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+        transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
       >
         {/* Drag handle (mobile only) */}
-        <div className="sm:hidden flex justify-center pt-3 pb-2 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+        <div
+          className="sm:hidden flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
+          <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
 
         {/* Header */}

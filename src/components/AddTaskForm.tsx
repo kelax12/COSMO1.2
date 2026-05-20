@@ -269,7 +269,10 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   return (
     <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
-      <DialogContent showCloseButton={false} className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl lg:max-w-5xl w-full h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="p-0 border-0 top-auto bottom-0 left-0 translate-x-0 translate-y-0 rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:rounded-2xl sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bg-transparent sm:shadow-none sm:max-w-4xl lg:max-w-5xl w-full h-[94vh] max-h-[94vh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+          <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+        </div>
         <div className="sm:rounded-2xl sm:shadow-2xl w-full transition-colors overflow-hidden h-full flex flex-col flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header */}
             <div className="flex justify-between items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>

@@ -612,12 +612,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       <DialogContent
         showCloseButton={false}
         fullScreenMobile={true}
-        className="p-0 rounded-none border-0 top-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[100dvh] max-h-[100dvh] sm:rounded-2xl sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:bg-transparent sm:shadow-none lg:max-h-[85vh] overflow-hidden flex flex-col"
+        className="p-0 rounded-t-[28px] sm:rounded-2xl border-0 top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:bg-transparent sm:shadow-none lg:max-h-[85vh] overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
         </DialogTitle>
-        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'hsl(var(--card))' }}>
+        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0" style={{ backgroundColor: 'hsl(var(--card))' }}>
+          <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+        </div>
+        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit flex flex-col" style={{ backgroundColor: 'hsl(var(--card))' }}>
           {/* Header — sticky */}
           <div
             className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
@@ -1473,7 +1476,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-[70] sm:p-4"
+              className="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/50 backdrop-blur-md flex items-end sm:items-center justify-center z-[70] sm:p-4"
               onClick={() => setShowDeleteConfirm(false)}
             >
               <motion.div
@@ -1481,21 +1484,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 dragControls={deleteConfirmDragControls}
                 dragListener={false}
                 dragConstraints={{ top: 0 }}
-                dragElastic={{ top: 0, bottom: 0.3 }}
-                onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setShowDeleteConfirm(false); }}
+                dragElastic={{ top: 0.05, bottom: 0.5 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setShowDeleteConfirm(false); }}
                 initial={{ y: '100%', scale: 0.95, opacity: 0 }}
                 animate={{ y: 0, scale: 1, opacity: 1 }}
                 exit={{ y: '100%', scale: 0.95, opacity: 0 }}
-                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
+                className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               >
                 <div
                   className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
                   onPointerDown={(e) => deleteConfirmDragControls.start(e)}
                 >
-                  <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
                 <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
