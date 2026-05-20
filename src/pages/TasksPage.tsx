@@ -324,7 +324,18 @@ const TasksPage: React.FC = () => {
                   className="mb-4 sm:mb-8"
                 >
                   <div className="mb-4">
-                    <h3 className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">Accès rapide aux listes</h3>
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                      <h3 className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h3>
+                      {!showCreateList && (
+                        <button
+                          onClick={() => setShowCreateList(true)}
+                          aria-label="Nouvelle liste"
+                          className="sm:hidden flex items-center justify-center w-9 h-9 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
+                        >
+                          <Plus size={20} strokeWidth={2.5} />
+                        </button>
+                      )}
+                    </div>
 
                     <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] sm:[mask-image:none]">
                       <motion.button
@@ -364,7 +375,7 @@ const TasksPage: React.FC = () => {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
+                                  className="absolute -top-7 inset-x-0 hidden sm:flex justify-center gap-2 z-10"
                                 >
                                   <button
                                     onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
@@ -540,22 +551,10 @@ const TasksPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Bouton + nouvelle liste — mobile pleine largeur */}
+                    {/* Formulaire nouvelle liste — mobile (déclenché par l'icône + dans l'en-tête) */}
                     <div className="sm:hidden mt-2">
                       <AnimatePresence mode="wait">
-                        {!showCreateList ? (
-                          <motion.button
-                            key="add-btn-mobile"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setShowCreateList(true)}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all"
-                          >
-                            <Plus size={16} />
-                            <span className="text-sm font-medium">Nouvelle liste</span>
-                          </motion.button>
-                        ) : (
+                        {showCreateList && (
                           <motion.form
                             key="add-form-mobile"
                             initial={{ opacity: 0 }}
