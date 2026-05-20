@@ -613,7 +613,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       <DialogContent
         showCloseButton={false}
         fullScreenMobile={true}
-        className="p-0 rounded-t-[28px] sm:rounded-2xl border-0 top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:bg-transparent sm:shadow-none lg:max-h-[85vh] overflow-hidden flex flex-col"
+        className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
@@ -625,7 +625,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
           dragConstraints={{ top: 0 }}
           dragElastic={{ top: 0.05, bottom: 0.5 }}
           onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleClose(); }}
-          className="flex flex-col h-full w-full"
+          className="flex flex-col h-full w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
+          style={{ backgroundColor: 'hsl(var(--card))' }}
         >
         <div
           className="sm:hidden flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
