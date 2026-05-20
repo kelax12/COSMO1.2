@@ -77,6 +77,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
   const deleteConfirmDragControls = useDragControls();
+  const mainDragControls = useDragControls();
 
 
   useEffect(() => {
@@ -304,17 +305,34 @@ const EventModal: React.FC<EventModalProps> = ({
   const isPrefilledMode = mode === 'add';
 
   const renderContent = () => (
-<div
-        className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden opacity-0 scale-95 animate-modal-content flex flex-col"
+<motion.div
+        drag="y"
+        dragControls={mainDragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0.05, bottom: 0.5 }}
+        onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+        className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
       style={{ backgroundColor: "rgb(var(--color-surface))", paddingBottom: 'env(safe-area-inset-bottom)' }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="md:hidden flex justify-center pt-3 pb-2 shrink-0">
+      <div
+        className="md:hidden flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+        onPointerDown={(e) => mainDragControls.start(e)}
+      >
         <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
       </div>
       <div
-        className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors gap-2"
-        style={{ borderColor: "rgb(var(--color-border))" }}
+        className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b transition-colors gap-2 md:cursor-default cursor-grab active:cursor-grabbing touch-none md:touch-auto"
+        style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
+        onPointerDown={(e) => {
+          if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+          mainDragControls.start(e);
+        }}
       >
         <h2
           className="text-base md:text-xl font-bold truncate"
@@ -770,7 +788,7 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
         </div>
       </form>
-    </div>
+    </motion.div>
   );
 
   return (

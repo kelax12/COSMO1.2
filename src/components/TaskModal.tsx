@@ -59,6 +59,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }) => {
   const deleteConfirmDragControls = useDragControls();
+  const mainDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -617,14 +618,31 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
         </DialogTitle>
-        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0" style={{ backgroundColor: 'hsl(var(--card))' }}>
+        <motion.div
+          drag="y"
+          dragControls={mainDragControls}
+          dragListener={false}
+          dragConstraints={{ top: 0 }}
+          dragElastic={{ top: 0.05, bottom: 0.5 }}
+          onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleClose(); }}
+          className="flex flex-col h-full w-full"
+        >
+        <div
+          className="sm:hidden flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          style={{ backgroundColor: 'hsl(var(--card))' }}
+          onPointerDown={(e) => mainDragControls.start(e)}
+        >
           <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
         <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit flex flex-col" style={{ backgroundColor: 'hsl(var(--card))' }}>
           {/* Header — sticky */}
           <div
-            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
+            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
             style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'hsl(var(--card))' }}
+            onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+              mainDragControls.start(e);
+            }}
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -1469,7 +1487,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             </form>
           </div>
         </div>
-        
+        </motion.div>
+
         <AnimatePresence>
           {showDeleteConfirm && (
             <motion.div

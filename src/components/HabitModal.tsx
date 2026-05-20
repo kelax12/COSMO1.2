@@ -100,8 +100,12 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
               {/* Sticky header */}
               <div
-                className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
+                className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
                 style={{ borderColor: 'rgb(var(--color-border))' }}
+                onPointerDown={(e) => {
+                  if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+                  dragControls.start(e);
+                }}
               >
                 <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                   {isEditing ? "Modifier l'habitude" : 'Nouvelle habitude'}

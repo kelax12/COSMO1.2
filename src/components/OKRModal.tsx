@@ -212,7 +212,13 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
+        <div
+          className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
+          onPointerDown={(e) => {
+            if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
+            dragControls.start(e);
+          }}
+        >
           <div>
             <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">
               {editingObjective ? 'Modifier' : 'Nouvel objectif'} · {step}/2
