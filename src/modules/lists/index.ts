@@ -6,11 +6,15 @@
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
 
-export type { 
-  TaskList, 
-  CreateListInput, 
-  UpdateListInput 
+export type {
+  TaskList,
+  CreateListInput,
+  UpdateListInput,
+  SmartRulePreset,
 } from './types';
+
+export { SMART_PRESETS, tasksInList, tasksDueToday } from './smart-rules';
+export type { SmartPresetDef } from './smart-rules';
 
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS & QUERY KEYS

@@ -4,8 +4,9 @@ import TaskFilter from '../components/TaskFilter';
 import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
-import { CalendarDays, X, Plus, Pencil, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import SmartListMenu from '../components/SmartListMenu';
+import { CalendarDays, X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff } from 'lucide-react';
+import { motion, AnimatePresence, useDragControls, Reorder } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -16,7 +17,18 @@ import { useTasks } from '@/modules/tasks';
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useLists, useCreateList, useUpdateList, useDeleteList, useAddTaskToList } from '@/modules/lists';
+import {
+  useLists,
+  useCreateList,
+  useUpdateList,
+  useDeleteList,
+  useAddTaskToList,
+  tasksInList,
+  tasksDueToday,
+  SMART_PRESETS,
+  type SmartRulePreset,
+  type TaskList,
+} from '@/modules/lists';
 
 // ═══════════════════════════════════════════════════════════════════
 import { usePriorityRange } from '@/modules/ui-states';
@@ -72,7 +84,24 @@ const TasksPage: React.FC = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
   const [showQuickFilters, setShowQuickFilters] = useState(false);
+  // selectedListId peut désormais valoir une UUID de liste OU le sentinel
+  // 'virtual-today' pour la liste virtuelle "Aujourd'hui".
+  const VIRTUAL_TODAY_ID = 'virtual-today';
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+
+  // Auto-épingle la liste par défaut au mount (une seule fois, au premier
+  // chargement avec lists peuplé). Ne re-déclenche pas si l'user a changé
+  // manuellement de liste depuis — d'où le flag autoSelectDoneRef.
+  const autoSelectDoneRef = useRef(false);
+  useEffect(() => {
+    if (autoSelectDoneRef.current) return;
+    if (lists.length === 0) return;
+    const defaultList = lists.find(l => l.isDefault);
+    if (defaultList) {
+      setSelectedListId(defaultList.id);
+    }
+    autoSelectDoneRef.current = true;
+  }, [lists]);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [summaryAtBottom, setSummaryAtBottom] = useState(true);
@@ -205,14 +234,34 @@ const TasksPage: React.FC = () => {
     // Filtre par liste sélectionnée — désactivé en mode "ajouter à une liste"
     // pour permettre de sélectionner n'importe quelle tâche.
     if (selectedListId && !selectingTasksForListId) {
-      const selectedList = lists.find(list => list.id === selectedListId);
-      if (selectedList) {
-        result = result.filter(task => selectedList.taskIds.includes(task.id));
+      if (selectedListId === VIRTUAL_TODAY_ID) {
+        // Liste virtuelle "Aujourd'hui" — toutes les tâches dont
+        // deadline tombe aujourd'hui et qui ne sont pas complétées.
+        const todayIds = new Set(tasksDueToday(tasks).map(t => t.id));
+        result = result.filter(t => todayIds.has(t.id));
+      } else {
+        const selectedList = lists.find(list => list.id === selectedListId);
+        if (selectedList) {
+          // tasksInList gère manual ET smart (filtrage dynamique par règle)
+          const allowed = new Set(tasksInList(selectedList, tasks).map(t => t.id));
+          result = result.filter(task => allowed.has(task.id));
+        }
       }
     }
 
     return result;
   }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists]);
+
+  // Compteur de tâches par liste (calculé une fois, partagé entre toutes les chips).
+  // On compte avec les filtres "Aujourd'hui = non complétées" cohérents.
+  const tasksCountByListId = useMemo(() => {
+    const map = new Map<string, number>();
+    map.set(VIRTUAL_TODAY_ID, tasksDueToday(tasks).length);
+    for (const list of lists) {
+      map.set(list.id, tasksInList(list, tasks).length);
+    }
+    return map;
+  }, [lists, tasks]);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6', name: 'Bleu' },
@@ -224,6 +273,56 @@ const TasksPage: React.FC = () => {
     { value: 'pink', color: '#EC4899', name: 'Rose' },
     { value: 'indigo', color: '#6366F1', name: 'Indigo' },
   ];
+
+  // Résout la couleur affichée : si c'est un hex personnalisé (#RRGGBB),
+  // on l'utilise tel quel. Sinon on cherche dans la palette nominée.
+  const resolveListColor = (color: string): string => {
+    if (typeof color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(color)) return color;
+    return colorOptions.find(c => c.value === color)?.color || '#3B82F6';
+  };
+
+  // Toggle un preset smart : crée la liste à partir du preset choisi.
+  const handleCreateSmartList = (presetKey: SmartRulePreset) => {
+    const preset = SMART_PRESETS.find(p => p.preset === presetKey);
+    if (!preset) return;
+    // Évite les doublons : si une smart list avec ce preset existe déjà, on la sélectionne.
+    const existing = lists.find(l => l.type === 'smart' && l.smartRule === presetKey);
+    if (existing) {
+      setSelectedListId(existing.id);
+      return;
+    }
+    createListMutation.mutate({
+      name: preset.label,
+      color: preset.color,
+      type: 'smart',
+      smartRule: presetKey,
+    });
+  };
+
+  // Réordonne les listes (drag-to-reorder). Met à jour le champ `position`
+  // pour chaque liste affectée. Optimisation : on ne pousse que les diffs.
+  const handleReorderLists = (newOrder: TaskList[]) => {
+    newOrder.forEach((list, idx) => {
+      if (list.position !== idx) {
+        updateListMutation.mutate({ id: list.id, updates: { position: idx } });
+      }
+    });
+  };
+
+  // Toggle la liste par défaut (un seul à la fois).
+  const handleToggleDefault = (list: TaskList) => {
+    if (list.isDefault) {
+      // Retire le statut par défaut
+      updateListMutation.mutate({ id: list.id, updates: { isDefault: false } });
+    } else {
+      // Retire le statut des autres et le pose sur celle-ci
+      const previousDefault = lists.find(l => l.isDefault);
+      if (previousDefault) {
+        updateListMutation.mutate({ id: previousDefault.id, updates: { isDefault: false } });
+      }
+      updateListMutation.mutate({ id: list.id, updates: { isDefault: true } });
+    }
+  };
 
   // Error state — shows up if useTasks fails (network, RLS denial, etc.)
   // Without this, an error was silently swallowed and the page sat on the
@@ -368,17 +467,49 @@ const TasksPage: React.FC = () => {
                         <span className="sm:hidden">Tout</span>
                       </motion.button>
 
+                      {/* Chip virtuelle "Aujourd'hui" — toujours présente, non-supprimable.
+                          Filtre dynamique : tâches dont deadline === today AND !completed. */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                          selectedListId === VIRTUAL_TODAY_ID
+                            ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
+                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
+                        }`}
+                        title="Tâches dont l'échéance est aujourd'hui"
+                      >
+                        <Sparkles size={13} />
+                        <span>Aujourd'hui</span>
+                        <span className="text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
+                      </motion.button>
+
+                      {/* Drag-to-reorder : Reorder.Group rend un div inline (className="contents")
+                          pour ne pas casser la layout flex parente. */}
+                      <Reorder.Group
+                        as="div"
+                        axis="x"
+                        values={lists}
+                        onReorder={handleReorderLists}
+                        className="contents"
+                      >
                       {lists.map((list) => {
-                        const colorOption = colorOptions.find(c => c.value === list.color);
                         const isSelected = selectedListId === list.id;
                         const isEditing = editingListId === list.id;
                         const isHovered = hoveredListId === list.id;
                         const showActions = (isHovered || isSelected) && !isEditing;
 
                         return (
-                          <div
+                          <Reorder.Item
+                            as="div"
+                            value={list}
                             key={list.id}
-                            className="relative shrink-0"
+                            // Drag désactivé pendant l'édition (sinon les inputs reçoivent les pointer events).
+                            // En usage normal, framer-motion distingue click (mouvement < 4px) du drag.
+                            drag={isEditing ? false : 'x'}
+                            whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
+                            className="relative shrink-0 cursor-grab active:cursor-grabbing"
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
@@ -391,22 +522,41 @@ const TasksPage: React.FC = () => {
                                   transition={{ duration: 0.15 }}
                                   className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
                                 >
+                                  {/* Bouton "épingler par défaut" — seul un peut être actif */}
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
-                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                    title="Ajouter des tâches"
-                                    aria-label="Ajouter des tâches"
+                                    onClick={(e) => { e.stopPropagation(); handleToggleDefault(list); }}
+                                    className={`p-1 rounded border shadow-sm transition-colors ${
+                                      list.isDefault
+                                        ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300'
+                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                                    }`}
+                                    title={list.isDefault ? 'Liste par défaut (cliquez pour désépingler)' : 'Définir comme liste par défaut'}
+                                    aria-label={list.isDefault ? 'Liste par défaut' : 'Épingler comme liste par défaut'}
                                   >
-                                    <Plus size={15} />
+                                    {list.isDefault ? <Pin size={15} fill="currentColor" /> : <PinOff size={15} />}
                                   </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); startEditList(list); }}
-                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                    title="Modifier la liste"
-                                    aria-label="Modifier la liste"
-                                  >
-                                    <Pencil size={15} />
-                                  </button>
+                                  {/* Ajouter des tâches — désactivé pour les smart lists (auto-générées) */}
+                                  {list.type !== 'smart' && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
+                                      className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      title="Ajouter des tâches"
+                                      aria-label="Ajouter des tâches"
+                                    >
+                                      <Plus size={15} />
+                                    </button>
+                                  )}
+                                  {/* Modifier — désactivé pour smart (la règle est fixe) */}
+                                  {list.type !== 'smart' && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); startEditList(list); }}
+                                      className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      title="Modifier la liste"
+                                      aria-label="Modifier la liste"
+                                    >
+                                      <Pencil size={15} />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
@@ -426,13 +576,25 @@ const TasksPage: React.FC = () => {
                               >
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    if (e.shiftKey) {
+                                      e.currentTarget.nextElementSibling?.dispatchEvent(new MouseEvent('click'));
+                                      return;
+                                    }
                                     const idx = colorOptions.findIndex(c => c.value === editListColor);
                                     setEditListColor(colorOptions[(idx + 1) % colorOptions.length].value);
                                   }}
                                   className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                                  style={{ backgroundColor: colorOptions.find(c => c.value === editListColor)?.color || '#3B82F6' }}
-                                  title="Changer la couleur"
+                                  style={{ backgroundColor: resolveListColor(editListColor) }}
+                                  title="Clic : cycle couleurs · Shift+clic : palette hex"
+                                />
+                                <input
+                                  type="color"
+                                  value={resolveListColor(editListColor)}
+                                  onChange={(e) => setEditListColor(e.target.value)}
+                                  className="sr-only"
+                                  aria-label="Choisir une couleur personnalisée"
+                                  tabIndex={-1}
                                 />
                                 <input
                                   autoFocus
@@ -471,13 +633,23 @@ const TasksPage: React.FC = () => {
                                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
                                 }`}
                               >
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colorOption?.color || list.color || '#3B82F6' }} />
+                                {/* Indicateur visuel : pastille couleur, ou icône Sparkles si smart */}
+                                {list.type === 'smart' ? (
+                                  <Sparkles size={13} style={{ color: isSelected ? 'currentColor' : resolveListColor(list.color) }} />
+                                ) : (
+                                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: resolveListColor(list.color) }} />
+                                )}
                                 <span>{list.name}</span>
+                                {/* Icône Pin si liste par défaut */}
+                                {list.isDefault && (
+                                  <Pin
+                                    size={11}
+                                    fill="currentColor"
+                                    className={isSelected ? 'opacity-80' : 'text-amber-500'}
+                                  />
+                                )}
                                 <span className="text-xs opacity-60 ml-1 monochrome:text-neutral-400">
-                                  {list.taskIds.filter(taskId => {
-                                    const task = tasks.find(t => t.id === taskId);
-                                    return task && !task.completed;
-                                  }).length}
+                                  {tasksCountByListId.get(list.id) ?? 0}
                                 </span>
                                 {isSelected && (
                                   <div className="text-white monochrome:text-black">
@@ -486,9 +658,18 @@ const TasksPage: React.FC = () => {
                                 )}
                               </button>
                             )}
-                          </div>
+                          </Reorder.Item>
                         );
                       })}
+                      </Reorder.Group>
+
+                      {/* Bouton "ajouter une smart list" — toujours visible quand pas en édition */}
+                      {!showCreateList && (
+                        <SmartListMenu
+                          existingPresets={lists.filter(l => l.type === 'smart').map(l => l.smartRule!).filter(Boolean)}
+                          onSelect={handleCreateSmartList}
+                        />
+                      )}
 
                       {/* Bouton + nouvelle liste — desktop uniquement inline dans le scroll */}
                       <div className="hidden sm:contents">
@@ -501,7 +682,7 @@ const TasksPage: React.FC = () => {
                               exit={{ opacity: 0, scale: 0.9 }}
                               onClick={() => setShowCreateList(true)}
                               className="flex items-center justify-center w-9 h-9 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
-                              title="Nouvelle liste"
+                              title="Nouvelle liste manuelle"
                             >
                               <Plus size={16} />
                             </motion.button>
@@ -524,15 +705,31 @@ const TasksPage: React.FC = () => {
                                 });
                               }}
                             >
+                              {/* Pastille cyclique : click rapide passe à la couleur suivante.
+                                  Long-press / Shift-click ouvre le color picker hex natif via le input HTML5. */}
                               <button
                                 type="button"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  // Shift+clic ou clic droit → ouvre le color picker natif
+                                  if (e.shiftKey) {
+                                    e.currentTarget.nextElementSibling?.dispatchEvent(new MouseEvent('click'));
+                                    return;
+                                  }
                                   const idx = colorOptions.findIndex(c => c.value === newListColor);
                                   setNewListColor(colorOptions[(idx + 1) % colorOptions.length].value);
                                 }}
                                 className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                                style={{ backgroundColor: colorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                                title="Changer la couleur"
+                                style={{ backgroundColor: resolveListColor(newListColor) }}
+                                title="Clic : cycle couleurs · Shift+clic : palette hex"
+                              />
+                              {/* Color picker hex caché — déclenché par Shift+clic sur la pastille */}
+                              <input
+                                type="color"
+                                value={resolveListColor(newListColor)}
+                                onChange={(e) => setNewListColor(e.target.value)}
+                                className="sr-only"
+                                aria-label="Choisir une couleur personnalisée"
+                                tabIndex={-1}
                               />
                               <input
                                 autoFocus
