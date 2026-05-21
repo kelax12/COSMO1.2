@@ -466,8 +466,21 @@ Voir `faille.md` §4.
 ### Layout shell mobile
 
 - **`MobileTabBar`** (bottom tab bar, hauteur ~64 px) — visible sur mobile uniquement, contient `Accueil / Tâches / Agenda / Habitudes / Plus`.
-- **Padding-bottom obligatoire** sur les pages : `pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8` pour libérer la zone du tab bar + FAB + safe-area iOS.
-- **FAB (Floating Action Button)** : `fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14`. Doit être au-dessus de la tab bar.
+- **Padding-bottom obligatoire** sur les pages : `pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8` (avec FAB) ou `+24px` (sans FAB) pour libérer la zone du tab bar + safe-area iOS. **Toutes les pages protégées doivent l'avoir** — sans ça le dernier élément est caché derrière la tab bar.
+- **`min-h-[100dvh]`** (jamais `min-h-screen`/`100vh`) sur les wrappers de page — sinon Safari iOS rogne le contenu à cause de la barre d'URL dynamique.
+- **FAB (Floating Action Button)** : `fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500`. Doit être au-dessus de la tab bar. **Pages avec FAB** : Tasks, Habits, OKR. Pages sans FAB : Dashboard (read-only), Settings (pas de création), Agenda (tap sur slot horaire), Statistics (read-only).
+
+### Échelle typographique (H1 des pages)
+
+Trois familles documentées — chaque page suit l'une d'elles selon son rôle UX :
+
+| Famille | Mobile | Desktop | Pages |
+|---|---|---|---|
+| **Hero salutation** | `text-2xl` | `sm:text-4xl lg:text-5xl` | DashboardPage uniquement |
+| **Standard** | `text-2xl` | `sm:text-3xl` / `md:text-3xl` | HabitsPage, OKRPage, StatisticsPage, PremiumPage (`sm:text-4xl`) |
+| **Compact inline** | `text-lg` | `sm:text-3xl` | TasksPage (titre côtoie l'icône calendrier sur mobile) |
+
+> Ne pas inventer une 4ème famille sans raison UX claire. PremiumPage a un cran de plus en desktop (`sm:text-4xl`) pour appuyer l'offre commerciale, c'est délibéré.
 
 ### Modals — pattern bottom-sheet
 

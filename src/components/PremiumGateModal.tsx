@@ -100,15 +100,18 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
               >
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
-              {/* Header */}
-              <div className="bg-gradient-to-r from-amber-400 to-yellow-500 p-5 flex items-center justify-between">
+              {/* Header — accent amber atténué pour signaler Premium sans casser la cohérence iOS sheet */}
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border-b border-amber-200/50 dark:border-amber-800/40 p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Crown size={22} className="text-amber-900" />
-                  <span className="font-bold text-amber-900 text-lg">Fonctionnalité Premium</span>
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-sm">
+                    <Crown size={18} className="text-amber-900" />
+                  </div>
+                  <span className="font-bold text-amber-900 dark:text-amber-100 text-lg">Fonctionnalité Premium</span>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 hover:bg-amber-600/20 rounded-lg transition-colors text-amber-900"
+                  className="min-w-11 min-h-11 flex items-center justify-center hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors text-amber-900 dark:text-amber-100"
+                  aria-label="Fermer"
                 >
                   <X size={18} />
                 </button>
