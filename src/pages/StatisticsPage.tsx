@@ -835,9 +835,20 @@ const TasksStatistics: React.FC<{
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ tasks, colorSettings, categories }) => {
   const getColorValue = (catId: string) => categories.find(c => c.id === catId)?.color || '#64748B';
-  const colorDistribution = Object.keys(colorSettings).map(catId => ({
-    catId, name: colorSettings[catId], count: tasks.filter(t => t.category === catId).length,
-  }));
+  // Fix dots gris : itérer sur les VRAIES catégories (UUIDs), pas sur colorSettings (clés hardcodées cat-1...).
+  // Fallback aux entrées colorSettings si aucune catégorie chargée (mode démo très précoce).
+  const colorDistribution = (categories.length > 0
+    ? categories.map(c => ({
+        catId: c.id,
+        name: c.name,
+        count: tasks.filter(t => t.category === c.id).length,
+      }))
+    : Object.keys(colorSettings).map(catId => ({
+        catId,
+        name: colorSettings[catId],
+        count: tasks.filter(t => t.category === catId).length,
+      }))
+  ).filter(item => item.count > 0);
   const priorityDistribution = [1, 2, 3, 4, 5].map(priority => ({
     priority, count: tasks.filter(t => t.priority === priority).length,
   }));

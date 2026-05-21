@@ -425,20 +425,23 @@ const LandingPage: React.FC = () => {
               transition={{ delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
             >
+              {/* CTA principal : démo sans inscription (arme de l'app, friction zéro) */}
               <button
                 onClick={() => {
                   loginDemo();
                   setTimeout(() => navigate('/dashboard'), 0);
                 }}
-                className="group bg-slate-200 hover:bg-slate-300 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
+                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                aria-label="Essayer la démo sans inscription"
               >
-                Essayer la démo
+                Essayer maintenant — sans inscription
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button
                 onClick={handleRegisterClick}
-                className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
+                className="group bg-slate-800/60 hover:bg-slate-700 text-white border border-slate-600 px-8 py-4 rounded-2xl font-semibold text-base transition-all duration-300 hover:scale-105 transform flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
               >
-                Commencer gratuitement
+                Créer un compte gratuit
               </button>
             </motion.div>
 

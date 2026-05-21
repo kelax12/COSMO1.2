@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Repeat, Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import EmptyState from './EmptyState';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 
@@ -15,6 +17,7 @@ const getVisibleLimit = () => {
 };
 
 const TodayHabits: React.FC = () => {
+  const navigate = useNavigate();
   const { data: habits = [], isLoading } = useHabits();
   const toggleCompletionMutation = useToggleHabitCompletion();
   const today = new Date().toLocaleDateString('en-CA');
@@ -115,11 +118,15 @@ const TodayHabits: React.FC = () => {
         )}
 
         {todayHabits.length === 0 && (
-          <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
-            <Repeat size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p>Aucune habitude configurée</p>
-            <p className="text-sm">Ajoutez des habitudes dans la section dédiée</p>
-          </div>
+          <EmptyState
+            icon={Repeat}
+            title="Construisez votre routine"
+            description="Les habitudes sont le moteur du progrès quotidien. Ajoutez-en une et suivez votre régularité."
+            actionLabel="Créer ma première habitude"
+            onAction={() => navigate('/habits')}
+            accentColor="#EAB308"
+            compact
+          />
         )}
 
         {todayHabits.length > visibleLimit && (
