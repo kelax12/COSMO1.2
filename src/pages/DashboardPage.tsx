@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { CheckSquare, Repeat, Target, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
@@ -16,6 +14,7 @@ import TodayTasks from '../components/TodayTasks';
 import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
+import MobileCollapsible from '../components/MobileCollapsible';
 import SharedTasksHistory from '../components/SharedTasksHistory';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
@@ -76,11 +75,7 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
 };
 
 const DashboardPage: React.FC = () => {
-  const navigate = useNavigate();
-  // Refonte v2 : par défaut sur 'semaine' (vue plus actionnable que 'jour')
-  const [viewMode, setViewMode] = useState<ViewMode>('semaine');
-  // Section "Plus" repliée par défaut (CollaborativeTasks, SocialRequests, etc.)
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('jour');
 
   const { data: tasks = [] } = useTasks();
   const { data: krCompletions = [] } = useKRCompletions();
@@ -254,76 +249,54 @@ const DashboardPage: React.FC = () => {
   };
 
 
-  // Refonte v2 — 3 zones : Today / This week / Quick actions + section "Plus" repliable
-  const quickActions = [
-    { label: 'Mes tâches',     icon: CheckSquare, color: '#3B82F6', path: '/tasks',    desc: 'Voir & créer des tâches' },
-    { label: 'Mes habitudes',  icon: Repeat,      color: '#EAB308', path: '/habits',   desc: 'Suivre la régularité' },
-    { label: 'Mes OKR',        icon: Target,      color: '#22C55E', path: '/okr',      desc: 'Définir les objectifs' },
-    { label: 'Mon agenda',     icon: Calendar,    color: '#EF4444', path: '/agenda',   desc: 'Planifier la semaine' },
-  ];
-
   return (
     <div className="min-h-[100dvh] bg-[rgb(var(--color-background))] p-3 sm:p-6 lg:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8 transition-colors duration-300">
       <motion.div
-        className="max-w-[1400px] mx-auto space-y-6 sm:space-y-8"
+        className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* ────────────────────────────────────────────────────────
-            HEADER — salutation seule, plus aérée
-           ──────────────────────────────────────────────────────── */}
+        {/* Header avec salutation */}
+          <motion.div
+            variants={itemVariants}
+          >
+            <div className="flex-1">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2 lg:mb-3">
+                  <span>Bonjour, </span>
+                <TextType
+                        text={displayUser.name}
+                        typingSpeed={80}
+                        pauseDuration={5000}
+                        deletingSpeed={50}
+                        loop={false}
+                        showCursor={true}
+                        cursorCharacter="|"
+                        cursorClassName="text-blue-500 monochrome:text-white"
+                        textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
+                      />
+                </h1>
+              <motion.p
+                className="text-[rgb(var(--color-text-secondary))] text-sm sm:text-base lg:text-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                Voici votre tableau de bord pour aujourd'hui
+              </motion.p>
+            </div>
+          </motion.div>
+
+        {/* Toggle vue + Statistiques rapides */}
         <motion.div variants={itemVariants}>
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2">
-            <span>Bonjour, </span>
-            <TextType
-              text={displayUser.name}
-              typingSpeed={80}
-              pauseDuration={5000}
-              deletingSpeed={50}
-              loop={false}
-              showCursor={true}
-              cursorCharacter="|"
-              cursorClassName="text-blue-500 monochrome:text-white"
-              textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
-            />
-          </h1>
-          <p className="text-[rgb(var(--color-text-secondary))] text-sm sm:text-base">
-            Votre productivité, à l'essentiel.
-          </p>
-        </motion.div>
-
-        {/* ────────────────────────────────────────────────────────
-            ZONE 1 — TODAY : tâches + habitudes du jour, côte à côte
-           ──────────────────────────────────────────────────────── */}
-        <motion.section variants={itemVariants} aria-labelledby="zone-today">
-          <h2 id="zone-today" className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] mb-3 sm:mb-4 flex items-center gap-2">
-            <span className="inline-block w-1.5 h-5 bg-blue-500 rounded-full" aria-hidden />
-            Aujourd'hui
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <TodayTasks />
-            <TodayHabits />
-          </div>
-        </motion.section>
-
-        {/* ────────────────────────────────────────────────────────
-            ZONE 2 — THIS WEEK : 1 graphique unifié + stats agrégées
-           ──────────────────────────────────────────────────────── */}
-        <motion.section variants={itemVariants} aria-labelledby="zone-week">
-          <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4 flex-wrap">
-            <h2 id="zone-week" className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
-              <span className="inline-block w-1.5 h-5 bg-purple-500 rounded-full" aria-hidden />
-              Vue d'ensemble
-            </h2>
-            {/* Toggle déplacé près du titre de la section qu'il contrôle */}
-            <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
+          <div className="flex items-center justify-stretch sm:justify-end mb-3 sm:mb-4">
+            <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl w-full sm:w-auto">
               {(['jour', 'semaine', 'mois'] as const).map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    'px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium capitalize transition-all outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+                    'flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
                       ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
@@ -335,104 +308,75 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Stats cards compactes (4 colonnes desktop, 2 mobile) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {statCards.map((stat, index) => (
               <motion.div
                 key={index}
-                className="relative overflow-hidden"
-                initial={{ opacity: 0, y: 10 }}
+                className="relative overflow-hidden group cursor-pointer"
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
+                transition={{ delay: index * 0.05, type: 'spring', stiffness: 100 }}
+                whileHover={{ y: -4, scale: 1.02 }}
               >
-                <div className="p-3 sm:p-4 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
-                  <p className="text-[11px] sm:text-xs text-[rgb(var(--color-text-secondary))] font-semibold truncate uppercase tracking-wide">
-                    {stat.label}
-                  </p>
-                  <motion.p
-                    key={`${stat.label}-${viewMode}`}
-                    className="text-2xl sm:text-3xl font-black text-[rgb(var(--color-text-primary))] mt-0.5 mb-2"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring' }}
-                  >
-                    {stat.value}
-                  </motion.p>
+                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] monochrome:group-hover:border-white/20">
+                  <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
+                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors monochrome:group-hover:text-white truncate">
+                      {stat.label}
+                    </p>
+                    <motion.p
+                      key={`${stat.label}-${viewMode}`}
+                      className="text-2xl sm:text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring' }}
+                    >
+                      {stat.value}
+                    </motion.p>
+                  </div>
                   <MiniBarChart data={stat.chartData} color={stat.color} />
                 </div>
               </motion.div>
             ))}
           </div>
+        </motion.div>
 
-          {/* Un seul graphique unifié (au lieu des 2 empilés DashboardChart + BarChart) */}
-          <DashboardChart viewMode={viewMode} />
-        </motion.section>
-
-        {/* ────────────────────────────────────────────────────────
-            ZONE 3 — QUICK ACTIONS : raccourcis vers les modules
-           ──────────────────────────────────────────────────────── */}
-        <motion.section variants={itemVariants} aria-labelledby="zone-actions">
-          <h2 id="zone-actions" className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] mb-3 sm:mb-4 flex items-center gap-2">
-            <span className="inline-block w-1.5 h-5 bg-emerald-500 rounded-full" aria-hidden />
-            Accès rapide
-          </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {quickActions.map(action => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.path}
-                  onClick={() => navigate(action.path)}
-                  className="group p-4 sm:p-5 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  aria-label={`${action.label} — ${action.desc}`}
-                >
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 monochrome:bg-white/10"
-                    style={{ backgroundColor: `${action.color}18` }}
-                  >
-                    <Icon size={22} style={{ color: action.color }} className="monochrome:text-white" />
-                  </div>
-                  <p className="font-bold text-sm sm:text-base text-[rgb(var(--color-text-primary))]">{action.label}</p>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 truncate">{action.desc}</p>
-                </button>
-              );
-            })}
-          </div>
-        </motion.section>
-
-        {/* ────────────────────────────────────────────────────────
-            SECTION "PLUS" — collaborative, social, historique
-            Repliée par défaut pour ne pas surcharger
-           ──────────────────────────────────────────────────────── */}
-        <motion.section variants={itemVariants}>
-          <button
-            type="button"
-            onClick={() => setMoreOpen(v => !v)}
-            aria-expanded={moreOpen}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        {/* Contenu principal en grille */}
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
+          variants={containerVariants}
+        >
+          {/* Colonne gauche - Graphiques + Tâches + OKR */}
+          <motion.div
+            className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
+            variants={itemVariants}
           >
-            <span className="font-semibold text-sm sm:text-base text-[rgb(var(--color-text-primary))]">
-              {moreOpen ? 'Masquer' : 'Afficher'} : OKR actifs, collaboration, historique
-            </span>
-            {moreOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
-          {moreOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-4"
-            >
-              <ActiveOKRs />
+            <DashboardChart viewMode={viewMode} />
+            <DashboardBarChart viewMode={viewMode} />
+            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
+              <TodayTasks />
+            </MobileCollapsible>
+            <MobileCollapsible title="Tâches collaboratives">
               <CollaborativeTasks />
+            </MobileCollapsible>
+            <MobileCollapsible title="OKR en cours">
+              <ActiveOKRs />
+            </MobileCollapsible>
+          </motion.div>
+
+          {/* Colonne droite - Habitudes du jour + Demandes sociales */}
+          <motion.div
+            className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
+            variants={itemVariants}
+          >
+            <MobileCollapsible title="Habitudes du jour">
+              <TodayHabits />
+            </MobileCollapsible>
+            <MobileCollapsible title="Demandes sociales">
               <SocialRequests />
-              <SharedTasksHistory />
-              <div className="lg:col-span-2">
-                <DashboardBarChart viewMode={viewMode} />
-              </div>
-            </motion.div>
-          )}
-        </motion.section>
+            </MobileCollapsible>
+            <SharedTasksHistory />
+          </motion.div>
+        </motion.div>
 
       </motion.div>
     </div>
