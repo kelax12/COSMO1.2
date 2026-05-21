@@ -338,7 +338,7 @@ const TasksPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="flex sm:flex-wrap gap-3 pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] sm:[mask-image:none]">
+                    <div className="flex sm:flex-wrap gap-3 pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -382,20 +382,23 @@ const TasksPage: React.FC = () => {
                                     onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                     title="Ajouter des tâches"
+                                    aria-label="Ajouter des tâches"
                                   >
                                     <Plus size={15} />
                                   </button>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); startEditList(list); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                    title="Modifier"
+                                    title="Modifier la liste"
+                                    aria-label="Modifier la liste"
                                   >
                                     <Pencil size={15} />
                                   </button>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
                                     className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
-                                    title="Supprimer"
+                                    title="Supprimer la liste"
+                                    aria-label="Supprimer la liste"
                                   >
                                     <Trash2 size={15} />
                                   </button>

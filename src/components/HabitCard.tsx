@@ -147,7 +147,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               variant="ghost"
               size="sm"
               onClick={() => setShowDetails(!showDetails)}
-              className={`flex items-center gap-1.5 px-2 h-9 ${
+              className={`flex items-center gap-1.5 px-2 h-11 sm:h-9 min-w-11 sm:min-w-0 ${
                 showDetails ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : ''
               }`}
             >
@@ -156,10 +156,10 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             </Button>
             {/* Edit + Delete — droite sur mobile */}
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
+              <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={() => setEditOpen(true)}>
                 <Edit2 size={18} className="md:w-4 md:h-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsDeleting(true)}>
+              <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={() => setIsDeleting(true)}>
                 <Trash2 size={18} className="md:w-4 md:h-4" />
               </Button>
             </div>

@@ -94,7 +94,9 @@ const TaskCard = React.memo(({
   // les catégories Supabase finissent de charger (asynchrone en prod).
   const getCategoryById = useCategoryLookup();
   const category = getCategoryById(task.category);
-  const categoryColor = category?.color || '#3B82F6';
+  // Fallback gris neutre (pas bleu = couleur Travail par défaut) pour
+  // signaler une catégorie manquante au lieu de la masquer.
+  const categoryColor = category?.color || '#94a3b8';
 
   const [actionsVisible, setActionsVisible] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -205,6 +207,8 @@ const TaskCard = React.memo(({
         }
         setTimeout(() => { isDragging.current = false; }, 50);
       }}
+      whileTap={addToListMode ? undefined : { scale: 0.98 }}
+      transition={{ duration: 0.1 }}
       className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
       onClick={handleCardClick}
       onPointerDown={startLongPress}

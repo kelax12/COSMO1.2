@@ -92,7 +92,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             >
               {/* Drag handle (mobile only) — déclenche le swipe-to-dismiss */}
               <div
-                className="sm:hidden flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                className="sm:hidden flex justify-center pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
                 onPointerDown={(e) => dragControls.start(e)}
               >
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />

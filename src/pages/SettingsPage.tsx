@@ -347,7 +347,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-      className="min-h-screen bg-[rgb(var(--color-background))] transition-colors duration-300 flex">
+      className="min-h-[100dvh] bg-[rgb(var(--color-background))] transition-colors duration-300 flex pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-0">
 
       {/* ──────── SIDEBAR ──────── */}
       <motion.aside

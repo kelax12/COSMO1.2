@@ -42,7 +42,7 @@ const CookieBanner: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-[200]"
+          className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-[200]"
         >
           <div className="bg-slate-800 border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/40">
             <div className="flex items-start justify-between gap-3 mb-3">

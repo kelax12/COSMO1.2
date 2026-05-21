@@ -100,7 +100,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-9 w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 monochrome:bg-neutral-800 monochrome:hover:bg-neutral-700"
+                className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-11 w-11 sm:h-9 sm:w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 monochrome:bg-neutral-800 monochrome:hover:bg-neutral-700"
                 aria-label="Effacer la recherche"
               >
                 <X size={16} aria-hidden="true" />
@@ -188,6 +188,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
           >
             <Plus size={14} aria-hidden="true" />
             <span>d'options</span>
+            <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${showQuickFilters ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Reset - inline next to Filters */}
