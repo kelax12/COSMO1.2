@@ -1,12 +1,12 @@
 import { TutorialStep } from '@/components/tutorial/types';
 
 /**
- * Tutoriel page Habitudes — 5 étapes.
+ * Tutoriel page Habitudes — DESKTOP uniquement.
  */
-export const habitsTutorialSteps: TutorialStep[] = [
+export const habitsTutorialStepsDesktop: TutorialStep[] = [
   {
     title: 'Vos habitudes 🔁',
-    description: "Les habitudes sont le moteur du progrès quotidien. Cosmo suit votre régularité, votre série de jours consécutifs, et votre taux de complétion.",
+    description: "Les habitudes sont le moteur du progrès quotidien. Cosmo suit votre régularité, votre série de jours consécutifs et votre taux de complétion.",
   },
   {
     title: 'Changez de vue',
@@ -21,21 +21,17 @@ export const habitsTutorialSteps: TutorialStep[] = [
     target: '[data-tutorial-id="habits-create-button"]',
     cardPlacement: 'bottom',
     action: 'pulse',
-    visibility: 'desktop',
   },
   {
-    title: 'Créer une habitude (mobile)',
-    description: "Bouton flottant en bas à droite : tappez pour ouvrir le formulaire de création.",
-    target: '[data-tutorial-id="habits-fab"]',
-    cardPlacement: 'top',
-    action: 'pulse',
-    visibility: 'mobile',
-  },
-  {
-    title: 'Cochez chaque jour',
+    title: 'Validez chaque jour',
     description: "Sur chaque habit, le bouton ✓ valide la journée. Votre série s'allonge. Si vous oubliez un jour, la série repart à zéro — c'est la règle.",
     target: '[data-tutorial-id="habits-list"]',
     cardPlacement: 'top',
     action: 'pulse',
+    dimLevel: 'light',
+  },
+  {
+    title: 'Astuce : vue Tableau',
+    description: "La vue Tableau affiche une grille avec toutes vos habitudes en lignes et les 30 derniers jours en colonnes. Idéal pour repérer les jours « secs ».",
   },
 ];
