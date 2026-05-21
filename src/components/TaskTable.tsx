@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -417,6 +418,103 @@ const TaskCard = React.memo(({
     prevProps.selectedForListIds === nextProps.selectedForListIds
   );
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// VirtualizedTaskList — rendu virtualisé au-delà de VIRTUALIZE_THRESHOLD
+// items. En dessous, on garde AnimatePresence + map pour préserver les
+// animations spring d'entrée/sortie. Au-delà, on utilise react-virtual
+// pour ne monter que les cards visibles + un overscan de 5.
+// ═══════════════════════════════════════════════════════════════════
+const VIRTUALIZE_THRESHOLD = 50;
+const ESTIMATED_CARD_HEIGHT = 76; // mesuré : ~68px card + 8px mb-2
+
+interface VirtualizedTaskListProps {
+  tasks: Task[];
+  addToListMode: boolean;
+  selectedForListIds: string[];
+  onToggleTaskForList?: (id: string) => void;
+  onToggleComplete: (id: string) => void;
+  onToggleBookmark: (id: string) => void;
+  onOpenCollaborator: (id: string) => void;
+  onSelectTask: (id: string) => void;
+  onAddToList: (id: string) => void;
+  onDeleteTask: (id: string) => void;
+  onScheduleTask: (task: Task) => void;
+}
+
+const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
+  const { tasks } = props;
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const cardProps = (task: Task) => ({
+    task,
+    addToListMode: props.addToListMode,
+    selectedForListIds: props.selectedForListIds,
+    onToggleTaskForList: props.onToggleTaskForList,
+    onToggleComplete: props.onToggleComplete,
+    onToggleBookmark: props.onToggleBookmark,
+    onOpenCollaborator: props.onOpenCollaborator,
+    onSelectTask: props.onSelectTask,
+    onAddToList: props.onAddToList,
+    onDeleteTask: props.onDeleteTask,
+    onScheduleTask: props.onScheduleTask,
+  });
+
+  // useWindowVirtualizer : le scroll est sur la fenêtre (les pages COSMO
+  // scrollent au niveau document, pas dans un container fixe). Offset retire
+  // la position absolue de la liste relative au top de la page.
+  const virtualizer = useWindowVirtualizer({
+    count: tasks.length,
+    estimateSize: () => ESTIMATED_CARD_HEIGHT,
+    overscan: 5,
+    scrollMargin: listRef.current?.offsetTop ?? 0,
+  });
+
+  // En dessous du seuil, garder AnimatePresence pour les anims
+  if (tasks.length < VIRTUALIZE_THRESHOLD) {
+    return (
+      <AnimatePresence mode="popLayout">
+        {tasks.map(task => (
+          <TaskCard key={task.id} {...cardProps(task)} />
+        ))}
+      </AnimatePresence>
+    );
+  }
+
+  // Au-delà : virtualisation (pas d'AnimatePresence — incompatible avec le
+  // mounting/unmounting agressif du virtualizer)
+  const items = virtualizer.getVirtualItems();
+  return (
+    <div
+      ref={listRef}
+      style={{
+        height: `${virtualizer.getTotalSize()}px`,
+        width: '100%',
+        position: 'relative',
+      }}
+    >
+      {items.map(virtualItem => {
+        const task = tasks[virtualItem.index];
+        return (
+          <div
+            key={task.id}
+            data-index={virtualItem.index}
+            ref={virtualizer.measureElement}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualItem.start - (listRef.current?.offsetTop ?? 0)}px)`,
+            }}
+          >
+            <TaskCard {...cardProps(task)} />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
@@ -884,26 +982,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </table>
       </div>
 
-      {/* Mobile View (Cards) */}
+      {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
-        <AnimatePresence mode="popLayout">
-          {sortedTasks.map(task => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              addToListMode={addToListMode}
-              selectedForListIds={selectedForListIds}
-              onToggleTaskForList={onToggleTaskForList}
-              onToggleComplete={handleToggleComplete}
-              onToggleBookmark={handleToggleBookmark}
-              onOpenCollaborator={handleOpenCollaborator}
-              onSelectTask={handleSelectTask}
-              onAddToList={setAddToListTask}
-              onDeleteTask={setTaskToDelete}
-              onScheduleTask={setTaskToEventModal}
-            />
-          ))}
-        </AnimatePresence>
+        <VirtualizedTaskList
+          tasks={sortedTasks}
+          addToListMode={addToListMode}
+          selectedForListIds={selectedForListIds}
+          onToggleTaskForList={onToggleTaskForList}
+          onToggleComplete={handleToggleComplete}
+          onToggleBookmark={handleToggleBookmark}
+          onOpenCollaborator={handleOpenCollaborator}
+          onSelectTask={handleSelectTask}
+          onAddToList={setAddToListTask}
+          onDeleteTask={setTaskToDelete}
+          onScheduleTask={setTaskToEventModal}
+        />
       </div>
 
       {sortedTasks.length === 0 && isLoadingTasks && (
