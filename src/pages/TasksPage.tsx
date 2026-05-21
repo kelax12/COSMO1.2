@@ -20,8 +20,12 @@ import { useLists, useCreateList, useUpdateList, useDeleteList, useAddTaskToList
 
 // ═══════════════════════════════════════════════════════════════════
 import { usePriorityRange } from '@/modules/ui-states';
+import PageTutorial from '@/components/tutorial/PageTutorial';
+import { useTutorial } from '@/components/tutorial/useTutorial';
+import { tasksTutorialSteps } from '@/tutorials/tasks';
 
 const TasksPage: React.FC = () => {
+  const tutorial = useTutorial('tasks');
   const deleteListDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -282,6 +286,7 @@ const TasksPage: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
+                data-tutorial-id="tasks-calendar-toggle"
                 aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
                 className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
                   showDeadlineCalendar
@@ -661,7 +666,7 @@ const TasksPage: React.FC = () => {
                   transition={{ delay: 0.6 }}
                   className="flex flex-col md:flex-row justify-between items-stretch md:items-start mb-8 gap-6"
                 >
-                  <div className="flex-1 w-full">
+                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
                     <TaskFilter
                       onFilterChange={handleFilterChange}
                       currentFilter={filter}
@@ -680,6 +685,7 @@ const TasksPage: React.FC = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
+                      data-tutorial-id="tasks-create-button"
                       className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black monochrome:hover:from-neutral-100 monochrome:hover:to-neutral-300"
                       aria-label="Créer une nouvelle tâche"
                     >
@@ -700,6 +706,7 @@ const TasksPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
+                data-tutorial-id="tasks-list"
               >
                 <TaskTable
                   tasks={filteredTasks}
@@ -769,6 +776,7 @@ const TasksPage: React.FC = () => {
           animate={{ scale: 1, opacity: 1 }}
           whileTap={{ scale: 0.92 }}
           onClick={() => setShowAddTaskForm(true)}
+          data-tutorial-id="tasks-fab"
           aria-label="Nouvelle tâche"
           className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-transform"
         >
@@ -845,6 +853,14 @@ const TasksPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Tutoriel page Tâches — s'affiche au premier accès */}
+      <PageTutorial
+        steps={tasksTutorialSteps}
+        isOpen={tutorial.isOpen}
+        onClose={tutorial.close}
+        accentColor="#3B82F6"
+      />
     </motion.div>
   );
 };
