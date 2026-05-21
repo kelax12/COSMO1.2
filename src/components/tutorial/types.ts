@@ -58,6 +58,16 @@ export interface TutorialStep {
   /**
    * Mobile only / Desktop only. Permet d'avoir des étapes qui ne s'affichent
    * pas sur certaines tailles. Défaut : 'both'.
+   * Conservé pour compat ; désormais on fournit deux configs séparées (.desktop / .mobile).
    */
   visibility?: 'mobile' | 'desktop' | 'both';
+  /**
+   * Intensité du voile assombrissant.
+   *   - 'normal' (défaut) : voile sombre standard ~0.72
+   *   - 'light'           : voile très léger ~0.35 — utile quand l'action démontrée
+   *                          implique une vue large (drag sur calendrier, calendrier complet)
+   *   - 'none'            : pas de voile (la cible est sur fond transparent)
+   * Le contour spotlight (anneau coloré + pulse + flèche) reste actif quoi qu'il arrive.
+   */
+  dimLevel?: 'normal' | 'light' | 'none';
 }

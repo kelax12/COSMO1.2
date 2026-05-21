@@ -15,12 +15,16 @@ import HabitGlobalTracking from '../components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
-import { habitsTutorialSteps } from '@/tutorials/habits';
+import { habitsTutorialStepsDesktop } from '@/tutorials/habits.desktop';
+import { habitsTutorialStepsMobile } from '@/tutorials/habits.mobile';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
-  const tutorial = useTutorial('habits');
+  const isMobile = useIsMobile();
+  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
+  const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
   const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -170,9 +174,9 @@ const HabitsPage: React.FC = () => {
         <Plus size={28} />
       </motion.button>
 
-      {/* Tutoriel page Habitudes */}
+      {/* Tutoriel page Habitudes — variante adaptée au viewport */}
       <PageTutorial
-        steps={habitsTutorialSteps}
+        steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#EAB308"

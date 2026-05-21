@@ -15,7 +15,8 @@ import { fr } from 'date-fns/locale';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
-import { agendaTutorialSteps } from '@/tutorials/agenda';
+import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
+import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
 
 type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
 
@@ -217,7 +218,9 @@ const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectD
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
-  const tutorial = useTutorial('agenda', 800);
+  const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800);
+  const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
   const { data: events = [] } = useEvents();
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
@@ -946,9 +949,9 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
-      {/* Tutoriel page Agenda */}
+      {/* Tutoriel page Agenda — variante adaptée au viewport */}
       <PageTutorial
-        steps={agendaTutorialSteps}
+        steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#EF4444"

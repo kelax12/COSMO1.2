@@ -12,12 +12,16 @@ import OKRModal from '../components/OKRModal';
 import { toast } from 'sonner';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
-import { okrTutorialSteps } from '@/tutorials/okr';
+import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
+import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 type Objective = OKR & { estimatedTime?: number };
 
 const OKRPage: React.FC = () => {
-  const tutorial = useTutorial('okr');
+  const isMobile = useIsMobile();
+  const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
+  const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
   const location = useLocation();
   // Use new OKR module hooks
   const { data: objectives = [] } = useOkrs();
@@ -683,9 +687,9 @@ const OKRPage: React.FC = () => {
         <Plus size={28} />
       </motion.button>
 
-      {/* Tutoriel page OKR */}
+      {/* Tutoriel page OKR — variante adaptée au viewport */}
       <PageTutorial
-        steps={okrTutorialSteps}
+        steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#22C55E"

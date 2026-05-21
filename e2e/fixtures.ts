@@ -45,10 +45,13 @@ export const test = base.extend<{ demoPage: Page }>({
     await page.evaluate(() => {
       try {
         localStorage.removeItem('cosmo_onboarding_pending');
-        localStorage.setItem('cosmo_tutorial_seen_tasks', '1');
-        localStorage.setItem('cosmo_tutorial_seen_agenda', '1');
-        localStorage.setItem('cosmo_tutorial_seen_habits', '1');
-        localStorage.setItem('cosmo_tutorial_seen_okr', '1');
+        // Désormais 2 flags par page (desktop + mobile) — neutraliser les deux
+        for (const page of ['tasks', 'agenda', 'habits', 'okr']) {
+          localStorage.setItem(`cosmo_tutorial_seen_${page}_desktop`, '1');
+          localStorage.setItem(`cosmo_tutorial_seen_${page}_mobile`, '1');
+          // Ancien flag (rétro-compat avec versions précédentes)
+          localStorage.setItem(`cosmo_tutorial_seen_${page}`, '1');
+        }
       } catch { /* ignore */ }
     });
 

@@ -22,10 +22,17 @@ import { useLists, useCreateList, useUpdateList, useDeleteList, useAddTaskToList
 import { usePriorityRange } from '@/modules/ui-states';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
-import { tasksTutorialSteps } from '@/tutorials/tasks';
+import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
+import { tasksTutorialStepsMobile } from '@/tutorials/tasks.mobile';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 const TasksPage: React.FC = () => {
-  const tutorial = useTutorial('tasks');
+  const isMobile = useIsMobile();
+  // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
+  // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
+  // adapté au viewport courant.
+  const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop');
+  const tutorialSteps = isMobile ? tasksTutorialStepsMobile : tasksTutorialStepsDesktop;
   const deleteListDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -854,9 +861,9 @@ const TasksPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Tutoriel page Tâches — s'affiche au premier accès */}
+      {/* Tutoriel page Tâches — variante adaptée au viewport */}
       <PageTutorial
-        steps={tasksTutorialSteps}
+        steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#3B82F6"

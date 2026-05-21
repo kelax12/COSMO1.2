@@ -302,34 +302,54 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
         className="fixed inset-0 z-[500] pointer-events-none"
         aria-live="polite"
       >
-        {/* Couche assombrissante (clic = passer à l'étape suivante) */}
-        <motion.div
-          className="absolute inset-0 pointer-events-auto"
-          style={{
-            background: 'rgba(8, 12, 24, 0.72)',
-            backdropFilter: 'blur(2px)',
-          }}
-          onClick={handleNext}
-        />
-
-        {/* Hole : un rectangle transparent par-dessus la cible, avec un anneau */}
-        {targetRect && (
+        {/* ── Voile assombrissant ──
+            Sans target → voile plein écran (pour les étapes "welcome" centrées).
+            Avec target → on ne pose PAS de fullscreen overlay (sinon backdrop-filter
+            blur flouterait la cible visible à travers le trou). C'est la boxShadow
+            massive du "hole" qui crée le voile autour de la cible — sans blur. */}
+        {!targetRect && (
           <motion.div
-            key={`hole-${stepIndex}`}
-            initial={{ opacity: 0, scale: 1.08 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 22, stiffness: 320 }}
-            className="absolute pointer-events-none"
-            style={{
-              top: targetRect.top - PADDING,
-              left: targetRect.left - PADDING,
-              width: targetRect.width + PADDING * 2,
-              height: targetRect.height + PADDING * 2,
-              borderRadius: 14,
-              boxShadow: `0 0 0 9999px rgba(8, 12, 24, 0.72), 0 0 0 4px ${accentColor}, 0 0 24px 4px ${accentColor}55`,
-            }}
+            className="absolute inset-0 pointer-events-auto"
+            style={{ background: 'rgba(8, 12, 24, 0.72)' }}
+            onClick={handleNext}
           />
         )}
+
+        {/* Hole : rectangle transparent par-dessus la cible.
+            La boxShadow étend une couleur massive vers l'extérieur → dim ambiant.
+            On NE met PAS de blur → la cible reste nette. */}
+        {targetRect && (() => {
+          const dim = step.dimLevel ?? 'normal';
+          const dimRgba =
+            dim === 'none'   ? 'rgba(8, 12, 24, 0)' :
+            dim === 'light'  ? 'rgba(8, 12, 24, 0.35)' :
+                               'rgba(8, 12, 24, 0.72)';
+          return (
+            <>
+              {/* Layer de capture des clics (clic = next), même rect que le voile */}
+              <div
+                className="absolute inset-0 pointer-events-auto"
+                onClick={handleNext}
+                aria-hidden
+              />
+              <motion.div
+                key={`hole-${stepIndex}`}
+                initial={{ opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 320 }}
+                className="absolute pointer-events-none"
+                style={{
+                  top: targetRect.top - PADDING,
+                  left: targetRect.left - PADDING,
+                  width: targetRect.width + PADDING * 2,
+                  height: targetRect.height + PADDING * 2,
+                  borderRadius: 14,
+                  boxShadow: `0 0 0 9999px ${dimRgba}, 0 0 0 4px ${accentColor}, 0 0 24px 4px ${accentColor}55`,
+                }}
+              />
+            </>
+          );
+        })()}
 
         {/* Pulse animation sur la cible quand action='pulse' ou par défaut */}
         {targetRect && (!step.action || step.action === 'pulse' || step.action === 'click') && (
