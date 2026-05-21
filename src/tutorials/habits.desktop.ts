@@ -1,37 +1,42 @@
 import { TutorialStep } from '@/components/tutorial/types';
 
 /**
- * Tutoriel page Habitudes — DESKTOP uniquement.
+ * Tutoriel Habitudes — DESKTOP.
  */
 export const habitsTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Vos habitudes 🔁',
-    description: "Les habitudes sont le moteur du progrès quotidien. Cosmo suit votre régularité, votre série de jours consécutifs et votre taux de complétion.",
+    title: 'Construire vos habitudes',
+    description:
+      "Une habitude = un comportement à répéter régulièrement. Cosmo suit votre série (jours consécutifs) et votre taux de complétion.",
   },
   {
-    title: 'Changez de vue',
-    description: "Liste pour le détail jour, Tableau pour la grille des 30 derniers jours, Suivi global pour les stats agrégées.",
+    title: 'Trois vues au choix',
+    description:
+      "Liste : une carte par habitude (par défaut). Tableau : grille des 30 derniers jours. Suivi global : statistiques agrégées.",
     target: '[data-tutorial-id="habits-view-switcher"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
     title: 'Créer une habitude',
-    description: "Ce bouton ouvre le formulaire. Définissez un nom, une couleur et une cadence (quotidienne, hebdo, X fois par semaine).",
+    description:
+      "Ce bouton ouvre le formulaire. Définissez un nom, une couleur, une cadence (chaque jour, X fois par semaine, jours précis).",
     target: '[data-tutorial-id="habits-create-button"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Validez chaque jour',
-    description: "Sur chaque habit, le bouton ✓ valide la journée. Votre série s'allonge. Si vous oubliez un jour, la série repart à zéro — c'est la règle.",
+    title: 'Valider la journée',
+    description:
+      "Sur chaque carte, le bouton ✓ marque l'habitude faite aujourd'hui. Votre série s'allonge. Sauter un jour la remet à zéro — c'est la règle.",
     target: '[data-tutorial-id="habits-list"]',
     cardPlacement: 'top',
     action: 'pulse',
     dimLevel: 'light',
   },
   {
-    title: 'Astuce : vue Tableau',
-    description: "La vue Tableau affiche une grille avec toutes vos habitudes en lignes et les 30 derniers jours en colonnes. Idéal pour repérer les jours « secs ».",
+    title: 'Repérer les jours « secs »',
+    description:
+      "Passez en vue Tableau pour voir une grille de toutes vos habitudes sur 30 jours. Les cases vides sautent aux yeux — utile pour ajuster votre rythme.",
   },
 ];
