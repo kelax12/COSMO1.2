@@ -37,15 +37,26 @@ export const test = base.extend<{ demoPage: Page }>({
     await page.waitForURL(/\/dashboard/, { timeout: 10_000 });
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/bonjour/i);
 
-    // 4. Skip onboarding — l'overlay est posé 500ms après loginDemo() et
-    //    bloque tous les clics (role=dialog aria-modal). On l'attend puis
-    //    on le ferme via le bouton X (aria-label="Passer le tutoriel").
-    //    Fallback : si l'overlay n'apparaît pas dans 2s, on continue.
+    // 4. Skip onboarding général + tutoriels par page
+    //    L'overlay onboarding est posé 500ms après loginDemo() et bloque
+    //    tous les clics. Les tutoriels page (Tasks/Habits/OKR/Agenda) se
+    //    déclenchent à l'arrivée sur leur page respective.
+    //    On marque tout comme "vu" dans localStorage pour neutraliser.
+    await page.evaluate(() => {
+      try {
+        localStorage.removeItem('cosmo_onboarding_pending');
+        localStorage.setItem('cosmo_tutorial_seen_tasks', '1');
+        localStorage.setItem('cosmo_tutorial_seen_agenda', '1');
+        localStorage.setItem('cosmo_tutorial_seen_habits', '1');
+        localStorage.setItem('cosmo_tutorial_seen_okr', '1');
+      } catch { /* ignore */ }
+    });
+
+    // Si l'onboarding overlay est déjà visible (apparu pendant les 500ms),
+    // on le ferme explicitement
     const onboardingDialog = page.locator('[role="dialog"][aria-labelledby="onb-title"]');
-    if (await onboardingDialog.isVisible({ timeout: 2500 }).catch(() => false)) {
-      // Cliquer le X (aria-label "Passer le tutoriel") — unique au sein du dialog
+    if (await onboardingDialog.isVisible({ timeout: 1500 }).catch(() => false)) {
       await page.getByRole('button', { name: /passer le tutoriel/i }).click();
-      // Attendre la fermeture
       await onboardingDialog.waitFor({ state: 'hidden', timeout: 3000 });
     }
 

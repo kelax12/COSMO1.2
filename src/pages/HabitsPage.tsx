@@ -13,10 +13,14 @@ import HabitModal from '../components/HabitModal';
 import HabitTable from '../components/HabitTable';
 import HabitGlobalTracking from '../components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
+import PageTutorial from '@/components/tutorial/PageTutorial';
+import { useTutorial } from '@/components/tutorial/useTutorial';
+import { habitsTutorialSteps } from '@/tutorials/habits';
 
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
+  const tutorial = useTutorial('habits');
   const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -75,6 +79,7 @@ const HabitsPage: React.FC = () => {
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
               }}
+              data-tutorial-id="habits-view-switcher"
             >
               {VIEW_TABS.map(({ mode, icon: Icon, label }) => (
                 <motion.button
@@ -98,6 +103,7 @@ const HabitsPage: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowModal(true)}
+            data-tutorial-id="habits-create-button"
             className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
           >
             <Plus size={18} />
@@ -107,7 +113,7 @@ const HabitsPage: React.FC = () => {
       </div>
 
       {viewMode === 'list' && (
-        <div className="space-y-4 md:space-y-6">
+        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list">
           {isLoading && habits.length === 0 && (
             [1, 2, 3].map(i => (
               <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
@@ -157,11 +163,20 @@ const HabitsPage: React.FC = () => {
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowModal(true)}
+        data-tutorial-id="habits-fab"
         aria-label="Nouvelle habitude"
         className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
       >
         <Plus size={28} />
       </motion.button>
+
+      {/* Tutoriel page Habitudes */}
+      <PageTutorial
+        steps={habitsTutorialSteps}
+        isOpen={tutorial.isOpen}
+        onClose={tutorial.close}
+        accentColor="#EAB308"
+      />
     </div>
   );
 };

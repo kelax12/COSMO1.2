@@ -13,6 +13,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format, addDays, isSameDay, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import PageTutorial from '@/components/tutorial/PageTutorial';
+import { useTutorial } from '@/components/tutorial/useTutorial';
+import { agendaTutorialSteps } from '@/tutorials/agenda';
 
 type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
 
@@ -214,6 +217,7 @@ const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectD
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
+  const tutorial = useTutorial('agenda', 800);
   const { data: events = [] } = useEvents();
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
@@ -637,6 +641,7 @@ const AgendaPage: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => setShowTaskSidebar(!showTaskSidebar)}
+                data-tutorial-id="agenda-task-sidebar-toggle"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm shrink-0 border ${showTaskSidebar ? 'shadow-md' : ''}`}
                 style={{
                   backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
@@ -663,6 +668,7 @@ const AgendaPage: React.FC = () => {
                 </div>
 
                 <div className="flex gap-1 p-1 rounded-xl border"
+                  data-tutorial-id="agenda-view-switcher"
                   style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                   {(['timeGridDay', 'timeGridWeek', 'dayGridMonth'] as const).map(view => (
                     <button key={view} onClick={() => handleViewChange(view)}
@@ -789,6 +795,7 @@ const AgendaPage: React.FC = () => {
           className="hidden md:flex flex-1 p-2 lg:p-6 min-w-0 overflow-hidden"
         >
           <div className="rounded-xl shadow-lg border h-full w-full overflow-hidden"
+            data-tutorial-id="agenda-calendar-grid"
             style={{ backgroundColor: 'rgb(var(--calendar-bg))', borderColor: 'rgb(var(--calendar-border))' }}>
             <div className="p-2 lg:p-6 h-full w-full overflow-hidden">
               <FullCalendar
@@ -938,6 +945,14 @@ const AgendaPage: React.FC = () => {
           onDeleteEvent={handleDeleteEvent}
         />
       )}
+
+      {/* Tutoriel page Agenda */}
+      <PageTutorial
+        steps={agendaTutorialSteps}
+        isOpen={tutorial.isOpen}
+        onClose={tutorial.close}
+        accentColor="#EF4444"
+      />
     </motion.div>
   );
 };

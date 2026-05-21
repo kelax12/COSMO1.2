@@ -10,10 +10,14 @@ import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
 import { toast } from 'sonner';
+import PageTutorial from '@/components/tutorial/PageTutorial';
+import { useTutorial } from '@/components/tutorial/useTutorial';
+import { okrTutorialSteps } from '@/tutorials/okr';
 
 type Objective = OKR & { estimatedTime?: number };
 
 const OKRPage: React.FC = () => {
+  const tutorial = useTutorial('okr');
   const location = useLocation();
   // Use new OKR module hooks
   const { data: objectives = [] } = useOkrs();
@@ -166,6 +170,7 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
+          data-tutorial-id="okr-create-button"
           className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
           aria-label="Créer un nouvel objectif"
         >
@@ -174,7 +179,7 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6" data-tutorial-id="okr-category-filter">
         <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégorie :</span>
         <div className="flex gap-2 flex-wrap">
             <button
@@ -386,6 +391,7 @@ const OKRPage: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
+                  data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
                   className="rounded-lg shadow-sm border p-6 transition-all relative overflow-hidden group"
                   style={{
                     backgroundColor: 'rgb(var(--color-surface))',
@@ -676,6 +682,14 @@ const OKRPage: React.FC = () => {
       >
         <Plus size={28} />
       </motion.button>
+
+      {/* Tutoriel page OKR */}
+      <PageTutorial
+        steps={okrTutorialSteps}
+        isOpen={tutorial.isOpen}
+        onClose={tutorial.close}
+        accentColor="#22C55E"
+      />
     </motion.div>);
 
 };
