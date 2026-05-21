@@ -92,3 +92,8 @@ vite.config.ts.timestamp-*
 
 # Deepsec scanner workspace — local-only, contains ANTHROPIC_API_KEY
 .deepsec/
+
+# Playwright artefacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
