@@ -98,7 +98,7 @@ const HabitsPage: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowModal(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+            className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
           >
             <Plus size={18} />
             <span>Nouvelle</span>
@@ -152,6 +152,16 @@ const HabitsPage: React.FC = () => {
       {viewMode === 'global' && <HabitGlobalTracking />}
 
       <HabitModal isOpen={showModal} onClose={() => setShowModal(false)} />
+
+      {/* FAB Nouvelle habitude — mobile only */}
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowModal(true)}
+        aria-label="Nouvelle habitude"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
+      >
+        <Plus size={28} />
+      </motion.button>
     </div>
   );
 };

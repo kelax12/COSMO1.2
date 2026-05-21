@@ -161,7 +161,7 @@ const OKRPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex justify-end mb-8">
+      <div className="hidden sm:flex justify-end mb-8">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -666,6 +666,16 @@ const OKRPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* FAB Nouvel objectif — mobile only */}
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowAddObjective(true)}
+        aria-label="Nouvel objectif"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
+      >
+        <Plus size={28} />
+      </motion.button>
     </motion.div>);
 
 };

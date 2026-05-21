@@ -124,7 +124,7 @@ export function PremiumPage() {
               whileHover={{ scale: 1.02 }}
             >
               <Crown size={36} style={{ color: '#eab308' }} />
-              <h1 className="text-3xl sm:text-5xl font-bold text-[rgb(var(--color-text-primary))]">
+              <h1 className="text-2xl sm:text-4xl font-bold text-[rgb(var(--color-text-primary))]">
                 Cosmo Premium
               </h1>
             </motion.div>
