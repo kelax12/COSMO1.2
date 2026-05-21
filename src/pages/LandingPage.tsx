@@ -434,7 +434,7 @@ const LandingPage: React.FC = () => {
                 className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 aria-label="Essayer la démo sans inscription"
               >
-                Essayer maintenant — sans inscription
+                Essayer la démo
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button
