@@ -150,8 +150,9 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
       const el = findTarget(step.target);
       setTargetRect(getRect(el));
 
-      // Drag-ghost : mesure aussi la destination
-      if (step.action === 'drag-ghost' && step.dragTo) {
+      // Drag-ghost OU drag-and-resize : mesurer aussi la destination
+      const needsGhost = step.action === 'drag-ghost' || step.action === 'drag-and-resize';
+      if (needsGhost && step.dragTo) {
         const dst = findTarget(step.dragTo);
         const fromRect = getRect(el);
         const toRect = getRect(dst);
@@ -369,40 +370,119 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
           />
         )}
 
-        {/* Ghost de drag : un cercle accent qui glisse du from au to */}
-        {dragGhost && (
+        {/* ── Ghost de drag scénarisé ────────────────────────────────────
+            Deux variantes :
+            - 'drag-ghost' : un fantôme glisse de target vers dragTo, puis fade.
+            - 'drag-and-resize' : même drag, MAIS à l'arrivée le fantôme se
+               transforme en bloc « événement calendrier » qui s'étire vers
+               le bas (resize) pour démontrer la fonction de redimensionnement.
+            ─────────────────────────────────────────────────────────────── */}
+        {dragGhost && (() => {
+          const GHOST_W = 140;
+          const GHOST_H = 36;
+          const RESIZE_TARGET_H = 96; // hauteur finale après resize (~3 slots horaires)
+          const isResize = step.action === 'drag-and-resize';
+          const fromX = dragGhost.from.left + dragGhost.from.width / 2 - GHOST_W / 2;
+          const fromY = dragGhost.from.top + dragGhost.from.height / 2 - GHOST_H / 2;
+          const toX = dragGhost.to.left + dragGhost.to.width / 2 - GHOST_W / 2;
+          const toY = dragGhost.to.top + 80; // un peu sous le haut du calendrier (pas au centre vertical)
+          const label = step.ghostLabel || 'Tâche démo';
+
+          // 4 phases : 0% appear at from, 30% arrived at to, 65% resized down, 100% fade
+          // Pour drag-ghost simple : 3 phases (no resize)
+          const keyframes = isResize
+            ? { times: [0, 0.12, 0.45, 0.80, 1] }
+            : { times: [0, 0.15, 0.85, 1] };
+
+          return (
+            <motion.div
+              key={`ghost-${stepIndex}`}
+              className="absolute pointer-events-none rounded-lg shadow-2xl flex items-center justify-start px-2.5 overflow-hidden"
+              style={{
+                width: GHOST_W,
+                background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
+                border: `2px solid ${accentColor}`,
+                color: 'white',
+                fontWeight: 700,
+                fontSize: 12,
+              }}
+              initial={{
+                top: fromY,
+                left: fromX,
+                height: GHOST_H,
+                opacity: 0,
+                scale: 0.9,
+                rotate: -2,
+              }}
+              animate={isResize ? {
+                // Phase 1: appear at source (lifted/tilted)
+                // Phase 2: travel to destination
+                // Phase 3: drop and resize (height grows)
+                // Phase 4: fade out
+                top:    [fromY, fromY,           toY,           toY,                  toY],
+                left:   [fromX, fromX,           toX,           toX,                  toX],
+                height: [GHOST_H, GHOST_H,       GHOST_H,       RESIZE_TARGET_H,      RESIZE_TARGET_H],
+                opacity:[0,     1,               1,             1,                    0],
+                scale:  [0.9,   1.05,            1,             1,                    0.95],
+                rotate: [-2,    -3,              0,             0,                    0],
+                boxShadow: [
+                  `0 0 0 ${accentColor}00`,
+                  `0 12px 30px ${accentColor}66`,
+                  `0 6px 16px ${accentColor}44`,
+                  `0 6px 16px ${accentColor}44`,
+                  `0 0 0 ${accentColor}00`,
+                ],
+              } : {
+                top:    [fromY, fromY, toY,   toY],
+                left:   [fromX, fromX, toX,   toX],
+                opacity:[0,     1,     1,     0],
+                scale:  [0.9,   1.05,  1,     0.9],
+                rotate: [-2,    -3,    0,     0],
+              }}
+              transition={{
+                duration: isResize ? 3.6 : 2.4,
+                repeat: Infinity,
+                repeatDelay: 0.4,
+                ease: 'easeInOut',
+                ...keyframes,
+              }}
+            >
+              <span className="truncate">📌 {label}</span>
+            </motion.div>
+          );
+        })()}
+
+        {/* Indicateur de poignée resize (apparaît en bas du ghost pendant la phase resize) */}
+        {dragGhost && step.action === 'drag-and-resize' && (
           <motion.div
-            key={`ghost-${stepIndex}`}
-            className="absolute pointer-events-none rounded-xl shadow-2xl"
+            key={`resize-handle-${stepIndex}`}
+            className="absolute pointer-events-none rounded-full"
             style={{
-              width: 80,
-              height: 32,
-              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}aa)`,
+              width: 32,
+              height: 4,
+              background: 'white',
               border: `2px solid ${accentColor}`,
+              left: dragGhost.to.left + dragGhost.to.width / 2 - 16,
             }}
-            initial={{
-              top: dragGhost.from.top + dragGhost.from.height / 2 - 16,
-              left: dragGhost.from.left + dragGhost.from.width / 2 - 40,
-              opacity: 0,
-              scale: 0.8,
-            }}
+            initial={{ opacity: 0, top: dragGhost.to.top + 80 + 36 - 4 }}
             animate={{
+              opacity: [0, 0, 0, 1, 1, 0],
               top: [
-                dragGhost.from.top + dragGhost.from.height / 2 - 16,
-                dragGhost.from.top + dragGhost.from.height / 2 - 16,
-                dragGhost.to.top + dragGhost.to.height / 2 - 16,
-                dragGhost.to.top + dragGhost.to.height / 2 - 16,
+                dragGhost.to.top + 80 + 36 - 4,
+                dragGhost.to.top + 80 + 36 - 4,
+                dragGhost.to.top + 80 + 36 - 4,
+                dragGhost.to.top + 80 + 36 - 4,
+                dragGhost.to.top + 80 + 96 - 4,
+                dragGhost.to.top + 80 + 96 - 4,
               ],
-              left: [
-                dragGhost.from.left + dragGhost.from.width / 2 - 40,
-                dragGhost.from.left + dragGhost.from.width / 2 - 40,
-                dragGhost.to.left + dragGhost.to.width / 2 - 40,
-                dragGhost.to.left + dragGhost.to.width / 2 - 40,
-              ],
-              opacity: [0, 1, 1, 0],
-              scale: [0.8, 1, 1, 0.8],
             }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.15, 0.85, 1] }}
+            transition={{
+              duration: 3.6,
+              repeat: Infinity,
+              repeatDelay: 0.4,
+              ease: 'easeInOut',
+              times: [0, 0.12, 0.45, 0.55, 0.80, 1],
+            }}
           />
         )}
 

@@ -1,55 +1,61 @@
 import { TutorialStep } from '@/components/tutorial/types';
 
 /**
- * Tutoriel page Tâches — MOBILE uniquement.
- * Focalisé sur les gestes tactiles : FAB, swipe gauche/droite, long-press,
- * bouton "…" sur la TaskCard.
+ * Tutoriel Tâches — MOBILE (gestes tactiles).
+ * 7 étapes : intro → listes → filtres → calendrier → FAB → swipes → bouton "…"
  */
 export const tasksTutorialStepsMobile: TutorialStep[] = [
   {
-    title: 'Bienvenue sur vos tâches 📋',
-    description: "Centralisez toutes vos tâches avec priorité, catégorie et deadline. Le tour mobile dure 30 secondes.",
+    title: 'Vos tâches en un endroit',
+    description:
+      "Ici vous gérez toutes vos tâches. 7 étapes pour découvrir les gestes mobiles — swipe, tap long, bouton « … ».",
   },
   {
-    title: 'Recherche et tri',
-    description: "Touchez la zone filtres pour ouvrir/fermer les options. Sur mobile, « + d'options » révèle les filtres rapides Favoris/Terminées/Retard.",
+    title: 'Listes personnelles',
+    description:
+      "Vos listes (Travail, Courses, Voyage…) se trouvent ici. Touchez une liste pour filtrer. Faites glisser le carrousel pour voir toutes vos listes.",
+    target: '[data-tutorial-id="tasks-lists"]',
+    cardPlacement: 'bottom',
+    action: 'pulse',
+    dimLevel: 'light',
+  },
+  {
+    title: 'Recherche & filtres',
+    description:
+      "Tapez pour chercher. Touchez « + d'options » pour révéler les filtres rapides : Favoris, Terminées, En retard, Collaboration.",
     target: '[data-tutorial-id="tasks-filter"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
     title: 'Mini-calendrier',
-    description: "Touchez ce bouton pour afficher un mini-calendrier de vos échéances.",
+    description:
+      "Affiche vos échéances sur une semaine. Touchez ce bouton pour l'afficher ou le masquer.",
     target: '[data-tutorial-id="tasks-calendar-toggle"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
     title: 'Créer une tâche',
-    description: "Ce bouton flottant en bas à droite ouvre le formulaire de création. Toujours accessible quand vous scrollez.",
+    description:
+      "Ce bouton flottant est toujours accessible, même quand vous scrollez. Il ouvre le formulaire de création.",
     target: '[data-tutorial-id="tasks-fab"]',
     cardPlacement: 'top',
     action: 'pulse',
   },
   {
-    title: 'Geste 1 : swipe droite = valider',
-    description: "Sur n'importe quelle tâche, glissez le doigt vers la droite. La tâche se valide automatiquement (avec vibration légère).",
+    title: 'Geste : glisser à droite pour valider',
+    description:
+      "Sur une tâche, glissez votre doigt vers la droite. Une zone verte « Valider » apparaît. Lâchez : la tâche est cochée (avec une légère vibration).",
     target: '[data-tutorial-id="tasks-list"]',
     cardPlacement: 'top',
     action: 'pulse',
     dimLevel: 'light',
   },
   {
-    title: 'Geste 2 : swipe gauche = options',
-    description: "Glissez vers la gauche pour révéler les actions : favori, partage, planifier, supprimer.",
-    target: '[data-tutorial-id="tasks-list"]',
-    cardPlacement: 'top',
-    action: 'pulse',
-    dimLevel: 'light',
-  },
-  {
-    title: 'Bouton « … »',
-    description: "Pas envie de glisser ? Sur chaque tâche, le bouton « … » à droite ouvre le même panneau d'actions. Plus simple.",
+    title: 'Plus simple : le bouton « … »',
+    description:
+      "Pas envie de glisser ? Le bouton « … » à droite de chaque tâche ouvre le panneau d'actions : favori, partage, planifier, supprimer.",
     target: '[data-tutorial-id="tasks-list"]',
     cardPlacement: 'top',
     action: 'pulse',

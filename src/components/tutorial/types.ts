@@ -37,13 +37,20 @@ export interface TutorialStep {
   cardPlacement?: CardPlacement;
   /**
    * Action de démo auto. Déclenchée 800ms après l'apparition de l'étape.
-   *   - 'click'       : simule un click sur target
-   *   - 'pulse'       : juste un pulse visuel sur target (par défaut si action absent)
-   *   - 'drag-ghost'  : anime un fantôme d'élément depuis target vers dragTo
-   *   - 'type'        : tape `typeText` dans target (input)
-   *   - 'custom'      : appelle customAction(target)
+   *   - 'click'         : simule un click sur target
+   *   - 'pulse'         : juste un pulse visuel sur target (par défaut si action absent)
+   *   - 'drag-ghost'    : anime un fantôme d'élément depuis target vers dragTo
+   *   - 'drag-and-resize' : scénario complet — un fantôme « tâche » glisse de
+   *                         target vers dragTo, se transforme en bloc événement,
+   *                         puis le bloc s'étire vers le bas pour montrer le
+   *                         resize. Idéal pour démontrer le drag + resize sur
+   *                         FullCalendar sans toucher au DOM réel.
+   *   - 'type'          : tape `typeText` dans target (input)
+   *   - 'custom'        : appelle customAction(target)
    */
-  action?: 'click' | 'pulse' | 'drag-ghost' | 'type' | 'custom';
+  action?: 'click' | 'pulse' | 'drag-ghost' | 'drag-and-resize' | 'type' | 'custom';
+  /** Label affiché dans le fantôme de drag pour le rendre parlant (ex. « Réviser maths ») */
+  ghostLabel?: string;
   /** Pour action='drag-ghost' : sélecteur de la cible du drag */
   dragTo?: string;
   /** Pour action='type' : texte à taper */

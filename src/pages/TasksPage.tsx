@@ -335,6 +335,7 @@ const TasksPage: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                   className="mb-4 sm:mb-8"
+                  data-tutorial-id="tasks-lists"
                 >
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">

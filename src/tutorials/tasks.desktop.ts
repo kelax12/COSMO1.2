@@ -1,39 +1,53 @@
 import { TutorialStep } from '@/components/tutorial/types';
 
 /**
- * Tutoriel page Tâches — DESKTOP uniquement.
- * Focalisé sur les actions hover/click et le tableau desktop.
+ * Tutoriel Tâches — DESKTOP (souris + grand écran).
+ * 6 étapes : intro → listes → filtres → calendrier → création → tableau.
  */
 export const tasksTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Bienvenue sur vos tâches 📋',
-    description: "Centralisez toutes vos tâches avec priorité, catégorie et deadline. Suivez le tour, on vous montre tout en 5 étapes.",
+    title: 'Vos tâches en un endroit',
+    description:
+      "Ici vous gérez toutes vos tâches : titre, priorité (1 = urgent, 5 = peu urgent), catégorie, deadline et temps estimé. Le tour dure 30 secondes.",
   },
   {
-    title: 'Recherche et filtres',
-    description: "Cherchez par mot-clé, filtrez par catégorie, ajustez la plage de priorité. Pratique quand la liste s'allonge.",
+    title: 'Listes personnelles',
+    description:
+      "Cette zone regroupe vos listes (ex : Travail, Maison, Voyage). Cliquez une liste pour ne voir que ses tâches. Le « + » à droite en crée une nouvelle.",
+    target: '[data-tutorial-id="tasks-lists"]',
+    cardPlacement: 'bottom',
+    action: 'pulse',
+    dimLevel: 'light',
+  },
+  {
+    title: 'Recherche & filtres',
+    description:
+      "Tapez un mot-clé pour filtrer instantanément. Sélectionnez une ou plusieurs catégories. Ajustez la fourchette de priorité avec le slider.",
     target: '[data-tutorial-id="tasks-filter"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
     title: 'Vue calendrier',
-    description: "Ce bouton bascule un mini-calendrier qui montre vos échéances par semaine. Idéal pour visualiser les périodes chargées.",
+    description:
+      "Affiche vos échéances sous forme de mini-calendrier. Utile pour repérer d'un coup d'œil les semaines surchargées.",
     target: '[data-tutorial-id="tasks-calendar-toggle"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Créer une tâche',
-    description: "On clique pour vous : ce bouton ouvre le formulaire de création. Nom, priorité, catégorie, date — le minimum.",
+    title: 'Créer une tâche — on clique pour vous',
+    description:
+      "Le formulaire de création s'ouvre. Un seul champ obligatoire : le titre. Tout le reste a des valeurs par défaut sensibles.",
     target: '[data-tutorial-id="tasks-create-button"]',
     cardPlacement: 'bottom',
     action: 'click',
     actionDelay: 1800,
   },
   {
-    title: 'Tableau de tâches',
-    description: "Cliquez une ligne pour ouvrir. Survolez avec la souris pour révéler les actions à droite : favori, planifier, partager, supprimer. Triez en cliquant sur les en-têtes de colonne.",
+    title: 'Le tableau des tâches',
+    description:
+      "Survolez une ligne avec la souris : les actions apparaissent à droite (favori, planifier dans l'agenda, partager, supprimer). Cliquez une colonne pour trier dessus.",
     target: '[data-tutorial-id="tasks-list"]',
     cardPlacement: 'top',
     action: 'pulse',

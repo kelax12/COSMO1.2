@@ -1,43 +1,42 @@
 import { TutorialStep } from '@/components/tutorial/types';
 
 /**
- * Tutoriel page Agenda — MOBILE uniquement.
- * Sur mobile, l'agenda est une vue agenda verticale (liste par jour),
- * pas une grille FullCalendar. Le drag-and-drop n'est PAS disponible
- * (le calendrier mobile force currentView='agenda' en lecture-tap).
- * Le tutoriel mobile explique donc :
- *   - sélecteur de jour en haut (carrousel)
- *   - création via le bouton + (header mobile)
- *   - tap sur une journée pour la centrer
+ * Tutoriel Agenda — MOBILE (vue agenda verticale, pas de drag).
+ * Sur mobile, FullCalendar est forcé en vue agenda (liste). Le drag-and-drop
+ * n'est PAS supporté — on l'indique clairement à l'utilisateur.
  */
 export const agendaTutorialStepsMobile: TutorialStep[] = [
   {
-    title: 'Votre agenda 📅',
-    description: "Vue agenda mobile : une liste verticale par jour, optimisée pour le scroll. Plus simple que la grille desktop.",
+    title: 'Votre agenda',
+    description:
+      "Sur mobile, l'agenda s'affiche en liste verticale par jour — pensé pour le scroll au pouce.",
   },
   {
-    title: 'Carrousel de dates',
-    description: "En haut de l'écran, un carrousel horizontal vous laisse voir 7 jours à la fois. Touchez une date pour la centrer.",
-    // Pas de target précis — la zone change selon le mois affiché.
+    title: 'Bandeau de dates',
+    description:
+      "En haut, un carrousel horizontal affiche les 7 jours suivants. Touchez une date pour la centrer.",
   },
   {
-    title: 'Bouton + pour créer',
-    description: "Le bouton + dans le header mobile ouvre le formulaire d'événement, pré-rempli à l'heure courante.",
+    title: 'Créer un événement',
+    description:
+      "Le bouton « + » dans le header mobile ouvre le formulaire. L'heure est pré-remplie à l'heure courante.",
   },
   {
-    title: 'Ouvrez le panneau Tâches',
-    description: "L'icône Calendrier en haut à gauche ouvre votre liste de tâches non planifiées — utile pour piocher une tâche à planifier.",
+    title: 'Panneau Tâches',
+    description:
+      "Cette icône ouvre vos tâches non planifiées. Touchez une tâche puis « Planifier dans l'agenda » pour la transformer en événement.",
     target: '[data-tutorial-id="agenda-task-sidebar-toggle"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Mois et navigation',
-    description: "Sur la vue mois mobile, les flèches gauche/droite naviguent entre les mois. Touchez une date pour zoomer sur la journée.",
+    title: 'Naviguer entre les mois',
+    description:
+      "En vue Mois, les flèches gauche/droite changent de mois. Touchez une date pour zoomer sur la journée.",
   },
   {
-    title: 'Astuce : drag desktop only',
-    description: "Le glisser-déposer d'une tâche sur la grille n'est disponible que sur desktop. Sur mobile, créez l'événement via le bouton + et liez la tâche manuellement.",
-    dimLevel: 'normal',
+    title: 'Astuce : drag réservé au desktop',
+    description:
+      "Le glisser-déposer d'une tâche sur la grille n'existe que sur ordinateur. Sur mobile, créez l'événement via le bouton + et choisissez la tâche associée.",
   },
 ];
