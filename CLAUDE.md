@@ -139,31 +139,13 @@ Les seeds sont dans les fichiers `local.repository.ts` / `repository.ts` de chaq
 | Events | `src/modules/events/repository.ts` | ~150 événements | 12 mois + récurrents |
 | OKRs | `src/modules/okrs/repository.ts` | 8 OKRs | 3 actifs + 5 complétés |
 
-Helpers disponibles dans les fichiers seed :
-- `getDate(daysFromNow)` / `getDateString(daysFromNow)` — dates relatives à aujourd'hui
-- `generateCompletions(daysBack, rate, seed)` — historique déterministe (pas de `Math.random()`)
-- `t(id, name, desc, priority, cat, createdDays, deadlineDays, completedDays, ...)` — raccourci Task
-- `h(id, name, desc, color, icon, time, daysBack, rate, seed, freq?)` — raccourci Habit
+Helpers disponibles dans les fichiers seed : dates relatives (`getDate`, `getDateString`), historique déterministe (`generateCompletions` — pas de `Math.random()`), et raccourcis `t(...)` / `h(...)` pour Task/Habit. Signatures exactes dans les fichiers seed concernés.
 
-### Clés localStorage démo effacées par `clearDemoStorage()`
+### Clés localStorage démo
 
-Liste exacte (cf. `src/lib/repository.factory.ts`) :
-```
-cosmo_demo_tasks
-cosmo_demo_habits
-cosmo_demo_events
-cosmo_demo_kr_completions
-cosmo-okrs · cosmo-okrs-v2 · cosmo-okrs-v3 · cosmo-okrs-v4 · cosmo-okrs-v5
-cosmo_categories
-cosmo_lists
-cosmo_friends
-cosmo_friend_requests
-cosmo_shared_tasks
-```
+Effacées par `clearDemoStorage()` dans `src/lib/repository.factory.ts`. Pour ajouter une nouvelle clé démo, l'ajouter dans cette fonction (toute clé `cosmo_demo_*` ou `cosmo-okrs*` est balayée).
 
-> **Naming inconsistent** : certaines clés démo ne sont pas préfixées `cosmo_demo_` (categories, lists, friends, okrs). Pas exploitable mais à harmoniser à terme. Aucun risque réel : les utilisateurs Supabase ne lisent pas le localStorage.
-
-> Pour ajouter une nouvelle clé démo, l'ajouter dans `clearDemoStorage()` dans `src/lib/repository.factory.ts`.
+> **Naming inconsistent** : certaines clés ne sont pas préfixées `cosmo_demo_` (categories, lists, friends, okrs). À harmoniser à terme. Aucun risque sécu : les utilisateurs Supabase ne lisent pas le localStorage.
 
 ### Ce qu'il ne faut jamais faire en mode démo
 
@@ -203,7 +185,6 @@ src/modules/{module}/
 | friends | `src/modules/friends/` | Collaboration sociale |
 | okrs | `src/modules/okrs/` | OKR (Objectives & Key Results) |
 | kr-completions | `src/modules/kr-completions/` | Journal append-only des complétions de KR |
-| messaging | `src/modules/messaging/` | Messagerie entre amis |
 | ui-states | `src/modules/ui-states/` | État UI persistant (couleurs, priorités) |
 | user | `src/modules/user/` | Profil utilisateur, messages inbox |
 
@@ -271,11 +252,6 @@ import { useCategories } from '@/modules/categories';
 import { useLists } from '@/modules/lists';
 ```
 
-### Messagerie temps réel
-```typescript
-import { useSendChatMessage, useConversationMessages, useMessagingRealtime } from '@/modules/messaging/messaging.hooks';
-```
-
 ---
 
 ## Hiérarchie des providers (`src/App.tsx`)
@@ -305,7 +281,6 @@ Travailler sur une zone = importer uniquement les modules de cette zone.
 | Habitudes | `habits`, `categories` |
 | OKR | `okrs` |
 | Amis / Collaboration | `friends` |
-| Messagerie | `messaging`, `friends`, `auth` |
 | UI / Filtres | `ui-states` |
 | Auth | `auth` |
 | Premium | `billing` |
@@ -349,7 +324,6 @@ export type User = {
 /statistics       → StatisticsPage   (protégé)
 /settings         → SettingsPage     (protégé)
 /premium          → PremiumPage      (protégé)
-/messages         → MessagingPage    (protégé)
 /*                → redirect /welcome
 ```
 
@@ -359,21 +333,12 @@ Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErro
 
 ## Base de données Supabase
 
-Les migrations SQL sont dans `supabase/` :
+Les migrations SQL sont dans `supabase/migration/*.sql` (numérotées 001+). Convention `NNN_<feature>.sql`. Points notables :
+- `008_key_results.sql` normalise les KR en table dédiée (avant ils étaient en JSONB dans `003_okrs.sql`).
+- `009_kr_completions.sql` ajoute le journal append-only qui alimente le graphique dashboard (cf. section dédiée plus bas).
+- `017_processed_stripe_events.sql` ajoute l'idempotence des webhooks Stripe.
 
-| Fichier | Tables créées |
-|---|---|
-| `migration/001_tasks.sql` | `tasks` |
-| `migration/002_habits.sql` | `habits` |
-| `migration/003_okrs.sql` | `okrs` (`key_results` est aussi en JSONB ici, normalisé en 008) |
-| `migration/004_events.sql` | `events` |
-| `migration/005_categories.sql` | `categories` |
-| `migration/006_lists.sql` | `lists` |
-| `migration/007_friends.sql` | `friends`, `friend_requests`, `shared_tasks` |
-| `migration/008_key_results.sql` | `key_results` (table dédiée, remplace progressivement le JSONB) |
-| `migration/009_kr_completions.sql` | `kr_completions` (journal append-only des KR validés — alimente le graphique dashboard) |
-| `subscriptions.sql` | `subscriptions` (premium) |
-| `messages.sql` | `chat_messages` |
+Pour lister à jour : `ls supabase/migration/`.
 
 Toutes les tables ont **Row Level Security (RLS) activée** avec policies `auth.uid() = user_id`. Toutes les `CREATE POLICY` utilisent des guillemets non-échappés (`"..."`) — ne pas réintroduire de `\"`.
 
@@ -445,11 +410,13 @@ Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit(
 
 ## Tests
 
-Le dossier `src/__test__/` contient des fichiers de tests Vitest, **mais Vitest n'est pas installé** dans `package.json`. Les tests ne tournent pas. Soit :
-1. Installer `vitest @testing-library/react happy-dom` et ajouter `"test": "vitest"` à `package.json`
-2. Supprimer le dossier `src/__test__/` et la section `test:` de `vite.config.ts`
+**État actuel : pas de tests automatisés actifs.** Le dossier `src/__test__/` contient d'anciens fichiers Vitest non exécutés (Vitest non installé dans `package.json`). Le dossier est ignoré par ESLint.
 
-Voir `faille.md` §4.
+**Décision en cours** — soit :
+- (A) Réactiver : `npm i -D vitest @testing-library/react happy-dom` + `"test": "vitest"` dans `package.json` + nettoyer les imports obsolètes
+- (B) Supprimer `src/__test__/` et la section `test:` de `vite.config.ts`
+
+D'ici la décision, **ne pas ajouter de nouveaux fichiers dans `src/__test__/`**. Pour valider une feature critique : smoke test manuel mobile (375×812) + checklist déploiement (voir section dédiée).
 
 ---
 
@@ -623,8 +590,8 @@ if (supabaseUrl) {
 - ❌ Faire diverger le mobile et le desktop dans le même composant sans utiliser `md:hidden` / `md:flex` ou `useIsMobile()` — éviter le code dupliqué
 - ❌ Modifier `<TaskCard>` (`md:hidden`) sans vérifier que la table desktop reste intacte (`hidden md:block`)
 - ❌ Réintroduire `TaskCategoryIndicator` ou des icônes inline sur la TaskCard mobile — l'épuration est délibérée
-- ❌ Retirer les **warmup fetches** vers `${VITE_SUPABASE_URL}/auth/v1/health` et `/rest/v1/` dans `src/main.tsx` — sans eux, iOS Safari rejette les requêtes parallèles au mount (bug WebKit, voir section "iOS Safari — bug WebKit fetches parallèles")
-- ❌ Ajouter de nouvelles requêtes Supabase dans l'init de l'app (`AuthContext.initializeAuth`, `BillingProvider`, hooks de pages) sans vérifier sur un vrai iPhone que la connection HTTP/2 absorbe le surplus — au-delà de 5-6 streams parallèles initiaux, le warmup actuel peut ne plus suffire
+
+> Pour le bug WebKit iOS Safari (warmup fetches + cache localStorage), voir la section dédiée « iOS Safari — bug WebKit fetches parallèles » plus haut.
 
 ---
 
@@ -744,52 +711,161 @@ Pour tout `<input type="file">` :
 - ✅ Si la table a `user_id`, attacher le trigger `prevent_user_id_change`
 - ⚠️ Le schéma réel de prod peut diverger des migrations (ex. `friend_requests` utilise `sender_id`/`receiver_id`, voir `faille.md` §8) — vérifier avant d'écrire des policies qui réfèrent à des colonnes
 
+### Rotation des secrets
+
+Si une clé fuite (commit accidentel, compromission soupçonnée, etc.) :
+
+1. **Rotater immédiatement** :
+   - Supabase : `Dashboard → Project Settings → API → Reset anon/service_role`
+   - Stripe : `Dashboard → Developers → API keys → Roll`
+   - Webhook signing secret Stripe : recréer l'endpoint
+2. **Invalider les sessions actives** : `auth.admin.signOut()` côté Edge Function ou requête manuelle SQL `delete from auth.refresh_tokens`
+3. **Mettre à jour** : Vercel env vars + `.env` local + Edge Function secrets (`supabase secrets set ...`)
+4. **Re-deploy** Vercel + redéployer les Edge Functions
+5. **Audit** : vérifier les logs Supabase pour activité suspecte avant la rotation
+
+Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `OPENAI_API_KEY` (si utilisé).
+
+---
+
+## Accessibilité (a11y)
+
+- ✅ **Touch targets ≥ 44×44 px** (WCAG 2.5.5) — sur boutons d'icône, utiliser `min-w-11 min-h-11` ou wrapper l'icône dans un container de cette taille.
+- ✅ **`aria-label` obligatoire** sur tout `<button>` qui ne contient qu'une icône — `title=` est ignoré par les lecteurs d'écran sur mobile.
+- ✅ **`focus-visible:`** sur tous les boutons custom — la navigation au clavier (iPad + clavier physique) doit montrer un focus ring.
+- ✅ **`aria-pressed`** sur les toggles (favoris, terminées, sélections).
+- ✅ Préférer `<button>` à `<div onClick>` — gère focus, ENTER, SPACE automatiquement.
+- ❌ **Pas de changement de contenu sans annonce** — si une action mute le DOM (toast, badge), utiliser `role="status"` ou `aria-live="polite"`.
+- ❌ **Pas de couleur seule pour transmettre l'information** — toujours doubler avec une icône, du texte, ou un état (ex. tâche en retard = rouge + badge "Retard").
+
+---
+
+## Theme `monochrome:` (accessibilité haute contraste)
+
+L'app supporte un **mode monochrome** activé via classe CSS racine. Toutes les classes Tailwind colorées doivent avoir un équivalent `monochrome:` :
+
+```tsx
+// ✅ OK
+className="bg-blue-600 text-white monochrome:bg-white monochrome:text-black"
+
+// ❌ Cassé en mode monochrome (perd la lisibilité)
+className="bg-blue-600 text-white"
+```
+
+Patterns standards :
+- `bg-blue-*` → `monochrome:bg-white` (sur fond clair) ou `monochrome:bg-neutral-900` (sur fond foncé)
+- `text-blue-*` → `monochrome:text-black` ou `monochrome:text-white`
+- `border-blue-*` → `monochrome:border-white` ou `monochrome:border-neutral-700`
+- `hover:` couleurs → `monochrome:hover:bg-neutral-800` etc.
+
+Référence : voir `TaskTable.tsx` pour les pills de catégorie, `MobileTabBar.tsx` pour la nav active.
+
+---
+
+## Shadcn UI — exceptions documentées
+
+Les composants dans `src/components/ui/` sont normalement **non modifiés** (ils sont gérés par la CLI shadcn et un refactor par la CLI écraserait tes changements). Si une modif est nécessaire, **la documenter ici** :
+
+| Fichier | Modification | Raison | Commit |
+|---|---|---|---|
+| `dialog.tsx` | `DialogOverlay` : `bg-black/50` → `bg-black/30 backdrop-blur-md` | Cohérence iOS sheet style avec les autres modals custom | `5e2336a` |
+
+Toute nouvelle modif doit s'ajouter dans cette table.
+
+---
+
+## Checklist avant push prod
+
+Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
+
+1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
+2. ✅ `npm run build` → succès (le drop console.log se fait au build)
+3. ✅ **Smoke test mobile preview** sur viewport 375×812 (iPhone SE/12 mini) :
+   - Login démo → Dashboard
+   - Créer une tâche → fermer modal
+   - Compléter une tâche (clic checkbox + swipe droit)
+   - Navigation Tab bar (Accueil / Tâches / Agenda / Habitudes / Plus)
+   - Vérifier qu'aucun contenu n'est caché derrière la MobileTabBar
+4. ✅ **Si touche `recordKRCompletion()`** : vérifier le graphique dashboard en démo ET en prod
+5. ✅ **Si touche un modal** : tester drag-to-close, ESC, clic backdrop
+6. ✅ **Si touche une page nouvelle** : vérifier `min-h-[100dvh]` + `pb-[calc(64px+env(safe-area-inset-bottom)+24/88px)]`
+7. ✅ **Si touche `supabase/migration/*.sql`** : voir checklist dédiée plus haut
+8. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` pour activer Eruda console sur un vrai iPhone
+
+---
+
+## i18n
+
+L'app est actuellement **100% français** (UI, copy, dates via `date-fns/locale/fr`). Pas de framework i18n installé.
+
+Si on ajoute une langue :
+- Installer `i18next` + `react-i18next`
+- **Ne jamais** concaténer des strings (`"Bonjour " + name` casse les langues à pluriel/grammaire variable)
+- Migrer les strings progressivement (priorité : UI publique > app interne > tooltips)
+- Le mode démo doit rester en FR (seed data hardcoded)
+
 ---
 
 ## Ce qu'il ne faut jamais faire
 
-- ❌ Importer depuis `src/context/TaskContext` — **ce fichier a été supprimé**
+> Chaque règle vient d'une faille corrigée — les réintroduire = régression. Les codes `(V1)`, `(B6)`, `(N9)`, `(U2)`, `(W6)`, etc. réfèrent à des fiches détaillées dans `faille.md`.
+
+### 🔐 Sécurité — données & auth
+
 - ❌ Créer `supabaseAdmin` avec `SERVICE_ROLE_KEY` côté client
-- ❌ Importer `useAuth` depuis `@/modules/user`
-- ❌ Appeler `toast.error()` depuis un repository ou `normalizeApiError`
-- ❌ Écrire l'état premium dans `localStorage` (utiliser Supabase `subscriptions`)
-- ❌ Modifier les fichiers dans `src/components/ui/` (shadcn — géré par la CLI)
 - ❌ Committer le fichier `.env`
-- ❌ Ajouter des `as any` pour contourner les erreurs TypeScript
-- ❌ Recréer un contexte/façade global qui agrège plusieurs modules
+- ❌ Réintroduire `user_id` dans `mapToDb()` d'un repository — mass-assignment (V1)
+- ❌ Créer une policy `UPDATE` sans `WITH CHECK` (N1, N2)
+- ❌ Spreader l'input client dans un `.update()` / `.insert()` Supabase — whitelist explicite obligatoire
 - ❌ Échapper les guillemets dans les `CREATE POLICY` SQL (`\"...\"` casse Postgres)
-- ❌ Modifier la logique `recordKRCompletion()` sans vérifier que le graphique dashboard fonctionne en mode démo ET en mode prod
-- ❌ Forcer `theme="dark"` sur le `Toaster` (utiliser `theme="system"`)
+- ❌ Lire `premiumTokens` ou identité depuis `localStorage` / `user_metadata` — source unique = `subscriptions` via `useBilling()` (N5, N6)
+- ❌ Écrire l'état premium dans `localStorage` (utiliser Supabase `subscriptions`)
+- ❌ Insérer dans `friends` / `shared_tasks` sans vérifier le lien d'amitié côté SQL (V12, V13)
+- ❌ Ne supprimer qu'un côté d'une amitié — `accept_friend_request` insère 2 lignes, `removeFriend` doit en supprimer 2 (B15)
+- ❌ Appeler `supabase.auth.updateUser({ password })` sans réauthentification via `signInWithPassword` (B8)
+- ❌ Accepter `image/svg+xml` dans un upload utilisateur — peut contenir du JS (V5)
+- ❌ Dériver `isDemo` de l'email (`user?.email === 'demo@cosmo.app'`) — utiliser `useIsDemo()` / `appModeStore.isDemo` (B0)
+- ❌ `window.parent.postMessage(*, '*')` — fuite vers iframe parente (V6)
+- ❌ Surfacer `error.message` brut de Supabase/Postgres dans l'UI ou un toast — `normalizeApiError().message` est générique, l'original va en `originalMessage` (log only, V7)
 - ❌ Ajouter un script tiers dans `index.html` sans CSP
-- ❌ Réintroduire `user_id` dans `mapToDb()` d'un repository (faille V1)
-- ❌ Créer une policy `UPDATE` sans `WITH CHECK` (faille N1, N2)
-- ❌ Spreader l'input client dans un `.update()` Supabase (mass-assignment)
-- ❌ `window.parent.postMessage(*, '*')` (faille V6)
-- ❌ Afficher `error.message` brut dans l'UI (faille V7)
-- ❌ Accepter `image/svg+xml` dans un upload utilisateur (faille V5)
-- ❌ Lire `premiumTokens` ou identité depuis `localStorage`/`user_metadata` (faille N5, N6)
-- ❌ Insérer dans `friends`, `shared_tasks` sans vérifier le lien d'amitié côté SQL (faille V12, V13)
-- ❌ Dériver `isDemo` de l'email (`user?.email === 'demo@cosmo.app'`) — utiliser `useIsDemo()` / `appModeStore.isDemo` (faille B0)
-- ❌ Réintroduire `premiumTokens` / `subscriptionEndDate` / `premiumWinStreak` dans le type `User` ou dans `mapSupabaseUserToAppUser` — source unique = `subscriptions` via `useBilling()` (faille N5)
-- ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (TaskModal, AddTaskForm, CollaboratorModal) sinon `shareTaskMutation` reçoit un nom au lieu d'un UUID (faille B6/B22)
-- ❌ Appeler `repository.getFriends()` depuis un hook — l'interface expose `getAll()` ; `getFriends()` est privé sur le repo local et absent en prod (faille B3)
-- ❌ Lire `habit.completedDates` — le champ canonique est `habit.completions: Record<string, boolean>` (faille B5)
-- ❌ Lire `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser `task.completed`, `task.name`, `task.deadline`, `task.bookmarked` (faille B6)
-- ❌ Appeler `supabase.auth.updateUser({ password })` sans réauthentification via `signInWithPassword` (faille B8)
-- ❌ Faire un read-then-write sur `subscriptions` dans une Edge Function — utiliser `upsert({ ... }, { onConflict: 'user_id' })` pour éviter les races (faille U1/U2)
-- ❌ Reset `premium_tokens` ou `win_streak` sur tous les events Stripe — ces champs ne se touchent que sur `checkout.session.completed` (init) et `invoice.payment_succeeded` (renouvellement) (faille B10/W6)
-- ❌ Échouer la validation signature webhook avec `return new Response(err.message, ...)` — toujours renvoyer `'Invalid signature'` générique (faille N9)
-- ❌ Renvoyer `Access-Control-Allow-Origin: '*'` sur une Edge Function authentifiée — utiliser une allowlist liée à `APP_URL` (faille N7)
-- ❌ Interpoler `params.cursor` / `params.cursorDate` directement dans un filtre PostgREST `.or()` sans validation regex UUID + ISO (faille N6)
-- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — toujours `JSON.parse(JSON.stringify(...))` avant retour (faille B12)
-- ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser un helper `safeParse<T>` (faille B14)
-- ❌ Appeler `kr.currentValue / kr.targetValue` sans guard `targetValue > 0` (faille B17 — divide-by-zero → NaN → row corrupt)
-- ❌ Insérer N lignes dans `kr_completions` à partir d'un `count` client non clampé (faille B18 — clamp à 100/write)
-- ❌ Whitelist manuelle de clés `cosmo_demo_*` dans `clearDemoStorage` — sweep par prefix `cosmo_*` (faille B21)
-- ❌ Surfacer `error.message` brut de Supabase/Postgres dans un toast — `normalizeApiError().message` est désormais toujours générique, l'original passe en `originalMessage` (log only, faille V7)
-- ❌ `allowedHosts: true` dans `vite.config.ts` — toujours une allowlist explicite (faille N10)
-- ❌ Ne supprimer qu'un côté d'une amitié — `accept_friend_request` insère 2 lignes, `removeFriend` doit les supprimer toutes les deux (faille B15)
-- ❌ Retirer les warmup `fetch()` vers `${VITE_SUPABASE_URL}/auth/v1/health` et `/rest/v1/` dans `src/main.tsx` — bug WebKit iOS Safari qui rejette les fetches parallèles initiales avec `TypeError: Load failed`. Régression invisible en dev/desktop, casse uniquement la prod iOS (voir section "iOS Safari — bug WebKit fetches parallèles")
-- ❌ Lancer `> 5-6 requêtes Supabase en parallèle` au mount de l'app sans vérifier sur iPhone réel — au-delà, le warmup actuel peut ne plus suffire et il faudra sérialiser ou ajouter un 3e fetch warmup
-- ❌ Retirer le cache localStorage par userId (`cosmo:qcache:{userId}:tasks` / `cosmo:qcache:{userId}:habits`) dans `AuthContext.tsx` — c'est lui qui rend les ouvertures ≥ 2 instantanées et permet de fonctionner offline brièvement
-- ❌ Retirer le skip retry sur `timeout` / `aborted` / `Délai` dans le `retry()` de `App.tsx` — sinon un fetch qui timeout à 8 s déclenche un retry, le worst-case devient ~17 s avant erreur visible
+- ❌ `allowedHosts: true` dans `vite.config.ts` — toujours une allowlist explicite (N10)
+
+### 💳 Stripe & Edge Functions
+
+- ❌ Faire un read-then-write sur `subscriptions` dans une Edge Function — utiliser `upsert({...}, { onConflict: 'user_id' })` (U1, U2)
+- ❌ Reset `premium_tokens` ou `win_streak` sur tous les events Stripe — ces champs ne se touchent que sur `checkout.session.completed` et `invoice.payment_succeeded` (B10, W6)
+- ❌ Échouer la validation signature webhook avec `return new Response(err.message, ...)` — toujours renvoyer `'Invalid signature'` générique (N9)
+- ❌ Renvoyer `Access-Control-Allow-Origin: '*'` sur une Edge Function authentifiée — allowlist liée à `APP_URL` (N7)
+- ❌ Interpoler `params.cursor` / `params.cursorDate` directement dans un filtre PostgREST `.or()` — validation regex UUID + ISO obligatoire (N6)
+
+### 📐 Conventions de modèle — types & champs canoniques
+
+- ❌ Importer depuis `src/context/TaskContext` — **fichier supprimé**
+- ❌ Importer `useAuth` depuis `@/modules/user` — source de vérité dans `@/modules/auth/AuthContext`
+- ❌ Recréer un contexte/façade global qui agrège plusieurs modules
+- ❌ Réintroduire `premiumTokens` / `subscriptionEndDate` / `premiumWinStreak` dans le type `User` ou `mapSupabaseUserToAppUser` — `useBilling()` only (N5)
+- ❌ Lire `habit.completedDates` — le champ canonique est `habit.completions: Record<string, boolean>` (B5)
+- ❌ Lire `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser `task.completed` / `task.name` / `task.deadline` / `task.bookmarked` (B6)
+- ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (B6, B22)
+- ❌ Appeler `repository.getFriends()` depuis un hook — l'interface expose `getAll()` ; `getFriends()` est privé/absent (B3)
+
+### 🧮 Logique métier — KR completions / quotas / mode démo
+
+- ❌ Modifier `recordKRCompletion()` sans vérifier que le graphique dashboard fonctionne en démo ET en prod
+- ❌ `kr.currentValue / kr.targetValue` sans guard `targetValue > 0` — divide-by-zero → NaN → row corrupt (B17)
+- ❌ Insérer N lignes dans `kr_completions` à partir d'un `count` client non clampé — cap 100/write (B18)
+- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — toujours `JSON.parse(JSON.stringify(...))` avant retour (B12)
+- ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser `safeParse<T>` (B14)
+- ❌ Whitelist manuelle de clés `cosmo_demo_*` dans `clearDemoStorage` — sweep par prefix `cosmo_*` (B21)
+
+### 🎨 UI / convention code
+
+- ❌ Modifier les fichiers `src/components/ui/` **sans documenter l'exception** (voir section « Shadcn UI — exceptions documentées »)
+- ❌ Ajouter des `as any` pour contourner les erreurs TypeScript
+- ❌ Appeler `toast.error()` depuis un repository ou `normalizeApiError`
+- ❌ Forcer `theme="dark"` sur le `Toaster` (utiliser `theme="system"`)
+
+### 📱 Mobile — patterns critiques
+
+- ❌ Retirer le warmup `fetch()` iOS Safari ou le cache `cosmo:qcache:*` ou le skip-retry sur timeout (voir section « iOS Safari — bug WebKit fetches parallèles »)
+- ❌ Lancer > 5-6 requêtes Supabase en parallèle au mount sans tester sur vrai iPhone — le warmup actuel peut ne plus suffire
