@@ -15,18 +15,35 @@ const DEMO_LISTS: TaskList[] = [
     name: 'Urgent',
     color: 'red',
     taskIds: ['task-1', 'task-2'],
+    type: 'manual',
+    isDefault: true,        // épinglée par défaut à l'ouverture
+    position: 0,
   },
   {
     id: 'list-2',
-    name: 'Cette semaine',
-    color: 'blue',
-    taskIds: ['task-3', 'task-4', 'task-5'],
-  },
-  {
-    id: 'list-3',
     name: 'Professionnel',
     color: 'purple',
     taskIds: ['task-1', 'task-2'],
+    type: 'manual',
+    position: 1,
+  },
+  {
+    id: 'list-3-smart-overdue',
+    name: 'En retard',
+    color: 'red',
+    taskIds: [],
+    type: 'smart',
+    smartRule: 'overdue',
+    position: 2,
+  },
+  {
+    id: 'list-4-smart-priority',
+    name: 'Priorité haute',
+    color: 'orange',
+    taskIds: [],
+    type: 'smart',
+    smartRule: 'high-priority',
+    position: 3,
   },
 ];
 
@@ -79,7 +96,15 @@ export class LocalStorageListsRepository implements IListsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<TaskList[]> {
-    return this.getLists();
+    // Tri identique au repo Supabase : position ascendante puis nom alpha.
+    // Les listes sans position passent à la fin (équivalent NULLS LAST).
+    const lists = this.getLists();
+    return [...lists].sort((a, b) => {
+      const ap = a.position ?? Number.MAX_SAFE_INTEGER;
+      const bp = b.position ?? Number.MAX_SAFE_INTEGER;
+      if (ap !== bp) return ap - bp;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   async getById(id: string): Promise<TaskList | null> {

@@ -22,6 +22,12 @@ interface ListRow {
   task_ids: string[];
   user_id?: string;
   created_at?: string;
+  // Nouveaux champs migration 021 (rétro-compat : peuvent être absents
+  // si la migration n'a pas encore tourné côté Supabase)
+  type?: 'manual' | 'smart' | null;
+  smart_rule?: string | null;
+  is_default?: boolean | null;
+  position?: number | null;
 }
 
 /**
@@ -32,6 +38,10 @@ interface ListDbInput {
   color?: string;
   task_ids?: string[];
   user_id?: string;
+  type?: 'manual' | 'smart';
+  smart_rule?: string | null;
+  is_default?: boolean;
+  position?: number | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -48,8 +58,11 @@ export class SupabaseListsRepository implements IListsRepository {
     const { data, error } = await supabase
       .from('lists')
       .select('*')
+      // Tri : position d'abord (drag-to-reorder), puis nom alpha en fallback
+      // Les listes sans position passent à la fin grâce à NULLS LAST côté SQL.
+      .order('position', { ascending: true, nullsFirst: false })
       .order('name', { ascending: true })
-      .limit(200); // Sécurité — les listes ne devraient jamais dépasser 200
+      .limit(200);
 
     if (error) throw normalizeApiError(error);
     return warnIfTruncated(data || [], 200, 'lists').map(this.mapFromDb);
@@ -186,14 +199,26 @@ export class SupabaseListsRepository implements IListsRepository {
       name: row.name,
       color: row.color,
       taskIds: row.task_ids || [],
+      type: (row.type as 'manual' | 'smart' | undefined) || 'manual',
+      smartRule: (row.smart_rule as TaskList['smartRule']) || undefined,
+      isDefault: row.is_default ?? false,
+      position: row.position ?? undefined,
     };
   }
 
+  /**
+   * Whitelist explicite des champs : pas de spread d'input pour éviter
+   * tout mass-assignment (cf. CLAUDE.md, faille V1).
+   */
   private mapToDb(input: Partial<TaskList>): ListDbInput {
     const result: ListDbInput = {};
-    if (input.name !== undefined) result.name = input.name;
-    if (input.color !== undefined) result.color = input.color;
-    if (input.taskIds !== undefined) result.task_ids = input.taskIds;
+    if (input.name      !== undefined) result.name      = input.name;
+    if (input.color     !== undefined) result.color     = input.color;
+    if (input.taskIds   !== undefined) result.task_ids  = input.taskIds;
+    if (input.type      !== undefined) result.type      = input.type;
+    if (input.smartRule !== undefined) result.smart_rule = input.smartRule ?? null;
+    if (input.isDefault !== undefined) result.is_default = input.isDefault;
+    if (input.position  !== undefined) result.position  = input.position ?? null;
     return result;
   }
 }
