@@ -15,12 +15,14 @@ import AddToListModal from './AddToListModal';
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { 
-  useTasks, 
-  useDeleteTask, 
-  useToggleTaskComplete, 
+import { toast } from 'sonner';
+import {
+  useTasks,
+  useDeleteTask,
+  useCreateTask,
+  useToggleTaskComplete,
   useToggleTaskBookmark,
-  Task 
+  Task
 } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -315,6 +317,24 @@ const TaskCard = React.memo(({
       {task.bookmarked && (
         <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
       )}
+
+      {/* Affordance permanente — bouton "…" pour révéler les actions sans devoir swipe/long-press.
+          Améliore la découvrabilité tout en gardant l'épuration : icône discrète, taille 44×44. */}
+      {!addToListMode && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            cancelLongPress();
+            setActionsVisible(v => !v);
+          }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          className="self-center shrink-0 min-w-11 min-h-11 -my-1 -mr-1 p-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          aria-label={actionsVisible ? 'Masquer les actions' : 'Afficher les actions'}
+          aria-expanded={actionsVisible}
+        >
+          <MoreHorizontal size={18} />
+        </button>
+      )}
     </motion.div>
     </div>
 
@@ -414,6 +434,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // ═══════════════════════════════════════════════════════════════════
   const { data: moduleTasks = [], isLoading: isLoadingTasks } = useTasks();
   const deleteMutation = useDeleteTask();
+  const createMutation = useCreateTask();
   const toggleCompleteMutation = useToggleTaskComplete();
   const toggleBookmarkMutation = useToggleTaskBookmark();
 
@@ -572,8 +593,27 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const confirmDelete = () => {
     if (!taskToDelete) return;
+    // Snapshot la tâche AVANT suppression pour permettre l'undo
+    const taskSnapshot = tasks.find(t => t.id === taskToDelete);
     deleteMutation.mutate(taskToDelete, {
-      onSuccess: () => setTaskToDelete(null),
+      onSuccess: () => {
+        setTaskToDelete(null);
+        if (taskSnapshot) {
+          toast.success('Tâche supprimée', {
+            action: {
+              label: 'Annuler',
+              onClick: () => {
+                // Recrée la tâche avec les mêmes champs (nouvel id généré côté repo)
+                const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
+                createMutation.mutate(rest, {
+                  onSuccess: () => toast.success('Tâche restaurée'),
+                });
+              },
+            },
+            duration: 6000,
+          });
+        }
+      },
       onError: (err) => console.error('Delete failed', err),
     });
   };

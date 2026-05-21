@@ -1,13 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import CollaboratorModal from './CollaboratorModal';
 import AddToListModal from './AddToListModal';
+import EmptyState from './EmptyState';
 
-import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, Task } from '@/modules/tasks';
+import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, useCreateTask, Task } from '@/modules/tasks';
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { useFriends } from '@/modules/friends';
@@ -22,10 +25,12 @@ const TodayTasks: React.FC = () => {
   const [collaboratorTaskId, setCollaboratorTaskId] = useState<string | null>(null);
   const [taskToDelete, setTaskToDelete]             = useState<string | null>(null);
 
+  const navigate = useNavigate();
   const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
   const toggleCompleteMutation  = useToggleTaskComplete();
   const toggleBookmarkMutation  = useToggleTaskBookmark();
   const deleteMutation          = useDeleteTask();
+  const createMutation          = useCreateTask();
   const createEventMutation     = useCreateEvent();
   const { data: categories = [] } = useCategories();
   const { data: friends = [] }    = useFriends();
@@ -73,7 +78,26 @@ const TodayTasks: React.FC = () => {
 
   const confirmDelete = () => {
     if (!taskToDelete) return;
-    deleteMutation.mutate(taskToDelete, { onSuccess: () => setTaskToDelete(null) });
+    const snapshot = tasks.find(t => t.id === taskToDelete);
+    deleteMutation.mutate(taskToDelete, {
+      onSuccess: () => {
+        setTaskToDelete(null);
+        if (snapshot) {
+          toast.success('Tâche supprimée', {
+            action: {
+              label: 'Annuler',
+              onClick: () => {
+                const { id: _id, createdAt: _ca, ...rest } = snapshot;
+                createMutation.mutate(rest, {
+                  onSuccess: () => toast.success('Tâche restaurée'),
+                });
+              },
+            },
+            duration: 6000,
+          });
+        }
+      },
+    });
   };
 
   if (isLoadingTasks) {
@@ -191,11 +215,19 @@ const TodayTasks: React.FC = () => {
           })}
 
           {todayTasks.length === 0 && (
-            <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
-              <CheckSquare size={48} className="mx-auto mb-4 opacity-30" />
-              <p>Aucune tâche prioritaire</p>
-              <p className="text-sm">Toutes vos tâches urgentes sont terminées !</p>
-            </div>
+            <EmptyState
+              icon={CheckSquare}
+              title={tasks.length === 0 ? 'Aucune tâche pour le moment' : 'Tout est sous contrôle 🎯'}
+              description={
+                tasks.length === 0
+                  ? "Créez votre première tâche pour démarrer. Cosmo l'ajoutera à votre planning."
+                  : 'Vos tâches urgentes sont terminées. Profitez-en pour avancer sur le reste.'
+              }
+              actionLabel={tasks.length === 0 ? 'Créer ma première tâche' : 'Voir toutes mes tâches'}
+              onAction={() => navigate('/tasks')}
+              accentColor="#3B82F6"
+              compact
+            />
           )}
         </div>
       </div>
