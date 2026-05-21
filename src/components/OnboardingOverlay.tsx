@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, CheckSquare, Repeat, ArrowRight, X } from 'lucide-react';
+import { useIsDemo } from '@/lib/app-mode.store';
 
 /**
  * OnboardingOverlay — tutoriel 3 étapes pour nouveaux utilisateurs (mode démo).
@@ -66,19 +67,24 @@ const STORAGE_KEY = 'cosmo_onboarding_pending';
 
 const OnboardingOverlay: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDemo = useIsDemo();
   const [isOpen, setIsOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Détecte le flag à mount
+  // Détecte le flag à chaque (a) mount, (b) bascule en démo, (c) changement de route.
+  // Sans (b)/(c), l'overlay est monté au niveau App AVANT que loginDemo() ne
+  // pose le flag dans localStorage → un seul useEffect([]) raterait l'event.
   useEffect(() => {
     try {
-      if (localStorage.getItem(STORAGE_KEY) === '1') {
-        // Petit délai pour laisser le dashboard s'afficher derrière
+      if (localStorage.getItem(STORAGE_KEY) === '1' && !isOpen) {
+        // Petit délai pour laisser la page derrière finir son render
         const t = setTimeout(() => setIsOpen(true), 500);
         return () => clearTimeout(t);
       }
     } catch { /* ignore */ }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemo, location.pathname]);
 
   // Verrou body scroll quand ouvert
   useEffect(() => {

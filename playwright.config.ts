@@ -19,7 +19,10 @@ export default defineConfig({
   workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:5173',
+    // baseURL aligné sur le script `npm start` (port 3000 réseau)
+    // pour réutiliser un dev server existant sans en redémarrer un.
+    // Override via PLAYWRIGHT_BASE_URL si besoin.
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -35,9 +38,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    // npm start lance vite sur 0.0.0.0:3000 — utilisé par les tests E2E.
+    // reuseExistingServer évite de redémarrer si tu as déjà `npm start` ouvert.
+    command: 'npm start',
+    url: 'http://localhost:3000',
+    reuseExistingServer: true,
+    timeout: 120_000,
   },
 });
