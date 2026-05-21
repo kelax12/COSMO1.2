@@ -283,7 +283,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
         <div
-          className="sm:hidden flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          className="sm:hidden flex justify-center pt-4 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           onPointerDown={(e) => mainDragControls.start(e)}
         >

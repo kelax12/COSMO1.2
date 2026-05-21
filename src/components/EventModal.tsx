@@ -833,7 +833,7 @@ const EventModal: React.FC<EventModalProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div
-                className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+                className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
                 onPointerDown={(e) => deleteConfirmDragControls.start(e)}
               >
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />

@@ -731,7 +731,7 @@ const AgendaPage: React.FC = () => {
 
         {/* ── MOBILE CALENDAR ── */}
         {isMobile && (
-          <div className="md:hidden mobile-calendar flex-1 overflow-hidden">
+          <div className="md:hidden mobile-calendar flex-1 overflow-hidden pb-[calc(64px+env(safe-area-inset-bottom))]">
             <FullCalendar
               key={mobileCalendarKey}
               ref={mobileCalendarRef}

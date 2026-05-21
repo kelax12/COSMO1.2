@@ -291,7 +291,7 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden scroll-smooth">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden scroll-smooth">
       <AnimatePresence>
         {showLoginModal && (
           <MockLoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} mode={loginMode} />
