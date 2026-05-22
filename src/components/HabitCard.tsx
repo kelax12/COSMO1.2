@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, Pause } from 'lucide-react';
+import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Habit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
@@ -46,6 +49,9 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const [editOpen, setEditOpen] = useState(false);
 
   const streak = calculateStreak(habit.completions);
+  const { isPaused, getPauseUntil } = useHabitPauses();
+  const paused = isPaused(habit.id);
+  const pausedUntil = getPauseUntil(habit.id);
 
   const handleDelete = () => {
     deleteHabitMutation.mutate(habit.id);
@@ -129,7 +135,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight">
                 {habit.name}
               </h3>
-              <div className="flex items-center gap-4 mt-1 text-xs md:text-sm text-slate-600">
+              <div className="flex items-center gap-4 mt-1 text-xs md:text-sm text-slate-600 flex-wrap">
                 <div className="flex items-center gap-1">
                   <Clock size={12} className="md:w-3.5 md:h-3.5" />
                   <span>{habit.estimatedTime} min</span>
@@ -138,6 +144,15 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                   <Flame size={12} className="md:w-3.5 md:h-3.5 text-orange-500" />
                   <span>{streak} jours</span>
                 </div>
+                {paused && pausedUntil && (
+                  <div
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-medium"
+                    title={`En pause jusqu'au ${format(pausedUntil, "d MMMM yyyy", { locale: fr })}`}
+                  >
+                    <Pause size={10} />
+                    <span>En pause · {format(pausedUntil, 'd MMM', { locale: fr })}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
