@@ -72,6 +72,19 @@ const EventModal: React.FC<EventModalProps> = ({
 }) => {
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
+
+  // La section Description est masquée par défaut (UX épuré). Visible si :
+  //   - mode edit + l'event a déjà des notes (sinon on perdrait visuellement le contenu)
+  //   - l'utilisateur clique sur "+ Ajouter un commentaire"
+  // Re-évaluée à chaque ouverture, mais PAS à chaque frappe (sinon le focus
+  // sauterait quand l'user vide le textarea).
+  const [showDescription, setShowDescription] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      setShowDescription(Boolean(notes && notes.length > 0));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
   const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
 
@@ -630,38 +643,51 @@ const EventModal: React.FC<EventModalProps> = ({
               </div>
             </div>
 
-            <div>
-              <label
-                className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color: "rgb(var(--color-text-secondary))" }}
+            {/* Section Description — masquée par défaut pour épurer l'UI.
+                Bouton "+ Ajouter un commentaire" pour la révéler. */}
+            {showDescription ? (
+              <div>
+                <label
+                  className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color: "rgb(var(--color-text-secondary))" }}
+                >
+                  Description
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) =>
+                    handleFieldChange("notes", setNotes, e.target.value)
+                  }
+                  rows={6}
+                  autoFocus={!notes}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm ${
+                    isPrefilledMode && prefilledFields.has("notes")
+                      ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                      : ""
+                  }`}
+                    style={{
+                      backgroundColor:
+                        isPrefilledMode && prefilledFields.has("notes")
+                          ? undefined
+                          : "rgb(var(--color-surface))",
+                      color: "rgb(var(--color-text-primary))",
+                      borderColor:
+                        isPrefilledMode && prefilledFields.has("notes")
+                          ? undefined
+                          : "rgb(var(--color-border))",
+                    }}
+                    placeholder="description de l'événement"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDescription(true)}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
               >
-                Description
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) =>
-                  handleFieldChange("notes", setNotes, e.target.value)
-                }
-                rows={6}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm ${
-                  isPrefilledMode && prefilledFields.has("notes")
-                    ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
-                    : ""
-                }`}
-                  style={{
-                    backgroundColor:
-                      isPrefilledMode && prefilledFields.has("notes")
-                        ? undefined
-                        : "rgb(var(--color-surface))",
-                    color: "rgb(var(--color-text-primary))",
-                    borderColor:
-                      isPrefilledMode && prefilledFields.has("notes")
-                        ? undefined
-                        : "rgb(var(--color-border))",
-                  }}
-                  placeholder="description de l'événement"
-              />
-            </div>
+                + Ajouter un commentaire
+              </button>
+            )}
           </div>
 
               <div className="md:col-span-5 space-y-3">
@@ -754,31 +780,9 @@ const EventModal: React.FC<EventModalProps> = ({
               )}
             </div>
 
-              <div
-                className="hidden md:block p-3 rounded-xl border transition-colors bg-transparent"
-                style={{ borderColor: "rgb(var(--color-border))" }}
-              >
-                <h4
-                  className="text-xs font-semibold mb-2"
-                  style={{ color: "rgb(var(--color-text-primary))" }}
-                >
-                  Aperçu
-                </h4>
-                <div
-                  className="p-2.5 rounded-lg text-white text-center text-sm font-medium shadow-sm transition-transform hover:scale-[1.02]"
-                  style={{ backgroundColor: color }}
-                >
-                    {title || "nom de l'événement"}
-                </div>
-                {calculateDuration() && (
-                  <div
-                    className="text-[12px] text-center mt-1.5"
-                    style={{ color: "rgb(var(--color-text-muted))" }}
-                  >
-                    {calculateDuration()}
-                  </div>
-                )}
-              </div>
+            {/* Section "Aperçu" retirée — l'UI est suffisamment claire
+                sans : titre + couleur déjà visibles, durée affichée
+                ailleurs si besoin. */}
 
             <div
               className={`sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 md:mt-6 border-t flex ${mode === 'edit' ? 'flex-col-reverse sm:flex-row gap-2 sm:gap-3' : ''}`}
