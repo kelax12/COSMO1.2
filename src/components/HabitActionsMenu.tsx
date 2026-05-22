@@ -1,7 +1,10 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, Calendar as CalendarIcon, CheckSquare } from 'lucide-react';
+import { MoreHorizontal, Calendar as CalendarIcon, CheckSquare, Pause, Play } from 'lucide-react';
+import { useHabitPauses, pausePresets } from '@/lib/hooks/use-habit-pauses';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
@@ -35,6 +38,10 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
   const { data: categories = [] } = useCategories();
   const createTaskMutation = useCreateTask();
   const createEventMutation = useCreateEvent();
+  const { isPaused, getPauseUntil, pauseUntil, resume } = useHabitPauses();
+  const [pauseSubmenuOpen, setPauseSubmenuOpen] = useState(false);
+  const paused = isPaused(habit.id);
+  const pausedUntil = getPauseUntil(habit.id);
 
   // Calcule la position viewport du trigger (idem SmartListMenu)
   useLayoutEffect(() => {
@@ -189,6 +196,81 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 </div>
               </button>
             </li>
+
+            {/* Pause / Reprendre */}
+            {paused ? (
+              <li>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    resume(habit.id);
+                    toast.success(`« ${habit.name} » a repris`);
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                    <Play size={16} className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-slate-900 dark:text-white">
+                      Reprendre l'habitude
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {pausedUntil && `En pause jusqu'au ${format(pausedUntil, 'd MMM', { locale: fr })}`}
+                    </p>
+                  </div>
+                </button>
+              </li>
+            ) : (
+              <li>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => setPauseSubmenuOpen(v => !v)}
+                  className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                    <Pause size={16} className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-slate-900 dark:text-white">
+                      Mettre en pause
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Vacances, maladie… le streak reste intact
+                    </p>
+                  </div>
+                </button>
+                {pauseSubmenuOpen && (
+                  <div className="bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700">
+                    {[
+                      { label: "Jusqu'à demain", get: pausePresets.tomorrow },
+                      { label: 'Fin de la semaine', get: pausePresets.endOfWeek },
+                      { label: 'Fin du mois', get: pausePresets.endOfMonth },
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          const until = preset.get();
+                          pauseUntil(habit.id, until);
+                          toast.success(`« ${habit.name} » en pause`, {
+                            description: `Jusqu'au ${format(until, 'd MMMM', { locale: fr })}`,
+                          });
+                          setOpen(false);
+                          setPauseSubmenuOpen(false);
+                        }}
+                        className="w-full text-left px-12 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </li>
+            )}
           </ul>
         </motion.div>
       )}
