@@ -13,6 +13,7 @@ import { BillingProvider } from '@/modules/billing/billing.context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import OnboardingOverlay from '@/components/OnboardingOverlay';
+import CommandPalette from '@/components/CommandPalette';
 
 // ──────────────────────────────────────────────────────────────────
 // Lazy import wrapper — recharge la page si un chunk est obsolète
@@ -196,6 +197,7 @@ const App: React.FC = () => {
             <AppRoutes />
             <CookieBanner />
             <OnboardingOverlay />
+            <CommandPalette />
           </TooltipProvider>
         </BillingProvider>
       </AuthProvider>
