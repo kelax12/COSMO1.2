@@ -8,16 +8,12 @@
  *
  *   - 'overdue'        : tâches en retard ET non complétées
  *   - 'this-week'      : deadline dans [today, today+7j]
- *   - 'no-deadline'    : aucune deadline (jamais marquée)
  *   - 'high-priority'  : priorité <= 2
- *   - 'bookmarked'     : tâches favorites
  */
 export type SmartRulePreset =
   | 'overdue'
   | 'this-week'
-  | 'no-deadline'
-  | 'high-priority'
-  | 'bookmarked';
+  | 'high-priority';
 
 /**
  * TaskList - Représente une liste de tâches.

@@ -12,7 +12,7 @@ import { useLocation } from 'react-router-dom';
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks } from '@/modules/tasks';
+import { useTasks, useUpdateTask } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
@@ -50,6 +50,7 @@ const TasksPage: React.FC = () => {
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [], isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
+  const updateTaskMutation = useUpdateTask();
 
 
   // ═══════════════════════════════════════════════════════════════════
@@ -101,6 +102,25 @@ const TasksPage: React.FC = () => {
       setSelectedListId(defaultList.id);
     }
     autoSelectDoneRef.current = true;
+  }, [lists]);
+
+  // Ordre local des listes — source de vérité pour le rendu Reorder.Group.
+  // Sync depuis `lists` (React Query) quand la composition change (ajout,
+  // suppression, ou première charge). Pendant un drag, le user voit son
+  // mouvement immédiatement sans attendre l'aller-retour Supabase.
+  // Sans cet état local, Reorder.Group snap-back parce que `lists` reste
+  // dans son ancien ordre tant que la mutation n'a pas refetch.
+  const [orderedLists, setOrderedLists] = useState<TaskList[]>(lists);
+  useEffect(() => {
+    // On synchronise UNIQUEMENT si la composition change (ids ou count).
+    // Sinon on garde l'ordre local (qui peut différer pendant les
+    // mutations optimistes).
+    const localIds = orderedLists.map(l => l.id).sort().join(',');
+    const incomingIds = lists.map(l => l.id).sort().join(',');
+    if (localIds !== incomingIds) {
+      setOrderedLists(lists);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lists]);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -193,9 +213,23 @@ const TasksPage: React.FC = () => {
       setSelectedTasksForList([]);
       return;
     }
-    selectedTasksForList.forEach(taskId => {
-      addTaskToListMutation.mutate({ taskId, listId: selectingTasksForListId });
-    });
+    // Cas spécial : la liste virtuelle "Aujourd'hui" n'est pas en base.
+    // Ajouter une tâche = poser sa deadline à aujourd'hui (00:00 local).
+    if (selectingTasksForListId === VIRTUAL_TODAY_ID) {
+      const todayISO = (() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d.toISOString();
+      })();
+      selectedTasksForList.forEach(taskId => {
+        updateTaskMutation.mutate({ id: taskId, updates: { deadline: todayISO } });
+      });
+    } else {
+      // Liste manuelle classique
+      selectedTasksForList.forEach(taskId => {
+        addTaskToListMutation.mutate({ taskId, listId: selectingTasksForListId });
+      });
+    }
     setSelectingTasksForListId(null);
     setSelectedTasksForList([]);
   };
@@ -299,9 +333,11 @@ const TasksPage: React.FC = () => {
     });
   };
 
-  // Réordonne les listes (drag-to-reorder). Met à jour le champ `position`
-  // pour chaque liste affectée. Optimisation : on ne pousse que les diffs.
+  // Réordonne les listes (drag-to-reorder).
+  // 1. Update immédiat du state local → l'UI ne snap-back pas.
+  // 2. Push les diffs vers le backend en arrière-plan.
   const handleReorderLists = (newOrder: TaskList[]) => {
+    setOrderedLists(newOrder);
     newOrder.forEach((list, idx) => {
       if (list.position !== idx) {
         updateListMutation.mutate({ id: list.id, updates: { position: idx } });
@@ -468,33 +504,64 @@ const TasksPage: React.FC = () => {
                       </motion.button>
 
                       {/* Chip virtuelle "Aujourd'hui" — toujours présente, non-supprimable.
-                          Filtre dynamique : tâches dont deadline === today AND !completed. */}
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
-                          selectedListId === VIRTUAL_TODAY_ID
-                            ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
-                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
-                        }`}
-                        title="Tâches dont l'échéance est aujourd'hui"
+                          Filtre dynamique : tâches dont deadline === today AND !completed.
+                          Hover (desktop) ou statut sélectionné révèle un mini bouton "+"
+                          pour ajouter des tâches (= poser leur deadline à aujourd'hui). */}
+                      <div
+                        className="relative shrink-0"
+                        onMouseEnter={() => setHoveredListId(VIRTUAL_TODAY_ID)}
+                        onMouseLeave={() => setHoveredListId(null)}
                       >
-                        <Sparkles size={13} />
-                        <span>Aujourd'hui</span>
-                        <span className="text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
-                      </motion.button>
+                        <AnimatePresence>
+                          {(hoveredListId === VIRTUAL_TODAY_ID || selectedListId === VIRTUAL_TODAY_ID) && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 4 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
+                            >
+                              <button
+                                onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}
+                                className="p-1 rounded bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 shadow-sm transition-colors"
+                                title="Ajouter des tâches à aujourd'hui (pose leur échéance à aujourd'hui)"
+                                aria-label="Ajouter des tâches à aujourd'hui"
+                              >
+                                <Plus size={15} />
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                            selectedListId === VIRTUAL_TODAY_ID
+                              ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
+                          }`}
+                          title="Tâches dont l'échéance est aujourd'hui"
+                        >
+                          <Sparkles size={13} />
+                          <span>Aujourd'hui</span>
+                          <span className="text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
+                        </motion.button>
+                      </div>
 
                       {/* Drag-to-reorder : Reorder.Group rend un div inline (className="contents")
-                          pour ne pas casser la layout flex parente. */}
+                          pour ne pas casser la layout flex parente.
+                          IMPORTANT : on passe `orderedLists` (state local) au lieu de `lists`
+                          (React Query). Sans ça, après onReorder() Reorder voit toujours
+                          l'ancien ordre et l'item snap-back à sa position d'origine. */}
                       <Reorder.Group
                         as="div"
                         axis="x"
-                        values={lists}
+                        values={orderedLists}
                         onReorder={handleReorderLists}
                         className="contents"
                       >
-                      {lists.map((list) => {
+                      {orderedLists.map((list) => {
                         const isSelected = selectedListId === list.id;
                         const isEditing = editingListId === list.id;
                         const isHovered = hoveredListId === list.id;
@@ -840,7 +907,9 @@ const TasksPage: React.FC = () => {
                         >
                           <span className="text-sm text-blue-700 dark:text-blue-300 font-medium flex-1">
                             {selectedTasksForList.length === 0
-                              ? `Sélectionnez des tâches à ajouter dans "${lists.find(l => l.id === selectingTasksForListId)?.name}"`
+                              ? selectingTasksForListId === VIRTUAL_TODAY_ID
+                                ? `Sélectionnez des tâches : leur échéance sera fixée à aujourd'hui`
+                                : `Sélectionnez des tâches à ajouter dans "${lists.find(l => l.id === selectingTasksForListId)?.name}"`
                               : `${selectedTasksForList.length} tâche${selectedTasksForList.length > 1 ? 's' : ''} sélectionnée${selectedTasksForList.length > 1 ? 's' : ''}`}
                           </span>
                           <button
