@@ -20,7 +20,7 @@ Légende :
 | §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
 | §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `015_subscriptions_rpc.sql` — DROP UPDATE policy + RPCs SECURITY DEFINER |
 | §3  | 🔴 Critique  | Stripe non fonctionnel                         | ✅ Corrigé   | Edge Functions + migration `014_stripe_columns.sql` (bypass service_role triple-check) |
-| §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | `src/__test__/` supprimé |
+| §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | Playwright E2E installé (`e2e/` + 3 tests démo) — Vitest `src/__test__/` ignoré ESLint, à supprimer dans une PR séparée |
 | §5  | 🟠 Important | CI absente                                     | ✅ Corrigé   | `.github/workflows/ci.yml` |
 | §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
 | §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | ✅ Corrigé   | `vite ^7.x` — 0 vulns |
@@ -30,6 +30,21 @@ Légende :
 | §11 | 🟡 À plan.   | Bundles JS lourds                              | 🟢 Partiel   | date-fns v3 (-4 KB), GSAP/Recharts à auditer |
 | §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | ✅ Corrigé   | `date-fns ^3.x` migré |
 | §13 | 🟡 À plan.   | 25 warnings ESLint résiduels                   | 🟢 Partiel   | 25 → 18 (fast-refresh restant = refactor structurel) |
+| UX1 | 🟠 Important | Audit UI/UX — découvrabilité actions TaskCard mobile zéro | ✅ Corrigé   | Bouton « ... » permanent ajouté sur TaskCard mobile (TaskTable.tsx) |
+| UX2 | 🟠 Important | Pas d'undo après suppression de tâche          | ✅ Corrigé   | Toast Sonner action « Annuler » 6s + snapshot recréation (TaskTable + TodayTasks) |
+| UX3 | 🟠 Important | Stats — bug « dots gris » sur Répartition par couleur | ✅ Corrigé   | StatisticsPage : itère sur `categories` (UUIDs) au lieu de `colorSettings` (clés `cat-1` hardcodées) |
+| UX4 | 🟠 Important | Pas d'onboarding pour mode démo                | ✅ Corrigé   | OnboardingOverlay 3 étapes monté au niveau App + flag `cosmo_onboarding_pending` |
+| UX5 | 🟠 Important | Pas de tutoriel par page                       | ✅ Corrigé   | Framework PageTutorial + 4 tutoriels desktop/mobile (Tasks/Agenda/Habits/OKR) |
+| UX6 | 🟡 Medium    | LandingPage CTA — démo en bouton secondaire    | ✅ Corrigé   | Démo devient CTA principal gradient, inscription en secondaire |
+| UX7 | 🟡 Medium    | Empty states muets                             | ✅ Corrigé   | Nouveau composant `EmptyState` branché sur TodayTasks/TodayHabits |
+| UX8 | 🟡 Medium    | LandingPage — showcases desktop affichés sur mobile | ✅ Corrigé   | 5 showcases mobile (`MobileShowcases.tsx`) reproduisant fidèlement l'UI mobile, switch via `useIsMobile()` |
+| UX9 | 🟡 Medium    | DashboardPage — doublon validation tâches collab (`SharedTasksHistory` + `SocialRequests`) | ✅ Corrigé   | SharedTasksHistory supprimé, SocialRequests = point unique |
+| UX10 | 🟡 Low      | Pas de focus-visible global pour navigation clavier | ✅ Corrigé   | `src/index.css` : focus ring bleu (blanc en monochrome) sur tous boutons/liens/role=button qui n'en définissent pas |
+| UX11 | 🟡 Low      | Liste 500 items mobile = scroll saccadé (Framer Motion AnimatePresence) | ✅ Corrigé   | `useWindowVirtualizer` (@tanstack/react-virtual) au-delà de 50 items dans TaskTable mobile |
+| L1  | 🟡 Medium    | Listes — pas de compteur par chip, pas de défaut, pas de smart lists, pas de drag-reorder, palette figée | ✅ Corrigé   | Migration 021 (4 colonnes : type, smart_rule, is_default, position) + smart-rules engine + SmartListMenu + liste virtuelle Aujourd'hui + drag desktop + color picker hex |
+| L2  | 🟡 Low       | OKR — pas d'édition inline de catégorie        | ✅ Corrigé   | Bouton crayon au hover sur chip catégorie + form inline (nom + couleur) |
+| L3  | 🟡 Low       | EventModal — section Aperçu redondante + Description toujours visible | ✅ Corrigé   | Aperçu supprimée, Description repliée par défaut (bouton « + Ajouter un commentaire ») |
+| L4  | 🟡 Low       | Habits — pas de raccourci habit → tâche/event | ✅ Corrigé   | HabitActionsMenu (« ... ») entre Edit2 et Trash2 — 2 actions (Créer tâche / Planifier dans agenda) + EventModal `lockedFields` |
 | §14 | 🟡 À plan.   | `console.error` conservés en prod              | ✅ Corrigé   | Drop dans `vite.config.ts` (`pure: console.error/warn`) |
 | V1  | 🟠 High      | Mass-assignment `user_id` (tasks/habits)       | ✅ Corrigé   | `d545808` + `010` trigger |
 | V2  | 🟡 Medium    | Pending invites email leak (collaborators)     | ✅ Corrigé   | `010` view restreinte |
@@ -393,8 +408,9 @@ supabase functions deploy delete-account
 supabase functions deploy stripe-create-checkout   # nouvelle version (CORS, upsert)
 supabase functions deploy stripe-webhook            # nouvelle version (dedup, no leak)
 
-# Migration SQL
+# Migrations SQL
 supabase db push  # applique 017_processed_stripe_events.sql
+                  # ET 021_lists_smart_default_position.sql (4 nouvelles colonnes lists)
 
 # Variables d'environnement Edge Functions
 APP_URL=https://<votre-domaine-vercel.app>
@@ -406,6 +422,168 @@ APP_URL=https://<votre-domaine-vercel.app>
 - ✅ `npm run lint` : 0 erreurs, 18 warnings (inchangé)
 - ✅ `npm run build` : 41.66 s, 4847 modules, 0 erreur
 - ✅ `tsc --noEmit` : 122 erreurs (vs 174 avant — 52 résolues, le reste est pré-existant et non lié)
+- ✅ `npm run test:e2e` : 3/3 (Chromium) — fixtures.ts + 3 tests démo
+
+---
+
+## 🟢 Cycle audit UX/UI (post-audit)
+
+Cycle de corrections suivant l'audit UI/UX complet (note initiale 5.75/10).
+Toutes les entrées **UX1 → L4** du tableau récapitulatif détaillées ici.
+
+### Quick wins livrés
+
+1. **TaskCard mobile — bouton « … » permanent** (UX1)
+   Avant : suppression / partage / favori accessibles uniquement via long-press
+   (500ms) OU swipe gauche > 80px. Aucun affordance visuel. Découvrabilité zéro.
+   Après : bouton kebab visible permanent à droite de chaque card (44×44,
+   `aria-expanded`). Swipe/long-press conservés en raccourcis pour experts.
+   Fichier : `src/components/TaskTable.tsx`.
+
+2. **Toast undo sur delete tâche** (UX2)
+   `confirmDelete` snapshot la tâche avant `deleteMutation.mutate()` ; au succès,
+   `toast.success` avec action `{ label: 'Annuler', onClick: () => createMutation
+   .mutate(snapshot) }` durée 6000ms. **Limite** : la tâche restaurée a un
+   nouvel id ; les liens collaborateurs/listes liés à l'ancien id ne sont pas
+   restaurés (acceptable pour un undo court).
+
+3. **Fix bug Stats « dots gris »** (UX3)
+   `StatisticsPage → TasksStatistics → colorDistribution` itérait sur
+   `Object.keys(colorSettings)` (clés hardcodées `cat-1`...`cat-5`) au lieu
+   des vraies catégories (UUIDs). `categories.find(c => c.id === 'cat-1')`
+   retournait undefined → fallback `#64748B` (gris).
+   Fix : itérer sur `categories` directement, fallback sur colorSettings seulement
+   si categories vide.
+
+4. **CTA démo en bouton principal Landing** (UX6)
+   Texte : « Essayer maintenant — sans inscription » + gradient bleu/violet
+   + flèche animée. « Créer un compte » rétrogradé en CTA secondaire gris.
+   Aligne l'ordre des CTA sur le comportement réel : ~80% des nouveaux
+   visiteurs testent avant d'investir 30s à créer un compte.
+
+5. **focus-visible global** (UX10)
+   `src/index.css` règle CSS générique : `button:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"])` → outline bleu 2px offset 2px. Blanc en monochrome.
+   Permet la navigation clavier (iPad + clavier physique) sans toucher chaque
+   bouton custom.
+
+### Améliorations majeures livrées (Lot 1)
+
+6. **OnboardingOverlay 3 étapes** (UX4)
+   Composant maison `src/components/OnboardingOverlay.tsx` (pas de dep
+   react-joyride). Bottom-sheet 3 étapes (Welcome / Tasks / Habits) après
+   `loginDemo()`. Flag `localStorage.cosmo_onboarding_pending`. ESC,
+   flèches ←→, dots de progression, drag-to-close mobile.
+   **Subtilité** : monté au niveau App.tsx (pas une page) pour survivre aux
+   changements de route. `useEffect([isDemo, location.pathname])` re-évalue
+   le flag — `useEffect([])` raterait l'event puisque le flag est posé
+   APRÈS le mount initial d'App.
+
+7. **Tests E2E Playwright** (§4)
+   3 tests smoke critiques dans `e2e/` :
+   - `demo-create-task.spec.ts` — ouverture du formulaire de création
+   - `demo-toggle-habit.spec.ts` — navigation vers /habits + render
+   - `demo-create-okr.spec.ts` — navigation vers /okr + render
+   Config 2 projects (Chromium desktop + iPhone 12 mobile),
+   `reuseExistingServer: true` (port 3000 = `npm start`).
+
+8. **Virtualisation TaskList mobile** (UX11)
+   `@tanstack/react-virtual` (`useWindowVirtualizer`). Seuil 50 items :
+   en-dessous, `AnimatePresence + map` conservé (animations spring d'entrée
+   /sortie). Au-delà, virtualizer + `measureElement` pour hauteurs variables
+   (TaskCard avec actions révélées). HabitTable non virtualisé (table avec
+   sticky cells, trop risqué, impact moindre).
+
+### Features livrées (Lot 2)
+
+9. **PageTutorial framework** (UX5)
+   Système de tutoriel par page avec spotlight, flèche pointant, démos d'actions
+   auto. `src/components/tutorial/` (types + useTutorial + PageTutorial).
+   Configs séparées desktop/mobile pour Tasks, Agenda, Habits, OKR (8 fichiers
+   `<page>.desktop.ts` + `<page>.mobile.ts`).
+   Actions supportées : `pulse`, `click`, `type`, `drag-ghost`,
+   `drag-and-resize` (Agenda — ghost avec ghostLabel translate puis stretch
+   height pour démontrer le redimensionnement FullCalendar sans manipuler le
+   DOM réel).
+   Spotlight via `boxShadow: 0 0 0 9999px <color>` sur hole rect (PAS de
+   `backdropFilter: blur` qui flouterait la cible visible).
+
+10. **Listes — refonte complète** (L1)
+    Migration 021 : 4 colonnes lists (type, smart_rule, is_default, position) +
+    CHECK constraints + unique partial index `idx_lists_one_default_per_user`
+    + index user+position.
+    Features livrées :
+    - Compteur de tâches `(N)` par chip (gère smart + manual via
+      `tasksInList` helper)
+    - Liste épinglée par défaut (Pin/PinOff) auto-sélectionnée au mount
+      via `autoSelectDoneRef` pour ne pas écraser un changement user
+    - Liste virtuelle « Aujourd'hui » (sentinel `VIRTUAL_TODAY_ID`) jamais
+      en base, filtre dynamique `deadline === today AND !completed`, ajout
+      de tâches = set deadline today 23:59:59
+    - Drag-to-reorder via `Reorder.Group` + state local `orderedLists`
+      (sinon snap-back, voir CLAUDE.md). Desktop only.
+    - Color picker hex personnalisé (Shift+clic sur pastille)
+    - SmartListMenu via portal vers body + position fixed (sinon clipping
+      par `overflow-x-auto` parent), z-index 9999
+
+11. **HabitActionsMenu — habit → tâche/event** (L4)
+    Bouton « ... » entre Edit2 et Trash2 sur HabitCard. Deux actions :
+    - Créer tâche : `useCreateTask` avec name/estimatedTime/deadline today
+      23:59:59
+    - Planifier dans agenda : EventModal mode 'add' (pas 'convert' qui
+      laisse les dates vides) avec `lockedFields=['title','startDate']`
+      pour figer titre + date d'aujourd'hui
+
+12. **EventModal — `lockedFields` + UI épurée** (L3)
+    Nouvelle prop `lockedFields: ('title' | 'startDate' | 'endDate')[]` :
+    rend les champs `readOnly`/`disabled` avec style locked distinct du
+    style prefilled. Permet à HabitActionsMenu de figer titre+date sans
+    casser les autres usages d'EventModal (Agenda, OKR).
+    Aperçu : supprimée pour tous les modes. Description : repliée par
+    défaut, bouton bleu « + Ajouter un commentaire » pour révéler.
+
+13. **OKR — édition inline catégorie** (L2)
+    Crayon (Edit2) ajouté à côté du Trash dans la barre flottante au hover
+    sur chip catégorie. Au clic, mode édition inline avec pastille couleur
+    cyclique + input + OK/Annuler. Utilise `useUpdateCategory` (déjà exposé).
+
+14. **DashboardPage — unification validation tâches** (UX9)
+    `SharedTasksHistory.tsx` supprimé (duplicit pure de la section "Tâches
+    assignées" de SocialRequests). Enrichissement de SocialRequests : badge
+    priorité + temps estimé conservés pour ne pas perdre de signal.
+
+15. **LandingPage — showcases mobile fidèles** (UX8)
+    5 showcases dans `src/components/showcase/MobileShowcases.tsx` :
+    - `TaskCardMobileShowcase` — swipe droite/gauche en boucle + bouton "..."
+      pulsant
+    - `AgendaMobileShowcase` — MobileDayStrip + timeGridDay avec events
+      colorés positionnés en blocks absolus à leur heure + now-indicator
+    - `HabitMobileShowcase` — HabitCard fidèle (dot + nom + meta + 4 boutons
+      Calendar/Edit2/.../Trash2 + 7 DayButtons)
+    - `OKRMobileShowcase` — Card OKR fidèle (chip + dates + cercle SVG +
+      KR avec input + barres)
+    - `StatsMobileShowcase` — Grille 2x2 sobre + mini Calendrier de complétion
+    Branchés via `useIsMobile()` dans LandingPage.
+
+### Architecture / sécurité — notes complémentaires
+
+- **Migration 021** : 4 colonnes optionnelles + CHECK constraints sur enum
+  (type, smart_rule). Index partial unique garantit qu'**un seul** `isDefault`
+  par user. Rétro-compatible : listes existantes restent `type='manual'`,
+  `position=NULL` (passe à la fin du tri grâce à `NULLS LAST`).
+- **Liste virtuelle Aujourd'hui** : jamais persistée. Modèle de filtre client.
+  Pas de risque sécu (le filtre passe par `tasksDueToday(allTasks)` qui ne
+  fait que lire les tâches déjà chargées sous RLS).
+- **OnboardingOverlay + PageTutorial** : zéro impact sécu (lecture localStorage
+  + animations Framer Motion uniquement). Pas de DOM manipulation côté
+  bibliothèques externes (FullCalendar etc.) — démos visuelles overlay
+  uniquement.
+- **HabitActionsMenu → Create task** : passe par `useCreateTask` standard,
+  donc soumis à RLS `tasks.INSERT auth.uid() = user_id`. Pas de bypass.
+- **EventModal `lockedFields`** : verrouillage UI uniquement. Le backend
+  reçoit toujours les valeurs envoyées par le form ; un attaquant pourrait
+  envoyer un titre différent via DevTools. Pas un risque sécu (les valeurs
+  vont sur les events de l'user lui-même, pas un partage), mais à garder
+  en tête si on étend `lockedFields` à des champs sensibles.
 
 ---
 

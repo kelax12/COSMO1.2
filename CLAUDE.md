@@ -22,8 +22,10 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | Animations | Framer Motion + GSAP |
 | Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé**, voir `faille.md` |
 | Icônes | lucide-react |
-| Dates | date-fns 2 (à migrer en v3 — voir `faille.md`) |
+| Dates | date-fns 3 |
 | Calendrier | FullCalendar |
+| Virtualisation | `@tanstack/react-virtual` (TaskList mobile au-delà de 50 items) |
+| Tests E2E | Playwright (3 parcours démo critiques dans `e2e/`) |
 | Hosting | Vercel (configuration `vercel.json` avec headers de sécurité) |
 
 ---
@@ -396,8 +398,8 @@ Les composants shadcn/ui sont dans `src/components/ui/` — ne pas les modifier 
 ### ESLint
 - Configuration : `eslint.config.js`
 - Lint **doit retourner 0 erreur** avant chaque commit
-- Tests (`src/__test__/`) et showcase (`src/components/showcase/`) sont **ignorés** par ESLint
-- Warnings autorisés : Fast refresh sur les contextes (Auth, Billing) et les fichiers ui shadcn
+- **Ignorés** par ESLint : `dist`, `src/__test__/**`, `src/components/showcase/**`, `e2e/**`, `playwright.config.ts`
+- Warnings autorisés : Fast refresh sur les contextes (Auth, Billing) et les fichiers ui shadcn (18 warnings préexistants OK)
 
 ### Limites de requêtes
 Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit()` :
@@ -410,13 +412,294 @@ Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit(
 
 ## Tests
 
-**État actuel : pas de tests automatisés actifs.** Le dossier `src/__test__/` contient d'anciens fichiers Vitest non exécutés (Vitest non installé dans `package.json`). Le dossier est ignoré par ESLint.
+### Playwright E2E — 3 parcours critiques actifs
 
-**Décision en cours** — soit :
-- (A) Réactiver : `npm i -D vitest @testing-library/react happy-dom` + `"test": "vitest"` dans `package.json` + nettoyer les imports obsolètes
-- (B) Supprimer `src/__test__/` et la section `test:` de `vite.config.ts`
+Setup ajouté pendant l'audit UX. Dossier `e2e/`, config `playwright.config.ts`.
 
-D'ici la décision, **ne pas ajouter de nouveaux fichiers dans `src/__test__/`**. Pour valider une feature critique : smoke test manuel mobile (375×812) + checklist déploiement (voir section dédiée).
+```bash
+npm run test:e2e         # run headless (Chromium)
+npm run test:e2e:ui      # mode debug visuel
+npm run test:e2e:report  # voir le rapport HTML
+```
+
+**Avant le premier run** : `npx playwright install chromium` (télécharge le navigateur, ~150 MB).
+
+**Architecture** :
+- `e2e/fixtures.ts` : fixture `demoPage` réutilisable. Clean localStorage/cookies → goto / → clic CTA « Essayer maintenant — sans inscription » → attend `/dashboard` → skip OnboardingOverlay (bouton aria-label "Passer le tutoriel"). Neutralise aussi les 8 flags `cosmo_tutorial_seen_*_(desktop|mobile)` + l'ancien flag rétro-compat.
+- 3 tests smoke :
+  - `demo-create-task.spec.ts` — ouvre le formulaire de création de tâche (le wizard 2-étapes empêche un test bout-en-bout sans piloter le date picker).
+  - `demo-toggle-habit.spec.ts` — navigation vers /habits, vérifie qu'au moins une habit est rendue.
+  - `demo-create-okr.spec.ts` — navigation vers /okr, vérifie que la page charge.
+
+**Règles** :
+- ✅ Naviguer via **clic sur les NavLink** de la sidebar — `page.goto('/route')` cause un full reload et casse le mode démo (AuthContext réinitialise et re-désactive demo quand Supabase est configuré).
+- ✅ `baseURL` aligné sur `npm start` (port **3000**), pas `npm run dev` (5173). `reuseExistingServer: true` pour ne pas redémarrer si déjà ouvert.
+- ✅ Pas d'utilisation du sélecteur CSS `:has-text("..." i)` — syntaxe invalide ; utiliser `[data-sonner-toast][data-type="error"]` pour les toasts Sonner.
+
+**Folder `src/__test__/`** — ancien Vitest jamais activé. Ignoré par ESLint. À supprimer ou réactiver, mais **pas dans la même PR** que les E2E Playwright (les deux infras coexistent sans conflit).
+
+---
+
+## Onboarding & Tutoriels
+
+### OnboardingOverlay — premier login démo
+
+`src/components/OnboardingOverlay.tsx` — bottom-sheet 3 étapes affichées
+**après loginDemo()**. Monté au niveau **App** (`src/App.tsx`, après `<Toaster>`),
+pas au niveau d'une page — pour survivre aux changements de route.
+
+Déclenchement :
+1. `AuthContext.loginDemo()` pose `localStorage.cosmo_onboarding_pending = '1'`
+2. `OnboardingOverlay` lit ce flag dans `useEffect([isDemo, location.pathname])`
+   (pas `[]` — sinon useEffect ne re-trigger pas après loginDemo qui change le
+   flag *après* le mount initial du composant)
+3. Affichage 500ms après pour laisser la page de destination se monter
+4. Dismiss = retire le flag (jamais réaffiché)
+
+Pour ré-afficher en debug : `localStorage.removeItem('cosmo_onboarding_pending')`
+puis reload.
+
+### PageTutorial — tutoriel par page
+
+`src/components/tutorial/PageTutorial.tsx` — système de tutoriel avancé avec
+spotlight, flèche pointant, démos d'actions automatiques.
+
+Architecture :
+- `tutorial/types.ts` — `TutorialStep` : title, description, target (selector CSS),
+  cardPlacement, action ('click' | 'pulse' | 'drag-ghost' | 'drag-and-resize' |
+  'type' | 'custom'), dimLevel ('normal' | 'light' | 'none'), ghostLabel, visibility
+- `tutorial/useTutorial.ts` — hook qui gère le flag `cosmo_tutorial_seen_<key>`
+- `tutorial/PageTutorial.tsx` — composant orchestrateur
+
+**Configs séparées par viewport** : chaque page a `<page>.desktop.ts` ET
+`<page>.mobile.ts` (pas juste un filtre `visibility`). Choisi via `useIsMobile()`
+au mount de la page :
+
+```tsx
+const isMobile = useIsMobile();
+const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop');
+const steps = isMobile ? tasksTutorialStepsMobile : tasksTutorialStepsDesktop;
+```
+
+Flags localStorage : `cosmo_tutorial_seen_tasks_(desktop|mobile)`, idem pour
+`agenda`, `habits`, `okr`. Une rotation tablette → mobile ré-affiche la
+variante adaptée.
+
+**Visuel spotlight** :
+- Voile sombre via `boxShadow: 0 0 0 9999px <color>` sur le hole (rectangle
+  transparent par-dessus la cible). PAS de fullscreen overlay avec
+  `backdropFilter: blur` (ça flouterait la cible visible à travers le trou —
+  fix Agenda).
+- `dimLevel: 'light'` (0.35) sur les steps Agenda/Calendar pour garder la
+  grille lisible pendant les démos drag.
+
+**Action `drag-and-resize`** (Agenda) :
+- Ghost coloré avec ghostLabel (« 📌 Réviser maths ») glisse de `target` vers
+  `dragTo` (4 phases : appear+tilt → translate → drop+stretch height → fade)
+- Indicateur de poignée resize (barre blanche) apparaît en bas pendant la
+  phase resize pour matérialiser le geste
+- Pas de manipulation DOM réelle — animation pure (FullCalendar n'accepte pas
+  le drag programmatique fiable)
+
+**Markers `data-tutorial-id`** dans les pages :
+- TasksPage : `tasks-filter`, `tasks-calendar-toggle`, `tasks-create-button`,
+  `tasks-fab`, `tasks-list`, `tasks-lists`
+- AgendaPage : `agenda-view-switcher`, `agenda-task-sidebar-toggle`,
+  `agenda-calendar-grid`
+- HabitsPage : `habits-view-switcher`, `habits-create-button`, `habits-fab`,
+  `habits-list`
+- OKRPage : `okr-category-filter`, `okr-create-button`, `okr-first-card`
+
+> **Ne pas renommer** un `data-tutorial-id` sans grep les tutorials d'abord.
+
+### Pour ré-afficher un tutoriel
+```js
+['tasks','agenda','habits','okr'].forEach(p => {
+  localStorage.removeItem(`cosmo_tutorial_seen_${p}_desktop`);
+  localStorage.removeItem(`cosmo_tutorial_seen_${p}_mobile`);
+});
+```
+
+---
+
+## Listes — modèle étendu (types, smart, virtuelle)
+
+`src/modules/lists/types.ts` — `TaskList` étendu avec 4 champs optionnels
+(rétro-compatibles) :
+- `type?: 'manual' | 'smart'` — défaut `'manual'`
+- `smartRule?: SmartRulePreset` — `'overdue' | 'this-week' | 'high-priority'`
+- `isDefault?: boolean` — épingle UNE liste comme sélectionnée à l'ouverture
+- `position?: number` — ordre d'affichage (drag-to-reorder)
+
+**Migration SQL** : `021_lists_smart_default_position.sql` ajoute les 4 colonnes
++ CHECK constraints (whitelist type + smart_rule) + unique partial index pour
+"un seul isDefault par user" + index user_id+position. À appliquer via
+`supabase db push`.
+
+### Smart rules engine
+
+`src/modules/lists/smart-rules.ts` — `SMART_PRESETS: SmartPresetDef[]` avec
+3 presets (overdue / this-week / high-priority). Chaque preset a un `matches(task, now)`
+pur. Helper `tasksInList(list, allTasks, now)` retourne les tâches d'une liste
+manuelle OU smart (transparent côté caller).
+
+**Anciens presets retirés** : `'no-deadline'` et `'bookmarked'` — non pertinents
+pour l'usage cible.
+
+### Liste virtuelle « Aujourd'hui »
+
+Sentinel ID = `'virtual-today'` (constante `VIRTUAL_TODAY_ID` dans `TasksPage`).
+**Jamais en base** — calculée à l'affichage via `tasksDueToday(allTasks)`
+(filtre `deadline === today AND !completed`).
+
+- Visible par défaut, masquable via `localStorage.cosmo_lists_today_hidden = '1'`
+- Si sélectionnée et qu'on la masque → `selectedListId` repasse à null
+- Bouton « + » au hover ouvre le mode sélection multi-tâches ; à la validation,
+  chaque tâche sélectionnée se voit poser `deadline = today 23:59:59` via
+  `updateTaskMutation` (pas `addTaskToListMutation` — c'est une liste virtuelle)
+
+### SmartListMenu (popover ✨)
+
+`src/components/SmartListMenu.tsx` — déclenché par bouton ✨ violet à côté du
+« + Nouvelle liste ». Affiche dans cet ordre :
+1. **Aujourd'hui** — toggle show/hide (corbeille rouge à droite si visible,
+   clic sur la ligne si masquée pour ré-afficher)
+2. **Liste par défaut** — affichée si une liste est `isDefault` (corbeille rouge
+   = unpin, la liste reste, juste plus auto-ouverte)
+3. **Smart presets** (3 lignes : En retard / Cette semaine / Priorité haute) —
+   inactifs cliquables pour créer, actifs = badge ✓ + corbeille rouge pour
+   supprimer définitivement la liste smart
+
+**Rendu via `createPortal(content, document.body)` + `position: fixed`** —
+sinon le popover était clippé par `overflow-x-auto` de la barre de chips. Le
+trigger position est mesuré via `getBoundingClientRect()` dans `useLayoutEffect`.
+z-index 9999 pour passer devant sidebar + tab-bar mobile.
+
+### Drag-to-reorder local state
+
+`Reorder.Group values={lists}` avec `lists` venant de React Query causait
+un snap-back après drop (le cache était mis à jour avec les nouvelles `position`
+mais le tableau n'était pas re-trié → Reorder voyait toujours l'ancien ordre).
+
+**Fix** : state local `orderedLists` mis à jour immédiatement par
+`setOrderedLists(newOrder)` dans `onReorder`. Synchronisé depuis `lists`
+**uniquement** quand la composition change (ids ou count).
+
+Désactivé sur mobile (voir section "Drag-to-reorder — desktop only" du
+patterns mobile).
+
+### Couleurs personnalisées (hex)
+
+`resolveListColor(color)` : si format `#RRGGBB` → utilisé tel quel, sinon
+lookup palette nominée (`colorOptions`). UI : Shift+clic sur la pastille
+ouvre un `<input type="color">` caché qui déclenche le picker natif.
+
+---
+
+## EventModal — `lockedFields` & section repliée
+
+### Prop `lockedFields?: ('title' | 'startDate' | 'endDate')[]`
+
+Verrouille certains champs pré-remplis en lecture seule, **sans casser les
+autres usages** d'EventModal (Agenda direct, OKR convert). Style locked :
+`bg-slate-50 cursor-not-allowed opacity-80`, distinct du style "prefilled"
+(bleu clair).
+
+**Cas d'usage** : `HabitActionsMenu` → « Planifier dans l'agenda » passe
+`lockedFields={['title', 'startDate']}` pour que seuls horaires + catégorie
+soient éditables. `endDate` est auto-synchronisé depuis `startDate` donc
+locker startDate suffit.
+
+### Section « Description » repliée par défaut
+
+État `showDescription` initialisé via `useEffect([isOpen])` (pas `[notes]` —
+sinon ré-évaluerait à chaque frappe et casserait le focus). Visible par
+défaut uniquement si l'event a déjà des notes (mode edit avec contenu).
+Sinon, bouton bleu **« + Ajouter un commentaire »** révèle le textarea avec
+autoFocus.
+
+### Section « Aperçu » retirée
+
+Supprimée pour tous les modes (add/edit/convert) — elle dupliquait des infos
+déjà visibles ailleurs dans le formulaire (titre, couleur, durée).
+
+---
+
+## HabitActionsMenu — habit → tâche/event
+
+`src/components/HabitActionsMenu.tsx` — bouton « ... » dans HabitCard, entre
+Edit2 et Trash2 (ordre : `Edit2` → `MoreHorizontal` → `Trash2`).
+
+Popover via `createPortal` + position fixed (même pattern que SmartListMenu).
+Deux actions :
+
+1. **Créer une tâche** :
+   ```ts
+   createTaskMutation.mutate({
+     name: habit.name,
+     priority: 3,
+     category: categories[0]?.id,
+     deadline: todayEod(),       // aujourd'hui 23:59:59 ISO
+     estimatedTime: habit.estimatedTime,
+     bookmarked: false,
+     completed: false,
+   })
+   ```
+2. **Planifier dans l'agenda** : ouvre `EventModal` en mode `'add'` (pas
+   `'convert'` — `add` pré-remplit la date à aujourd'hui + start time 12:00
+   + end time basé sur estimatedTime, là où convert laisse vide). Avec
+   `lockedFields={['title', 'startDate']}` pour figer titre + date.
+
+---
+
+## SocialRequests — point unique pour la validation collaborative
+
+`src/components/SocialRequests.tsx` (Dashboard column droite) est le **seul**
+endroit pour valider :
+- demandes d'amis reçues (acceptFriendMutation / rejectFriendMutation)
+- tâches assignées par d'autres (= section « Tâches assignées »)
+
+Pour les tâches : filtre `t.isCollaborative && t.sharedBy && t.sharedBy !== user?.name`.
+Accepter = `{ sharedBy: undefined, isCollaborative: true }`. Refuser =
+`{ sharedBy: undefined, isCollaborative: false, collaborators: [] }`.
+
+**Ne pas recréer un 2ème composant** qui validerait les mêmes tâches —
+le fichier `SharedTasksHistory.tsx` (supprimé) faisait exactement ça
+et créait de la duplication + confusion utilisateur.
+
+---
+
+## Showcases LandingPage — mobile vs desktop
+
+`src/components/showcase/` :
+- 5 desktop : `TaskTableShowcase`, `AgendaShowcase`, `OKRCardShowcase`,
+  `HabitHeatmapShowcase`, `StatsShowcase`
+- 5 mobile : exportés depuis `MobileShowcases.tsx` —
+  `TaskCardMobileShowcase`, `AgendaMobileShowcase`, `HabitMobileShowcase`,
+  `OKRMobileShowcase`, `StatsMobileShowcase`
+
+Choisi via `useIsMobile()` dans `LandingPage` :
+```tsx
+{isMobile ? <TaskCardMobileShowcase /> : <TaskTableShowcase />}
+```
+
+Les showcases mobile **reproduisent fidèlement** les composants réels
+(MobileDayStrip + timeGridDay events absolus pour Agenda, HabitCard avec
+DayButtons + 4 boutons Calendar/Edit2/.../Trash2 pour Habits, cercle SVG
++ barre globale + KR pour OKR, grille 2x2 sobre + heatmap pour Stats).
+
+> Le folder `src/components/showcase/` est ignoré par ESLint.
+
+---
+
+## EmptyState — composant réutilisable
+
+`src/components/EmptyState.tsx` — état vide normalisé : icône + titre positif +
+description + CTA. Branché sur TodayTasks et TodayHabits. À utiliser pour
+toute liste vide nouvelle (pas de « Aucun résultat » muet).
+
+Props : `icon: LucideIcon, title, description?, actionLabel?, onAction?,
+accentColor?, compact?`.
 
 ---
 
@@ -532,6 +815,20 @@ Layout style "agenda" :
 | `AddTaskForm.tsx` | `h-[100dvh]` full-screen, sticky footer avec boutons empilés |
 | `DeadlineCalendar.tsx` | Vue agenda forcée |
 | `CollaboratorModal.tsx`, `AddToListModal.tsx`, `EventModal.tsx`, `ColorSettingsModal.tsx` | Bottom-sheet pattern |
+
+### Drag-to-reorder — desktop only
+
+Sur la barre de chips des listes (TasksPage), le drag-to-reorder Framer Motion
+(`Reorder.Group` / `Reorder.Item`) est **désactivé sur mobile** :
+```tsx
+drag={isEditing || isMobile ? false : 'x'}
+```
+Raison : la barre de chips a `overflow-x-auto` pour scroller. Le drag horizontal
+capturerait le swipe attendu pour le scroll → conflit de gestures. Sur desktop
+(souris), les deux cohabitent. Le `cursor-grab` est aussi conditionnel mobile.
+
+> Même logique pour toute future barre scrollable horizontale avec items
+> draggables : `drag={isMobile ? false : 'x'}`.
 
 ### iOS Safari — bug WebKit fetches parallèles (`src/main.tsx`)
 
@@ -780,17 +1077,20 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
 2. ✅ `npm run build` → succès (le drop console.log se fait au build)
-3. ✅ **Smoke test mobile preview** sur viewport 375×812 (iPhone SE/12 mini) :
+3. ✅ `npm run test:e2e` → **3/3 passent** (ouvrir `npm start` dans un autre terminal d'abord)
+4. ✅ **Smoke test mobile preview** sur viewport 375×812 (iPhone SE/12 mini) :
    - Login démo → Dashboard
    - Créer une tâche → fermer modal
    - Compléter une tâche (clic checkbox + swipe droit)
    - Navigation Tab bar (Accueil / Tâches / Agenda / Habitudes / Plus)
    - Vérifier qu'aucun contenu n'est caché derrière la MobileTabBar
-4. ✅ **Si touche `recordKRCompletion()`** : vérifier le graphique dashboard en démo ET en prod
-5. ✅ **Si touche un modal** : tester drag-to-close, ESC, clic backdrop
-6. ✅ **Si touche une page nouvelle** : vérifier `min-h-[100dvh]` + `pb-[calc(64px+env(safe-area-inset-bottom)+24/88px)]`
-7. ✅ **Si touche `supabase/migration/*.sql`** : voir checklist dédiée plus haut
-8. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` pour activer Eruda console sur un vrai iPhone
+5. ✅ **Si touche `recordKRCompletion()`** : vérifier le graphique dashboard en démo ET en prod
+6. ✅ **Si touche un modal** : tester drag-to-close, ESC, clic backdrop
+7. ✅ **Si touche un popover** : tester clipping (overflow parents), z-index vs sidebar+tabbar, position au resize/scroll
+8. ✅ **Si touche un tutoriel** : tester desktop ET mobile (flags localStorage distincts), vérifier que les `data-tutorial-id` cibles existent toujours
+9. ✅ **Si touche une page nouvelle** : vérifier `min-h-[100dvh]` + `pb-[calc(64px+env(safe-area-inset-bottom)+24/88px)]`
+10. ✅ **Si touche `supabase/migration/*.sql`** : voir checklist dédiée plus haut (et si c'est migration 021+, vérifier que `supabase db push` a tourné en prod)
+11. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` pour activer Eruda console sur un vrai iPhone
 
 ---
 
@@ -869,3 +1169,25 @@ Si on ajoute une langue :
 
 - ❌ Retirer le warmup `fetch()` iOS Safari ou le cache `cosmo:qcache:*` ou le skip-retry sur timeout (voir section « iOS Safari — bug WebKit fetches parallèles »)
 - ❌ Lancer > 5-6 requêtes Supabase en parallèle au mount sans tester sur vrai iPhone — le warmup actuel peut ne plus suffire
+- ❌ Activer un `Reorder.Group` ou un `drag` Framer Motion sur une barre `overflow-x-auto` mobile sans guard `drag={isMobile ? false : 'x'}` — conflit drag vs scroll
+
+### 🧭 Tutoriels & onboarding
+
+- ❌ Monter `OnboardingOverlay` au niveau d'une page — il doit être au niveau **App** pour survivre aux changements de route (les étapes naviguent entre pages)
+- ❌ `useEffect([], () => ...)` pour détecter le flag `cosmo_onboarding_pending` — le flag est posé APRÈS le mount d'App. Dépendre de `[isDemo, location.pathname]`.
+- ❌ Fusionner les configs tutoriel desktop/mobile en un seul fichier avec filtre `visibility` — les patterns UI divergent trop (vue agenda liste vs grille, FAB vs bouton header, swipe vs hover). Garder `<page>.desktop.ts` ET `<page>.mobile.ts`.
+- ❌ Manipuler le DOM réel (FullCalendar drag, etc.) depuis `action: 'click' | 'drag-ghost' | 'drag-and-resize'` — animation pure côté overlay, fiable et indépendant des libs externes
+- ❌ Ajouter du `backdropFilter: blur` au voile du PageTutorial — flouterait la cible visible à travers le hole. Le voile est créé par `boxShadow: 0 0 0 9999px <color>` sur le hole rect.
+
+### 📋 Listes & SmartListMenu
+
+- ❌ Renvoyer un popover positionné en `absolute` à l'intérieur d'une barre `overflow-x-auto` — clipping garanti. Utiliser `createPortal(content, document.body)` + `position: fixed` (cf. SmartListMenu / HabitActionsMenu).
+- ❌ Stocker la liste virtuelle « Aujourd'hui » dans la table `lists` — c'est un filtre dynamique calculé via `tasksDueToday()`. Sentinel `VIRTUAL_TODAY_ID = 'virtual-today'`.
+- ❌ Pour `Reorder.Group` avec React Query : `values={lists}` directement — l'optimistic update ne re-trie pas le tableau, snap-back garanti. Maintenir un state local `orderedLists` synchronisé sur changement de composition uniquement.
+- ❌ Recréer un 2ème composant qui valide les tâches assignées (= sharedBy !== self) — **SocialRequests est le point unique**. SharedTasksHistory (supprimé) faisait ça en double et a été éradiqué.
+
+### 🎨 EventModal & UI
+
+- ❌ Réintroduire la section « Aperçu » dans EventModal — supprimée volontairement (redondance avec les autres champs)
+- ❌ Forcer `showDescription = true` au mount par défaut — masqué par défaut, révélé via bouton « + Ajouter un commentaire » (sauf si l'event a déjà des notes)
+- ❌ Ajouter un champ à `lockedFields` sans aussi gérer le visuel `disabled`/`readOnly` + le style locked (`bg-slate-50 cursor-not-allowed`)
