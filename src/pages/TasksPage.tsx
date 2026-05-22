@@ -90,6 +90,23 @@ const TasksPage: React.FC = () => {
   const VIRTUAL_TODAY_ID = 'virtual-today';
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
+  // Visibilité de la chip virtuelle "Aujourd'hui" — visible par défaut,
+  // masquable depuis la corbeille de la chip OU depuis la popup SmartListMenu.
+  // Persisté en localStorage pour survivre aux rechargements.
+  const TODAY_HIDDEN_KEY = 'cosmo_lists_today_hidden';
+  const [todayHidden, setTodayHiddenState] = useState<boolean>(() => {
+    try { return localStorage.getItem(TODAY_HIDDEN_KEY) === '1'; } catch { return false; }
+  });
+  const setTodayHidden = (hidden: boolean) => {
+    setTodayHiddenState(hidden);
+    try {
+      if (hidden) localStorage.setItem(TODAY_HIDDEN_KEY, '1');
+      else        localStorage.removeItem(TODAY_HIDDEN_KEY);
+    } catch { /* ignore */ }
+    // Si on masque alors qu'elle est sélectionnée comme filtre, on désélectionne
+    if (hidden && selectedListId === VIRTUAL_TODAY_ID) setSelectedListId(null);
+  };
+
   // Auto-épingle la liste par défaut au mount (une seule fois, au premier
   // chargement avec lists peuplé). Ne re-déclenche pas si l'user a changé
   // manuellement de liste depuis — d'où le flag autoSelectDoneRef.
@@ -503,10 +520,13 @@ const TasksPage: React.FC = () => {
                         <span className="sm:hidden">Tout</span>
                       </motion.button>
 
-                      {/* Chip virtuelle "Aujourd'hui" — toujours présente, non-supprimable.
+                      {/* Chip virtuelle "Aujourd'hui" — visible par défaut, masquable.
+                          Quand masquée (todayHidden === true), elle disparaît de l'accès
+                          rapide. On peut la réactiver depuis la popup SmartListMenu.
                           Filtre dynamique : tâches dont deadline === today AND !completed.
-                          Hover (desktop) ou statut sélectionné révèle un mini bouton "+"
-                          pour ajouter des tâches (= poser leur deadline à aujourd'hui). */}
+                          Hover révèle 2 mini boutons : "+" pour ajouter des tâches,
+                          "🗑️" pour masquer la chip. */}
+                      {!todayHidden && (
                       <div
                         className="relative shrink-0"
                         onMouseEnter={() => setHoveredListId(VIRTUAL_TODAY_ID)}
@@ -529,6 +549,14 @@ const TasksPage: React.FC = () => {
                               >
                                 <Plus size={15} />
                               </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setTodayHidden(true); }}
+                                className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
+                                title="Masquer la chip Aujourd'hui (réactivable depuis ✨)"
+                                aria-label="Masquer la chip Aujourd'hui"
+                              >
+                                <Trash2 size={15} />
+                              </button>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -548,6 +576,7 @@ const TasksPage: React.FC = () => {
                           <span className="text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
                         </motion.button>
                       </div>
+                      )}
 
                       {/* Drag-to-reorder : Reorder.Group rend un div inline (className="contents")
                           pour ne pas casser la layout flex parente.
@@ -731,8 +760,9 @@ const TasksPage: React.FC = () => {
                       </Reorder.Group>
 
                       {/* Bouton "ajouter une smart list" — toujours visible quand pas en édition.
-                          Le menu affiche : (1) la liste épinglée par défaut (révocable = unpin),
-                          (2) les smart presets (révocables = suppression définitive). */}
+                          Le menu affiche : (1) la chip "Aujourd'hui" (toggle show/hide),
+                          (2) la liste épinglée par défaut (révocable = unpin),
+                          (3) les smart presets (révocables = suppression définitive). */}
                       {!showCreateList && (
                         <SmartListMenu
                           existingSmartLists={lists.filter(l => l.type === 'smart')}
@@ -744,6 +774,9 @@ const TasksPage: React.FC = () => {
                           }}
                           defaultList={lists.find(l => l.isDefault) ?? null}
                           onRevokeDefault={(list) => handleToggleDefault(list)}
+                          todayHidden={todayHidden}
+                          onToggleToday={() => setTodayHidden(!todayHidden)}
+                          todayCount={tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}
                         />
                       )}
 

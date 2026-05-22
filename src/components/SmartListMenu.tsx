@@ -14,6 +14,12 @@ interface SmartListMenuProps {
   defaultList?: TaskList | null;
   /** Callback : révoque le statut "liste par défaut" (unpin, ne supprime pas la liste) */
   onRevokeDefault?: (list: TaskList) => void;
+  /** État courant de la chip "Aujourd'hui" : true = masquée, false = visible */
+  todayHidden?: boolean;
+  /** Callback : toggle de la visibilité de la chip "Aujourd'hui" */
+  onToggleToday?: () => void;
+  /** Compteur de tâches du jour (pour affichage dans la popup) */
+  todayCount?: number;
 }
 
 const COLOR_HEX: Record<string, string> = {
@@ -39,6 +45,9 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
   onRevokeSmart,
   defaultList,
   onRevokeDefault,
+  todayHidden = false,
+  onToggleToday,
+  todayCount = 0,
 }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -98,6 +107,72 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
             </div>
 
             <ul className="py-1 max-h-80 overflow-y-auto">
+              {/* ───── Entrée "Aujourd'hui" — chip virtuelle, visible par défaut.
+                  Toggle show/hide : si visible (todayHidden=false), corbeille rouge
+                  pour masquer ; si masquée, clic sur la ligne pour la ré-afficher. ───── */}
+              {onToggleToday && (
+                <li>
+                  <div className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800">
+                    {/* Zone cliquable : si masquée, click = ré-afficher.
+                        Si visible, click ne fait rien (la corbeille gère le masquage). */}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        if (todayHidden) {
+                          onToggleToday();
+                          setOpen(false);
+                        }
+                      }}
+                      disabled={!todayHidden}
+                      className="flex items-start gap-3 flex-1 min-w-0 text-left focus-visible:outline-none disabled:cursor-default"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full mt-1.5 shrink-0"
+                        style={{ backgroundColor: '#10B981' }}
+                        aria-hidden
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm text-slate-900 dark:text-white">
+                            Aujourd'hui
+                          </span>
+                          {!todayHidden ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              <Check size={10} /> Active
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                              Masquée
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Tâches dont l'échéance est aujourd'hui ({todayCount}).
+                          {todayHidden && <span className="ml-1 text-emerald-600 dark:text-emerald-400">Cliquez pour ré-afficher.</span>}
+                        </p>
+                      </div>
+                    </button>
+                    {/* Corbeille — visible uniquement quand la chip est active.
+                        Cliquer = masquer la chip Aujourd'hui (réversible via cette même popup). */}
+                    {!todayHidden && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onToggleToday();
+                          setOpen(false);
+                        }}
+                        className="shrink-0 mt-0.5 p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        title="Masquer la chip Aujourd'hui"
+                        aria-label="Masquer la chip Aujourd'hui"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                </li>
+              )}
+
               {/* ───── Entrée "Liste par défaut" — active par défaut quand une
                   liste est épinglée. La corbeille révoque le statut (unpin),
                   elle ne supprime PAS la liste elle-même. ───── */}
