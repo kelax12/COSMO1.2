@@ -135,7 +135,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
       "Bash(netstat -ano)",
       "Bash(findstr :3000)",
-      "Bash(findstr :5173)"
+      "Bash(findstr :5173)",
+      "Bash(git rm *)"
     ]
   }
 }
