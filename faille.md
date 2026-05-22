@@ -25,7 +25,7 @@ Légende :
 | §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
 | §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | ✅ Corrigé   | `vite ^7.x` — 0 vulns |
 | §8  | 🟠 Important | Drift DB ↔ migrations (`friend_requests`)      | ✅ Corrigé   | `012_friend_requests_align.sql` |
-| §9  | 🟠 Important | Pagination absente côté UI                     | 🟢 Partiel   | Warning dev-only (`pagination.warning.ts`), pagination UI à terme |
+| §9  | 🟠 Important | Pagination absente côté UI                     | 🟢 Partiel   | Toast utilisateur prod (sonner, dedupé par table) via `pagination.warning.ts` + console.warn dev. Pagination UI complète à terme. |
 | §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | 🔴 Ouvert    | Refactor progressif (continu) |
 | §11 | 🟡 À plan.   | Bundles JS lourds                              | 🟢 Partiel   | date-fns v3 (-4 KB), GSAP/Recharts à auditer |
 | §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | ✅ Corrigé   | `date-fns ^3.x` migré |
