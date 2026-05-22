@@ -398,7 +398,7 @@ Audit complet via Deepsec (Vercel Labs) sur les 114 fichiers du codebase.
 | TOCTOU-3 | 🐛 BUG | `toggleComplete`/`toggleBookmark` tasks read-then-write  | Nécessite RPC `UPDATE ... SET completed = NOT completed RETURNING *` |
 | TOCTOU-4 | 🐛 BUG | OKR/KR update snapshot vs write non atomique             | Nécessite Postgres function pour write + journal en une transaction |
 | RACE-5  | 🐛 BUG  | `acceptFriendRequest` fetch `ORDER BY created_at` race    | Nécessite modifier RPC `accept_friend_request` pour RETURNING |
-| 25      | 🐛 BUG  | `useUpdateUserSettings` orphelin en prod                  | À supprimer ou réécrire — usage résiduel dans demo |
+| ~~25~~  | ✅ Résolu | ~~`useUpdateUserSettings` orphelin en prod~~          | Hook conservé mais whitelist stricte (4 champs safe) + tous les call sites scopés `if (isDemo)` (SettingsPage.tsx:180, 307, 334). Prod passe par `supabase.auth.updateUser` directement. Vérifié 2026-05-23. |
 
 ### Déploiement requis (manuel — Supabase dashboard / CLI)
 
