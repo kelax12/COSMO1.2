@@ -17,6 +17,14 @@ import AgendaShowcase from '../components/showcase/AgendaShowcase';
 import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
 import StatsShowcase from '../components/showcase/StatsShowcase';
+import {
+  TaskCardMobileShowcase,
+  AgendaMobileShowcase,
+  HabitMobileShowcase,
+  OKRMobileShowcase,
+  StatsMobileShowcase,
+} from '../components/showcase/MobileShowcases';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 const USE_CASES = [
   {
@@ -274,6 +282,11 @@ const LandingPage: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  // Sur viewport mobile, on affiche des showcases qui miment l'UI mobile
+  // de l'app (swipe TaskCard, vue agenda liste, FAB, etc.) au lieu des
+  // tableaux et grilles desktop — pour que ce que le visiteur voit dans
+  // la landing soit cohérent avec ce qu'il aura sur son téléphone.
+  const isMobile = useIsMobile();
 
   const handleFeatureClick = (path: string) => {
     loginDemo();
@@ -518,7 +531,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <TaskTableShowcase />
+                    {isMobile ? <TaskCardMobileShowcase /> : <TaskTableShowcase />}
                   </div>
                 </motion.div>
               </div>
@@ -569,7 +582,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <AgendaShowcase />
+                    {isMobile ? <AgendaMobileShowcase /> : <AgendaShowcase />}
                   </div>
                 </motion.div>
               </div>
@@ -614,7 +627,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <OKRCardShowcase />
+                    {isMobile ? <OKRMobileShowcase /> : <OKRCardShowcase />}
                   </div>
                 </motion.div>
               </div>
@@ -659,7 +672,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <HabitHeatmapShowcase />
+                    {isMobile ? <HabitMobileShowcase /> : <HabitHeatmapShowcase />}
                   </div>
                 </motion.div>
               </div>
@@ -704,7 +717,7 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-violet-500/20 to-purple-600/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    <StatsShowcase />
+                    {isMobile ? <StatsMobileShowcase /> : <StatsShowcase />}
                   </div>
                 </motion.div>
               </div>
