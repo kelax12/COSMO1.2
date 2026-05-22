@@ -3,9 +3,10 @@ import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 
+// Ordre : Tableau (défaut, plus dense) → Liste → Suivi global
 const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; label: string }[] = [
-  { mode: 'list', icon: List, label: 'Liste' },
   { mode: 'table', icon: Grid3X3, label: 'Tableau' },
+  { mode: 'list', icon: List, label: 'Liste' },
   { mode: 'global', icon: TrendingUp, label: 'Suivi global' },
 ];
 import HabitCard from '../components/HabitCard';
@@ -27,7 +28,8 @@ const HabitsPage: React.FC = () => {
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
   const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
