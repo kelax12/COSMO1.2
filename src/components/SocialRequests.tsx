@@ -211,6 +211,17 @@ const SocialRequests: React.FC = () => {
                         <Clock size={11} />
                         Par {task.sharedBy} · {timeAgo}
                       </p>
+                      {/* Méta-infos rapides : priorité + temps estimé
+                          (récupérées de l'ancien SharedTasksHistory pour ne pas
+                          perdre de signal lors de l'unification) */}
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))]">
+                          P{task.priority}
+                        </span>
+                        <span className="text-xs text-[rgb(var(--color-text-muted))]">
+                          {task.estimatedTime} min
+                        </span>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button

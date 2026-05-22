@@ -15,7 +15,9 @@ import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 import MobileCollapsible from '../components/MobileCollapsible';
-import SharedTasksHistory from '../components/SharedTasksHistory';
+// SharedTasksHistory retiré : la section "Tâches assignées" de SocialRequests
+// gère désormais l'acceptation/refus des tâches partagées de manière unifiée
+// avec les demandes d'amis.
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
@@ -374,7 +376,6 @@ const DashboardPage: React.FC = () => {
             <MobileCollapsible title="Demandes sociales">
               <SocialRequests />
             </MobileCollapsible>
-            <SharedTasksHistory />
           </motion.div>
         </motion.div>
 
