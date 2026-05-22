@@ -1,7 +1,26 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import './index.css';
+
+// Sentry — error monitoring prod (faille §14 / I3). Init synchrone, AVANT le
+// warmup iOS Safari pour capturer aussi les erreurs très précoces. Désactivé
+// silencieusement si VITE_SENTRY_DSN est absent (utile en dev local).
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0,
+    sendDefaultPii: false,
+    ignoreErrors: [
+      'ResizeObserver loop limit exceeded',
+      'ResizeObserver loop completed with undelivered notifications',
+      'Non-Error promise rejection captured',
+    ],
+  });
+}
 
 // Mobile debug console — only loaded when the URL contains ?debug=1.
 // Lets us read timing logs on iOS Safari without needing a Mac for remote

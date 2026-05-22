@@ -51,6 +51,7 @@ npm run lint       # ESLint (doit retourner 0 erreur)
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_STRIPE_PUBLISHABLE_KEY=
+VITE_SENTRY_DSN=  # DSN Sentry (public, write-only) — si absent, monitoring désactivé
 ```
 
 - Si `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` sont absentes → mode démo automatique (LocalStorage)
