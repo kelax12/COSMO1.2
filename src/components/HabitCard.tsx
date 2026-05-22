@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Habit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
+import HabitActionsMenu from './HabitActionsMenu';
 
 interface HabitCardProps {
   habit: Habit;
@@ -154,11 +155,13 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               <Calendar size={16} />
               <span className="text-xs font-medium md:hidden">Historique</span>
             </Button>
-            {/* Edit + Delete — droite sur mobile */}
+            {/* Ordre demandé : crayon (édition) → « ... » (actions) → corbeille (suppression) */}
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={() => setEditOpen(true)}>
                 <Edit2 size={18} className="md:w-4 md:h-4" />
               </Button>
+              {/* Menu « ... » — popover avec « Créer une tâche » + « Planifier dans l'agenda » */}
+              <HabitActionsMenu habit={habit} />
               <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={() => setIsDeleting(true)}>
                 <Trash2 size={18} className="md:w-4 md:h-4" />
               </Button>
