@@ -211,16 +211,18 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
 
       {typeof document !== 'undefined' && createPortal(popoverContent, document.body)}
 
-      {/* EventModal en mode convert : ouvre le formulaire d'événement
-          pré-rempli depuis l'habit (titre, durée, catégorie, date).
-          L'utilisateur ajuste l'heure puis valide. */}
+      {/* EventModal en mode 'add' : pré-remplit titre, DATE = aujourd'hui,
+          start time = 12:00, end time = start + estimatedTime, couleur.
+          lockedFields verrouille titre + startDate → seuls les horaires
+          et la couleur (catégorie) restent éditables par l'utilisateur. */}
       {eventModalOpen && (
         <EventModal
-          mode="convert"
+          mode="add"
           isOpen={eventModalOpen}
           onClose={() => setEventModalOpen(false)}
           task={habitAsTask}
-          onConvert={(eventData) => {
+          lockedFields={['title', 'startDate']}
+          onAddEvent={(eventData) => {
             createEventMutation.mutate(eventData as CreateEventInput, {
               onSuccess: () => {
                 toast.success(`Habitude « ${habit.name} » planifiée`);
