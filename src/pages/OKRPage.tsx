@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
-import { useCategories, useCreateCategory, useDeleteCategory } from '@/modules/categories';
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
@@ -32,6 +32,7 @@ const OKRPage: React.FC = () => {
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
   const deleteCategoryMutation = useDeleteCategory();
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -44,6 +45,37 @@ const OKRPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
+  // États d'édition inline d'une catégorie (nom + couleur). Activés via le
+  // bouton crayon dans la barre flottante au-dessus d'une chip catégorie.
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
+  const [editCategoryColor, setEditCategoryColor] = useState('blue');
+
+  const startEditCategory = (cat: { id: string; name: string; color: string }) => {
+    setEditingCategoryId(cat.id);
+    setEditCategoryName(cat.name);
+    setEditCategoryColor(cat.color);
+    setHoveredCategoryId(null);
+  };
+
+  const cancelEditCategory = () => {
+    setEditingCategoryId(null);
+    setEditCategoryName('');
+    setEditCategoryColor('blue');
+  };
+
+  const submitEditCategory = () => {
+    if (!editingCategoryId) return;
+    const name = editCategoryName.trim();
+    if (name.length < 2) {
+      toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+      return;
+    }
+    updateCategoryMutation.mutate(
+      { id: editingCategoryId, updates: { name, color: editCategoryColor } },
+      { onSuccess: () => cancelEditCategory() }
+    );
+  };
   const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
 
   const confirmDeleteCategory = () => {
@@ -199,6 +231,7 @@ const OKRPage: React.FC = () => {
             </button>
             {categories.map((category) => {
               const isHovered = hoveredCategoryId === category.id;
+              const isEditing = editingCategoryId === category.id;
               return (
                 <div
                   key={category.id}
@@ -206,32 +239,96 @@ const OKRPage: React.FC = () => {
                   onMouseEnter={() => setHoveredCategoryId(category.id)}
                   onMouseLeave={() => setHoveredCategoryId(null)}
                 >
+                  {/* Barre flottante d'actions au-dessus de la chip — visible au hover,
+                      cachée pendant l'édition (les boutons d'action passent dans le form). */}
                   <AnimatePresence>
-                    {isHovered && (
-                      <motion.button
+                    {isHovered && !isEditing && (
+                      <motion.div
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 4 }}
                         transition={{ duration: 0.15 }}
-                        onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
-                        className="absolute -top-7 inset-x-0 mx-auto w-fit p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors z-10"
-                        title="Supprimer la catégorie"
+                        className="absolute -top-7 inset-x-0 mx-auto w-fit flex items-center gap-1 z-10"
                       >
-                        <Trash size={14} />
-                      </motion.button>
+                        {/* Crayon — modifier la catégorie (nom + couleur) */}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); startEditCategory(category); }}
+                          className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                          title="Modifier la catégorie"
+                          aria-label="Modifier la catégorie"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        {/* Corbeille — supprimer la catégorie */}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
+                          className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                          title="Supprimer la catégorie"
+                          aria-label="Supprimer la catégorie"
+                        >
+                          <Trash size={14} />
+                        </button>
+                      </motion.div>
                     )}
                   </AnimatePresence>
-                  <button
-                    onClick={() => setSelectedCategory(category.id)}
-                    className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
-                    style={{
-                      backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
-                      borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
-                      color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
-                      boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
-                    }}>
-                    <span>{category.name}</span>
-                  </button>
+
+                  {isEditing ? (
+                    /* Mode édition inline : pastille couleur cyclique + input nom + OK/Annuler */
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); submitEditCategory(); }}
+                      className="flex items-center gap-2 px-3 py-1 rounded-full border bg-white dark:bg-slate-800"
+                      style={{ borderColor: resolveColor(editCategoryColor) + '60' }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const idx = colorOptions.findIndex(c => c.value === editCategoryColor);
+                          setEditCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
+                        }}
+                        className="w-4 h-4 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                        style={{ backgroundColor: resolveColor(editCategoryColor) }}
+                        title="Changer la couleur"
+                      />
+                      <input
+                        autoFocus
+                        type="text"
+                        value={editCategoryName}
+                        onChange={(e) => setEditCategoryName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Escape') cancelEditCategory(); }}
+                        className="bg-transparent text-sm font-medium focus:outline-none w-24"
+                        style={{ color: 'rgb(var(--color-text-primary))' }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={editCategoryName.trim().length < 2}
+                        className="px-2 py-0.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-40 transition-all"
+                      >
+                        OK
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditCategory}
+                        className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                        title="Annuler"
+                      >
+                        <X size={12} />
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedCategory(category.id)}
+                      className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
+                      style={{
+                        backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
+                        borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
+                        color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
+                        boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
+                      }}>
+                      <span>{category.name}</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
