@@ -601,11 +601,14 @@ const TasksPage: React.FC = () => {
                             as="div"
                             value={list}
                             key={list.id}
-                            // Drag désactivé pendant l'édition (sinon les inputs reçoivent les pointer events).
-                            // En usage normal, framer-motion distingue click (mouvement < 4px) du drag.
-                            drag={isEditing ? false : 'x'}
+                            // Drag désactivé :
+                            //   - pendant l'édition (sinon les inputs reçoivent les pointer events),
+                            //   - sur mobile (la barre de chips a overflow-x-auto, donc swipe horizontal
+                            //     = scroll attendu ; drag-to-reorder rentrerait en conflit avec le scroll).
+                            // En usage desktop, framer-motion distingue click (mouvement < 4px) du drag.
+                            drag={isEditing || isMobile ? false : 'x'}
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
-                            className="relative shrink-0 cursor-grab active:cursor-grabbing"
+                            className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
