@@ -56,16 +56,6 @@ export const SMART_PRESETS: SmartPresetDef[] = [
     },
   },
   {
-    preset: 'no-deadline',
-    label: 'Sans deadline',
-    color: 'purple',
-    description: 'Tâches sans date butoir (à planifier)',
-    matches: (task) => {
-      if (task.completed) return false;
-      return !task.deadline || task.deadline === '';
-    },
-  },
-  {
     preset: 'high-priority',
     label: 'Priorité haute',
     color: 'orange',
@@ -74,13 +64,6 @@ export const SMART_PRESETS: SmartPresetDef[] = [
       if (task.completed) return false;
       return task.priority <= 2;
     },
-  },
-  {
-    preset: 'bookmarked',
-    label: 'Favoris',
-    color: 'yellow',
-    description: 'Tâches marquées comme favoris',
-    matches: (task) => !task.completed && !!task.bookmarked,
   },
 ];
 

@@ -30,7 +30,7 @@ ALTER TABLE lists
 ALTER TABLE lists
   ADD CONSTRAINT lists_smart_rule_check CHECK (
     smart_rule IS NULL OR smart_rule IN (
-      'overdue', 'this-week', 'no-deadline', 'high-priority', 'bookmarked'
+      'overdue', 'this-week', 'high-priority'
     )
   );
 
