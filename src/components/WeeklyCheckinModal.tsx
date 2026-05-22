@@ -126,7 +126,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
           updateKR.mutate(
             {
               okrId: item.okrId,
-              krId,
+              keyResultId: krId,
               updates: { currentValue: newValue, completed },
             },
             {
