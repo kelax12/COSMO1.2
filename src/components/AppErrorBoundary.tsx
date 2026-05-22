@@ -1,4 +1,6 @@
 import React, { Component, ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
+import { appModeStore } from '@/lib/app-mode.store';
 
 interface Props { children: ReactNode }
 interface State { hasError: boolean; error: Error | null }
@@ -15,6 +17,10 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: info.componentStack ?? undefined } },
+      tags: { mode: appModeStore.isDemo ? 'demo' : 'prod' },
+    });
   }
 
   render() {
