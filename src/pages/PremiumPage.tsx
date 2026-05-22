@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, Zap, Play, Check, Users, Sparkles, Loader2, X } from 'lucide-react';
+import { Crown, Zap, Play, Check, Users, Sparkles, Loader2, X, Minus } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -425,6 +425,90 @@ export function PremiumPage() {
                   ))}
               </div>
           </div>
+        </motion.div>
+        {/* Tableau comparatif Free vs Premium */}
+        <motion.div
+          className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-3xl p-6 sm:p-8 mb-8 shadow-sm"
+          variants={itemVariants}
+        >
+          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
+            Gratuit ou Premium ?
+          </h3>
+          <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
+            Tout ce dont vous avez besoin reste gratuit. Premium débloque la collaboration et les analyses avancées.
+          </p>
+
+          {(() => {
+            const rows: Array<{ label: string; free: boolean | string; pro: boolean | string }> = [
+              { label: 'Tâches illimitées', free: true, pro: true },
+              { label: 'Habitudes illimitées', free: true, pro: true },
+              { label: 'Agenda & événements', free: true, pro: true },
+              { label: 'OKR & Key Results', free: true, pro: true },
+              { label: 'Statistiques de base', free: true, pro: true },
+              { label: 'Sync multi-appareils', free: true, pro: true },
+              { label: 'Mode démo', free: true, pro: true },
+              { label: 'Collaboration & partage de tâches', free: false, pro: true },
+              { label: 'Statistiques avancées', free: false, pro: true },
+              { label: 'Sans publicité', free: false, pro: true },
+              { label: 'Support prioritaire', free: false, pro: true },
+            ];
+
+            const Cell = ({ value }: { value: boolean | string }) =>
+              typeof value === 'string' ? (
+                <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">{value}</span>
+              ) : value ? (
+                <Check size={18} className="text-emerald-600 dark:text-emerald-400 mx-auto" />
+              ) : (
+                <Minus size={18} className="text-slate-400 dark:text-slate-600 mx-auto" />
+              );
+
+            return (
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-[rgb(var(--color-border))]">
+                      <th className="text-left py-3 px-2 font-semibold text-[rgb(var(--color-text-secondary))]">Fonctionnalité</th>
+                      <th className="py-3 px-2 sm:px-4 font-semibold text-[rgb(var(--color-text-secondary))] text-center w-24 sm:w-32">Gratuit</th>
+                      <th className="py-3 px-2 sm:px-4 font-bold text-amber-600 dark:text-amber-400 text-center w-24 sm:w-32">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Crown size={14} />
+                          Premium
+                        </span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, i) => (
+                      <tr
+                        key={i}
+                        className={`border-b border-[rgb(var(--color-border))]/60 ${
+                          row.free === false ? 'bg-amber-500/[0.03]' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-2 text-[rgb(var(--color-text-primary))]">{row.label}</td>
+                        <td className="py-3 px-2 sm:px-4 text-center"><Cell value={row.free} /></td>
+                        <td className="py-3 px-2 sm:px-4 text-center"><Cell value={row.pro} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+
+          {!premium && (
+            <div className="mt-6 flex justify-center">
+              <motion.button
+                onClick={() => setShowChoiceModal(true)}
+                className="px-6 py-3 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-sm shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-2"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Crown size={18} />
+                Passer Premium
+              </motion.button>
+            </div>
+          )}
         </motion.div>
       </motion.div>
 

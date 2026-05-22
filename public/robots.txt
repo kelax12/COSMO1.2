@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /tasks
+Disallow: /agenda
+Disallow: /habits
+Disallow: /okr
+Disallow: /statistics
+Disallow: /settings
+Disallow: /premium
+
+Sitemap: https://thecosmo.app/sitemap.xml
