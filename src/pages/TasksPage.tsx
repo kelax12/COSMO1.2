@@ -731,11 +731,17 @@ const TasksPage: React.FC = () => {
                       </Reorder.Group>
 
                       {/* Bouton "ajouter une smart list" — toujours visible quand pas en édition.
-                          Le menu affiche aussi la liste épinglée par défaut (révocable). */}
+                          Le menu affiche : (1) la liste épinglée par défaut (révocable = unpin),
+                          (2) les smart presets (révocables = suppression définitive). */}
                       {!showCreateList && (
                         <SmartListMenu
-                          existingPresets={lists.filter(l => l.type === 'smart').map(l => l.smartRule!).filter(Boolean)}
+                          existingSmartLists={lists.filter(l => l.type === 'smart')}
                           onSelect={handleCreateSmartList}
+                          onRevokeSmart={(list) => {
+                            // Désélectionne si on supprime la liste actuellement filtrée
+                            if (selectedListId === list.id) setSelectedListId(null);
+                            deleteListMutation.mutate(list.id);
+                          }}
                           defaultList={lists.find(l => l.isDefault) ?? null}
                           onRevokeDefault={(list) => handleToggleDefault(list)}
                         />
