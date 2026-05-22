@@ -37,6 +37,9 @@ import { useTutorial } from '@/components/tutorial/useTutorial';
 import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
 import { tasksTutorialStepsMobile } from '@/tutorials/tasks.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { TaskListSkeleton } from '@/components/skeletons';
+import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 
 const TasksPage: React.FC = () => {
   const isMobile = useIsMobile();
@@ -49,8 +52,9 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
-  const { data: tasks = [], isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
+  const { data: tasks = [], isLoading: isTasksLoading, isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
   const updateTaskMutation = useUpdateTask();
+  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetchTasks());
 
 
   // ═══════════════════════════════════════════════════════════════════
@@ -406,6 +410,7 @@ const TasksPage: React.FC = () => {
       animate={{ opacity: 1 }}
       className="p-3 sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
     >
+      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
       <div className="flex flex-col gap-4 sm:gap-8">
         <motion.header
           initial={{ y: -20, opacity: 0 }}
@@ -1027,6 +1032,9 @@ const TasksPage: React.FC = () => {
                 transition={{ delay: 0.7 }}
                 data-tutorial-id="tasks-list"
               >
+                {isTasksLoading && tasks.length === 0 ? (
+                  <TaskListSkeleton count={6} />
+                ) : (
                 <TaskTable
                   tasks={filteredTasks}
                   sortField={filter}
@@ -1038,10 +1046,11 @@ const TasksPage: React.FC = () => {
                   onToggleTaskForList={toggleTaskForList}
                   showQuickFilters={showQuickFilters}
                 />
+                )}
               </motion.div>
             </div>
           </motion.div>
-          
+
           <AnimatePresence>
             {!summaryAtBottom && (
               <motion.div 

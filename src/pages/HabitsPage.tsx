@@ -14,6 +14,9 @@ import HabitModal from '../components/HabitModal';
 import HabitTable from '../components/HabitTable';
 import HabitGlobalTracking from '../components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
+import { HabitListSkeleton } from '@/components/skeletons';
+import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { habitsTutorialStepsDesktop } from '@/tutorials/habits.desktop';
@@ -27,6 +30,7 @@ const HabitsPage: React.FC = () => {
   const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
   const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
+  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetch());
   const [showModal, setShowModal] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -60,6 +64,7 @@ const HabitsPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -120,11 +125,7 @@ const HabitsPage: React.FC = () => {
 
       {viewMode === 'list' && (
         <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list">
-          {isLoading && habits.length === 0 && (
-            [1, 2, 3].map(i => (
-              <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
-            ))
-          )}
+          {isLoading && habits.length === 0 && <HabitListSkeleton count={4} />}
 
           {habits.map(habit => (
             <HabitCard key={habit.id} habit={habit} />
