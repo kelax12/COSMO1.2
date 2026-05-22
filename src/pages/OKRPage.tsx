@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash } from 'lucide-react';
+import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash, CalendarCheck } from 'lucide-react';
+import { useAuth } from '@/modules/auth/AuthContext';
+import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -23,6 +25,10 @@ const OKRPage: React.FC = () => {
   const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
   const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
   const location = useLocation();
+  const { isDemo } = useAuth();
+  // Bouton "Check-in hebdo" visible uniquement en mode démo pour tester le
+  // composant (en prod il s'auto-déclenche lundi/mardi depuis le Dashboard).
+  const [showCheckin, setShowCheckin] = useState(false);
   // Use new OKR module hooks
   const { data: objectives = [] } = useOkrs();
   const createOkrMutation = useCreateOkr();
@@ -201,7 +207,23 @@ const OKRPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="hidden sm:flex justify-end mb-8">
+      <div className="hidden sm:flex justify-end mb-8 gap-3">
+        {/* Bouton démo : ouvrir le check-in hebdo manuellement. En prod il
+            s'auto-déclenche lundi/mardi via le Dashboard. */}
+        {isDemo && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCheckin(true)}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold border-2 border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            aria-label="Ouvrir le check-in hebdo (démo)"
+            title="Disponible uniquement en mode démo — en production le check-in s'ouvre automatiquement lundi/mardi depuis le Dashboard"
+          >
+            <CalendarCheck size={18} />
+            <span>Check-in hebdo</span>
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">démo</span>
+          </motion.button>
+        )}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -214,6 +236,21 @@ const OKRPage: React.FC = () => {
           <span>Nouvel Objectif</span>
         </motion.button>
       </div>
+
+      {/* Bouton démo mobile — affiché sous le H1 */}
+      {isDemo && (
+        <div className="sm:hidden mb-4">
+          <button
+            type="button"
+            onClick={() => setShowCheckin(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900"
+          >
+            <CalendarCheck size={18} />
+            <span>Ouvrir le check-in hebdo</span>
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">démo</span>
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6" data-tutorial-id="okr-category-filter">
         <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégorie :</span>
@@ -791,6 +828,10 @@ const OKRPage: React.FC = () => {
         onClose={tutorial.close}
         accentColor="#22C55E"
       />
+
+      {/* Check-in hebdo — accessible manuellement en mode démo (en prod il
+          s'auto-déclenche lundi/mardi via le Dashboard) */}
+      <WeeklyCheckinModal isOpen={showCheckin} onClose={() => setShowCheckin(false)} />
     </motion.div>);
 
 };
