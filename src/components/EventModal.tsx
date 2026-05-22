@@ -48,6 +48,13 @@ type EventModalProps = {
   onUpdateEvent?: (eventId: string, eventData: Omit<EventData, 'taskId'>) => void;
   onDeleteEvent?: (eventId: string) => void;
   onConvert?: (eventData: EventData) => void;
+  /**
+   * Liste des champs à verrouiller (lecture seule). Valeurs supportées :
+   * 'title', 'startDate', 'endDate'. Permet à l'appelant de figer certains
+   * champs pré-remplis (cas d'usage : planifier une habitude → titre +
+   * date imposés, seuls horaires et catégorie restent éditables).
+   */
+  lockedFields?: ('title' | 'startDate' | 'endDate')[];
 };
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -61,7 +68,10 @@ const EventModal: React.FC<EventModalProps> = ({
   onUpdateEvent,
   onDeleteEvent,
   onConvert,
+  lockedFields = [],
 }) => {
+  // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
+  const lockedSet = new Set(lockedFields);
   const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
 
@@ -371,8 +381,11 @@ const EventModal: React.FC<EventModalProps> = ({
                 onChange={(e) =>
                   handleFieldChange("title", setTitle, e.target.value)
                 }
+                readOnly={lockedSet.has('title')}
                 className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                  isPrefilledMode && prefilledFields.has("title")
+                  lockedSet.has('title')
+                    ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                    : isPrefilledMode && prefilledFields.has("title")
                     ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                     : ""
                 }`}
@@ -411,9 +424,12 @@ const EventModal: React.FC<EventModalProps> = ({
                     handleFieldChange("startDate", setStartDate, e.target.value);
                     handleFieldChange("endDate", setEndDate, e.target.value);
                   }}
+                  disabled={lockedSet.has('startDate')}
                   placeholder="Sélectionner une date"
                   className={`md:hidden w-full px-4 h-11 border rounded-lg text-sm transition-colors ${
-                    isPrefilledMode && prefilledFields.has("startDate")
+                    lockedSet.has('startDate')
+                      ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                      : isPrefilledMode && prefilledFields.has("startDate")
                       ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                       : ""
                   }`}
@@ -429,8 +445,11 @@ const EventModal: React.FC<EventModalProps> = ({
                     <PopoverTrigger asChild>
                       <button
                         type="button"
+                        disabled={lockedSet.has('startDate')}
                         className={`w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-sm transition-colors ${
-                          isPrefilledMode && prefilledFields.has("startDate")
+                          lockedSet.has('startDate')
+                            ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                            : isPrefilledMode && prefilledFields.has("startDate")
                             ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                             : ""
                         }`}
