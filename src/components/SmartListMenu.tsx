@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Check } from 'lucide-react';
-import { SMART_PRESETS, type SmartRulePreset } from '@/modules/lists';
+import { Sparkles, Check, Pin, X as XIcon } from 'lucide-react';
+import { SMART_PRESETS, type SmartRulePreset, type TaskList } from '@/modules/lists';
 
 interface SmartListMenuProps {
   /** Presets déjà créés (affichés grisés / cochés) */
   existingPresets: SmartRulePreset[];
   /** Callback à l'activation d'un preset */
   onSelect: (preset: SmartRulePreset) => void;
+  /** Liste actuellement épinglée par défaut, si elle existe */
+  defaultList?: TaskList | null;
+  /** Callback pour révoquer la liste par défaut (passe l'id au handler parent) */
+  onRevokeDefault?: (list: TaskList) => void;
 }
 
 const COLOR_HEX: Record<string, string> = {
@@ -19,11 +23,18 @@ const COLOR_HEX: Record<string, string> = {
 };
 
 /**
- * Petit menu pour créer une liste intelligente en un clic.
- * 5 presets prédéfinis (En retard / Cette semaine / Sans deadline /
- * Priorité haute / Favoris). Les presets déjà créés sont cochés.
+ * Petit menu qui regroupe les filtres dynamiques :
+ *   - L'entrée "Liste par défaut" en tête (active par défaut quand une
+ *     liste est épinglée — révocable en un clic ici)
+ *   - Les 3 presets de listes intelligentes (En retard / Cette semaine /
+ *     Priorité haute), opt-in : inactifs jusqu'à activation
  */
-const SmartListMenu: React.FC<SmartListMenuProps> = ({ existingPresets, onSelect }) => {
+const SmartListMenu: React.FC<SmartListMenuProps> = ({
+  existingPresets,
+  onSelect,
+  defaultList,
+  onRevokeDefault,
+}) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -69,16 +80,56 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({ existingPresets, onSelect
             className="absolute right-0 top-full mt-2 z-50 w-72 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
             role="menu"
           >
+            {/* Header — sans icône, titre seul + sous-titre */}
             <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-violet-50 dark:bg-violet-900/20">
-              <div className="flex items-center gap-2">
-                <Sparkles size={14} className="text-violet-600 dark:text-violet-400" />
-                <span className="font-bold text-sm text-slate-900 dark:text-white">Listes intelligentes</span>
-              </div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">Listes intelligentes</span>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 Filtres dynamiques. Le contenu se met à jour automatiquement.
               </p>
             </div>
+
             <ul className="py-1 max-h-80 overflow-y-auto">
+              {/* ───── Entrée "Liste par défaut" — active dès qu'une liste est épinglée.
+                  Contrairement aux smart presets (opt-in), celle-ci est active par défaut
+                  quand le seed pose une liste isDefault. Clic = révoque (unpin). ───── */}
+              {defaultList && (
+                <li>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      onRevokeDefault?.(defaultList);
+                      setOpen(false);
+                    }}
+                    className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700 border-b border-slate-100 dark:border-slate-800"
+                  >
+                    <Pin
+                      size={12}
+                      fill="currentColor"
+                      className="text-amber-500 mt-1.5 shrink-0"
+                      aria-hidden
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-slate-900 dark:text-white">
+                          Liste par défaut
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          <Check size={10} /> Active
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                        <span>« {defaultList.name} » s'ouvre automatiquement.</span>
+                      </p>
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 inline-flex items-center gap-1">
+                        <XIcon size={10} /> Cliquez pour révoquer
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              )}
+
+              {/* ───── Smart presets ───── */}
               {SMART_PRESETS.map(preset => {
                 const exists = existingSet.has(preset.preset);
                 return (
