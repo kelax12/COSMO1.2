@@ -15,6 +15,7 @@ import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 import MobileCollapsible from '../components/MobileCollapsible';
+import WeeklyCheckinModal, { useWeeklyCheckin } from '../components/WeeklyCheckinModal';
 // SharedTasksHistory retiré : la section "Tâches assignées" de SocialRequests
 // gère désormais l'acceptation/refus des tâches partagées de manière unifiée
 // avec les demandes d'amis.
@@ -78,6 +79,17 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
 
 const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('jour');
+  const weeklyCheckin = useWeeklyCheckin();
+  const [checkinOpen, setCheckinOpen] = useState(false);
+
+  // Auto-ouverture du check-in hebdo lundi/mardi (une seule fois par semaine).
+  React.useEffect(() => {
+    if (weeklyCheckin.shouldShow) {
+      // Léger délai pour laisser le dashboard se monter avant de superposer un modal
+      const t = setTimeout(() => setCheckinOpen(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, [weeklyCheckin.shouldShow]);
 
   const { data: tasks = [] } = useTasks();
   const { data: krCompletions = [] } = useKRCompletions();
@@ -380,6 +392,15 @@ const DashboardPage: React.FC = () => {
         </motion.div>
 
       </motion.div>
+
+      {/* Modal check-in hebdo OKR — auto-déclenché lundi/mardi, 1×/semaine */}
+      <WeeklyCheckinModal
+        isOpen={checkinOpen}
+        onClose={() => {
+          setCheckinOpen(false);
+          weeklyCheckin.dismiss();
+        }}
+      />
     </div>
   );
 };
