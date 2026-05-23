@@ -162,31 +162,24 @@ export class SupabaseListsRepository implements IListsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async addTaskToList(taskId: string, listId: string): Promise<TaskList> {
-    // First get current list
-    const list = await this.getById(listId);
-    if (!list) {
-      throw new Error(`List with id ${listId} not found`);
-    }
-
-    // Add task if not already present
-    if (!list.taskIds.includes(taskId)) {
-      const newTaskIds = [...list.taskIds, taskId];
-      return this.update(listId, { taskIds: newTaskIds });
-    }
-
-    return list;
+    // Atomic array upsert via RPC (migration 023, faille TOCTOU-2).
+    // Ancien code : SELECT task_ids → push JS → UPDATE — race garantie en
+    // cas d'ajout concurrent depuis 2 tabs.
+    const { data, error } = await supabase.rpc('add_task_to_list', {
+      p_task_id: taskId,
+      p_list_id: listId,
+    });
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data as ListRow);
   }
 
   async removeTaskFromList(taskId: string, listId: string): Promise<TaskList> {
-    // First get current list
-    const list = await this.getById(listId);
-    if (!list) {
-      throw new Error(`List with id ${listId} not found`);
-    }
-
-    // Remove task
-    const newTaskIds = list.taskIds.filter(id => id !== taskId);
-    return this.update(listId, { taskIds: newTaskIds });
+    const { data, error } = await supabase.rpc('remove_task_from_list', {
+      p_task_id: taskId,
+      p_list_id: listId,
+    });
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data as ListRow);
   }
 
   // ═══════════════════════════════════════════════════════════════════

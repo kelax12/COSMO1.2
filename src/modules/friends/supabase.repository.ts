@@ -122,17 +122,16 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (!data) return null;
     const friend = this.mapFromDb(data);
 
-    // Resolve the friend's auth.uid via the public profiles table — required
-    // so tasks.collaborators / shared_tasks.friend_id are populated with real
-    // auth.uids (RLS + FK).
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, avatar_url')
-      .eq('email', lower)
-      .maybeSingle();
-    if (profile) {
-      friend.userId = profile.id as string;
-      friend.avatar = (profile.avatar_url as string | null) ?? friend.avatar;
+    // Resolve the friend's auth.uid via the `resolve_profile_by_email` RPC.
+    // Direct `profiles` SELECT is restricted to own + confirmed friends after
+    // migration 022 (faille N12), so we go through the SECURITY DEFINER RPC
+    // which returns only the uid (no avatar/display_name) — sufficient to
+    // populate tasks.collaborators / shared_tasks.friend_id.
+    const { data: resolvedId } = await supabase.rpc('resolve_profile_by_email', {
+      p_email: lower,
+    });
+    if (resolvedId) {
+      friend.userId = resolvedId as string;
     }
     return friend;
   }
@@ -197,21 +196,15 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   async acceptFriendRequest(requestId: string): Promise<Friend> {
     if (!supabase) throw new Error('Supabase not configured');
 
-    // Utilise la fonction SECURITY DEFINER pour créer l'amitié bidirectionnelle
-    const { error: rpcError } = await supabase.rpc('accept_friend_request', {
+    // RPC v2 (migration 023, faille RACE-5) retourne directement la ligne
+    // friends créée. L'ancien code faisait un SELECT ORDER BY created_at
+    // DESC LIMIT 1 derrière le RPC v1 — race si deux acceptations
+    // concurrentes : on récupérait potentiellement le mauvais friend.
+    const { data, error } = await supabase.rpc('accept_friend_request_v2', {
       request_id: requestId,
     });
-    if (rpcError) throw normalizeApiError(rpcError);
-
-    // Retourner le nouvel ami depuis la table friends
-    const { data: friends, error: fetchError } = await supabase
-      .from('friends')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (fetchError) throw normalizeApiError(fetchError);
-    return this.mapFromDb(friends?.[0]);
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data as FriendRow);
   }
 
   async rejectFriendRequest(requestId: string): Promise<void> {
@@ -227,42 +220,18 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   async removeFriend(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     // The friends table stores TWO rows per friendship (receiver→sender and
-    // sender→receiver) inserted by `accept_friend_request`. Deleting just one
-    // row leaves the reciprocal entry behind — the ex-friend still sees the
-    // caller in their list. Find the email of the friend being removed, then
-    // delete both sides. Faille B15.
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { data: row, error: readError } = await supabase
-      .from('friends')
-      .select('email')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    if (readError) throw normalizeApiError(readError);
-    if (!row) return; // nothing to delete
-
-    // Delete the caller's row.
-    const { error: ownError } = await supabase
-      .from('friends')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (ownError) throw normalizeApiError(ownError);
-
-    // Best-effort: delete the reciprocal row owned by the other user, scoped
-    // by their email pointing back at the caller. RLS still applies — if the
-    // policy forbids cross-user delete, this is a no-op and we surface it
-    // in logs rather than silently passing.
-    const { error: reciprocalError } = await supabase
-      .from('friends')
-      .delete()
-      .eq('email', user.email ?? '')
-      .neq('user_id', user.id);
-    if (reciprocalError) {
-      console.warn('removeFriend: reciprocal row not removed (RLS or schema)', reciprocalError);
-    }
+    // sender→receiver) inserted by `accept_friend_request`. The previous
+    // implementation deleted the caller's row then attempted a cross-user
+    // delete via RLS — which the DELETE policy `auth.uid()=user_id` rejected,
+    // making the reciprocal cleanup a silent no-op. The ex-friend kept seeing
+    // the caller. Faille N13.
+    //
+    // Fix: RPC `remove_friendship` SECURITY DEFINER (migration 022) deletes
+    // both sides atomically after verifying the caller owns the row.
+    const { error } = await supabase.rpc('remove_friendship', {
+      p_friend_row_id: id,
+    });
+    if (error) throw normalizeApiError(error);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -280,12 +249,13 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     // via la table profiles, par email.
     let friendUserId = input.friendId;
     if (input.friendEmail) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', input.friendEmail.toLowerCase())
-        .maybeSingle();
-      if (profile?.id) friendUserId = profile.id as string;
+      // Go through SECURITY DEFINER RPC instead of direct SELECT on profiles —
+      // the restricted policy (faille N12, migration 022) only exposes the
+      // profile to confirmed friends. The RPC returns only the uid (no PII).
+      const { data: resolvedId } = await supabase.rpc('resolve_profile_by_email', {
+        p_email: input.friendEmail.toLowerCase(),
+      });
+      if (resolvedId) friendUserId = resolvedId as string;
     }
 
     const { data: { user } } = await supabase.auth.getUser();

