@@ -183,18 +183,13 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
             {/* Header */}
             <div className="px-5 pt-3 pb-4 shrink-0 border-b border-[rgb(var(--color-border))]">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Target size={18} className="text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h2 className="font-bold text-base text-[rgb(var(--color-text-primary))]">
-                      Check-in hebdo
-                    </h2>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                      KR {currentIdx + 1} sur {allKRs.length}
-                    </p>
-                  </div>
+                <div>
+                  <h2 className="font-bold text-base text-[rgb(var(--color-text-primary))]">
+                    Check-in hebdo
+                  </h2>
+                  <p className="text-xs text-[rgb(var(--color-text-muted))]">
+                    KR {currentIdx + 1} sur {allKRs.length}
+                  </p>
                 </div>
                 <button
                   onClick={onClose}
