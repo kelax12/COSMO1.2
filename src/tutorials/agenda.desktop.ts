@@ -2,10 +2,19 @@ import { TutorialStep } from '@/components/tutorial/types';
 
 /**
  * Tutoriel Agenda — DESKTOP (FullCalendar + drag + resize).
- * La démo drag-and-resize lance une animation complète : un fantôme glisse
- * du panneau Tâches vers la grille, se transforme en bloc événement, puis
- * s'étire vers le bas pour montrer le redimensionnement.
+ *
+ * Steps 4 → 5 → 6 utilisent le système de « ghost persistant »
+ * (ghostAnimation) : l'événement créé à l'étape 4 reste visible à l'étape 5
+ * (où il est étiré), puis disparaît au début de l'étape 6 pour laisser place
+ * à une démo « sélection d'une plage horaire → création d'événement », qui
+ * disparaît à son tour à la fin.
+ *
+ * Cible commune pour le placement : la colonne MERCREDI (`.fc-day-wed`),
+ * généralement vide dans les données démo.
  */
+const WED_COLUMN = '.fc-timegrid-col.fc-day-wed';
+const CALENDAR_GRID = '[data-tutorial-id="agenda-calendar-grid"]';
+
 export const agendaTutorialStepsDesktop: TutorialStep[] = [
   {
     title: 'Votre agenda',
@@ -44,31 +53,37 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
   {
     title: 'Glisser une tâche vers le calendrier',
     description:
-      "Saisissez une tâche dans le panneau, glissez-la sur un créneau horaire et lâchez — elle devient un événement planifié.",
+      "Saisissez une tâche dans le panneau, glissez-la sur un créneau horaire et lâchez — elle devient un événement planifié, calé sur la colonne du jour.",
     target: '[data-tutorial-id="agenda-first-task"]',
     cardPlacement: 'right',
-    action: 'drag-and-resize',
-    dragTo: '[data-tutorial-id="agenda-calendar-grid"]',
+    ghostAnimation: 'drag-place',
+    placeTarget: WED_COLUMN,
+    dragTo: CALENDAR_GRID,
     ghostLabel: 'Travail',
-    actionDelay: 600,
     dimLevel: 'light',
   },
   {
     title: 'Étirer pour rallonger',
     description:
-      "Une fois lâchée, attrapez le bord inférieur de l'événement et glissez vers le bas pour allonger sa durée. La démo le fait pour vous.",
-    target: '[data-tutorial-id="agenda-calendar-grid"]',
+      "Une fois posé, attrapez le bord inférieur de l'événement et glissez vers le bas pour allonger sa durée. La démo le fait pour vous.",
+    target: CALENDAR_GRID,
     cardPlacement: 'inside',
-    action: 'pulse',
+    ghostAnimation: 'resize-grow',
+    placeTarget: WED_COLUMN,
+    dragTo: CALENDAR_GRID,
+    ghostLabel: 'Travail',
     dimLevel: 'light',
   },
   {
     title: 'Créer depuis un créneau vide',
     description:
-      "Pas envie de drag ? Un simple clic sur un créneau libre ouvre directement le formulaire d'événement, pré-rempli à cette heure.",
-    target: '[data-tutorial-id="agenda-calendar-grid"]',
+      "Pas envie de drag ? Cliquez-glissez sur une plage horaire vide pour ouvrir directement le formulaire d'événement, pré-rempli à cette heure.",
+    target: CALENDAR_GRID,
     cardPlacement: 'inside',
-    action: 'pulse',
+    ghostAnimation: 'select-create',
+    placeTarget: WED_COLUMN,
+    dragTo: CALENDAR_GRID,
+    ghostLabel: 'Pause café',
     dimLevel: 'light',
   },
 ];

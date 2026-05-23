@@ -58,6 +58,21 @@ export interface TutorialStep {
   /** Pour action='custom' : fonction exécutée à l'arrivée de l'étape */
   customAction?: (target: HTMLElement | null) => Promise<void> | void;
   /**
+   * Animation de « ghost persistant » à travers plusieurs étapes (indépendante
+   * de l'action one-shot ci-dessus). Utilisée pour les démos multi-étapes
+   * comme tasks-vers-calendrier où l'événement créé doit rester visible
+   * et être réutilisé à l'étape suivante.
+   *   - 'drag-place'    : ghost glisse de `target` vers `placeTarget`, puis
+   *                       prend la largeur de la colonne et reste en place
+   *   - 'resize-grow'   : ghost déjà placé dans `placeTarget` s'étire vers le bas
+   *   - 'select-create' : ghost actuel disparaît, puis un rectangle de sélection
+   *                       apparaît dans `placeTarget`, grandit, se solidifie
+   *                       en événement, et finalement disparaît
+   */
+  ghostAnimation?: 'drag-place' | 'resize-grow' | 'select-create';
+  /** Cible CSS où poser/redimensionner le ghost (ex. `.fc-timegrid-col.fc-day-wed`) */
+  placeTarget?: string;
+  /**
    * Délai avant l'action auto (ms). Défaut 800ms pour laisser l'utilisateur
    * lire la description avant la démo.
    */
