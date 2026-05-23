@@ -21,6 +21,19 @@ interface TargetRect {
   height: number;
 }
 
+// État du « ghost persistant » multi-étapes (drag-place / resize-grow / select-create).
+// Survit aux changements d'étape via une key stable + Framer Motion interpole entre
+// les snapshots successifs.
+interface GhostState {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  opacity: number;
+  label: string;
+  isDashed?: boolean;
+}
+
 // ───────────────────────────────────────────────────────────────────
 // Helpers : recherche d'élément + calcul du rect (en coordonnées viewport)
 // ───────────────────────────────────────────────────────────────────
@@ -130,7 +143,9 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [dragGhost, setDragGhost] = useState<{ from: TargetRect; to: TargetRect } | null>(null);
+  const [ghost, setGhost] = useState<GhostState | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ghostTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Filtre les étapes selon viewport
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -203,6 +218,126 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
       if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
     };
   }, [isOpen, step, stepIndex]);
+
+  // ─────────────────────────────────────────────────────────────────
+  // Ghost persistant — drive l'animation séquencée à chaque step change.
+  // ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isOpen || !step) return;
+    // Cleanup des timers précédents
+    ghostTimersRef.current.forEach(clearTimeout);
+    ghostTimersRef.current = [];
+
+    const queue = (ms: number, fn: () => void) => {
+      ghostTimersRef.current.push(setTimeout(fn, ms));
+    };
+    const rectOf = (sel: string | undefined): TargetRect | null =>
+      sel ? getRect(findTarget(sel)) : null;
+
+    const anim = step.ghostAnimation;
+    if (!anim) {
+      // Pas de ghost pour cette étape — on l'efface si présent
+      setGhost(null);
+      return;
+    }
+
+    const placeRect = rectOf(step.placeTarget);
+    const gridRect = rectOf(step.dragTo);
+    // Y visible du calendrier (sous les en-têtes de colonnes ~40-60px)
+    const visibleTopY = (gridRect?.top ?? placeRect?.top ?? 100) + 56;
+
+    if (anim === 'drag-place') {
+      const fromRect = rectOf(step.target);
+      if (!fromRect || !placeRect) return;
+      const label = step.ghostLabel || 'Tâche';
+      // Apparition discrète sur la tâche source (sidebar)
+      setGhost({
+        x: fromRect.left + 4,
+        y: fromRect.top + 4,
+        w: Math.max(80, fromRect.width - 8),
+        h: 36,
+        opacity: 0,
+        label,
+      });
+      queue(80, () => setGhost(g => g && { ...g, opacity: 1 }));
+      // Voyage vers la colonne mercredi + adopte sa largeur
+      queue(700, () =>
+        setGhost({
+          x: placeRect.left + 1,
+          y: visibleTopY + 40,
+          w: placeRect.width - 2,
+          h: 72,
+          opacity: 0.95,
+          label,
+        })
+      );
+    } else if (anim === 'resize-grow') {
+      if (!placeRect) return;
+      const label = step.ghostLabel || 'Tâche';
+      // Force l'état "posé" (au cas où on arrive par back-navigation)
+      setGhost({
+        x: placeRect.left + 1,
+        y: visibleTopY + 40,
+        w: placeRect.width - 2,
+        h: 72,
+        opacity: 0.95,
+        label,
+      });
+      // Étirement vers le bas
+      queue(700, () => setGhost(g => g && { ...g, h: 168 }));
+    } else if (anim === 'select-create') {
+      if (!placeRect) return;
+      const label = step.ghostLabel || 'Tâche';
+      // 1. État initial : événement précédent (depuis step 5)
+      setGhost({
+        x: placeRect.left + 1,
+        y: visibleTopY + 40,
+        w: placeRect.width - 2,
+        h: 168,
+        opacity: 0.95,
+        label,
+      });
+      // 2. L'événement précédent disparaît
+      queue(350, () => setGhost(g => g && { ...g, opacity: 0 }));
+      // 3. Rectangle de sélection apparaît plus bas, hauteur minimale
+      queue(900, () =>
+        setGhost({
+          x: placeRect.left + 1,
+          y: visibleTopY + 260,
+          w: placeRect.width - 2,
+          h: 6,
+          opacity: 0.55,
+          label: '',
+          isDashed: true,
+        })
+      );
+      // 4. La sélection grandit (simule le drag pour sélectionner une plage)
+      queue(1200, () => setGhost(g => g && { ...g, h: 120 }));
+      // 5. Solidification en événement créé
+      queue(2050, () =>
+        setGhost(g =>
+          g && {
+            ...g,
+            opacity: 0.95,
+            isDashed: false,
+            label,
+          }
+        )
+      );
+      // 6. Fade out final à la fin de l'étape 6
+      queue(3300, () => setGhost(g => g && { ...g, opacity: 0 }));
+    }
+
+    return () => {
+      ghostTimersRef.current.forEach(clearTimeout);
+      ghostTimersRef.current = [];
+    };
+  }, [isOpen, step, stepIndex]);
+
+  // Cleanup ghost quand le tutoriel se ferme
+  useEffect(() => {
+    if (!isOpen) setGhost(null);
+  }, [isOpen]);
 
   // Verrou body scroll quand ouvert
   useEffect(() => {
@@ -511,6 +646,40 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
               times: [0, 0.12, 0.45, 0.55, 0.80, 1],
             }}
           />
+        )}
+
+        {/* ── Ghost persistant (drag-place / resize-grow / select-create) ──
+            Une seule motion.div avec key stable → Framer Motion interpole
+            entre les snapshots successifs même au passage entre étapes. */}
+        {ghost && (
+          <motion.div
+            key="persistent-ghost"
+            className="absolute pointer-events-none rounded-md shadow-xl overflow-hidden flex items-start"
+            initial={false}
+            animate={{
+              top: ghost.y,
+              left: ghost.x,
+              width: ghost.w,
+              height: ghost.h,
+              opacity: ghost.opacity,
+            }}
+            transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
+            style={{
+              background: ghost.isDashed
+                ? `${accentColor}33`
+                : `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
+              border: ghost.isDashed
+                ? `2px dashed ${accentColor}`
+                : `2px solid ${accentColor}`,
+              color: 'white',
+              fontWeight: 700,
+              fontSize: 11,
+              padding: '4px 6px',
+              zIndex: 10,
+            }}
+          >
+            {ghost.label && <span className="truncate">{ghost.label}</span>}
+          </motion.div>
         )}
 
         {/* Flèche pointant vers la cible (masquée pour 'inside') */}
