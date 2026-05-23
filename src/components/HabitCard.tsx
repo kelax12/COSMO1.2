@@ -150,7 +150,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                     title={`En pause jusqu'au ${format(pausedUntil, "d MMMM yyyy", { locale: fr })}`}
                   >
                     <Pause size={10} />
-                    <span>En pause · {format(pausedUntil, 'd MMM', { locale: fr })}</span>
+                    <span>En pause</span>
                   </div>
                 )}
               </div>
