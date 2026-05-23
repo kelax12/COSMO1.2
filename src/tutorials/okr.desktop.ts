@@ -5,14 +5,14 @@ import { TutorialStep } from '@/components/tutorial/types';
  */
 export const okrTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Piloter avec les OKR',
+    title: 'Définissez votre cap.',
     description:
-      "OKR = Objective (ambition) + Key Results (3-5 indicateurs mesurables). Une méthode éprouvée pour rester aligné sur ce qui compte.",
+      "OKR = Objective (votre but) + Key Results (métrique). Clarté et alignement garantis.",
   },
   {
     title: 'Filtrer par catégorie',
     description:
-      "Quand vous aurez plusieurs OKR, ces chips vous permettent de zoomer sur un domaine (Travail, Perso, Santé…). Le « + » crée une nouvelle catégorie.",
+      "Segmentez vos OKR / Travail, Personnel, Santé... Filtrez par domaine. Le « + » crée une catégorie.",
     target: '[data-tutorial-id="okr-category-filter"]',
     cardPlacement: 'bottom',
     action: 'pulse',
@@ -20,23 +20,88 @@ export const okrTutorialStepsDesktop: TutorialStep[] = [
   {
     title: 'Créer un objectif',
     description:
-      "Ce bouton ouvre le formulaire de création. Donnez un titre clair (ex : « Atteindre 1000 utilisateurs ») et ajoutez 3 à 5 KR avec leur cible chiffrée.",
+      "Définissez un objectif et décomposez le en métriques (KR).",
     target: '[data-tutorial-id="okr-create-button"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Lecture d\'une carte OKR',
+    title: 'Transformez vos métriques.',
     description:
-      "Chip catégorie en haut. Période (date début → fin). Titre + description. Jauge de santé à droite (rouge = en retard, vert = OK). Chaque KR avec sa progression — cliquez pour la faire avancer.",
+      "ajoutez des métriques dans votre to do liste ou dans votre agenda.",
     target: '[data-tutorial-id="okr-first-card"]',
     cardPlacement: 'top',
-    action: 'pulse',
+    action: 'custom',
     dimLevel: 'light',
-  },
-  {
-    title: 'Le lien stratégique : tâches → KR',
-    description:
-      "Bonne pratique : créer des tâches dont la complétion fait avancer un KR. Vous reliez la stratégie (OKR) à l'exécution (tâches du jour).",
+    customAction: async (target) => {
+      if (!target) return;
+
+      // Attendre que les boutons soient visibles
+      await new Promise(r => setTimeout(r, 300));
+
+      // Trouver les boutons d'action CheckCircle et Calendar
+      const krElements = target.querySelectorAll('[class*="gap-1"]');
+      if (krElements.length === 0) return;
+
+      // On cherche les deux premiers boutons d'action (CheckCircle et Calendar)
+      const buttons = target.querySelectorAll('button[title]');
+      const addTaskBtn = Array.from(buttons).find(btn => btn.getAttribute('title') === 'Créer une tâche') as HTMLElement;
+      const addEventBtn = Array.from(buttons).find(btn => btn.getAttribute('title') === 'Planifier un événement') as HTMLElement;
+
+      if (!addTaskBtn || !addEventBtn) return;
+
+      // Créer un conteneur SVG pour les flèches
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      svg.setAttribute('style', 'position: absolute; top: 0; left: 0; pointer-events: none; z-index: 40');
+
+      // Animer les flèches
+      const animateArrow = (btnElement: HTMLElement, index: number) => {
+        const rect = btnElement.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+
+        const startX = rect.left - targetRect.left + rect.width / 2;
+        const startY = rect.top - targetRect.top + rect.height / 2;
+
+        // Créer une flèche animée avec pulse
+        const arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        arrowGroup.setAttribute('style', `animation: pulse 1.5s ease-in-out infinite`);
+
+        // Cercle autour du bouton
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', String(startX));
+        circle.setAttribute('cy', String(startY));
+        circle.setAttribute('r', '18');
+        circle.setAttribute('fill', 'none');
+        circle.setAttribute('stroke', index === 0 ? '#3b82f6' : '#a855f7');
+        circle.setAttribute('stroke-width', '2');
+
+        arrowGroup.appendChild(circle);
+        svg.appendChild(arrowGroup);
+      };
+
+      animateArrow(addTaskBtn, 0);
+      animateArrow(addEventBtn, 1);
+
+      // Ajouter le style pour l'animation pulse
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      target.style.position = 'relative';
+      target.appendChild(svg);
+
+      // Nettoyage à la fin
+      return () => {
+        svg.remove();
+        style.remove();
+      };
+    },
   },
 ];
