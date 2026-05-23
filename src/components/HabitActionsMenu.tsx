@@ -39,9 +39,9 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
   const { isPaused, pauseUntil, resume } = useHabitPauses();
   const paused = isPaused(habit.id);
 
-  // Pause "indéfinie" : on stocke une date très lointaine. La pause ne se
+  // Pause "indéfinie" : on stocke une date très lointaine (année 9999). La pause ne se
   // lèvera que lorsque l'utilisateur clique manuellement sur « Reprendre ».
-  const INDEFINITE_PAUSE_DATE = new Date('2100-01-01T00:00:00.000Z');
+  const INDEFINITE_PAUSE_DATE = new Date('9999-12-31T23:59:59.999Z');
 
   // Calcule la position viewport du trigger (idem SmartListMenu)
   useLayoutEffect(() => {
