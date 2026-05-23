@@ -442,11 +442,11 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
         };
     }
   } else {
-    // Sans target → centre écran
+    // Sans target → centre écran (en pixels — pas de translate() car Framer Motion
+    // applique son propre transform pour scale, qui écraserait translate(-50%,-50%))
     cardStyle = {
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
+      top: Math.max(16, window.innerHeight / 2 - CARD_H / 2),
+      left: Math.max(16, window.innerWidth / 2 - CARD_W / 2),
     };
   }
 
