@@ -5,38 +5,33 @@ import { TutorialStep } from '@/components/tutorial/types';
  */
 export const habitsTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Construire vos habitudes',
+    title: 'Habitudes quotidiennes',
     description:
-      "Une habitude = un comportement à répéter régulièrement. Cosmo suit votre série (jours consécutifs) et votre taux de complétion.",
+      "Créez des gestes à refaire chaque jour. Cosmo vous aide à tenir votre chaîne.",
   },
   {
-    title: 'Trois vues au choix',
+    title: 'Trois façons de voir vos habitudes',
     description:
-      "Liste : une carte par habitude (par défaut). Tableau : grille des 30 derniers jours. Suivi global : statistiques agrégées.",
+      "Liste : suivi hebdomadaire. Tableau : grille des 30 derniers jours. Suivi global : statistiques de toutes vos habitudes.",
     target: '[data-tutorial-id="habits-view-switcher"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Créer une habitude',
+    title: 'Créer en quelques clics',
     description:
-      "Ce bouton ouvre le formulaire. Définissez un nom, une couleur, une cadence (chaque jour, X fois par semaine, jours précis).",
+      "Donnez un nom et choisissez une couleur.",
     target: '[data-tutorial-id="habits-create-button"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Valider la journée',
+    title: 'Cliquez ✓ pour compléter',
     description:
-      "Sur chaque carte, le bouton ✓ marque l'habitude faite aujourd'hui. Votre série s'allonge. Sauter un jour la remet à zéro — c'est la règle.",
+      "Le bouton valide l'habitude du jour et allonge votre série. Un jour manqué la remet à zéro.",
     target: '[data-tutorial-id="habits-list"]',
     cardPlacement: 'top',
     action: 'pulse',
     dimLevel: 'light',
-  },
-  {
-    title: 'Repérer les jours « secs »',
-    description:
-      "Passez en vue Tableau pour voir une grille de toutes vos habitudes sur 30 jours. Les cases vides sautent aux yeux — utile pour ajuster votre rythme.",
   },
 ];
