@@ -136,27 +136,16 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   async toggleCompletion(id: string, date: string): Promise<Habit> {
-    // First fetch current completions
-    const { data: habit, error: fetchError } = await supabase
-      .from('habits')
-      .select('completions')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) throw normalizeApiError(fetchError);
-
-    const completions = habit?.completions || {};
-    completions[date] = !completions[date];
-
-    const { data, error } = await supabase
-      .from('habits')
-      .update({ completions })
-      .eq('id', id)
-      .select()
-      .single();
+    // Atomic toggle via RPC (migration 023, faille TOCTOU-1). L'ancien code
+    // faisait SELECT completions → mutate JS → UPDATE — un autre tab/device
+    // pouvait écrire entre les deux et perdre ses changements.
+    const { data, error } = await supabase.rpc('toggle_habit_completion', {
+      p_habit_id: id,
+      p_date: date,
+    });
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return this.mapFromDb(data as HabitRow);
   }
 
   // Map from Supabase snake_case to app camelCase

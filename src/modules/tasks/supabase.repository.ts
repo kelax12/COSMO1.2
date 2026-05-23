@@ -222,40 +222,23 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async toggleComplete(id: string): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
-    const task = await this.getById(id);
-    if (!task) throw new Error(`Task ${id} not found`);
-
-    const newCompleted = !task.completed;
-    const updates: TaskDbInput = {
-      completed: newCompleted,
-      completed_at: newCompleted ? new Date().toISOString() : undefined,
-    };
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
+    // Atomic flip via RPC (migration 023, faille TOCTOU-3). Ancien code :
+    // SELECT * → !completed → UPDATE — race possible avec un toggle
+    // concurrent (l'utilisateur double-clic, deux tabs ouverts, etc.).
+    const { data, error } = await supabase.rpc('toggle_task_complete', {
+      p_task_id: id,
+    });
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return this.mapFromDb(data as TaskRow);
   }
 
   async toggleBookmark(id: string): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
-    const task = await this.getById(id);
-    if (!task) throw new Error(`Task ${id} not found`);
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({ bookmarked: !task.bookmarked })
-      .eq('id', id)
-      .select()
-      .single();
-
+    const { data, error } = await supabase.rpc('toggle_task_bookmark', {
+      p_task_id: id,
+    });
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return this.mapFromDb(data as TaskRow);
   }
 
   // ═══════════════════════════════════════════════════════════════════
