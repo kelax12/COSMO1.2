@@ -620,9 +620,9 @@ const OKRPage: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex items-center justify-center gap-2 mb-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        <span>{new Date(objective.startDate).toLocaleDateString('fr-FR')}</span>
+                        <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         <span>→</span>
-                        <span>{new Date(objective.endDate).toLocaleDateString('fr-FR')}</span>
+                        <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
                       <p className="text-xs sm:text-sm line-clamp-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>

@@ -56,7 +56,7 @@ const ActiveOKRs: React.FC = () => {
                       </span>
                     </div>
                     <p className="mb-1">{okr.keyResults.length} résultats clés</p>
-                    <p>Échéance: {new Date(okr.endDate).toLocaleDateString('fr-FR')}</p>
+                    <p>Échéance: {new Date(okr.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                   </div>
                 </div>
               );
