@@ -49,7 +49,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     cardPlacement: 'right',
     action: 'drag-and-resize',
     dragTo: '[data-tutorial-id="agenda-calendar-grid"]',
-    ghostLabel: 'Réviser maths',
+    ghostLabel: 'Travail',
     actionDelay: 600,
     dimLevel: 'light',
   },

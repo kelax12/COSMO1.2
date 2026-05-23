@@ -401,13 +401,17 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
                le bas (resize) pour démontrer la fonction de redimensionnement.
             ─────────────────────────────────────────────────────────────── */}
         {dragGhost && (() => {
-          const GHOST_W = 140;
+          const GHOST_W = 110;
           const GHOST_H = 36;
           const RESIZE_TARGET_H = 96; // hauteur finale après resize (~3 slots horaires)
           const isResize = step.action === 'drag-and-resize';
           const fromX = dragGhost.from.left + dragGhost.from.width / 2 - GHOST_W / 2;
           const fromY = dragGhost.from.top + dragGhost.from.height / 2 - GHOST_H / 2;
-          const toX = dragGhost.to.left + dragGhost.to.width / 2 - GHOST_W / 2;
+          // FullCalendar affiche un axe horaire ~55 px à gauche du grid — on l'exclut
+          // du calcul pour centrer le ghost dans la zone des colonnes de jours.
+          const FC_TIME_AXIS = 55;
+          const toX = dragGhost.to.left + FC_TIME_AXIS +
+            (dragGhost.to.width - FC_TIME_AXIS) / 2 - GHOST_W / 2;
           const toY = dragGhost.to.top + 80; // un peu sous le haut du calendrier (pas au centre vertical)
           const label = step.ghostLabel || 'Tâche démo';
 
