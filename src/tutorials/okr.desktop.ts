@@ -68,14 +68,14 @@ export const okrTutorialStepsDesktop: TutorialStep[] = [
         const arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         arrowGroup.setAttribute('style', `animation: pulse 1.5s ease-in-out infinite`);
 
-        // Cercle autour du bouton
+        // Cercle autour du bouton - vert, plus gros
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('cx', String(startX));
         circle.setAttribute('cy', String(startY));
-        circle.setAttribute('r', '18');
+        circle.setAttribute('r', '28');
         circle.setAttribute('fill', 'none');
-        circle.setAttribute('stroke', index === 0 ? '#3b82f6' : '#a855f7');
-        circle.setAttribute('stroke-width', '2');
+        circle.setAttribute('stroke', '#10b981');
+        circle.setAttribute('stroke-width', '3');
 
         arrowGroup.appendChild(circle);
         svg.appendChild(arrowGroup);
