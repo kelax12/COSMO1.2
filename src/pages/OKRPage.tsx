@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash, CalendarCheck } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '../components/CategoryManager';
@@ -11,6 +11,8 @@ import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory 
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
+import OKRDeadlineReviewModal from '../components/OKRDeadlineReviewModal';
+import CompletedOKRsModal from '../components/CompletedOKRsModal';
 import { toast } from 'sonner';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
@@ -56,6 +58,16 @@ const OKRPage: React.FC = () => {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
   const [editCategoryColor, setEditCategoryColor] = useState('blue');
+
+  // ── Deadline review popup ───────────────────────────────────────────
+  // À l'ouverture de la page : si un OKR non complété a une deadline atteinte
+  // (endDate <= today), on affiche un popup centré demandant de faire le point
+  // avant clôture. Au clic Valider, la carte s'anime vers le bouton « OKR
+  // terminés » en haut à droite, puis l'OKR est marqué completed.
+  const [deadlineReviewOkrId, setDeadlineReviewOkrId] = useState<string | null>(null);
+  const [reviewedOkrIds, setReviewedOkrIds] = useState<Set<string>>(new Set());
+  const [showCompletedModal, setShowCompletedModal] = useState(false);
+  const finishedButtonRef = useRef<HTMLButtonElement>(null);
 
   const startEditCategory = (cat: { id: string; name: string; color: string }) => {
     setEditingCategoryId(cat.id);
@@ -191,6 +203,50 @@ const OKRPage: React.FC = () => {
     }
   }, [location]);
 
+  // Détection des OKR à reviewer (deadline atteinte, non complétés, non encore
+  // reviewés dans cette session). On affiche le 1er trouvé. Dès que l'user
+  // valide ou ferme, on passe au suivant éventuel.
+  useEffect(() => {
+    if (deadlineReviewOkrId) return;
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const due = objectives.find(o =>
+      !o.completed &&
+      !reviewedOkrIds.has(o.id) &&
+      new Date(o.endDate).getTime() <= todayEnd.getTime()
+    );
+    if (due) setDeadlineReviewOkrId(due.id);
+  }, [objectives, deadlineReviewOkrId, reviewedOkrIds]);
+
+  const deadlineReviewOkr = deadlineReviewOkrId
+    ? objectives.find(o => o.id === deadlineReviewOkrId) ?? null
+    : null;
+
+  const handleCloseDeadlineReview = () => {
+    if (deadlineReviewOkrId) {
+      setReviewedOkrIds(prev => new Set(prev).add(deadlineReviewOkrId));
+    }
+    setDeadlineReviewOkrId(null);
+  };
+
+  const handleValidateDeadlineReview = (updated: OKR) => {
+    updateOkrMutation.mutate({
+      id: updated.id,
+      updates: {
+        title: updated.title,
+        description: updated.description,
+        endDate: updated.endDate,
+        keyResults: updated.keyResults,
+        progress: updated.progress,
+        completed: true,
+      },
+    });
+    toast.success('OKR validé et déplacé dans « OKR terminés »');
+    handleCloseDeadlineReview();
+  };
+
+  const completedCount = objectives.filter(o => o.completed).length;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -198,13 +254,33 @@ const OKRPage: React.FC = () => {
       className="min-h-[100dvh] p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8 max-w-7xl mx-auto"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          OKR - Objectifs & Résultats Clés
-        </h1>
-        <p className="text-sm sm:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          Définissez et suivez vos objectifs avec des résultats mesurables
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            OKR - Objectifs & Résultats Clés
+          </h1>
+          <p className="text-sm sm:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            Définissez et suivez vos objectifs avec des résultats mesurables
+          </p>
+        </div>
+
+        {/* Bouton "OKR terminés" en haut à droite — cible de l'animation fly-to du popup deadline (pattern Calendrier de TasksPage). */}
+        <motion.button
+          ref={finishedButtonRef}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowCompletedModal(true)}
+          aria-label="Voir la liste des OKR terminés"
+          className="shrink-0 flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm bg-white text-slate-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-emerald-900/20"
+        >
+          <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
+          <span className="hidden sm:inline">OKR terminés</span>
+          {completedCount > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              {completedCount}
+            </span>
+          )}
+        </motion.button>
       </div>
 
       <div className="hidden sm:flex justify-end mb-8 gap-3">
@@ -832,6 +908,30 @@ const OKRPage: React.FC = () => {
       {/* Check-in hebdo — accessible manuellement en mode démo (en prod il
           s'auto-déclenche lundi/mardi via le Dashboard) */}
       <WeeklyCheckinModal isOpen={showCheckin} onClose={() => setShowCheckin(false)} />
+
+      {/* Popup deadline atteinte : affiché à l'ouverture pour les OKR non
+          complétés dont endDate <= aujourd'hui. Au validate, la carte s'anime
+          vers le bouton « OKR terminés ». */}
+      <OKRDeadlineReviewModal
+        okr={deadlineReviewOkr}
+        categories={categories}
+        flyTargetRef={finishedButtonRef}
+        onClose={handleCloseDeadlineReview}
+        onValidate={handleValidateDeadlineReview}
+        resolveColor={resolveColor}
+      />
+
+      {/* Liste des OKR terminés — ouverte par le bouton du header. Chaque
+          item a un bouton "Modifier" qui referme cette modal et ouvre
+          OKRModal en mode édition. */}
+      <CompletedOKRsModal
+        isOpen={showCompletedModal}
+        onClose={() => setShowCompletedModal(false)}
+        okrs={objectives.filter(o => o.completed)}
+        categories={categories}
+        resolveColor={resolveColor}
+        onEdit={handleEditObjective}
+      />
     </motion.div>);
 
 };
