@@ -77,18 +77,13 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
 
             {/* Header */}
             <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                  <Trophy size={20} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-                    OKR terminés
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {okrs.length} objectif{okrs.length > 1 ? 's' : ''} clôturé{okrs.length > 1 ? 's' : ''}
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+                  OKR terminés
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {okrs.length} objectif{okrs.length > 1 ? 's' : ''} clôturé{okrs.length > 1 ? 's' : ''}
+                </p>
               </div>
               <button
                 onClick={onClose}
