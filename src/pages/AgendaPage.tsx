@@ -78,6 +78,7 @@ const MobileAgendaHeader: React.FC<MobileAgendaHeaderProps> = ({
         {/* Left: Tâches toggle */}
         <button
           onClick={onToggleSidebar}
+          data-tutorial-id="agenda-mobile-tasks-toggle"
           className={`flex items-center gap-1 px-2 min-h-[44px] rounded-lg text-xs font-medium transition-colors`}
           style={{
             backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'transparent',
@@ -92,6 +93,7 @@ const MobileAgendaHeader: React.FC<MobileAgendaHeaderProps> = ({
         <div className="flex items-center gap-1">
           {/* 3-way view selector */}
           <div
+            data-tutorial-id="agenda-mobile-view-switcher"
             className="flex rounded-lg overflow-hidden border text-xs"
             style={{ borderColor: 'rgb(var(--color-border))' }}
           >
@@ -114,6 +116,7 @@ const MobileAgendaHeader: React.FC<MobileAgendaHeaderProps> = ({
           {/* Add */}
           <button
             onClick={onAddEvent}
+            data-tutorial-id="agenda-mobile-add-button"
             className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg"
             style={{ color: 'rgb(var(--color-accent))' }}
           >
@@ -722,6 +725,7 @@ const AgendaPage: React.FC = () => {
         {/* ── MOBILE : bandeau jours + label (masqué en vue mois) ── */}
         {!isMonthView && (
           <div
+            data-tutorial-id="agenda-mobile-day-strip"
             className="md:hidden border-b shrink-0"
             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
           >
@@ -740,7 +744,10 @@ const AgendaPage: React.FC = () => {
 
         {/* ── MOBILE CALENDAR ── */}
         {isMobile && (
-          <div className="md:hidden mobile-calendar flex-1 overflow-hidden pb-[calc(64px+env(safe-area-inset-bottom))]">
+          <div
+            data-tutorial-id="agenda-mobile-calendar"
+            className="md:hidden mobile-calendar flex-1 overflow-hidden pb-[calc(64px+env(safe-area-inset-bottom))]"
+          >
             <FullCalendar
               key={mobileCalendarKey}
               ref={mobileCalendarRef}
