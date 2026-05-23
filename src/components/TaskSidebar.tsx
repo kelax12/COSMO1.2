@@ -2,6 +2,13 @@ import React, { useCallback, useState } from 'react';
 import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -128,39 +135,31 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
 
         {/* Filters */}
         <div className="grid grid-cols-2 gap-2">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-            style={{ 
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-primary))'
-            }}
-          >
-            <option value="">Toutes catégories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.name}</option>
-            ))}
-          </select>
-          
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-            style={{ 
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-primary))'
-            }}
-          >
-            <option value="">Toutes priorités</option>
-            <option value="1">Priorité 1</option>
-            <option value="2">Priorité 2</option>
-            <option value="3">Priorité 3</option>
-            <option value="4">Priorité 4</option>
-            <option value="5">Priorité 5</option>
-          </select>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Toutes catégories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Priorité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Toutes priorités</SelectItem>
+              <SelectItem value="1">Priorité 1</SelectItem>
+              <SelectItem value="2">Priorité 2</SelectItem>
+              <SelectItem value="3">Priorité 3</SelectItem>
+              <SelectItem value="4">Priorité 4</SelectItem>
+              <SelectItem value="5">Priorité 5</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -217,7 +216,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                        P{task.priority}
+                        Priorité {task.priority}
                       </span>
                       {task.isCollaborative && task.collaborators && (
                         <CollaboratorAvatars collaborators={task.collaborators} friends={friends} size="sm" />

@@ -131,7 +131,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
-          transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
             className={`relative w-full overflow-hidden rounded-t-[28px] sm:rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all flex flex-col max-h-[88vh] sm:max-h-[85vh] ${
               isNested ? 'sm:max-w-[510px]' : 'sm:max-w-[572px]'
             }`}

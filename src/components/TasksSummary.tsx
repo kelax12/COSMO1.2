@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Eye, EyeOff } from 'lucide-react';
+import { Settings, ChevronUp, ChevronDown } from 'lucide-react';
 import { usePendingTasks } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import ColorSettingsModal from './ColorSettingsModal';
@@ -69,7 +69,7 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
               }}
               title={isBottomPosition ? "Afficher sur le côté" : "Afficher en bas"}
             >
-              {isBottomPosition ? <Eye size={18} /> : <EyeOff size={18} />}
+              {isBottomPosition ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
             </button>
           )}
           <button
