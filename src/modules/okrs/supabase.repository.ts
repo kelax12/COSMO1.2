@@ -380,9 +380,11 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       for (const kr of updates.keyResults) {
         const previous = previousKRsById.get(kr.id);
         const previousValue = previous?.currentValue ?? 0;
-        const delta = Math.max(0, Math.round(kr.currentValue - previousValue));
+        const delta = Math.round(kr.currentValue - previousValue);
         if (delta > 0) {
           await this.recordKRReps(id, kr, row.title, delta);
+        } else if (delta < 0) {
+          await this.removeKRReps(kr.id, -delta);
         }
       }
     }
@@ -486,9 +488,11 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     // Si currentValue a augmenté de N (ex: 5 → 7 → +2), insère N lignes.
     const updatedKr = keyResults.find(kr => kr.id === keyResultId);
     if (updatedKr) {
-      const delta = Math.max(0, Math.round(updatedKr.currentValue - previousCurrentValue));
+      const delta = Math.round(updatedKr.currentValue - previousCurrentValue);
       if (delta > 0) {
         await this.recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
+      } else if (delta < 0) {
+        await this.removeKRReps(updatedKr.id, -delta);
       }
     }
 
@@ -529,6 +533,38 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (error) throw normalizeApiError(error);
   }
 
+  /**
+   * Symétrique de recordKRReps : retire les `count` reps les plus récentes
+   * pour ce KR (ORDER BY completed_at DESC, LIMIT count). Appelé quand
+   * currentValue diminue, pour que le graphique dashboard reflète bien
+   * la décrémentation.
+   */
+  private async removeKRReps(krId: string, count: number): Promise<void> {
+    if (!supabase || count <= 0) return;
+    const MAX_REPS_PER_WRITE = 100;
+    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: rows, error: selectErr } = await supabase
+      .from('kr_completions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('kr_id', krId)
+      .order('completed_at', { ascending: false })
+      .limit(safeCount);
+    if (selectErr) throw normalizeApiError(selectErr);
+    if (!rows || rows.length === 0) return;
+
+    const ids = rows.map((r: { id: string }) => r.id);
+    const { error: deleteErr } = await supabase
+      .from('kr_completions')
+      .delete()
+      .in('id', ids)
+      .eq('user_id', user.id);
+    if (deleteErr) throw normalizeApiError(deleteErr);
+  }
+
   // Fallback: update KR in JSONB when it's not yet in key_results table
   // Régénère aussi les ids non-UUID en UUID pour qu'ils deviennent compatibles
   // avec la table dédiée key_results lors du prochain sync.
@@ -567,11 +603,13 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     if (error) throw normalizeApiError(error);
 
-    // ── Append-only journal : delta de reps ──
+    // ── Journal : delta de reps (1 ligne = 1 rep), symétrique ± ──
     const updatedKr = okr.keyResults[krIndex];
-    const delta = Math.max(0, Math.round(updatedKr.currentValue - previousCurrentValue));
+    const delta = Math.round(updatedKr.currentValue - previousCurrentValue);
     if (delta > 0) {
       await this.recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
+    } else if (delta < 0) {
+      await this.removeKRReps(updatedKr.id, -delta);
     }
 
     return this.mapFromDb(data as OKRRow, okr.keyResults);

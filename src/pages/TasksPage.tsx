@@ -111,19 +111,9 @@ const TasksPage: React.FC = () => {
     if (hidden && selectedListId === VIRTUAL_TODAY_ID) setSelectedListId(null);
   };
 
-  // Auto-épingle la liste par défaut au mount (une seule fois, au premier
-  // chargement avec lists peuplé). Ne re-déclenche pas si l'user a changé
-  // manuellement de liste depuis — d'où le flag autoSelectDoneRef.
-  const autoSelectDoneRef = useRef(false);
-  useEffect(() => {
-    if (autoSelectDoneRef.current) return;
-    if (lists.length === 0) return;
-    const defaultList = lists.find(l => l.isDefault);
-    if (defaultList) {
-      setSelectedListId(defaultList.id);
-    }
-    autoSelectDoneRef.current = true;
-  }, [lists]);
+  // L'ouverture de la page démarre toujours sur "Toutes les tâches" (selectedListId = null).
+  // `isDefault` est conservé pour la gestion via SmartListMenu (pin/unpin)
+  // mais n'auto-sélectionne plus la liste au mount.
 
   // Ordre local des listes — source de vérité pour le rendu Reorder.Group.
   // Sync depuis `lists` (React Query) quand la composition change (ajout,

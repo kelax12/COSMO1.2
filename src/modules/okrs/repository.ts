@@ -347,6 +347,27 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
   }
 
+  /**
+   * Symétrique de appendKRReps : retire les `count` reps les plus récentes
+   * pour ce KR (par completedAt DESC). Appelé quand currentValue diminue.
+   */
+  private removeKRReps(krId: string, count: number): void {
+    if (count <= 0) return;
+    const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
+    if (!raw) return;
+    const completions: KRCompletion[] = JSON.parse(raw);
+    const toRemoveIds = new Set(
+      completions
+        .filter(c => c.krId === krId)
+        .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+        .slice(0, count)
+        .map(c => c.id)
+    );
+    if (toRemoveIds.size === 0) return;
+    const remaining = completions.filter(c => !toRemoveIds.has(c.id));
+    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(remaining));
+  }
+
   async delete(id: string): Promise<void> {
     const okrs = this.getOKRs();
     const filtered = okrs.filter(o => o.id !== id);
@@ -426,10 +447,12 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     okrs[okrIndex] = okr;
     this.saveOKRs(okrs);
 
-    // ── Journal append-only : delta de reps (1 ligne = 1 rep) ──
-    const delta = Math.max(0, Math.round(merged.currentValue - previousCurrentValue));
+    // ── Journal : delta de reps (1 ligne = 1 rep), symétrique ±  ──
+    const delta = Math.round(merged.currentValue - previousCurrentValue);
     if (delta > 0) {
       this.appendKRReps(okrId, merged, okr.title, delta);
+    } else if (delta < 0) {
+      this.removeKRReps(merged.id, -delta);
     }
 
     return okr;

@@ -1,10 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, Calendar as CalendarIcon, CheckSquare, Pause, Play } from 'lucide-react';
-import { useHabitPauses, pausePresets } from '@/lib/hooks/use-habit-pauses';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { MoreHorizontal, CalendarPlus, ListPlus, CircleSlash, CirclePlay } from 'lucide-react';
+import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { toast } from 'sonner';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
@@ -38,10 +36,12 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
   const { data: categories = [] } = useCategories();
   const createTaskMutation = useCreateTask();
   const createEventMutation = useCreateEvent();
-  const { isPaused, getPauseUntil, pauseUntil, resume } = useHabitPauses();
-  const [pauseSubmenuOpen, setPauseSubmenuOpen] = useState(false);
+  const { isPaused, pauseUntil, resume } = useHabitPauses();
   const paused = isPaused(habit.id);
-  const pausedUntil = getPauseUntil(habit.id);
+
+  // Pause "indéfinie" : on stocke une date très lointaine. La pause ne se
+  // lèvera que lorsque l'utilisateur clique manuellement sur « Reprendre ».
+  const INDEFINITE_PAUSE_DATE = new Date('2100-01-01T00:00:00.000Z');
 
   // Calcule la position viewport du trigger (idem SmartListMenu)
   useLayoutEffect(() => {
@@ -146,30 +146,30 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
           exit={{ opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-64 max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+          className="w-64 max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
           role="menu"
         >
-          <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20">
-            <span className="font-bold text-sm text-slate-900 dark:text-white">Actions</span>
+          <div className="px-3 pt-2.5 pb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Actions
+            </span>
           </div>
-          <ul className="py-1">
+          <ul className="pb-1.5">
             {/* Créer une tâche */}
             <li>
               <button
                 type="button"
                 role="menuitem"
                 onClick={handleCreateTask}
-                className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
               >
-                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                  <CheckSquare size={16} className="text-blue-600 dark:text-blue-400" />
-                </div>
+                <ListPlus size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-slate-900 dark:text-white">
+                  <div className="text-sm text-slate-900 dark:text-white">
                     Créer une tâche
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Échéance aujourd'hui, {habit.estimatedTime} min
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Aujourd'hui · {habit.estimatedTime} min
                   </p>
                 </div>
               </button>
@@ -181,96 +181,59 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 type="button"
                 role="menuitem"
                 onClick={handleScheduleEvent}
-                className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
               >
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                  <CalendarIcon size={16} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
+                <CalendarPlus size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-slate-900 dark:text-white">
+                  <div className="text-sm text-slate-900 dark:text-white">
                     Planifier dans l'agenda
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Crée un événement avec heure ajustable
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Événement avec heure ajustable
                   </p>
                 </div>
               </button>
             </li>
 
-            {/* Pause / Reprendre */}
-            {paused ? (
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
+            <li className="my-1 mx-3 border-t border-slate-100 dark:border-slate-800" />
+
+            {/* Pause / Reprendre — toggle direct sans sous-menu */}
+            <li>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  if (paused) {
                     resume(habit.id);
                     toast.success(`« ${habit.name} » a repris`);
-                    setOpen(false);
-                  }}
-                  className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                    <Play size={16} className="text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-slate-900 dark:text-white">
-                      Reprendre l'habitude
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {pausedUntil && `En pause jusqu'au ${format(pausedUntil, 'd MMM', { locale: fr })}`}
-                    </p>
-                  </div>
-                </button>
-              </li>
-            ) : (
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => setPauseSubmenuOpen(v => !v)}
-                  className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                    <Pause size={16} className="text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-slate-900 dark:text-white">
-                      Mettre en pause
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Vacances, maladie… le streak reste intact
-                    </p>
-                  </div>
-                </button>
-                {pauseSubmenuOpen && (
-                  <div className="bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700">
-                    {[
-                      { label: "Jusqu'à demain", get: pausePresets.tomorrow },
-                      { label: 'Fin de la semaine', get: pausePresets.endOfWeek },
-                      { label: 'Fin du mois', get: pausePresets.endOfMonth },
-                    ].map(preset => (
-                      <button
-                        key={preset.label}
-                        type="button"
-                        onClick={() => {
-                          const until = preset.get();
-                          pauseUntil(habit.id, until);
-                          toast.success(`« ${habit.name} » en pause`, {
-                            description: `Jusqu'au ${format(until, 'd MMMM', { locale: fr })}`,
-                          });
-                          setOpen(false);
-                          setPauseSubmenuOpen(false);
-                        }}
-                        className="w-full text-left px-12 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
+                  } else {
+                    pauseUntil(habit.id, INDEFINITE_PAUSE_DATE);
+                    toast.success(`« ${habit.name} » en pause`, {
+                      description: 'Le streak reste intact jusqu\'à reprise',
+                    });
+                  }
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+              >
+                {paused ? (
+                  <CirclePlay size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                ) : (
+                  <CircleSlash size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
                 )}
-              </li>
-            )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-slate-900 dark:text-white">
+                    {paused ? 'Reprendre l\'habitude' : 'Mettre en pause'}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {paused ? 'Réactiver le suivi' : 'Vacances, maladie… streak conservé'}
+                  </p>
+                </div>
+                {paused && (
+                  <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
+                )}
+              </button>
+            </li>
           </ul>
         </motion.div>
       )}
