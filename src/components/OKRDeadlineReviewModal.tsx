@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, X, Clock, Calendar, AlarmClock } from 'lucide-react';
+import { CheckCircle2, X, Clock, CheckCircle } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 
 type Category = { id: string; name: string; color: string };
@@ -19,10 +19,10 @@ type Props = {
 
 /**
  * Popup affiché à l'ouverture de la page OKR pour les objectifs dont la
- * deadline est atteinte (endDate <= today) et qui ne sont pas encore
- * complétés. L'utilisateur peut éditer les champs avant de cliquer Valider —
- * la carte s'anime alors vers le bouton "OKR terminés" en haut à droite,
- * puis l'OKR est marqué completed.
+ * deadline est atteinte. Reprend exactement le design de la carte OKR de
+ * OKRPage (chip catégorie, dates, titre, progression, KR avec currentValue
+ * éditable inline, temps effectué). Ajoute en bas un bouton « Valider »
+ * qui anime la carte vers le bouton "OKR terminés".
  */
 const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef, onClose, onValidate, resolveColor }) => {
   const [draft, setDraft] = useState<OKR | null>(okr);
@@ -38,7 +38,6 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     validatedRef.current = false;
   }, [okr?.id]);
 
-  // Lock body scroll
   useEffect(() => {
     if (!okr) return;
     const prev = document.body.style.overflow;
@@ -46,7 +45,6 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     return () => { document.body.style.overflow = prev; };
   }, [okr]);
 
-  // ESC pour fermer (seulement en mode edit)
   useEffect(() => {
     if (!okr || phase !== 'edit') return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -58,10 +56,6 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
 
   const category = categories.find(c => c.id === draft.category);
 
-  const updateField = <K extends keyof OKR>(key: K, value: OKR[K]) => {
-    setDraft(prev => prev ? { ...prev, [key]: value } : prev);
-  };
-
   const updateKR = (krId: string, patch: Partial<KeyResult>) => {
     setDraft(prev => prev ? {
       ...prev,
@@ -71,8 +65,18 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
 
   const computeProgress = (krs: KeyResult[]) => {
     if (krs.length === 0) return 0;
-    const sum = krs.reduce((s, kr) => s + (kr.targetValue > 0 ? Math.min((kr.currentValue / kr.targetValue) * 100, 100) : 0), 0);
+    const sum = krs.reduce((s, kr) =>
+      s + (kr.targetValue > 0 ? Math.min((kr.currentValue / kr.targetValue) * 100, 100) : 0)
+    , 0);
     return Math.round(sum / krs.length);
+  };
+
+  const formatTime = (minutes: number) => {
+    if (minutes === 0) return '0min';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m}min`;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
   };
 
   const handleValidate = () => {
@@ -82,7 +86,6 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
       onValidate({ ...draft, progress: computeProgress(draft.keyResults), completed: true });
     };
     if (!cardRef.current || !flyTargetRef.current) {
-      // Fallback : pas d'animation, valide direct
       commit();
       return;
     }
@@ -93,9 +96,6 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     const scale = Math.max(0.08, targetRect.width / cardRect.width);
     setFlyTarget({ x: dx, y: dy, scale });
     setPhase('flying');
-    // Fallback : si onAnimationComplete ne se déclenche pas (Framer ne tire pas
-    // toujours l'event quand le composant est démonté pendant l'anim), on
-    // commit après la durée prévue + marge. La duration est 0.7s côté card.
     window.setTimeout(commit, 800);
   };
 
@@ -106,10 +106,8 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
   };
 
   const progress = computeProgress(draft.keyResults);
-  const accent = category ? resolveColor(category.color) : '#3B82F6';
-
-  // Pour l'input date HTML
-  const endDateInput = draft.endDate ? draft.endDate.split('T')[0] : '';
+  const doneMins = draft.keyResults.reduce((sum, kr) => sum + Math.round(kr.currentValue * kr.estimatedTime), 0);
+  const totalMins = draft.keyResults.reduce((sum, kr) => sum + Math.round(kr.estimatedTime * kr.targetValue), 0);
 
   return createPortal(
     <AnimatePresence>
@@ -125,7 +123,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
         <motion.div
           ref={cardRef}
           key="card"
-          initial={{ scale: 0.85, opacity: 0, y: 40 }}
+          initial={{ scale: 0.9, opacity: 0, y: 30 }}
           animate={
             phase === 'flying' && flyTarget
               ? { x: flyTarget.x, y: flyTarget.y, scale: flyTarget.scale, opacity: 0, rotate: 8 }
@@ -138,193 +136,151 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
           }
           onAnimationComplete={() => { if (phase === 'flying') handleFlyEnd(); }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          className="relative w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh]"
+          style={{
+            backgroundColor: 'rgb(var(--color-surface))',
+            border: '1px solid rgb(var(--color-border))',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
         >
           {/* Drag handle mobile */}
-          <div className="sm:hidden flex justify-center pt-2 pb-1">
+          <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
             <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
           </div>
 
-          {/* Header avec bandeau « deadline atteinte » */}
-          <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: accent + '20' }}
-                >
-                  <AlarmClock size={20} style={{ color: accent }} />
+          {/* Close (X) */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors z-10"
+            aria-label="Fermer"
+          >
+            <X size={16} />
+          </button>
+
+          {/* Carte OKR — reprend exactement le design de OKRPage TaskCard */}
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="flex justify-between items-start mb-4 gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap"
+                    style={{
+                      backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)',
+                      color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))',
+                    }}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}
+                    />
+                    <span>{category?.name ?? draft.category}</span>
+                  </span>
                 </div>
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: accent }}>
-                    Deadline atteinte
-                  </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300">
-                    Faites le point sur cet objectif avant de le clôturer.
-                  </div>
+                <div className="flex items-center justify-center gap-2 mb-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  <span>{new Date(draft.startDate).toLocaleDateString('fr-FR')}</span>
+                  <span>→</span>
+                  <span>{new Date(draft.endDate).toLocaleDateString('fr-FR')}</span>
                 </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="Fermer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
-
-          {/* Body — carte éditable */}
-          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
-            {/* Catégorie chip */}
-            {category && (
-              <span
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                style={{ backgroundColor: accent + '20', color: accent }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accent }} />
-                {category.name}
-              </span>
-            )}
-
-            {/* Titre */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                Objectif
-              </label>
-              <input
-                type="text"
-                value={draft.title}
-                onChange={(e) => updateField('title', e.target.value)}
-                className="w-full px-3 py-2 text-base font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                Description
-              </label>
-              <textarea
-                value={draft.description}
-                onChange={(e) => updateField('description', e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-            </div>
-
-            {/* Deadline */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                Deadline
-              </label>
-              <div className="relative">
-                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input
-                  type="date"
-                  value={endDateInput}
-                  onChange={(e) => updateField('endDate', e.target.value ? new Date(e.target.value).toISOString() : draft.endDate)}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <h3 className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
+                <p className="text-xs sm:text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{draft.description}</p>
               </div>
             </div>
 
-            {/* Progress global */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-              <div className="relative w-14 h-14 shrink-0">
-                <svg className="-rotate-90" width="56" height="56" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="22" stroke="rgb(226,232,240)" className="dark:stroke-slate-700" strokeWidth="6" fill="none" />
+            <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
+                <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-border-muted))" strokeWidth="8" fill="none" />
                   <circle
-                    cx="28" cy="28" r="22"
-                    stroke={accent}
-                    strokeWidth="6"
+                    cx="40" cy="40" r="32"
+                    stroke="rgb(var(--color-accent))"
+                    strokeWidth="8"
                     fill="none"
                     strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 22}`}
-                    strokeDashoffset={2 * Math.PI * 22 * (1 - Math.min(progress, 100) / 100)}
-                    style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+                    strokeDasharray={`${2 * Math.PI * 32}`}
+                    strokeDashoffset={2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)}
                   />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {progress}%
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-lg sm:text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
                 </div>
               </div>
-              <div className="flex-1">
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Progression globale</div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {draft.keyResults.filter(k => k.currentValue >= k.targetValue && k.targetValue > 0).length} / {draft.keyResults.length} KR atteints
+
+              <div className="flex-1 w-full">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression globale</span>
+                  <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
+                </div>
+                <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                  <div className="h-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }} />
                 </div>
               </div>
             </div>
 
-            {/* Key Results éditables */}
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-2">
-                Résultats clés
-              </label>
-              <div className="space-y-2">
-                {draft.keyResults.map((kr) => {
-                  const krProgress = kr.targetValue > 0 ? (kr.currentValue / kr.targetValue) * 100 : 0;
-                  const done = krProgress >= 100;
-                  return (
-                    <div key={kr.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
-                      <input
-                        type="text"
-                        value={kr.title}
-                        onChange={(e) => updateKR(kr.id, { title: e.target.value })}
-                        className="w-full bg-transparent text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none mb-2"
-                      />
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          value={kr.currentValue}
-                          onChange={(e) => {
-                            const v = Number(e.target.value);
-                            updateKR(kr.id, { currentValue: v, completed: v >= kr.targetValue });
-                          }}
-                          className="w-16 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        <span className="text-xs text-slate-500 dark:text-slate-400">/</span>
-                        <input
-                          type="number"
-                          value={kr.targetValue}
-                          onChange={(e) => updateKR(kr.id, { targetValue: Number(e.target.value) })}
-                          className="w-16 px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{kr.unit}</span>
-                        <div className="flex-1 ml-2 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-300 ${done ? 'bg-green-500' : 'bg-blue-500'}`}
-                            style={{ width: `${Math.min(krProgress, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-8 text-right shrink-0 flex items-center gap-0.5">
-                          <Clock size={10} /> {kr.estimatedTime}m
+            <div className="space-y-3">
+              <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
+              {draft.keyResults.map((keyResult) => {
+                const krProgress = keyResult.targetValue > 0 ? (keyResult.currentValue / keyResult.targetValue) * 100 : 0;
+                return (
+                  <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                    <div className="flex justify-between items-center mb-3 gap-2">
+                      <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <span className="text-[10px] sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                          <Clock size={12} />
+                          {keyResult.estimatedTime}min
                         </span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <input
+                          type="number"
+                          value={keyResult.currentValue}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            updateKR(keyResult.id, { currentValue: v, completed: v >= keyResult.targetValue });
+                          }}
+                          className="w-16 sm:w-20 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none"
+                          style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))', borderColor: 'rgb(var(--color-border))' }}
+                        />
+                        <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
+                      </div>
+
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                          <div className={`h-1.5 rounded-full transition-all duration-500 ${krProgress >= 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+
+            {totalMins > 0 && (
+              <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                <div className="flex items-center gap-1.5">
+                  <Clock size={13} style={{ color: 'rgb(var(--color-text-muted))' }} />
+                  <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Temps effectué</span>
+                </div>
+                <span className="text-xs font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  {formatTime(doneMins)} <span style={{ color: 'rgb(var(--color-text-muted))' }}>/ {formatTime(totalMins)}</span>
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Footer */}
-          <div className="px-5 sm:px-6 pt-3 pb-3 border-t border-slate-200 dark:border-slate-700 shrink-0 flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-            >
-              Plus tard
-            </button>
+          {/* Footer — bouton Valider seul */}
+          <div className="px-6 pt-3 pb-4 border-t shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <button
               onClick={handleValidate}
               disabled={phase !== 'edit'}
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 shadow-md shadow-green-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 shadow-md shadow-green-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               <CheckCircle2 size={16} />
-              Valider et terminer
+              Valider
             </button>
           </div>
         </motion.div>
