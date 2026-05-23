@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info } from 'lucide-react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 
@@ -128,49 +128,45 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
 
         {/* Filters */}
         <div className="grid grid-cols-2 gap-2">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer"
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-primary))',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgb(107,114,128)' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 0.5rem center',
-              backgroundSize: '1.2em 1.2em',
-              paddingRight: '2rem'
-            }}
-          >
-            <option value="">Toutes catégories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.name}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer pr-8"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+                color: 'rgb(var(--color-text-primary))'
+              }}
+            >
+              <option value="">Toutes catégories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
+          </div>
 
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer"
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-primary))',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgb(107,114,128)' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 0.5rem center',
-              backgroundSize: '1.2em 1.2em',
-              paddingRight: '2rem'
-            }}
-          >
-            <option value="">Toutes priorités</option>
-            <option value="1">Priorité 1</option>
-            <option value="2">Priorité 2</option>
-            <option value="3">Priorité 3</option>
-            <option value="4">Priorité 4</option>
-            <option value="5">Priorité 5</option>
-          </select>
+          <div className="relative">
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer pr-8"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+                color: 'rgb(var(--color-text-primary))'
+              }}
+            >
+              <option value="">Toutes priorités</option>
+              <option value="1">Priorité 1</option>
+              <option value="2">Priorité 2</option>
+              <option value="3">Priorité 3</option>
+              <option value="4">Priorité 4</option>
+              <option value="5">Priorité 5</option>
+            </select>
+            <ChevronDown size={16} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
+          </div>
         </div>
       </div>
 
