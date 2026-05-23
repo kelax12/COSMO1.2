@@ -246,8 +246,10 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
             ))}
           </div>
 
-          {/* Animated content */}
-          <div className="overflow-hidden" style={{ minHeight: 412 }}>
+          {/* Animated content — minHeight pour stabiliser pendant l'anim, pas
+              de overflow-hidden ni maxHeight (le scroll est géré par le parent
+              flex-1 overflow-y-auto). */}
+          <div style={{ minHeight: 412 }}>
             <AnimatePresence mode="wait" custom={direction} initial={false}>
               {step === 1 ? (
                 <motion.div
@@ -259,7 +261,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                   exit="exit"
                   transition={{ duration: 0.2, ease: 'easeInOut' }}
                   className="px-6 py-5 space-y-4"
-                  style={{ maxHeight: 454 }}
                 >
                   {/* Titre */}
                   <div>
@@ -377,7 +378,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                   exit="exit"
                   transition={{ duration: 0.2, ease: 'easeInOut' }}
                   className="px-6 py-5"
-                  style={{ maxHeight: 454 }}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs text-slate-400">Définissez comment mesurer votre succès</p>

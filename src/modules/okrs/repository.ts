@@ -23,6 +23,23 @@ const completedAt = (daysFromNow: number): string => getDate(daysFromNow);
 
 function createDemoOkrs(): OKR[] {
   return [
+  // ── OKR DEADLINE AUJOURD'HUI (déclenche le popup de revue à l'ouverture) ──
+  {
+    id: 'okr-due-today',
+    title: 'Lancer la newsletter COSMO #1',
+    description: 'Première édition à publier ce soir — finaliser les derniers envois',
+    category: 'cat-5',
+    progress: 75,
+    completed: false,
+    keyResults: [
+      { id: 'kr-dt-1', title: 'Rédiger 3 articles de fond',          currentValue: 3,  targetValue: 3,  unit: 'articles',    completed: true,  estimatedTime: 120, completedAt: completedAt(0) },
+      { id: 'kr-dt-2', title: 'Mettre en page dans Mailchimp',       currentValue: 1,  targetValue: 1,  unit: 'template',    completed: true,  estimatedTime: 60,  completedAt: completedAt(0) },
+      { id: 'kr-dt-3', title: 'Envoyer à la liste d\'abonnés',       currentValue: 30, targetValue: 50, unit: 'envois',      completed: false, estimatedTime: 30,  completedAt: null },
+    ],
+    startDate: getDate(-14),
+    endDate: getDate(0),
+  },
+
   // ── OKRs ACTUELS (en cours) — KR partiellement complétés récemment ───
   {
     id: 'okr-1',
