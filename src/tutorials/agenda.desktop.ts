@@ -17,22 +17,22 @@ const CALENDAR_GRID = '[data-tutorial-id="agenda-calendar-grid"]';
 
 export const agendaTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Votre agenda',
+    title: 'Contrôle total du planning',
     description:
-      "Visualisez événements et tâches planifiées. Le drag-and-drop relie vos tâches non planifiées au calendrier en un geste.",
+      "Visualisez tout. Glissez vos tâches non planifiées dans le calendrier en un clic.",
   },
   {
-    title: 'Changer de vue',
+    title: 'Adaptez votre vue',
     description:
-      "Jour pour le détail heure par heure. Semaine pour la vue d'ensemble (recommandée). Mois pour le contexte large.",
+      "Détail heure par heure (Jour), vue d'ensemble (Semaine), ou contexte large (Mois).",
     target: '[data-tutorial-id="agenda-view-switcher"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Panneau Tâches',
+    title: 'Accès rapide aux tâches',
     description:
-      "Ce bouton ouvre la barre latérale listant toutes vos tâches non planifiées, prêtes à glisser dans le calendrier.",
+      "Ouvrez la liste des tâches à planifier. Glissez-en une sur un créneau pour l'ajouter à l'agenda.",
     target: '[data-tutorial-id="agenda-task-sidebar-toggle"]',
     cardPlacement: 'bottom',
     action: 'custom',
@@ -51,9 +51,9 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     },
   },
   {
-    title: 'Glisser une tâche vers le calendrier',
+    title: 'Du panneau au calendrier',
     description:
-      "Saisissez une tâche dans le panneau, glissez-la sur un créneau horaire et lâchez — elle devient un événement planifié, calé sur la colonne du jour.",
+      "Saisissez une tâche, glissez-la sur un créneau. Elle s'ajoute à votre agenda en un geste.",
     target: '[data-tutorial-id="agenda-first-task"]',
     cardPlacement: 'right',
     ghostAnimation: 'drag-place',
@@ -65,7 +65,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
   {
     title: 'Étirer pour rallonger',
     description:
-      "Une fois posé, attrapez le bord inférieur de l'événement et glissez vers le bas pour allonger sa durée. La démo le fait pour vous.",
+      "Attrapez le bas de l'événement et glissez vers le bas pour l'allonger.",
     target: CALENDAR_GRID,
     cardPlacement: 'inside',
     ghostAnimation: 'resize-grow',
@@ -77,7 +77,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
   {
     title: 'Créer depuis un créneau vide',
     description:
-      "Pas envie de drag ? Cliquez-glissez sur une plage horaire vide pour ouvrir directement le formulaire d'événement, pré-rempli à cette heure.",
+      "Sélectionnez un créneau horaire pour y créer un événement",
     target: CALENDAR_GRID,
     cardPlacement: 'inside',
     ghostAnimation: 'select-create',
