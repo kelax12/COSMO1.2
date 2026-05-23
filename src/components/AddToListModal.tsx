@@ -81,23 +81,17 @@ const InlineForm: React.FC<{
       className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3"
     >
       {/* Name input */}
-      <div className="flex items-center gap-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 px-3 h-11 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-        <div
-          className="w-3 h-3 rounded-full shrink-0"
-          style={{ backgroundColor: resolveColor(color) }}
-        />
-        <input
-          ref={inputRef}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && name.trim()) onSave(name.trim(), color);
-            if (e.key === 'Escape') onCancel();
-          }}
-          placeholder="Nom de la liste"
-          className="flex-1 bg-transparent text-sm font-medium focus:outline-none text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))]"
-        />
-      </div>
+      <input
+        ref={inputRef}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && name.trim()) onSave(name.trim(), color);
+          if (e.key === 'Escape') onCancel();
+        }}
+        placeholder="Nom de la liste"
+        className="w-full h-11 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] transition-all"
+      />
 
       {/* Color row */}
       <ColorRow selected={color} onChange={setColor} />
@@ -294,12 +288,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 )}
               </AnimatePresence>
 
-              {/* Separator */}
-              {lists.length > 0 && (
-                <div className="border-t border-[rgb(var(--color-border))] my-2" />
-              )}
-
-              {/* Empty state */}
+              {/* List items */}
               {lists.length === 0 && !creating && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">
@@ -308,7 +297,8 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 </div>
               )}
 
-              {/* List items */}
+              {lists.length > 0 && (
+                <div className="border-t border-[rgb(var(--color-border))] mt-2 divide-y divide-[rgb(var(--color-border))]">
               {lists.map((list) => {
                 const isSelected = list.taskIds.includes(taskId);
                 const color      = resolveColor(list.color);
@@ -318,7 +308,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
 
                 if (isEditing) {
                   return (
-                    <div key={list.id}>
+                    <div key={list.id} className="py-2">
                       <InlineForm
                         initialName={list.name}
                         initialColor={list.color}
@@ -331,7 +321,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 }
 
                 return (
-                  <div key={list.id} className="group flex items-center gap-3 px-3 py-3.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleToggle(list.id)}>
+                  <div key={list.id} className="group flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleToggle(list.id)}>
                     {/* Colour dot */}
                     <div
                       className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -420,6 +410,8 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                   </div>
                 );
               })}
+                </div>
+              )}
             </div>
 
             {/* ── Footer ── */}
