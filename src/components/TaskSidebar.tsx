@@ -227,7 +227,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                        Priorité {task.priority}
+                        P{task.priority}
                       </span>
                       {task.isCollaborative && task.collaborators && (
                         <CollaboratorAvatars collaborators={task.collaborators} friends={friends} size="sm" />

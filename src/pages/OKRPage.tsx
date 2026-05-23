@@ -358,8 +358,8 @@ const OKRPage: React.FC = () => {
                       onClick={() => setSelectedCategory(category.id)}
                       className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
                       style={{
-                        backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '30',
-                        borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '80',
+                        backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
+                        borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
                         color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
                         boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
                       }}>
