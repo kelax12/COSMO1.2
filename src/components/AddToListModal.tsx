@@ -81,7 +81,7 @@ const InlineForm: React.FC<{
       className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3"
     >
       {/* Name input */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 px-3 h-11 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
         <div
           className="w-3 h-3 rounded-full shrink-0"
           style={{ backgroundColor: resolveColor(color) }}
@@ -331,7 +331,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 }
 
                 return (
-                  <div key={list.id} className="group flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleToggle(list.id)}>
+                  <div key={list.id} className="group flex items-center gap-3 px-3 py-3.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleToggle(list.id)}>
                     {/* Colour dot */}
                     <div
                       className="w-2.5 h-2.5 rounded-full shrink-0"
