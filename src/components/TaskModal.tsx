@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
-import { X, Users, AlertCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
+import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -15,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import { DatePicker } from '@/components/ui/date-picker';
-import CollaboratorAvatars from './CollaboratorAvatars';
 import ColorSettingsModal from './ColorSettingsModal';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -136,10 +135,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
   const autoPromoteDoneRef = useRef<Set<string>>(new Set());
-
-  const getCategoryColor = (id: string) => {
-    return categories.find((cat) => cat.id === id)?.color || '#9CA3AF';
-  };
 
   // Close collaborator section on outside click
   useEffect(() => {
@@ -1396,36 +1391,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                       </div>
                     </div>
 
-                  {/* Task Preview */}
-                  <div>
-                    <div className="flex items-center mb-3">
-                      <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Aperçu de la tâche
-                      </label>
-                    </div>
-                    <div className="p-4 rounded-lg border transition-colors flex items-center justify-between" style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      borderColor: 'rgb(var(--color-border))'
-                    }}>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 rounded" style={{ backgroundColor: getCategoryColor(formData.category) }} />
-                          <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                            {formData.name || 'Nom de la tâche'}
-                          </span>
-                          {formData.bookmarked && <BookmarkCheck size={16} className="text-yellow-500" fill="#EAB308" />}
-                        </div>
-                        <div className="flex items-center gap-4 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          <span>Priorité {formData.priority}</span>
-                          <span>{formData.estimatedTime} min</span>
-                          {formData.completed && <span className="text-blue-600 dark:text-blue-400">✓ Complétée</span>}
-                        </div>
-                      </div>
-                      {collaborators.length > 0 && (
-                        <CollaboratorAvatars collaborators={collaborators} friends={friends} size="md" />
-                      )}
-                    </div>
-                  </div>
                 </div>
                 )} {/* end step 2 */}
 
