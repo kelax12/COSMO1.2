@@ -2,13 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -135,31 +128,49 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
 
         {/* Filters */}
         <div className="grid grid-cols-2 gap-2">
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Toutes catégories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer"
+            style={{
+              backgroundColor: 'rgb(var(--color-surface))',
+              borderColor: 'rgb(var(--color-border))',
+              color: 'rgb(var(--color-text-primary))',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgb(107,114,128)' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0.5rem center',
+              backgroundSize: '1.2em 1.2em',
+              paddingRight: '2rem'
+            }}
+          >
+            <option value="">Toutes catégories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
 
-          <Select value={filterPriority} onValueChange={setFilterPriority}>
-            <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Priorité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Toutes priorités</SelectItem>
-              <SelectItem value="1">Priorité 1</SelectItem>
-              <SelectItem value="2">Priorité 2</SelectItem>
-              <SelectItem value="3">Priorité 3</SelectItem>
-              <SelectItem value="4">Priorité 4</SelectItem>
-              <SelectItem value="5">Priorité 5</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer"
+            style={{
+              backgroundColor: 'rgb(var(--color-surface))',
+              borderColor: 'rgb(var(--color-border))',
+              color: 'rgb(var(--color-text-primary))',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgb(107,114,128)' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0.5rem center',
+              backgroundSize: '1.2em 1.2em',
+              paddingRight: '2rem'
+            }}
+          >
+            <option value="">Toutes priorités</option>
+            <option value="1">Priorité 1</option>
+            <option value="2">Priorité 2</option>
+            <option value="3">Priorité 3</option>
+            <option value="4">Priorité 4</option>
+            <option value="5">Priorité 5</option>
+          </select>
         </div>
       </div>
 
