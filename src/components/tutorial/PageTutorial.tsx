@@ -181,9 +181,22 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
     if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
 
     const delay = step.actionDelay ?? 800;
-    actionTimerRef.current = setTimeout(() => {
+    actionTimerRef.current = setTimeout(async () => {
       const el = findTarget(step.target);
-      runAction(step, el);
+      await runAction(step, el);
+      // Re-mesure après l'action (couvre les customAction qui changent le DOM,
+      // ex. ouverture du sidebar tâches avant un drag-and-resize)
+      const newEl = findTarget(step.target);
+      const newRect = getRect(newEl);
+      if (newRect) {
+        setTargetRect(newRect);
+        const needsGhost = step.action === 'drag-ghost' || step.action === 'drag-and-resize';
+        if (needsGhost && step.dragTo) {
+          const dst = findTarget(step.dragTo);
+          const toRect = getRect(dst);
+          setDragGhost(newRect && toRect ? { from: newRect, to: toRect } : null);
+        }
+      }
     }, delay);
 
     return () => {
@@ -276,6 +289,16 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
           left: targetRect.left + targetRect.width + 56,
         };
         arrowStyle = { top: cy - 22, left: targetRect.left + targetRect.width + 6 };
+        break;
+      case 'inside':
+        // Carte à l'intérieur du rect cible, angle haut-droite (utile quand la
+        // cible occupe tout l'écran et qu'aucune direction externe n'est visible)
+        cardStyle = {
+          top: Math.max(16, targetRect.top + 60),
+          left: Math.max(16, Math.min(window.innerWidth - CARD_W - 16,
+            targetRect.left + targetRect.width - CARD_W - 24)),
+        };
+        // Pas de flèche pour 'inside' (on est à l'intérieur de l'élément)
         break;
       default:
         cardStyle = {
@@ -486,8 +509,8 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
           />
         )}
 
-        {/* Flèche pointant vers la cible */}
-        {targetRect && (
+        {/* Flèche pointant vers la cible (masquée pour 'inside') */}
+        {targetRect && placement !== 'inside' && (
           <div className="absolute pointer-events-none" style={arrowStyle}>
             <TutorialArrow side={arrowSide} color={accentColor} />
           </div>

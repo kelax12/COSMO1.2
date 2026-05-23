@@ -178,12 +178,13 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <p>Aucune tâche trouvée</p>
           </div>
         ) : (
-          availableTasks.map(task => {
+          availableTasks.map((task, idx) => {
             const isPlaced = isTaskPlacedInCalendar(task.id);
-            
+
             return (
                   <div
                     key={task.id}
+                    data-tutorial-id={idx === 0 ? 'agenda-first-task' : undefined}
                     onClick={() => setSelectedTaskForModal(task)}
                     className={`external-event rounded-lg p-3 border group select-none ${
                       isPlaced ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:shadow-md'

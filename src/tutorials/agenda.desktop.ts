@@ -21,19 +21,31 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     action: 'pulse',
   },
   {
-    title: 'Ouvrir le panneau Tâches',
+    title: 'Panneau Tâches',
     description:
-      "Ce bouton ouvre la barre latérale qui liste toutes vos tâches non planifiées. On l'ouvre maintenant.",
+      "Ce bouton ouvre la barre latérale listant toutes vos tâches non planifiées, prêtes à glisser dans le calendrier.",
     target: '[data-tutorial-id="agenda-task-sidebar-toggle"]',
     cardPlacement: 'bottom',
-    action: 'click',
-    actionDelay: 1500,
+    action: 'custom',
+    actionDelay: 1200,
+    customAction: async (target) => {
+      if (!target) return;
+      // Garantit que le sidebar est ouvert à la fin (nécessaire pour l'étape suivante)
+      const isOpen = !!document.getElementById('external-events-container');
+      if (isOpen) {
+        // Ferme puis rouvre pour montrer l'animation
+        target.click();
+        await new Promise(r => setTimeout(r, 700));
+      }
+      target.click();
+      await new Promise(r => setTimeout(r, 650));
+    },
   },
   {
     title: 'Glisser une tâche vers le calendrier',
     description:
-      "Démonstration en cours : on saisit une tâche, on la glisse sur la grille, on la lâche → elle devient un événement planifié à cette heure.",
-    target: '[data-tutorial-id="agenda-task-sidebar-toggle"]',
+      "Saisissez une tâche dans le panneau, glissez-la sur un créneau horaire et lâchez — elle devient un événement planifié.",
+    target: '[data-tutorial-id="agenda-first-task"]',
     cardPlacement: 'right',
     action: 'drag-and-resize',
     dragTo: '[data-tutorial-id="agenda-calendar-grid"]',
@@ -46,7 +58,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     description:
       "Une fois lâchée, attrapez le bord inférieur de l'événement et glissez vers le bas pour allonger sa durée. La démo le fait pour vous.",
     target: '[data-tutorial-id="agenda-calendar-grid"]',
-    cardPlacement: 'left',
+    cardPlacement: 'inside',
     action: 'pulse',
     dimLevel: 'light',
   },
@@ -55,7 +67,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     description:
       "Pas envie de drag ? Un simple clic sur un créneau libre ouvre directement le formulaire d'événement, pré-rempli à cette heure.",
     target: '[data-tutorial-id="agenda-calendar-grid"]',
-    cardPlacement: 'left',
+    cardPlacement: 'inside',
     action: 'pulse',
     dimLevel: 'light',
   },

@@ -12,7 +12,7 @@
  */
 
 export type ArrowSide = 'top' | 'bottom' | 'left' | 'right';
-export type CardPlacement = 'top' | 'bottom' | 'left' | 'right' | 'center';
+export type CardPlacement = 'top' | 'bottom' | 'left' | 'right' | 'center' | 'inside';
 
 export interface TutorialStep {
   /** Titre court affiché dans la carte */
