@@ -1,42 +1,66 @@
 import { TutorialStep } from '@/components/tutorial/types';
 
 /**
- * Tutoriel Agenda — MOBILE (vue agenda verticale, pas de drag).
- * Sur mobile, FullCalendar est forcé en vue agenda (liste). Le drag-and-drop
- * n'est PAS supporté — on l'indique clairement à l'utilisateur.
+ * Tutoriel Agenda — MOBILE.
+ *
+ * UX mobile spécifique :
+ *  - Pas de drag-and-drop tâche → grille (réservé au desktop)
+ *  - Vue en colonne verticale par jour (FullCalendar timeGridDay)
+ *  - Bandeau de dates horizontal en haut + tab bar fixe en bas
+ *  - Modales en bottom-sheet
+ *
+ * Toutes les cartes utilisent `cardPlacement: 'bottom'` (ou 'inside' pour
+ * la grille calendrier) — le code de PageTutorial clampe automatiquement
+ * la position horizontale dans la viewport, donc aucune carte ne sort de
+ * l'écran sur les tailles iPhone SE (375) → iPhone 14 Pro Max (430).
  */
 export const agendaTutorialStepsMobile: TutorialStep[] = [
   {
     title: 'Votre agenda',
     description:
-      "Sur mobile, l'agenda s'affiche en liste verticale par jour — pensé pour le scroll au pouce.",
+      "Vue verticale par jour, optimisée pour le scroll au pouce. Touchez les zones surlignées pour découvrir l'essentiel.",
   },
   {
-    title: 'Bandeau de dates',
+    title: 'Naviguer dans les jours',
     description:
-      "En haut, un carrousel horizontal affiche les 7 jours suivants. Touchez une date pour la centrer.",
-  },
-  {
-    title: 'Créer un événement',
-    description:
-      "Le bouton « + » dans le header mobile ouvre le formulaire. L'heure est pré-remplie à l'heure courante.",
-  },
-  {
-    title: 'Panneau Tâches',
-    description:
-      "Cette icône ouvre vos tâches non planifiées. Touchez une tâche puis « Planifier dans l'agenda » pour la transformer en événement.",
-    target: '[data-tutorial-id="agenda-task-sidebar-toggle"]',
+      "Faites glisser horizontalement pour parcourir vos prochaines journées. Touchez une date pour la centrer dans la grille ci-dessous.",
+    target: '[data-tutorial-id="agenda-mobile-day-strip"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Naviguer entre les mois',
+    title: "Trois vues d'agenda",
     description:
-      "En vue Mois, les flèches gauche/droite changent de mois. Touchez une date pour zoomer sur la journée.",
+      "Jour pour le détail heure par heure, 2J pour comparer deux jours, Mois pour le contexte large. Bascule en un toucher.",
+    target: '[data-tutorial-id="agenda-mobile-view-switcher"]',
+    cardPlacement: 'bottom',
+    action: 'pulse',
   },
   {
-    title: 'Astuce : drag réservé au desktop',
+    title: 'Vos tâches à planifier',
     description:
-      "Le glisser-déposer d'une tâche sur la grille n'existe que sur ordinateur. Sur mobile, créez l'événement via le bouton + et choisissez la tâche associée.",
+      "Ce bouton ouvre le panneau de vos tâches non planifiées. Touchez-en une puis « Planifier dans l'agenda » — le glisser-déposer est réservé au desktop.",
+    target: '[data-tutorial-id="agenda-mobile-tasks-toggle"]',
+    cardPlacement: 'bottom',
+    action: 'pulse',
+  },
+  {
+    title: 'Créer un événement',
+    description:
+      "Le « + » ouvre le formulaire en bottom-sheet, pré-rempli à l'heure courante du jour sélectionné.",
+    target: '[data-tutorial-id="agenda-mobile-add-button"]',
+    cardPlacement: 'bottom',
+    action: 'pulse',
+  },
+  {
+    title: 'Toucher un créneau libre',
+    description:
+      "Maintenez votre doigt sur une plage horaire vide dans la grille pour créer un événement directement à cette heure.",
+    target: '[data-tutorial-id="agenda-mobile-calendar"]',
+    cardPlacement: 'inside',
+    // 'custom' avec un no-op évite le gros pulse autour de toute la grille
+    action: 'custom',
+    customAction: () => { /* spotlight uniquement */ },
+    dimLevel: 'light',
   },
 ];
