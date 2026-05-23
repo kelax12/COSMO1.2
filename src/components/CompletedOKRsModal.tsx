@@ -200,8 +200,8 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                                     style={{ width: `${Math.min(krProgress, 100)}%` }}
                                   />
                                 </div>
-                                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-14 text-right shrink-0">
-                                  {kr.currentValue}/{kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}
+                                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-10 text-right shrink-0">
+                                  {kr.currentValue}/{kr.targetValue}
                                 </span>
                               </div>
                             );
