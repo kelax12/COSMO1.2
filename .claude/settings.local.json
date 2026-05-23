@@ -136,7 +136,16 @@
       "Bash(netstat -ano)",
       "Bash(findstr :3000)",
       "Bash(findstr :5173)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:3000/src/components/AddToListModal.tsx\")",
+      "Bash(curl -s \"http://localhost:3000/src/components/AddToListModal.tsx\")",
+      "Bash(curl -s -o /dev/null -w \"tasks=%{http_code}\\\\n\" \"http://localhost:3000/src/pages/TasksPage.tsx\")",
+      "Bash(curl -s -o /dev/null -w \"okr-repo=%{http_code}\\\\n\" \"http://localhost:3000/src/modules/okrs/repository.ts\")",
+      "Bash(curl -s -o /dev/null -w \"okr-sup=%{http_code}\\\\n\" \"http://localhost:3000/src/modules/okrs/supabase.repository.ts\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/src/components/HabitActionsMenu.tsx\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/\")",
+      "Bash(git checkout *)",
+      "Bash(curl -s -H \"Accept: text/plain\" \"http://localhost:3000/@vite/client\" -w \"\\\\n%{http_code}\")"
     ]
   }
 }

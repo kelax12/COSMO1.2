@@ -15,7 +15,7 @@ export const PRIORITY_RANGE_KEY = 'cosmo_priority_range';
  * Default favorite colors
  */
 export const DEFAULT_FAVORITE_COLORS: string[] = [
-  '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899'
+  '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899', '#06B6D4', '#14B8A6'
 ];
 
 /**

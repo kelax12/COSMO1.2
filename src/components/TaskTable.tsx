@@ -312,7 +312,7 @@ const TaskCard = React.memo(({
           color: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)
         }}
       >
-        P{task.priority}
+        Priorité {task.priority}
       </div>
 
       {task.bookmarked && (

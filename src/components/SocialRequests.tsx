@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UserPlus, Share2, Check, X, User, Send, Clock } from 'lucide-react';
+import { UserPlus, Check, X, User, Send, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -189,8 +189,7 @@ const SocialRequests: React.FC = () => {
         {/* Tâches assignées */}
         {assignedTasks.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-wide flex items-center gap-1.5 mb-3">
-              <Share2 size={12} />
+            <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-3">
               Tâches assignées ({assignedTasks.length})
             </p>
             <div className="space-y-3">
@@ -216,7 +215,7 @@ const SocialRequests: React.FC = () => {
                           perdre de signal lors de l'unification) */}
                       <div className="flex items-center gap-2 mt-1.5">
                         <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))]">
-                          P{task.priority}
+                          Priorité {task.priority}
                         </span>
                         <span className="text-xs text-[rgb(var(--color-text-muted))]">
                           {task.estimatedTime} min
