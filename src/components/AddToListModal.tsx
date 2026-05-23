@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { X, Check, Plus, Pencil, Trash2, Sparkles } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
-
-// ═══════════════════════════════════════════════════════════════════
-// Module lists - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
 import {
   useLists,
   useAddTaskToList,
@@ -20,15 +16,15 @@ type AddToListModalProps = {
   taskId: string;
 };
 
-const COLOR_PALETTE: { key: string; hex: string }[] = [
-  { key: 'blue', hex: '#3B82F6' },
-  { key: 'red', hex: '#EF4444' },
-  { key: 'green', hex: '#10B981' },
-  { key: 'purple', hex: '#8B5CF6' },
-  { key: 'orange', hex: '#F97316' },
-  { key: 'yellow', hex: '#F59E0B' },
-  { key: 'pink', hex: '#EC4899' },
-  { key: 'indigo', hex: '#6366F1' },
+const COLOR_PALETTE: { key: string; hex: string; label: string }[] = [
+  { key: 'blue', hex: '#3B82F6', label: 'Bleu' },
+  { key: 'red', hex: '#EF4444', label: 'Rouge' },
+  { key: 'green', hex: '#10B981', label: 'Vert' },
+  { key: 'purple', hex: '#8B5CF6', label: 'Violet' },
+  { key: 'orange', hex: '#F97316', label: 'Orange' },
+  { key: 'yellow', hex: '#F59E0B', label: 'Jaune' },
+  { key: 'pink', hex: '#EC4899', label: 'Rose' },
+  { key: 'indigo', hex: '#6366F1', label: 'Indigo' },
 ];
 
 const colorMap: Record<string, string> = Object.fromEntries(
@@ -46,18 +42,14 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
   const updateListMutation = useUpdateList();
   const deleteListMutation = useDeleteList();
 
-  // States for create / edit / delete flows
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState<string>('blue');
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState<string>('blue');
-
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // Reset transient states when modal closes
   useEffect(() => {
     if (!isOpen) {
       setCreating(false);
@@ -68,14 +60,22 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
     }
   }, [isOpen]);
 
-  // ESC to close + lock body scroll
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (editingId) { setEditingId(null); return; }
-        if (creating) { setCreating(false); return; }
-        if (confirmDeleteId) { setConfirmDeleteId(null); return; }
+        if (editingId) {
+          setEditingId(null);
+          return;
+        }
+        if (creating) {
+          setCreating(false);
+          return;
+        }
+        if (confirmDeleteId) {
+          setConfirmDeleteId(null);
+          return;
+        }
         onClose();
       }
     };
@@ -91,7 +91,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
   const handleToggleTask = (listId: string) => {
     const list = lists.find((l) => l.id === listId);
     if (!list) return;
-    if (list.type === 'smart') return; // smart lists are computed, not editable membership
+    if (list.type === 'smart') return;
     if (list.taskIds.includes(taskId)) {
       removeTaskFromListMutation.mutate({ taskId, listId });
     } else {
@@ -146,7 +146,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
@@ -158,78 +158,80 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             dragListener={false}
             dragConstraints={{ top: 0 }}
             dragElastic={{ top: 0.05, bottom: 0.5 }}
-            onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 100 || info.velocity.y > 600) onClose();
+            }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[80vh]"
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              paddingBottom: 'env(safe-area-inset-bottom)',
-            }}
+            className="w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl sm:shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] bg-white dark:bg-slate-950"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             {/* Drag handle (mobile) */}
             <div
               className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
               onPointerDown={(e) => dragControls.start(e)}
             >
-              <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+              <div className="w-8 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
-            {/* Header */}
+            {/* Header — editorial serif styling */}
             <div
-              className="flex justify-between items-center px-5 py-3 sm:py-4 border-b shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
-              style={{ borderColor: 'rgb(var(--color-border))' }}
+              className="px-6 pt-6 sm:pt-8 pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
               onPointerDown={(e) => {
                 if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
                 dragControls.start(e);
               }}
             >
-              <div className="flex flex-col">
-                <h2
-                  id="add-to-list-title"
-                  className="text-lg sm:text-xl font-bold leading-tight"
-                  style={{ color: 'rgb(var(--color-text-primary))' }}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h2
+                    id="add-to-list-title"
+                    className="text-3xl sm:text-4xl font-serif font-bold text-slate-900 dark:text-white leading-tight"
+                    style={{ fontFamily: '"Playfair Display", serif' }}
+                  >
+                    Listes
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {lists.length} {lists.length <= 1 ? 'liste' : 'listes'}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  aria-label="Fermer"
+                  className="min-w-11 min-h-11 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
                 >
-                  Ajouter à une liste
-                </h2>
-                <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {lists.length} {lists.length <= 1 ? 'liste disponible' : 'listes disponibles'}
-                </p>
+                  <X size={22} className="text-slate-500 dark:text-slate-400" />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                aria-label="Fermer"
-                className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                style={{ color: 'rgb(var(--color-text-muted))' }}
-              >
-                <X size={22} />
-              </button>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {/* Create new list — collapsed button or expanded form */}
+            {/* Body — scrollable with staggered animation */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3">
+              {/* Create new list */}
               {!creating ? (
-                <button
-                  onClick={() => { setCreating(true); setEditingId(null); }}
-                  className="w-full flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border-2 border-dashed transition-all min-h-[56px] text-left hover:bg-blue-50/50 dark:hover:bg-blue-950/20 monochrome:hover:bg-neutral-100 dark:monochrome:hover:bg-neutral-900"
-                  style={{ borderColor: 'rgb(var(--color-border))' }}
+                <motion.button
+                  onClick={() => {
+                    setCreating(true);
+                    setEditingId(null);
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full group relative overflow-hidden rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 py-4 px-4 transition-all hover:border-blue-400 dark:hover:border-blue-500"
                 >
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-blue-100 dark:bg-blue-950/40 monochrome:bg-neutral-200 dark:monochrome:bg-neutral-800">
-                    <Plus size={18} className="text-blue-600 dark:text-blue-400 monochrome:text-black dark:monochrome:text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-950/20 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex items-center justify-center gap-2">
+                    <Plus size={18} className="text-blue-600 dark:text-blue-400" />
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">Nouvelle liste</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm sm:text-base text-blue-600 dark:text-blue-400 monochrome:text-black dark:monochrome:text-white">
-                      Nouvelle liste
-                    </p>
-                  </div>
-                </button>
+                </motion.button>
               ) : (
-                <div
-                  className="rounded-xl border-2 p-3 space-y-3"
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-xl p-4 border-2"
                   style={{
                     borderColor: resolveColor(newColor),
                     backgroundColor: `${resolveColor(newColor)}0D`,
@@ -239,30 +241,43 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                     autoFocus
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreate();
+                    }}
                     placeholder="Nom de la liste"
-                    className="w-full bg-transparent text-sm sm:text-base font-semibold focus:outline-none placeholder:font-normal"
+                    className="w-full bg-transparent text-lg font-semibold focus:outline-none"
                     style={{ color: 'rgb(var(--color-text-primary))' }}
                   />
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap mt-3">
                     {COLOR_PALETTE.map((c) => (
-                      <button
+                      <motion.button
                         key={c.key}
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => setNewColor(c.key)}
-                        aria-label={`Couleur ${c.key}`}
+                        aria-label={`Couleur ${c.label}`}
                         className="w-7 h-7 rounded-full transition-all"
                         style={{
                           backgroundColor: c.hex,
-                          outline: newColor === c.key ? `2px solid ${c.hex}` : 'none',
+                          outline:
+                            newColor === c.key
+                              ? `3px solid ${c.hex}`
+                              : 'none',
                           outlineOffset: 2,
-                          transform: newColor === c.key ? 'scale(1.1)' : 'scale(1)',
+                          transform:
+                            newColor === c.key
+                              ? 'scale(1.2)'
+                              : 'scale(1)',
                         }}
                       />
                     ))}
                   </div>
-                  <div className="flex gap-2 pt-1">
+                  <div className="flex gap-2 pt-3">
                     <button
-                      onClick={() => { setCreating(false); setNewName(''); }}
+                      onClick={() => {
+                        setCreating(false);
+                        setNewName('');
+                      }}
                       className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                       style={{
                         borderColor: 'rgb(var(--color-border))',
@@ -274,180 +289,256 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                     <button
                       onClick={handleCreate}
                       disabled={!newName.trim()}
-                      className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed monochrome:bg-black monochrome:text-white transition-colors"
+                      className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       Créer
                     </button>
                   </div>
-                </div>
+                </motion.div>
               )}
 
-              {/* Existing lists */}
+              {/* Existing lists with staggered animation */}
               {lists.length === 0 && !creating ? (
-                <div className="py-8 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  <p className="text-sm">Aucune liste pour l'instant</p>
+                <div className="text-center py-8">
+                  <p
+                    className="text-sm"
+                    style={{ color: 'rgb(var(--color-text-muted))' }}
+                  >
+                    Aucune liste pour l'instant
+                  </p>
                 </div>
               ) : (
-                lists.map((list) => {
+                lists.map((list, idx) => {
                   const isAlreadyInList = list.taskIds.includes(taskId);
                   const color = resolveColor(list.color);
                   const isEditing = editingId === list.id;
                   const isSmart = list.type === 'smart';
                   const isConfirmingDelete = confirmDeleteId === list.id;
 
-                  if (isEditing) {
-                    return (
-                      <div
-                        key={list.id}
-                        className="rounded-xl border-2 p-3 space-y-3"
-                        style={{
-                          borderColor: resolveColor(editColor),
-                          backgroundColor: `${resolveColor(editColor)}0D`,
-                        }}
-                      >
-                        <input
-                          autoFocus
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(); }}
-                          className="w-full bg-transparent text-sm sm:text-base font-semibold focus:outline-none"
-                          style={{ color: 'rgb(var(--color-text-primary))' }}
-                        />
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {COLOR_PALETTE.map((c) => (
-                            <button
-                              key={c.key}
-                              onClick={() => setEditColor(c.key)}
-                              aria-label={`Couleur ${c.key}`}
-                              className="w-7 h-7 rounded-full transition-all"
-                              style={{
-                                backgroundColor: c.hex,
-                                outline: editColor === c.key ? `2px solid ${c.hex}` : 'none',
-                                outlineOffset: 2,
-                                transform: editColor === c.key ? 'scale(1.1)' : 'scale(1)',
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <div className="flex gap-2 pt-1">
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                            style={{
-                              borderColor: 'rgb(var(--color-border))',
-                              color: 'rgb(var(--color-text-primary))',
-                            }}
-                          >
-                            Annuler
-                          </button>
-                          <button
-                            onClick={handleSaveEdit}
-                            disabled={!editName.trim()}
-                            className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed monochrome:bg-black monochrome:text-white transition-colors"
-                          >
-                            Enregistrer
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  }
-
                   return (
                     <motion.div
                       key={list.id}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
                       layout
-                      whileTap={{ scale: 0.99 }}
-                      className="group w-full flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border-2 transition-all min-h-[60px]"
-                      style={{
-                        backgroundColor: isAlreadyInList ? `${color}15` : 'rgb(var(--color-surface))',
-                        borderColor: isAlreadyInList ? color : 'rgb(var(--color-border))',
-                      }}
                     >
-                      <button
-                        onClick={() => handleToggleTask(list.id)}
-                        disabled={isSmart}
-                        className="flex items-center gap-3 flex-1 min-w-0 text-left disabled:cursor-default"
-                      >
-                        <div
-                          className="w-1.5 h-10 rounded-full shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p
-                              className="font-semibold text-sm sm:text-base truncate"
-                              style={{ color: 'rgb(var(--color-text-primary))' }}
-                            >
-                              {list.name}
-                            </p>
-                            {isSmart && (
-                              <span
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium shrink-0"
-                                style={{
-                                  backgroundColor: `${color}20`,
-                                  color: color,
-                                }}
-                              >
-                                <Sparkles size={9} />
-                                Auto
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            {list.taskIds.length} {list.taskIds.length === 1 ? 'tâche' : 'tâches'}
-                          </p>
-                        </div>
-                        {isAlreadyInList && !isSmart && (
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: color }}
-                          >
-                            <Check size={16} className="text-white" />
-                          </div>
-                        )}
-                      </button>
-
-                      {/* Actions edit / delete */}
-                      {isConfirmingDelete ? (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => setConfirmDeleteId(null)}
-                            className="min-w-9 h-9 px-2 rounded-lg text-xs font-medium border transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                      {isEditing ? (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="rounded-xl border-2 p-4"
+                          style={{
+                            borderColor: resolveColor(editColor),
+                            backgroundColor: `${resolveColor(editColor)}0D`,
+                          }}
+                        >
+                          <input
+                            autoFocus
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveEdit();
+                            }}
+                            className="w-full bg-transparent text-lg font-semibold focus:outline-none mb-3"
                             style={{
-                              borderColor: 'rgb(var(--color-border))',
                               color: 'rgb(var(--color-text-primary))',
                             }}
-                          >
-                            Annuler
-                          </button>
-                          <button
-                            onClick={() => handleConfirmDelete(list.id)}
-                            className="min-w-9 h-9 px-2 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-black transition-colors"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-0.5 shrink-0 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                          {!isSmart && (
+                          />
+                          <div className="flex items-center gap-1.5 flex-wrap mb-3">
+                            {COLOR_PALETTE.map((c) => (
+                              <motion.button
+                                key={c.key}
+                                whileHover={{ scale: 1.15 }}
+                                onClick={() => setEditColor(c.key)}
+                                className="w-7 h-7 rounded-full transition-all"
+                                style={{
+                                  backgroundColor: c.hex,
+                                  outline:
+                                    editColor === c.key
+                                      ? `3px solid ${c.hex}`
+                                      : 'none',
+                                  outlineOffset: 2,
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
                             <button
-                              onClick={() => handleStartEdit(list.id)}
-                              aria-label={`Modifier ${list.name}`}
-                              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                              style={{ color: 'rgb(var(--color-text-muted))' }}
+                              onClick={() => setEditingId(null)}
+                              className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                              style={{
+                                borderColor: 'rgb(var(--color-border))',
+                                color: 'rgb(var(--color-text-primary))',
+                              }}
                             >
-                              <Pencil size={15} />
+                              Annuler
                             </button>
-                          )}
-                          <button
-                            onClick={() => setConfirmDeleteId(list.id)}
-                            aria-label={`Supprimer ${list.name}`}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-colors"
-                            style={{ color: 'rgb(var(--color-text-muted))' }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
+                            <button
+                              onClick={handleSaveEdit}
+                              disabled={!editName.trim()}
+                              className="flex-1 min-h-10 px-3 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                            >
+                              Enregistrer
+                            </button>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          onClick={() => handleToggleTask(list.id)}
+                          className="group relative rounded-xl border-2 p-4 cursor-pointer transition-all overflow-hidden"
+                          style={{
+                            backgroundColor: isAlreadyInList
+                              ? `${color}10`
+                              : 'rgb(var(--color-surface))',
+                            borderColor: isAlreadyInList
+                              ? color
+                              : 'rgb(var(--color-border))',
+                          }}
+                        >
+                          {/* Hover gradient background */}
+                          <div
+                            className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity"
+                            style={{
+                              background: `linear-gradient(135deg, ${color} 0%, ${color}00 100%)`,
+                            }}
+                          />
+
+                          <div className="relative flex items-center gap-4">
+                            {/* Color bar */}
+                            <div
+                              className="w-1 h-12 rounded-full shrink-0 transition-all"
+                              style={{
+                                backgroundColor: color,
+                                transform: isAlreadyInList
+                                  ? 'scaleY(1.2)'
+                                  : 'scaleY(1)',
+                              }}
+                            />
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p
+                                  className="font-semibold text-sm sm:text-base truncate"
+                                  style={{
+                                    color: 'rgb(var(--color-text-primary))',
+                                  }}
+                                >
+                                  {list.name}
+                                </p>
+                                {isSmart && (
+                                  <span
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium shrink-0"
+                                    style={{
+                                      backgroundColor: `${color}20`,
+                                      color: color,
+                                    }}
+                                  >
+                                    <Sparkles size={9} />
+                                    Auto
+                                  </span>
+                                )}
+                              </div>
+                              <p
+                                className="text-xs mt-1"
+                                style={{
+                                  color: 'rgb(var(--color-text-muted))',
+                                }}
+                              >
+                                {list.taskIds.length}{' '}
+                                {list.taskIds.length === 1
+                                  ? 'tâche'
+                                  : 'tâches'}
+                              </p>
+                            </div>
+
+                            {/* Actions */}
+                            {isConfirmingDelete ? (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmDeleteId(null);
+                                  }}
+                                  className="min-w-9 h-9 px-2 rounded-lg text-xs font-medium border transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  style={{
+                                    borderColor: 'rgb(var(--color-border))',
+                                    color: 'rgb(var(--color-text-primary))',
+                                  }}
+                                >
+                                  Non
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleConfirmDelete(list.id);
+                                  }}
+                                  className="min-w-9 h-9 px-2 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
+                                >
+                                  Oui
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-0.5 shrink-0 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                {!isSmart && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartEdit(list.id);
+                                    }}
+                                    aria-label={`Modifier ${list.name}`}
+                                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    style={{
+                                      color: 'rgb(var(--color-text-muted))',
+                                    }}
+                                  >
+                                    <Pencil size={15} />
+                                  </motion.button>
+                                )}
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmDeleteId(list.id);
+                                  }}
+                                  aria-label={`Supprimer ${list.name}`}
+                                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                  style={{
+                                    color: 'rgb(var(--color-text-muted))',
+                                  }}
+                                >
+                                  <Trash2 size={15} />
+                                </motion.button>
+                              </div>
+                            )}
+
+                            {/* Checkmark indicator */}
+                            {isAlreadyInList && !isSmart && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: color }}
+                              >
+                                <svg
+                                  className="w-3 h-3 text-white"
+                                  fill="none"
+                                  strokeWidth="3"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path d="M5 13l4 4L19 7" />
+                                </svg>
+                              </motion.div>
+                            )}
+                          </div>
+                        </motion.div>
                       )}
                     </motion.div>
                   );
@@ -457,15 +548,17 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
 
             {/* Footer */}
             <div
-              className="px-4 pt-3 pb-4 border-t shrink-0"
+              className="px-6 pt-4 pb-6 border-t shrink-0"
               style={{ borderColor: 'rgb(var(--color-border))' }}
             >
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={onClose}
-                className="w-full min-h-11 px-6 py-3 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 monochrome:bg-white monochrome:text-black transition-colors"
+                className="w-full min-h-12 px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg hover:shadow-xl"
               >
                 Terminer
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>
