@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, X, ChevronRight, Check } from 'lucide-react';
+import { X, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
 
