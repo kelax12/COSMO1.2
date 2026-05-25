@@ -1,22 +1,13 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { useMotionValue, useTransform, animate } from 'framer-motion';
+import { useMotionValue, useTransform, animate, useDragControls } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-
-export interface BottomSheetDragProps {
-  drag: 'y';
-  dragConstraints: { top: number; bottom: number };
-  dragElastic: { top: number; bottom: number };
-  dragMomentum: boolean;
-  onDrag: (_: unknown, info: PanInfo) => void;
-  onDragEnd: (_: unknown, info: PanInfo) => void;
-}
 
 export interface BottomSheetHook {
   sheetRef: React.RefObject<HTMLDivElement>;
   backdropOpacity: ReturnType<typeof useTransform>;
   handleBarWidth: ReturnType<typeof useTransform>;
-  sheetDragProps: BottomSheetDragProps | Record<string, never>;
+  sheetDragProps: Record<string, unknown>;
 }
 
 /**
@@ -26,12 +17,14 @@ export interface BottomSheetHook {
  * - Smaller drag → spring snap-back
  * - Backdrop opacity fades in real-time as the sheet is pulled down
  * - Handle bar stretches subtly on drag
+ * - Drag starts from ANY non-interactive area of the sheet (not just the handle)
  *
  * Only activates on mobile (< 768px). Desktop modals are unaffected.
  */
 export function useBottomSheet(onClose: () => void): BottomSheetHook {
   const isMobile = useIsMobile();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
 
   // Track drag distance for visual feedback only (not actual position)
   const dragY = useMotionValue(0);
@@ -65,15 +58,29 @@ export function useBottomSheet(onClose: () => void): BottomSheetHook {
         info.offset.y > height * 0.35 || info.velocity.y > 500;
 
       if (shouldClose) {
-        // Leave dragY as-is — exit animation handles the backdrop fade-out
         onClose();
       } else {
-        // Snap-back: restore backdrop opacity with a spring
         animate(dragY, 0, { type: 'spring', damping: 28, stiffness: 380 });
-        // The sheet itself springs back via Framer Motion's dragConstraints
       }
     },
     [dragY, onClose],
+  );
+
+  // Start drag from ANY area — but skip interactive elements and scrolled areas
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const target = e.target as Element;
+
+      // Never intercept interactive elements
+      if (target.closest('input, textarea, select, button, a, label, [role="button"], [role="slider"], [contenteditable]')) return;
+
+      // Don't start drag if inside a scrollable area that is scrolled down
+      const scrollArea = target.closest('[data-scroll-area]') as HTMLElement | null;
+      if (scrollArea && scrollArea.scrollTop > 4) return;
+
+      dragControls.start(e);
+    },
+    [dragControls],
   );
 
   if (!isMobile) {
@@ -94,8 +101,12 @@ export function useBottomSheet(onClose: () => void): BottomSheetHook {
       dragConstraints: { top: 0, bottom: 0 },
       dragElastic: { top: 0, bottom: 0.3 },
       dragMomentum: false,
+      dragListener: false,
+      dragControls,
+      dragTransition: { bounceStiffness: 600, bounceDamping: 35 },
       onDrag,
       onDragEnd,
+      onPointerDown,
     },
   };
 }

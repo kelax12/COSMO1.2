@@ -68,7 +68,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             key="panel"
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
+            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
@@ -99,7 +99,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             </div>
 
             {/* Body — liste */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+            <div data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
               {okrs.length === 0 ? (
                 <div className="py-12 text-center">
                   <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">

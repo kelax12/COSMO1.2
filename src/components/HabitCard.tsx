@@ -197,7 +197,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               <motion.div
                 initial={{ y: '100%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+                exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
                 transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
                 className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
