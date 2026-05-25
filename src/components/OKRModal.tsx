@@ -59,6 +59,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   const [step, setStep] = useState<1 | 2>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [step1Error, setStep1Error] = useState('');
+  const [endDateError, setEndDateError] = useState('');
   const [showColorSettings, setShowColorSettings] = useState(false);
 
   const [info, setInfo] = useState({ title: '', description: '', category: '', endDate: '' });
@@ -88,6 +89,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     }
     setStep(1);
     setStep1Error('');
+    setEndDateError('');
   }, [editingObjective, isOpen]);
 
   const resetForm = () => {
@@ -97,14 +99,16 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
       { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
     ]);
     setStep1Error('');
+    setEndDateError('');
   };
 
   const handleClose = () => { resetForm(); setStep(1); onClose(); };
 
   const handleNext = () => {
     if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); return; }
-    if (!info.endDate) { setStep1Error("Veuillez choisir une date de fin."); return; }
+    if (!info.endDate) { setEndDateError("Veuillez choisir une date de fin."); return; }
     setStep1Error('');
+    setEndDateError('');
     setDirection(1);
     setStep(2);
   };
@@ -347,14 +351,15 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     </div>
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                        Date de fin
+                        Date de fin <span className="text-red-500 normal-case">*</span>
                       </label>
                       <DatePicker
                         value={info.endDate}
-                        onChange={(d) => { setInfo({ ...info, endDate: d }); setStep1Error(''); }}
+                        onChange={(d) => { setInfo({ ...info, endDate: d }); setEndDateError(''); }}
                         placeholder="Choisir une date"
-                        className={`h-auto py-2.5 text-sm rounded-lg ${!info.endDate && step1Error ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
+                        className={`h-auto py-2.5 text-sm rounded-lg ${endDateError ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
                       />
+                      {endDateError && <p className="text-xs text-red-500 mt-1">{endDateError}</p>}
                     </div>
                   </div>
 
