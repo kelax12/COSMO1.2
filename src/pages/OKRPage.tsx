@@ -164,11 +164,11 @@ const OKRPage: React.FC = () => {
     setEditingObjective(null);
   };
 
-  const filteredObjectives = selectedCategory === 'all' ?
-  objectives :
-  selectedCategory === 'finished' ?
+  const filteredObjectives = selectedCategory === 'finished' ?
   objectives.filter((obj) => obj.completed) :
-  objectives.filter((obj) => obj.category === selectedCategory);
+  selectedCategory === 'all' ?
+  objectives.filter((obj) => !obj.completed) :
+  objectives.filter((obj) => !obj.completed && obj.category === selectedCategory);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6' },
