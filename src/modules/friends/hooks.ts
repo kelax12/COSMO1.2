@@ -101,6 +101,7 @@ export const useRejectFriendRequest = () => {
     mutationFn: (requestId: string) => repository.rejectFriendRequest(requestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible de refuser la demande d'ami : ${error.message}`);

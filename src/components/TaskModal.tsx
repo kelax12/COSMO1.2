@@ -1365,7 +1365,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                         </div>
                                         <button
                                           type="button"
-                                          onClick={() => cancelFriendRequestMutation.mutate(req.id)}
+                                          onClick={() => cancelFriendRequestMutation.mutate(req.id, {
+                                            onSuccess: () => toast.success(`Demande d'ami à ${req.email} annulée`),
+                                          })}
                                           className="p-1 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors shrink-0"
                                           aria-label="Annuler la demande"
                                           title="Annuler la demande d'ami"
