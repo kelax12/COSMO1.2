@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { Crown, Play, X, Zap, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +15,7 @@ interface PremiumGateModalProps {
 }
 
 export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctionnalité' }: PremiumGateModalProps) {
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { addTokens, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -80,6 +82,8 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
 
             {/* Modal */}
             <motion.div
+              ref={sheetRef}
+              {...sheetDragProps}
               className="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               initial={{ y: '100%', opacity: 0 }}
@@ -88,7 +92,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             >
               <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               {/* Header — accent amber atténué pour signaler Premium sans casser la cohérence iOS sheet */}
               <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border-b border-amber-200/50 dark:border-amber-800/40 p-5 flex items-center justify-between">

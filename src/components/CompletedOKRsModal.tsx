@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Edit2, CheckCircle2, Calendar, Trophy } from 'lucide-react';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { X, Edit2, CheckCircle2, Calendar } from 'lucide-react';
 import type { OKR } from '@/modules/okrs';
 
 type Category = { id: string; name: string; color: string };
@@ -21,6 +22,7 @@ type Props = {
  * l'OKRModal en mode édition.
  */
 const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories, resolveColor, onEdit }) => {
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
@@ -61,6 +63,8 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
           className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm sm:p-4"
         >
           <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
             key="panel"
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -70,9 +74,9 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            {/* Drag handle mobile */}
+            {/* Drag handle — reacts to swipe on mobile */}
             <div className="sm:hidden flex justify-center pt-2 pb-1">
-              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
             {/* Header */}

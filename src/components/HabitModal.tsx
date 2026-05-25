@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
@@ -59,6 +60,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     if (e.key === 'Escape') onClose();
   };
 
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+
   return (
     <>
       <AnimatePresence>
@@ -72,6 +75,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             onKeyDown={handleKeyDown}
           >
             <motion.div
+              ref={sheetRef}
+              {...sheetDragProps}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -83,9 +88,9 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Drag handle (mobile only - visual) */}
+              {/* Drag handle — reacts to swipe on mobile */}
               <div className="sm:hidden flex justify-center pt-4 pb-3 shrink-0">
-                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
 
               {/* Sticky header */}

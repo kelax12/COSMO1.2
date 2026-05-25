@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { DatePicker } from './ui/date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -102,6 +103,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   };
 
   const handleClose = () => { resetForm(); setStep(1); onClose(); };
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);
 
   const handleNext = () => {
     if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); return; }
@@ -190,6 +192,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
       exit={{ opacity: 0 }}
     >
       <motion.div
+        ref={sheetRef}
+        {...sheetDragProps}
         className="w-full sm:max-w-[624px] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden"
         style={{
           backgroundColor: 'rgb(var(--color-surface))',
@@ -201,9 +205,9 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
         transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
       >
-        {/* Drag handle (mobile only - visual) */}
+        {/* Drag handle — reacts to swipe on mobile */}
         <div className="sm:hidden flex justify-center pt-4 pb-3 shrink-0">
-          <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
 
         {/* Header */}
