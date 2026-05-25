@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Clock, Plus, CalendarIcon, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBottomSheet } from "@/hooks/use-bottom-sheet";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import ColorSettingsModal from "./ColorSettingsModal";
@@ -72,6 +73,7 @@ const EventModal: React.FC<EventModalProps> = ({
 }) => {
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
 
   // La section Description est masquée par défaut (UX épuré). Visible si :
   //   - mode edit + l'event a déjà des notes (sinon on perdrait visuellement le contenu)
@@ -99,6 +101,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+  const { sheetRef: deleteSheetRef, handleBarWidth: deleteHandleBarWidth, sheetDragProps: deleteSheetDragProps } = useBottomSheet(() => setShowDeleteConfirm(false));
 
 
   useEffect(() => {
@@ -327,6 +330,8 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const renderContent = () => (
 <motion.div
+        ref={sheetRef}
+        {...sheetDragProps}
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -335,8 +340,9 @@ const EventModal: React.FC<EventModalProps> = ({
       style={{ backgroundColor: "rgb(var(--color-surface))", paddingBottom: 'env(safe-area-inset-bottom)' }}
       onClick={(e) => e.stopPropagation()}
     >
+      {/* Drag handle — reacts to swipe on mobile */}
       <div className="md:hidden flex justify-center pt-3 pb-2 shrink-0">
-        <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+        <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
       </div>
       <div
         className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b transition-colors gap-2"
@@ -823,6 +829,8 @@ const EventModal: React.FC<EventModalProps> = ({
             onClick={() => setShowDeleteConfirm(false)}
           >
             <motion.div
+              ref={deleteSheetRef}
+              {...deleteSheetDragProps}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -835,7 +843,7 @@ const EventModal: React.FC<EventModalProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                <motion.div style={{ width: deleteHandleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               <div className="p-5 sm:p-6">
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">

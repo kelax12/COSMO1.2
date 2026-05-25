@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +32,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const [search, setSearch] = useState('');
 
   const assignedCollaborators = task?.collaborators || [];
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
 
   // A friend's canonical "collaborator id" is their auth.users.id (userId),
   // required by Supabase RLS + shared_tasks FK. Falls back to friend.id in
@@ -200,6 +202,8 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
           aria-labelledby="collab-modal-title"
         >
           <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -211,9 +215,9 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
-            {/* Drag handle (mobile only - visual) */}
+            {/* Drag handle — reacts to swipe on mobile */}
             <div className="sm:hidden flex justify-center pt-4 pb-3">
-              <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+              <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
             </div>
 
             {/* Header */}

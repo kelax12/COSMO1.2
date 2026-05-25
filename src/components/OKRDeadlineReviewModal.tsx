@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, X, Clock, CheckCircle } from 'lucide-react';
+import { CheckCircle2, X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 
 type Category = { id: string; name: string; color: string };

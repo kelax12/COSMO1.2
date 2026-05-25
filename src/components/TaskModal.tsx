@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
 import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -111,6 +112,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [inputError, setInputError] = useState<string | null>(null);
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { sheetRef: deleteSheetRef, handleBarWidth: deleteHandleBarWidth, sheetDragProps: deleteSheetDragProps } = useBottomSheet(() => setShowDeleteConfirm(false));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [step, setStep] = useState(1);
@@ -1446,6 +1448,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               onClick={() => setShowDeleteConfirm(false)}
             >
               <motion.div
+                ref={deleteSheetRef}
+                {...deleteSheetDragProps}
                 initial={{ y: '100%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -1455,7 +1459,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               >
                 <div className="sm:hidden flex justify-center pt-4 pb-3">
-                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                  <motion.div style={{ width: deleteHandleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
                 <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { X, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
@@ -72,6 +73,7 @@ interface WeeklyCheckinModalProps {
  * via `useUpdateKeyResult` (qui insère dans `kr_completions` côté repository).
  */
 export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps) {
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { data: activeOkrs = [] } = useActiveOkrs();
   const updateKR = useUpdateKeyResult();
 
@@ -168,6 +170,8 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
           aria-modal="true"
         >
           <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -177,7 +181,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
             {/* Header */}

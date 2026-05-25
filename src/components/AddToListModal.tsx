@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import {
   useLists,
   useAddTaskToList,
@@ -129,6 +130,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
 
   const [creating, setCreating]           = useState(false);
   const [editingId, setEditingId]         = useState<string | null>(null);
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   /* Reset on close */
@@ -202,6 +204,8 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
           aria-labelledby="add-to-list-title"
         >
           <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -210,9 +214,9 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[80vh] bg-[rgb(var(--color-surface))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            {/* ── Drag handle (mobile only - visual) ── */}
+            {/* Drag handle — reacts to swipe on mobile */}
             <div className="sm:hidden flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
             {/* ── Header ── */}

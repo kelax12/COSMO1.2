@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -28,6 +30,7 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitchMode }) => {
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -114,17 +117,29 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     }));
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center sm:p-4" onClick={onClose}>
-      <div
+    <AnimatePresence>
+      {isOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center sm:p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        ref={sheetRef}
+        {...sheetDragProps}
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
         className="bg-slate-900 border-t sm:border border-slate-700 rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sm:hidden flex justify-center -mt-3 mb-3">
-          <div className="w-9 h-[5px] rounded-full bg-slate-600/80" />
+          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-600/80" />
         </div>
         <Button
           variant="ghost"
@@ -272,8 +287,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

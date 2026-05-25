@@ -57,7 +57,7 @@ export const okrTutorialStepsDesktop: TutorialStep[] = [
       svg.setAttribute('style', 'position: absolute; top: 0; left: 0; pointer-events: none; z-index: 40');
 
       // Animer les flèches
-      const animateArrow = (btnElement: HTMLElement, index: number) => {
+      const animateArrow = (btnElement: HTMLElement, _index: number) => {
         const rect = btnElement.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
 
