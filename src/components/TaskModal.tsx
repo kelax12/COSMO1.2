@@ -936,7 +936,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Échéance
+                          Échéance <span className="normal-case font-normal opacity-60">(Facultatif)</span>
                         </label>
                         <DatePicker
                           value={formData.deadline}
@@ -955,7 +955,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                       <div>
                         <label htmlFor="task-time" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Temps estimé (min)
+                          Temps estimé (min) <span className="normal-case font-normal opacity-60">(Facultatif)</span>
                         </label>
                           <div className="flex items-stretch gap-2">
                             <input
