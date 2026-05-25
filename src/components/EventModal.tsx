@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Clock, Plus, CalendarIcon } from "lucide-react";
+import { X, Clock, Plus, CalendarIcon, Trash2 } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -862,32 +862,29 @@ const EventModal: React.FC<EventModalProps> = ({
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               <div className="p-5 sm:p-6">
-                <h2
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: "rgb(var(--color-text-primary))" }}
-                >
-                  Confirmer la suppression
-                </h2>
-                <p
-                  className="text-sm mb-5 sm:mb-6"
-                  style={{ color: "rgb(var(--color-text-secondary))" }}
-                >
-                  Êtes-vous sûr de vouloir supprimer cet événement ? Cette action
-                  est irréversible.
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                  Supprimer l'événement
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
+                  Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.
                 </p>
-                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                   <Button
                     variant="outline"
-                    className="min-h-11 w-full sm:w-auto"
+                    className="flex-1 min-h-11"
                     onClick={() => setShowDeleteConfirm(false)}
                   >
                     Annuler
                   </Button>
                   <Button
                     variant="destructive"
-                    className="min-h-11 w-full sm:w-auto"
+                    className="flex-1 min-h-11"
                     onClick={confirmDelete}
                   >
+                    <Trash2 size={14} data-icon="inline-start" />
                     Supprimer
                   </Button>
                 </div>
