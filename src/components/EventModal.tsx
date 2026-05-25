@@ -881,10 +881,9 @@ const EventModal: React.FC<EventModalProps> = ({
                   </Button>
                   <Button
                     variant="destructive"
-                    className="flex-1 min-h-11"
+                    className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white"
                     onClick={confirmDelete}
                   >
-                    <Trash2 size={14} data-icon="inline-start" />
                     Supprimer
                   </Button>
                 </div>

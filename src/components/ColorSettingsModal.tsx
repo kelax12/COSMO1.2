@@ -290,10 +290,9 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                     </Button>
                     <Button
                       variant="destructive"
-                      className="flex-1 min-h-11"
+                      className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white"
                       onClick={confirmDeleteLocal}
                     >
-                      <Trash2 size={14} data-icon="inline-start" />
                       Supprimer
                     </Button>
                   </div>
