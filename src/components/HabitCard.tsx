@@ -216,7 +216,13 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                 >
                   <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
-                <div className="p-5 sm:p-6">
+                <div
+                  className="p-5 sm:p-6"
+                  onPointerDown={(e) => {
+                    if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return;
+                    deleteConfirmDragControls.start(e);
+                  }}
+                >
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
