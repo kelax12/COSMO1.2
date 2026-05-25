@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import PremiumGateModal from './PremiumGateModal';
 import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, List, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
-import { motion, useDragControls } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -74,7 +73,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const { isPremium } = useBilling();
   const [showPremiumGate, setShowPremiumGate] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(expanded);
-  const mainDragControls = useDragControls();
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -292,32 +290,21 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   return (
     <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
       <DialogContent showCloseButton={false} className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-4xl lg:max-w-5xl w-full h-[94vh] max-h-[94vh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col">
-        <motion.div
-          drag="y"
-          dragControls={mainDragControls}
-          dragListener={false}
-          dragConstraints={{ top: 0 }}
-          dragElastic={{ top: 0.05, bottom: 0.5 }}
-          onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleFormToggle(false); }}
+        <div
           className="flex flex-col h-full w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
         <div
-          className="sm:hidden flex justify-center pt-4 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          className="sm:hidden flex justify-center pt-4 pb-2 shrink-0"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-          onPointerDown={(e) => mainDragControls.start(e)}
         >
           <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
         <div className="sm:rounded-2xl sm:shadow-2xl w-full transition-colors overflow-hidden h-full flex flex-col flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header */}
             <div
-              className="flex justify-between items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
+              className="flex justify-between items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors"
               style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
-              onPointerDown={(e) => {
-                if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-                mainDragControls.start(e);
-              }}
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
@@ -768,7 +755,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
             </div>
             </form>
         </div>
-        </motion.div>
+        </div>
       </DialogContent>
 
       <ColorSettingsModal

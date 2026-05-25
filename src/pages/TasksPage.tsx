@@ -6,7 +6,7 @@ import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import SmartListMenu from '../components/SmartListMenu';
 import { CalendarDays, X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff } from 'lucide-react';
-import { motion, AnimatePresence, useDragControls, Reorder } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -48,7 +48,6 @@ const TasksPage: React.FC = () => {
   // adapté au viewport courant.
   const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop');
   const tutorialSteps = isMobile ? tasksTutorialStepsMobile : tasksTutorialStepsDesktop;
-  const deleteListDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -1113,16 +1112,10 @@ const TasksPage: React.FC = () => {
             onClick={() => setListToDeleteId(null)}
           >
             <motion.div
-              drag="y"
-              dragControls={deleteListDragControls}
-              dragListener={false}
-              dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0, bottom: 0.3 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setListToDeleteId(null); }}
-              initial={{ y: '100%', scale: 0.95, opacity: 0 }}
-              animate={{ y: 0, scale: 1, opacity: 1 }}
-              exit={{ y: '100%', scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
               className="rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border"
               style={{
@@ -1131,10 +1124,7 @@ const TasksPage: React.FC = () => {
                 paddingBottom: 'env(safe-area-inset-bottom)',
               }}
             >
-              <div
-                className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
-                onPointerDown={(e) => deleteListDragControls.start(e)}
-              >
+              <div className="sm:hidden flex justify-center pt-3 pb-2">
                 <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
               <div className="p-5 sm:p-6">

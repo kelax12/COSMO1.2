@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,7 +55,6 @@ type OKRModalProps = {
 
 const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editingObjective, onSubmit }) => {
   const { data: allCategories = [] } = useCategories();
-  const dragControls = useDragControls();
   const [step, setStep] = useState<1 | 2>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [step1Error, setStep1Error] = useState('');
@@ -191,12 +190,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
       exit={{ opacity: 0 }}
     >
       <motion.div
-        drag="y"
-        dragControls={dragControls}
-        dragListener={false}
-        dragConstraints={{ top: 0 }}
-        dragElastic={{ top: 0.05, bottom: 0.5 }}
-        onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleClose(); }}
         className="w-full sm:max-w-[624px] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden"
         style={{
           backgroundColor: 'rgb(var(--color-surface))',
@@ -205,25 +198,16 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         onClick={(e) => e.stopPropagation()}
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+        exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
       >
-        {/* Drag handle (mobile only) */}
-        <div
-          className="sm:hidden flex justify-center pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-          onPointerDown={(e) => dragControls.start(e)}
-        >
+        {/* Drag handle (mobile only - visual) */}
+        <div className="sm:hidden flex justify-center pt-4 pb-3 shrink-0">
           <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
 
         {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
-          onPointerDown={(e) => {
-            if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-            dragControls.start(e);
-          }}
-        >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
           <div>
             <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">
               {editingObjective ? 'Modifier' : 'Nouvel objectif'} · {step}/2

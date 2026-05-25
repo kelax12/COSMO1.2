@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   useLists,
   useAddTaskToList,
@@ -120,7 +120,6 @@ const InlineForm: React.FC<{
 
 /* ─── Main component ─────────────────────────────────────────────────────── */
 const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
-  const dragControls = useDragControls();
   const { data: lists = [] } = useLists();
   const addTaskToListMutation    = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
@@ -203,38 +202,21 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
           aria-labelledby="add-to-list-title"
         >
           <motion.div
-            drag="y"
-            dragControls={dragControls}
-            dragListener={false}
-            dragConstraints={{ top: 0 }}
-            dragElastic={{ top: 0.05, bottom: 0.5 }}
-            onDragEnd={(_, info) => {
-              if (info.offset.y > 100 || info.velocity.y > 600) onClose();
-            }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 32, stiffness: 340, mass: 0.85 }}
+            exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[80vh] bg-[rgb(var(--color-surface))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            {/* ── Drag handle (mobile only) ── */}
-            <div
-              className="sm:hidden flex justify-center pt-3 pb-1 touch-none cursor-grab active:cursor-grabbing"
-              onPointerDown={(e) => dragControls.start(e)}
-            >
+            {/* ── Drag handle (mobile only - visual) ── */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
 
             {/* ── Header ── */}
-            <div
-              className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0"
-              onPointerDown={(e) => {
-                if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-                dragControls.start(e);
-              }}
-            >
+            <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2

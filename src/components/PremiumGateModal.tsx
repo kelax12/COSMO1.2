@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Play, X, Zap, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +17,6 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
   const { addTokens, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-  const dragControls = useDragControls();
 
   const handleAdComplete = async () => {
     try {
@@ -81,23 +80,14 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
 
             {/* Modal */}
             <motion.div
-              drag="y"
-              dragControls={dragControls}
-              dragListener={false}
-              dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0.05, bottom: 0.5 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
               className="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+              exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             >
-              <div
-                className="sm:hidden flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-                onPointerDown={(e) => dragControls.start(e)}
-              >
+              <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               {/* Header — accent amber atténué pour signaler Premium sans casser la cohérence iOS sheet */}
