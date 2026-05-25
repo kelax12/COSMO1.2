@@ -612,16 +612,15 @@ const OKRPage: React.FC = () => {
                     borderColor: 'rgb(var(--color-border))'
                   }}>
                   <div className="flex justify-between items-center mb-4 gap-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
-                        <span>{category?.name ?? objective.category}</span>
-                      </span>
-                      <div className="flex items-center gap-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                        <span>→</span>
-                        <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                      </div>
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
+                      <span>{category?.name ?? objective.category}</span>
+                    </span>
+
+                    <div className="flex-1 flex items-center justify-center gap-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <span>→</span>
+                      <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     </div>
 
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
