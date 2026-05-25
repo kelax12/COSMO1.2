@@ -230,8 +230,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                     <Button type="button" variant="outline" className="flex-1 min-h-11" onClick={() => setIsDeleting(false)}>
                       Annuler
                     </Button>
-                    <Button type="button" variant="destructive" className="flex-1 min-h-11" onClick={handleDelete}>
-                      <Trash2 size={14} data-icon="inline-start" />
+                    <Button type="button" variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white" onClick={handleDelete}>
                       Supprimer
                     </Button>
                   </div>
