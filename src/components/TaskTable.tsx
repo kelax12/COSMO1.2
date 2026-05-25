@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useDragControls } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
@@ -567,6 +567,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [collaboratorModalTask, setCollaboratorModalTask] = useState<string | null>(null);
   const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const deleteConfirmDragControls = useDragControls();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration'>('none');
 
   const toggleQuickFilter = (filter: 'favoris' | 'terminées' | 'retard' | 'collaboration') => {
@@ -1063,6 +1064,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
             onClick={() => setTaskToDelete(null)}
           >
             <motion.div
+              drag="y"
+              dragControls={deleteConfirmDragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0.05, bottom: 0.5 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setTaskToDelete(null); }}
               initial={{ y: '100%', scale: 0.95, opacity: 0 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
               exit={{ y: '100%', scale: 0.95, opacity: 0 }}
@@ -1071,10 +1078,19 @@ const TaskTable: React.FC<TaskTableProps> = ({
               className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-              <div className="sm:hidden flex justify-center pt-2 pb-1">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              <div
+                className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={(e) => deleteConfirmDragControls.start(e)}
+              >
+                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
-              <div className="p-5 sm:p-6">
+              <div
+                className="p-5 sm:p-6"
+                onPointerDown={(e) => {
+                  if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return;
+                  deleteConfirmDragControls.start(e);
+                }}
+              >
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
                   <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
                 </div>
