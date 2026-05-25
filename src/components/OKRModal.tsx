@@ -103,6 +103,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
 
   const handleNext = () => {
     if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); return; }
+    if (!info.endDate) { setStep1Error("Veuillez choisir une date de fin."); return; }
     setStep1Error('');
     setDirection(1);
     setStep(2);
@@ -350,9 +351,9 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                       </label>
                       <DatePicker
                         value={info.endDate}
-                        onChange={(d) => setInfo({ ...info, endDate: d })}
+                        onChange={(d) => { setInfo({ ...info, endDate: d }); setStep1Error(''); }}
                         placeholder="Choisir une date"
-                        className="h-auto py-2.5 text-sm rounded-lg border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500"
+                        className={`h-auto py-2.5 text-sm rounded-lg ${!info.endDate && step1Error ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
                       />
                     </div>
                   </div>
