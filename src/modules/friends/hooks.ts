@@ -66,7 +66,8 @@ export const useSendFriendRequest = () => {
 
   return useMutation({
     mutationFn: (input: FriendRequestInput) => repository.sendFriendRequest(input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      toast.success(`Demande d'ami envoyée à ${variables.email}`);
       queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
     },
     onError: (error: Error) => {
