@@ -1243,6 +1243,34 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           </div>
                         ) : (
                           <>
+                            {/* Selected collaborators — affiché en premier */}
+                            {collaborators.length > 0 && (
+                              <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Sélectionnés ({collaborators.length})
+                                  </h4>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {collaborators.map((userId) => {
+                                    const info = displayInfo(userId);
+                                    return (
+                                      <CollaboratorItem
+                                        key={userId}
+                                        id={userId}
+                                        name={info.name}
+                                        email={info.email}
+                                        avatar={info.avatar}
+                                        isPending={info.isPending}
+                                        onAction={() => handleRemoveCollaborator(userId)}
+                                        variant="remove"
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Add collaborator by email/id */}
                             <div className="flex gap-2 mb-4">
                               <div className="relative flex-1">
@@ -1358,34 +1386,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 </div>
                               );
                             })()}
-
-                            {/* Selected collaborators */}
-                            {collaborators.length > 0 && (
-                              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                    Sélectionnés ({collaborators.length})
-                                  </h4>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                  {collaborators.map((userId) => {
-                                    const info = displayInfo(userId);
-                                    return (
-                                      <CollaboratorItem
-                                        key={userId}
-                                        id={userId}
-                                        name={info.name}
-                                        email={info.email}
-                                        avatar={info.avatar}
-                                        isPending={info.isPending}
-                                        onAction={() => handleRemoveCollaborator(userId)}
-                                        variant="remove"
-                                      />
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
                           </>
                         )}
                       </div>
