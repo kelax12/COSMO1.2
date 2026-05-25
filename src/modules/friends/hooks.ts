@@ -69,6 +69,7 @@ export const useSendFriendRequest = () => {
     onSuccess: (_data, variables) => {
       toast.success(`Demande d'ami envoyée à ${variables.email}`);
       queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'envoyer la demande d'ami : ${error.message}`);
