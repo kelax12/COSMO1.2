@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
-import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, Mail, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
+import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -108,7 +108,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // Collaborator state (integrated from AddTaskForm)
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [pendingInvitesLocal, setPendingInvitesLocal] = useState<string[]>([]);
-  const [searchUser, setSearchUser] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -526,8 +525,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const availableFriends = friends || [];
   const filteredFriends = availableFriends.filter((friend) =>
     !collaborators.includes(collabIdOf(friend)) && (
-      friend.name.toLowerCase().includes(searchUser.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchUser.toLowerCase())
+      emailInput === '' ||
+      friend.name.toLowerCase().includes(emailInput.toLowerCase()) ||
+      friend.email.toLowerCase().includes(emailInput.toLowerCase())
     )
   );
 
@@ -1271,10 +1271,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               </div>
                             )}
 
-                            {/* Add collaborator by email/id */}
+                            {/* Input unique : filtre les amis ET permet d'ajouter par email/identifiant */}
                             <div className="flex gap-2 mb-4">
                               <div className="relative flex-1">
-                                <Mail
+                                <Search
                                   size={16}
                                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
                                 />
@@ -1282,7 +1282,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                   type="text"
                                   value={emailInput}
                                   onChange={(e) => setEmailInput(e.target.value)}
-                                  placeholder="Email ou identifiant"
+                                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
+                                  placeholder="Email, nom ou identifiant..."
                                   className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
                                   style={{
                                     backgroundColor: 'rgb(var(--color-surface))',
@@ -1299,25 +1300,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               >
                                 <UserPlus size={16} />
                               </Button>
-                            </div>
-
-                            {/* Search users */}
-                            <div className="relative mb-4">
-                              <Search
-                                size={16}
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                              />
-                              <input
-                                type="text"
-                                value={searchUser}
-                                onChange={(e) => setSearchUser(e.target.value)}
-                                placeholder="Rechercher parmi vos amis..."
-                                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
-                                  style={{
-                                    backgroundColor: 'rgb(var(--color-surface))',
-                                    color: 'rgb(var(--color-text-primary))',
-                                  }}
-                              />
                             </div>
 
                             {/* Friends list — 2 columns */}
@@ -1338,7 +1320,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                   />
                                 );
                               })}
-                              {filteredFriends.length === 0 && searchUser && (
+                              {filteredFriends.length === 0 && emailInput && (
                                 <p className="col-span-2 text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
                               )}
                             </div>
@@ -1349,7 +1331,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 !collaborators.includes(req.email) &&
                                 !pendingInvitesLocal.includes(req.email) &&
                                 !friends.some(f => f.email.toLowerCase() === req.email.toLowerCase()) &&
-                                (searchUser === '' || req.email.toLowerCase().includes(searchUser.toLowerCase()))
+                                (emailInput === '' || req.email.toLowerCase().includes(emailInput.toLowerCase()))
                               );
                               if (!pendingContacts.length) return null;
                               return (

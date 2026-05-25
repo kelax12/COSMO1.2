@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PremiumGateModal from './PremiumGateModal';
-import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Mail, List, ChevronDown } from 'lucide-react';
+import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, List, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import { motion, useDragControls } from 'framer-motion';
 import {
@@ -119,7 +119,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   }, [initialData]);
 
   const [collaborators, setCollaborators] = useState<string[]>([]);
-  const [searchUser, setSearchUser] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string;}>({});
@@ -135,8 +134,9 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   const filteredFriends = (friends || []).filter((friend) =>
     !collaborators.includes(collabIdOf(friend)) && (
-      friend.name.toLowerCase().includes(searchUser.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchUser.toLowerCase())
+      emailInput === '' ||
+      friend.name.toLowerCase().includes(emailInput.toLowerCase()) ||
+      friend.email.toLowerCase().includes(emailInput.toLowerCase())
     )
   );
 
@@ -637,14 +637,16 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                             </div>
                           ) : (
                             <>
+                              {/* Input unique : filtre les amis ET permet d'ajouter par email/identifiant */}
                               <div className="flex gap-2 mb-4">
                                 <div className="relative flex-1">
-                                  <Mail size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                                   <input
                                     type="text"
                                     value={emailInput}
                                     onChange={(e) => setEmailInput(e.target.value)}
-                                    placeholder="Email ou identifiant"
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
+                                    placeholder="Email, nom ou identifiant..."
                                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
                                     style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                                   />
@@ -654,23 +656,11 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                                 </button>
                               </div>
 
-                              <div className="relative mb-4">
-                                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
-                                <input
-                                  type="text"
-                                  value={searchUser}
-                                  onChange={(e) => setSearchUser(e.target.value)}
-                                  placeholder="Rechercher parmi vos amis..."
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
-                                    style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                                />
-                              </div>
-
                               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                                 {filteredFriends.map(friend => (
                                   <CollaboratorItem key={friend.id} id={collabIdOf(friend)} name={friend.name} email={friend.email} avatar={friend.avatar} isSelected={collaborators.includes(collabIdOf(friend))} onAction={() => toggleCollaborator(collabIdOf(friend))} variant="toggle" />
                                 ))}
-                                {filteredFriends.length === 0 && searchUser && (
+                                {filteredFriends.length === 0 && emailInput && (
                                   <p className="text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
                                 )}
                               </div>
