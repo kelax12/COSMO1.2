@@ -611,54 +611,56 @@ const OKRPage: React.FC = () => {
                     backgroundColor: 'rgb(var(--color-surface))',
                     borderColor: 'rgb(var(--color-border))'
                   }}>
-                  <div className="flex justify-between items-start mb-4 gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
-                          <span>{category?.name ?? objective.category}</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2 mb-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  <div className="flex justify-between items-center mb-4 gap-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
+                        <span>{category?.name ?? objective.category}</span>
+                      </span>
+                      <div className="flex items-center gap-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         <span>→</span>
                         <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                       </div>
-                      <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
-                      <p className="text-xs sm:text-sm line-clamp-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
                     </div>
 
-                    <div className="flex flex-col items-end gap-3 shrink-0">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <button
-                          onClick={() => handleEditObjective(objective.id)}
-                          className="p-1.5 transition-colors hover:bg-hover rounded-md"
-                          style={{ color: 'rgb(var(--color-text-muted))' }}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => setDeletingObjective(objective.id)}
-                          className="p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
-                          style={{ color: 'rgb(var(--color-text-muted))' }}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      {remainingDays > 0 && (
-                        <div 
-                          className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full backdrop-blur-md border shadow-sm transition-transform group-hover:scale-105"
-                          style={{ 
-                            backgroundColor: healthColor,
-                            borderColor: healthBorder,
-                            color: healthText
-                          }}
-                        >
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: healthText }}></span>
-                            {remainingDays}j restants
-                          </span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      <button
+                        onClick={() => handleEditObjective(objective.id)}
+                        className="p-1.5 transition-colors hover:bg-hover rounded-md"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingObjective(objective.id)}
+                        className="p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <Trash2 size={16} />
+                      </button>
                     </div>
+                  </div>
+
+                  {remainingDays > 0 && (
+                    <div className="mb-4">
+                      <div
+                        className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full backdrop-blur-md border shadow-sm transition-transform group-hover:scale-105 w-fit"
+                        style={{
+                          backgroundColor: healthColor,
+                          borderColor: healthBorder,
+                          color: healthText
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                          <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: healthText }}></span>
+                          {remainingDays}j restants
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
+                    <p className="text-xs sm:text-sm line-clamp-2 mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
                   </div>
 
                 <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
