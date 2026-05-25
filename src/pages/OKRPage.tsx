@@ -3,7 +3,7 @@ import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash, Ca
 import { useAuth } from '@/modules/auth/AuthContext';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '../components/CategoryManager';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
@@ -19,6 +19,7 @@ import { useTutorial } from '@/components/tutorial/useTutorial';
 import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
 import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
 
 type Objective = OKR & { estimatedTime?: number };
 
@@ -52,6 +53,7 @@ const OKRPage: React.FC = () => {
   const [showAddObjective, setShowAddObjective] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
+  const deleteConfirmDragControls = useDragControls();
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
   // États d'édition inline d'une catégorie (nom + couleur). Activés via le
   // bouton crayon dans la barre flottante au-dessus d'une chip catégorie.
@@ -776,38 +778,54 @@ const OKRPage: React.FC = () => {
 
         <AnimatePresence>
           {deletingObjective && (
-            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/50 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
+              onClick={() => setDeletingObjective(null)}
+            >
+              <motion.div
+                drag="y"
+                dragControls={deleteConfirmDragControls}
+                dragListener={false}
+                dragConstraints={{ top: 0 }}
+                dragElastic={{ top: 0.05, bottom: 0.5 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setDeletingObjective(null); }}
+                initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: '100%', scale: 0.95, opacity: 0 }}
+                transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+                className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-6">
+                <div
+                  className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
+                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
+                >
+                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                </div>
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer l'objectif</h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
                     Êtes-vous sûr de vouloir supprimer cet objectif ? Tous les résultats clés associés seront également supprimés.
                   </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setDeletingObjective(null)}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
-                    >
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+                    <Button variant="outline" className="flex-1 min-h-11" onClick={() => setDeletingObjective(null)}>
                       Annuler
-                    </button>
-                    <button
-                      onClick={() => deleteObjective(deletingObjective)}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
-                    >
+                    </Button>
+                    <Button variant="destructive" className="flex-1 min-h-11" onClick={() => deleteObjective(deletingObjective)}>
+                      <Trash2 size={14} data-icon="inline-start" />
                       Supprimer
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 

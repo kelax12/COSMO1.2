@@ -3,7 +3,7 @@ import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, Pause } fro
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { Habit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
@@ -47,6 +47,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const deleteConfirmDragControls = useDragControls();
 
   const streak = calculateStreak(habit.completions);
   const { isPaused, getPauseUntil } = useHabitPauses();
@@ -187,47 +188,56 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
         {/* Confirmation suppression */}
         <AnimatePresence>
           {isDeleting && (
-            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/50 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
+              onClick={() => setIsDeleting(false)}
+            >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+                drag="y"
+                dragControls={deleteConfirmDragControls}
+                dragListener={false}
+                dragConstraints={{ top: 0 }}
+                dragElastic={{ top: 0.05, bottom: 0.5 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setIsDeleting(false); }}
+                initial={{ y: '100%', scale: 0.95, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                exit={{ y: '100%', scale: 0.95, opacity: 0 }}
+                transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+                className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-6">
+                <div
+                  className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
+                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
+                >
+                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                </div>
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                     Supprimer l'habitude
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                    Êtes-vous sûr de vouloir supprimer l'habitude "{habit.name}" ? Cette action est
-                    irréversible.
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
+                    Êtes-vous sûr de vouloir supprimer l'habitude "{habit.name}" ? Cette action est irréversible.
                   </p>
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setIsDeleting(false)}
-                    >
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+                    <Button type="button" variant="outline" className="flex-1 min-h-11" onClick={() => setIsDeleting(false)}>
                       Annuler
                     </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={handleDelete}
-                    >
+                    <Button type="button" variant="destructive" className="flex-1 min-h-11" onClick={handleDelete}>
                       <Trash2 size={14} data-icon="inline-start" />
                       Supprimer
                     </Button>
                   </div>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 
