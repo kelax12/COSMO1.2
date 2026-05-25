@@ -254,10 +254,11 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                 dragConstraints={{ top: 0 }}
                 dragElastic={{ top: 0.05, bottom: 0.5 }}
                 onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setCategoryToDelete(null); }}
-                initial={{ y: '100%', scale: 0.95, opacity: 0 }}
-                animate={{ y: 0, scale: 1, opacity: 1 }}
-                exit={{ y: '100%', scale: 0.95, opacity: 0 }}
-                transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+                dragTransition={{ bounceStiffness: 500, bounceDamping: 35 }}
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+                transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
                 onClick={(e) => e.stopPropagation()}
                 className="rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border monochrome:border-neutral-700"
                 style={{
