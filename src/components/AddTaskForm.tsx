@@ -120,6 +120,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
+  const [inputError, setInputError] = useState<string | null>(null);
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string;}>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -148,13 +149,32 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   };
 
   const handleAddEmail = () => {
-    const value = emailInput.trim();
-    if (!value || collaborators.includes(value)) {
+    const value = emailInput.trim().toLowerCase();
+    if (!value) return;
+    // Check if it's a known friend first
+    const friend = (friends || []).find(f => f.email.toLowerCase() === value);
+    if (friend) {
+      const collabId = collabIdOf(friend);
+      if (!collaborators.includes(collabId)) {
+        setCollaborators([...collaborators, collabId]);
+        setHasChanges(true);
+      }
+      setEmailInput('');
+      setInputError(null);
+      return;
+    }
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(value)) {
+      setInputError('Utilisateur introuvable');
+      return;
+    }
+    if (collaborators.includes(value)) {
       setEmailInput('');
       return;
     }
     setCollaborators([...collaborators, value]);
     setEmailInput('');
+    setInputError(null);
     setHasChanges(true);
   };
 
@@ -638,22 +658,29 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                           ) : (
                             <>
                               {/* Input unique : filtre les amis ET permet d'ajouter par email/identifiant */}
-                              <div className="flex gap-2 mb-4">
-                                <div className="relative flex-1">
-                                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                                  <input
-                                    type="text"
-                                    value={emailInput}
-                                    onChange={(e) => setEmailInput(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
-                                    placeholder="Email, nom ou identifiant..."
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
-                                    style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                                  />
+                              <div className="mb-4">
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                                    <input
+                                      type="text"
+                                      value={emailInput}
+                                      onChange={(e) => { setEmailInput(e.target.value); if (inputError) setInputError(null); }}
+                                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
+                                      placeholder="Email, nom ou identifiant..."
+                                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-2 text-sm transition-colors ${inputError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 hover:border-blue-500 focus:border-blue-600'}`}
+                                      style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                                    />
+                                  </div>
+                                  <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                                    <UserPlus size={18} />
+                                  </button>
                                 </div>
-                                <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                                  <UserPlus size={18} />
-                                </button>
+                                {inputError && (
+                                  <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                                    <span>⚠</span> {inputError}
+                                  </p>
+                                )}
                               </div>
 
                               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">

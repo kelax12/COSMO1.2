@@ -39,7 +39,7 @@ import { useCategories, useCreateCategory } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
-import { useFriends, useSendFriendRequest, useShareTask, useSentFriendRequests } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask, useSentFriendRequests } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -84,6 +84,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const { data: sentRequests = [] } = useSentFriendRequests();
   const shareTaskMutation = useShareTask();
   const sendFriendRequestMutation = useSendFriendRequest();
+  const cancelFriendRequestMutation = useRejectFriendRequest();
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
@@ -109,6 +110,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [pendingInvitesLocal, setPendingInvitesLocal] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
+  const [inputError, setInputError] = useState<string | null>(null);
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -561,7 +563,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       // entries in `pendingInvites`. Faille D2.
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRe.test(value)) {
-        setEmailInput('');
+        setInputError('Utilisateur introuvable');
         return;
       }
       if (collaborators.includes(value)) {
@@ -575,6 +577,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       // cache invalidation that would set hasChanges=false.
     }
     setEmailInput('');
+    setInputError(null);
   };
 
   const handleRemoveCollaborator = (collaboratorName: string) => {
@@ -1272,34 +1275,41 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             )}
 
                             {/* Input unique : filtre les amis ET permet d'ajouter par email/identifiant */}
-                            <div className="flex gap-2 mb-4">
-                              <div className="relative flex-1">
-                                <Search
-                                  size={16}
-                                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                                />
-                                <input
-                                  type="text"
-                                  value={emailInput}
-                                  onChange={(e) => setEmailInput(e.target.value)}
-                                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
-                                  placeholder="Email, nom ou identifiant..."
-                                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
-                                  style={{
-                                    backgroundColor: 'rgb(var(--color-surface))',
-                                    color: 'rgb(var(--color-text-primary))',
-                                  }}
-                                />
+                            <div className="mb-4">
+                              <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                  <Search
+                                    size={16}
+                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={emailInput}
+                                    onChange={(e) => { setEmailInput(e.target.value); if (inputError) setInputError(null); }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
+                                    placeholder="Email, nom ou identifiant..."
+                                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-2 text-sm transition-colors ${inputError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 hover:border-blue-500 focus:border-blue-600'}`}
+                                    style={{
+                                      backgroundColor: 'rgb(var(--color-surface))',
+                                      color: 'rgb(var(--color-text-primary))',
+                                    }}
+                                  />
+                                </div>
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  onClick={handleAddEmail}
+                                  disabled={!emailInput.trim()}
+                                  className={emailInput.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-white border-0 !opacity-100'}
+                                >
+                                  <UserPlus size={16} />
+                                </Button>
                               </div>
-                              <Button
-                                type="button"
-                                size="icon"
-                                onClick={handleAddEmail}
-                                disabled={!emailInput.trim()}
-                                className={emailInput.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-white border-0 !opacity-100'}
-                              >
-                                <UserPlus size={16} />
-                              </Button>
+                              {inputError && (
+                                <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                                  <span>⚠</span> {inputError}
+                                </p>
+                              )}
                             </div>
 
                             {/* Friends list — 2 columns */}
@@ -1340,29 +1350,29 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                     <Clock size={12} />
                                     Demandes d'amis en attente
                                   </p>
-                                  <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                                  <div className="grid grid-cols-2 gap-2">
                                     {pendingContacts.map(req => (
-                                      <button
+                                      <div
                                         key={req.id}
-                                        type="button"
-                                        onClick={() => {
-                                          const email = req.email.toLowerCase();
-                                          if (!collaborators.includes(email)) {
-                                            setCollaborators(prev => [...prev, email]);
-                                            setPendingInvitesLocal(prev => [...prev, email]);
-                                          }
-                                        }}
-                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-left"
+                                        className="flex items-center gap-2 p-2.5 rounded-xl border border-amber-400/30 bg-amber-500/10 text-left"
                                       >
-                                        <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                                          <Clock size={14} className="text-amber-600 dark:text-amber-400" />
+                                        <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                                          <Clock size={12} className="text-amber-600 dark:text-amber-400" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{req.email}</p>
-                                          <p className="text-xs text-amber-600 dark:text-amber-400">En attente d'acceptation</p>
+                                          <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{req.email}</p>
+                                          <p className="text-[10px] text-amber-600 dark:text-amber-400">En attente</p>
                                         </div>
-                                        <UserPlus size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                                      </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => cancelFriendRequestMutation.mutate(req.id)}
+                                          className="p-1 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors shrink-0"
+                                          aria-label="Annuler la demande"
+                                          title="Annuler la demande d'ami"
+                                        >
+                                          <X size={13} />
+                                        </button>
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
