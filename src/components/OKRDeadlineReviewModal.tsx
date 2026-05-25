@@ -32,6 +32,11 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
   const validatedRef = useRef(false);
 
   useEffect(() => {
+    // Ne pas réinitialiser quand okr devient null (fermeture) — sinon
+    // validatedRef.current serait remis à false pendant l'animation fly,
+    // ce qui laisserait le setTimeout(commit, 800) appeler onValidate une
+    // deuxième fois après que handleFlyEnd l'a déjà appelé. → double toast.
+    if (!okr?.id) return;
     setDraft(okr);
     setPhase('edit');
     setFlyTarget(null);
