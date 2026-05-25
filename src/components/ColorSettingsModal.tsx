@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 type ColorSettingsModalProps = {
@@ -23,8 +23,6 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dragControls = useDragControls();
-  const deleteConfirmDragControls = useDragControls();
 
   // Sync local state with fetched categories
   useEffect(() => {
@@ -123,36 +121,21 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
       />
 
         <motion.div
-          drag="y"
-          dragControls={dragControls}
-          dragListener={false}
-          dragConstraints={{ top: 0 }}
-          dragElastic={{ top: 0.05, bottom: 0.5 }}
-          onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '100%', opacity: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+          transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             className={`relative w-full overflow-hidden rounded-t-[28px] sm:rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all flex flex-col max-h-[88vh] sm:max-h-[85vh] ${
               isNested ? 'sm:max-w-[510px]' : 'sm:max-w-[572px]'
             }`}
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          {/* Drag handle (mobile only) */}
-          <div
-            className="sm:hidden flex justify-center pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            onPointerDown={(e) => dragControls.start(e)}
-          >
+          {/* Drag handle (mobile only - visual) */}
+          <div className="sm:hidden flex justify-center pt-4 pb-3 shrink-0">
             <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
           </div>
 
-          <div
-            className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
-            onPointerDown={(e) => {
-              if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-              dragControls.start(e);
-            }}
-          >
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0">
             <h2 className="text-base sm:text-xl font-medium text-slate-800 dark:text-white">Modifier les catégories</h2>
             <button
               onClick={onClose}
@@ -248,13 +231,6 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
               onClick={() => setCategoryToDelete(null)}
             >
               <motion.div
-                drag="y"
-                dragControls={deleteConfirmDragControls}
-                dragListener={false}
-                dragConstraints={{ top: 0 }}
-                dragElastic={{ top: 0.05, bottom: 0.5 }}
-                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setCategoryToDelete(null); }}
-                dragTransition={{ bounceStiffness: 500, bounceDamping: 35 }}
                 initial={{ y: '100%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -267,19 +243,10 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                   paddingBottom: 'env(safe-area-inset-bottom)',
                 }}
               >
-                <div
-                  className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
-                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
-                >
+                <div className="sm:hidden flex justify-center pt-4 pb-3">
                   <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
-                <div
-                  className="p-5 sm:p-6"
-                  onPointerDown={(e) => {
-                    if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return;
-                    deleteConfirmDragControls.start(e);
-                  }}
-                >
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
                   </div>

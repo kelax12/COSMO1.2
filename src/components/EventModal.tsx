@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Clock, Plus, CalendarIcon, Trash2 } from "lucide-react";
-import { motion, AnimatePresence, useDragControls } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import ColorSettingsModal from "./ColorSettingsModal";
@@ -99,8 +99,6 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
-  const deleteConfirmDragControls = useDragControls();
-  const mainDragControls = useDragControls();
 
 
   useEffect(() => {
@@ -329,33 +327,20 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const renderContent = () => (
 <motion.div
-        drag="y"
-        dragControls={mainDragControls}
-        dragListener={false}
-        dragConstraints={{ top: 0 }}
-        dragElastic={{ top: 0.05, bottom: 0.5 }}
-        onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
         className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
       style={{ backgroundColor: "rgb(var(--color-surface))", paddingBottom: 'env(safe-area-inset-bottom)' }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className="md:hidden flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-        onPointerDown={(e) => mainDragControls.start(e)}
-      >
+      <div className="md:hidden flex justify-center pt-3 pb-2 shrink-0">
         <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
       </div>
       <div
-        className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b transition-colors gap-2 md:cursor-default cursor-grab active:cursor-grabbing touch-none md:touch-auto"
+        className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b transition-colors gap-2"
         style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
-        onPointerDown={(e) => {
-          if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-          mainDragControls.start(e);
-        }}
       >
         <h2
           className="text-base md:text-xl font-bold truncate"
@@ -838,13 +823,6 @@ const EventModal: React.FC<EventModalProps> = ({
             onClick={() => setShowDeleteConfirm(false)}
           >
             <motion.div
-              drag="y"
-              dragControls={deleteConfirmDragControls}
-              dragListener={false}
-              dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0.05, bottom: 0.5 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setShowDeleteConfirm(false); }}
-              dragTransition={{ bounceStiffness: 500, bounceDamping: 35 }}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -856,19 +834,10 @@ const EventModal: React.FC<EventModalProps> = ({
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
-                onPointerDown={(e) => deleteConfirmDragControls.start(e)}
-              >
+              <div className="sm:hidden flex justify-center pt-4 pb-3">
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
-              <div
-                className="p-5 sm:p-6"
-                onPointerDown={(e) => {
-                  if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return;
-                  deleteConfirmDragControls.start(e);
-                }}
-              >
+              <div className="p-5 sm:p-6">
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                   <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                 </div>

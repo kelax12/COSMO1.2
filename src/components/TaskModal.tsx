@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PremiumGateModal from './PremiumGateModal';
 import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock } from 'lucide-react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -57,8 +57,6 @@ interface TaskModalProps {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }) => {
-  const deleteConfirmDragControls = useDragControls();
-  const mainDragControls = useDragControls();
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -616,32 +614,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
         </DialogTitle>
-        <motion.div
-          drag="y"
-          dragControls={mainDragControls}
-          dragListener={false}
-          dragConstraints={{ top: 0 }}
-          dragElastic={{ top: 0.05, bottom: 0.5 }}
-          onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) handleClose(); }}
+        <div
           className="flex flex-col h-full w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
           style={{ backgroundColor: 'hsl(var(--card))' }}
         >
         <div
-          className="sm:hidden flex justify-center pt-4 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          className="sm:hidden flex justify-center pt-4 pb-2 shrink-0"
           style={{ backgroundColor: 'hsl(var(--card))' }}
-          onPointerDown={(e) => mainDragControls.start(e)}
         >
           <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
         <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit flex flex-col" style={{ backgroundColor: 'hsl(var(--card))' }}>
           {/* Header — sticky */}
           <div
-            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
+            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
             style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'hsl(var(--card))' }}
-            onPointerDown={(e) => {
-              if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-              mainDragControls.start(e);
-            }}
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -1447,7 +1434,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             </form>
           </div>
         </div>
-        </motion.div>
+        </div>
 
         <AnimatePresence>
           {showDeleteConfirm && (
@@ -1459,13 +1446,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               onClick={() => setShowDeleteConfirm(false)}
             >
               <motion.div
-                drag="y"
-                dragControls={deleteConfirmDragControls}
-                dragListener={false}
-                dragConstraints={{ top: 0 }}
-                dragElastic={{ top: 0.05, bottom: 0.5 }}
-                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setShowDeleteConfirm(false); }}
-                dragTransition={{ bounceStiffness: 500, bounceDamping: 35 }}
                 initial={{ y: '100%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -1474,19 +1454,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               >
-                <div
-                  className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
-                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
-                >
+                <div className="sm:hidden flex justify-center pt-4 pb-3">
                   <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
-                <div
-                  className="p-5 sm:p-6"
-                  onPointerDown={(e) => {
-                    if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return;
-                    deleteConfirmDragControls.start(e);
-                  }}
-                >
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
                   </div>

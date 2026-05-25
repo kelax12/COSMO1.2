@@ -3,7 +3,7 @@ import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, Pause } fro
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Habit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
@@ -47,7 +47,6 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const deleteConfirmDragControls = useDragControls();
 
   const streak = calculateStreak(habit.completions);
   const { isPaused, getPauseUntil } = useHabitPauses();
@@ -196,13 +195,6 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               onClick={() => setIsDeleting(false)}
             >
               <motion.div
-                drag="y"
-                dragControls={deleteConfirmDragControls}
-                dragListener={false}
-                dragConstraints={{ top: 0 }}
-                dragElastic={{ top: 0.05, bottom: 0.5 }}
-                onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) setIsDeleting(false); }}
-                dragTransition={{ bounceStiffness: 500, bounceDamping: 35 }}
                 initial={{ y: '100%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
@@ -211,19 +203,10 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
-                  onPointerDown={(e) => deleteConfirmDragControls.start(e)}
-                >
+                <div className="sm:hidden flex justify-center pt-4 pb-3">
                   <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
-                <div
-                  className="p-5 sm:p-6"
-                  onPointerDown={(e) => {
-                    if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return;
-                    deleteConfirmDragControls.start(e);
-                  }}
-                >
+                <div className="p-5 sm:p-6">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>

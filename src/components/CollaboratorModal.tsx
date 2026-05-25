@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
@@ -17,7 +17,6 @@ type CollaboratorModalProps = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, taskId }) => {
-  const dragControls = useDragControls();
   const { data: tasks = [] } = useTasks();
   const updateTaskMutation = useUpdateTask();
 
@@ -201,16 +200,10 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
           aria-labelledby="collab-modal-title"
         >
           <motion.div
-            drag="y"
-            dragControls={dragControls}
-            dragListener={false}
-            dragConstraints={{ top: 0 }}
-            dragElastic={{ top: 0.05, bottom: 0.5 }}
-            onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 600) onClose(); }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 34, stiffness: 360, mass: 0.85 }}
+            exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] h-[88vh] sm:h-auto"
             style={{
@@ -218,22 +211,15 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
-            {/* Drag handle (mobile only) — déclenche le swipe-to-dismiss */}
-            <div
-              className="sm:hidden flex justify-center pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none"
-              onPointerDown={(e) => dragControls.start(e)}
-            >
+            {/* Drag handle (mobile only - visual) */}
+            <div className="sm:hidden flex justify-center pt-4 pb-3">
               <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
             </div>
 
             {/* Header */}
             <div
-              className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none sm:touch-auto"
+              className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
               style={{ borderColor: 'rgb(var(--color-border))' }}
-              onPointerDown={(e) => {
-                if ((e.target as HTMLElement).closest('button,input,a,[contenteditable]')) return;
-                dragControls.start(e);
-              }}
             >
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] sm:text-xs uppercase tracking-wide font-semibold" style={{ color: 'rgb(var(--color-text-muted))' }}>
