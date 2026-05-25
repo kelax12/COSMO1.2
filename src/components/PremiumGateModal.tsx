@@ -88,7 +88,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             >
               <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">

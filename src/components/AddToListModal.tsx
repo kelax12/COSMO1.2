@@ -208,7 +208,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             {...sheetDragProps}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[80vh] bg-[rgb(var(--color-surface))]"
@@ -246,7 +246,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             </div>
 
             {/* ── Body ── */}
-            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-1">
+            <div data-scroll-area className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-1">
 
               {/* Create button / form */}
               <AnimatePresence mode="wait">

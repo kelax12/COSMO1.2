@@ -174,7 +174,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
             {...sheetDragProps}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
+            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             onClick={e => e.stopPropagation()}
             className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
@@ -214,7 +214,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
             </div>
 
             {/* Body — KR actuel */}
-            <div className="flex-1 overflow-y-auto px-5 py-5">
+            <div data-scroll-area className="flex-1 overflow-y-auto px-5 py-5">
               <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-muted))] mb-1.5">
                 {current.okrTitle}
               </p>

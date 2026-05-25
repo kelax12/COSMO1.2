@@ -132,8 +132,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
         {...sheetDragProps}
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
+        exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
         transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+        data-scroll-area
         className="bg-slate-900 border-t sm:border border-slate-700 rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
         onClick={(e) => e.stopPropagation()}
