@@ -22,6 +22,20 @@ import WeeklyCheckinModal, { useWeeklyCheckin } from '../components/WeeklyChecki
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
+const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+const formatBarDate = (raw: string): string => {
+  // Only format yyyy-mm-dd strings (7 days view)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  if (raw === todayStr) return "Aujourd'hui";
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (raw === yesterday.toLocaleDateString('en-CA')) return 'Hier';
+  const [, m, d] = raw.split('-');
+  return `${d} ${MONTHS_FR[parseInt(m, 10) - 1]}`;
+};
+
 const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string }> = ({ data, color = '#2563EB' }) => {
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
@@ -44,7 +58,7 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
   return (
     <div className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative">
       {data.map((d, i) => {
-        const tooltipLabel = d.label || d.date || '';
+        const tooltipLabel = d.label ? d.label : d.date ? formatBarDate(d.date) : '';
         return (
           <div
             key={i}
