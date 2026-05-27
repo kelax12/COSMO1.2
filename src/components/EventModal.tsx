@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Clock, Plus, CalendarIcon, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useBottomSheet } from "@/hooks/use-bottom-sheet";
+import { ResponsiveSheet } from "@/components/ui/responsive-sheet";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import ColorSettingsModal from "./ColorSettingsModal";
@@ -73,7 +72,6 @@ const EventModal: React.FC<EventModalProps> = ({
 }) => {
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
 
   // La section Description est masquée par défaut (UX épuré). Visible si :
   //   - mode edit + l'event a déjà des notes (sinon on perdrait visuellement le contenu)
@@ -101,7 +99,6 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
-  const { sheetRef: deleteSheetRef, handleBarWidth: deleteHandleBarWidth, sheetDragProps: deleteSheetDragProps } = useBottomSheet(() => setShowDeleteConfirm(false));
 
 
   useEffect(() => {
@@ -329,21 +326,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const isPrefilledMode = mode === 'add';
 
   const renderContent = () => (
-<motion.div
-        ref={sheetRef}
-        {...sheetDragProps}
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-        className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
-      style={{ backgroundColor: "rgb(var(--color-surface))", paddingBottom: 'env(safe-area-inset-bottom)' }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Drag handle — reacts to swipe on mobile */}
-      <div className="md:hidden flex justify-center pt-3 pb-2 shrink-0">
-        <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-      </div>
+    <>
       <div
         className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b transition-colors gap-2"
         style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
@@ -803,80 +786,61 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
         </div>
       </form>
-    </motion.div>
+    </>
   );
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
-        onClick={onClose}
+      <ResponsiveSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        ariaLabel={mode === 'add' ? 'Nouvel événement' : mode === 'edit' ? 'Modifier événement' : 'Convertir en événement'}
+        desktopMaxWidth="md:max-w-4xl lg:max-w-5xl"
+        desktopMaxHeight="90vh"
       >
         {renderContent()}
-      </div>
+      </ResponsiveSheet>
 
       <ColorSettingsModal
         isOpen={isColorSettingsOpen}
         onClose={() => setIsColorSettingsOpen(false)}
       />
 
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
-            onClick={() => setShowDeleteConfirm(false)}
-          >
-            <motion.div
-              ref={deleteSheetRef}
-              {...deleteSheetDragProps}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              className="rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-md transition-colors"
-              style={{
-                backgroundColor: "rgb(var(--color-surface))",
-                paddingBottom: 'env(safe-area-inset-bottom)',
-              }}
-              onClick={(e) => e.stopPropagation()}
+      <ResponsiveSheet
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        ariaLabel="Supprimer l'événement"
+        desktopMaxWidth="sm:max-w-md"
+        zIndex={60}
+      >
+        <div className="p-5 sm:p-6">
+          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+            <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            Supprimer l'événement
+          </h3>
+          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
+            Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.
+          </p>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 min-h-11"
+              onClick={() => setShowDeleteConfirm(false)}
             >
-              <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <motion.div style={{ width: deleteHandleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-              </div>
-              <div className="p-5 sm:p-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                  Supprimer l'événement
-                </h3>
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                  Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.
-                </p>
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1 min-h-11"
-                    onClick={() => setShowDeleteConfirm(false)}
-                  >
-                    Annuler
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white"
-                    onClick={confirmDelete}
-                  >
-                    Supprimer
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white"
+              onClick={confirmDelete}
+            >
+              Supprimer
+            </Button>
+          </div>
+        </div>
+      </ResponsiveSheet>
     </>
   );
 };

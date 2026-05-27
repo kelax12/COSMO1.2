@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
 import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
@@ -32,7 +31,6 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const [search, setSearch] = useState('');
 
   const assignedCollaborators = task?.collaborators || [];
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
 
   // A friend's canonical "collaborator id" is their auth.users.id (userId),
   // required by Supabase RLS + shared_tasks FK. Falls back to friend.id in
@@ -188,38 +186,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-md sm:p-4"
-          onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="collab-modal-title"
-        >
-          <motion.div
-            ref={sheetRef}
-            {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] h-[88vh] sm:h-auto"
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              paddingBottom: 'env(safe-area-inset-bottom)',
-            }}
-          >
-            {/* Drag handle — reacts to swipe on mobile */}
-            <div className="sm:hidden flex justify-center pt-4 pb-3">
-              <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-            </div>
-
+    <ResponsiveSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      ariaLabel={`Collaborateurs ${task.name}`}
+      desktopMaxWidth="sm:max-w-3xl"
+    >
             {/* Header */}
             <div
               className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
@@ -244,7 +216,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
             </div>
 
             {/* Content — scrollable */}
-            <div data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6 sm:space-y-8">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6 sm:space-y-8">
               {/* Assigned collaborators */}
               <section>
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -387,10 +359,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                 )}
               </section>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </ResponsiveSheet>
   );
 };
 
