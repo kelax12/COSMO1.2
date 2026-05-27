@@ -97,6 +97,13 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
     }
   };
 
+  const cycleListColor = (list: { id: string; name: string; color: string }) => {
+    const currentHex = resolveColor(list.color);
+    const currentIdx = COLOR_PALETTE.findIndex((c) => c.hex === currentHex);
+    const nextKey = COLOR_PALETTE[(currentIdx + 1) % COLOR_PALETTE.length].key;
+    updateListMutation.mutate({ id: list.id, updates: { name: list.name, color: nextKey } });
+  };
+
   const handleCreate = () => {
     if (!draftList?.name.trim()) return;
     createListMutation.mutate({ name: draftList.name.trim(), color: draftList.color, type: 'manual' });
@@ -200,7 +207,13 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                   if (editMode) {
                     return (
                       <div key={list.id} className="flex items-center gap-3 px-1 py-2.5">
-                        <div className="w-5 h-5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <button
+                          type="button"
+                          onClick={() => cycleListColor(list)}
+                          aria-label="Changer la couleur"
+                          className="w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
+                          style={{ backgroundColor: color }}
+                        />
 
                         <input
                           type="text"
