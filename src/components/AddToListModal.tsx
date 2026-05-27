@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, Check } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import {
@@ -33,125 +33,47 @@ const colorMap: Record<string, string> = Object.fromEntries(
 );
 const resolveColor = (color: string) => colorMap[color] || color;
 
-/* ─── Colour picker row ─────────────────────────────────────────────────── */
-const ColorRow: React.FC<{
-  selected: string;
-  onChange: (key: string) => void;
-}> = ({ selected, onChange }) => (
-  <div className="flex items-center gap-2 flex-wrap">
-    {COLOR_PALETTE.map((c) => (
-      <button
-        key={c.key}
-        type="button"
-        onClick={() => onChange(c.key)}
-        aria-label={`Couleur ${c.label}`}
-        className="w-6 h-6 rounded-full transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
-        style={{
-          backgroundColor: c.hex,
-          transform: selected === c.key ? 'scale(1.25)' : 'scale(1)',
-          outline: selected === c.key ? `2px solid ${c.hex}` : 'none',
-          outlineOffset: 2,
-        }}
-      />
-    ))}
-  </div>
-);
-
-/* ─── Inline form (create / edit) ────────────────────────────────────────── */
-const InlineForm: React.FC<{
-  initialName?: string;
-  initialColor?: string;
-  onSave: (name: string, color: string) => void;
-  onCancel: () => void;
-  saveLabel?: string;
-}> = ({ initialName = '', initialColor = 'blue', onSave, onCancel, saveLabel = 'Créer' }) => {
-  const [name, setName] = useState(initialName);
-  const [color, setColor] = useState(initialColor);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.15 }}
-      className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3"
-    >
-      {/* Name input */}
-      <input
-        ref={inputRef}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && name.trim()) onSave(name.trim(), color);
-          if (e.key === 'Escape') onCancel();
-        }}
-        placeholder="Nom de la liste"
-        className="w-full h-11 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] transition-all"
-      />
-
-      {/* Color row */}
-      <ColorRow selected={color} onChange={setColor} />
-
-      {/* Buttons */}
-      <div className="flex items-center gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 min-h-9 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-        >
-          Annuler
-        </button>
-        <button
-          type="button"
-          onClick={() => { if (name.trim()) onSave(name.trim(), color); }}
-          disabled={!name.trim()}
-          className="flex-1 min-h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white transition-colors"
-        >
-          {saveLabel}
-        </button>
-      </div>
-    </motion.div>
-  );
-};
-
 /* ─── Main component ─────────────────────────────────────────────────────── */
 const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
   const { data: lists = [] } = useLists();
-  const addTaskToListMutation    = useAddTaskToList();
+  const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
-  const createListMutation = useCreateList();
-  const updateListMutation = useUpdateList();
-  const deleteListMutation = useDeleteList();
+  const createListMutation         = useCreateList();
+  const updateListMutation         = useUpdateList();
+  const deleteListMutation         = useDeleteList();
 
-  const [creating, setCreating]           = useState(false);
-  const [editingId, setEditingId]         = useState<string | null>(null);
-  const [editMode, setEditMode]           = useState(false);
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const [editMode, setEditMode]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [draftList, setDraftList]             = useState<{ name: string; color: string } | null>(null);
+  const draftInputRef = useRef<HTMLInputElement>(null);
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+
+  const hasDraft = draftList !== null;
 
   /* Reset on close */
   useEffect(() => {
     if (!isOpen) {
-      setCreating(false);
-      setEditingId(null);
-      setConfirmDeleteId(null);
       setEditMode(false);
+      setConfirmDeleteId(null);
+      setDraftList(null);
     }
   }, [isOpen]);
+
+  /* Focus draft input when it appears */
+  useEffect(() => {
+    if (hasDraft) {
+      requestAnimationFrame(() => draftInputRef.current?.focus());
+    }
+  }, [hasDraft]);
 
   /* ESC + body lock */
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (editingId)         { setEditingId(null);        return; }
-      if (creating)          { setCreating(false);         return; }
-      if (confirmDeleteId)   { setConfirmDeleteId(null);   return; }
+      if (draftList)       { setDraftList(null);       return; }
+      if (confirmDeleteId) { setConfirmDeleteId(null); return; }
+      if (editMode)        { setEditMode(false);       return; }
       onClose();
     };
     document.addEventListener('keydown', onKey);
@@ -161,12 +83,13 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, onClose, editingId, creating, confirmDeleteId]);
+  }, [isOpen, onClose, editMode, draftList, confirmDeleteId]);
 
   /* Handlers */
   const handleToggle = (listId: string) => {
+    if (editMode) return;
     const list = lists.find((l) => l.id === listId);
-    if (!list || list.type === 'smart') return;
+    if (!list) return;
     if (list.taskIds.includes(taskId)) {
       removeTaskFromListMutation.mutate({ taskId, listId });
     } else {
@@ -174,22 +97,26 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
     }
   };
 
-  const handleCreate = (name: string, color: string) => {
-    createListMutation.mutate({ name, color, type: 'manual' });
-    setCreating(false);
+  const handleCreate = () => {
+    if (!draftList?.name.trim()) return;
+    createListMutation.mutate({ name: draftList.name.trim(), color: draftList.color, type: 'manual' });
+    setDraftList(null);
   };
 
-  const handleSaveEdit = (name: string, color: string) => {
-    if (!editingId) return;
-    updateListMutation.mutate({ id: editingId, updates: { name, color } });
-    setEditingId(null);
+  const cycleDraftColor = () => {
+    setDraftList((d) => {
+      if (!d) return null;
+      const idx = COLOR_PALETTE.findIndex((c) => c.key === d.color);
+      return { ...d, color: COLOR_PALETTE[(idx + 1) % COLOR_PALETTE.length].key };
+    });
   };
 
   const handleConfirmDelete = (listId: string) => {
     deleteListMutation.mutate(listId);
     setConfirmDeleteId(null);
-    if (editingId === listId) setEditingId(null);
   };
+
+  const manualLists = lists.filter((l) => l.type !== 'smart');
 
   return (
     <AnimatePresence>
@@ -221,7 +148,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
               <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" />
             </div>
 
-            {/* ── Header ligne : titre + boutons ── */}
+            {/* Header : titre + boutons */}
             <div className="flex items-center justify-between px-4 pb-2 shrink-0">
               <p id="add-to-list-title" className="text-[13px] font-semibold uppercase tracking-wider text-gray-500">
                 Listes
@@ -229,169 +156,180 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
-                  onClick={() => { setCreating(c => !c); setEditMode(false); setEditingId(null); }}
+                  onClick={() => setDraftList(hasDraft ? null : { name: '', color: 'blue' })}
                   aria-label="Nouvelle liste"
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${creating ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                    hasDraft
+                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                      : 'text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
                 >
                   <Plus size={16} />
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setEditMode(m => !m); setEditingId(null); setConfirmDeleteId(null); setCreating(false); }}
+                  onClick={() => { setEditMode((m) => !m); setConfirmDeleteId(null); }}
                   aria-label="Mode édition"
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${editMode ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                    editMode
+                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                      : 'text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
                 >
                   <Pencil size={15} />
                 </button>
               </div>
             </div>
 
-            {/* ── Body ── */}
+            {/* Body */}
             <div data-scroll-area className="flex-1 overflow-y-auto px-4">
 
-              {/* Inline create form */}
-              <AnimatePresence>
-                {creating && (
-                  <motion.div
-                    key="create-form"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="overflow-hidden py-2 border-b border-[rgb(var(--color-border))]"
-                  >
-                    <InlineForm
-                      onSave={handleCreate}
-                      onCancel={() => setCreating(false)}
-                      saveLabel="Créer"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Empty state */}
-              {lists.filter(l => l.type !== 'smart').length === 0 && !creating && (
+              {manualLists.length === 0 && !hasDraft && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">Aucune liste pour l'instant</p>
                 </div>
               )}
 
-              {lists.filter(l => l.type !== 'smart').length > 0 && (
-                <div className="divide-y divide-[rgb(var(--color-border))]">
-              {lists.filter(l => l.type !== 'smart').map((list) => {
-                const isSelected = list.taskIds.includes(taskId);
-                const color      = resolveColor(list.color);
-                const isEditing  = editingId === list.id;
-                const isDeleting = confirmDeleteId === list.id;
+              <div className="divide-y divide-[rgb(var(--color-border))]">
+                {manualLists.map((list) => {
+                  const isSelected = list.taskIds.includes(taskId);
+                  const color      = resolveColor(list.color);
+                  const isDeleting = confirmDeleteId === list.id;
 
-                if (isEditing) {
-                  return (
-                    <div key={list.id} className="py-2">
-                      <InlineForm
-                        initialName={list.name}
-                        initialColor={list.color}
-                        onSave={handleSaveEdit}
-                        onCancel={() => setEditingId(null)}
-                        saveLabel="Enregistrer"
-                      />
-                    </div>
-                  );
-                }
+                  /* ── Mode édition ── */
+                  if (editMode) {
+                    return (
+                      <div key={list.id} className="flex items-center gap-3 px-1 py-2.5">
+                        <div className="w-5 h-5 rounded-full shrink-0" style={{ backgroundColor: color }} />
 
-                return (
-                  <div
-                    key={list.id}
-                    className="flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                    onClick={() => !editMode && handleToggle(list.id)}
-                  >
-                    {/* Check + colour dot */}
-                    <div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
-                      <AnimatePresence>
-                        {isSelected && !editMode ? (
-                          <motion.div
-                            key="check"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-                            className="absolute inset-0 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: color }}
-                          >
-                            <Check size={11} className="text-white" strokeWidth={3} />
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="dot"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: color }}
-                          />
-                        )}
-                      </AnimatePresence>
-                    </div>
+                        <input
+                          type="text"
+                          defaultValue={list.name}
+                          onBlur={(e) => {
+                            const newName = e.target.value.trim();
+                            if (newName && newName !== list.name) {
+                              updateListMutation.mutate({ id: list.id, updates: { name: newName, color: list.color } });
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter')  e.currentTarget.blur();
+                            if (e.key === 'Escape') { e.currentTarget.value = list.name; e.currentTarget.blur(); }
+                          }}
+                          className="flex-1 min-w-0 text-sm font-medium bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] border-b border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
+                        />
 
-                    {/* Name + meta */}
-                    <div className="flex-1 min-w-0 flex items-center gap-2">
-                      <span className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                        {list.name}
-                      </span>
-                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-
-                    {/* Right zone — visible only in edit mode */}
-                    {editMode && (
-                      <div className="flex items-center gap-0.5 shrink-0">
                         {isDeleting ? (
-                          <>
+                          <div className="flex items-center gap-1 shrink-0">
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
+                              onClick={() => setConfirmDeleteId(null)}
                               className="h-7 px-2.5 rounded-md text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             >
                               Non
                             </button>
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); handleConfirmDelete(list.id); }}
+                              onClick={() => handleConfirmDelete(list.id)}
                               className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
                             >
                               Supprimer
                             </button>
-                          </>
+                          </div>
                         ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setEditingId(list.id); setConfirmDeleteId(null); setCreating(false); }}
-                              aria-label={`Modifier ${list.name}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            >
-                              <Pencil size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(list.id); }}
-                              aria-label={`Supprimer ${list.name}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(list.id)}
+                            aria-label={`Supprimer ${list.name}`}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         )}
                       </div>
+                    );
+                  }
+
+                  /* ── Mode normal ── */
+                  return (
+                    <div
+                      key={list.id}
+                      className="flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      onClick={() => handleToggle(list.id)}
+                    >
+                      <div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
+                        <AnimatePresence>
+                          {isSelected ? (
+                            <motion.div
+                              key="check"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                              className="absolute inset-0 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: color }}
+                            >
+                              <Check size={11} className="text-white" strokeWidth={3} />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="dot"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: color }}
+                            />
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      <span className="flex-1 text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                        {list.name}
+                      </span>
+                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
+                        {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* Ligne de création inline */}
+                {hasDraft && (
+                  <div className="flex items-center gap-3 px-1 py-2.5">
+                    <button
+                      type="button"
+                      onClick={cycleDraftColor}
+                      aria-label="Changer la couleur"
+                      className="w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
+                      style={{ backgroundColor: resolveColor(draftList!.color) }}
+                    />
+                    <input
+                      ref={draftInputRef}
+                      type="text"
+                      value={draftList!.name}
+                      onChange={(e) => setDraftList((d) => d ? { ...d, name: e.target.value } : null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter'  && draftList!.name.trim()) handleCreate();
+                        if (e.key === 'Escape') setDraftList(null);
+                      }}
+                      placeholder="Nom de la liste…"
+                      className="flex-1 min-w-0 text-sm bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-gray-400 dark:placeholder-gray-600"
+                    />
+                    {draftList!.name.trim() ? (
+                      <button type="button" onClick={handleCreate} aria-label="Créer" className="text-blue-500 shrink-0">
+                        <Check size={16} />
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => setDraftList(null)} aria-label="Annuler" className="text-gray-400 shrink-0">
+                        <X size={14} />
+                      </button>
                     )}
                   </div>
-                );
-              })}
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
-            {/* ── Footer ── */}
+            {/* Footer */}
             <div className="px-5 sm:px-6 pt-3 pb-5 border-t border-[rgb(var(--color-border))] shrink-0">
               <button
                 type="button"

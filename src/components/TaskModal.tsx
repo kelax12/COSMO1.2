@@ -285,7 +285,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         locale={fr}
                         disabled={{ before: new Date() }}
                         initialFocus
-                        className="w-full [--cell-size:2.5rem]"
+                        className="w-full [--cell-size:2.25rem]"
                       />
                     </div>
                     {formData.deadline && (
