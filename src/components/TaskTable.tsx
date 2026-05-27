@@ -12,6 +12,7 @@ import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import CollaboratorModal from './CollaboratorModal';
 import AddToListModal from './AddToListModal';
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -1053,27 +1054,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
         />
       )}
 
-        <AnimatePresence>
-        {taskToDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
-            onClick={() => setTaskToDelete(null)}
-          >
-            <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-              </div>
+        <ResponsiveSheet
+          isOpen={taskToDelete !== null}
+          onClose={() => setTaskToDelete(null)}
+          ariaLabel="Supprimer la tâche"
+          desktopMaxWidth="sm:max-w-sm"
+          zIndex={60}
+          overlayClassName="bg-black/50"
+          className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
+        >
               <div className="p-5 sm:p-6">
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
                   <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
@@ -1097,10 +1086,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </button>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-        </AnimatePresence>
+        </ResponsiveSheet>
 
         {addToListTask && (
           <AddToListModal

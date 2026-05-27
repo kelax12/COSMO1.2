@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
 import { X, Edit2, CheckCircle2, Calendar } from 'lucide-react';
 import type { OKR } from '@/modules/okrs';
 
@@ -22,7 +20,6 @@ type Props = {
  * l'OKRModal en mode édition.
  */
 const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories, resolveColor, onEdit }) => {
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
@@ -50,35 +47,17 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
     return Math.round(sum / okr.keyResults.length);
   };
 
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key="overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={onClose}
-          className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm sm:p-4"
-        >
-          <motion.div
-            ref={sheetRef}
-            {...sheetDragProps}
-            key="panel"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          >
-            {/* Drag handle — reacts to swipe on mobile */}
-            <div className="sm:hidden flex justify-center pt-2 pb-1">
-              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-            </div>
-
+  return (
+    <ResponsiveSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      ariaLabel="OKR terminés"
+      desktopMaxWidth="sm:max-w-3xl"
+      desktopMaxHeight="92dvh"
+      zIndex={75}
+      overlayClassName="bg-slate-950/60"
+      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+    >
             {/* Header */}
             <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-between gap-3">
               <div>
@@ -212,11 +191,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                 </div>
               )}
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body
+    </ResponsiveSheet>
   );
 };
 

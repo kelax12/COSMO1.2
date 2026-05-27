@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -30,7 +29,6 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitchMode }) => {
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -118,30 +116,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center sm:p-4"
-      onClick={onClose}
+    <ResponsiveSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      ariaLabel={mode === 'login' ? 'Connexion' : 'Inscription'}
+      desktopMaxWidth="sm:max-w-md"
+      desktopMaxHeight="90vh"
+      zIndex={9999}
+      className="bg-slate-900 border-t sm:border border-slate-700 overflow-y-auto p-6 sm:p-8"
+      showHandle={false}
     >
-      <motion.div
-        ref={sheetRef}
-        {...sheetDragProps}
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-        data-scroll-area
-        className="bg-slate-900 border-t sm:border border-slate-700 rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sm:hidden flex justify-center -mt-3 mb-3">
-          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-600/80" />
-        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -288,10 +272,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
-      )}
-    </AnimatePresence>
+    </ResponsiveSheet>
   );
 };
 
