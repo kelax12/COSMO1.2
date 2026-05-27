@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import {
@@ -130,6 +130,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
 
   const [creating, setCreating]           = useState(false);
   const [editingId, setEditingId]         = useState<string | null>(null);
+  const [editMode, setEditMode]           = useState(false);
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -139,6 +140,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
       setCreating(false);
       setEditingId(null);
       setConfirmDeleteId(null);
+      setEditMode(false);
     }
   }, [isOpen]);
 
@@ -258,19 +260,31 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                     saveLabel="Créer"
                   />
                 ) : (
-                  <motion.button
+                  <motion.div
                     key="create-btn"
-                    type="button"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.1 }}
-                    onClick={() => { setCreating(true); setEditingId(null); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                    className="flex items-center"
                   >
-                    <Plus size={16} className="shrink-0" />
-                    Nouvelle liste
-                  </motion.button>
+                    <button
+                      type="button"
+                      onClick={() => { setCreating(true); setEditingId(null); setEditMode(false); }}
+                      className="flex-1 flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                    >
+                      <Plus size={16} className="shrink-0" />
+                      Nouvelle liste
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEditMode(m => !m); setEditingId(null); setConfirmDeleteId(null); }}
+                      aria-label="Mode édition"
+                      className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${editMode ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  </motion.div>
                 )}
               </AnimatePresence>
 
@@ -283,12 +297,11 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 </div>
               )}
 
-              {lists.length > 0 && (
+              {lists.filter(l => l.type !== 'smart').length > 0 && (
                 <div className="border-t border-[rgb(var(--color-border))] mt-2 divide-y divide-[rgb(var(--color-border))]">
-              {lists.map((list) => {
+              {lists.filter(l => l.type !== 'smart').map((list) => {
                 const isSelected = list.taskIds.includes(taskId);
                 const color      = resolveColor(list.color);
-                const isSmart    = list.type === 'smart';
                 const isEditing  = editingId === list.id;
                 const isDeleting = confirmDeleteId === list.id;
 
@@ -307,92 +320,91 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 }
 
                 return (
-                  <div key={list.id} className="group flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleToggle(list.id)}>
-                    {/* Colour dot */}
-                    <div
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
+                  <div
+                    key={list.id}
+                    className="flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                    onClick={() => !editMode && handleToggle(list.id)}
+                  >
+                    {/* Check + colour dot */}
+                    <div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
+                      <AnimatePresence>
+                        {isSelected && !editMode ? (
+                          <motion.div
+                            key="check"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                            className="absolute inset-0 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: color }}
+                          >
+                            <Check size={11} className="text-white" strokeWidth={3} />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="dot"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: color }}
+                          />
+                        )}
+                      </AnimatePresence>
+                    </div>
 
                     {/* Name + meta */}
                     <div className="flex-1 min-w-0 flex items-center gap-2">
                       <span className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
                         {list.name}
                       </span>
-                      {isSmart && (
-                        <span
-                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0"
-                          style={{ backgroundColor: `${color}20`, color }}
-                        >
-                          <Sparkles size={8} />
-                          Auto
-                        </span>
-                      )}
                       <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
                         {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
                       </span>
                     </div>
 
-                    {/* Right zone */}
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      {isDeleting ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
-                            className="h-7 px-2.5 rounded-md text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          >
-                            Non
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleConfirmDelete(list.id); }}
-                            className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
-                          >
-                            Supprimer
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {/* Check (selected) */}
-                          <AnimatePresence>
-                            {isSelected && !isSmart && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                exit={{ scale: 0 }}
-                                className="w-5 h-5 rounded-full flex items-center justify-center mr-1"
-                                style={{ backgroundColor: color }}
-                              >
-                                <Check size={11} className="text-white" strokeWidth={3} />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Edit */}
-                          {!isSmart && (
+                    {/* Right zone — visible only in edit mode */}
+                    {editMode && (
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {isDeleting ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
+                              className="h-7 px-2.5 rounded-md text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              Non
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleConfirmDelete(list.id); }}
+                              className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
+                            >
+                              Supprimer
+                            </button>
+                          </>
+                        ) : (
+                          <>
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); setEditingId(list.id); setConfirmDeleteId(null); setCreating(false); }}
                               aria-label={`Modifier ${list.name}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             >
                               <Pencil size={13} />
                             </button>
-                          )}
-
-                          {/* Delete */}
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(list.id); }}
-                            aria-label={`Supprimer ${list.name}`}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </>
-                      )}
-                    </div>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(list.id); }}
+                              aria-label={`Supprimer ${list.name}`}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
