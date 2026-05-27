@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cookie, X } from 'lucide-react';
+import { Cookie, X, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 type CookieConsent = 'accepted' | 'refused' | null;
@@ -42,44 +42,92 @@ const CookieBanner: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-[200]"
+          className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-[200]"
         >
-          <div className="bg-slate-800 border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/40">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2">
-                <Cookie size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                <h3 className="font-semibold text-white text-sm">Cookies</h3>
+          {/* Card */}
+          <div className="
+            bg-white dark:bg-gray-900
+            border border-gray-100 dark:border-white/10
+            rounded-2xl shadow-xl shadow-gray-200/80 dark:shadow-black/40
+            overflow-hidden
+          ">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-[8px] bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                  <Cookie size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                </div>
+                <span className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                  Cookies
+                </span>
               </div>
               <button
                 onClick={handleRefuse}
-                className="text-slate-500 hover:text-white transition-colors shrink-0"
+                className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 aria-label="Fermer"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
 
-            <p className="text-slate-400 text-xs leading-relaxed mb-4">
-              Nous utilisons uniquement des cookies <strong className="text-white">strictement nécessaires</strong> au fonctionnement de l'application (session, préférences). Aucun cookie publicitaire ni de tracking. Consultez notre{' '}
-              <Link to="/politique-confidentialite" className="text-blue-400 hover:underline">
-                politique de confidentialité
-              </Link>.
-            </p>
+            {/* Separator */}
+            <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4" />
 
-            <div className="flex gap-2">
+            {/* Body */}
+            <div className="px-4 pt-3 pb-4">
+              {/* Trust badge */}
+              <div className="flex items-center gap-2 mb-2.5">
+                <ShieldCheck size={13} className="text-green-500 shrink-0" aria-hidden="true" />
+                <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">
+                  Aucun tracking publicitaire
+                </span>
+              </div>
+
+              <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                Uniquement des cookies{' '}
+                <strong className="text-gray-900 dark:text-white font-semibold">strictement nécessaires</strong>
+                {' '}au fonctionnement (session, préférences).{' '}
+                <Link
+                  to="/politique-confidentialite"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  onClick={handleRefuse}
+                >
+                  En savoir plus
+                </Link>.
+              </p>
+            </div>
+
+            {/* Footer actions */}
+            <div className="px-4 pb-4 flex gap-2">
               <button
                 onClick={handleRefuse}
-                className="flex-1 px-3 py-2 rounded-xl border border-white/10 text-slate-300 hover:text-white hover:border-white/20 text-xs font-medium transition-all"
+                className="
+                  flex-1 h-[42px] rounded-xl
+                  bg-gray-100 dark:bg-gray-800
+                  text-gray-700 dark:text-gray-300
+                  hover:bg-gray-200 dark:hover:bg-gray-700
+                  text-[13px] font-semibold
+                  transition-colors active:scale-[0.97] transform-gpu
+                "
               >
                 Refuser
               </button>
               <button
                 onClick={handleAccept}
-                className="flex-1 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all"
+                className="
+                  flex-1 h-[42px] rounded-xl
+                  bg-blue-600 hover:bg-blue-500
+                  text-white
+                  text-[13px] font-semibold
+                  transition-colors active:scale-[0.97] transform-gpu
+                  shadow-sm shadow-blue-500/30
+                "
               >
                 Accepter
               </button>
             </div>
+
           </div>
         </motion.div>
       )}
