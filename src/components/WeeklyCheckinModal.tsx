@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { X, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
@@ -73,6 +73,7 @@ interface WeeklyCheckinModalProps {
  * via `useUpdateKeyResult` (qui insère dans `kr_completions` côté repository).
  */
 export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps) {
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { data: activeOkrs = [] } = useActiveOkrs();
   const updateKR = useUpdateKeyResult();
 
@@ -156,18 +157,33 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
   const progress = current ? ((currentIdx + 1) / allKRs.length) * 100 : 0;
   const krProgress = current ? (currentValue / Math.max(current.kr.targetValue, 1)) * 100 : 0;
 
-  if (!current) return null;
-
   return (
-    <ResponsiveSheet
-      isOpen={isOpen}
-      onClose={onClose}
-      ariaLabel="Check-in hebdo"
-      desktopMaxWidth="sm:max-w-md"
-      desktopMaxHeight="92vh"
-      zIndex={150}
-      overlayClassName="bg-black/50"
-    >
+    <AnimatePresence>
+      {isOpen && current && (
+        <motion.div
+          className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+        >
+          <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            <div className="sm:hidden flex justify-center pt-2 pb-1 shrink-0">
+              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+            </div>
+
             {/* Header */}
             <div className="px-5 pt-3 pb-4 shrink-0 border-b border-[rgb(var(--color-border))]">
               <div className="flex items-center justify-between mb-2">
@@ -282,7 +298,10 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 )}
               </button>
             </div>
-    </ResponsiveSheet>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

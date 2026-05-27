@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, X, Zap, Clock } from 'lucide-react';
-import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 declare global {
   interface Window {
@@ -15,6 +16,7 @@ interface AdModalProps {
 }
 
 const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [adState, setAdState] = useState<'loading' | 'playing' | 'completed'>('loading');
   const [countdown, setCountdown] = useState(15);
   const [canSkip, setCanSkip] = useState(false);
@@ -80,16 +82,29 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
   };
 
   return (
-    <ResponsiveSheet
-      isOpen={isOpen}
-      onClose={onClose}
-      ariaLabel="Publicité Sponsorisée"
-      desktopMaxWidth="sm:max-w-2xl"
-      desktopMaxHeight="90vh"
-      zIndex={300}
-      overlayClassName="bg-black/70"
-      className="bg-white dark:bg-slate-800 overflow-hidden"
+    <AnimatePresence>
+      {isOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center z-[300] sm:p-4"
     >
+      <motion.div
+        ref={sheetRef}
+        {...sheetDragProps}
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+        className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl w-full sm:max-w-2xl overflow-hidden transition-colors shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
+          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+        </div>
+
         {/* Header */}
         <div className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -161,7 +176,10 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         <div className="p-4 bg-slate-50 dark:bg-slate-700 text-center text-sm text-slate-600 dark:text-slate-300 transition-colors">
           <p>En regardant cette publicité, vous soutenez le développement de Cosmo</p>
         </div>
-    </ResponsiveSheet>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
