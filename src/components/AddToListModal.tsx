@@ -215,7 +215,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                             if (e.key === 'Enter')  e.currentTarget.blur();
                             if (e.key === 'Escape') { e.currentTarget.value = list.name; e.currentTarget.blur(); }
                           }}
-                          className="flex-1 min-w-0 text-sm font-medium bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] border-b border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
+                          className="flex-1 min-w-0 text-sm font-medium bg-transparent border-0 focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))]"
                         />
 
                         {isDeleting ? (
@@ -313,7 +313,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                         if (e.key === 'Escape') setDraftList(null);
                       }}
                       placeholder="Nom de la liste…"
-                      className="flex-1 min-w-0 text-sm bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-gray-400 dark:placeholder-gray-600"
+                      className="flex-1 min-w-0 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-gray-400 dark:placeholder-gray-600"
                     />
                     {draftList!.name.trim() ? (
                       <button type="button" onClick={handleCreate} aria-label="Créer" className="text-blue-500 shrink-0">
