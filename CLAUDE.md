@@ -1067,6 +1067,7 @@ Les composants dans `src/components/ui/` sont normalement **non modifiés** (ils
 | Fichier | Modification | Raison | Commit |
 |---|---|---|---|
 | `dialog.tsx` | `DialogOverlay` : `bg-black/50` → `bg-black/30 backdrop-blur-md` | Cohérence iOS sheet style avec les autres modals custom | `5e2336a` |
+| `dialog.tsx` | `DialogContent` : prop `variant` ajoutée (`'default'` \| `'bottom-sheet'`) — `bottom-sheet` remplace zoom par slide-from-bottom avec easing iOS (`cubic-bezier(0.32,0.72,0,1)` open, `(0.4,0,1,1)` close) | Animation fluide bottom-sheet mobile TaskModal | `pending` |
 
 Toute nouvelle modif doit s'ajouter dans cette table.
 
