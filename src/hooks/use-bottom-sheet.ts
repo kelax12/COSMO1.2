@@ -66,19 +66,52 @@ export function useBottomSheet(onClose: () => void): BottomSheetHook {
     [dragY, onClose],
   );
 
-  // Start drag from ANY area — but skip interactive elements and scrolled areas
+  // Start drag from ANY pixel of the sheet — including over buttons/inputs.
+  // We watch pointermove and only lock the drag once the user has clearly
+  // moved down ≥ 6px. Until then, the event flows normally so taps, clicks,
+  // input focus, and text selection all keep working.
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       const target = e.target as Element;
 
-      // Never intercept interactive elements
-      if (target.closest('input, textarea, select, button, a, label, [role="button"], [role="slider"], [contenteditable]')) return;
-
-      // Don't start drag if inside a scrollable area that is scrolled down
+      // If the user is inside a scrollable area already scrolled past the top,
+      // let the native scroll handle the gesture — don't hijack to drag.
       const scrollArea = target.closest('[data-scroll-area]') as HTMLElement | null;
       if (scrollArea && scrollArea.scrollTop > 4) return;
 
-      dragControls.start(e);
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let armed = true;
+
+      const onMove = (moveE: PointerEvent) => {
+        if (!armed) return;
+        const dx = moveE.clientX - startX;
+        const dy = moveE.clientY - startY;
+
+        // Cancel if the gesture turns out to be horizontal — leave native behavior alone
+        if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+          armed = false;
+          cleanup();
+          return;
+        }
+
+        // Lock into drag once the user moves clearly down (>6px) and mostly vertical
+        if (dy > 6 && Math.abs(dy) > Math.abs(dx)) {
+          armed = false;
+          cleanup();
+          dragControls.start(moveE);
+        }
+      };
+
+      const cleanup = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', cleanup);
+        window.removeEventListener('pointercancel', cleanup);
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', cleanup);
+      window.addEventListener('pointercancel', cleanup);
     },
     [dragControls],
   );
@@ -99,7 +132,7 @@ export function useBottomSheet(onClose: () => void): BottomSheetHook {
     sheetDragProps: {
       drag: 'y',
       dragConstraints: { top: 0, bottom: 0 },
-      dragElastic: { top: 0, bottom: 0.3 },
+      dragElastic: { top: 0, bottom: 1 },
       dragMomentum: false,
       dragListener: false,
       dragControls,
