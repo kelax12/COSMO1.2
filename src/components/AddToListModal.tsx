@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Plus, Pencil, Trash2, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import {
@@ -216,30 +216,13 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[80vh] bg-[rgb(var(--color-surface))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            {/* Drag handle — reacts to swipe on mobile */}
-            <div className="sm:hidden flex justify-center pt-3 pb-1">
-              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-2 shrink-0">
+              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" />
             </div>
-
-            {/* ── Header ── */}
-            <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0">
-              <div className="flex items-center justify-between gap-3">
-                <h2
-                  id="add-to-list-title"
-                  className="text-lg font-semibold text-[rgb(var(--color-text-primary))]"
-                >
-                  Ajouter à une liste
-                </h2>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Fermer"
-                  className="min-w-9 min-h-9 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
+            <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2 shrink-0">
+              Listes
+            </p>
 
             {/* ── Body ── */}
             <div data-scroll-area className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-1">

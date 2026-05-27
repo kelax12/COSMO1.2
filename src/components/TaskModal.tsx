@@ -165,6 +165,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('blue');
   const [stepperDir, setStepperDir] = useState<1 | -1 | 0>(0);
+  const { sheetRef, sheetDragProps } = useBottomSheet(handleClose);
 
   const isValid = isFormValid();
 
@@ -177,7 +178,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full rounded-t-3xl bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <motion.div ref={sheetRef} {...sheetDragProps} className="flex flex-col h-full w-full rounded-t-3xl bg-gray-50 dark:bg-gray-950 overflow-hidden">
 
       {/* ── Header ── */}
       <div className="shrink-0 bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200/80 dark:border-gray-800" style={{ paddingTop: '10px' }}>
@@ -214,7 +215,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Nom de la tâche"
               autoFocus={isCreating}
-              className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none ${
+              className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none rounded-2xl ${
                 cellErrors.name
                   ? 'text-red-500 placeholder-red-300'
                   : 'text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600'
@@ -271,7 +272,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   transition={{ duration: 0.22, ease: 'easeOut' }}
                   className="overflow-hidden"
                 >
-                  <div className="pb-2">
+                  <div className="flex flex-col">
                     <Calendar
                       mode="single"
                       selected={formData.deadline ? new Date(formData.deadline + 'T12:00:00') : undefined}
@@ -289,7 +290,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                       <button
                         type="button"
                         onClick={() => { handleInputChange('deadline', ''); setShowDeadlinePicker(false); }}
-                        className="w-full text-center text-[14px] text-red-500 py-2"
+                        className="w-full text-center text-[14px] text-red-500 py-3 border-t border-gray-100 dark:border-gray-800"
                       >
                         Effacer la date
                       </button>
@@ -646,7 +647,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
         )}
       </AnimatePresence>
 
-    </div>
+    </motion.div>
   );
 };
 
