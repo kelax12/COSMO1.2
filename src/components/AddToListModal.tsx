@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import {
   useLists,
   useAddTaskToList,
@@ -130,6 +130,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
 
   const [creating, setCreating]           = useState(false);
   const [editingId, setEditingId]         = useState<string | null>(null);
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   /* Reset on close */
@@ -189,13 +190,35 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
   };
 
   return (
-    <ResponsiveSheet
-      isOpen={isOpen}
-      onClose={onClose}
-      ariaLabel="Ajouter à une liste"
-      desktopMaxWidth="sm:max-w-md"
-      desktopMaxHeight="80vh"
-    >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm sm:p-4"
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-to-list-title"
+        >
+          <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[80vh] bg-[rgb(var(--color-surface))]"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {/* Drag handle — reacts to swipe on mobile */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1">
+              <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+            </div>
+
             {/* ── Header ── */}
             <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0">
               <div className="flex items-center justify-between gap-3">
@@ -223,7 +246,7 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             </div>
 
             {/* ── Body ── */}
-            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-1">
+            <div data-scroll-area className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-1">
 
               {/* Create button / form */}
               <AnimatePresence mode="wait">
@@ -387,7 +410,10 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                 Terminer
               </button>
             </div>
-    </ResponsiveSheet>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

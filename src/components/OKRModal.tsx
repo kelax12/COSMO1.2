@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResponsiveSheet } from '@/components/ui/responsive-sheet';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { DatePicker } from './ui/date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -103,6 +103,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   };
 
   const handleClose = () => { resetForm(); setStep(1); onClose(); };
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);
 
   const handleNext = () => {
     if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); return; }
@@ -183,13 +184,32 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
 
   return (
     <>
-    <ResponsiveSheet
-      isOpen={isOpen}
-      onClose={handleClose}
-      ariaLabel={editingObjective ? 'Modifier OKR' : 'Nouvel OKR'}
-      desktopMaxWidth="sm:max-w-[624px]"
-      desktopMaxHeight="90vh"
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-md"
+      onClick={handleClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
+      <motion.div
+        ref={sheetRef}
+        {...sheetDragProps}
+        className="w-full sm:max-w-[624px] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden"
+        style={{
+          backgroundColor: 'rgb(var(--color-surface))',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+        transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+      >
+        {/* Drag handle — reacts to swipe on mobile */}
+        <div className="sm:hidden flex justify-center pt-4 pb-3 shrink-0">
+          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
           <div>
@@ -480,7 +500,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
             </>
           )}
         </div>
-    </ResponsiveSheet>
+      </motion.div>
+    </motion.div>
     <ColorSettingsModal
       isOpen={showColorSettings}
       onClose={() => setShowColorSettings(false)}
