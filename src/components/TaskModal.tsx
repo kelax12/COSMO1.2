@@ -215,7 +215,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Nom de la tâche"
               autoFocus={isCreating}
-              className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none rounded-2xl ${
+              className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 ${
                 cellErrors.name
                   ? 'text-red-500 placeholder-red-300'
                   : 'text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600'
@@ -273,19 +273,21 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   className="overflow-hidden"
                 >
                   <div className="flex flex-col">
-                    <Calendar
-                      mode="single"
-                      selected={formData.deadline ? new Date(formData.deadline + 'T12:00:00') : undefined}
-                      onSelect={(date) => {
-                        if (!date) return;
-                        handleInputChange('deadline', format(date, 'yyyy-MM-dd'));
-                        setShowDeadlinePicker(false);
-                      }}
-                      locale={fr}
-                      disabled={{ before: new Date() }}
-                      initialFocus
-                      className="w-full [--cell-size:2.75rem]"
-                    />
+                    <div className="overflow-hidden">
+                      <Calendar
+                        mode="single"
+                        selected={formData.deadline ? new Date(formData.deadline + 'T12:00:00') : undefined}
+                        onSelect={(date) => {
+                          if (!date) return;
+                          handleInputChange('deadline', format(date, 'yyyy-MM-dd'));
+                          setShowDeadlinePicker(false);
+                        }}
+                        locale={fr}
+                        disabled={{ before: new Date() }}
+                        initialFocus
+                        className="w-full [--cell-size:2.5rem]"
+                      />
+                    </div>
                     {formData.deadline && (
                       <button
                         type="button"
