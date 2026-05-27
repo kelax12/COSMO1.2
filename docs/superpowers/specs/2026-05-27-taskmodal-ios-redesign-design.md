@@ -214,7 +214,8 @@ Annuler    Nouvelle tâche / Modifier    Créer / OK
 
 ### Split mobile / desktop
 
-Le JSX du `return` sera restructuré avec `useIsMobile()` :
+**Le JSX desktop existant n'est pas touché.** On ajoute un bloc mobile conditionnel via `useIsMobile()` :
+
 ```tsx
 const isMobile = useIsMobile();
 
@@ -222,7 +223,10 @@ return (
   <>
     <Dialog ...>
       <DialogContent ...>
-        {isMobile ? <TaskModalMobileLayout ... /> : <TaskModalDesktopLayout ... />}
+        {isMobile
+          ? <TaskModalMobileBody ... />   {/* ← nouveau */}
+          : <>{/* JSX desktop existant — zéro modification */}</>
+        }
       </DialogContent>
     </Dialog>
     ...
@@ -230,7 +234,7 @@ return (
 );
 ```
 
-Les deux layouts (`TaskModalMobileLayout`, `TaskModalDesktopLayout`) vivent dans le même fichier `TaskModal.tsx` comme des composants internes (pas de fichiers séparés). Ils partagent les mêmes props et handlers définis dans le composant parent.
+`TaskModalMobileBody` est un composant interne défini dans le même fichier `TaskModal.tsx`. Il reçoit les mêmes handlers et state que le desktop (`formData`, `handleSave`, `handleDelete`, etc.). Aucune ligne du code desktop n'est modifiée.
 
 ---
 
