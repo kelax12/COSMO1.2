@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import { DatePicker } from '@/components/ui/date-picker';
 import ColorSettingsModal from './ColorSettingsModal';
+import AddToListModal from './AddToListModal';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -66,7 +67,7 @@ const SectionCard: React.FC<{ children: React.ReactNode; className?: string }> =
 );
 
 const CellSeparator: React.FC = () => (
-  <div className="h-px bg-gray-100 dark:bg-gray-800 ml-4" />
+  <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
 );
 
 interface CellProps {
@@ -115,8 +116,6 @@ interface MobileBodyProps {
   categories: Array<{ id: string; name: string; color: string }>;
   lists: Array<{ id: string; name: string; color: string; taskIds: string[]; type?: string; smartRule?: string; isDefault?: boolean; position?: number }>;
   selectedListIds: string[];
-  setSelectedListIds: React.Dispatch<React.SetStateAction<string[]>>;
-  setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
   listColorOptions: { value: string; color: string }[];
   collaborators: string[];
   pendingInvitesLocal: string[];
@@ -132,7 +131,6 @@ interface MobileBodyProps {
   handleRemoveCollaborator: (id: string) => void;
   toggleCollaborator: (id: string) => void;
   createCategoryMutation: ReturnType<typeof useCreateCategory>;
-  createListMutation: ReturnType<typeof useCreateList>;
   isPremium: () => boolean;
   setShowPremiumGate: React.Dispatch<React.SetStateAction<boolean>>;
   handleSave: () => void;
@@ -141,32 +139,31 @@ interface MobileBodyProps {
   isCreating: boolean;
   isLoading: boolean;
   isFormValid: () => boolean;
+  taskId?: string;
 }
 
 // ─── TaskModalMobileBody ──────────────────────────────────────────────────────
 
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   formData, handleInputChange,
-  categories, lists, selectedListIds, setSelectedListIds, setHasChanges, listColorOptions,
+  categories, lists, selectedListIds, listColorOptions,
   collaborators, pendingInvitesLocal: _pendingInvitesLocal, emailInput, setEmailInput, inputError,
   friends: _friends, filteredFriends, sentRequests: _sentRequests, collabIdOf, displayInfo,
   handleAddEmail, handleRemoveCollaborator, toggleCollaborator,
-  createCategoryMutation, createListMutation,
+  createCategoryMutation,
   isPremium, setShowPremiumGate,
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
+  taskId,
 }) => {
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
-  const [showListsSheet, setShowListsSheet] = useState(false);
+  const [showListsModal, setShowListsModal] = useState(false);
   const [showCollabSheet, setShowCollabSheet] = useState(false);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [cellErrors, setCellErrors] = useState<Record<string, boolean>>({});
   const [showNewCatInput, setShowNewCatInput] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('blue');
-  const [showNewListInput, setShowNewListInput] = useState(false);
-  const [newListName, setNewListName] = useState('');
-  const [newListColor, setNewListColor] = useState('blue');
   const [stepperDir, setStepperDir] = useState<1 | -1 | 0>(0);
 
   const isValid = isFormValid();
@@ -274,7 +271,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   transition={{ duration: 0.22, ease: 'easeOut' }}
                   className="overflow-hidden"
                 >
-                  <div className="px-2 pb-2">
+                  <div className="pb-2">
                     <Calendar
                       mode="single"
                       selected={formData.deadline ? new Date(formData.deadline + 'T12:00:00') : undefined}
@@ -286,6 +283,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                       locale={fr}
                       disabled={{ before: new Date() }}
                       initialFocus
+                      className="w-full [--cell-size:2.75rem]"
                     />
                     {formData.deadline && (
                       <button
@@ -349,14 +347,13 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <Cell
               label="Listes"
               value={(() => {
-                if (selectedListIds.length === 0) return <span className="text-gray-400">Aucune</span>;
-                if (selectedListIds.length === 1) {
-                  const l = lists.find(li => li.id === selectedListIds[0]);
-                  return <span className="text-blue-500">{l?.name ?? '1 liste'}</span>;
-                }
-                return <span className="text-blue-500">{selectedListIds.length} listes</span>;
+                const inLists = taskId ? lists.filter(l => l.taskIds.includes(taskId)) : lists.filter(l => selectedListIds.includes(l.id));
+                if (inLists.length === 0) return <span className="text-gray-400">Aucune</span>;
+                if (inLists.length === 1) return <span className="text-blue-500">{inLists[0].name}</span>;
+                return <span className="text-blue-500">{inLists.length} listes</span>;
               })()}
-              onTap={() => setShowListsSheet(true)}
+              onTap={() => setShowListsModal(true)}
+              showChevron={!!taskId}
             />
             <CellSeparator />
             {/* Favori — toggle iOS */}
@@ -567,84 +564,14 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
         )}
       </AnimatePresence>
 
-      {/* ── Action sheet : Listes ── */}
-      <AnimatePresence>
-        {showListsSheet && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[60] flex items-end"
-            onClick={() => { setShowListsSheet(false); setShowNewListInput(false); }}
-          >
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full bg-white dark:bg-gray-900 rounded-t-2xl overflow-hidden max-h-[65vh] flex flex-col"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2 shrink-0">Listes</p>
-              <div className="flex-1 overflow-y-auto">
-                {lists.map((list, i) => {
-                  const colorHex = listColorOptions.find(c => c.value === list.color)?.color ?? list.color ?? '#3B82F6';
-                  const isChecked = selectedListIds.includes(list.id);
-                  return (
-                    <React.Fragment key={list.id}>
-                      {i > 0 && <CellSeparator />}
-                      <button
-                        type="button"
-                        onClick={() => { setSelectedListIds(prev => isChecked ? prev.filter(id => id !== list.id) : [...prev, list.id]); setHasChanges(true); }}
-                        className="w-full flex items-center justify-between px-4 min-h-11 active:bg-gray-100 dark:active:bg-gray-800"
-                      >
-                        <span className="flex items-center gap-2.5">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colorHex }} />
-                          <span className="text-[15px] text-gray-900 dark:text-gray-100">{list.name}</span>
-                        </span>
-                        {isChecked && <Check size={16} className="text-blue-500" />}
-                      </button>
-                    </React.Fragment>
-                  );
-                })}
-                {lists.length > 0 && <CellSeparator />}
-                {!showNewListInput ? (
-                  <button type="button" onClick={() => setShowNewListInput(true)} className="w-full flex items-center gap-2 px-4 min-h-11 text-blue-500">
-                    <Plus size={16} /><span className="text-[15px]">Créer une liste</span>
-                  </button>
-                ) : (
-                  <div className="px-4 py-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { const idx = listColorOptions.findIndex(c => c.value === newListColor); setNewListColor(listColorOptions[(idx + 1) % listColorOptions.length].value); }}
-                      className="w-6 h-6 rounded-full shrink-0"
-                      style={{ backgroundColor: listColorOptions.find(c => c.value === newListColor)?.color ?? '#3B82F6' }}
-                    />
-                    <input
-                      autoFocus type="text" value={newListName} onChange={(e) => setNewListName(e.target.value)}
-                      placeholder="Nom de la liste…"
-                      className="flex-1 text-[15px] bg-transparent focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                    />
-                    <button
-                      type="button"
-                      disabled={!newListName.trim() || createListMutation.isPending}
-                      onClick={() => {
-                        if (!newListName.trim()) return;
-                        createListMutation.mutate(
-                          { name: newListName.trim(), color: newListColor },
-                          { onSuccess: (created) => { setSelectedListIds(prev => [...prev, created.id]); setHasChanges(true); setShowNewListInput(false); setNewListName(''); setNewListColor('blue'); } }
-                        );
-                      }}
-                      className="text-[15px] text-blue-500 font-semibold disabled:text-blue-300"
-                    >
-                      {createListMutation.isPending ? '…' : 'Créer'}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="h-3 shrink-0" />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── Modal Listes (composant existant) ── */}
+      {taskId && (
+        <AddToListModal
+          isOpen={showListsModal}
+          onClose={() => setShowListsModal(false)}
+          taskId={taskId}
+        />
+      )}
 
       {/* ── Action sheet : Collaborateurs ── */}
       <AnimatePresence>
@@ -1303,8 +1230,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             categories={categories}
             lists={lists}
             selectedListIds={selectedListIds}
-            setSelectedListIds={setSelectedListIds}
-            setHasChanges={setHasChanges}
             listColorOptions={listColorOptions}
             collaborators={collaborators}
             pendingInvitesLocal={pendingInvitesLocal}
@@ -1320,7 +1245,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             handleRemoveCollaborator={handleRemoveCollaborator}
             toggleCollaborator={toggleCollaborator}
             createCategoryMutation={createCategoryMutation}
-            createListMutation={createListMutation}
             isPremium={isPremium}
             setShowPremiumGate={setShowPremiumGate}
             handleSave={handleSave}
@@ -1329,6 +1253,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             isCreating={isCreating}
             isLoading={isLoading}
             isFormValid={isFormValid}
+            taskId={task?.id}
           />
         ) : (
         <div
