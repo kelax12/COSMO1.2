@@ -1221,6 +1221,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       <DialogContent
         showCloseButton={false}
         fullScreenMobile={true}
+        variant={isMobile ? 'bottom-sheet' : 'default'}
         className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
