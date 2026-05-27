@@ -220,62 +220,64 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             <div className="flex justify-center pt-3 pb-2 shrink-0">
               <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" />
             </div>
-            <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2 shrink-0">
-              Listes
-            </p>
+
+            {/* ── Header ligne : titre + boutons ── */}
+            <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+              <p id="add-to-list-title" className="text-[13px] font-semibold uppercase tracking-wider text-gray-500">
+                Listes
+              </p>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => { setCreating(c => !c); setEditMode(false); setEditingId(null); }}
+                  aria-label="Nouvelle liste"
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${creating ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                >
+                  <Plus size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditMode(m => !m); setEditingId(null); setConfirmDeleteId(null); setCreating(false); }}
+                  aria-label="Mode édition"
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${editMode ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                >
+                  <Pencil size={15} />
+                </button>
+              </div>
+            </div>
 
             {/* ── Body ── */}
-            <div data-scroll-area className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-1">
+            <div data-scroll-area className="flex-1 overflow-y-auto px-4">
 
-              {/* Create button / form */}
-              <AnimatePresence mode="wait">
-                {creating ? (
-                  <InlineForm
-                    key="create-form"
-                    onSave={handleCreate}
-                    onCancel={() => setCreating(false)}
-                    saveLabel="Créer"
-                  />
-                ) : (
+              {/* Inline create form */}
+              <AnimatePresence>
+                {creating && (
                   <motion.div
-                    key="create-btn"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1 }}
-                    className="flex items-center"
+                    key="create-form"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="overflow-hidden py-2 border-b border-[rgb(var(--color-border))]"
                   >
-                    <button
-                      type="button"
-                      onClick={() => { setCreating(true); setEditingId(null); setEditMode(false); }}
-                      className="flex-1 flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-                    >
-                      <Plus size={16} className="shrink-0" />
-                      Nouvelle liste
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setEditMode(m => !m); setEditingId(null); setConfirmDeleteId(null); }}
-                      aria-label="Mode édition"
-                      className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${editMode ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                    >
-                      <Pencil size={15} />
-                    </button>
+                    <InlineForm
+                      onSave={handleCreate}
+                      onCancel={() => setCreating(false)}
+                      saveLabel="Créer"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* List items */}
-              {lists.length === 0 && !creating && (
+              {/* Empty state */}
+              {lists.filter(l => l.type !== 'smart').length === 0 && !creating && (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-[rgb(var(--color-text-muted))]">
-                    Aucune liste pour l'instant
-                  </p>
+                  <p className="text-sm text-[rgb(var(--color-text-muted))]">Aucune liste pour l'instant</p>
                 </div>
               )}
 
               {lists.filter(l => l.type !== 'smart').length > 0 && (
-                <div className="border-t border-[rgb(var(--color-border))] mt-2 divide-y divide-[rgb(var(--color-border))]">
+                <div className="divide-y divide-[rgb(var(--color-border))]">
               {lists.filter(l => l.type !== 'smart').map((list) => {
                 const isSelected = list.taskIds.includes(taskId);
                 const color      = resolveColor(list.color);
