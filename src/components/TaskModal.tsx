@@ -208,7 +208,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
         <div className="px-4 py-4 flex flex-col gap-0">
 
           {/* ── Groupe 1 : Nom ── */}
-          <SectionCard>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
             <input
               type="text"
               value={formData.name}
@@ -221,7 +221,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   : 'text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600'
               }`}
             />
-          </SectionCard>
+          </div>
 
           {/* ── Section DÉTAILS ── */}
           <SectionTitle>Détails</SectionTitle>
