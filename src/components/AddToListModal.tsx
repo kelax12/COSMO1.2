@@ -224,18 +224,12 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
             {/* ── Header ── */}
             <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0">
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2
-                    id="add-to-list-title"
-                    className="text-lg font-semibold text-[rgb(var(--color-text-primary))]"
-                  >
-                    Ajouter à une liste
-                  </h2>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                    {lists.filter(l => l.type !== 'smart').length}{' '}
-                    {lists.filter(l => l.type !== 'smart').length <= 1 ? 'liste manuelle' : 'listes manuelles'}
-                  </p>
-                </div>
+                <h2
+                  id="add-to-list-title"
+                  className="text-lg font-semibold text-[rgb(var(--color-text-primary))]"
+                >
+                  Ajouter à une liste
+                </h2>
                 <button
                   type="button"
                   onClick={onClose}
