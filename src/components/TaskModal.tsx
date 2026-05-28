@@ -938,12 +938,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       newErrors.name = 'Le nom ne peut pas dépasser 100 caractères';
     }
 
-    if (formData.estimatedTime === '' || formData.estimatedTime === null) {
-      newErrors.estimatedTime = 'Le temps estimé est obligatoire';
-    } else if (isNaN(Number(formData.estimatedTime))) {
-      newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
-    } else if (Number(formData.estimatedTime) < 0) {
-      newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
+    // Temps estimé : facultatif. Ne valide que la cohérence si une valeur
+    // (autre que vide) est saisie — jamais bloquant quand vide.
+    if (formData.estimatedTime !== '' && formData.estimatedTime !== null) {
+      if (isNaN(Number(formData.estimatedTime))) {
+        newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
+      } else if (Number(formData.estimatedTime) < 0) {
+        newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
+      }
     }
 
     if (formData.priority === 0) {
@@ -954,21 +956,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       newErrors.category = 'Veuillez choisir une catégorie';
     }
 
-    // Vérifie "deadline pas dans le passé" uniquement à la création OU
-    // si l'utilisateur a explicitement modifié la deadline (sinon on bloque
-    // l'édition de toute tâche dont la deadline est déjà passée).
-    if (formData.deadline) {
-      const deadlineDate = new Date(formData.deadline);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const originalDeadline = task?.deadline ? task.deadline.split('T')[0] : '';
-      const deadlineChanged = formData.deadline !== originalDeadline;
-
-      if (deadlineDate < today && (isCreating || deadlineChanged)) {
-        newErrors.deadline = 'La date limite ne peut pas être dans le passé';
-      }
-    }
+    // Échéance : facultative, n'est jamais bloquante (une date passée est
+    // autorisée, ex. journalisation d'une tâche rétroactive).
 
     return newErrors;
   };
@@ -979,47 +968,28 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     return Object.keys(newErrors).length === 0;
   };
 
+  // Temps estimé et échéance sont facultatifs → ne bloquent jamais.
   const isFormValid = () => {
     const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
-    const timeValid = formData.estimatedTime !== '' && formData.estimatedTime !== null && !isNaN(Number(formData.estimatedTime)) && Number(formData.estimatedTime) >= 0;
     const priorityValid = formData.priority !== 0;
     const categoryValid = !!formData.category;
-    
-    let deadlineValid = true;
-    if (formData.deadline) {
-      const deadlineDate = new Date(formData.deadline);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      deadlineValid = deadlineDate >= today;
-    }
-
-    return nameValid && timeValid && priorityValid && categoryValid && deadlineValid;
+    return nameValid && priorityValid && categoryValid;
   };
 
   const isStep1Valid = () => {
     const nameValid = formData.name.trim().length >= 1 && formData.name.trim().length <= 100;
     const priorityValid = formData.priority !== 0;
     const categoryValid = !!formData.category;
-    let deadlineValid = true;
-    if (formData.deadline) {
-      const d = new Date(formData.deadline);
-      const today = new Date(); today.setHours(0,0,0,0);
-      deadlineValid = d >= today;
-    }
-    return nameValid && priorityValid && categoryValid && deadlineValid;
+    return nameValid && priorityValid && categoryValid;
   };
 
-  // Liste des champs step 1 manquants/invalides — alimente le shake desktop.
+  // Liste des champs step 1 manquants — alimente le shake desktop.
+  // (échéance et temps estimé exclus : facultatifs)
   const missingStep1Fields = (): string[] => {
     const m: string[] = [];
     if (!(formData.name.trim().length >= 1 && formData.name.trim().length <= 100)) m.push('name');
     if (formData.priority === 0) m.push('priority');
     if (!formData.category) m.push('category');
-    if (formData.deadline) {
-      const d = new Date(formData.deadline);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      if (d < today) m.push('deadline');
-    }
     return m;
   };
 
