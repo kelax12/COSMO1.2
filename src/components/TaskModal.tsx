@@ -3,6 +3,7 @@ import PremiumGateModal from './PremiumGateModal';
 import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -166,6 +167,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   const [newCatColor, setNewCatColor] = useState('blue');
   const [stepperDir, setStepperDir] = useState<1 | -1 | 0>(0);
   const { sheetRef, sheetDragProps } = useBottomSheet(handleClose);
+  const { register, trigger, clear, isInvalid } = useInvalidShake();
 
   const isValid = isFormValid();
 
@@ -174,7 +176,14 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
     const priorityOk = formData.priority !== 0;
     const categoryOk = !!formData.category;
     setCellErrors({ name: !nameOk, priority: !priorityOk, category: !categoryOk });
-    if (nameOk && priorityOk && categoryOk) handleSave();
+    if (nameOk && priorityOk && categoryOk) {
+      handleSave();
+      return;
+    }
+    const missing: string[] = [];
+    if (!nameOk) missing.push('name');
+    if (!priorityOk || !categoryOk) missing.push('details');
+    trigger(missing);
   };
 
   return (
@@ -208,11 +217,16 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
         <div className="px-4 py-4 flex flex-col gap-0">
 
           {/* ── Groupe 1 : Nom ── */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+          <div
+            ref={register('name')}
+            className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+              isInvalid('name') ? 'ring-2 ring-red-500' : ''
+            }`}
+          >
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              onChange={(e) => { handleInputChange('name', e.target.value); clear('name'); }}
               placeholder="Nom de la tâche"
               autoFocus={isCreating}
               className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 ${
@@ -225,6 +239,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
 
           {/* ── Section DÉTAILS ── */}
           <SectionTitle>Détails</SectionTitle>
+          <div ref={register('details')} className={`rounded-2xl transition-[box-shadow] ${isInvalid('details') ? 'ring-2 ring-red-500' : ''}`}>
           <SectionCard>
             {/* Priorité */}
             <Cell
@@ -342,6 +357,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               </div>
             </div>
           </SectionCard>
+          </div>
 
           {/* ── Section ORGANISATION ── */}
           <SectionTitle>Organisation</SectionTitle>
@@ -697,6 +713,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const { isPremium } = useBilling();
   const [showPremiumGate, setShowPremiumGate] = useState(false);
 
+  // Marqueur visuel (shake + bordure rouge) des champs requis non remplis
+  // au clic sur un bouton de validation non validable (desktop).
+  const { register: dRegister, trigger: dTrigger, clear: dClear, isInvalid: dInvalid } = useInvalidShake();
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -989,6 +1009,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     return nameValid && priorityValid && categoryValid && deadlineValid;
   };
 
+  // Liste des champs step 1 manquants/invalides — alimente le shake desktop.
+  const missingStep1Fields = (): string[] => {
+    const m: string[] = [];
+    if (!(formData.name.trim().length >= 1 && formData.name.trim().length <= 100)) m.push('name');
+    if (formData.priority === 0) m.push('priority');
+    if (!formData.category) m.push('category');
+    if (formData.deadline) {
+      const d = new Date(formData.deadline);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (d < today) m.push('deadline');
+    }
+    return m;
+  };
+
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     
@@ -999,6 +1033,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
+
+    dClear(field);
   };
 
   const handleSave = async () => {
@@ -1222,7 +1258,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         showCloseButton={false}
         fullScreenMobile={true}
         variant={isMobile ? 'bottom-sheet' : 'default'}
-        className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] sm:border sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
+        className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
@@ -1319,7 +1355,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 <div className="space-y-5">
 
                   {/* Task Name */}
-                  <div>
+                  <div ref={dRegister('name')}>
                     <label htmlFor="task-name" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       Nom de la tâche *
                     </label>
@@ -1327,14 +1363,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                       id="task-name"
                       type="text"
                       value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      onChange={(e) => { handleInputChange('name', e.target.value); dClear('name'); }}
                       className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
-                        errors.name ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
+                        errors.name || dInvalid('name') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'
                       } ${okrFields.name ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
                       style={{
                         backgroundColor: okrFields.name ? undefined : 'rgb(var(--color-surface))',
                         color: 'rgb(var(--color-text-primary))',
-                        borderColor: errors.name ? 'rgb(var(--error))' : (okrFields.name ? undefined : undefined)
+                        borderColor: errors.name || dInvalid('name') ? '#ef4444' : (okrFields.name ? undefined : undefined)
                       }}
                       placeholder="Entrez le nom de la tâche"
                       aria-describedby={errors.name ? 'name-error' : undefined}
@@ -1351,7 +1387,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                   {/* Priority and Category */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
+                      <div ref={dRegister('priority')}>
                         <label htmlFor="task-priority" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Priorité
                         </label>
@@ -1359,11 +1395,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           <select
                             id="task-priority"
                             value={formData.priority}
-                            onChange={(e) => handleInputChange('priority', Number(e.target.value))}
-                            className="w-full px-4 pr-12 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base border-slate-200 dark:border-slate-700 appearance-none cursor-pointer"
+                            onChange={(e) => { handleInputChange('priority', Number(e.target.value)); dClear('priority'); }}
+                            className={`w-full px-4 pr-12 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base appearance-none cursor-pointer ${
+                              dInvalid('priority') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'
+                            }`}
                             style={{
                               backgroundColor: 'rgb(var(--color-surface))',
                               color: formData.priority === 0 ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
+                              borderColor: dInvalid('priority') ? '#ef4444' : undefined,
                             }}
                             aria-label="Sélectionner la priorité de la tâche"
                           >
@@ -1384,7 +1423,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         }
                     </div>
 
-                    <div>
+                    <div ref={dRegister('category')}>
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Catégorie
                       </label>
@@ -1414,12 +1453,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                 <button
                                   type="button"
                                   className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 data-[state=open]:border-blue-600 data-[state=open]:border-2 transition-all text-base ${
-                                    errors.category ? 'border-red-500' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700')
+                                    errors.category || dInvalid('category') ? 'border-red-400 dark:border-red-500' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700')
                                   } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
                                   style={{
                                   backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
                                   color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-                                  borderColor: errors.category ? 'rgb(var(--color-error))' : (okrFields.category ? undefined : undefined)
+                                  borderColor: errors.category || dInvalid('category') ? '#ef4444' : (okrFields.category ? undefined : undefined)
                                 }}
                               >
                               <span>{categories.find(c => c.id === formData.category)?.name || (formData.category === 'okr' ? 'OKR' : 'Choisir...')}</span>
@@ -1567,7 +1606,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                   {/* Deadline and Estimated Time */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
+                      <div ref={dRegister('deadline')}>
                         <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Échéance <span className="normal-case font-normal opacity-60">(Facultatif)</span>
                         </label>
@@ -1575,7 +1614,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                           value={formData.deadline}
                           onChange={(date) => handleInputChange('deadline', date)}
                           placeholder="Sélectionner une date"
-                          className={`h-12 w-full ${errors.deadline ? 'border-red-300 dark:border-red-600' : ''}`}
+                          className={`h-12 w-full ${errors.deadline || dInvalid('deadline') ? 'border-red-400 dark:border-red-500' : ''}`}
                         />
 
                         {errors.deadline &&
@@ -2039,9 +2078,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                         <Button
                           type="button"
                           size="lg"
-                          onClick={(e) => { e.preventDefault(); if (validateForm()) setStep(2); }}
-                          disabled={!isStep1Valid()}
-                          className={`min-h-11 w-full sm:w-auto ${!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const missing = missingStep1Fields();
+                            if (missing.length === 0) { setStep(2); return; }
+                            validateForm();
+                            dTrigger(missing);
+                          }}
+                          className={`min-h-11 w-full sm:w-auto ${!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}`}
                         >
                           Suivant
                           <ChevronRight size={16} data-icon="inline-end" />
