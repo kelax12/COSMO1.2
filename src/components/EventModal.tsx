@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Clock, Plus, CalendarIcon, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBottomSheet } from "@/hooks/use-bottom-sheet";
+import { useInvalidShake } from "@/hooks/use-invalid-shake";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -75,6 +76,7 @@ const EventModal: React.FC<EventModalProps> = ({
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const { register, trigger, clear, isInvalid } = useInvalidShake();
   const isMobile = useIsMobile();
 
   // La section Description est masquée par défaut (UX épuré). Visible si :
@@ -200,8 +202,17 @@ const EventModal: React.FC<EventModalProps> = ({
     setPrefilledFields(prefilled);
   }, [isOpen, mode, task, event, prefilledTimeSlot, categories, favoriteColors]);
 
+  const SHAKE_KEY: Record<string, string> = {
+    title: 'title',
+    startDate: 'date',
+    endDate: 'date',
+    startTime: 'startTime',
+    endTime: 'endTime',
+  };
+
   const handleFieldChange = <T,>(field: string, setter: (val: T) => void, value: T) => {
     setter(value);
+    if (SHAKE_KEY[field]) clear(SHAKE_KEY[field]);
     if (mode === 'add') {
       setPrefilledFields((prev) => {
         const next = new Set(prev);
@@ -212,13 +223,13 @@ const EventModal: React.FC<EventModalProps> = ({
   };
 
   const doSave = () => {
-    if (!title.trim()) {
-      alert("Veuillez saisir un titre pour l'événement");
-      return;
-    }
-
-    if (!startDate || !startTime || !endDate || !endTime) {
-      alert("Veuillez sélectionner une date et des horaires");
+    const missing: string[] = [];
+    if (!title.trim()) missing.push('title');
+    if (!startDate || !endDate) missing.push('date');
+    if (!startTime) missing.push('startTime');
+    if (!endTime) missing.push('endTime');
+    if (missing.length) {
+      trigger(missing);
       return;
     }
 
@@ -226,12 +237,12 @@ const EventModal: React.FC<EventModalProps> = ({
     const end = new Date(`${endDate}T${endTime}`).toISOString();
 
     if (isNaN(new Date(start).getTime()) || isNaN(new Date(end).getTime())) {
-      alert("Les dates saisies sont invalides");
+      trigger(['date']);
       return;
     }
 
     if (new Date(end) <= new Date(start)) {
-      alert("La date de fin doit être après la date de début");
+      trigger(['endTime']);
       return;
     }
 
@@ -370,7 +381,6 @@ const EventModal: React.FC<EventModalProps> = ({
             <button
               type="button"
               onClick={doSave}
-              disabled={!isMobileFormValid}
               className={`text-[15px] font-semibold min-w-16 min-h-11 flex items-center justify-end shrink-0 ${
                 isMobileFormValid ? 'text-blue-500' : 'text-blue-300'
               }`}
@@ -383,7 +393,12 @@ const EventModal: React.FC<EventModalProps> = ({
           <div data-scroll-area className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
 
             {/* Groupe 1 — Titre (sans overflow-hidden) */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+            <div
+              ref={register('title')}
+              className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+                isInvalid('title') ? 'ring-2 ring-red-500' : ''
+              }`}
+            >
               {lockedSet.has('title') ? (
                 <div className="w-full px-4 min-h-12 flex items-center text-[17px] text-gray-500 cursor-not-allowed opacity-80">
                   {title || "Titre de l'événement"}
@@ -405,7 +420,12 @@ const EventModal: React.FC<EventModalProps> = ({
             <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
               Horaires
             </p>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+            <div
+              ref={(el) => { register('date')(el); register('startTime')(el); register('endTime')(el); }}
+              className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden transition-[box-shadow] ${
+                isInvalid('date') || isInvalid('startTime') || isInvalid('endTime') ? 'ring-2 ring-red-500' : ''
+              }`}
+            >
 
               {/* Date */}
               <div className={`flex items-center px-4 min-h-11 relative ${lockedSet.has('startDate') ? 'opacity-60' : ''}`}>
@@ -610,7 +630,6 @@ const EventModal: React.FC<EventModalProps> = ({
             <button
               type="button"
               onClick={doSave}
-              disabled={!isMobileFormValid}
               className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
                 isMobileFormValid ? 'bg-blue-600 active:bg-blue-700' : 'bg-blue-200 dark:bg-blue-900/40'
               }`}
@@ -655,7 +674,7 @@ const EventModal: React.FC<EventModalProps> = ({
           >
             <div className="flex flex-col md:grid md:grid-cols-12 gap-5">
               <div className="md:col-span-7 space-y-3">
-                <div>
+                <div ref={register('title')}>
                   <label
                     className="block text-xs font-semibold uppercase tracking-wider mb-1.5 !whitespace-pre-line"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -670,7 +689,9 @@ const EventModal: React.FC<EventModalProps> = ({
                     }
                     readOnly={lockedSet.has('title')}
                     className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      lockedSet.has('title')
+                      isInvalid('title')
+                        ? 'border-red-400 dark:border-red-500'
+                        : lockedSet.has('title')
                         ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
                         : isPrefilledMode && prefilledFields.has("title")
                         ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
@@ -682,13 +703,13 @@ const EventModal: React.FC<EventModalProps> = ({
                             ? undefined
                             : "rgb(var(--color-surface))",
                         color: "rgb(var(--color-text-primary))",
-                        borderColor:
-                          isPrefilledMode && prefilledFields.has("title")
+                        borderColor: isInvalid('title')
+                          ? '#ef4444'
+                          : isPrefilledMode && prefilledFields.has("title")
                             ? undefined
                             : "rgb(var(--color-border))",
                       }}
                     placeholder="nom de l'événement"
-                    required
                   />
                 </div>
 
@@ -696,7 +717,7 @@ const EventModal: React.FC<EventModalProps> = ({
                   className="p-4 rounded-2xl transition-colors relative bg-transparent space-y-3"
                 >
                   {/* Sélecteur de date */}
-                  <div>
+                  <div ref={register('date')}>
                     <label
                       className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                       style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -734,7 +755,9 @@ const EventModal: React.FC<EventModalProps> = ({
                             type="button"
                             disabled={lockedSet.has('startDate')}
                             className={`w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-sm transition-colors ${
-                              lockedSet.has('startDate')
+                              isInvalid('date')
+                                ? 'border-red-400 dark:border-red-500'
+                                : lockedSet.has('startDate')
                                 ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
                                 : isPrefilledMode && prefilledFields.has("startDate")
                                 ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
@@ -745,8 +768,9 @@ const EventModal: React.FC<EventModalProps> = ({
                                 isPrefilledMode && prefilledFields.has("startDate")
                                   ? undefined
                                   : "rgb(var(--color-surface))",
-                              borderColor:
-                                isPrefilledMode && prefilledFields.has("startDate")
+                              borderColor: isInvalid('date')
+                                ? '#ef4444'
+                                : isPrefilledMode && prefilledFields.has("startDate")
                                   ? undefined
                                   : "rgb(var(--color-border))",
                               color: startDate
@@ -782,7 +806,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
                   {/* Sélecteurs d'heure */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
+                    <div ref={register('startTime')}>
                       <label
                         className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                         style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -797,14 +821,14 @@ const EventModal: React.FC<EventModalProps> = ({
                         className="md:hidden w-full px-3 h-11 border rounded-lg text-sm"
                         style={{
                           color: "rgb(var(--color-text-primary))",
-                          borderColor: "rgb(var(--color-border))",
+                          borderColor: isInvalid('startTime') ? '#ef4444' : "rgb(var(--color-border))",
                           backgroundColor: "rgb(var(--color-surface))",
                         }}
                       />
                       {/* Desktop : wrapper avec icône */}
                       <div
                         className="hidden md:flex time-input-wrapper items-center gap-2 px-3 py-2.5 border rounded-lg"
-                        style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
+                        style={{ borderColor: isInvalid('startTime') ? '#ef4444' : "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
                       >
                         <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
                         <input
@@ -817,7 +841,7 @@ const EventModal: React.FC<EventModalProps> = ({
                       </div>
                     </div>
 
-                    <div>
+                    <div ref={register('endTime')}>
                       <label
                         className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
                         style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -832,14 +856,14 @@ const EventModal: React.FC<EventModalProps> = ({
                         className="md:hidden w-full px-3 h-11 border rounded-lg text-sm"
                         style={{
                           color: "rgb(var(--color-text-primary))",
-                          borderColor: "rgb(var(--color-border))",
+                          borderColor: isInvalid('endTime') ? '#ef4444' : "rgb(var(--color-border))",
                           backgroundColor: "rgb(var(--color-surface))",
                         }}
                       />
                       {/* Desktop : wrapper avec icône */}
                       <div
                         className="hidden md:flex time-input-wrapper items-center gap-2 px-3 py-2.5 border rounded-lg"
-                        style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
+                        style={{ borderColor: isInvalid('endTime') ? '#ef4444' : "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
                       >
                         <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
                         <input

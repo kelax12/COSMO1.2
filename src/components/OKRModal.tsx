@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -60,6 +61,7 @@ type OKRModalProps = {
 const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editingObjective, onSubmit }) => {
   const { data: allCategories = [] } = useCategories();
   const isMobile = useIsMobile();
+  const { register, trigger, clear, isInvalid } = useInvalidShake();
   const [step, setStep] = useState<1 | 2>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [step1Error, setStep1Error] = useState('');
@@ -115,11 +117,18 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   const handleClose = () => { resetForm(); setStep(1); onClose(); };
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);
 
-  const handleNext = () => {
-    if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); return; }
-    if (!info.endDate) { setEndDateError("Veuillez choisir une date de fin."); return; }
+  const validateStep1 = (): boolean => {
+    const missing: string[] = [];
+    if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); missing.push('title'); }
+    if (!info.endDate) { setEndDateError("Veuillez choisir une date de fin."); missing.push('endDate'); }
+    if (missing.length) { trigger(missing); return false; }
     setStep1Error('');
     setEndDateError('');
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!validateStep1()) return;
     setDirection(1);
     setStep(2);
   };
@@ -135,12 +144,22 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     if (keyResults.length > 1) setKeyResults(keyResults.filter((_, idx) => idx !== i));
   };
 
-  const updateKR = (i: number, field: string, value: string) =>
+  const updateKR = (i: number, field: string, value: string) => {
     setKeyResults(keyResults.map((kr, idx) => (idx === i ? { ...kr, [field]: value } : kr)));
+    if (field === 'title') clear('kr-title');
+    if (field === 'targetValue') clear('kr-target');
+  };
 
   const handleSubmit = () => {
     const valid = keyResults.filter((kr) => kr.title.trim() && kr.targetValue && Number(kr.targetValue) > 0);
-    if (valid.length === 0) { alert('Ajoutez au moins un résultat clé valide.'); return; }
+    if (valid.length === 0) {
+      const first = keyResults[0];
+      const missing: string[] = [];
+      if (!first?.title.trim()) missing.push('kr-title');
+      if (!first?.targetValue || Number(first.targetValue) <= 0) missing.push('kr-target');
+      trigger(missing.length ? missing : ['kr-title']);
+      return;
+    }
     onSubmit(
       {
         title: info.title,
@@ -169,10 +188,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   };
 
   const handleMobileSave = () => {
-    if (!info.title.trim()) { setStep1Error("Veuillez saisir un titre."); return; }
-    if (!info.endDate) { setEndDateError("Veuillez choisir une date de fin."); return; }
-    setStep1Error('');
-    setEndDateError('');
+    if (!validateStep1()) return;
     handleSubmit();
   };
 
@@ -256,7 +272,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 <button
                   type="button"
                   onClick={handleMobileSave}
-                  disabled={!info.title.trim()}
                   className={`text-[15px] font-semibold min-w-16 min-h-11 flex items-center justify-end ${
                     info.title.trim() ? 'text-blue-500' : 'text-blue-300'
                   }`}
@@ -269,11 +284,16 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
               <div data-scroll-area className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
 
                 {/* Groupe 1 — Titre (sans overflow-hidden) */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+                <div
+                  ref={register('title')}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+                    isInvalid('title') ? 'ring-2 ring-red-500' : ''
+                  }`}
+                >
                   <input
                     type="text"
                     value={info.title}
-                    onChange={(e) => { setInfo({ ...info, title: e.target.value }); setStep1Error(''); }}
+                    onChange={(e) => { setInfo({ ...info, title: e.target.value }); setStep1Error(''); clear('title'); }}
                     placeholder="Nom de l'objectif"
                     autoFocus
                     className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 placeholder-gray-400 dark:placeholder-gray-600 ${
@@ -340,9 +360,14 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                   <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
 
                   {/* Date de fin — native date input */}
-                  <div className="flex items-center px-4 min-h-11 relative">
+                  <div
+                    ref={register('endDate')}
+                    className={`flex items-center px-4 min-h-11 relative transition-[box-shadow] ${
+                      isInvalid('endDate') ? 'ring-2 ring-red-500 rounded-lg' : ''
+                    }`}
+                  >
                     <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Date de fin</span>
-                    <span className={`text-[15px] mr-1 ${endDateError ? 'text-red-500' : info.endDate ? 'text-blue-500' : 'text-gray-400'}`}>
+                    <span className={`text-[15px] mr-1 ${endDateError || isInvalid('endDate') ? 'text-red-500' : info.endDate ? 'text-blue-500' : 'text-gray-400'}`}>
                       {info.endDate
                         ? format(new Date(info.endDate + 'T12:00:00'), 'd MMM yyyy', { locale: fr })
                         : 'Aucune'}
@@ -351,7 +376,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                     <input
                       type="date"
                       value={info.endDate}
-                      onChange={(e) => { setInfo({ ...info, endDate: e.target.value }); setEndDateError(''); }}
+                      onChange={(e) => { setInfo({ ...info, endDate: e.target.value }); setEndDateError(''); clear('endDate'); }}
                       className="absolute inset-0 opacity-0 cursor-pointer"
                       style={{ border: 'none' }}
                     />
@@ -389,10 +414,14 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 <div className="space-y-3">
                   {keyResults.map((kr, idx) => {
                     const ph = KR_PLACEHOLDERS[idx % KR_PLACEHOLDERS.length];
+                    const krInvalid = idx === 0 && (isInvalid('kr-title') || isInvalid('kr-target'));
                     return (
                       <div
                         key={idx}
-                        className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden"
+                        ref={idx === 0 ? (el) => { register('kr-title')(el); register('kr-target')(el); } : undefined}
+                        className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden transition-[box-shadow] ${
+                          krInvalid ? 'ring-2 ring-red-500' : ''
+                        }`}
                       >
                         {/* KR header */}
                         <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200/80 dark:border-gray-700/60">
@@ -473,7 +502,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                 <button
                   type="button"
                   onClick={handleMobileSave}
-                  disabled={!info.title.trim()}
                   className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
                     info.title.trim() ? 'bg-blue-600 active:bg-blue-700' : 'bg-blue-200 dark:bg-blue-900/40'
                   }`}
@@ -533,7 +561,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                         className="px-6 py-5 space-y-4"
                       >
                         {/* Titre */}
-                        <div>
+                        <div ref={register('title')}>
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                             Nom de l'objectif <span className="text-red-500 normal-case">*</span>
                           </label>
@@ -541,10 +569,10 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             autoFocus
                             type="text"
                             value={info.title}
-                            onChange={(e) => { setInfo({ ...info, title: e.target.value }); setStep1Error(''); }}
+                            onChange={(e) => { setInfo({ ...info, title: e.target.value }); setStep1Error(''); clear('title'); }}
                             className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-white dark:bg-slate-800 outline-none transition-all
                               focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
-                              ${step1Error ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
+                              ${step1Error || isInvalid('title') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
                             placeholder="Ex : Améliorer ma santé physique"
                           />
                           {step1Error && <p className="text-xs text-red-500 mt-1">{step1Error}</p>}
@@ -614,15 +642,15 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          <div>
+                          <div ref={register('endDate')}>
                             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                               Date de fin <span className="text-red-500 normal-case">*</span>
                             </label>
                             <DatePicker
                               value={info.endDate}
-                              onChange={(d) => { setInfo({ ...info, endDate: d }); setEndDateError(''); }}
+                              onChange={(d) => { setInfo({ ...info, endDate: d }); setEndDateError(''); clear('endDate'); }}
                               placeholder="Choisir une date"
-                              className={`h-auto py-2.5 text-sm rounded-lg ${endDateError ? 'border-red-400' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
+                              className={`h-auto py-2.5 text-sm rounded-lg ${endDateError || isInvalid('endDate') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
                             />
                             {endDateError && <p className="text-xs text-red-500 mt-1">{endDateError}</p>}
                           </div>
@@ -665,13 +693,17 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                         <div className="space-y-2.5">
                           {keyResults.map((kr, idx) => {
                             const ph = KR_PLACEHOLDERS[idx % KR_PLACEHOLDERS.length];
+                            const krInvalid = idx === 0 && (isInvalid('kr-title') || isInvalid('kr-target'));
                             return (
                               <motion.div
                                 key={idx}
+                                ref={idx === 0 ? (el) => { register('kr-title')(el); register('kr-target')(el); } : undefined}
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.03 }}
-                                className="group relative bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 overflow-hidden transition-all"
+                                className={`group relative bg-slate-50 dark:bg-slate-800/60 border rounded-xl p-4 overflow-hidden transition-all ${
+                                  krInvalid ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'
+                                }`}
                               >
                                 {/* accent bar */}
                                 <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400/40 group-hover:bg-blue-500 rounded-l-xl transition-colors" />

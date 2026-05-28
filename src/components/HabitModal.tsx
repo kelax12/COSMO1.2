@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
@@ -29,6 +30,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     color: '#3B82F6',
   });
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+  const { register, trigger, clear, isInvalid } = useInvalidShake();
 
   useEffect(() => {
     if (isOpen) {
@@ -45,7 +47,10 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   }, [isOpen, habit, categories, favoriteColors]);
 
   const doSave = () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim()) {
+      trigger(['name']);
+      return;
+    }
     if (isEditing && habit) {
       updateHabitMutation.mutate({ id: habit.id, updates: formData }, { onSuccess: () => onClose() });
     } else {
@@ -116,7 +121,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     <button
                       type="button"
                       onClick={doSave}
-                      disabled={!formData.name.trim()}
                       className={`text-[15px] font-semibold min-w-16 min-h-11 flex items-center justify-end ${
                         formData.name.trim() ? 'text-blue-500' : 'text-blue-300'
                       }`}
@@ -129,11 +133,16 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   <div data-scroll-area className="flex-1 overflow-y-auto px-4 py-4">
 
                     {/* Groupe 1 — Nom (sans overflow-hidden pour iOS selection handles) */}
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+                    <div
+                      ref={register('name')}
+                      className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+                        isInvalid('name') ? 'ring-2 ring-red-500' : ''
+                      }`}
+                    >
                       <input
                         type="text"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
                         placeholder="Nom de l'habitude"
                         autoFocus
                         className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
@@ -216,7 +225,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     <button
                       type="button"
                       onClick={doSave}
-                      disabled={!formData.name.trim()}
                       className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
                         formData.name.trim()
                           ? 'bg-blue-600 active:bg-blue-700'
@@ -251,23 +259,24 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   {/* Scrollable body */}
                   <form id="habit-form" onSubmit={handleSubmit} data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2">
+                      <div className="sm:col-span-2" ref={register('name')}>
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Nom de l'habitude
                         </label>
                         <input
                           type="text"
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                          onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
+                          className={`w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-sm ${
+                            isInvalid('name') ? 'border-red-500 focus:ring-red-500/40' : 'focus:ring-blue-500 focus:border-blue-500'
+                          }`}
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: 'rgb(var(--color-text-primary))',
-                            borderColor: 'rgb(var(--color-border))',
+                            borderColor: isInvalid('name') ? '#ef4444' : 'rgb(var(--color-border))',
                           }}
                           placeholder="Ex: Lire 30 minutes..."
                           autoFocus
-                          required
                         />
                       </div>
                       <div>
