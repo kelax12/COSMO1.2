@@ -42,11 +42,12 @@ function corsHeadersFor(req: Request) {
 // exist. `auth.admin.deleteUser` will cascade through `auth.users` references
 // where they exist; we explicitly clean tables that store `user_id` as a UUID
 // column rather than an FK to auth.users.
+// NOTE: `shared_tasks` is intentionally NOT in this list — its columns are
+// `friend_id` / `shared_by`, not `user_id`. It's handled separately below.
 const USER_OWNED_TABLES = [
   'kr_completions',
   'key_results',
   'okrs',
-  'shared_tasks',
   'friends',
   'friend_requests',
   'tasks',
@@ -57,6 +58,8 @@ const USER_OWNED_TABLES = [
   'subscriptions',
   'chat_messages',
 ] as const
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 Deno.serve(async (req) => {
   const cors = corsHeadersFor(req)
@@ -99,20 +102,64 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    // M-6 — Defense-in-depth: validate the resolved user id is a UUID before
+    // template-interpolating it into PostgREST `.or()` filters. The id comes
+    // from a verified JWT so it should always be valid, but the contract is
+    // "never inline string into PostgREST filters without a guard".
+    if (!UUID_RE.test(user.id)) {
+      return new Response(JSON.stringify({ error: 'Invalid user id' }), {
+        status: 400,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Track per-table failures so we can abort BEFORE deleting the auth row
+    // if any cleanup leaves orphans (RGPD article 17 — right to erasure).
+    const failedTables: string[] = []
+
     // Friend-request rows reference the user by either sender_id or
     // receiver_id; clean both before the main loop.
-    await supabaseAdmin.from('friend_requests').delete().or(
-      `sender_id.eq.${user.id},receiver_id.eq.${user.id}`,
-    )
+    {
+      const { error } = await supabaseAdmin.from('friend_requests').delete().or(
+        `sender_id.eq.${user.id},receiver_id.eq.${user.id}`,
+      )
+      if (error) {
+        console.error('delete-account: failed to clean friend_requests:', error.message)
+        failedTables.push('friend_requests')
+      }
+    }
+
+    // M-6 — shared_tasks uses `friend_id` / `shared_by`, NOT `user_id`.
+    // The previous `.eq('user_id', uid)` was a silent no-op leaving every
+    // share this user issued (and received) in the database after deletion.
+    {
+      const { error } = await supabaseAdmin.from('shared_tasks').delete().or(
+        `friend_id.eq.${user.id},shared_by.eq.${user.id}`,
+      )
+      if (error) {
+        console.error('delete-account: failed to clean shared_tasks:', error.message)
+        failedTables.push('shared_tasks')
+      }
+    }
 
     for (const table of USER_OWNED_TABLES) {
       if (table === 'friend_requests') continue
       const { error } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
       if (error) {
         console.error(`delete-account: failed to clean ${table}:`, error.message)
-        // Continue best-effort — we'd rather drop the auth user than leave
-        // a half-deleted account that the user can't retry.
+        failedTables.push(table)
       }
+    }
+
+    // M-6 — If any cleanup failed, refuse to drop the auth row. Otherwise we
+    // permanently lose the user's identity and orphan data becomes impossible
+    // to purge later (RGPD violation). The client can retry; the function is
+    // idempotent (DELETE … WHERE on already-empty tables is a no-op).
+    if (failedTables.length > 0) {
+      return new Response(
+        JSON.stringify({ error: 'cleanup_failed', tables: failedTables }),
+        { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } },
+      )
     }
 
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)

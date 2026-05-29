@@ -81,10 +81,15 @@ Deno.serve(async (req) => {
     let customerId = sub?.stripe_customer_id ?? null
 
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { supabase_uid: user.id },
-      })
+      // M-3 — Idempotency key prevents double Stripe customer creation on
+      // double-click / network retry. Stripe deduplicates within 24 h.
+      const customer = await stripe.customers.create(
+        {
+          email: user.email,
+          metadata: { supabase_uid: user.id },
+        },
+        { idempotencyKey: `customer:${user.id}` },
+      )
       customerId = customer.id
 
       // Use upsert keyed on user_id so the customer id is persisted even when
@@ -108,18 +113,25 @@ Deno.serve(async (req) => {
 
     const priceId = Deno.env.get('STRIPE_PRICE_ID') ?? ''
 
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${APP_URL}/premium?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${APP_URL}/premium?checkout=cancelled`,
-      metadata: { supabase_uid: user.id },
-      subscription_data: {
+    // M-3 — Day-scoped idempotency: a same-day retry returns the existing
+    // session instead of allocating a fresh one. Daily granularity keeps a
+    // user able to re-checkout the next day if they abandoned the flow.
+    const dayKey = new Date().toISOString().slice(0, 10)
+    const session = await stripe.checkout.sessions.create(
+      {
+        customer: customerId,
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${APP_URL}/premium?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${APP_URL}/premium?checkout=cancelled`,
         metadata: { supabase_uid: user.id },
+        subscription_data: {
+          metadata: { supabase_uid: user.id },
+        },
       },
-    })
+      { idempotencyKey: `checkout:${user.id}:${dayKey}` },
+    )
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...cors, 'Content-Type': 'application/json' },

@@ -176,7 +176,17 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
         .upsert(rows, { onConflict: 'id' });
       if (upsertError) throw normalizeApiError(upsertError);
 
+      // M-1 — Validate every KR id is a UUID before interpolating into the
+      // PostgREST `not.in.(...)` filter. A crafted id like `aaa","bbb")` would
+      // break the closing paren and either neutralize the filter (orphans
+      // never deleted) or tautologize it (data loss). RLS scopes us to our
+      // own rows so impact is auto-DoS, but the contract is "never inline
+      // client-controlled strings into PostgREST filters".
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const keepIds = keyResults.map(kr => kr.id);
+      if (keepIds.some(id => !UUID_RE.test(id))) {
+        throw new Error('Invalid key result id');
+      }
       const { error: deleteError } = await supabase
         .from('key_results')
         .delete()

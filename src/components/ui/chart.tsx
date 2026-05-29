@@ -78,6 +78,21 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  // M-11 — Whitelist the color string before CSS interpolation. The shadcn
+  // default does dangerouslySetInnerHTML with the raw `color`; if a caller
+  // ever plumbs user-controlled hex (custom category colors), an attacker
+  // could escape with `; } body { display:none } #x{x:` and break the page
+  // / exfiltrate via attribute selectors. Accept only hex, hsl(), rgb(), or
+  // `var(--…)` references.
+  const SAFE_COLOR_RE = /^(#[0-9a-f]{3,8}|var\(--[a-z0-9-]+\)|hsl\(\s*[\d.]+\s+[\d.]+%\s+[\d.]+%\s*\)|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))$/i
+
+  // Sanitize the chart id too — it's interpolated into the CSS selector.
+  // Only allow alphanumeric + dash/underscore (shadcn callers pass uuids,
+  // those would already be safe, but the contract is "validate at boundary").
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return null
+  }
+
   return (
     <style
       dangerouslySetInnerHTML={{
@@ -90,7 +105,10 @@ ${colorConfig
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    if (!color || !SAFE_COLOR_RE.test(color)) return null
+    // Sanitize key (used as CSS custom property name).
+    if (!/^[a-zA-Z0-9_-]+$/.test(key)) return null
+    return `  --color-${key}: ${color};`
   })
   .join("\n")}
 }

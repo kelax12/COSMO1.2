@@ -12,6 +12,11 @@ const supabaseAdmin = createClient(
 )
 
 Deno.serve(async (req) => {
+  // L-13 — Stripe only POSTs; reject other methods early without parsing.
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405 })
+  }
+
   const signature = req.headers.get('stripe-signature')
   const body = await req.text()
 
@@ -31,26 +36,24 @@ Deno.serve(async (req) => {
     return new Response('Invalid signature', { status: 400 })
   }
 
-  // Idempotency: Stripe retries events on transient failures and may deliver
-  // out-of-order. Persist event.id with PK conflict to short-circuit replays.
-  // Requires the `processed_stripe_events` table (migration 016). Faille N8.
-  const { error: dedupError } = await supabaseAdmin
+  // M-4 / M-5 — Idempotency check happens BEFORE handler (dedup), but the
+  // "processed" marker is only written AFTER the handler succeeds. The
+  // previous flow marked the event processed first, so a handler crash
+  // turned at-least-once delivery into at-most-once and silently dropped
+  // the event (Stripe never retries an event marked done).
+  //
+  // Pre-check ignores 23505 (concurrent delivery) and lets two parallel
+  // workers race; the handlers are idempotent (upserts). The post-handler
+  // INSERT then becomes the durable "done" marker.
+  const { data: alreadyProcessed } = await supabaseAdmin
     .from('processed_stripe_events')
-    .insert({
-      id: event.id,
-      event_type: event.type,
-      created_at: new Date(event.created * 1000).toISOString(),
+    .select('id')
+    .eq('id', event.id)
+    .maybeSingle()
+  if (alreadyProcessed) {
+    return new Response(JSON.stringify({ received: true, deduped: true }), {
+      headers: { 'Content-Type': 'application/json' },
     })
-  if (dedupError) {
-    // 23505 = unique_violation → already processed; safely skip.
-    const code = (dedupError as { code?: string }).code
-    if (code === '23505') {
-      return new Response(JSON.stringify({ received: true, deduped: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-    // Other errors: log but don't drop the event — Stripe will retry.
-    console.error('processed_stripe_events insert error:', dedupError)
   }
 
   try {
@@ -77,6 +80,27 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error(`Error handling event ${event.type}:`, err)
     return new Response('Internal error', { status: 500 })
+  }
+
+  // Mark as processed only AFTER the handler succeeded. Race with concurrent
+  // delivery → one INSERT wins, the other 23505 (treated as success); both
+  // handlers ran but our writes are idempotent. Any other DB error → 500 so
+  // Stripe retries the event (the idempotent handler will re-converge).
+  const { error: dedupError } = await supabaseAdmin
+    .from('processed_stripe_events')
+    .insert({
+      id: event.id,
+      event_type: event.type,
+      created_at: new Date(event.created * 1000).toISOString(),
+    })
+  if (dedupError) {
+    const code = (dedupError as { code?: string }).code
+    if (code !== '23505') {
+      // Persistence failure (schema drift, RLS, network) — without the marker
+      // we lose idempotency. Force Stripe to retry. Faille M-5.
+      console.error('processed_stripe_events insert error:', dedupError)
+      return new Response('Internal error', { status: 500 })
+    }
   }
 
   return new Response(JSON.stringify({ received: true }), {

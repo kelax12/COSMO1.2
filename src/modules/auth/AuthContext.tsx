@@ -47,6 +47,20 @@ function clearLocalCache(userId: string): void {
   } catch { /* ignore */ }
 }
 
+// L-11 — On a shared device, signing out one user must not leave another
+// user's cache reachable via devtools (cosmo:qcache:* survives 24 h TTL).
+// Sweep every cache entry on SIGNED_OUT, not just the current userId.
+function purgeAllLocalCache(): void {
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('cosmo:qcache:')) toRemove.push(key);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+}
+
 // User type — identity fields only.
 // Premium/financial state (premiumTokens, subscriptionEndDate, win_streak, …) lives
 // exclusively in the Supabase `subscriptions` table and is consumed via useBilling().
@@ -229,6 +243,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(mapSupabaseUserToAppUser(session.user));
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        // L-11 — purge every cached cosmo:qcache:* entry, not only the user
+        // we just signed out. Defense for shared devices.
+        purgeAllLocalCache();
       }
       setIsLoading(false);
     });

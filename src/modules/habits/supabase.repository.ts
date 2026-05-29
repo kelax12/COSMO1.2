@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
-import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 
 /**
@@ -62,6 +62,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       .limit(limit + 1);
 
     if (params.cursor && params.cursorDate) {
+      assertValidCursor(params.cursor, params.cursorDate);
       query = query.or(
         `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
       );

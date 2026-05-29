@@ -1,0 +1,22 @@
+# Supabase project configuration
+# https://supabase.com/docs/guides/local-development/cli/config
+
+project_id = "cosmo"
+
+# ─── Edge Functions ─────────────────────────────────────────────────
+# Stripe posts webhook events without a Supabase JWT — it authenticates the
+# request via the `stripe-signature` header, which the handler verifies with
+# the webhook secret. Leaving the default `verify_jwt = true` would have
+# Supabase reject Stripe with 401 before the signature check ever ran.
+[functions.stripe-webhook]
+verify_jwt = false
+
+# stripe-create-checkout requires the user's JWT (we use it to identify which
+# subscription row to upsert) — keep the default verify_jwt = true.
+[functions.stripe-create-checkout]
+verify_jwt = true
+
+# delete-account requires the user's JWT (we resolve which user to purge
+# from the JWT, never from request body) — keep verify_jwt = true.
+[functions.delete-account]
+verify_jwt = true
