@@ -9,6 +9,15 @@ import './index.css';
 // silencieusement si VITE_SENTRY_DSN est absent (utile en dev local).
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 if (sentryDsn) {
+  // M-9 — sendDefaultPii: false strips Sentry's auto-collected user identifiers
+  // (IP, cookies). It does NOT scrub PII that lands in error.message itself —
+  // Supabase errors routinely include emails and UUIDs in their message. This
+  // beforeSend hook regex-strips both from message + exception values before
+  // the event leaves the browser. Defense-in-depth for RGPD.
+  const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+  const scrub = (s: string): string => s.replace(EMAIL_RE, '[email]').replace(UUID_RE, '[uuid]');
+
   Sentry.init({
     dsn: sentryDsn,
     environment: import.meta.env.MODE,
@@ -19,6 +28,20 @@ if (sentryDsn) {
       'ResizeObserver loop completed with undelivered notifications',
       'Non-Error promise rejection captured',
     ],
+    beforeSend(event) {
+      if (event.message) event.message = scrub(event.message);
+      if (event.exception?.values) {
+        for (const ex of event.exception.values) {
+          if (ex.value) ex.value = scrub(ex.value);
+        }
+      }
+      if (event.breadcrumbs) {
+        for (const crumb of event.breadcrumbs) {
+          if (crumb.message) crumb.message = scrub(crumb.message);
+        }
+      }
+      return event;
+    },
   });
 }
 

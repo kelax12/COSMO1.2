@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
-import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 
 /**
@@ -71,6 +71,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       .limit(limit + 1);
 
     if (params.cursor && params.cursorDate) {
+      assertValidCursor(params.cursor, params.cursorDate);
       query = query.or(
         `start_time.lt.${params.cursorDate},and(start_time.eq.${params.cursorDate},id.lt.${params.cursor})`
       );

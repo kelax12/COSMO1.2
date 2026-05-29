@@ -104,6 +104,12 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getByEmail(email: string): Promise<Friend | null> {
     if (!supabase) throw new Error('Supabase not configured');
+    // L-9 — Validate input at boundary: reject empty / oversized strings and
+    // anything without an `@`. Prevents pathological inputs from reaching
+    // PostgREST (DoS-by-huge-query) and surfaces caller bugs early.
+    if (!email || email.length > 320 || !email.includes('@')) {
+      return null;
+    }
     // Exact match instead of ILIKE — the old query forwarded unescaped `%` and
     // `_` from caller input as SQL pattern wildcards (PostgREST pattern
     // injection). Emails are stored verbatim, so a lowercased `.eq` suffices.
