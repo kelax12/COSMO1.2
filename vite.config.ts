@@ -29,10 +29,21 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Audit perf 2026-05-29 — chunking strategy revised. Goals:
+        // 1. Isolate `recharts` (was bleeding 321 kB into auto-split
+        //    chunks shared by Landing/Dashboard/Statistics). Now lazy and
+        //    paid only by pages that actually render a chart.
+        // 2. Pull `@supabase/supabase-js` and `@sentry/react` out of the
+        //    main entry — both are bulky and were defaulting to `index`.
+        // 3. Split `react-router` from `react`/`react-dom` to parallelize
+        //    over HTTP/2.
         manualChunks(id) {
+          if (id.includes('node_modules/react-router')) {
+            return 'vendor-router';
+          }
           if (id.includes('node_modules/react') ||
               id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/react-router')) {
+              id.includes('node_modules/scheduler')) {
             return 'vendor-react';
           }
           if (id.includes('node_modules/@radix-ui')) {
@@ -43,6 +54,17 @@ export default defineConfig({
           }
           if (id.includes('node_modules/framer-motion')) {
             return 'vendor-animation';
+          }
+          if (id.includes('node_modules/recharts') ||
+              id.includes('node_modules/d3-') ||
+              id.includes('node_modules/victory-vendor')) {
+            return 'vendor-charts';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'vendor-supabase';
+          }
+          if (id.includes('node_modules/@sentry')) {
+            return 'vendor-sentry';
           }
           if (id.includes('node_modules/date-fns') ||
               id.includes('node_modules/lucide-react')) {

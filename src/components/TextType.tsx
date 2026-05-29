@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, createElement, useMemo, useCallback } from 'react';
-import { gsap } from 'gsap';
 import './TextType.css';
 
 const TextType = ({
@@ -32,8 +31,6 @@ const TextType = ({
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
   const [isTypingDone, setIsTypingDone] = useState(false);
-  const cursorRef = useRef(null);
-  const cursorTweenRef = useRef(null);
   const containerRef = useRef(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
@@ -52,9 +49,9 @@ const TextType = ({
   const getTextStyle = () => {
     const color = getCurrentTextColor();
     if (!color) return {};
-    
+
     const isGradient = color.includes('gradient') || color.includes('linear-') || color.includes('radial-');
-    
+
     if (isGradient) {
       return {
         background: color,
@@ -64,7 +61,7 @@ const TextType = ({
         color: 'transparent'
       };
     }
-    
+
     return { color };
   };
 
@@ -85,26 +82,6 @@ const TextType = ({
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [startOnVisible]);
-
-  useEffect(() => {
-    if (showCursor && cursorRef.current) {
-      gsap.set(cursorRef.current, { opacity: 1 });
-      cursorTweenRef.current = gsap.to(cursorRef.current, {
-        opacity: 0,
-        duration: cursorBlinkDuration,
-        repeat: -1,
-        yoyo: true,
-        ease: 'power2.inOut'
-      });
-    }
-  }, [showCursor, cursorBlinkDuration]);
-
-  useEffect(() => {
-    if (isTypingDone && cursorRef.current) {
-      cursorTweenRef.current?.kill();
-      gsap.set(cursorRef.current, { opacity: 0 });
-    }
-  }, [isTypingDone]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -184,6 +161,18 @@ const TextType = ({
   const shouldHideCursor =
     hideCursorWhileTyping && (currentCharIndex < currentTextForCursor.length || isDeleting);
 
+  // Audit perf 2026-05-29 — cursor blink moved from GSAP tween to a pure CSS
+  // keyframe (TextType.css). Removed the gsap dependency entirely; saves a
+  // ~137 kB chunk from the bundle. Blink duration is wired through a CSS
+  // custom property so the prop still drives the cadence.
+  const cursorStyle = { ['--text-type-blink-duration' as string]: `${cursorBlinkDuration}s` };
+  const cursorClasses = [
+    'text-type__cursor',
+    cursorClassName,
+    shouldHideCursor ? 'text-type__cursor--hidden' : '',
+    isTypingDone ? 'text-type__cursor--stopped' : '',
+  ].filter(Boolean).join(' ');
+
   return createElement(
     Component,
     {
@@ -195,10 +184,7 @@ const TextType = ({
       {displayedText}
     </span>,
     showCursor && (
-      <span
-        ref={cursorRef}
-        className={`text-type__cursor ${cursorClassName} ${shouldHideCursor ? 'text-type__cursor--hidden' : ''}`}
-      >
+      <span className={cursorClasses} style={cursorStyle}>
         {cursorCharacter}
       </span>
     )

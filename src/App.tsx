@@ -13,7 +13,11 @@ import { BillingProvider } from '@/modules/billing/billing.context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import OnboardingOverlay from '@/components/OnboardingOverlay';
-import CommandPalette from '@/components/CommandPalette';
+// Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
+// it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
+// land in the entry chunk. Suspense fallback is null because the palette
+// itself is invisible until opened.
+const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 
 // ──────────────────────────────────────────────────────────────────
 // Lazy import wrapper — recharge la page si un chunk est obsolète
@@ -197,7 +201,9 @@ const App: React.FC = () => {
             <AppRoutes />
             <CookieBanner />
             <OnboardingOverlay />
-            <CommandPalette />
+            <Suspense fallback={null}>
+              <CommandPalette />
+            </Suspense>
           </TooltipProvider>
         </BillingProvider>
       </AuthProvider>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,7 +16,13 @@ import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
 import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
-import StatsShowcase from '../components/showcase/StatsShowcase';
+// Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
+// page should never block on it: lazy-load with a lightweight skeleton so
+// the page renders instantly and the chart streams in once Recharts arrives.
+const StatsShowcase = lazy(() => import('../components/showcase/StatsShowcase'));
+const ShowcaseSkeleton = () => (
+  <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
+);
 import {
   TaskCardMobileShowcase,
   AgendaMobileShowcase,
@@ -717,7 +723,11 @@ const LandingPage: React.FC = () => {
                 >
                   <div className="absolute -inset-3 bg-gradient-to-r from-violet-500/20 to-purple-600/20 rounded-3xl blur-2xl" />
                   <div className="relative">
-                    {isMobile ? <StatsMobileShowcase /> : <StatsShowcase />}
+                    {isMobile ? <StatsMobileShowcase /> : (
+                      <Suspense fallback={<ShowcaseSkeleton />}>
+                        <StatsShowcase />
+                      </Suspense>
+                    )}
                   </div>
                 </motion.div>
               </div>
