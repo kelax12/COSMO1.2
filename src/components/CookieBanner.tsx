@@ -79,7 +79,9 @@ const CookieBanner: React.FC = () => {
               {/* Trust badge */}
               <div className="flex items-center gap-2 mb-2.5">
                 <ShieldCheck size={13} className="text-green-500 shrink-0" aria-hidden="true" />
-                <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">
+                {/* A11y: text-green-600 (#16a34a) on white = 3.29:1 (WCAG AA fails).
+                    text-green-700 (#15803d) = 4.78:1 → passes 4.5:1. */}
+                <span className="text-[11px] font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
                   Aucun tracking publicitaire
                 </span>
               </div>
@@ -88,9 +90,11 @@ const CookieBanner: React.FC = () => {
                 Uniquement des cookies{' '}
                 <strong className="text-gray-900 dark:text-white font-semibold">strictement nécessaires</strong>
                 {' '}au fonctionnement (session, préférences).{' '}
+                {/* A11y: links inside text blocks need a non-color affordance
+                    (WCAG 1.4.1). underline is always on, not only :hover. */}
                 <Link
                   to="/politique-confidentialite"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-blue-700 dark:text-blue-300 underline underline-offset-2"
                   onClick={handleRefuse}
                 >
                   En savoir plus

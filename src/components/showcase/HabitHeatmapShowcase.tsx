@@ -187,10 +187,13 @@ const HabitTableShowcase: React.FC = () => {
           {/* Period nav */}
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
+              aria-label="Semaine précédente (démo)"
+              tabIndex={-1}
               className="p-1.5 rounded-md border cursor-default"
               style={{ color: textSecondary, borderColor: border }}
             >
-              <ChevronLeft size={14} />
+              <ChevronLeft size={14} aria-hidden="true" />
             </button>
             <div
               className="text-xs font-medium min-w-[110px] text-center"
@@ -199,10 +202,13 @@ const HabitTableShowcase: React.FC = () => {
               Semaine du 20 avr.
             </div>
             <button
+              type="button"
+              aria-label="Semaine suivante (démo)"
+              tabIndex={-1}
               className="p-1.5 rounded-md border cursor-default"
               style={{ color: textMuted, borderColor: border }}
             >
-              <ChevronRight size={14} />
+              <ChevronRight size={14} aria-hidden="true" />
             </button>
           </div>
 

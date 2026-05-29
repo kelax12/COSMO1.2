@@ -774,8 +774,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
         <table className="data-table w-full" style={{ minWidth: '1000px' }}>
           <thead>
             <tr className="monochrome:bg-neutral-900 monochrome:text-neutral-200">
-              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '40px' }}></th>
-              <th className="px-1 py-3 monochrome:border-neutral-700" style={{ width: '30px' }}></th>
+              {/* A11y: empty <th> need a label for screen readers. */}
+              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '40px' }}><span className="sr-only">Compléter</span></th>
+              <th className="px-1 py-3 monochrome:border-neutral-700" style={{ width: '30px' }}><span className="sr-only">Favori</span></th>
               <th 
                 className="cursor-pointer px-2 py-3 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800"
                 onClick={() => handleSort('name')}

@@ -366,6 +366,10 @@ const HabitTable: React.FC = () => {
                     return (
                       <td key={day.date} className="p-1 md:p-2 text-center transition-colors">
                             <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={!!isCompleted}
+                          aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : ''}`}
                           onClick={() => handleDayClick(habit.id, day.date)}
                           disabled={day.isFuture || isBeforeCreation}
                           className="w-7 h-7 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
