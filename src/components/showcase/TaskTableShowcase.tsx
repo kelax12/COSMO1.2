@@ -70,8 +70,9 @@ const TaskTableShowcase: React.FC = () => (
       <table className="w-full" style={{ minWidth: 780 }}>
         <thead>
           <tr className="bg-slate-900/60 border-b border-white/10">
-            <th className="px-3 py-3 w-10" />
-            <th className="px-2 py-3 w-7" />
+            {/* A11y: empty <th> need a label for screen readers. */}
+            <th className="px-3 py-3 w-10"><span className="sr-only">Compléter</span></th>
+            <th className="px-2 py-3 w-7"><span className="sr-only">Favori</span></th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Nom de la tâche
             </th>

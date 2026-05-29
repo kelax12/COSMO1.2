@@ -404,6 +404,9 @@ const LandingPage: React.FC = () => {
         </div>
       </header>
 
+      {/* A11y: wrap entire content in <main> landmark — axe-core flagged
+          162 nodes "not contained by landmarks" on this page. */}
+      <main>
       <section className="relative py-20 lg:py-32 overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -1152,6 +1155,7 @@ const LandingPage: React.FC = () => {
           </motion.div>
         </div>
       </section>
+      </main>
 
       <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

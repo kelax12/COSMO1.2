@@ -164,11 +164,12 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Période précédente"
                 onClick={() => navigatePeriod('prev')}
                 className="border"
                 style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={18} aria-hidden="true" />
               </Button>
               <div
                 className="text-xs font-medium min-w-[100px] md:min-w-[120px] text-center"
@@ -179,6 +180,7 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Période suivante"
                 onClick={() => navigatePeriod('next')}
                 disabled={!canNavigateNext()}
                 className="border"
@@ -187,7 +189,7 @@ const HabitGlobalTracking: React.FC = () => {
                   borderColor: 'rgb(var(--color-border))',
                 }}
               >
-                <ChevronRight size={18} />
+                <ChevronRight size={18} aria-hidden="true" />
               </Button>
             </div>
           )}
@@ -294,11 +296,12 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Page précédente"
                 onClick={() => setGlobalPage((p) => Math.max(0, p - 1))}
                 disabled={globalPage === 0}
                 style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={20} aria-hidden="true" />
               </Button>
               <span className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                 {globalPage + 1} / {totalPages}
@@ -306,11 +309,12 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Page suivante"
                 onClick={() => setGlobalPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={globalPage === totalPages - 1}
                 style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={20} aria-hidden="true" />
               </Button>
             </div>
           )}

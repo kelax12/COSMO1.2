@@ -726,6 +726,7 @@ const OKRPage: React.FC = () => {
                           <div className="flex items-center gap-2 w-full sm:w-auto">
                             <input
                               type="number"
+                              aria-label={`Avancement de ${keyResult.title} sur ${keyResult.targetValue}`}
                               value={keyResult.currentValue}
                               onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
                               className="w-16 sm:w-20 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none"

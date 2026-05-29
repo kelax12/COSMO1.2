@@ -31,15 +31,17 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center p-4">
+    <main className="min-h-[100dvh] bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
         <h1 className="text-3xl font-bold text-white mb-2 text-center">Bon retour</h1>
         <p className="text-slate-400 text-center mb-8">Connectez-vous à votre espace Cosmo</p>
-        
+
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+            {/* A11y: explicit label association via htmlFor/id. */}
+            <label htmlFor="login-email" className="block text-sm font-medium text-slate-300 mb-2">Email</label>
             <input
+              id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -49,8 +51,9 @@ const LoginPage = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Mot de passe</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-slate-300 mb-2">Mot de passe</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -59,7 +62,7 @@ const LoginPage = () => {
               required
             />
           </div>
-          
+
           <Button
             type="submit"
             variant="default"
@@ -69,15 +72,17 @@ const LoginPage = () => {
             {loading ? 'Connexion...' : 'Se connecter'}
           </Button>
         </form>
-        
+
         <p className="mt-8 text-center text-slate-400">
           Pas encore de compte ?{' '}
-          <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-medium">
+          {/* A11y: underline ensures link is distinguishable from text by
+              more than color alone (WCAG 1.4.1). */}
+          <Link to="/signup" className="text-blue-300 hover:text-blue-200 font-medium underline underline-offset-2">
             S'inscrire
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 };
 

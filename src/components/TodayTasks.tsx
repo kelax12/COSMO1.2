@@ -153,6 +153,10 @@ const TodayTasks: React.FC = () => {
                 <div className="flex items-center gap-3">
                   {/* Checkbox */}
                   <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={task.completed}
+                    aria-label={task.completed ? `Marquer "${task.name}" comme non complétée` : `Marquer "${task.name}" comme complétée`}
                     onClick={(e) => { e.stopPropagation(); handleToggleComplete(task.id); }}
                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                       task.completed

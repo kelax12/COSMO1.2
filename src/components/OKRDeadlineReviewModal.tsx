@@ -241,6 +241,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                       <div className="flex items-center gap-2 w-full sm:w-auto">
                         <input
                           type="number"
+                          aria-label={`Avancement de ${keyResult.title} sur ${keyResult.targetValue}`}
                           value={keyResult.currentValue}
                           onChange={(e) => {
                             const v = Number(e.target.value);
