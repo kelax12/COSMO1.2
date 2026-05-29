@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
@@ -11,7 +11,11 @@ import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
 import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
-import StatsShowcase from '../components/showcase/StatsShowcase';
+// Audit perf 2026-05-29 — lazy-load Recharts wrapper (same rationale as LandingPage).
+const StatsShowcase = lazy(() => import('../components/showcase/StatsShowcase'));
+const StatsShowcaseFallback = () => (
+  <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
+);
 
 // ─── Types ────────────────────────────────────────────────────────────
 type SectionId = 'demarrage' | 'taches' | 'listes' | 'agenda' | 'habitudes' | 'okr' | 'statistiques' | 'premium';
@@ -438,7 +442,9 @@ const GuidePage: React.FC = () => {
               />
 
               <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
-                <StatsShowcase />
+                <Suspense fallback={<StatsShowcaseFallback />}>
+                  <StatsShowcase />
+                </Suspense>
               </div>
 
               <div className="space-y-6">
