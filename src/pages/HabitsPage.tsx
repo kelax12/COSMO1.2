@@ -161,8 +161,67 @@ const HabitsPage: React.FC = () => {
         </div>
       )}
 
-      {viewMode === 'table' && <HabitTable />}
-      {viewMode === 'global' && <HabitGlobalTracking />}
+      {/* Mobile : quand aucune habitude, on ne montre QUE l'empty state avec
+          le bouton « Créer une habitude » (pas la table vide qui doublonnait).
+          Sur desktop, on garde le comportement actuel par vue. */}
+      {viewMode === 'table' && (
+        isMobile && habits.length === 0 && !isLoading ? (
+          <div className="card p-8 text-center">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: 'rgb(var(--color-hover))' }}
+            >
+              <Calendar size={24} style={{ color: 'rgb(var(--color-text-muted))' }} />
+            </div>
+            <h3
+              className="text-lg font-semibold mb-2"
+              style={{ color: 'rgb(var(--color-text-primary))' }}
+            >
+              Aucune habitude
+            </h3>
+            <p className="mb-6 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+              Commencez par créer votre première habitude
+            </p>
+            <Button
+              variant="default"
+              size="lg"
+              onClick={() => setShowModal(true)}
+              className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+            >
+              Créer une habitude
+            </Button>
+          </div>
+        ) : <HabitTable />
+      )}
+      {viewMode === 'global' && (
+        isMobile && habits.length === 0 && !isLoading ? (
+          <div className="card p-8 text-center">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: 'rgb(var(--color-hover))' }}
+            >
+              <Calendar size={24} style={{ color: 'rgb(var(--color-text-muted))' }} />
+            </div>
+            <h3
+              className="text-lg font-semibold mb-2"
+              style={{ color: 'rgb(var(--color-text-primary))' }}
+            >
+              Aucune habitude
+            </h3>
+            <p className="mb-6 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+              Commencez par créer votre première habitude
+            </p>
+            <Button
+              variant="default"
+              size="lg"
+              onClick={() => setShowModal(true)}
+              className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+            >
+              Créer une habitude
+            </Button>
+          </div>
+        ) : <HabitGlobalTracking />
+      )}
 
       <HabitModal isOpen={showModal} onClose={() => setShowModal(false)} />
 

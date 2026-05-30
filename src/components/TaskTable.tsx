@@ -230,10 +230,12 @@ const TaskCard = React.memo(({
         touchAction: 'pan-y',
       }}
     >
-      {/* Color bar (left) */}
+      {/* Color bar (left) — toujours la couleur de catégorie pour que
+          la TaskCard mobile soit visuellement cohérente avec la catégorie.
+          L'état overdue/bookmark est signalé par l'icône bookmark + la date. */}
       <div
         className="w-1 self-stretch rounded-full shrink-0"
-        style={{ backgroundColor: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor) }}
+        style={{ backgroundColor: categoryColor }}
       />
 
       {/* Checkbox */}
@@ -292,7 +294,7 @@ const TaskCard = React.memo(({
           {task.name}
         </p>
         <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <span>{formatDate(task.deadline)}</span>
+          <span className={isOverdue ? 'text-red-500 font-semibold' : ''}>{formatDate(task.deadline)}</span>
           <span>·</span>
           <span>{task.estimatedTime}min</span>
           {task.isCollaborative && (task.collaborators?.length ?? 0) > 0 && (
@@ -304,12 +306,12 @@ const TaskCard = React.memo(({
         </div>
       </div>
 
-      {/* Priority badge */}
+      {/* Priority badge — couleur catégorie pour cohérence visuelle avec la barre. */}
       <div
         className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
         style={{
-          backgroundColor: `${isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)}20`,
-          color: isOverdue ? '#ef4444' : (task.bookmarked ? '#EAB308' : categoryColor)
+          backgroundColor: `${categoryColor}20`,
+          color: categoryColor
         }}
       >
         Priorité {task.priority}
