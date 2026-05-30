@@ -122,13 +122,15 @@ const TasksPage: React.FC = () => {
   // dans son ancien ordre tant que la mutation n'a pas refetch.
   const [orderedLists, setOrderedLists] = useState<TaskList[]>(lists);
   useEffect(() => {
-    // On synchronise UNIQUEMENT si la composition change (ids ou count).
-    // Sinon on garde l'ordre local (qui peut différer pendant les
-    // mutations optimistes).
     const localIds = orderedLists.map(l => l.id).sort().join(',');
     const incomingIds = lists.map(l => l.id).sort().join(',');
     if (localIds !== incomingIds) {
+      // Composition différente (ajout / suppression) → reset complet
       setOrderedLists(lists);
+    } else {
+      // Même composition → merger les changements de contenu (nom, couleur…)
+      // en préservant l'ordre local (drag-to-reorder).
+      setOrderedLists(prev => prev.map(l => lists.find(nl => nl.id === l.id) ?? l));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lists]);
