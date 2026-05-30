@@ -1198,6 +1198,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     if (emailRegex.test(id)) {
       return { name: id, email: id, avatar: undefined, isPending };
     }
+    // Garde-fou : un id non résolu qui ressemble à un UUID (auth.users.id) ne
+    // doit JAMAIS s'afficher brut à la place d'un pseudo. Cela arrive si la
+    // résolution friend_id → ami échoue (ex. ami non enrichi, ou partage dont
+    // le destinataire ouvre la tâche). On affiche un libellé générique.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      return { name: 'Collaborateur', email: undefined, avatar: undefined, isPending };
+    }
     return { name: id, email: undefined, avatar: undefined, isPending };
   };
 

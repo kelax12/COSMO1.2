@@ -211,6 +211,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     if (emailRegex.test(id)) {
       return { name: id, email: id, avatar: undefined, isPending };
     }
+    // Garde-fou : ne jamais afficher un UUID auth brut à la place d'un pseudo
+    // si la résolution friend_id → ami échoue.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      return { name: 'Collaborateur', email: undefined, avatar: undefined, isPending };
+    }
     return { name: id, email: undefined, avatar: undefined, isPending };
   };
 
