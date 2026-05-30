@@ -297,12 +297,20 @@ const TaskCard = React.memo(({
           <span className={isOverdue ? 'text-red-500 font-semibold' : ''}>{formatDate(task.deadline)}</span>
           <span>·</span>
           <span>{task.estimatedTime}min</span>
-          {task.isCollaborative && (task.collaborators?.length ?? 0) > 0 && (
+          {task.sharedBy ? (
+            <>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1 text-[rgb(var(--color-accent))]">
+                <Users size={11} />
+                Reçu de {task.sharedBy}
+              </span>
+            </>
+          ) : task.isCollaborative && (task.collaborators?.length ?? 0) > 0 ? (
             <>
               <span>·</span>
               <Users size={11} className="opacity-70" />
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -914,9 +922,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
                   <div className="flex items-center gap-2">
                     <span className="truncate" title={task.name}>{task.name}</span>
-                    {task.isCollaborative && (task.collaborators?.length ?? 0) > 0 && (
+                    {task.sharedBy ? (
+                      <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Reçu de {task.sharedBy}</span>
+                    ) : task.isCollaborative && (task.collaborators?.length ?? 0) > 0 ? (
                       <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
-                    )}
+                    ) : null}
                   </div>
                 </td>
                 <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>

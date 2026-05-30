@@ -67,7 +67,47 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .limit(500);
 
     if (error) throw normalizeApiError(error);
-    return warnIfTruncated(data || [], 500, 'tasks').map(this.mapFromDb);
+    return this.enrichSharedBy(warnIfTruncated(data || [], 500, 'tasks').map(this.mapFromDb));
+  }
+
+  /**
+   * RLS renvoie au destinataire les tâches qu'on lui a partagées (owner ≠ moi)
+   * mêlées à ses propres tâches. La table `tasks` n'a pas de colonne pour le
+   * partageur, donc on résout son nom via `profiles.display_name` et on pose
+   * `sharedBy` + `isCollaborative` pour que l'UI puisse marquer la tâche comme
+   * « reçue ». Sans amis/tâches partagées : zéro requête supplémentaire.
+   */
+  private async enrichSharedBy(tasks: Task[]): Promise<Task[]> {
+    if (!supabase) return tasks;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return tasks;
+
+    const ownerIds = [
+      ...new Set(
+        tasks
+          .filter((t) => t.userId && t.userId !== user.id)
+          .map((t) => t.userId as string)
+      ),
+    ];
+    if (ownerIds.length === 0) return tasks;
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, email')
+      .in('id', ownerIds);
+
+    const nameById = new Map(
+      (profiles || []).map((p) => [
+        p.id as string,
+        ((p.display_name as string | null) || (p.email as string | null) || 'Un ami'),
+      ])
+    );
+
+    return tasks.map((t) =>
+      t.userId && t.userId !== user.id
+        ? { ...t, isCollaborative: true, sharedBy: nameById.get(t.userId) || 'Un ami' }
+        : t
+    );
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Task>> {
@@ -99,7 +139,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const lastItem = items[items.length - 1];
 
     return {
-      data: items.map(this.mapFromDb),
+      data: await this.enrichSharedBy(items.map(this.mapFromDb)),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.created_at : null,
@@ -118,7 +158,8 @@ export class SupabaseTasksRepository implements ITasksRepository {
       if (error.code === 'PGRST116') return null;
       throw normalizeApiError(error);
     }
-    return data ? this.mapFromDb(data) : null;
+    if (!data) return null;
+    return (await this.enrichSharedBy([this.mapFromDb(data)]))[0];
   }
 
   async getByDate(date: string): Promise<Task[]> {
@@ -135,7 +176,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .order('deadline', { ascending: true });
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return this.enrichSharedBy((data || []).map(this.mapFromDb));
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
@@ -173,7 +214,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return this.enrichSharedBy((data || []).map(this.mapFromDb));
   }
 
   // ═══════════════════════════════════════════════════════════════════

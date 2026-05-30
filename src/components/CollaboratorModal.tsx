@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { X, Users, UserPlus, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -69,6 +70,14 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const handleAdd = () => {
     if (!task) return;
+    // Le partage cross-user (shared_tasks → RLS du destinataire) est réservé
+    // au Premium. On bloque l'ajout AVANT d'écrire `collaborators`, sinon la
+    // tâche apparaît collaborative côté propriétaire mais n'est jamais visible
+    // pour le destinataire (cause n°1 du bug de partage).
+    if (!isPremium()) {
+      toast.error('Le partage de tâches est réservé aux membres Premium.');
+      return;
+    }
     const value = input.trim().toLowerCase();
     if (!value) return;
 
@@ -91,9 +100,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
             }
           }
         });
-        if (isPremium()) {
-          shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, friendEmail: friend.email, role: 'editor' });
-        }
+        shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, friendEmail: friend.email, role: 'editor' });
       }
     } else {
       // Non-friend invite: must be a valid email. Reject garbage input that
@@ -130,6 +137,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     if (!task) return;
     // `collabId` = friend's auth.uid (or friend.id in demo).
     if (assignedCollaborators.includes(collabId)) {
+      // Retrait toujours autorisé (pas de gate premium pour décocher).
       const newCollaborators = assignedCollaborators.filter((c) => c !== collabId);
       const newValidations = { ...task.collaboratorValidations };
       delete newValidations[collabId];
@@ -142,6 +150,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         }
       });
     } else {
+      // Ajout = partage cross-user → réservé au Premium.
+      if (!isPremium()) {
+        toast.error('Le partage de tâches est réservé aux membres Premium.');
+        return;
+      }
+      const friend = friends.find((f) => collabIdOf(f) === collabId);
       updateTaskMutation.mutate({
         id: task.id,
         updates: {
@@ -153,9 +167,9 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
           }
         }
       });
-      if (isPremium()) {
-        shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, role: 'editor' });
-      }
+      // Passer friendEmail permet à shareTask de re-résoudre l'auth.uid
+      // canonique via profiles si `userId` n'a pas été résolu (fallback robuste).
+      shareTaskMutation.mutate({ taskId: task.id, friendId: collabId, friendEmail: friend?.email, role: 'editor' });
     }
   };
 

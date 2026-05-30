@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UserPlus, Check, X, User, Send, Clock } from 'lucide-react';
+import { UserPlus, Check, X, User, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -10,17 +10,12 @@ import {
   useSendFriendRequest,
   type PendingFriendRequest,
 } from '@/modules/friends';
-import { useTasks, useUpdateTask } from '@/modules/tasks';
-import { useAuth } from '@/modules/auth/AuthContext';
 
 const SocialRequests: React.FC = () => {
   const { data: requests = [] } = useFriendRequests();
-  const { data: tasks = [] } = useTasks();
-  const { user } = useAuth();
   const acceptFriendMutation = useAcceptFriendRequest();
   const rejectFriendMutation = useRejectFriendRequest();
   const sendFriendMutation = useSendFriendRequest();
-  const updateTaskMutation = useUpdateTask();
 
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [friendEmail, setFriendEmail] = useState('');
@@ -34,11 +29,11 @@ const SocialRequests: React.FC = () => {
     (r: PendingFriendRequest) => r.status === 'pending' && r.senderEmail
   );
 
-  const assignedTasks = tasks.filter(
-    t => t.isCollaborative && t.sharedBy && t.sharedBy !== user?.name
-  );
-
-  const total = incomingRequests.length + assignedTasks.length;
+  // Les tâches partagées s'affichent désormais directement dans la liste du
+  // destinataire (marquées « Reçu de … » via `sharedBy`, résolu côté
+  // repository). Plus d'étape accepter/refuser ici — SocialRequests ne gère
+  // que les demandes d'amis.
+  const total = incomingRequests.length;
 
   const handleSendFriendRequest = () => {
     const email = friendEmail.trim();
@@ -62,20 +57,6 @@ const SocialRequests: React.FC = () => {
     rejectFriendMutation.mutate(id, {
       onSuccess: () => toast.success('Demande refusée'),
     });
-  };
-
-  const handleAcceptTask = (taskId: string) => {
-    updateTaskMutation.mutate(
-      { id: taskId, updates: { sharedBy: undefined, isCollaborative: true } },
-      { onSuccess: () => toast.success('Tâche acceptée') }
-    );
-  };
-
-  const handleDeclineTask = (taskId: string) => {
-    updateTaskMutation.mutate(
-      { id: taskId, updates: { sharedBy: undefined, isCollaborative: false, collaborators: [] } },
-      { onSuccess: () => toast.success('Tâche refusée') }
-    );
   };
 
   if (total === 0 && !showAddFriend) return null;
@@ -186,66 +167,6 @@ const SocialRequests: React.FC = () => {
           </div>
         )}
 
-        {/* Tâches assignées */}
-        {assignedTasks.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-wide mb-3">
-              Tâches assignées ({assignedTasks.length})
-            </p>
-            <div className="space-y-3">
-              {assignedTasks.map(task => {
-                const timeAgo = task.createdAt
-                  ? formatDistanceToNow(new Date(task.createdAt), { locale: fr, addSuffix: true })
-                  : '';
-                return (
-                  <div
-                    key={task.id}
-                    className="p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300"
-                  >
-                    <div className="mb-3">
-                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-                        {task.name}
-                      </p>
-                      <p className="text-xs text-[rgb(var(--color-text-secondary))] flex items-center gap-1 mt-0.5">
-                        <Clock size={11} />
-                        Par {task.sharedBy} · {timeAgo}
-                      </p>
-                      {/* Méta-infos rapides : priorité + temps estimé
-                          (récupérées de l'ancien SharedTasksHistory pour ne pas
-                          perdre de signal lors de l'unification) */}
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))]">
-                          Priorité {task.priority}
-                        </span>
-                        <span className="text-xs text-[rgb(var(--color-text-muted))]">
-                          {task.estimatedTime} min
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleAcceptTask(task.id)}
-                        disabled={updateTaskMutation.isPending}
-                        className="flex-1 h-8 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors monochrome:bg-white monochrome:text-zinc-900"
-                      >
-                        <Check size={13} />
-                        Accepter
-                      </button>
-                      <button
-                        onClick={() => handleDeclineTask(task.id)}
-                        disabled={updateTaskMutation.isPending}
-                        className="flex-1 h-8 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-[rgb(var(--color-text-secondary))] hover:text-red-500 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                      >
-                        <X size={13} />
-                        Refuser
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
