@@ -5,6 +5,11 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 > **Avant un déploiement** : consulter [`faille.md`](./faille.md) — répertorie les failles de sécurité et bugs bloquants identifiés (Stripe à finaliser, secrets à rotater, RLS à durcir).
 >
 > **Avant de toucher la version mobile** : consulter [`a-faire.md`](./a-faire.md) — répertorie les bugs/régressions mobile non résolus (notamment le panneau de couleur swipe TaskCard).
+>
+> **Rapports d'audit versionnés** (mis à jour 2026-05-30) :
+> - [`audit-perf.md`](./audit-perf.md) — bundle / runtime (entry 403→124 kB, gain -69 %, GSAP supprimé, Recharts lazy, Supabase/Sentry extraits du entry). Roadmap P-9/P-11 résiduelle.
+> - [`audit-a11y.md`](./audit-a11y.md) — WCAG AA / EAA 2025 (Critical 97→0, Serious 56→8, score axe estimé 65→92/100). Scan auto via [`e2e/a11y-audit.spec.ts`](./e2e/a11y-audit.spec.ts). Roadmap A-7 à A-11 résiduelle.
+> - **Audit sécurité** : findings 2026-05-29 intégrés dans `faille.md` (H-1, M-1 à M-11, L-9/L-11/L-13). Score posture 8.4 → ~9.3/10.
 
 ---
 
@@ -19,14 +24,16 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | Backend / Auth | Supabase 2 |
 | UI Components | shadcn/ui (Radix UI + Tailwind CSS 3) |
 | Toasts | Sonner |
-| Animations | Framer Motion + GSAP |
+| Animations | Framer Motion (GSAP retiré 2026-05-30, audit perf P-1 — cf. `audit-perf.md`) |
 | Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé**, voir `faille.md` |
-| Icônes | lucide-react |
-| Dates | date-fns 3 |
+| Icônes | lucide-react (imports nominaux uniquement — tree-shaking) |
+| Dates | date-fns 3 (locale `fr` toujours importé nominalement) |
 | Calendrier | FullCalendar |
 | Virtualisation | `@tanstack/react-virtual` (TaskList mobile au-delà de 50 items) |
-| Tests E2E | Playwright (3 parcours démo critiques dans `e2e/`) |
-| Hosting | Vercel (configuration `vercel.json` avec headers de sécurité) |
+| Tests E2E | Playwright (3 parcours démo critiques + scan a11y axe-core dans `e2e/`) |
+| Tests A11y | `@axe-core/playwright` (devDep) — `e2e/a11y-audit.spec.ts` scanne 6 routes |
+| Monitoring | Sentry (`@sentry/react`) — `beforeSend` strip emails/UUIDs (M-9) |
+| Hosting | Vercel (configuration `vercel.json` avec headers de sécurité + CSP) |
 
 ---
 
@@ -38,9 +45,10 @@ npm start          # Serveur dev réseau (port 3000)
 npm run build      # Build production → dist/
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
+npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (axe scan 6 routes)
 ```
 
-> Le build prod **drope automatiquement** `console.log`, `console.info`, `console.debug` et `debugger` (via `vite.config.ts → esbuild.pure/drop`). Les `console.error` / `console.warn` sont **conservés** pour AppErrorBoundary.
+> Le build prod **drope automatiquement** `console.log`, `console.info`, `console.debug`, `console.warn`, `console.error` et `debugger` (via `vite.config.ts → esbuild.pure/drop`). Les erreurs sont remontées via Sentry (`@sentry/react`) — voir variable d'env `VITE_SENTRY_DSN` ci-dessous.
 
 ---
 
@@ -104,9 +112,11 @@ Alternativement, cliquer sur une feature card de la landing déclenche aussi `lo
 
 | Function | Rôle | Sécurité notable |
 |---|---|---|
-| `stripe-create-checkout` | Crée une session Checkout Stripe | CORS allowlist (`APP_URL`), upsert sur `subscriptions` (B0/N7/U1) |
-| `stripe-webhook` | Reçoit les events Stripe | Idempotence via `processed_stripe_events` (PK event.id), upsert atomique, event-type specific token updates (B10/W6/N8/N9/U2) |
-| `delete-account` | Supprime compte + données utilisateur | Anon JWT pour l'identité, service_role pour purger toutes les tables user-owned + `auth.admin.deleteUser` (B9) |
+| `stripe-create-checkout` | Crée une session Checkout Stripe | CORS allowlist (`APP_URL`), upsert sur `subscriptions` (B0/N7/U1), idempotency-key `customer:${uid}` + `checkout:${uid}:${day}` (M-3) |
+| `stripe-webhook` | Reçoit les events Stripe | Signature verify, idempotence via `processed_stripe_events` (PK event.id) — **marker INSERT après handler** (M-4) pour préserver at-least-once Stripe + 500 sur erreur dedup non-23505 (M-5) + rejet non-POST (L-13) (B10/W6/N8/N9/U2) |
+| `delete-account` | Supprime compte + données utilisateur | Anon JWT pour l'identité, service_role pour purger toutes les tables user-owned + `auth.admin.deleteUser` (B9). Purge `shared_tasks` par `friend_id`/`shared_by` (M-6), abort si cleanup échoue (RGPD) |
+
+> **`supabase/config.toml` obligatoire** (M-10) : `stripe-webhook` doit avoir `verify_jwt = false` (Stripe authentifie par signature, pas JWT). Les 2 autres fonctions gardent `verify_jwt = true`. Ne pas déployer sans ce fichier ou Stripe recevra 401 avant la vérification signature.
 
 ```bash
 supabase functions deploy stripe-create-checkout
@@ -409,6 +419,20 @@ Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit(
 
 > Pas de pagination côté UI au-delà de la limite — à 500+ tâches, les données sont silencieusement tronquées (cf. `faille.md` §9).
 
+### Pagination cursor-based — `assertValidCursor`
+
+Tous les `getPage(params)` des repos qui utilisent un filtre PostgREST `.or()` avec `params.cursor`/`params.cursorDate` **doivent** appeler :
+```ts
+import { assertValidCursor } from '@/lib/pagination.types';
+if (params.cursor && params.cursorDate) {
+  assertValidCursor(params.cursor, params.cursorDate);
+  query = query.or(`...lt.${params.cursorDate},...`);
+}
+```
+- Le helper valide UUID + ISO 8601 (regex). Sans guard, un cursor forgé (`?cursor=...`) peut bypasser le cutoff ou faire fuiter le schéma via erreur PostgREST. Faille H-1 (régression du fix N6 appliqué uniquement à OKR avant 2026-05-30).
+- Appliqué dans `tasks`, `habits`, `events`, `okrs` — à dupliquer si on ajoute un autre module paginé.
+- Même principe pour tout filtre `.or()` / `.not('in',...)` qui interpole un id client-fourni : valider UUID en amont (cf. `syncKRsToTable` dans `okrs/supabase.repository.ts`, faille M-1).
+
 ---
 
 ## Tests
@@ -438,6 +462,18 @@ npm run test:e2e:report  # voir le rapport HTML
 - ✅ Pas d'utilisation du sélecteur CSS `:has-text("..." i)` — syntaxe invalide ; utiliser `[data-sonner-toast][data-type="error"]` pour les toasts Sonner.
 
 **Folder `src/__test__/`** — ancien Vitest jamais activé. Ignoré par ESLint. À supprimer ou réactiver, mais **pas dans la même PR** que les E2E Playwright (les deux infras coexistent sans conflit).
+
+### Playwright A11y — `e2e/a11y-audit.spec.ts` (2026-05-30)
+
+Scan automatique `@axe-core/playwright` sur 6 routes : `/`, `/login`, `/dashboard`, `/tasks`, `/habits`, `/okr`. Tags WCAG 2.0/2.1 A + AA + best-practice.
+
+```bash
+npx playwright test e2e/a11y-audit.spec.ts --project=chromium
+```
+
+- Dumpe les violations dans `test-results/a11y/<route>.json` (id, impact, tags, samples).
+- Actuellement **non bloquant** (`expect(...).toBeGreaterThanOrEqual(0)`). À transformer en `toHaveLength(0)` une fois A-7/A-8/A-10 (cf. `audit-a11y.md`) traités → guard CI.
+- Navigation SPA uniquement (`getByRole('link')`), pas `goto()` (qui reload et perd le flag démo en mémoire).
 
 ---
 
@@ -893,6 +929,42 @@ if (supabaseUrl) {
 
 ---
 
+## Performance bundle — `vite.config.ts manualChunks`
+
+État après audit 2026-05-30 (`audit-perf.md`) — **entry chunk 124 kB (34 kB gzip)**, First Load Landing 474 kB (145 kB gzip).
+
+### Vendor chunks isolés (commenter toute modif)
+
+| Chunk | Contenu | Taille (gzip) | Quand chargé |
+|---|---|---|---|
+| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | Toujours (entry) |
+| `vendor-router` | react-router-dom | 22 kB (8 kB) | Toujours (entry, split pour parallel HTTP/2) |
+| `vendor-radix` | @radix-ui/* | 101 kB (31 kB) | Toujours |
+| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | Toujours (entry — extrait pour cache CDN) |
+| `vendor-sentry` | @sentry/react | 82 kB (28 kB) | Toujours (entry — extrait pour cache CDN) |
+| `vendor-animation` | framer-motion | 137 kB (45 kB) | Toujours |
+| `vendor-utils` | date-fns + lucide-react | 48 kB (15 kB) | Toujours |
+| `vendor-query` | @tanstack/* | 55 kB (16 kB) | Toujours |
+| `vendor-charts` | **recharts + d3-* + victory-vendor** | 374 kB (110 kB) | **Lazy** (StatisticsPage, DashboardChart, scroll bottom Landing) |
+| `vendor-calendar` | @fullcalendar/* | 263 kB (76 kB) | **Lazy** (`/agenda` uniquement) |
+
+### Règles non négociables
+
+- ❌ **Ne jamais importer Recharts ou un composant qui l'utilise (DashboardChart/StatsShowcase) sans `React.lazy`** — sinon il retombe dans le chunk du caller et pollue le critical path. Faille P-2.
+- ❌ **Ne pas réintroduire GSAP** — supprimé (P-1), Framer Motion couvre tous les cas d'animation. Cursor blink → CSS keyframe (`@keyframes text-type-blink` dans `TextType.css`).
+- ❌ **Toute nouvelle dep > 50 kB minified doit être ajoutée à `manualChunks`** avec une règle explicite et commentée dans `vite.config.ts`.
+- ✅ `lucide-react` : imports nominaux uniquement (`import { Icon } from 'lucide-react'`). Jamais `import * as`.
+- ✅ `date-fns/locale/fr` : import nominal (`import { fr } from 'date-fns/locale'`). Jamais `import * as locales`.
+- ✅ Tout composant globalement monté dans App.tsx (CommandPalette, etc.) qui n'apparaît qu'après un geste utilisateur → **lazy avec Suspense**.
+
+### Budget bundle (objectif)
+
+- Entry chunk : **< 150 kB gzip** (actuellement 34 kB — large marge).
+- Chaque chunk lazy : **< 80 kB gzip** (exception documentée : `vendor-charts` 110 kB gzip, `vendor-calendar` 76 kB gzip).
+- Si `npm run build` warning ré-apparaît sur `index` > 400 kB → audit P-2/P-3 régressé.
+
+---
+
 ## Déploiement Vercel
 
 `vercel.json` définit :
@@ -1005,9 +1077,11 @@ Pour tout `<input type="file">` :
 ### Avant tout commit qui touche `supabase/migration/*.sql`
 
 - ✅ Vérifier `WITH CHECK` sur tous les UPDATE
-- ✅ Idempotence : `DROP POLICY IF EXISTS ... CREATE POLICY ...` (la prod a déjà des policies appliquées)
-- ✅ Si la table a `user_id`, attacher le trigger `prevent_user_id_change`
-- ⚠️ Le schéma réel de prod peut diverger des migrations (ex. `friend_requests` utilise `sender_id`/`receiver_id`, voir `faille.md` §8) — vérifier avant d'écrire des policies qui réfèrent à des colonnes
+- ✅ Idempotence : `DROP POLICY IF EXISTS ... CREATE POLICY ...` (la prod a déjà des policies appliquées). `CREATE OR REPLACE FUNCTION` pour les RPCs.
+- ✅ `SET search_path = ''` sur toute fonction `SECURITY DEFINER` (advisor hardening).
+- ✅ Si la table a `user_id`, attacher le trigger `prevent_user_id_change`.
+- ✅ Toute donnée utilisateur recopiée depuis `auth.users.raw_user_meta_data` ou autre source contrôlée par un tiers doit passer par `public.sanitize_display_name()` (migration 026, faille M-2) avant insertion dans une table partagée — `accept_friend_request_v2` est la référence.
+- ⚠️ Le schéma réel de prod peut diverger des migrations (ex. `friend_requests` utilise `sender_id`/`receiver_id`, voir `faille.md` §8) — vérifier avant d'écrire des policies qui réfèrent à des colonnes.
 
 ### Rotation des secrets
 
@@ -1028,13 +1102,24 @@ Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STR
 
 ## Accessibilité (a11y)
 
+**Cibles** : WCAG 2.1 AA (obligation EAA — European Accessibility Act, applicable depuis le 28 juin 2025 pour les apps grand public).
+**Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, dumpe les violations par route).
+**Posture courante** (cf. `audit-a11y.md`) : Critical 0, Serious 8, score axe ≈ 92/100. Findings résiduels A-7/A-8/A-10/A-11.
+
 - ✅ **Touch targets ≥ 44×44 px** (WCAG 2.5.5) — sur boutons d'icône, utiliser `min-w-11 min-h-11` ou wrapper l'icône dans un container de cette taille.
-- ✅ **`aria-label` obligatoire** sur tout `<button>` qui ne contient qu'une icône — `title=` est ignoré par les lecteurs d'écran sur mobile.
+- ✅ **`aria-label` obligatoire** sur tout `<button>` qui ne contient qu'une icône — `title=` est ignoré par les lecteurs d'écran sur mobile. Ajouter `aria-hidden="true"` sur l'icône lucide enfant pour éviter la double annonce. (Faille A-1.)
+- ✅ **`<input>` doit avoir un label associé** : soit `<label htmlFor>` + `id`, soit `aria-label`, soit `aria-labelledby`. Sur formulaires dynamiques (KR avancement, etc.) — utiliser `aria-label={"Avancement de <X> sur <Y>"}` dynamique. (Faille A-2.)
+- ✅ **Checkbox custom** stylé en `<button>` : ajouter `role="checkbox"` + `aria-checked={state}` + `aria-label` dynamique reflétant l'état attendu après clic. Exemples : TodayTasks, HabitTable DayButtons.
 - ✅ **`focus-visible:`** sur tous les boutons custom — la navigation au clavier (iPad + clavier physique) doit montrer un focus ring.
 - ✅ **`aria-pressed`** sur les toggles (favoris, terminées, sélections).
+- ✅ **`<main>` landmark obligatoire** sur toute page racine (LandingPage, LoginPage, SignupPage, etc.). Layout protégé contient déjà `<main>` — pas besoin d'en ajouter dans une page enfant. (Faille A-5 — sans `<main>`, axe flag jusqu'à 162 nodes "not contained by landmarks".)
+- ✅ **`<th>` vides** (colonnes d'icônes type checkbox/favori) : ajouter `<span className="sr-only">Label</span>`. (Faille A-6.)
+- ✅ **Liens dans un paragraphe** : `underline underline-offset-2` toujours visible — pas seulement `hover:underline` (WCAG 1.4.1 — info ne doit pas dépendre uniquement de la couleur).
+- ✅ **Contraste texte ≥ 4.5:1** sur fond clair (3:1 pour large 18pt+ / 14pt bold). `text-green-600` (3.29:1) → `text-green-700` (4.78:1). `text-blue-100` sur bleu 600 (4.23:1) → `text-white` ou `text-blue-50`. Vérifier via axe-core.
 - ✅ Préférer `<button>` à `<div onClick>` — gère focus, ENTER, SPACE automatiquement.
 - ❌ **Pas de changement de contenu sans annonce** — si une action mute le DOM (toast, badge), utiliser `role="status"` ou `aria-live="polite"`.
 - ❌ **Pas de couleur seule pour transmettre l'information** — toujours doubler avec une icône, du texte, ou un état (ex. tâche en retard = rouge + badge "Retard").
+- ❌ **Pas de `motion.h1 initial={{opacity:0}}`** sans aussi laisser un h1 statique présent — axe flag `page-has-heading-one` si le node est invisible au scan (faux positif gênant, mais évitable).
 
 ---
 
@@ -1079,8 +1164,8 @@ Toute nouvelle modif doit s'ajouter dans cette table.
 Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
-2. ✅ `npm run build` → succès (le drop console.log se fait au build)
-3. ✅ `npm run test:e2e` → **3/3 passent** (ouvrir `npm start` dans un autre terminal d'abord)
+2. ✅ `npm run build` → succès (le drop console.* se fait au build). Vérifier qu'aucun chunk first-paint ne dépasse **150 kB gzip** (budget audit-perf P-budget). Le warning Vite `chunkSizeWarningLimit: 400 kB` ne doit déclencher que pour `vendor-charts` (lazy, attendu).
+3. ✅ `npm run test:e2e` → **9/9 passent** : 3 smoke legacy + 6 a11y axe (sur dev server `npm start` port 3000).
 4. ✅ **Smoke test mobile preview** sur viewport 375×812 (iPhone SE/12 mini) :
    - Login démo → Dashboard
    - Créer une tâche → fermer modal
@@ -1091,9 +1176,11 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 6. ✅ **Si touche un modal** : tester drag-to-close, ESC, clic backdrop
 7. ✅ **Si touche un popover** : tester clipping (overflow parents), z-index vs sidebar+tabbar, position au resize/scroll
 8. ✅ **Si touche un tutoriel** : tester desktop ET mobile (flags localStorage distincts), vérifier que les `data-tutorial-id` cibles existent toujours
-9. ✅ **Si touche une page nouvelle** : vérifier `min-h-[100dvh]` + `pb-[calc(64px+env(safe-area-inset-bottom)+24/88px)]`
-10. ✅ **Si touche `supabase/migration/*.sql`** : voir checklist dédiée plus haut (et si c'est migration 021+, vérifier que `supabase db push` a tourné en prod)
-11. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` pour activer Eruda console sur un vrai iPhone
+9. ✅ **Si touche une page nouvelle** : vérifier `min-h-[100dvh]` + `pb-[calc(64px+env(safe-area-inset-bottom)+24/88px)]` + landmark `<main>` (faille A-5) + h1 visible
+10. ✅ **Si touche `supabase/migration/*.sql`** : voir checklist dédiée plus haut. Pour migration 026+, vérifier que `supabase db push` a tourné en prod et que `mcp__supabase__get_advisors` n'a pas signalé de nouveau warning.
+11. ✅ **Si touche `supabase/functions/*.ts`** : confirmer présence de `supabase/config.toml` (M-10) avant `supabase functions deploy`. Stripe webhook ne fonctionnera pas sans `verify_jwt = false`.
+12. ✅ **Si touche un `<button>` icon-only, un `<input>`, ou ajoute une page publique** : relancer `npx playwright test e2e/a11y-audit.spec.ts --project=chromium` pour s'assurer que Critical reste à 0 (cf. `audit-a11y.md`).
+13. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` pour activer Eruda console sur un vrai iPhone.
 
 ---
 
@@ -1139,7 +1226,18 @@ Si on ajoute une langue :
 - ❌ Reset `premium_tokens` ou `win_streak` sur tous les events Stripe — ces champs ne se touchent que sur `checkout.session.completed` et `invoice.payment_succeeded` (B10, W6)
 - ❌ Échouer la validation signature webhook avec `return new Response(err.message, ...)` — toujours renvoyer `'Invalid signature'` générique (N9)
 - ❌ Renvoyer `Access-Control-Allow-Origin: '*'` sur une Edge Function authentifiée — allowlist liée à `APP_URL` (N7)
-- ❌ Interpoler `params.cursor` / `params.cursorDate` directement dans un filtre PostgREST `.or()` — validation regex UUID + ISO obligatoire (N6)
+- ❌ Interpoler `params.cursor` / `params.cursorDate` directement dans un filtre PostgREST `.or()` — utiliser `assertValidCursor(...)` de `@/lib/pagination.types` (N6 / H-1)
+- ❌ Interpoler un id client-contrôlé dans un `.not('in', ...)` PostgREST sans valider l'UUID — cf. `syncKRsToTable` dans `okrs/supabase.repository.ts` (M-1)
+- ❌ Appeler Stripe `customers.create` ou `checkout.sessions.create` sans `idempotencyKey` (`customer:${uid}`, `checkout:${uid}:${day}`) — sinon double-clic ou retry réseau crée des Stripe customers orphelins (M-3)
+- ❌ Marquer un event Stripe comme processed (`INSERT processed_stripe_events`) **avant** que le handler n'ait réussi — convertit at-least-once en at-most-once, Stripe ne retry plus. Ordre obligatoire : handler → INSERT marker → 500 si INSERT échoue avec code ≠ 23505 (M-4 / M-5)
+- ❌ Déployer une Edge Function sans `supabase/config.toml` — `stripe-webhook` doit avoir `verify_jwt = false` ou Stripe reçoit 401 (M-10)
+- ❌ Rejeter une méthode HTTP avec un parsing préalable du body — `if (req.method !== 'POST') return 405` avant tout pour `stripe-webhook` (L-13)
+- ❌ Recopier `auth.users.raw_user_meta_data->>'name'` dans une table partagée sans `sanitize_display_name()` — second-order XSS (M-2)
+- ❌ `delete-account` qui `DELETE FROM shared_tasks WHERE user_id = ...` — la colonne s'appelle `friend_id` / `shared_by`. Utiliser `.or('friend_id.eq.{uid},shared_by.eq.{uid}')` (M-6)
+- ❌ `delete-account` qui supprime `auth.users` même si une table user-owned a échoué la purge — orphelins RGPD article 17 (M-6)
+- ❌ Envoyer `error.message` brut à Sentry sans `beforeSend` qui strip emails/UUIDs (M-9)
+- ❌ Laisser `cosmo:qcache:*` survivre à un `SIGNED_OUT` — purge prefix-sweep (L-11)
+- ❌ Passer une chaîne user-contrôlée dans `dangerouslySetInnerHTML` d'un `<style>` sans whitelist regex (`#[0-9a-f]{3,8}`, `var(--…)`, `hsl()`, `rgb()`) — cf. `chart.tsx` (M-11)
 
 ### 📐 Conventions de modèle — types & champs canoniques
 
@@ -1167,6 +1265,24 @@ Si on ajoute une langue :
 - ❌ Ajouter des `as any` pour contourner les erreurs TypeScript
 - ❌ Appeler `toast.error()` depuis un repository ou `normalizeApiError`
 - ❌ Forcer `theme="dark"` sur le `Toaster` (utiliser `theme="system"`)
+
+### ⚡ Performance bundle (cf. `audit-perf.md`)
+
+- ❌ Réintroduire `gsap` (supprimé P-1) — utiliser Framer Motion ou CSS keyframes.
+- ❌ Importer un composant Recharts (`<BarChart>`, `<LineChart>`, etc.) ou un wrapper qui en dépend **sans `React.lazy`** — fait retomber `vendor-charts` (374 kB) dans le critical path. Toujours `lazy(() => import(...))` + `Suspense`.
+- ❌ Ajouter une dépendance > 50 kB minified sans règle `manualChunks` dans `vite.config.ts` — elle finira dans le entry chunk.
+- ❌ Importer `* as locales` de `date-fns/locale` ou `* as Icons` de `lucide-react` — casse le tree-shaking, ramène ~MB de bundle.
+- ❌ Monter un composant gros au niveau App (CommandPalette etc.) qui ne s'affiche qu'après un geste — il doit être `lazy` + Suspense.
+
+### ♿ Accessibilité (cf. `audit-a11y.md`)
+
+- ❌ Créer un `<button>` icon-only sans `aria-label` — axe-core flag immédiat (A-1, critical).
+- ❌ Créer un `<input>` sans label associé (`htmlFor`/`id`, `aria-label`, ou `aria-labelledby`) (A-2, critical).
+- ❌ Page racine publique (LandingPage, LoginPage…) sans `<main>` landmark — axe flag jusqu'à 162 nodes "not contained by landmarks" (A-5).
+- ❌ `<th>` vide pour une colonne d'icône — ajouter `<span className="sr-only">Label</span>` (A-6).
+- ❌ Lien dans un paragraphe distingué uniquement par couleur (`hover:underline` ne suffit pas) — soulignement permanent obligatoire (A-4 / WCAG 1.4.1).
+- ❌ Utiliser `text-green-600`, `text-blue-100` sur fond clair sans vérifier le contraste 4.5:1 (palette `*-700` ou plus en cas de doute).
+- ❌ Faire annoncer une checkbox custom comme « bouton » — utiliser `role="checkbox" aria-checked={...}` + `aria-label` dynamique.
 
 ### 📱 Mobile — patterns critiques
 
