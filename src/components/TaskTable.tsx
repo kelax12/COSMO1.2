@@ -305,7 +305,7 @@ const TaskCard = React.memo(({
                 Reçu de {task.sharedBy}
               </span>
             </>
-          ) : task.isCollaborative && (task.collaborators?.length ?? 0) > 0 ? (
+          ) : task.isCollaborative ? (
             <>
               <span>·</span>
               <Users size={11} className="opacity-70" />
@@ -924,7 +924,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     <span className="truncate" title={task.name}>{task.name}</span>
                     {task.sharedBy ? (
                       <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Reçu de {task.sharedBy}</span>
-                    ) : task.isCollaborative && (task.collaborators?.length ?? 0) > 0 ? (
+                    ) : task.isCollaborative ? (
                       <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
                     ) : null}
                   </div>
