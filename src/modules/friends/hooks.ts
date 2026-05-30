@@ -7,6 +7,7 @@ import type {
   FriendRequestInput,
   ShareTaskInput,
   PendingFriendRequest,
+  TaskShare,
 } from './types';
 import { friendKeys } from './constants';
 
@@ -55,6 +56,23 @@ export const useSentFriendRequests = () => {
 // `useSharedTasks` removed — the underlying `getSharedTasks()` method does not
 // exist on any repository implementation. The feature isn't built yet; the
 // hook will be re-added when the backing implementation lands. Faille B4.
+
+export const useTaskShares = (taskId: string | undefined) => {
+  const repository = useFriendsRepository();
+  return useQuery({
+    queryKey: friendKeys.taskShares(taskId ?? ''),
+    queryFn: () => repository.getTaskShares(taskId as string),
+    enabled: !!taskId,
+  });
+};
+
+export const useMyTaskShares = () => {
+  const repository = useFriendsRepository();
+  return useQuery({
+    queryKey: friendKeys.myTaskShares(),
+    queryFn: () => repository.getMyTaskShares(),
+  });
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
@@ -186,6 +204,20 @@ export const usePendingRequestCount = () => {
     () => requests.filter((r: PendingFriendRequest) => r.status === 'pending').length,
     [requests]
   );
+};
+
+/** Map of taskId -> friendIds shared with, for list-view avatar badges. */
+export const useSharesByTask = (): Map<string, string[]> => {
+  const { data: shares = [] } = useMyTaskShares();
+  return useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const s of shares as TaskShare[]) {
+      const arr = m.get(s.taskId) ?? [];
+      arr.push(s.friendId);
+      m.set(s.taskId, arr);
+    }
+    return m;
+  }, [shares]);
 };
 
 // ═══════════════════════════════════════════════════════════════════

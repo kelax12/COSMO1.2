@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus } from './types';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -302,6 +302,42 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       .eq('friend_id', friendId);
 
     if (error) throw normalizeApiError(error);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TASK SHARING — READ MODEL (owner side)
+  // ═══════════════════════════════════════════════════════════════════
+
+  async getTaskShares(taskId: string): Promise<TaskShare[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RLS `shared_tasks_select` lets the owner (shared_by) read these rows.
+    const { data, error } = await supabase
+      .from('shared_tasks')
+      .select('task_id, friend_id, role')
+      .eq('task_id', taskId);
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((r) => ({
+      taskId: r.task_id as string,
+      friendId: r.friend_id as string,
+      role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+    }));
+  }
+
+  async getMyTaskShares(): Promise<TaskShare[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from('shared_tasks')
+      .select('task_id, friend_id, role')
+      .eq('shared_by', user.id)
+      .limit(500);
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((r) => ({
+      taskId: r.task_id as string,
+      friendId: r.friend_id as string,
+      role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+    }));
   }
 
   // ═══════════════════════════════════════════════════════════════════
