@@ -19,7 +19,7 @@ import { useEvents } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
-import { useFriends } from '@/modules/friends';
+import { useFriends, useSharesByTask } from '@/modules/friends';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -47,6 +47,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const { colorSettings } = useColorSettings();
   const { priorityRange } = usePriorityRange();
   const { data: friends = [] } = useFriends();
+  const sharesByTask = useSharesByTask();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -226,8 +227,8 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
                         P{task.priority}
                       </span>
-                      {task.isCollaborative && task.collaborators && (
-                        <CollaboratorAvatars collaborators={task.collaborators} friends={friends} size="sm" />
+                      {(sharesByTask.get(task.id)?.length ?? 0) > 0 && (
+                        <CollaboratorAvatars collaboratorIds={sharesByTask.get(task.id) ?? []} friends={friends} size="sm" />
                       )}
                     </div>
                   </div>
