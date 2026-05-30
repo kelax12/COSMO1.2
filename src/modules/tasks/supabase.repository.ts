@@ -21,7 +21,6 @@ interface TaskRow {
   completed?: boolean;
   completed_at?: string;
   is_collaborative?: boolean;
-  collaborators?: string[];
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
   user_id?: string;
@@ -41,7 +40,6 @@ interface TaskDbInput {
   completed?: boolean;
   completed_at?: string;
   is_collaborative?: boolean;
-  collaborators?: string[];
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
   user_id?: string;
@@ -62,7 +60,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // getById() keeps select('*') so TaskModal always has the full payload.
     const { data, error } = await supabase
       .from('tasks')
-      .select('id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,collaborators,pending_invites,user_id')
+      .select('id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,pending_invites,user_id')
       .order('created_at', { ascending: false })
       .limit(500);
 
@@ -300,7 +298,6 @@ export class SupabaseTasksRepository implements ITasksRepository {
       completed: row.completed ?? false,
       completedAt: row.completed_at,
       isCollaborative: row.is_collaborative ?? false,
-      collaborators: row.collaborators || [],
       pendingInvites: row.pending_invites || [],
       collaboratorValidations: row.collaborator_validations || {},
       userId: row.user_id,
@@ -319,7 +316,6 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (input.completed !== undefined) result.completed = input.completed;
     if (input.completedAt !== undefined) result.completed_at = input.completedAt;
     if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
-    if (input.collaborators !== undefined) result.collaborators = input.collaborators;
     if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
     if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;
     return result;
