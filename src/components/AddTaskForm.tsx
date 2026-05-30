@@ -244,7 +244,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
       bookmarked: formData.bookmarked,
       completed: formData.completed,
       isCollaborative: collaborators.length > 0,
-      collaborators: collaborators,
       pendingInvites: [],
     };
 
