@@ -190,9 +190,8 @@ const TasksPage: React.FC = () => {
 
   const submitEditList = () => {
     if (!editingListId || !editListName.trim()) return;
-    updateListMutation.mutate({ id: editingListId, updates: { name: editListName.trim(), color: editListColor } }, {
-      onSuccess: () => cancelEditList()
-    });
+    updateListMutation.mutate({ id: editingListId, updates: { name: editListName.trim(), color: editListColor } });
+    cancelEditList(); // Fermeture immédiate + mise à jour optimiste du hook
   };
 
   const confirmDeleteList = () => {
