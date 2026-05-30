@@ -161,11 +161,8 @@ const HabitsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile : quand aucune habitude, on ne montre QUE l'empty state avec
-          le bouton « Créer une habitude » (pas la table vide qui doublonnait).
-          Sur desktop, on garde le comportement actuel par vue. */}
       {viewMode === 'table' && (
-        isMobile && habits.length === 0 && !isLoading ? (
+        habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -194,7 +191,7 @@ const HabitsPage: React.FC = () => {
         ) : <HabitTable />
       )}
       {viewMode === 'global' && (
-        isMobile && habits.length === 0 && !isLoading ? (
+        habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
