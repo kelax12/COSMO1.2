@@ -8,7 +8,7 @@ import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
 import { useTasks, useUpdateTask } from '@/modules/tasks';
-import { useFriends, useSendFriendRequest, useShareTask } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useShareTask, useUnshareTask, useTaskShares } from '@/modules/friends';
 import { useBilling } from '@/modules/billing/billing.context';
 
 type CollaboratorModalProps = {
@@ -26,15 +26,26 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const { data: friends = [] } = useFriends();
   const sendFriendRequestMutation = useSendFriendRequest();
   const shareTaskMutation = useShareTask();
+  const unshareTaskMutation = useUnshareTask();
   const { isPremium } = useBilling();
 
   const task = tasks.find((t) => t.id === taskId);
   const isMobile = useIsMobile();
 
+  // shared_tasks est désormais la source de vérité du partage (la colonne
+  // dénormalisée `tasks.collaborators` a été supprimée — migration 028).
+  const { data: shares = [] } = useTaskShares(taskId);
+
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
 
-  const assignedCollaborators = task?.collaborators || [];
+  const pendingInvites = task?.pendingInvites || [];
+  // « Assignés » = grants shared_tasks (amis résolus en auth.uid) + invitations
+  // par email encore en attente (pas d'auth.users, donc pas de shared_tasks row).
+  const assignedCollaborators = useMemo(
+    () => [...shares.map((s) => s.friendId), ...pendingInvites],
+    [shares, pendingInvites]
+  );
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
 
   // A friend's canonical "collaborator id" is their auth.users.id (userId),
@@ -84,16 +95,14 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     const friend = friends.find(f => f.email.toLowerCase() === value);
 
     if (friend) {
-      // Store the friend's auth.uid (via userId) — required so RLS on
-      // tasks.collaborators and the shared_tasks.friend_id FK accept it.
-      // Falls back to friend.id in demo mode.
+      // Le partage écrit une ligne shared_tasks (friend_id = auth.uid du
+      // destinataire, ou friend.id en démo). Plus de colonne `collaborators`.
       const collabId = collabIdOf(friend);
       if (!assignedCollaborators.includes(collabId)) {
         updateTaskMutation.mutate({
           id: task.id,
           updates: {
             isCollaborative: true,
-            collaborators: [...assignedCollaborators, collabId],
             collaboratorValidations: {
               ...task.collaboratorValidations,
               [collabId]: false
@@ -113,14 +122,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         setInput('');
         return;
       }
-      const pendingInvites = task.pendingInvites || [];
       if (!pendingInvites.includes(value)) {
         sendFriendRequestMutation.mutate({ email: value });
         updateTaskMutation.mutate({
           id: task.id,
           updates: {
             isCollaborative: true,
-            collaborators: [...assignedCollaborators, value],
             pendingInvites: [...pendingInvites, value],
             collaboratorValidations: {
               ...task.collaboratorValidations,
@@ -138,14 +145,14 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     // `collabId` = friend's auth.uid (or friend.id in demo).
     if (assignedCollaborators.includes(collabId)) {
       // Retrait toujours autorisé (pas de gate premium pour décocher).
-      const newCollaborators = assignedCollaborators.filter((c) => c !== collabId);
+      const remaining = assignedCollaborators.filter((c) => c !== collabId);
       const newValidations = { ...task.collaboratorValidations };
       delete newValidations[collabId];
+      unshareTaskMutation.mutate({ taskId: task.id, friendId: collabId });
       updateTaskMutation.mutate({
         id: task.id,
         updates: {
-          collaborators: newCollaborators,
-          isCollaborative: newCollaborators.length > 0,
+          isCollaborative: remaining.length > 0,
           collaboratorValidations: newValidations
         }
       });
@@ -160,7 +167,6 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         id: task.id,
         updates: {
           isCollaborative: true,
-          collaborators: [...assignedCollaborators, collabId],
           collaboratorValidations: {
             ...task.collaboratorValidations,
             [collabId]: false
@@ -175,16 +181,21 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const handleRemove = (collaboratorId: string) => {
     if (!task) return;
-    const newCollaborators = assignedCollaborators.filter((c) => c !== collaboratorId);
+    const remaining = assignedCollaborators.filter((c) => c !== collaboratorId);
     const newValidations = { ...task.collaboratorValidations };
     delete newValidations[collaboratorId];
-    const newPendingInvites = (task.pendingInvites || []).filter(e => e !== collaboratorId);
+    const newPendingInvites = pendingInvites.filter((e) => e !== collaboratorId);
+
+    // Si c'est un grant shared_tasks (et non une invitation email en attente),
+    // supprimer la ligne de partage.
+    if (shares.some((s) => s.friendId === collaboratorId)) {
+      unshareTaskMutation.mutate({ taskId: task.id, friendId: collaboratorId });
+    }
 
     updateTaskMutation.mutate({
       id: task.id,
       updates: {
-        collaborators: newCollaborators,
-        isCollaborative: newCollaborators.length > 0,
+        isCollaborative: remaining.length > 0,
         collaboratorValidations: newValidations,
         pendingInvites: newPendingInvites
       }
