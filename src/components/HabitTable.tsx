@@ -210,21 +210,6 @@ const HabitTable: React.FC = () => {
     }
   };
 
-  if (habits.length === 0) {
-    return (
-      <div className="rounded-xl shadow-sm border p-12 text-center transition-colors" style={{
-        backgroundColor: 'rgb(var(--color-surface))',
-        borderColor: 'rgb(var(--color-border))'
-      }}>
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-          <Circle size={32} style={{ color: 'rgb(var(--color-text-muted))' }} />
-        </div>
-        <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Aucune habitude à afficher</h3>
-        <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Créez des habitudes pour voir le tableau de suivi</p>
-      </div>);
-
-  }
-
   return (
     <>
       <div className="card overflow-hidden">
