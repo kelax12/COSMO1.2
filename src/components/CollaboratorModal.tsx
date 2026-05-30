@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
@@ -27,6 +28,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const { isPremium } = useBilling();
 
   const task = tasks.find((t) => t.id === taskId);
+  const isMobile = useIsMobile();
 
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
@@ -263,7 +265,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                     <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l'instant.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     {assignedCollaborators.map((collaboratorId) => {
                       const info = displayInfo(collaboratorId);
                       return (
@@ -276,6 +278,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                           isPending={info.isPending}
                           onAction={() => handleRemove(collaboratorId)}
                           variant="remove"
+                          compact={isMobile}
                         />
                       );
                     })}
@@ -368,7 +371,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                     <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun contact trouvé.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     {availableFriends.map((friend) => {
                       const collabId = collabIdOf(friend);
                       return (
@@ -380,6 +383,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                           avatar={friend.avatar}
                           onAction={() => handleToggleFriend(collabId)}
                           variant="add"
+                          compact={isMobile}
                         />
                       );
                     })}

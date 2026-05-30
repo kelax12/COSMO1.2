@@ -331,12 +331,28 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                       style={{ border: 'none' }}
                     />
                     {draftList!.name.trim() ? (
-                      <button type="button" onClick={handleCreate} aria-label="Créer" className="text-blue-500 shrink-0">
-                        <Check size={16} />
+                      <button
+                        type="button"
+                        // onPointerDown au lieu d'onClick : sur mobile iOS, le tap
+                        // sur le bouton déclenche d'abord blur() de l'input ouvert,
+                        // ce qui referme le clavier ET peut faire bouger le layout,
+                        // ce qui fait que le onClick ne se déclenche pas. En réagissant
+                        // à pointerdown + preventDefault, on évite le blur et on crée
+                        // la liste de façon fiable.
+                        onPointerDown={(e) => { e.preventDefault(); handleCreate(); }}
+                        aria-label="Créer"
+                        className="text-blue-500 shrink-0 min-w-11 min-h-11 flex items-center justify-center -my-2"
+                      >
+                        <Check size={18} />
                       </button>
                     ) : (
-                      <button type="button" onClick={() => setDraftList(null)} aria-label="Annuler" className="text-gray-400 shrink-0">
-                        <X size={14} />
+                      <button
+                        type="button"
+                        onPointerDown={(e) => { e.preventDefault(); setDraftList(null); }}
+                        aria-label="Annuler"
+                        className="text-gray-400 shrink-0 min-w-11 min-h-11 flex items-center justify-center -my-2"
+                      >
+                        <X size={16} />
                       </button>
                     )}
                   </div>

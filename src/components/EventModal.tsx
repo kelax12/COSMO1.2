@@ -535,36 +535,49 @@ const EventModal: React.FC<EventModalProps> = ({
               </div>
             </div>
 
-            {/* Section COULEUR */}
+            {/* Section COULEUR — chip nominée par catégorie pour que
+                l'utilisateur identifie quelle couleur correspond à quelle
+                catégorie (le swatch seul est ambigu). */}
             {categories.length > 0 && (
               <>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
                   Couleur
                 </p>
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden px-4 py-4">
-                  <div className="flex flex-wrap gap-3">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleFieldChange("color", setColor, cat.color)}
-                        aria-label={cat.name}
-                        title={cat.name}
-                        className={`w-10 h-10 rounded-xl transition-transform active:scale-90 ${
-                          color === cat.color
-                            ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110'
-                            : ''
-                        }`}
-                        style={{ backgroundColor: cat.color }}
-                      />
-                    ))}
+                  <div className="grid grid-cols-2 gap-2">
+                    {categories.map((cat) => {
+                      const isSelected = color === cat.color;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => handleFieldChange("color", setColor, cat.color)}
+                          aria-label={cat.name}
+                          aria-pressed={isSelected}
+                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                              : 'border-gray-200 dark:border-gray-700'
+                          }`}
+                        >
+                          <span
+                            className="w-6 h-6 rounded-lg shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="flex-1 text-left text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {cat.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                     <button
                       type="button"
                       onClick={() => setIsColorSettingsOpen(true)}
                       aria-label="Personnaliser les couleurs"
-                      className="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center"
+                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-blue-500 text-[13px] font-medium"
                     >
-                      <Plus className="w-4 h-4 text-blue-500" />
+                      <Plus className="w-4 h-4" />
+                      Personnaliser
                     </button>
                   </div>
                 </div>
