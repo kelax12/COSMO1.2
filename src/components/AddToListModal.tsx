@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Plus, Pencil, Trash2, Check, Sparkles } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Check, Sparkles, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -35,91 +35,10 @@ const colorMap: Record<string, string> = Object.fromEntries(
 const resolveColor = (color: string) => colorMap[color] || color;
 
 // ════════════════════════════════════════════════════════════════════════
-// Desktop : design issu du commit 3b54070 (Fix swipe-to-close, 2026-05-25).
-// InlineForm pour création/édition, bouton « Nouvelle liste », icônes
-// Pencil/Trash révélées au hover. NE PAS modifier sans accord utilisateur.
+// Desktop : design custom — tuiles en grille 2 colonnes, recherche en
+// haut, création inline depuis le « + » dans le header. Toggle au clic
+// sur la tuile ; icônes edit/delete révélées au hover.
 // ════════════════════════════════════════════════════════════════════════
-
-const ColorRow: React.FC<{
-  selected: string;
-  onChange: (key: string) => void;
-}> = ({ selected, onChange }) => (
-  <div className="flex items-center gap-2 flex-wrap">
-    {COLOR_PALETTE.map((c) => (
-      <button
-        key={c.key}
-        type="button"
-        onClick={() => onChange(c.key)}
-        aria-label={`Couleur ${c.label}`}
-        className="w-6 h-6 rounded-full transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
-        style={{
-          backgroundColor: c.hex,
-          transform: selected === c.key ? 'scale(1.25)' : 'scale(1)',
-          outline: selected === c.key ? `2px solid ${c.hex}` : 'none',
-          outlineOffset: 2,
-        }}
-      />
-    ))}
-  </div>
-);
-
-const InlineForm: React.FC<{
-  initialName?: string;
-  initialColor?: string;
-  onSave: (name: string, color: string) => void;
-  onCancel: () => void;
-  saveLabel?: string;
-}> = ({ initialName = '', initialColor = 'blue', onSave, onCancel, saveLabel = 'Créer' }) => {
-  const [name, setName] = useState(initialName);
-  const [color, setColor] = useState(initialColor);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.15 }}
-      className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3"
-    >
-      <input
-        ref={inputRef}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && name.trim()) onSave(name.trim(), color);
-          if (e.key === 'Escape') onCancel();
-        }}
-        placeholder="Nom de la liste"
-        className="w-full h-11 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] transition-all"
-      />
-
-      <ColorRow selected={color} onChange={setColor} />
-
-      <div className="flex items-center gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 min-h-9 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-        >
-          Annuler
-        </button>
-        <button
-          type="button"
-          onClick={() => { if (name.trim()) onSave(name.trim(), color); }}
-          disabled={!name.trim()}
-          className="flex-1 min-h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white transition-colors"
-        >
-          {saveLabel}
-        </button>
-      </div>
-    </motion.div>
-  );
-};
 
 const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
   const { data: lists = [] } = useLists();
@@ -129,25 +48,37 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
   const updateListMutation = useUpdateList();
   const deleteListMutation = useDeleteList();
 
-  const [creating, setCreating]           = useState(false);
-  const [editingId, setEditingId]         = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [draft, setDraft] = useState<{ name: string; color: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string; color: string } | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const draftInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setCreating(false);
-      setEditingId(null);
+      setSearch('');
+      setDraft(null);
+      setEditing(null);
       setConfirmDeleteId(null);
     }
   }, [isOpen]);
 
   useEffect(() => {
+    if (draft) requestAnimationFrame(() => draftInputRef.current?.focus());
+  }, [draft]);
+
+  useEffect(() => {
+    if (editing) requestAnimationFrame(() => editInputRef.current?.focus());
+  }, [editing]);
+
+  useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (editingId)         { setEditingId(null);        return; }
-      if (creating)          { setCreating(false);         return; }
-      if (confirmDeleteId)   { setConfirmDeleteId(null);   return; }
+      if (editing)         { setEditing(null);         return; }
+      if (draft)           { setDraft(null);           return; }
+      if (confirmDeleteId) { setConfirmDeleteId(null); return; }
       onClose();
     };
     document.addEventListener('keydown', onKey);
@@ -157,7 +88,12 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, onClose, editingId, creating, confirmDeleteId]);
+  }, [isOpen, onClose, draft, editing, confirmDeleteId]);
+
+  const manualLists = lists.filter((l) => l.type !== 'smart');
+  const filteredLists = manualLists.filter((l) =>
+    l.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
 
   const handleToggle = (listId: string) => {
     const list = lists.find((l) => l.id === listId);
@@ -169,21 +105,24 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
     }
   };
 
-  const handleCreate = (name: string, color: string) => {
-    createListMutation.mutate({ name, color, type: 'manual' });
-    setCreating(false);
+  const handleCreateDraft = () => {
+    if (!draft || !draft.name.trim()) return;
+    createListMutation.mutate({ name: draft.name.trim(), color: draft.color, type: 'manual' });
+    setDraft(null);
   };
 
-  const handleSaveEdit = (name: string, color: string) => {
-    if (!editingId) return;
-    updateListMutation.mutate({ id: editingId, updates: { name, color } });
-    setEditingId(null);
+  const handleSaveEdit = () => {
+    if (!editing || !editing.name.trim()) return;
+    updateListMutation.mutate({
+      id: editing.id,
+      updates: { name: editing.name.trim(), color: editing.color },
+    });
+    setEditing(null);
   };
 
   const handleConfirmDelete = (listId: string) => {
     deleteListMutation.mutate(listId);
     setConfirmDeleteId(null);
-    if (editingId === listId) setEditingId(null);
   };
 
   return (
@@ -194,196 +133,361 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
           aria-labelledby="add-to-list-title"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8, transition: { duration: 0.18 } }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[80vh] bg-[rgb(var(--color-surface))]"
+            className="w-full max-w-xl rounded-2xl shadow-2xl flex flex-col max-h-[80vh] bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))]"
           >
-            <div className="px-6 pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 id="add-to-list-title" className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
-                    Ajouter à une liste
-                  </h2>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                    {lists.filter(l => l.type !== 'smart').length}{' '}
-                    {lists.filter(l => l.type !== 'smart').length <= 1 ? 'liste manuelle' : 'listes manuelles'}
-                  </p>
+            {/* Header */}
+            <div className="px-6 pt-5 pb-4 border-b border-[rgb(var(--color-border))] shrink-0">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                    <Sparkles size={16} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 id="add-to-list-title" className="text-base font-semibold text-[rgb(var(--color-text-primary))] truncate">
+                      Ajouter à une liste
+                    </h2>
+                    <p className="text-xs text-[rgb(var(--color-text-muted))]">
+                      {manualLists.length} {manualLists.length <= 1 ? 'liste' : 'listes'}
+                    </p>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Fermer"
-                  className="min-w-9 min-h-9 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => { setDraft(draft ? null : { name: '', color: 'blue' }); setEditing(null); setConfirmDeleteId(null); }}
+                    aria-label={draft ? 'Annuler la création' : 'Nouvelle liste'}
+                    aria-pressed={!!draft}
+                    className={`h-9 px-3 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                      draft
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                    }`}
+                  >
+                    <Plus size={15} />
+                    Nouvelle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Fermer"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
+
+              {/* Search */}
+              {manualLists.length > 3 && !draft && (
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Rechercher une liste…"
+                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))]"
+                  />
+                </div>
+              )}
             </div>
 
-            <div data-scroll-area className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
-              <AnimatePresence mode="wait">
-                {creating ? (
-                  <InlineForm
-                    key="create-form"
-                    onSave={handleCreate}
-                    onCancel={() => setCreating(false)}
-                    saveLabel="Créer"
-                  />
-                ) : (
-                  <motion.button
-                    key="create-btn"
-                    type="button"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1 }}
-                    onClick={() => { setCreating(true); setEditingId(null); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+            {/* Body */}
+            <div data-scroll-area className="flex-1 overflow-y-auto p-4">
+
+              {/* Inline draft form (création) */}
+              <AnimatePresence>
+                {draft && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -8, height: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="mb-3 overflow-hidden"
                   >
-                    <Plus size={16} className="shrink-0" />
-                    Nouvelle liste
-                  </motion.button>
+                    <div className="rounded-xl border-2 border-blue-500/30 bg-blue-50/40 dark:bg-blue-950/20 p-3 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: resolveColor(draft.color) }}
+                        />
+                        <input
+                          ref={draftInputRef}
+                          type="text"
+                          value={draft.name}
+                          onChange={(e) => setDraft((d) => d ? { ...d, name: e.target.value } : null)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && draft.name.trim()) handleCreateDraft();
+                            if (e.key === 'Escape') setDraft(null);
+                          }}
+                          placeholder="Nom de la nouvelle liste…"
+                          className="flex-1 min-w-0 h-8 px-2 rounded-md bg-transparent text-sm font-medium focus:outline-none text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))]"
+                          style={{ border: 'none' }}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-wrap pl-5">
+                        {COLOR_PALETTE.map((c) => (
+                          <button
+                            key={c.key}
+                            type="button"
+                            onClick={() => setDraft((d) => d ? { ...d, color: c.key } : null)}
+                            aria-label={`Couleur ${c.label}`}
+                            aria-pressed={draft.color === c.key}
+                            className={`w-5 h-5 rounded-full transition-transform ${draft.color === c.key ? 'scale-125 ring-2 ring-offset-2 ring-offset-[rgb(var(--color-surface))]' : 'hover:scale-110'}`}
+                            style={{
+                              backgroundColor: c.hex,
+                              boxShadow: draft.color === c.key ? `0 0 0 2px ${c.hex}` : undefined,
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setDraft(null)}
+                          className="h-8 px-3 rounded-md text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCreateDraft}
+                          disabled={!draft.name.trim()}
+                          className="h-8 px-3 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Créer la liste
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 )}
               </AnimatePresence>
 
-              {lists.length === 0 && !creating && (
-                <div className="py-8 text-center">
-                  <p className="text-sm text-[rgb(var(--color-text-muted))]">
-                    Aucune liste pour l'instant
+              {/* Empty state */}
+              {manualLists.length === 0 && !draft && (
+                <div className="py-10 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-3">
+                    <Plus size={20} className="text-[rgb(var(--color-text-muted))]" />
+                  </div>
+                  <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-1">Aucune liste</p>
+                  <p className="text-xs text-[rgb(var(--color-text-muted))]">
+                    Crée ta première liste avec le bouton « Nouvelle » ci-dessus
                   </p>
                 </div>
               )}
 
-              {lists.length > 0 && (
-                <div className="border-t border-[rgb(var(--color-border))] mt-2 divide-y divide-[rgb(var(--color-border))]">
-                  {lists.map((list) => {
+              {/* No search result */}
+              {manualLists.length > 0 && filteredLists.length === 0 && search.trim() && (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-[rgb(var(--color-text-muted))]">
+                    Aucune liste ne correspond à « {search} »
+                  </p>
+                </div>
+              )}
+
+              {/* Grid de tuiles */}
+              {filteredLists.length > 0 && (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {filteredLists.map((list) => {
                     const isSelected = list.taskIds.includes(taskId);
                     const color      = resolveColor(list.color);
-                    const isSmart    = list.type === 'smart';
-                    const isEditing  = editingId === list.id;
+                    const isEditing  = editing?.id === list.id;
                     const isDeleting = confirmDeleteId === list.id;
 
-                    if (isEditing) {
+                    if (isEditing && editing) {
                       return (
-                        <div key={list.id} className="py-2">
-                          <InlineForm
-                            initialName={list.name}
-                            initialColor={list.color}
-                            onSave={handleSaveEdit}
-                            onCancel={() => setEditingId(null)}
-                            saveLabel="Enregistrer"
-                          />
+                        <div
+                          key={list.id}
+                          className="col-span-2 rounded-xl border-2 border-blue-500/30 bg-blue-50/40 dark:bg-blue-950/20 p-3 space-y-3"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full shrink-0"
+                              style={{ backgroundColor: resolveColor(editing.color) }}
+                            />
+                            <input
+                              ref={editInputRef}
+                              type="text"
+                              value={editing.name}
+                              onChange={(e) => setEditing((s) => s ? { ...s, name: e.target.value } : null)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && editing.name.trim()) handleSaveEdit();
+                                if (e.key === 'Escape') setEditing(null);
+                              }}
+                              className="flex-1 min-w-0 h-8 px-2 rounded-md bg-transparent text-sm font-medium focus:outline-none text-[rgb(var(--color-text-primary))]"
+                              style={{ border: 'none' }}
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-wrap pl-5">
+                            {COLOR_PALETTE.map((c) => (
+                              <button
+                                key={c.key}
+                                type="button"
+                                onClick={() => setEditing((s) => s ? { ...s, color: c.key } : null)}
+                                aria-label={`Couleur ${c.label}`}
+                                aria-pressed={editing.color === c.key}
+                                className={`w-5 h-5 rounded-full transition-transform ${editing.color === c.key ? 'scale-125' : 'hover:scale-110'}`}
+                                style={{
+                                  backgroundColor: c.hex,
+                                  boxShadow: editing.color === c.key ? `0 0 0 2px ${c.hex}` : undefined,
+                                }}
+                              />
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-end gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setEditing(null)}
+                              className="h-8 px-3 rounded-md text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSaveEdit}
+                              disabled={!editing.name.trim()}
+                              className="h-8 px-3 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                            >
+                              Enregistrer
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (isDeleting) {
+                      return (
+                        <div
+                          key={list.id}
+                          className="col-span-2 rounded-xl border-2 border-red-300 dark:border-red-900 bg-red-50/60 dark:bg-red-950/30 p-3 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Trash2 size={16} className="text-red-600 dark:text-red-400 shrink-0" />
+                            <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">
+                              Supprimer <span className="font-semibold">{list.name}</span> ?
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="h-8 px-3 rounded-md text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmDelete(list.id)}
+                              className="h-8 px-3 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
                         </div>
                       );
                     }
 
                     return (
-                      <div
+                      <motion.button
                         key={list.id}
-                        className="group flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        type="button"
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => handleToggle(list.id)}
+                        className="group relative text-left rounded-xl border-2 transition-all overflow-hidden"
+                        style={{
+                          backgroundColor: isSelected ? `${color}12` : 'rgb(var(--color-surface))',
+                          borderColor: isSelected ? color : 'rgb(var(--color-border))',
+                        }}
                       >
-                        <div
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
+                        {/* Color band en haut */}
+                        <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
 
-                        <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <span className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                            {list.name}
-                          </span>
-                          {isSmart && (
-                            <span
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0"
-                              style={{ backgroundColor: `${color}20`, color }}
-                            >
-                              <Sparkles size={8} />
-                              Auto
-                            </span>
-                          )}
-                          <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                            {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
+                        <div className="p-3 flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
+                              {list.name}
+                            </p>
+                            <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
+                              {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
 
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          {isDeleting ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
-                                className="h-7 px-2.5 rounded-md text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                              >
-                                Non
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleConfirmDelete(list.id); }}
-                                className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
-                              >
-                                Supprimer
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <AnimatePresence>
-                                {isSelected && !isSmart && (
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    exit={{ scale: 0 }}
-                                    className="w-5 h-5 rounded-full flex items-center justify-center mr-1"
-                                    style={{ backgroundColor: color }}
-                                  >
-                                    <Check size={11} className="text-white" strokeWidth={3} />
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-
-                              {!isSmart && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); setEditingId(list.id); setConfirmDeleteId(null); setCreating(false); }}
-                                  aria-label={`Modifier ${list.name}`}
-                                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors opacity-0 group-hover:opacity-100"
+                          {/* Toggle indicator */}
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all"
+                            style={{
+                              backgroundColor: isSelected ? color : 'transparent',
+                              border: isSelected ? 'none' : '2px solid rgb(var(--color-border))',
+                            }}
+                          >
+                            <AnimatePresence>
+                              {isSelected && (
+                                <motion.span
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  exit={{ scale: 0 }}
+                                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                  className="flex items-center justify-center"
                                 >
-                                  <Pencil size={13} />
-                                </button>
+                                  <Check size={13} className="text-white" strokeWidth={3} />
+                                </motion.span>
                               )}
-
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(list.id); }}
-                                aria-label={`Supprimer ${list.name}`}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </>
-                          )}
+                            </AnimatePresence>
+                          </div>
                         </div>
-                      </div>
+
+                        {/* Actions hover : edit + delete */}
+                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); setEditing({ id: list.id, name: list.name, color: list.color }); setConfirmDeleteId(null); setDraft(null); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setEditing({ id: list.id, name: list.name, color: list.color }); } }}
+                            aria-label={`Modifier ${list.name}`}
+                            className="w-7 h-7 rounded-md flex items-center justify-center bg-white dark:bg-slate-800 shadow-sm border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-blue-600 cursor-pointer"
+                          >
+                            <Pencil size={11} />
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(list.id); setEditing(null); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setConfirmDeleteId(list.id); } }}
+                            aria-label={`Supprimer ${list.name}`}
+                            className="w-7 h-7 rounded-md flex items-center justify-center bg-white dark:bg-slate-800 shadow-sm border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-red-600 cursor-pointer"
+                          >
+                            <Trash2 size={11} />
+                          </span>
+                        </div>
+                      </motion.button>
                     );
                   })}
                 </div>
               )}
             </div>
 
+            {/* Footer */}
             <div className="px-6 pt-3 pb-5 border-t border-[rgb(var(--color-border))] shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full min-h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white transition-colors"
+                className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white transition-colors"
               >
                 Terminer
               </button>
