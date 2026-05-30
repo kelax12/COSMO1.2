@@ -2,7 +2,7 @@
 // FRIENDS MODULE - Repository Pattern Implementation
 // ═══════════════════════════════════════════════════════════════════
 
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest } from './types';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskShare } from './types';
 import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -55,6 +55,10 @@ export interface IFriendsRepository {
   // Task sharing operations
   shareTask(input: ShareTaskInput): Promise<void>;
   unshareTask(taskId: string, friendId: string): Promise<void>;
+
+  // Task sharing — read model (owner side)
+  getTaskShares(taskId: string): Promise<TaskShare[]>;
+  getMyTaskShares(): Promise<TaskShare[]>;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -249,5 +253,23 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       );
       localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
     }
+  }
+
+  async getTaskShares(taskId: string): Promise<TaskShare[]> {
+    const map = JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
+    const entries: { friendId: string; role?: 'viewer' | 'editor' }[] = map[taskId] || [];
+    return entries.map((s) => ({ taskId, friendId: s.friendId, role: s.role || 'viewer' }));
+  }
+
+  async getMyTaskShares(): Promise<TaskShare[]> {
+    const map = JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
+    const out: TaskShare[] = [];
+    for (const taskId of Object.keys(map)) {
+      const entries: { friendId: string; role?: 'viewer' | 'editor' }[] = map[taskId] || [];
+      for (const s of entries) {
+        out.push({ taskId, friendId: s.friendId, role: s.role || 'viewer' });
+      }
+    }
+    return out;
   }
 }
