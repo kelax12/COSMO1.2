@@ -97,3 +97,8 @@ vite.config.ts.timestamp-*
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# Skill framework artifacts (local tooling, not app code)
+.agents/
+.claude/skills/
+skills-lock.json
