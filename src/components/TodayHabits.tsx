@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Repeat, Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
-import EmptyState from './EmptyState';
+import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 
@@ -118,15 +117,17 @@ const TodayHabits: React.FC = () => {
         )}
 
         {todayHabits.length === 0 && (
-          <EmptyState
-            icon={Repeat}
-            title="Construisez votre routine"
-            description="Les habitudes sont le moteur du progrès quotidien. Ajoutez-en une et suivez votre régularité."
-            actionLabel="Créer ma première habitude"
-            onAction={() => navigate('/habits')}
-            accentColor="#EAB308"
-            compact
-          />
+          <div className="py-6 flex flex-col items-center gap-3 text-center">
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] leading-relaxed max-w-[220px]">
+              Aucune habitude pour aujourd'hui
+            </p>
+            <button
+              onClick={() => navigate('/habits')}
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
+            >
+              + Créer une habitude
+            </button>
+          </div>
         )}
 
         {todayHabits.length > visibleLimit && (
