@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import PremiumGateModal from './PremiumGateModal';
 import { X, Users, AlertCircle, Bookmark, Trash2, Search, UserPlus, List, ChevronDown, ChevronRight, Plus, Minus, Loader2, Clock, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,7 +46,7 @@ import { useCategories, useCreateCategory } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
-import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask, useSentFriendRequests } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -706,8 +706,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const { data: friends = [] } = useFriends();
   const { data: sentRequests = [] } = useSentFriendRequests();
   const shareTaskMutation = useShareTask();
+  const unshareTaskMutation = useUnshareTask();
   const sendFriendRequestMutation = useSendFriendRequest();
   const cancelFriendRequestMutation = useRejectFriendRequest();
+
+  // shared_tasks est la source de vérité du partage (colonne `tasks.collaborators`
+  // supprimée — migration 028). On dérive l'état « assignés » des grants.
+  const { data: shares = [] } = useTaskShares(task?.id);
+  const existingShareIds = useMemo(() => shares.map((s) => s.friendId), [shares]);
+  const existingCollaboratorIds = useMemo(
+    () => [...existingShareIds, ...(task?.pendingInvites || [])],
+    [existingShareIds, task?.pendingInvites]
+  );
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
@@ -843,15 +853,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         setOkrFields({});
       }
 
-      setCollaborators(task.collaborators || []);
+      setCollaborators(existingCollaboratorIds);
         setPendingInvitesLocal(task.pendingInvites || []);
-        
+
         const taskLists = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
       setSelectedListIds(taskLists);
 
       setHasChanges(false);
       setErrors({});
-      setShowCollaboratorSection(showCollaborators || (task.collaborators && task.collaborators.length > 0) || false);
+      setShowCollaboratorSection(showCollaborators || existingCollaboratorIds.length > 0 || false);
     }
     // Use `task?.id` and `lists.length` instead of full-object/full-array
     // references — those churn on every React Query refetch and would
@@ -860,6 +870,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     // to step 1 mid-flow.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, task?.id, isCreating, showCollaborators, lists.length]);
+
+  // Re-seed selected collaborators once shared_tasks grants load (the query
+  // resolves async after open). Guarded on !hasChanges so it never clobbers
+  // in-flight edits — shares are stale-stable during editing (no refetch on
+  // focus), so this only fires for the initial load.
+  useEffect(() => {
+    if (!isOpen || !task || isCreating || hasChanges) return;
+    setCollaborators(existingCollaboratorIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, task?.id, isCreating, existingCollaboratorIds.join(',')]);
 
   // Auto-promote pending invites that have since become friends
   useEffect(() => {
@@ -877,14 +897,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     toPromote.forEach(email => autoPromoteDoneRef.current.add(`${task.id}:${email}`));
 
     const promotedNames: string[] = [];
-    const extraCollaborators: string[] = [];
     toPromote.forEach(email => {
       const friend = friends.find(f => f.email.toLowerCase() === email.toLowerCase());
       if (!friend) return;
-      if (!(task.collaborators ?? []).includes(friend.id)) {
-        extraCollaborators.push(friend.id);
-      }
       promotedNames.push(friend.name);
+      // Le partage réel = ligne shared_tasks. Plus de colonne `collaborators`.
       if (isPremium()) {
         shareTaskMutation.mutate({
           taskId: task.id,
@@ -902,7 +919,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       id: task.id,
       updates: {
         pendingInvites: newPendingInvites,
-        collaborators: [...(task.collaborators ?? []), ...extraCollaborators],
       }
     });
     toast.success(`🎉 ${promotedNames.join(', ')} ${promotedNames.length > 1 ? 'ont rejoint' : 'a rejoint'} la tâche !`);
@@ -921,10 +937,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       formData.estimatedTime !== task.estimatedTime ||
       formData.completed !== task.completed ||
       formData.bookmarked !== task.bookmarked ||
-      JSON.stringify(collaborators) !== JSON.stringify(task.collaborators || []);
+      JSON.stringify(collaborators) !== JSON.stringify(existingCollaboratorIds);
 
     setHasChanges(hasFormChanges);
-  }, [formData, collaborators, task]);
+  }, [formData, collaborators, task, existingCollaboratorIds]);
 
   // Validation rules
   const computeValidationErrors = (): { [key: string]: string } => {
@@ -1029,12 +1045,28 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         completed: formData.completed,
         bookmarked: formData.bookmarked,
         isCollaborative: collaborators.length > 0,
-        collaborators: collaborators,
         pendingInvites: pendingInvitesLocal,
       };
 
       createTaskMutation.mutate(createData, {
-        onSuccess: () => {
+        onSuccess: (newTask) => {
+          // Le partage réel passe par shared_tasks (plus de colonne
+          // `collaborators`). On ignore les invitations email en attente —
+          // elles vivent dans pendingInvites jusqu'à acceptation.
+          if (isPremium() && newTask) {
+            collaborators.forEach((userId) => {
+              if (pendingInvitesLocal.includes(userId)) return;
+              const friend = friends.find(
+                f => (f.userId ?? f.id) === userId || f.id === userId
+              );
+              shareTaskMutation.mutate({
+                taskId: newTask.id,
+                friendId: userId,
+                friendEmail: friend?.email,
+                role: 'editor'
+              });
+            });
+          }
           onClose();
         },
         onError: (err) => {
@@ -1052,7 +1084,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         completed: formData.completed,
         bookmarked: formData.bookmarked,
         isCollaborative: collaborators.length > 0,
-        collaborators: collaborators,
         pendingInvites: pendingInvitesLocal,
       };
 
@@ -1077,9 +1108,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               }
             });
 
+            // Additions: nouveaux collaborateurs sélectionnés non encore
+            // partagés (et qui ne sont pas des invitations email en attente).
             if (isPremium()) {
               collaborators.forEach(userId => {
-                if (!task.collaborators?.includes(userId)) {
+                if (pendingInvitesLocal.includes(userId)) return;
+                if (!existingShareIds.includes(userId)) {
                   // Find the friend's email so shareTask can resolve the
                   // canonical auth.uid via profiles, even when userId is
                   // actually a friends-table row id (no profile lookup yet).
@@ -1095,7 +1129,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                 }
               });
             }
-            
+
+            // Removals: grants shared_tasks dé-sélectionnés → on retire le
+            // partage (pas de gate premium pour retirer).
+            existingShareIds.forEach(shareId => {
+              if (!collaborators.includes(shareId)) {
+                unshareTaskMutation.mutate({ taskId: task.id, friendId: shareId });
+              }
+            });
+
             onClose();
           },
           onError: (err) => {
