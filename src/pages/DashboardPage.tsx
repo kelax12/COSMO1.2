@@ -9,16 +9,16 @@ import { useEvents } from '@/modules/events';
 import DashboardChart from '../components/DashboardChart';
 import DashboardBarChart from '../components/DashboardBarChart';
 import TodayHabits from '../components/TodayHabits';
-import SocialRequests from '../components/SocialRequests';
+import InboxMenu from '../components/InboxMenu';
 import TodayTasks from '../components/TodayTasks';
 import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 import MobileCollapsible from '../components/MobileCollapsible';
 import WeeklyCheckinModal, { useWeeklyCheckin } from '../components/WeeklyCheckinModal';
-// SharedTasksHistory retiré : la section "Tâches assignées" de SocialRequests
-// gère désormais l'acceptation/refus des tâches partagées de manière unifiée
-// avec les demandes d'amis.
+// SocialRequests retiré du corps de page : les demandes d'amis ET les tâches
+// partagées à accepter sont désormais regroupées dans InboxMenu (bouton boîte
+// de réception en haut de page, avec pastille de notification).
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
@@ -289,7 +289,8 @@ const DashboardPage: React.FC = () => {
           <motion.div
             variants={itemVariants}
           >
-            <div className="flex-1">
+            <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2 lg:mb-3">
                   <span>Bonjour, </span>
                 <TextType
@@ -312,6 +313,11 @@ const DashboardPage: React.FC = () => {
               >
                 Voici votre tableau de bord pour aujourd'hui
               </motion.p>
+            </div>
+            {/* Boîte de réception : demandes d'amis + tâches partagées à accepter */}
+            <div className="shrink-0 pt-1">
+              <InboxMenu />
+            </div>
             </div>
           </motion.div>
 
@@ -380,9 +386,6 @@ const DashboardPage: React.FC = () => {
           >
             <DashboardChart viewMode={viewMode} />
             <DashboardBarChart viewMode={viewMode} />
-            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
-              <TodayTasks />
-            </MobileCollapsible>
             <MobileCollapsible title="Tâches collaboratives">
               <CollaborativeTasks />
             </MobileCollapsible>
@@ -391,7 +394,7 @@ const DashboardPage: React.FC = () => {
             </MobileCollapsible>
           </motion.div>
 
-          {/* Colonne droite - Habitudes du jour + Demandes sociales */}
+          {/* Colonne droite - Habitudes du jour + Tâches prioritaires */}
           <motion.div
             className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
@@ -399,8 +402,8 @@ const DashboardPage: React.FC = () => {
             <MobileCollapsible title="Habitudes du jour">
               <TodayHabits />
             </MobileCollapsible>
-            <MobileCollapsible title="Demandes sociales">
-              <SocialRequests />
+            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
+              <TodayTasks />
             </MobileCollapsible>
           </motion.div>
         </motion.div>
