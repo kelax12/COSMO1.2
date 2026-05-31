@@ -38,6 +38,18 @@ export interface ShareTaskInput {
 }
 
 /**
+ * A single sharing grant, as stored in `shared_tasks` (Supabase) or the
+ * `cosmo_shared_tasks` localStorage map (demo). This is the owner-side
+ * read model that replaces the removed `tasks.collaborators[]` array.
+ */
+export interface TaskShare {
+  taskId: string;
+  /** Recipient's auth.users.id (Supabase) or friend.id (demo). */
+  friendId: string;
+  role: 'viewer' | 'editor';
+}
+
+/**
  * Friend request status
  */
 export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected';

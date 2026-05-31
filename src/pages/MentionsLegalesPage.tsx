@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useSeoMeta } from '@/lib/useSeoMeta';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-10">
@@ -10,6 +11,11 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 const MentionsLegalesPage: React.FC = () => {
+  useSeoMeta({
+    title: 'Mentions légales – Cosmo App',
+    description: "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
+    canonical: 'https://thecosmo.app/mentions-legales',
+  });
   const navigate = useNavigate();
 
   return (

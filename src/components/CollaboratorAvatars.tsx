@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage, AvatarGroup, AvatarGroupCount } fr
 import { cn } from '@/lib/utils';
 
 interface CollaboratorAvatarsProps {
-  collaborators?: string[];
+  collaboratorIds?: string[];
   friends: Friend[];
   className?: string;
   size?: 'sm' | 'md';
@@ -12,17 +12,17 @@ interface CollaboratorAvatarsProps {
 }
 
 const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
-  collaborators,
+  collaboratorIds,
   friends,
   className,
   size = 'sm',
   maxVisible = 3,
 }) => {
-  if (!collaborators || collaborators.length === 0) return null;
+  if (!collaboratorIds || collaboratorIds.length === 0) return null;
 
   const sizeClasses = size === 'sm' ? 'size-7 text-[10px]' : 'size-9 text-xs';
-  const visible = collaborators.slice(0, maxVisible);
-  const overflow = collaborators.length - maxVisible;
+  const visible = collaboratorIds.slice(0, maxVisible);
+  const overflow = collaboratorIds.length - maxVisible;
 
   return (
     <AvatarGroup className={className}>

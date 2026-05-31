@@ -3,8 +3,14 @@ import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
+import { useSeoMeta } from '@/lib/useSeoMeta';
 
 const SignupPage = () => {
+  useSeoMeta({
+    title: 'Inscription gratuite – Cosmo, app productivité tâches et OKR',
+    description: "Créez votre compte Cosmo gratuitement. Gérez vos tâches, habitudes, agenda et objectifs OKR. Connexion possible via Google.",
+    canonical: 'https://thecosmo.app/signup',
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');

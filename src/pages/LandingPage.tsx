@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -10,7 +10,8 @@ import {
   Repeat,
   ArrowRight,
   X,
-  BarChart2
+  BarChart2,
+  ChevronDown
 } from 'lucide-react';
 import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
 import AgendaShowcase from '../components/showcase/AgendaShowcase';
@@ -282,12 +283,119 @@ const MockLoginModal = ({ isOpen, onClose, mode: initialMode }: { isOpen: boolea
   );
 };
 
+// ── FAQ data ──────────────────────────────────────────────────────────────
+const FAQ_ITEMS = [
+  {
+    question: 'Cosmo est-il vraiment gratuit ?',
+    answer: 'Oui. Toutes les fonctionnalités principales — tâches, habitudes, agenda, OKR et statistiques — sont entièrement gratuites. L\'accès Premium (collaboration en équipe, partage de tâches) s\'obtient en regardant une courte publicité, sans jamais sortir votre carte bancaire.',
+  },
+  {
+    question: 'Qu\'est-ce que la méthode OKR et pourquoi l\'utiliser ?',
+    answer: 'La méthode OKR (Objectives & Key Results) est le système de définition d\'objectifs utilisé par Google, Intel et Netflix. Un OKR = un objectif qualitatif ambitieux + 2 à 5 résultats clés mesurables. Cosmo automatise le calcul de progression et visualise votre avancement en temps réel, sans tableur.',
+  },
+  {
+    question: 'Quelle est la différence avec Notion ou Todoist ?',
+    answer: 'Notion est un espace de notes très flexible mais sans structure de productivité native. Todoist est un excellent gestionnaire de tâches mais n\'intègre pas les habitudes, les OKR ni le time-blocking. Cosmo est la seule application qui connecte les quatre pilliers — tâches, habitudes, agenda et objectifs — dans un seul écosystème cohérent.',
+  },
+  {
+    question: 'Comment fonctionne le mode démo ?',
+    answer: 'Cliquez sur "Essayer la démo" : vous accédez immédiatement à l\'application complète, pré-remplie avec 100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs sur 12 mois de données réalistes. Aucun compte, aucun email demandé. Quand vous êtes convaincu(e), créez votre vrai compte en 30 secondes.',
+  },
+  {
+    question: 'Cosmo fonctionne-t-il sur mobile ?',
+    answer: 'Oui. Cosmo est conçu mobile-first : interface responsive, bottom navigation bar, gestes swipe sur les tâches, bottom-sheets fluides et support du safe area iOS. L\'application fonctionne dans n\'importe quel navigateur mobile — Safari iOS, Chrome Android — sans téléchargement requis.',
+  },
+  {
+    question: 'Qu\'est-ce que le time-blocking ?',
+    answer: 'Le time-blocking consiste à réserver des créneaux horaires dans votre agenda pour travailler sur des tâches précises, plutôt que de réagir au fil de l\'eau. Dans Cosmo, glissez simplement une tâche depuis le panneau latéral vers un créneau de votre calendrier : l\'événement est créé automatiquement et lié à la tâche. C\'est la méthode plébiscitée par Elon Musk, Bill Gates et Cal Newport.',
+  },
+  {
+    question: 'Puis-je collaborer avec mon équipe ?',
+    answer: 'Oui. Avec l\'accès Premium (gratuit via publicité), envoyez des demandes d\'amis par email, partagez des tâches avec un rôle Lecteur ou Éditeur, et suivez la progression de vos collaborateurs depuis votre dashboard. La messagerie contextuelle permet de discuter directement dans le contexte d\'une tâche.',
+  },
+  {
+    question: 'Comment suivre mes habitudes efficacement ?',
+    answer: 'Créez une habitude, définissez sa fréquence (quotidienne, hebdomadaire, jours spécifiques), puis cochez chaque jour. Cosmo affiche une heatmap 26 semaines style GitHub, calcule votre streak (série de jours consécutifs) et votre taux de complétion sur la période choisie. La règle d\'or : commencez par 2 à 3 habitudes maximum.',
+  },
+  {
+    question: 'Mes données sont-elles sécurisées ?',
+    answer: 'Vos données sont stockées sur Supabase avec Row Level Security : personne d\'autre ne peut accéder à vos tâches ou habitudes. Les pages de l\'application (dashboard, tâches, etc.) sont bloquées pour les robots de recherche dans robots.txt. En mode démo, les données restent dans votre navigateur (localStorage) et ne transitent pas par nos serveurs.',
+  },
+  {
+    question: 'Peut-on utiliser Cosmo sans connexion internet ?',
+    answer: 'En mode démo, toutes les données sont stockées localement dans votre navigateur — aucune connexion requise après le chargement initial. En mode compte, un cache localStorage 24 heures permet de consulter vos tâches et habitudes récentes même avec une connexion instable.',
+  },
+];
+
+// ── FAQ item accordion ────────────────────────────────────────────────────
+const FaqItem: React.FC<{ question: string; answer: string; index: number }> = ({ question, answer, index }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-white/8 last:border-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between gap-4 py-5 text-left group"
+        aria-expanded={open}
+      >
+        <span className="text-base font-medium text-white group-hover:text-blue-200 transition-colors leading-snug">
+          {question}
+        </span>
+        <ChevronDown
+          size={18}
+          className="shrink-0 text-slate-400 transition-transform duration-300"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key={`faq-${index}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <p className="pb-5 text-sm text-slate-400 leading-relaxed">{answer}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ── FAQ Schema injection ──────────────────────────────────────────────────
+function useFaqSchema() {
+  useEffect(() => {
+    // Sur les pages pré-rendues (prerender.mjs), le FAQPage JSON-LD est déjà
+    // présent en statique dans le <head> — ne pas le dupliquer côté client.
+    if (document.getElementById('faq-schema')) return;
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer },
+      })),
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'faq-schema';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+    return () => { document.getElementById('faq-schema')?.remove(); };
+  }, []);
+}
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { loginDemo } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  useFaqSchema();
   // Sur viewport mobile, on affiche des showcases qui miment l'UI mobile
   // de l'app (swipe TaskCard, vue agenda liste, FAB, etc.) au lieu des
   // tableaux et grilles desktop — pour que ce que le visiteur voit dans
@@ -323,7 +431,7 @@ const LandingPage: React.FC = () => {
             <div className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
               <div className="relative group">
                 <div className="w-10 h-10 overflow-hidden rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-105">
-                  <img src="/logo.png" alt="Cosmo" className="w-full h-full object-contain bg-white/10" />
+                  <img src="/logo.png" alt="Logo Cosmo" width="40" height="40" className="w-full h-full object-contain bg-white/10" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur-lg opacity-30 animate-pulse"></div>
               </div>
@@ -332,15 +440,15 @@ const LandingPage: React.FC = () => {
               </span>
             </div>
 
-            <nav className="hidden md:flex items-center justify-between w-80 lg:w-96 xl:w-[28rem]">
+            <nav className="hidden md:flex items-center justify-between w-[32rem] lg:w-[36rem]" aria-label="Navigation principale">
               <a href="#features" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
                 Fonctionnalités
               </a>
               <a href="#solutions" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
                 Solutions
               </a>
-              <a href="#why" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
-                Pourquoi Cosmo
+              <a href="#faq" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
+                FAQ
               </a>
               <a href="/guide" className="text-slate-300 hover:text-white font-medium transition-all duration-200 hover:scale-105 transform text-sm lg:text-base whitespace-nowrap">
                 Guide
@@ -388,8 +496,11 @@ const LandingPage: React.FC = () => {
                   <a href="#solutions" onClick={() => setShowMobileMenu(false)} className="text-slate-300 hover:text-white font-medium transition-colors py-2">
                     Solutions
                   </a>
-                  <a href="#why" onClick={() => setShowMobileMenu(false)} className="text-slate-300 hover:text-white font-medium transition-colors py-2">
-                    Pourquoi Cosmo
+                  <a href="#faq" onClick={() => setShowMobileMenu(false)} className="text-slate-300 hover:text-white font-medium transition-colors py-2">
+                    FAQ
+                  </a>
+                  <a href="/guide" onClick={() => setShowMobileMenu(false)} className="text-slate-300 hover:text-white font-medium transition-colors py-2">
+                    Guide
                   </a>
                   <button
                     onClick={() => { handleLoginClick(); setShowMobileMenu(false); }}
@@ -431,14 +542,14 @@ const LandingPage: React.FC = () => {
               </span>
             </motion.h1>
 
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.8 }}
               className="text-xl lg:text-2xl text-slate-300 mb-12 max-w-4xl mx-auto leading-relaxed"
             >
-              Révolutionnez votre productivité avec une organisation optimisée. Gérez vos tâches, agenda, objectifs et habitudes 
-              dans un écosystème unifié qui s'adapte à votre rythme.
+              Gestionnaire de tâches, suivi d'habitudes, agenda avec time-blocking et méthode OKR —
+              tout dans une seule application gratuite. Essayez sans inscription.
             </motion.p>
 
             <motion.div
@@ -481,11 +592,11 @@ const LandingPage: React.FC = () => {
               className="text-4xl lg:text-5xl font-bold mb-6"
             >
               <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                Voyez l'application
+                Tâches, habitudes, agenda et OKR
               </span>
               <br />
               <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                en action
+                dans un seul outil
               </span>
             </motion.h2>
             <motion.p
@@ -495,7 +606,7 @@ const LandingPage: React.FC = () => {
               transition={{ delay: 0.2 }}
               className="text-xl text-slate-400 max-w-3xl mx-auto"
             >
-              Chaque module est conçu pour être puissant et intuitif — voici un aperçu réel de l'interface
+              Chaque module est conçu pour être puissant et intuitif — gestionnaire de tâches, tracker d'habitudes, agenda avec time-blocking et méthode OKR réunis
             </motion.p>
           </div>
 
@@ -516,7 +627,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Gestion de tâches<br /><span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">nouvelle génération</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.</p>
                 <div className="space-y-3">
-                  {['Filtrez par priorité, catégorie, deadline en un clic', 'Ajoutez des catégories pour visualiser votre travail en un coup d oeil', 'Créez des listes de tâches pour mieux vous organiser', 'Partagez vos tâches en équipe'].map((b, i) => (
+                  {['Filtrez par priorité, catégorie, deadline en un clic', "Ajoutez des catégories pour visualiser votre travail en un coup d'œil", 'Créez des listes de tâches pour mieux vous organiser', 'Partagez vos tâches en équipe'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -612,7 +723,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">OKR & Objectifs<br /><span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">à la Google</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">La méthode OKR utilisée par Google, Intel et Netflix — maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.</p>
                 <div className="space-y-3">
-                  {['Définissez des objectifs ambitieux avec des résultats clés chiffrés', 'Votre progression est calculée automatiquement', 'Visualisez l avancée de vos objectifs', 'Découpez vos objectifs en résultats clés pour passer de "un jour" à "maintenant" '].map((b, i) => (
+                  {["Définissez des objectifs ambitieux avec des résultats clés chiffrés", "Votre progression est calculée automatiquement", "Visualisez l'avancée de vos objectifs en temps réel", 'Découpez vos objectifs en résultats clés pour passer de "un jour" à "maintenant"'].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -657,7 +768,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Habitudes & Streaks<br /><span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">visualisés en heatmap</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Construisez des routines durables avec un suivi complet. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.</p>
                 <div className="space-y-3">
-                  {['Mesurez votre régularité grace au système de tableau de suivi.', 'Restez motivé avec le système de série de jour d affilé', 'Tableau de suivi global pour visualiser votre régularité sur toutes vos habitudes en une fois', 'Taux de complétion et temps investi : mesurez votre régularité réelle'].map((b, i) => (
+                  {["Mesurez votre régularité grâce au système de tableau de suivi.", "Restez motivé avec le système de série de jours d'affilée (streak)", "Tableau de suivi global : visualisez toutes vos habitudes en un coup d'œil", "Taux de complétion et temps investi : mesurez votre régularité réelle"].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -702,7 +813,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">Statistiques<br /><span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">multi-modules</span></h3>
                 <p className="text-lg text-slate-300 leading-relaxed">Analysez votre temps investi sur tous vos modules — tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.</p>
                 <div className="space-y-3">
-                  {['Répartition du temps sur tâches, agenda, OKR et habitudes pour une meilleure clareté', 'Vues jour, semaine, mois, année — zoomez où vous voulez', 'Suivez vas progrés depuis une unique page', 'Visualisez votre productivité en un coup d oeil'].map((b, i) => (
+                  {["Répartition du temps sur tâches, agenda, OKR et habitudes pour une meilleure clarté", "Vues jour, semaine, mois, année — zoomez où vous voulez", "Suivez vos progrès depuis une unique page", "Visualisez votre productivité en un coup d'œil"].map((b, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="w-5 h-5 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={11} className="text-white" />
@@ -744,11 +855,10 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Solutions pour chaque profil
+              Application productivité pour chaque profil
             </h2>
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">
-              Que vous soyez étudiant, professionnel, entrepreneur ou que vous dirigiez une équipe, 
-              Cosmo s'adapte parfaitement à vos besoins spécifiques
+              Étudiant, professionnel, entrepreneur ou équipe — Cosmo adapte la gestion de tâches, le suivi d'habitudes et les OKR à vos besoins spécifiques
             </p>
           </div>
 
@@ -1111,9 +1221,68 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* ── Section FAQ ── */}
+      <section id="faq" className="py-24 bg-black/20 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-4 block"
+            >
+              — Questions fréquentes —
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl lg:text-4xl font-bold text-white mb-4"
+            >
+              Tout ce que vous voulez savoir
+              <br />
+              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                sur Cosmo
+              </span>
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.15 }}
+              className="text-slate-400 text-lg"
+            >
+              Méthode OKR, habitudes, time-blocking, mode démo, sécurité... on répond à tout.
+            </motion.p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="bg-slate-900/60 border border-white/8 rounded-2xl px-6 sm:px-8"
+          >
+            {FAQ_ITEMS.map((item, i) => (
+              <FaqItem key={i} question={item.question} answer={item.answer} index={i} />
+            ))}
+          </motion.div>
+
+          <p className="text-center text-slate-500 text-sm mt-8">
+            Une question non listée ?{' '}
+            <a
+              href="mailto:contact@cosmo.app"
+              className="text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+            >
+              Écrivez-nous
+            </a>
+          </p>
+        </div>
+      </section>
+
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -1162,14 +1331,16 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center">
-                <img src="/logo.png" alt="Cosmo" className="w-full h-full object-contain" />
+                <img src="/logo.png" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain" />
               </div>
               <span className="text-lg font-bold text-white">Cosmo</span>
               <span className="text-slate-600 hidden sm:inline">—</span>
-              <span className="text-slate-400 text-sm hidden sm:inline">© 2025 Tous droits réservés.</span>
+              <span className="text-slate-400 text-sm hidden sm:inline">© 2026 Tous droits réservés.</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-slate-400">
-              <a href="/guide" className="hover:text-white transition-colors">Guide</a>
+            <div className="flex items-center gap-6 text-sm text-slate-400 flex-wrap justify-center md:justify-end">
+              <a href="/guide" className="hover:text-white transition-colors">Guide d'utilisation</a>
+              <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+              <a href="/signup" className="hover:text-white transition-colors">Inscription gratuite</a>
               <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
               <a href="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</a>
               <a href="/cgu" className="hover:text-white transition-colors">CGU</a>
