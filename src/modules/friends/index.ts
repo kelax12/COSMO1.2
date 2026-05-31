@@ -6,12 +6,13 @@
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
 
-export type { 
-  Friend, 
-  FriendRequestInput, 
+export type {
+  Friend,
+  FriendRequestInput,
   ShareTaskInput,
   PendingFriendRequest,
   FriendRequestStatus,
+  TaskShare,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -41,6 +42,9 @@ export {
   useFriends,
   useFriendRequests,
   useSentFriendRequests,
+  useTaskShares,
+  useMyTaskShares,
+  useSharesByTask,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════

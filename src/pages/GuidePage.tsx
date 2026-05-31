@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
+import { useSeoMeta } from '@/lib/useSeoMeta';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
@@ -93,7 +95,60 @@ const SectionHeader: React.FC<{ id: SectionId; icon: React.ReactNode; color: str
 
 // ─── Main component ───────────────────────────────────────────────────
 
+function useGuideSchemas() {
+  useEffect(() => {
+    // Pages pré-rendues (prerender.mjs) : les schémas sont déjà en statique
+    // dans le <head>. Ne pas dupliquer côté client.
+    if (document.getElementById('guide-breadcrumb')) return;
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://thecosmo.app/' },
+        { '@type': 'ListItem', position: 2, name: "Guide d'utilisation", item: 'https://thecosmo.app/guide' },
+      ],
+    };
+    const article = {
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
+      description: "Guide complet pour utiliser Cosmo : gestion de tâches, suivi d'habitudes avec heatmap, agenda time-blocking et méthode OKR.",
+      url: 'https://thecosmo.app/guide',
+      inLanguage: 'fr-FR',
+      datePublished: '2025-01-01',
+      dateModified: '2026-05-31',
+      author: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
+      publisher: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
+      mainEntityOfPage: 'https://thecosmo.app/guide',
+      articleSection: ['Prise en main', 'Tâches', 'Habitudes', 'Agenda', 'OKR', 'Statistiques'],
+    };
+
+    const bc = document.createElement('script');
+    bc.type = 'application/ld+json';
+    bc.id = 'guide-breadcrumb';
+    bc.textContent = JSON.stringify(breadcrumb);
+    document.head.appendChild(bc);
+
+    const art = document.createElement('script');
+    art.type = 'application/ld+json';
+    art.id = 'guide-article';
+    art.textContent = JSON.stringify(article);
+    document.head.appendChild(art);
+
+    return () => {
+      document.getElementById('guide-breadcrumb')?.remove();
+      document.getElementById('guide-article')?.remove();
+    };
+  }, []);
+}
+
 const GuidePage: React.FC = () => {
+  useSeoMeta({
+    title: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
+    description: "Apprenez à utiliser Cosmo : créer des tâches, suivre vos habitudes avec heatmap, planifier votre agenda avec time-blocking et gérer vos OKR. Guide complet en français.",
+    canonical: 'https://thecosmo.app/guide',
+  });
+  useGuideSchemas();
   const [activeSection, setActiveSection] = useState<SectionId>('demarrage');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 

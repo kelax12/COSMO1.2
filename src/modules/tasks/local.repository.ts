@@ -17,7 +17,7 @@ const t = (
   createdDays: number, deadlineDays: number,
   completedDays: number | null,
   bookmarked = false, estimatedTime = 60,
-  isCollaborative = false, collaborators: string[] = []
+  isCollaborative = false
 ): Task => ({
   id, name, description, priority, category,
   deadline: getDate(deadlineDays),
@@ -27,7 +27,6 @@ const t = (
   completed: completedDays !== null,
   completedAt: completedDays !== null ? getDate(completedDays) : undefined,
   isCollaborative,
-  collaborators,
   pendingInvites: [],
 });
 
@@ -54,8 +53,8 @@ const DEMO_TASKS: Task[] = [
   t('t010','Programme stretching quotidien',  'Mobilité + récupération post-sport',       2,'cat-3',-2,   3,  null, false, 20),
 
   // ── TÂCHES ASSIGNÉES PAR D'AUTRES ─────────────────────────────────────
-  { ...t('t011','Réviser le pitch deck',      'Intégrer les retours avant lundi',         4,'cat-5',-1,   3,  null, false, 60, true, ['Marie Dupont']), sharedBy: 'Marie Dupont' },
-  { ...t('t012','Tester le prototype mobile', 'Flow onboarding + feedback UX',            3,'cat-5',-2,   5,  null, false, 45, true, ['Jean Martin']),  sharedBy: 'Jean Martin'  },
+  { ...t('t011','Réviser le pitch deck',      'Intégrer les retours avant lundi',         4,'cat-5',-1,   3,  null, false, 60, true), sharedBy: 'Marie Dupont' },
+  { ...t('t012','Tester le prototype mobile', 'Flow onboarding + feedback UX',            3,'cat-5',-2,   5,  null, false, 45, true),  sharedBy: 'Jean Martin'  },
 
   // ── TÂCHES PARTAGÉES (shared TO the demo user) ────────────────────────
   {
@@ -70,7 +69,6 @@ const DEMO_TASKS: Task[] = [
     bookmarked: false,
     completed: false,
     isCollaborative: true,
-    collaborators: [],
     pendingInvites: [],
     sharedBy: 'Marie Dupont',
   },
@@ -86,7 +84,6 @@ const DEMO_TASKS: Task[] = [
     bookmarked: false,
     completed: false,
     isCollaborative: true,
-    collaborators: [],
     pendingInvites: [],
     sharedBy: 'Jean Martin',
   },
@@ -172,7 +169,6 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       bookmarked: input.bookmarked ?? false,
       completed: input.completed ?? false,
       isCollaborative: input.isCollaborative ?? false,
-      collaborators: input.collaborators ?? [],
       pendingInvites: input.pendingInvites ?? [],
     };
     this.saveTasks([newTask, ...tasks]);

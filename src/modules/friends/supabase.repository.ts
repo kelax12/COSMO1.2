@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus } from './types';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -70,14 +70,13 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       .select('id, email, avatar_url')
       .in('email', emails);
 
-    if (!profilesData?.length) return friends;
     const byEmail = new Map(
-      profilesData.map(p => [
+      (profilesData ?? []).map(p => [
         (p.email as string).toLowerCase(),
         { id: p.id as string, avatarUrl: p.avatar_url as string | null }
       ])
     );
-    return friends.map(f => {
+    const enriched = friends.map(f => {
       const profile = byEmail.get(f.email.toLowerCase());
       return {
         ...f,
@@ -85,6 +84,28 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
         avatar: profile?.avatarUrl ?? f.avatar,
       };
     });
+
+    // Fallback résolution userId : le SELECT direct sur `profiles` peut ne rien
+    // renvoyer selon le durcissement RLS (migration 022 / N12). Or `userId` DOIT
+    // valoir l'auth.uid du copain — c'est exactement ce que `shareTask` écrit
+    // dans `shared_tasks.friend_id`. Sans lui, l'affichage owner-side d'un
+    // collaborateur retombe sur l'id de ligne `friends` et ne matche jamais le
+    // partage → l'UUID brut s'affiche au lieu du pseudo. On comble les trous via
+    // la même RPC SECURITY DEFINER que shareTask (résolution fiable, bypass RLS).
+    const unresolved = enriched.filter(f => !f.userId && f.email);
+    if (unresolved.length === 0) return enriched;
+    const resolvedPairs = await Promise.all(
+      unresolved.map(async f => {
+        const { data: uid } = await supabase!.rpc('resolve_profile_by_email', {
+          p_email: f.email.toLowerCase(),
+        });
+        return [f.id, (uid as string | null) ?? undefined] as const;
+      })
+    );
+    const uidByRowId = new Map(resolvedPairs);
+    return enriched.map(f =>
+      f.userId ? f : { ...f, userId: uidByRowId.get(f.id) ?? f.userId }
+    );
   }
 
   async getById(id: string): Promise<Friend | null> {
@@ -302,6 +323,42 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       .eq('friend_id', friendId);
 
     if (error) throw normalizeApiError(error);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TASK SHARING — READ MODEL (owner side)
+  // ═══════════════════════════════════════════════════════════════════
+
+  async getTaskShares(taskId: string): Promise<TaskShare[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RLS `shared_tasks_select` lets the owner (shared_by) read these rows.
+    const { data, error } = await supabase
+      .from('shared_tasks')
+      .select('task_id, friend_id, role')
+      .eq('task_id', taskId);
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((r) => ({
+      taskId: r.task_id as string,
+      friendId: r.friend_id as string,
+      role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+    }));
+  }
+
+  async getMyTaskShares(): Promise<TaskShare[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from('shared_tasks')
+      .select('task_id, friend_id, role')
+      .eq('shared_by', user.id)
+      .limit(500);
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((r) => ({
+      taskId: r.task_id as string,
+      friendId: r.friend_id as string,
+      role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+    }));
   }
 
   // ═══════════════════════════════════════════════════════════════════

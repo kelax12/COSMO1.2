@@ -13,7 +13,7 @@ import EmptyState from './EmptyState';
 import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, useCreateTask, Task } from '@/modules/tasks';
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
-import { useFriends } from '@/modules/friends';
+import { useFriends, useSharesByTask } from '@/modules/friends';
 
 const TodayTasks: React.FC = () => {
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
@@ -34,6 +34,7 @@ const TodayTasks: React.FC = () => {
   const createEventMutation     = useCreateEvent();
   const { data: categories = [] } = useCategories();
   const { data: friends = [] }    = useFriends();
+  const sharesByTask              = useSharesByTask();
 
   const today = new Date();
 
@@ -191,8 +192,8 @@ const TodayTasks: React.FC = () => {
                   </div>
 
                   {/* Avatars collaborateurs */}
-                  {task.isCollaborative && task.collaborators && (
-                    <CollaboratorAvatars collaborators={task.collaborators} friends={friends} size="sm" />
+                  {(sharesByTask.get(task.id)?.length ?? 0) > 0 && (
+                    <CollaboratorAvatars collaboratorIds={sharesByTask.get(task.id) ?? []} friends={friends} size="sm" />
                   )}
 
                   {/* Action icons — desktop hover only */}

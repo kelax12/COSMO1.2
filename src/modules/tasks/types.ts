@@ -11,7 +11,6 @@ export interface Task {
   completed: boolean;
   completedAt?: string;
   isCollaborative?: boolean;
-  collaborators?: string[];
   pendingInvites?: string[];
   collaboratorValidations?: Record<string, boolean>;
   sharedBy?: string;
