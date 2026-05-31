@@ -3,8 +3,14 @@ import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
+import { useSeoMeta } from '@/lib/useSeoMeta';
 
 const LoginPage = () => {
+  useSeoMeta({
+    title: 'Connexion – Cosmo, application de productivité',
+    description: 'Connectez-vous à Cosmo pour accéder à vos tâches, habitudes, agenda et OKR.',
+    canonical: 'https://thecosmo.app/login',
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

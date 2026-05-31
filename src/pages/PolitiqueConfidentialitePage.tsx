@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useSeoMeta } from '@/lib/useSeoMeta';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-10">
@@ -10,6 +11,11 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 const PolitiqueConfidentialitePage: React.FC = () => {
+  useSeoMeta({
+    title: 'Politique de confidentialité – Cosmo App',
+    description: 'Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact.',
+    canonical: 'https://thecosmo.app/politique-confidentialite',
+  });
   const navigate = useNavigate();
 
   return (
