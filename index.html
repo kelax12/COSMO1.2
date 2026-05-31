@@ -1,42 +1,65 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Icons & PWA -->
     <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Cosmo" />
+    <meta name="application-name" content="Cosmo" />
+    <meta name="format-detection" content="telephone=no" />
 
     <!-- Primary SEO -->
-    <title>Cosmo — Tâches, habitudes et OKR pour rester focus</title>
-    <meta name="description" content="Cosmo réunit tâches, habitudes, agenda et OKR dans une seule app moderne. Gérez votre productivité personnelle et collaborez avec votre équipe." />
-    <meta name="keywords" content="gestionnaire de tâches, habitudes, OKR, productivité, agenda, todo, planificateur" />
+    <title>Cosmo – Gestionnaire de tâches, habitudes et OKR | App productivité gratuite</title>
+    <meta name="description" content="Cosmo centralise tâches, habitudes, agenda et OKR dans une seule application gratuite. Méthode OKR, heatmap habitudes, time-blocking, statistiques multi-modules. Essayez sans inscription." />
+    <meta name="keywords" content="gestionnaire de tâches, suivi habitudes, OKR, application productivité, agenda en ligne, todo list, time blocking, objectifs personnels, tracker habitudes, méthode OKR" />
     <meta name="author" content="Cosmo" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://thecosmo.app/" />
+    <link rel="alternate" hreflang="fr" href="https://thecosmo.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://thecosmo.app/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Cosmo" />
-    <meta property="og:title" content="Cosmo — Tâches, habitudes et OKR pour rester focus" />
-    <meta property="og:description" content="Cosmo réunit tâches, habitudes, agenda et OKR dans une seule app moderne. Gérez votre productivité personnelle et collaborez avec votre équipe." />
+    <meta property="og:title" content="Cosmo – Gestionnaire de tâches, habitudes et OKR | App productivité gratuite" />
+    <meta property="og:description" content="Centralisez tâches, habitudes, agenda et OKR dans une seule application gratuite. Méthode OKR, heatmap habitudes, time-blocking. Essayez sans inscription." />
     <meta property="og:url" content="https://thecosmo.app/" />
-    <meta property="og:image" content="https://thecosmo.app/logo.png" />
-    <meta property="og:image:alt" content="Logo Cosmo" />
+    <meta property="og:image" content="https://thecosmo.app/og-card.png" />
+    <meta property="og:image:secure_url" content="https://thecosmo.app/og-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="Cosmo – Application de productivité tout-en-un : tâches, habitudes, OKR" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="fr_FR" />
 
-    <!-- Twitter -->
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Cosmo — Tâches, habitudes et OKR pour rester focus" />
-    <meta name="twitter:description" content="Cosmo réunit tâches, habitudes, agenda et OKR dans une seule app moderne." />
-    <meta name="twitter:image" content="https://thecosmo.app/logo.png" />
+    <meta name="twitter:title" content="Cosmo – Gestionnaire de tâches, habitudes et OKR" />
+    <meta name="twitter:description" content="Centralisez tâches, habitudes, agenda et OKR. Application de productivité gratuite avec mode démo instantané." />
+    <meta name="twitter:image" content="https://thecosmo.app/og-card.png" />
+    <meta name="twitter:image:alt" content="Cosmo – Application de productivité tout-en-un" />
 
+    <!-- Google Fonts — preconnect puis feuille de style non bloquante -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    </noscript>
+
+    <!-- AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2572718224166714"
      crossorigin="anonymous"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- JSON-LD : SoftwareApplication -->
     <script type="application/ld+json">
@@ -44,21 +67,121 @@
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "Cosmo",
+      "alternateName": "Cosmo App",
       "url": "https://thecosmo.app/",
       "applicationCategory": "ProductivityApplication",
-      "operatingSystem": "Web",
-      "description": "Gestionnaire de tâches, habitudes, agenda et OKR.",
+      "applicationSubCategory": "Task Management",
+      "operatingSystem": "Web, iOS, Android",
+      "description": "Application de productivité tout-en-un : gestion de tâches avec priorités, suivi d'habitudes avec heatmap, agenda avec time-blocking, OKR (Objectives & Key Results) et statistiques multi-modules.",
       "inLanguage": "fr-FR",
+      "datePublished": "2025-01-01",
+      "dateModified": "2026-05-31",
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "EUR"
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock",
+        "description": "Version gratuite complète. Accès Premium gratuit via publicité."
+      },
+      "featureList": [
+        "Gestion de tâches avec priorités 1-5 et catégories colorées",
+        "Suivi d'habitudes avec heatmap 26 semaines et streaks",
+        "Agenda intégré avec time-blocking par glisser-déposer",
+        "OKR (Objectives & Key Results) — méthode Google, Intel, Netflix",
+        "Statistiques multi-modules : tâches, habitudes, agenda, OKR",
+        "Collaboration et partage de tâches en équipe",
+        "Mode démo sans inscription avec 100 tâches et données réalistes",
+        "Listes de tâches intelligentes (smart lists) et filtres avancés",
+        "Mode sombre / clair automatique",
+        "Responsive mobile-first avec support iOS et Android"
+      ],
+      "screenshot": {
+        "@type": "ImageObject",
+        "url": "https://thecosmo.app/og-card.png",
+        "width": 1200,
+        "height": 630
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Cosmo",
+        "url": "https://thecosmo.app"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD : Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Cosmo",
+      "legalName": "Cosmo",
+      "url": "https://thecosmo.app",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://thecosmo.app/logo.png",
+        "width": 584,
+        "height": 586
+      },
+      "image": "https://thecosmo.app/logo.png",
+      "description": "Éditeur de l'application de productivité Cosmo – gestionnaire de tâches, habitudes et OKR",
+      "foundingDate": "2025",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "contact@cosmo.app",
+        "contactType": "customer service",
+        "availableLanguage": ["fr"]
+      },
+      "sameAs": []
+    }
+    </script>
+
+    <!-- JSON-LD : WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Cosmo",
+      "url": "https://thecosmo.app/",
+      "description": "Application de productivité tout-en-un : gestionnaire de tâches, suivi d'habitudes, agenda avec time-blocking et méthode OKR. Gratuit.",
+      "inLanguage": "fr-FR",
+      "datePublished": "2025-01-01",
+      "dateModified": "2026-05-31",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cosmo",
+        "url": "https://thecosmo.app"
+      },
+      "potentialAction": {
+        "@type": "RegisterAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://thecosmo.app/signup"
+        },
+        "name": "Créer un compte gratuit"
       }
     }
     </script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Fallback pour les crawlers sans JS — contenu indexable minimal -->
+    <noscript>
+      <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b">
+        <h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1>
+        <p>Cosmo est une application de productivité gratuite qui centralise la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results).</p>
+        <h2>Fonctionnalités principales</h2>
+        <ul>
+          <li><strong>Gestionnaire de tâches</strong> — priorités, catégories colorées, deadlines, listes et filtres avancés</li>
+          <li><strong>Suivi d'habitudes</strong> — heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
+          <li><strong>Agenda avec time-blocking</strong> — glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
+          <li><strong>OKR (Objectives &amp; Key Results)</strong> — méthode utilisée par Google, Intel et Netflix</li>
+          <li><strong>Statistiques multi-modules</strong> — analysez votre temps sur tâches, habitudes, agenda et OKR</li>
+          <li><strong>Mode démo instantané</strong> — aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
+        </ul>
+        <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,0 +1,33 @@
+{
+  "name": "Cosmo – Gestionnaire de tâches, habitudes et OKR",
+  "short_name": "Cosmo",
+  "description": "Application de productivité tout-en-un : tâches, habitudes, agenda et OKR. Gratuit, sans inscription.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/og-card.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Cosmo – Vue d'ensemble de l'application"
+    }
+  ]
+}
