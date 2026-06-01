@@ -240,6 +240,8 @@ const AgendaPage: React.FC = () => {
   const [showRecurringManager, setShowRecurringManager] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ start: string; end: string } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
+  const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
   const [calendarKey, setCalendarKey] = useState(0);
   const calendarRef = useRef<FullCalendar>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -353,10 +355,17 @@ const AgendaPage: React.FC = () => {
     // sans mouvement notamment). Auto-expire après 300ms : pas de blocage permanent.
     if (Date.now() - lastDragEndAtRef.current < 300) return;
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
-    const masterId = getMasterId(clickInfo.event.id);
+    const rawId = clickInfo.event.id;
+    const masterId = getMasterId(rawId);
     const taskId = clickInfo.event.extendedProps?.taskId;
     const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
-    if (event) { setSelectedEvent(event); setShowEditEventModal(true); }
+    if (event) {
+      setSelectedEvent(event);
+      // Si c'est une instance virtuelle (id contient "::"), mémoriser sa date
+      const sepIdx = rawId.indexOf('::');
+      setSelectedInstanceDate(sepIdx !== -1 ? rawId.slice(sepIdx + 2) : null);
+      setShowEditEventModal(true);
+    }
   };
 
   const draggedEventIdRef = useRef<string | null>(null);
@@ -530,12 +539,23 @@ const AgendaPage: React.FC = () => {
     updateEventMutation.mutate({ id: eventId, updates: eventData });
     setShowEditEventModal(false);
     setSelectedEvent(null);
+    setSelectedInstanceDate(null);
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    deleteEventMutation.mutate(eventId);
+    const master = events.find(e => e.id === eventId);
+    const isRecurring = master && (master.recurrence ?? 'none') !== 'none';
+
+    if (isRecurring && selectedInstanceDate) {
+      // Suppression d'une seule occurrence : ajouter la date dans les exceptions du master
+      const newExceptions = [...(master.exceptions ?? []), selectedInstanceDate];
+      updateEventMutation.mutate({ id: eventId, updates: { exceptions: newExceptions } });
+    } else {
+      deleteEventMutation.mutate(eventId);
+    }
     setShowEditEventModal(false);
     setSelectedEvent(null);
+    setSelectedInstanceDate(null);
   };
 
   const handleOpenAddModal = () => { setSelectedTimeSlot(null); setShowAddEventModal(true); };
@@ -949,7 +969,7 @@ const AgendaPage: React.FC = () => {
         <EventModal
           mode="edit"
           isOpen={showEditEventModal}
-          onClose={() => { setShowEditEventModal(false); setSelectedEvent(null); }}
+          onClose={() => { setShowEditEventModal(false); setSelectedEvent(null); setSelectedInstanceDate(null); }}
           event={selectedEvent}
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}

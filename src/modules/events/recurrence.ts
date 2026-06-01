@@ -71,12 +71,14 @@ export function expandRecurringEvents(
       const instanceEnd = new Date(instanceStart.getTime() + durationMs);
       const dateKey = instanceStart.toISOString().split('T')[0];
 
-      out.push({
-        ...ev,
-        id: `${ev.id}::${dateKey}`,
-        start: instanceStart.toISOString(),
-        end: instanceEnd.toISOString(),
-      });
+      if (!ev.exceptions?.includes(dateKey)) {
+        out.push({
+          ...ev,
+          id: `${ev.id}::${dateKey}`,
+          start: instanceStart.toISOString(),
+          end: instanceEnd.toISOString(),
+        });
+      }
 
       cursor.setDate(cursor.getDate() + stepDays);
       count++;
