@@ -22,6 +22,7 @@ interface EventRow {
   notes?: string;
   task_id?: string;
   recurrence?: 'none' | 'daily' | 'weekly';
+  exceptions?: string[];
   user_id?: string;
   created_at?: string;
 }
@@ -38,6 +39,7 @@ interface EventDbInput {
   notes?: string;
   task_id?: string;
   recurrence?: 'none' | 'daily' | 'weekly';
+  exceptions?: string[];
   user_id?: string;
 }
 
@@ -210,6 +212,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       notes: row.notes,
       taskId: row.task_id,
       recurrence: row.recurrence ?? 'none',
+      exceptions: row.exceptions ?? [],
     };
   }
 
@@ -223,6 +226,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (input.notes !== undefined) result.notes = input.notes;
     if (input.taskId !== undefined) result.task_id = input.taskId;
     if (input.recurrence !== undefined) result.recurrence = input.recurrence;
+    if (input.exceptions !== undefined) result.exceptions = input.exceptions;
     return result;
   }
 }
