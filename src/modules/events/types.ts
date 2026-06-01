@@ -25,6 +25,8 @@ export interface CalendarEvent {
   notes?: string;       // Additional notes
   taskId?: string;      // Optional link to a Task
   recurrence?: EventRecurrence; // Défaut: 'none'
+  // Dates YYYY-MM-DD des occurrences supprimées individuellement (ne supprime pas le master)
+  exceptions?: string[];
 }
 
 /**
