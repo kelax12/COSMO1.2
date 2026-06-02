@@ -10,13 +10,12 @@ import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
-import CollaboratorModal from './CollaboratorModal';
 import AddToListModal from './AddToListModal';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { toast } from 'sonner';
+import { showUndoToast } from '@/lib/undo-toast';
 import {
   useTasks,
   useDeleteTask,
@@ -55,10 +54,10 @@ type TaskTableProps = {
 // ═══════════════════════════════════════════════════════════════════
 const formatDate = (dateString: string | undefined) => {
   try {
-    if (!dateString) return 'N/A';
+    if (!dateString) return '—';
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: fr });
   } catch {
-    return 'N/A';
+    return '—';
   }
 };
 
@@ -314,16 +313,19 @@ const TaskCard = React.memo(({
         </div>
       </div>
 
-      {/* Priority badge — couleur catégorie pour cohérence visuelle avec la barre. */}
-      <div
-        className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
-        style={{
-          backgroundColor: `${categoryColor}20`,
-          color: categoryColor
-        }}
-      >
-        Priorité {task.priority}
-      </div>
+      {/* Priority badge — couleur catégorie pour cohérence visuelle avec la barre.
+          Masqué si la tâche n'a pas de priorité (facultative). */}
+      {task.priority > 0 && (
+        <div
+          className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
+          style={{
+            backgroundColor: `${categoryColor}20`,
+            color: categoryColor
+          }}
+        >
+          Priorité {task.priority}
+        </div>
+      )}
 
       {task.bookmarked && (
         <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
@@ -574,7 +576,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [selectedTaskForCollaborators, setSelectedTaskForCollaborators] = useState<string | null>(null);
   const [addToListTask, setAddToListTask] = useState<string | null>(null);
-  const [collaboratorModalTask, setCollaboratorModalTask] = useState<string | null>(null);
   const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration'>('none');
@@ -640,8 +641,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
           : tasks.filter(task => !task.completed);
     }
 
-    const filteredTasks = filteredTasksForView.filter(task => 
-      task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
+    const filteredTasks = filteredTasksForView.filter(task =>
+      // Priorité facultative : une tâche sans priorité (0) reste toujours visible.
+      task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1])
     );
 
     const sorted = [...filteredTasks].sort((a, b) => {
@@ -696,7 +698,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
       navigate('/premium');
       return;
     }
-    setCollaboratorModalTask(taskId);
+    // Réutilise la vue « Collaborateurs » de TaskModal (étape 2 de création)
+    // au lieu d'un second popup dédié — une seule UI de partage.
+    setSelectedTaskForCollaborators(taskId);
   }, [isPremium, navigate]);
 
   const confirmDelete = () => {
@@ -707,18 +711,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
       onSuccess: () => {
         setTaskToDelete(null);
         if (taskSnapshot) {
-          toast.success('Tâche supprimée', {
-            action: {
-              label: 'Annuler',
-              onClick: () => {
-                // Recrée la tâche avec les mêmes champs (nouvel id généré côté repo)
-                const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
-                createMutation.mutate(rest, {
-                  onSuccess: () => toast.success('Tâche restaurée'),
-                });
-              },
-            },
-            duration: 6000,
+          showUndoToast('Tâche supprimée', () => {
+            // Recrée la tâche avec les mêmes champs (nouvel id généré côté repo)
+            const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
+            createMutation.mutate(rest);
           });
         }
       },
@@ -930,9 +926,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </div>
                 </td>
                 <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>
-                  <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
-                    {task.priority}
-                  </span>
+                  {task.priority === 0 ? (
+                    <span className="inline-flex justify-center items-center w-8 h-8 text-base font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      —
+                    </span>
+                  ) : (
+                    <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
+                      {task.priority}
+                    </span>
+                  )}
                 </td>
                 <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
                   {activeQuickFilter === 'terminées'
@@ -1045,14 +1047,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
           isOpen={!!selectedTaskForCollaborators}
           onClose={() => setSelectedTaskForCollaborators(null)}
           showCollaborators={true}
-        />
-      )}
-
-      {collaboratorModalTask && (
-        <CollaboratorModal
-          isOpen={!!collaboratorModalTask}
-          onClose={() => setCollaboratorModalTask(null)}
-          taskId={collaboratorModalTask}
         />
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -31,6 +31,9 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   });
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
   const { register, trigger, clear, isInvalid } = useInvalidShake();
+  // Garde anti-double-soumission : un double-clic rapide déclenchait deux
+  // mutations create avant que `isPending` ne passe à true (re-render async).
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,12 +54,18 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
       trigger(['name']);
       return;
     }
+    // Anti-double-soumission (double-clic / double-tap).
+    if (isSubmittingRef.current || createHabitMutation.isPending || updateHabitMutation.isPending) return;
+    isSubmittingRef.current = true;
     if (isEditing && habit) {
-      updateHabitMutation.mutate({ id: habit.id, updates: formData }, { onSuccess: () => onClose() });
+      updateHabitMutation.mutate(
+        { id: habit.id, updates: formData },
+        { onSuccess: () => onClose(), onSettled: () => { isSubmittingRef.current = false; } }
+      );
     } else {
       createHabitMutation.mutate(
         { name: formData.name, estimatedTime: formData.estimatedTime, color: formData.color, frequency: 'daily', icon: '✓', description: '' },
-        { onSuccess: () => onClose() }
+        { onSuccess: () => onClose(), onSettled: () => { isSubmittingRef.current = false; } }
       );
     }
   };

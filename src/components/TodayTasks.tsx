@@ -6,7 +6,6 @@ import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, Us
 import CollaboratorAvatars from './CollaboratorAvatars';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
-import CollaboratorModal from './CollaboratorModal';
 import AddToListModal from './AddToListModal';
 import EmptyState from './EmptyState';
 
@@ -42,8 +41,10 @@ const TodayTasks: React.FC = () => {
     return tasks
       .filter(task => !task.completed)
       .filter(task => {
-        const taskDate = new Date(task.deadline);
-        return taskDate.toDateString() === today.toDateString() || task.priority <= 2;
+        const taskDate = task.deadline ? new Date(task.deadline) : null;
+        const isDueToday = taskDate ? taskDate.toDateString() === today.toDateString() : false;
+        // Priorité facultative : 0 = non définie, ne compte pas comme « haute ».
+        return isDueToday || (task.priority > 0 && task.priority <= 2);
       })
       .sort((a, b) => {
         if (a.bookmarked && !b.bookmarked) return -1;
@@ -58,7 +59,7 @@ const TodayTasks: React.FC = () => {
   const getCategoryData = (categoryId: string) => categories.find(c => c.id === categoryId);
 
   const getPriorityIcon = (priority: number) => {
-    if (priority <= 2) return <AlertCircle size={16} className="text-[rgb(var(--color-error))]" />;
+    if (priority > 0 && priority <= 2) return <AlertCircle size={16} className="text-[rgb(var(--color-error))]" />;
     return null;
   };
 
@@ -183,11 +184,15 @@ const TodayTasks: React.FC = () => {
                     </div>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-[rgb(var(--color-text-secondary))]">
                       <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
-                      <div className="flex items-center gap-1">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
-                        <span>Priorité {task.priority}</span>
-                      </div>
-                      <div className="text-xs whitespace-nowrap">{new Date(task.deadline).toLocaleDateString('fr-FR')}</div>
+                      {task.priority > 0 && (
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
+                          <span>Priorité {task.priority}</span>
+                        </div>
+                      )}
+                      {task.deadline && (
+                        <div className="text-xs whitespace-nowrap">{new Date(task.deadline).toLocaleDateString('fr-FR')}</div>
+                      )}
                     </div>
                   </div>
 
@@ -258,10 +263,13 @@ const TodayTasks: React.FC = () => {
         <AddToListModal isOpen={true} onClose={() => setAddToListTask(null)} taskId={addToListTask} />
       )}
 
-      {/* CollaboratorModal */}
-      {collaboratorTaskId && (
-        <CollaboratorModal isOpen={!!collaboratorTaskId} onClose={() => setCollaboratorTaskId(null)} taskId={collaboratorTaskId} />
-      )}
+      {/* Collaborateurs — réutilise la vue Collaborateurs de TaskModal (étape 2). */}
+      {collaboratorTaskId && (() => {
+        const collabTask = tasks.find(t => t.id === collaboratorTaskId);
+        return collabTask ? (
+          <TaskModal task={collabTask} isOpen onClose={() => setCollaboratorTaskId(null)} showCollaborators />
+        ) : null;
+      })()}
 
       {/* Delete confirmation */}
       {taskToDelete && (

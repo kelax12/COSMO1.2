@@ -25,7 +25,7 @@ const DeadlineCalendar: React.FC = () => {
 
   const tasksById = new Map(tasks.map((t) => [t.id, t]));
 
-  const deadlineEvents = tasks.map(task => ({
+  const deadlineEvents = tasks.filter(task => task.deadline).map(task => ({
     id: task.id,
     title: task.name,
     date: new Date(task.deadline),
@@ -336,12 +336,14 @@ const DeadlineCalendar: React.FC = () => {
                               {event.title}
                             </p>
                             <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              <span className="px-1.5 py-0.5 rounded font-bold" style={{
-                                backgroundColor: `${event.backgroundColor}20`,
-                                color: event.backgroundColor
-                              }}>
-                                P{event.priority}
-                              </span>
+                              {event.priority > 0 && (
+                                <span className="px-1.5 py-0.5 rounded font-bold" style={{
+                                  backgroundColor: `${event.backgroundColor}20`,
+                                  color: event.backgroundColor
+                                }}>
+                                  P{event.priority}
+                                </span>
+                              )}
                               <span>{event.estimatedTime}min</span>
                             </div>
                           </div>
@@ -392,7 +394,7 @@ const DeadlineCalendar: React.FC = () => {
                         title={`${event.title}\nPriorité: ${event.priority}\nTemps: ${event.estimatedTime}min`}
                       >
                         <div className="truncate font-semibold">{event.title}</div>
-                        <div className="opacity-80 text-[10px] mt-1">P{event.priority}</div>
+                        {event.priority > 0 && <div className="opacity-80 text-[10px] mt-1">P{event.priority}</div>}
                       </div>
                     ))}
                   </div>

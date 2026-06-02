@@ -4,7 +4,8 @@ import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Habit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
+import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
+import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
 import HabitActionsMenu from './HabitActionsMenu';
@@ -42,6 +43,7 @@ const calculateStreak = (completions: Record<string, boolean>): number => {
 
 const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const deleteHabitMutation = useDeleteHabit();
+  const createHabitMutation = useCreateHabit();
   const toggleCompletionMutation = useToggleHabitCompletion();
 
   const [showDetails, setShowDetails] = useState(false);
@@ -54,7 +56,17 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const pausedUntil = getPauseUntil(habit.id);
 
   const handleDelete = () => {
-    deleteHabitMutation.mutate(habit.id);
+    const snapshot = habit;
+    deleteHabitMutation.mutate(habit.id, {
+      onSuccess: () => {
+        // Raccourci d'annulation (barre de progression 5 s, haut à droite).
+        // On recrée l'habitude avec son historique de complétions.
+        const { id: _id, createdAt: _ca, ...rest } = snapshot;
+        showUndoToast("Habitude supprimée", () => {
+          createHabitMutation.mutate(rest);
+        });
+      },
+    });
     setIsDeleting(false);
   };
 

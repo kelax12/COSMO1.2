@@ -186,10 +186,22 @@ const EventModal: React.FC<EventModalProps> = ({
       setTitle(task.name || "");
       setNotes("");
       setRecurrence('none');
-      setStartDate("");
-      setStartTime("");
-      setEndDate("");
-      setEndTime("");
+
+      // Pré-remplir date + horaires (éditables) pour que la conversion ait des
+      // valeurs par défaut sensées. Sans ça, les sélecteurs d'heure restaient
+      // vides et la conversion échouait silencieusement (date/heure manquantes).
+      const now = new Date();
+      const todayStr = now.toISOString().split("T")[0];
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+
+      const defaultStart = "12:00";
+      setStartTime(defaultStart);
+      const startTimeDate = new Date(`${todayStr}T${defaultStart}`);
+      const durationMin = task.estimatedTime && task.estimatedTime > 0 ? task.estimatedTime : 60;
+      const endTimeDate = new Date(startTimeDate.getTime() + durationMin * 60000);
+      setEndTime(endTimeDate.toTimeString().slice(0, 5));
+      setEndDate(endTimeDate.toISOString().split("T")[0]);
 
       if (task.category) {
         const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
@@ -385,7 +397,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 isMobileFormValid ? 'text-blue-500' : 'text-blue-300'
               }`}
             >
-              {getSubmitButtonText()}
+              {mode === 'convert' ? 'Créer' : getSubmitButtonText()}
             </button>
           </div>
 
@@ -632,23 +644,10 @@ const EventModal: React.FC<EventModalProps> = ({
               </>
             )}
 
-            <div className="h-4" />
-          </div>
-
-          {/* Footer CTA */}
-          <div
-            className="px-4 pt-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/95 dark:bg-gray-950/95 shrink-0"
-            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
-          >
-            <button
-              type="button"
-              onClick={doSave}
-              className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
-                isMobileFormValid ? 'bg-blue-600 active:bg-blue-700' : 'bg-blue-200 dark:bg-blue-900/40'
-              }`}
-            >
-              {getSubmitButtonText()}
-            </button>
+            {/* Espace bas pour libérer la zone safe-area iOS (le bouton de
+                validation footer a été retiré — la validation se fait via le
+                bouton en haut à droite). */}
+            <div style={{ height: 'max(env(safe-area-inset-bottom), 1rem)' }} />
           </div>
         </div>
       ) : (

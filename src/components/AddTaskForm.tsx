@@ -184,7 +184,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     if (formData.estimatedTime === '' || formData.estimatedTime === null) newErrors.estimatedTime = 'Le temps estimé est obligatoire';
     else if (isNaN(Number(formData.estimatedTime)) || Number(formData.estimatedTime) < 0) newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
     
-    if (formData.priority === 0) newErrors.priority = 'Veuillez choisir une priorité';
+    // Priorité facultative : aucune validation bloquante.
     if (!formData.category) newErrors.category = 'Veuillez choisir une catégorie';
     
     if (formData.deadline) {
@@ -201,9 +201,9 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const isFormValid = () => {
     const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
     const timeValid = formData.estimatedTime !== '' && formData.estimatedTime !== null && !isNaN(Number(formData.estimatedTime)) && Number(formData.estimatedTime) > 0;
-    const priorityValid = formData.priority !== 0;
+    // Priorité facultative : ne bloque pas la validation du formulaire.
     const categoryValid = !!formData.category;
-    return nameValid && timeValid && priorityValid && categoryValid;
+    return nameValid && timeValid && categoryValid;
   };
 
   const handleInputChange = (field: string, value: string | number | boolean | string[]) => {
@@ -239,7 +239,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
       name: formData.name,
       priority: formData.priority,
       category: formData.category,
-      deadline: formData.deadline || new Date().toISOString(),
+      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
       estimatedTime: Number(formData.estimatedTime),
       bookmarked: formData.bookmarked,
       completed: formData.completed,

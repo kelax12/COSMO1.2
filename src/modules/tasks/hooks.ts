@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showUndoToast } from '@/lib/undo-toast';
 import { getTasksRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { withTimeout } from '@/lib/withTimeout';
@@ -195,7 +196,23 @@ export const useToggleTaskComplete = () => {
 
   return useMutation({
     mutationFn: (id: string) => repository.toggleComplete(id),
-    
+
+    // Quand une tâche passe à « validée », propose un raccourci d'annulation
+    // (barre de progression 5 s, en haut à droite). L'annulation re-bascule
+    // l'état. On n'affiche rien quand on dé-valide une tâche.
+    onSuccess: (updatedTask) => {
+      if (!updatedTask?.completed) return;
+      showUndoToast('Tâche validée', () => {
+        repository
+          .toggleComplete(updatedTask.id)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: taskKeys.lists(), refetchType: 'none' });
+            queryClient.invalidateQueries({ queryKey: taskKeys.detail(updatedTask.id) });
+          })
+          .catch(() => {});
+      });
+    },
+
     // Optimistic update
     onMutate: async (id: string) => {
       // Cancel outgoing refetches

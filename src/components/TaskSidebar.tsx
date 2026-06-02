@@ -1,17 +1,19 @@
-import React, { useCallback, useState } from 'react';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
+import { showUndoToast } from '@/lib/undo-toast';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks, Task } from '@/modules/tasks';
+import { useTasks, useDeleteTask, useCreateTask, Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module events - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useEvents } from '@/modules/events';
+import { useEvents, useDeleteEvent } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
@@ -38,6 +40,9 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // EVENTS - Depuis le module events (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: events = [] } = useEvents();
+  const deleteEventMutation = useDeleteEvent();
+  const deleteTaskMutation = useDeleteTask();
+  const createTaskMutation = useCreateTask();
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
@@ -61,13 +66,86 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   }, []);
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
 
+  // ── Menu contextuel (long-press mobile / maintien-clic desktop) ──────────
+  const [contextMenu, setContextMenu] = useState<{ task: Task; x: number; y: number } | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const startLongPress = useCallback((e: React.PointerEvent, task: Task) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    longPressFired.current = false;
+    pressStart.current = { x: e.clientX, y: e.clientY };
+    cancelLongPress();
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+      // Positionne le menu près du point d'appui, en restant dans le viewport.
+      const x = Math.min(pressStart.current?.x ?? 0, window.innerWidth - 220);
+      const y = Math.min(pressStart.current?.y ?? 0, window.innerHeight - 200);
+      setContextMenu({ task, x: Math.max(8, x), y: Math.max(8, y) });
+    }, 500);
+  }, [cancelLongPress]);
+
+  const onPressMove = useCallback((e: React.PointerEvent) => {
+    if (!pressStart.current) return;
+    if (Math.abs(e.clientX - pressStart.current.x) > 10 || Math.abs(e.clientY - pressStart.current.y) > 10) {
+      cancelLongPress();
+    }
+  }, [cancelLongPress]);
+
+  // Ferme le menu sur clic extérieur / Échap / scroll.
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [contextMenu]);
+
+  const handleEditTask = (task: Task) => {
+    setContextMenu(null);
+    setSelectedTaskForModal(task);
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    setContextMenu(null);
+    deleteTaskMutation.mutate(task.id, {
+      onSuccess: () => {
+        const { id: _id, createdAt: _ca, ...rest } = task;
+        showUndoToast('Tâche supprimée', () => { createTaskMutation.mutate(rest); });
+      },
+    });
+  };
+
+  const handleDeleteLinkedEvent = (task: Task) => {
+    setContextMenu(null);
+    const linked = events.filter(ev => ev.taskId === task.id);
+    if (linked.length === 0) return;
+    linked.forEach(ev => deleteEventMutation.mutate(ev.id));
+  };
+
   // Filter tasks (exclude completed ones and respect priority range)
   const availableTasks = tasks.filter(task => 
     !task.completed &&
     task.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (filterCategory === '' || task.category === filterCategory) &&
     (filterPriority === '' || task.priority.toString() === filterPriority) &&
-    task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
+    // Priorité facultative : tâche sans priorité (0) toujours visible.
+    (task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1]))
   );
 
   const getCategoryColor = (category: string) => {
@@ -186,22 +264,39 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                   <div
                     key={task.id}
                     data-tutorial-id={idx === 0 ? 'agenda-first-task' : undefined}
-                    onClick={() => setSelectedTaskForModal(task)}
+                    onClick={() => {
+                      // Un long-press vient d'ouvrir le menu : ne pas ouvrir la modale.
+                      if (longPressFired.current) { longPressFired.current = false; return; }
+                      setSelectedTaskForModal(task);
+                    }}
+                    onContextMenu={(e) => {
+                      // Clic droit (desktop) → menu contextuel.
+                      e.preventDefault();
+                      longPressFired.current = true;
+                      const x = Math.min(e.clientX, window.innerWidth - 220);
+                      const y = Math.min(e.clientY, window.innerHeight - 200);
+                      setContextMenu({ task, x: Math.max(8, x), y: Math.max(8, y) });
+                    }}
                     className={`external-event rounded-lg p-3 border group select-none ${
                       isPlaced ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:shadow-md'
                     }`}
-                    style={{ 
+                    style={{
                       backgroundColor: isPlaced ? 'rgb(var(--color-hover))' : 'rgb(var(--color-surface))',
                       borderColor: 'rgb(var(--color-border))',
                       borderLeft: `4px solid ${getCategoryColor(task.category)}`,
                       position: 'relative',
-                      touchAction: 'none',
+                      // pan-y : permet le scroll vertical tactile de la liste sans
+                      // capturer le geste comme une sélection/drag (bug scroll mobile).
+                      touchAction: 'pan-y',
                       transition: isPlaced ? 'none' : 'background-color 0.2s, border-color 0.2s, box-shadow 0.2s'
                     }}
 
                   onMouseEnter={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
                     onMouseLeave={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))')}
-                    onPointerDown={() => !isPlaced && onDragStart?.()}
+                    onPointerDown={(e) => { if (!isPlaced) onDragStart?.(); startLongPress(e, task); }}
+                    onPointerMove={onPressMove}
+                    onPointerUp={cancelLongPress}
+                    onPointerCancel={cancelLongPress}
                     data-task={JSON.stringify(task)}
                   >
                 {isPlaced && (
@@ -224,9 +319,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                         )}
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                        P{task.priority}
-                      </span>
+                      {task.priority > 0 && (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                          P{task.priority}
+                        </span>
+                      )}
                       {(sharesByTask.get(task.id)?.length ?? 0) > 0 && (
                         <CollaboratorAvatars collaboratorIds={sharesByTask.get(task.id) ?? []} friends={friends} size="sm" />
                       )}
@@ -249,7 +346,9 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 </div>
                 
                 <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  Deadline: {new Date(task.deadline).toLocaleDateString('fr-FR')}
+                  {task.deadline
+                    ? `Deadline: ${new Date(task.deadline).toLocaleDateString('fr-FR')}`
+                    : 'Pas d\'échéance'}
                 </div>
                 
                 {/* Drag indicator */}
@@ -304,11 +403,55 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         </div>
       )}
 
+        {contextMenu && createPortal(
+          <div
+            className="fixed z-[9999] min-w-[200px] rounded-xl border shadow-2xl overflow-hidden py-1"
+            style={{
+              top: contextMenu.y,
+              left: contextMenu.x,
+              backgroundColor: 'rgb(var(--color-surface))',
+              borderColor: 'rgb(var(--color-border))',
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => handleEditTask(contextMenu.task)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
+              style={{ color: 'rgb(var(--color-text-primary))' }}
+            >
+              <Pencil size={16} className="text-blue-500 shrink-0" />
+              Modifier la tâche
+            </button>
+            {isTaskPlacedInCalendar(contextMenu.task.id) && (
+              <button
+                type="button"
+                onClick={() => handleDeleteLinkedEvent(contextMenu.task)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
+                style={{ color: 'rgb(var(--color-text-primary))' }}
+              >
+                <CalendarX size={16} className="text-orange-500 shrink-0" />
+                Supprimer l'événement associé
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleDeleteTask(contextMenu.task)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+            >
+              <Trash2 size={16} className="shrink-0" />
+              Supprimer la tâche
+            </button>
+          </div>,
+          document.body
+        )}
+
         {selectedTaskForModal && (
-          <TaskModal 
-            task={selectedTaskForModal} 
-            isOpen={!!selectedTaskForModal} 
-            onClose={() => setSelectedTaskForModal(null)} 
+          <TaskModal
+            task={selectedTaskForModal}
+            isOpen={!!selectedTaskForModal}
+            onClose={() => setSelectedTaskForModal(null)}
           />
         )}
       </div>
