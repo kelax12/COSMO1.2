@@ -142,6 +142,7 @@ interface MobileBodyProps {
   isLoading: boolean;
   isFormValid: () => boolean;
   taskId?: string;
+  autoOpenCollaborators?: boolean;
 }
 
 // ─── TaskModalMobileBody ──────────────────────────────────────────────────────
@@ -155,12 +156,17 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   createCategoryMutation,
   isPremium, setShowPremiumGate,
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
-  taskId,
+  taskId, autoOpenCollaborators,
 }) => {
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const [showListsModal, setShowListsModal] = useState(false);
   const [showCollabSheet, setShowCollabSheet] = useState(false);
+  // Ouvre directement la feuille Collaborateurs quand le modal est demandé
+  // pour le partage (bouton « ajouter un collaborateur » d'une tâche).
+  useEffect(() => {
+    if (autoOpenCollaborators) setShowCollabSheet(true);
+  }, [autoOpenCollaborators]);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [cellErrors, setCellErrors] = useState<Record<string, boolean>>({});
   const [showNewCatInput, setShowNewCatInput] = useState(false);
@@ -174,17 +180,13 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
 
   const handleCreateOrSave = () => {
     const nameOk = formData.name.trim().length >= 1;
-    const categoryOk = !!formData.category;
-    // Priorité facultative : ne bloque plus la validation.
-    setCellErrors({ name: !nameOk, category: !categoryOk });
-    if (nameOk && categoryOk) {
+    // Priorité + catégorie facultatives : seul le nom bloque.
+    setCellErrors({ name: !nameOk });
+    if (nameOk) {
       handleSave();
       return;
     }
-    const missing: string[] = [];
-    if (!nameOk) missing.push('name');
-    if (!categoryOk) missing.push('details');
-    trigger(missing);
+    trigger(['name']);
   };
 
   return (
@@ -531,7 +533,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     {i > 0 && <CellSeparator />}
                     <button
                       type="button"
-                      onClick={() => { handleInputChange('category', cat.id); setCellErrors(prev => ({ ...prev, category: false })); setShowCategorySheet(false); }}
+                      onClick={() => { handleInputChange('category', formData.category === cat.id ? '' : cat.id); setShowCategorySheet(false); }}
                       className="w-full flex items-center justify-between px-4 min-h-11 active:bg-gray-100 dark:active:bg-gray-800"
                     >
                       <span className="flex items-center gap-2.5">
@@ -968,11 +970,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       }
     }
 
-    // Priorité facultative : aucune validation bloquante.
-
-    if (!formData.category) {
-      newErrors.category = 'Veuillez choisir une catégorie';
-    }
+    // Priorité ET catégorie facultatives : aucune validation bloquante.
+    // Seul le nom est requis.
 
     // Échéance : facultative, n'est jamais bloquante (une date passée est
     // autorisée, ex. journalisation d'une tâche rétroactive).
@@ -988,17 +987,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
   // Temps estimé et échéance sont facultatifs → ne bloquent jamais.
   const isFormValid = () => {
-    const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
-    // Priorité facultative.
-    const categoryValid = !!formData.category;
-    return nameValid && categoryValid;
+    // Seul le nom est obligatoire (priorité + catégorie facultatives).
+    return formData.name.length >= 1 && formData.name.length <= 100;
   };
 
   const isStep1Valid = () => {
-    const nameValid = formData.name.trim().length >= 1 && formData.name.trim().length <= 100;
-    // Priorité facultative.
-    const categoryValid = !!formData.category;
-    return nameValid && categoryValid;
+    return formData.name.trim().length >= 1 && formData.name.trim().length <= 100;
   };
 
   // Liste des champs step 1 manquants — alimente le shake desktop.
@@ -1006,7 +1000,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const missingStep1Fields = (): string[] => {
     const m: string[] = [];
     if (!(formData.name.trim().length >= 1 && formData.name.trim().length <= 100)) m.push('name');
-    if (!formData.category) m.push('category');
     return m;
   };
 
@@ -1321,6 +1314,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             isLoading={isLoading}
             isFormValid={isFormValid}
             taskId={task?.id}
+            autoOpenCollaborators={showCollaborators}
           />
         ) : (
         <div
@@ -1513,7 +1507,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                               <button
                                 key={cat.id}
                                 type="button"
-                                onClick={() => handleInputChange('category', cat.id)}
+                                onClick={() => handleInputChange('category', formData.category === cat.id ? '' : cat.id)}
                                 className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
                                   formData.category === cat.id
                                     ? 'bg-blue-600 text-white shadow-sm'

@@ -51,7 +51,15 @@ export function expandRecurringEvents(
     }
 
     const durationMs = end.getTime() - start.getTime();
-    const stepDays = recurrence === 'daily' ? 1 : 7;
+    const isCustom = recurrence === 'custom';
+    const customDays = ev.recurrenceDays ?? [];
+    // 'custom' sans jour sélectionné → pas de répétition, on garde le master tel quel.
+    if (isCustom && customDays.length === 0) {
+      out.push(ev);
+      continue;
+    }
+    // daily ET custom avancent jour par jour (custom filtre par jour de semaine) ; weekly saute de 7.
+    const stepDays = recurrence === 'weekly' ? 7 : 1;
 
     // Calcule la première occurrence à projeter dans [from, to]
     const cursor = new Date(start);
@@ -67,17 +75,20 @@ export function expandRecurringEvents(
 
     let count = 0;
     while (cursor <= to && count < MAX_INSTANCES) {
-      const instanceStart = new Date(cursor);
-      const instanceEnd = new Date(instanceStart.getTime() + durationMs);
-      const dateKey = instanceStart.toISOString().split('T')[0];
+      // En mode custom, n'émettre que les jours de semaine cochés.
+      if (!isCustom || customDays.includes(cursor.getDay())) {
+        const instanceStart = new Date(cursor);
+        const instanceEnd = new Date(instanceStart.getTime() + durationMs);
+        const dateKey = instanceStart.toISOString().split('T')[0];
 
-      if (!ev.exceptions?.includes(dateKey)) {
-        out.push({
-          ...ev,
-          id: `${ev.id}::${dateKey}`,
-          start: instanceStart.toISOString(),
-          end: instanceEnd.toISOString(),
-        });
+        if (!ev.exceptions?.includes(dateKey)) {
+          out.push({
+            ...ev,
+            id: `${ev.id}::${dateKey}`,
+            start: instanceStart.toISOString(),
+            end: instanceEnd.toISOString(),
+          });
+        }
       }
 
       cursor.setDate(cursor.getDate() + stepDays);

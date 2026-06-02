@@ -203,13 +203,22 @@ export const useToggleTaskComplete = () => {
     onSuccess: (updatedTask) => {
       if (!updatedTask?.completed) return;
       showUndoToast('Tâche validée', () => {
+        // Mise à jour optimiste immédiate du cache : la tâche redevient
+        // « non complétée » et réapparaît tout de suite dans la liste active
+        // (sans attendre un refresh). On persiste ensuite le re-toggle.
+        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+          old?.map((t) => (t.id === updatedTask.id ? { ...t, completed: false, completedAt: undefined } : t))
+        );
         repository
           .toggleComplete(updatedTask.id)
           .then(() => {
-            queryClient.invalidateQueries({ queryKey: taskKeys.lists(), refetchType: 'none' });
+            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
             queryClient.invalidateQueries({ queryKey: taskKeys.detail(updatedTask.id) });
           })
-          .catch(() => {});
+          .catch(() => {
+            // En cas d'échec serveur, on resynchronise depuis la source.
+            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+          });
       });
     },
 

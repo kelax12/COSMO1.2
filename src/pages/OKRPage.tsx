@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
@@ -130,8 +131,13 @@ const OKRPage: React.FC = () => {
     }
   };
   const deleteObjective = (objectiveId: string) => {
+    const snapshot = objectives.find(o => o.id === objectiveId);
     deleteOkrMutation.mutate(objectiveId);
     setDeletingObjective(null);
+    if (snapshot) {
+      const { id: _id, ...rest } = snapshot;
+      showUndoToast('OKR supprimé', () => { createOkrMutation.mutate(rest); });
+    }
   };
 
   const handleEditObjective = (id: string) => {

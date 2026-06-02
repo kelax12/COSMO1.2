@@ -271,9 +271,10 @@ const TasksPage: React.FC = () => {
       );
     }
 
-    // Filtre par plage de priorité
-    result = result.filter(task => 
-      task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
+    // Filtre par plage de priorité — une tâche sans priorité (0, facultative)
+    // reste toujours visible.
+    result = result.filter(task =>
+      task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1])
     );
 
     // Filtre par liste sélectionnée — désactivé en mode "ajouter à une liste"
