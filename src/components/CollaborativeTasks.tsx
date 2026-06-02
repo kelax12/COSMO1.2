@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
-import CollaboratorModal from './CollaboratorModal';
 import AddToListModal from './AddToListModal';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -306,9 +305,13 @@ const CollaborativeTasks: React.FC = () => {
       {addToListTask && (
         <AddToListModal isOpen={true} onClose={() => setAddToListTask(null)} taskId={addToListTask} />
       )}
-      {collaboratorModalTaskId && (
-        <CollaboratorModal isOpen={!!collaboratorModalTaskId} onClose={() => setCollaboratorModalTaskId(null)} taskId={collaboratorModalTaskId} />
-      )}
+      {/* Collaborateurs — réutilise la vue Collaborateurs de TaskModal (étape 2). */}
+      {collaboratorModalTaskId && (() => {
+        const collabTask = tasks.find(t => t.id === collaboratorModalTaskId);
+        return collabTask ? (
+          <TaskModal task={collabTask} isOpen onClose={() => setCollaboratorModalTaskId(null)} showCollaborators />
+        ) : null;
+      })()}
       {taskToDelete && (
         <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <motion.div

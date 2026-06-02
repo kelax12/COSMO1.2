@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/interaction';
+import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, EventDragStartArg, EventDragStopArg, DatesSetArg } from '@fullcalendar/core';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
@@ -490,6 +490,20 @@ const AgendaPage: React.FC = () => {
     updateEventMutation.mutate({ id: event.id, updates: { start: newStart, end: newEnd } });
   };
 
+  // Persiste un redimensionnement (resize) d'event — tactile mobile ET souris
+  // desktop. Sans ce handler, FullCalendar applique le resize visuellement mais
+  // ne le persiste jamais : au prochain rendu l'event revient à sa durée initiale.
+  const handleEventResize = (resizeInfo: EventResizeDoneArg) => {
+    const masterId = getMasterId(resizeInfo.event.id);
+    const taskId = resizeInfo.event.extendedProps?.taskId;
+    const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
+    if (!event) { resizeInfo.revert(); return; }
+    const newStart = resizeInfo.event.start?.toISOString();
+    const newEnd = resizeInfo.event.end?.toISOString();
+    if (!newStart || !newEnd) { resizeInfo.revert(); return; }
+    updateEventMutation.mutate({ id: event.id, updates: { start: newStart, end: newEnd } });
+  };
+
   const handleEventReceive = (receiveInfo: EventReceiveArg) => {
     const eventData = receiveInfo.event;
     const newEvent: CreateEventInput = {
@@ -802,6 +816,7 @@ const AgendaPage: React.FC = () => {
               eventDragStart={handleEventDragStart}
               eventDragStop={handleEventDragStop}
               eventDrop={handleEventDrop}
+              eventResize={handleEventResize}
               eventReceive={handleEventReceive}
               unselectAuto={true}
               unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event"
@@ -863,6 +878,7 @@ const AgendaPage: React.FC = () => {
                 eventDragStart={handleEventDragStart}
                 eventDragStop={handleEventDragStop}
                 eventDrop={handleEventDrop}
+                eventResize={handleEventResize}
                 eventReceive={handleEventReceive}
                 unselectAuto={true}
                 unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event"

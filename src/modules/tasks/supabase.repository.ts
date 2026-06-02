@@ -14,7 +14,7 @@ interface TaskRow {
   description?: string;
   priority: number;
   category: string;
-  deadline: string;
+  deadline: string | null;
   estimated_time: number;
   created_at?: string;
   bookmarked?: boolean;
@@ -34,7 +34,7 @@ interface TaskDbInput {
   description?: string;
   priority?: number;
   category?: string;
-  deadline?: string;
+  deadline?: string | null;
   estimated_time?: number;
   bookmarked?: boolean;
   completed?: boolean;
@@ -291,7 +291,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       description: row.description,
       priority: row.priority,
       category: row.category,
-      deadline: row.deadline,
+      deadline: row.deadline ?? '',
       estimatedTime: row.estimated_time,
       createdAt: row.created_at,
       bookmarked: row.bookmarked ?? false,
@@ -310,7 +310,9 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (input.description !== undefined) result.description = input.description;
     if (input.priority !== undefined) result.priority = input.priority;
     if (input.category !== undefined) result.category = input.category;
-    if (input.deadline !== undefined) result.deadline = input.deadline;
+    // Échéance facultative : une chaîne vide signifie « pas de date » → NULL
+    // en base (la colonne deadline est un timestamp, '' n'est pas valide).
+    if (input.deadline !== undefined) result.deadline = input.deadline ? input.deadline : null;
     if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
     if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
     if (input.completed !== undefined) result.completed = input.completed;

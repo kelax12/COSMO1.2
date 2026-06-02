@@ -9,6 +9,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { showUndoToast } from '@/lib/undo-toast';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -173,16 +174,16 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
 
   const handleCreateOrSave = () => {
     const nameOk = formData.name.trim().length >= 1;
-    const priorityOk = formData.priority !== 0;
     const categoryOk = !!formData.category;
-    setCellErrors({ name: !nameOk, priority: !priorityOk, category: !categoryOk });
-    if (nameOk && priorityOk && categoryOk) {
+    // Priorité facultative : ne bloque plus la validation.
+    setCellErrors({ name: !nameOk, category: !categoryOk });
+    if (nameOk && categoryOk) {
       handleSave();
       return;
     }
     const missing: string[] = [];
     if (!nameOk) missing.push('name');
-    if (!priorityOk || !categoryOk) missing.push('details');
+    if (!categoryOk) missing.push('details');
     trigger(missing);
   };
 
@@ -795,7 +796,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // to bounce back to step 1 every time a mutation invalidated the React
   // Query cache — typically when sending a friend request from step 2.
   useEffect(() => {
-    if (isOpen) setStep(1);
+    // showCollaborators → ouvre directement l'étape 2 (Collaborateurs) sur
+    // desktop, pour réutiliser cette vue comme popup de partage unique.
+    if (isOpen) setStep(showCollaborators ? 2 : 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Initialize form data when task changes
@@ -833,7 +837,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     } else if (task) {
       setFormData({
         name: task.name || '',
-        priority: task.priority || 3,
+        priority: task.priority ?? 0,
         category: task.category || '',
         deadline: task.deadline ? task.deadline.split('T')[0] : '',
         estimatedTime: task.estimatedTime || 30,
@@ -964,9 +968,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       }
     }
 
-    if (formData.priority === 0) {
-      newErrors.priority = 'Veuillez choisir une priorité';
-    }
+    // Priorité facultative : aucune validation bloquante.
 
     if (!formData.category) {
       newErrors.category = 'Veuillez choisir une catégorie';
@@ -987,16 +989,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // Temps estimé et échéance sont facultatifs → ne bloquent jamais.
   const isFormValid = () => {
     const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
-    const priorityValid = formData.priority !== 0;
+    // Priorité facultative.
     const categoryValid = !!formData.category;
-    return nameValid && priorityValid && categoryValid;
+    return nameValid && categoryValid;
   };
 
   const isStep1Valid = () => {
     const nameValid = formData.name.trim().length >= 1 && formData.name.trim().length <= 100;
-    const priorityValid = formData.priority !== 0;
+    // Priorité facultative.
     const categoryValid = !!formData.category;
-    return nameValid && priorityValid && categoryValid;
+    return nameValid && categoryValid;
   };
 
   // Liste des champs step 1 manquants — alimente le shake desktop.
@@ -1004,7 +1006,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const missingStep1Fields = (): string[] => {
     const m: string[] = [];
     if (!(formData.name.trim().length >= 1 && formData.name.trim().length <= 100)) m.push('name');
-    if (formData.priority === 0) m.push('priority');
     if (!formData.category) m.push('category');
     return m;
   };
@@ -1040,7 +1041,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         name: formData.name,
         priority: formData.priority,
         category: formData.category,
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : new Date().toISOString(),
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
         estimatedTime: Number(formData.estimatedTime),
         completed: formData.completed,
         bookmarked: formData.bookmarked,
@@ -1079,7 +1080,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
         name: formData.name,
         priority: formData.priority,
         category: formData.category,
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : task.deadline,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
         estimatedTime: Number(formData.estimatedTime),
         completed: formData.completed,
         bookmarked: formData.bookmarked,
@@ -1157,10 +1158,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
   const confirmDelete = () => {
     if (task) {
+      const taskSnapshot = task;
       deleteTaskMutation.mutate(task.id, {
         onSuccess: () => {
           setShowDeleteConfirm(false);
           onClose();
+          // Raccourci d'annulation (barre de progression 5 s, haut à droite).
+          const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
+          showUndoToast('Tâche supprimée', () => {
+            createTaskMutation.mutate(rest);
+          });
         },
         onError: (err) => {
           console.error('Error deleting task:', err);
