@@ -12,8 +12,9 @@
  * - 'none'   : événement unique (par défaut)
  * - 'daily'  : tous les jours à la même heure
  * - 'weekly' : toutes les semaines au même jour de la semaine + heure
+ * - 'custom' : sur des jours de semaine choisis (cf. recurrenceDays)
  */
-export type EventRecurrence = 'none' | 'daily' | 'weekly';
+export type EventRecurrence = 'none' | 'daily' | 'weekly' | 'custom';
 
 export interface CalendarEvent {
   id: string;
@@ -25,6 +26,8 @@ export interface CalendarEvent {
   notes?: string;       // Additional notes
   taskId?: string;      // Optional link to a Task
   recurrence?: EventRecurrence; // Défaut: 'none'
+  // Jours de la semaine (0=dimanche … 6=samedi) pour recurrence === 'custom'
+  recurrenceDays?: number[];
   // Dates YYYY-MM-DD des occurrences supprimées individuellement (ne supprime pas le master)
   exceptions?: string[];
 }

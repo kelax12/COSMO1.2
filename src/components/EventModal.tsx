@@ -30,6 +30,11 @@ import { useFavoriteColors } from '@/modules/ui-states';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
+// Libellés courts des jours, indexés sur Date.getDay() (0 = dimanche).
+const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+// Ordre d'affichage lundi → dimanche pour le sélecteur de jours.
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
 type EventData = {
   title: string;
   start: string;
@@ -38,6 +43,7 @@ type EventData = {
   notes?: string;
   taskId?: string;
   recurrence?: EventRecurrence;
+  recurrenceDays?: number[];
 };
 
 type EventModalProps = {
@@ -102,6 +108,8 @@ const EventModal: React.FC<EventModalProps> = ({
   const [notes, setNotes] = useState("");
   const [color, setColor] = useState(categories[0]?.color || "#3B82F6");
   const [recurrence, setRecurrence] = useState<EventRecurrence>('none');
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  const [showDaysModal, setShowDaysModal] = useState(false);
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
@@ -118,6 +126,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setNotes(event.notes || "");
       setColor(event.color || "#3B82F6");
       setRecurrence(event.recurrence ?? 'none');
+      setRecurrenceDays(event.recurrenceDays ?? []);
 
       const start = new Date(event.start);
       const end = new Date(event.end);
@@ -128,6 +137,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndTime(end.toTimeString().slice(0, 5));
     } else if (mode === 'add' && task) {
       setRecurrence('none');
+      setRecurrenceDays([]);
       setTitle(task.name || "");
       if (task.name) prefilled.add("title");
 
@@ -186,6 +196,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setTitle(task.name || "");
       setNotes("");
       setRecurrence('none');
+      setRecurrenceDays([]);
 
       // Pré-remplir date + horaires (éditables) pour que la conversion ait des
       // valeurs par défaut sensées. Sans ça, les sélecteurs d'heure restaient
@@ -267,6 +278,7 @@ const EventModal: React.FC<EventModalProps> = ({
         notes: notes.trim(),
         taskId: task.id,
         recurrence,
+        recurrenceDays: recurrence === 'custom' ? recurrenceDays : [],
       });
       onClose();
       resetForm();
@@ -278,6 +290,7 @@ const EventModal: React.FC<EventModalProps> = ({
         color,
         notes: notes.trim(),
         recurrence,
+        recurrenceDays: recurrence === 'custom' ? recurrenceDays : [],
       });
     } else if (mode === 'convert' && onConvert) {
       onConvert({
@@ -287,6 +300,7 @@ const EventModal: React.FC<EventModalProps> = ({
         color,
         notes: notes.trim(),
         recurrence,
+        recurrenceDays: recurrence === 'custom' ? recurrenceDays : [],
       });
       onClose();
     }
@@ -302,6 +316,7 @@ const EventModal: React.FC<EventModalProps> = ({
     setNotes("");
     setColor(categories[0]?.color || "#3B82F6");
     setRecurrence('none');
+    setRecurrenceDays([]);
   };
 
   const handleDelete = () => {
@@ -524,6 +539,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     { value: 'none', label: 'Non' },
                     { value: 'daily', label: 'Jour' },
                     { value: 'weekly', label: 'Sem.' },
+                    { value: 'custom', label: 'Perso' },
                   ] as { value: EventRecurrence; label: string }[]).map((opt) => {
                     const active = recurrence === opt.value;
                     return (
@@ -532,7 +548,7 @@ const EventModal: React.FC<EventModalProps> = ({
                         key={opt.value}
                         role="radio"
                         aria-checked={active}
-                        onClick={() => setRecurrence(opt.value)}
+                        onClick={() => { setRecurrence(opt.value); if (opt.value === 'custom') setShowDaysModal(true); }}
                         className="px-2.5 py-1 rounded-full font-medium transition-colors text-[11px]"
                         style={{
                           backgroundColor: active ? 'rgb(var(--color-accent))' : 'transparent',
@@ -545,6 +561,24 @@ const EventModal: React.FC<EventModalProps> = ({
                   })}
                 </div>
               </div>
+              {/* Jours personnalisés — visible uniquement en récurrence 'custom' */}
+              {recurrence === 'custom' && (
+                <>
+                  <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
+                  <button
+                    type="button"
+                    onClick={() => setShowDaysModal(true)}
+                    className="w-full flex items-center px-4 min-h-11 gap-3 active:bg-gray-100 dark:active:bg-gray-800"
+                  >
+                    <span className="flex-1 text-left text-[15px] text-gray-900 dark:text-gray-100">Jours</span>
+                    <span className="text-[15px] text-blue-500">
+                      {recurrenceDays.length > 0
+                        ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')
+                        : 'Choisir'}
+                    </span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Section COULEUR — chip nominée par catégorie pour que
@@ -929,6 +963,7 @@ const EventModal: React.FC<EventModalProps> = ({
                           { value: 'none', label: 'Non' },
                           { value: 'daily', label: 'Tous les jours' },
                           { value: 'weekly', label: 'Toutes les semaines' },
+                          { value: 'custom', label: 'Personnaliser' },
                         ] as { value: EventRecurrence; label: string }[]).map((opt) => {
                           const active = recurrence === opt.value;
                           return (
@@ -937,7 +972,7 @@ const EventModal: React.FC<EventModalProps> = ({
                               key={opt.value}
                               role="radio"
                               aria-checked={active}
-                              onClick={() => setRecurrence(opt.value)}
+                              onClick={() => { setRecurrence(opt.value); if (opt.value === 'custom') setShowDaysModal(true); }}
                               className="px-3 py-1 rounded-full font-medium transition-colors"
                               style={{
                                 backgroundColor: active ? 'rgb(var(--color-accent))' : 'transparent',
@@ -950,6 +985,23 @@ const EventModal: React.FC<EventModalProps> = ({
                         })}
                       </div>
                     </div>
+                    {/* Jours personnalisés (récurrence 'custom') */}
+                    {recurrence === 'custom' && (
+                      <div className="flex items-center justify-between gap-3 mt-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--color-text-secondary))" }}>
+                          Jours
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowDaysModal(true)}
+                          className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                        >
+                          {recurrenceDays.length > 0
+                            ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')
+                            : 'Choisir les jours'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1139,6 +1191,87 @@ const EventModal: React.FC<EventModalProps> = ({
         isOpen={isColorSettingsOpen}
         onClose={() => setIsColorSettingsOpen(false)}
       />
+
+      {/* Modal de sélection des jours de répétition (récurrence personnalisée) */}
+      <AnimatePresence>
+        {showDaysModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center z-[70] sm:p-4"
+            onClick={() => setShowDaysModal(false)}
+          >
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              className="rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full sm:max-w-md"
+              style={{ backgroundColor: 'rgb(var(--color-surface))', paddingBottom: 'env(safe-area-inset-bottom)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sm:hidden flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              </div>
+              <div className="px-5 sm:px-6 py-4">
+                <h3 className="text-base font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  Répéter les jours
+                </h3>
+                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Sélectionnez les jours de la semaine où l'événement se répète.
+                </p>
+                <div className="space-y-1">
+                  {DAY_ORDER.map((d) => {
+                    const checked = recurrenceDays.includes(d);
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        role="checkbox"
+                        aria-checked={checked}
+                        onClick={() =>
+                          setRecurrenceDays((prev) =>
+                            prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
+                          )
+                        }
+                        className="w-full flex items-center justify-between px-3 min-h-11 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))]"
+                      >
+                        <span className="text-[15px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                          {['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][d]}
+                        </span>
+                        <span
+                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                            checked ? 'bg-blue-500 border-blue-500' : 'border-slate-400 dark:border-slate-500'
+                          }`}
+                        >
+                          {checked && (
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Si aucun jour coché en sortie, on revient à 'none' pour éviter
+                    // une récurrence custom vide silencieuse.
+                    if (recurrenceDays.length === 0) setRecurrence('none');
+                    setShowDaysModal(false);
+                  }}
+                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Valider
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showDeleteConfirm && (

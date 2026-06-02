@@ -5,6 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, EventDragStartArg, EventDragStopArg, DatesSetArg } from '@fullcalendar/core';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
+import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2 } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
@@ -284,7 +285,10 @@ const AgendaPage: React.FC = () => {
       if (container && !draggableRef.current) {
         draggableRef.current = new Draggable(container, {
           itemSelector: '.external-event',
-          longPressDelay: 50,
+          // 250ms (au lieu de 50) : un swipe vertical rapide scrolle la liste
+          // au lieu de démarrer un drag → permet de scroller sans sélectionner
+          // une tâche sur mobile (combiné à touch-action: pan-y sur les cartes).
+          longPressDelay: 250,
           eventData: function (eventEl) {
             const taskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
             const catColor = categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280';
@@ -559,13 +563,22 @@ const AgendaPage: React.FC = () => {
   const handleDeleteEvent = (eventId: string) => {
     const master = events.find(e => e.id === eventId);
     const isRecurring = master && (master.recurrence ?? 'none') !== 'none';
+    const instanceDate = selectedInstanceDate;
 
-    if (isRecurring && selectedInstanceDate) {
+    if (isRecurring && instanceDate && master) {
       // Suppression d'une seule occurrence : ajouter la date dans les exceptions du master
-      const newExceptions = [...(master.exceptions ?? []), selectedInstanceDate];
-      updateEventMutation.mutate({ id: eventId, updates: { exceptions: newExceptions } });
-    } else {
+      const prevExceptions = master.exceptions ?? [];
+      updateEventMutation.mutate({ id: eventId, updates: { exceptions: [...prevExceptions, instanceDate] } });
+      showUndoToast('Occurrence supprimée', () => {
+        // Annulation : retire la date des exceptions → l'occurrence réapparaît.
+        updateEventMutation.mutate({ id: eventId, updates: { exceptions: prevExceptions } });
+      });
+    } else if (master) {
+      const { id: _id, ...rest } = master;
       deleteEventMutation.mutate(eventId);
+      showUndoToast('Événement supprimé', () => {
+        createEventMutation.mutate(rest as CreateEventInput);
+      });
     }
     setShowEditEventModal(false);
     setSelectedEvent(null);
