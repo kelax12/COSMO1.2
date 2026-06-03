@@ -12,7 +12,6 @@ import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
-import OnboardingOverlay from '@/components/OnboardingOverlay';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
@@ -200,7 +199,6 @@ const App: React.FC = () => {
             />
             <AppRoutes />
             <CookieBanner />
-            <OnboardingOverlay />
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
