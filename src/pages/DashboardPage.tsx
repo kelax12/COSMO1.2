@@ -378,11 +378,14 @@ const DashboardPage: React.FC = () => {
           className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
           variants={containerVariants}
         >
-          {/* Colonne gauche - Graphiques + Tâches + OKR */}
+          {/* Colonne gauche - Tâches prioritaires (gros format) + Graphiques + OKR */}
           <motion.div
             className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
+            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
+              <TodayTasks />
+            </MobileCollapsible>
             <DashboardBarChart viewMode={viewMode} />
             <MobileCollapsible title="Tâches collaboratives">
               <CollaborativeTasks />
@@ -392,16 +395,13 @@ const DashboardPage: React.FC = () => {
             </MobileCollapsible>
           </motion.div>
 
-          {/* Colonne droite - Habitudes du jour + Tâches prioritaires */}
+          {/* Colonne droite - Habitudes du jour */}
           <motion.div
             className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
             <MobileCollapsible title="Habitudes du jour">
               <TodayHabits />
-            </MobileCollapsible>
-            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
-              <TodayTasks />
             </MobileCollapsible>
           </motion.div>
         </motion.div>
