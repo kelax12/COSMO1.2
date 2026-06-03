@@ -3,7 +3,7 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, X } from 'lucide-react';
+import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -77,6 +77,7 @@ interface TaskCardProps {
   onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
+  onDuplicate: (id: string) => void;
 }
 
 const TaskCard = React.memo(({
@@ -91,6 +92,7 @@ const TaskCard = React.memo(({
   onAddToList,
   onDeleteTask,
   onScheduleTask,
+  onDuplicate,
 }: TaskCardProps) => {
   // Lookup catégorie via hook React Query — re-render automatique quand
   // les catégories Supabase finissent de charger (asynchrone en prod).
@@ -293,8 +295,10 @@ const TaskCard = React.memo(({
           {task.name}
         </p>
         <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <span className={isOverdue ? 'text-red-500 font-semibold' : ''}>
+          <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-1' : ''}>
+            {isOverdue && <AlertTriangle size={11} aria-hidden="true" />}
             {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
+            {isOverdue && <span className="sr-only"> (en retard)</span>}
           </span>
           <span>·</span>
           <span>{task.estimatedTime}min</span>
@@ -399,6 +403,13 @@ const TaskCard = React.memo(({
               <MoreHorizontal size={18} />
             </button>
             <button
+              onClick={(e) => { e.stopPropagation(); onDuplicate(task.id); setActionsVisible(false); }}
+              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              aria-label="Dupliquer la tâche"
+            >
+              <Copy size={18} />
+            </button>
+            <button
               onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
               className="min-w-11 min-h-11 p-2 rounded-lg text-red-500 flex items-center justify-center"
               aria-label="Supprimer la tâche"
@@ -454,6 +465,7 @@ interface VirtualizedTaskListProps {
   onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
+  onDuplicate: (id: string) => void;
 }
 
 const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
@@ -472,6 +484,7 @@ const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
     onAddToList: props.onAddToList,
     onDeleteTask: props.onDeleteTask,
     onScheduleTask: props.onScheduleTask,
+    onDuplicate: props.onDuplicate,
   });
 
   // useWindowVirtualizer : le scroll est sur la fenêtre (les pages COSMO
@@ -618,6 +631,30 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const handleToggleBookmark = useCallback((taskId: string) => {
     toggleBookmarkMutation.mutate(taskId);
   }, [toggleBookmarkMutation]);
+
+  // Duplique une tâche : nouvelle tâche pré-remplie « (copie) », non complétée.
+  const handleDuplicate = useCallback((taskId: string) => {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t) return;
+    createMutation.mutate({
+      name: `${t.name} (copie)`,
+      priority: t.priority,
+      category: t.category,
+      deadline: t.deadline,
+      estimatedTime: t.estimatedTime,
+      bookmarked: t.bookmarked,
+      completed: false,
+    });
+  }, [tasks, createMutation]);
+
+  // Hint de découvrabilité des gestes (mobile) — affiché une fois, dismissable.
+  const [swipeHintDismissed, setSwipeHintDismissed] = useState<boolean>(() => {
+    try { return localStorage.getItem('cosmo_swipe_hint_dismissed') === '1'; } catch { return false; }
+  });
+  const dismissSwipeHint = () => {
+    setSwipeHintDismissed(true);
+    try { localStorage.setItem('cosmo_swipe_hint_dismissed', '1'); } catch { /* ignore */ }
+  };
 
   // Filtrage et tri mémoïsés
   const filteredAndSortedTasks = useMemo(() => {
@@ -985,8 +1022,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
                       >
                         <UserPlus size={16} />
                       </button>
-                        <button 
-                          onClick={() => setTaskToDelete(task.id)} 
+                        <button
+                          onClick={() => handleDuplicate(task.id)}
+                          className="p-2 rounded transition-colors"
+                          style={{ color: 'rgb(var(--color-text-muted))' }}
+                          aria-label="Dupliquer la tâche"
+                          title="Dupliquer"
+                        >
+                          <Copy size={16} />
+                        </button>
+                        <button
+                          onClick={() => setTaskToDelete(task.id)}
                           className="p-2 rounded transition-colors"
                           style={{ color: 'rgb(var(--color-text-muted))' }}
                         >
@@ -1008,6 +1054,26 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
+        {/* Hint de découvrabilité des gestes (affiché une fois) */}
+        {!swipeHintDismissed && !addToListMode && sortedTasks.length > 0 && (
+          <div
+            className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg text-xs"
+            style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
+          >
+            <span className="flex-1">
+              💡 Glissez à droite pour valider · maintenez (ou « ⋯ ») pour les options
+            </span>
+            <button
+              type="button"
+              onClick={dismissSwipeHint}
+              aria-label="Masquer l'astuce"
+              className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-[rgb(var(--color-surface))]"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         <VirtualizedTaskList
           tasks={sortedTasks}
           addToListMode={addToListMode}
@@ -1020,6 +1086,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onAddToList={setAddToListTask}
           onDeleteTask={setTaskToDelete}
           onScheduleTask={setTaskToEventModal}
+          onDuplicate={handleDuplicate}
         />
       </div>
 

@@ -37,7 +37,8 @@ const CookieBanner: React.FC = () => {
   return (
     <AnimatePresence>
       {visible && (
-        <motion.div
+        <motion.aside
+          aria-label="Bannière cookies"
           initial={{ y: 120, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
@@ -133,7 +134,7 @@ const CookieBanner: React.FC = () => {
             </div>
 
           </div>
-        </motion.div>
+        </motion.aside>
       )}
     </AnimatePresence>
   );

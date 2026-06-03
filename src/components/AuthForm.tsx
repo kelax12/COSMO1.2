@@ -150,7 +150,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             <div className="w-full border-t border-slate-700"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-3 bg-slate-900 text-slate-500">ou continuer avec un email</span>
+            <span className="px-3 bg-slate-900 text-slate-400">ou continuer avec un email</span>
           </div>
         </div>
 
@@ -241,7 +241,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
       </form>
 
       <div className="mt-6 pt-6 border-t border-slate-700/50 text-center">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-400">
           {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}
         </p>
         <button
