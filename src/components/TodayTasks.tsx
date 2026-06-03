@@ -190,9 +190,9 @@ const TodayTasks: React.FC = () => {
                           <span>Priorité {task.priority}</span>
                         </div>
                       )}
-                      {task.deadline && (
-                        <div className="text-xs whitespace-nowrap">{new Date(task.deadline).toLocaleDateString('fr-FR')}</div>
-                      )}
+                      <div className="text-xs whitespace-nowrap">
+                        {task.deadline ? new Date(task.deadline).toLocaleDateString('fr-FR') : "Pas d'échéance"}
+                      </div>
                     </div>
                   </div>
 

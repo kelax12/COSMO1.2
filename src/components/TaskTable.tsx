@@ -293,7 +293,9 @@ const TaskCard = React.memo(({
           {task.name}
         </p>
         <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <span className={isOverdue ? 'text-red-500 font-semibold' : ''}>{formatDate(task.deadline)}</span>
+          <span className={isOverdue ? 'text-red-500 font-semibold' : ''}>
+            {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
+          </span>
           <span>·</span>
           <span>{task.estimatedTime}min</span>
           {task.sharedBy ? (
@@ -927,7 +929,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 </td>
                 <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>
                   {task.priority === 0 ? (
-                    <span className="inline-flex justify-center items-center w-8 h-8 text-base font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <span
+                      className="inline-flex justify-center items-center w-8 h-8 text-base font-medium"
+                      style={{ color: 'rgb(var(--color-text-muted))' }}
+                      title="Aucune priorité"
+                      aria-label="Aucune priorité"
+                    >
                       —
                     </span>
                   ) : (
@@ -939,7 +946,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
                   {activeQuickFilter === 'terminées'
                     ? (task.completedAt ? formatDate(task.completedAt) : '—')
-                    : formatDate(task.deadline)}
+                    : (task.deadline
+                        ? formatDate(task.deadline)
+                        : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Pas d'échéance</span>)}
                 </td>
                 <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.estimatedTime}</td>
                 <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
