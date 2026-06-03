@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -36,6 +36,12 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const handleNav = (to: string) => {
     handleClose();
     navigate(to);
+  };
+
+  const handleSearch = () => {
+    handleClose();
+    // Laisse la feuille se fermer avant d'ouvrir la palette (overlay propre).
+    setTimeout(() => window.dispatchEvent(new CustomEvent('open-command-palette')), 280);
   };
 
   const initials = user
@@ -111,6 +117,29 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                     )}
                     <ChevronRight size={18} className="text-gray-400 dark:text-gray-600" />
                   </div>
+                </button>
+              </div>
+
+              {/* — Recherche (palette de commandes) — */}
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="w-full flex items-center gap-3.5 px-4 min-h-[60px] text-left transition-colors active:bg-gray-100 dark:active:bg-gray-800"
+                  aria-label="Rechercher (navigation et actions rapides)"
+                >
+                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 bg-blue-500">
+                    <Search size={20} className="text-white" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-medium text-gray-900 dark:text-gray-100 leading-snug">
+                      Rechercher
+                    </p>
+                    <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                      Navigation & actions rapides
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-300 dark:text-gray-600 shrink-0" />
                 </button>
               </div>
 
