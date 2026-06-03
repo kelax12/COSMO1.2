@@ -197,7 +197,7 @@ const NavItems = () =>
             style={{
               backgroundColor: 'rgb(var(--color-surface))',
               borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-muted))',
+              color: 'rgb(var(--color-text-secondary))',
             }}
           >
             <Search size={18} aria-hidden="true" />
@@ -221,7 +221,7 @@ const NavItems = () =>
 
         {/* Section Company */}
         <div className={`border-t ${isCollapsed ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
-          {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-muted))' }}>AUTRE</div>}
+          {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>AUTRE</div>}
           {CompanyItems()}
         </div>
       </aside>

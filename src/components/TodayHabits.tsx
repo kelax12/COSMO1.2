@@ -102,11 +102,11 @@ const TodayHabits: React.FC = () => {
                       {habit.name}
                     </h3>
                 <div className="flex items-center gap-4 mt-1">
-                  <div className={`flex items-center gap-1 text-sm ${habit.completedToday ? 'text-blue-100 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
+                  <div className={`flex items-center gap-1 text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                     <Clock size={14} />
                     <span>{habit.estimatedTime} min</span>
                   </div>
-                  <div className={`flex items-center gap-1 text-sm font-medium ${habit.completedToday ? 'text-white/90 dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                  <div className={`flex items-center gap-1 text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     <span>🔥</span>
                     <span>{Object.values(habit.completions).filter(Boolean).length} jours</span>
                   </div>

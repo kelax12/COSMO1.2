@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX } from 'lucide-react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -136,6 +136,19 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     const linked = events.filter(ev => ev.taskId === task.id);
     if (linked.length === 0) return;
     linked.forEach(ev => deleteEventMutation.mutate(ev.id));
+  };
+
+  const handleDuplicateTask = (task: Task) => {
+    setContextMenu(null);
+    createTaskMutation.mutate({
+      name: `${task.name} (copie)`,
+      priority: task.priority,
+      category: task.category,
+      deadline: task.deadline,
+      estimatedTime: task.estimatedTime,
+      bookmarked: task.bookmarked,
+      completed: false,
+    });
   };
 
   // Filter tasks (exclude completed ones and respect priority range)
@@ -336,13 +349,34 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     <Clock size={12} />
                     <span>{task.estimatedTime} min</span>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded border" style={{ 
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    borderColor: 'rgb(var(--color-border))',
-                    color: 'rgb(var(--color-text-secondary))'
-                  }}>
-                    {colorSettings[task.category] || 'Sans catégorie'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs px-2 py-1 rounded border" style={{
+                      backgroundColor: 'rgb(var(--color-surface))',
+                      borderColor: 'rgb(var(--color-border))',
+                      color: 'rgb(var(--color-text-secondary))'
+                    }}>
+                      {colorSettings[task.category] || 'Sans catégorie'}
+                    </span>
+                    {/* Point d'entrée VISIBLE vers le menu d'options (= long-press / clic droit).
+                        Toujours visible sur mobile, au survol sur desktop. */}
+                    <button
+                      type="button"
+                      aria-label="Options de la tâche"
+                      onPointerDown={(e) => { e.stopPropagation(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        longPressFired.current = true; // empêche l'ouverture de la modale par le onClick parent
+                        const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                        const x = Math.min(r.right - 200, window.innerWidth - 220);
+                        const y = Math.min(r.bottom + 4, window.innerHeight - 220);
+                        setContextMenu({ task, x: Math.max(8, x), y: Math.max(8, y) });
+                      }}
+                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md transition-opacity opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-[rgb(var(--color-hover))]"
+                      style={{ color: 'rgb(var(--color-text-muted))' }}
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
@@ -423,6 +457,15 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             >
               <Pencil size={16} className="text-blue-500 shrink-0" />
               Modifier la tâche
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDuplicateTask(contextMenu.task)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
+              style={{ color: 'rgb(var(--color-text-primary))' }}
+            >
+              <Copy size={16} className="text-blue-500 shrink-0" />
+              Dupliquer la tâche
             </button>
             {isTaskPlacedInCalendar(contextMenu.task.id) && (
               <button
