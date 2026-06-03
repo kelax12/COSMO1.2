@@ -6,7 +6,6 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { useEvents } from '@/modules/events';
-import DashboardChart from '../components/DashboardChart';
 import DashboardBarChart from '../components/DashboardBarChart';
 import TodayHabits from '../components/TodayHabits';
 import InboxMenu from '../components/InboxMenu';
@@ -384,7 +383,6 @@ const DashboardPage: React.FC = () => {
             className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
-            <DashboardChart viewMode={viewMode} />
             <DashboardBarChart viewMode={viewMode} />
             <MobileCollapsible title="Tâches collaboratives">
               <CollaborativeTasks />

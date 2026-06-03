@@ -20,6 +20,10 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 
+// Graphique multi-séries « Temps de travail » (déplacé du Dashboard).
+// Lazy : recharts ne charge que si l'utilisateur ouvre la vue détaillée (faille P-2).
+const DashboardChart = React.lazy(() => import('@/components/DashboardChart'));
+
 type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
 type TimePeriod = 'day' | 'week' | 'month' | 'year';
 
@@ -278,6 +282,9 @@ export default function StatisticsPage() {
   const { isPremium } = useBilling();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
+  // Vue d'ensemble : bascule entre le graphique « Tout » (une courbe agrégée)
+  // et « voir le détail » (multi-courbes par catégorie, ex-Dashboard).
+  const [overviewDetail, setOverviewDetail] = useState(false);
   const [showReferenceBar, setShowReferenceBar] = useState(true);
   const [referenceValue, setReferenceValue] = useState(60);
   const [now, setNow] = useState(new Date());
@@ -591,7 +598,46 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Graphique principal — Area Chart */}
+      {/* Vue d'ensemble : toggle Tout / voir le détail */}
+      {selectedSection === 'all' && (
+        <div className="flex justify-end mb-3">
+          <div className="inline-flex rounded-xl border p-0.5" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
+            <button
+              type="button"
+              onClick={() => setOverviewDetail(false)}
+              aria-pressed={!overviewDetail}
+              className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+              style={{
+                backgroundColor: !overviewDetail ? 'rgb(var(--color-accent))' : 'transparent',
+                color: !overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
+              }}
+            >
+              Tout
+            </button>
+            <button
+              type="button"
+              onClick={() => setOverviewDetail(true)}
+              aria-pressed={overviewDetail}
+              className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+              style={{
+                backgroundColor: overviewDetail ? 'rgb(var(--color-accent))' : 'transparent',
+                color: overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
+              }}
+            >
+              Voir le détail
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Graphique principal */}
+      {selectedSection === 'all' && overviewDetail ? (
+        <div className="mb-8">
+          <React.Suspense fallback={<div className="card p-6 h-[340px] animate-pulse" />}>
+            <DashboardChart viewMode={selectedPeriod === 'day' ? 'jour' : selectedPeriod === 'week' ? 'semaine' : 'mois'} />
+          </React.Suspense>
+        </div>
+      ) : (
       <div className="card p-6 mb-8">
         <div className={(!isMobile && selectedSection === 'habits') ? 'relative' : ''} style={(!isMobile && selectedSection === 'habits') ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
@@ -699,6 +745,7 @@ export default function StatisticsPage() {
         </div>
 
       </div>
+      )}
 
       {/* Heatmap habitudes sur mobile — card standalone sous le graphique */}
       {isMobile && selectedSection === 'habits' && (
