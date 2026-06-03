@@ -308,7 +308,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   </div>
 
                   {/* Scrollable body */}
-                  <form id="habit-form" onSubmit={handleSubmit} data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
+                  <form id="habit-form" onSubmit={handleSubmit} data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="sm:col-span-2" ref={register('name')}>
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -382,7 +382,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       {categories.length > 0 && (
                         <div
                           className="mt-3 p-2.5 rounded-xl border"
-                          style={{ borderColor: 'rgb(var(--color-border))' }}
+                          style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
                         >
                           <h4
                             className="text-[10px] font-bold uppercase tracking-widest mb-2"

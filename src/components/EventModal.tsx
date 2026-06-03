@@ -717,6 +717,7 @@ const EventModal: React.FC<EventModalProps> = ({
             onSubmit={handleSubmit}
             data-scroll-area
             className="p-4 md:p-5 overflow-y-auto h-[calc(100%-64px)] md:h-auto md:max-h-[calc(90vh-64px)]"
+            style={{ backgroundColor: 'rgb(var(--color-background))' }}
           >
             <div className="flex flex-col md:grid md:grid-cols-12 gap-5">
               <div className="md:col-span-7 space-y-3">
@@ -1111,9 +1112,10 @@ const EventModal: React.FC<EventModalProps> = ({
 
                   {categories.length > 0 && (
                     <div
-                      className="p-2.5 rounded-xl border bg-transparent transition-colors overflow-hidden"
+                      className="p-2.5 rounded-xl border transition-colors overflow-hidden"
                       style={{
                         borderColor: "rgb(var(--color-border))",
+                        backgroundColor: "rgb(var(--color-surface))",
                       }}
                     >
                       <h4

@@ -1358,7 +1358,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             </button>
           </div>
 
-          <div className="p-6 overflow-y-auto h-[calc(100%-72px)] md:h-auto">
+          <div className="p-6 overflow-y-auto h-[calc(100%-72px)] md:h-auto" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
             {/* Error display */}
             {errors.general &&
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">

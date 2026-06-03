@@ -534,7 +534,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
               </div>
 
               {/* Scrollable content */}
-              <div data-scroll-area className="flex-1 overflow-y-auto">
+              <div data-scroll-area className="flex-1 overflow-y-auto" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
                 {/* Progress bar */}
                 <div className="flex gap-1.5 px-6 pt-3 pb-1">
                   {[1, 2].map((s) => (
