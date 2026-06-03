@@ -5,6 +5,7 @@ import {
   AreaChart,
   Area,
   XAxis,
+  YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
@@ -45,6 +46,15 @@ const formatMinutes = (minutes: number): string => {
   if (h > 0 && m > 0) return `${h}h ${m}m`;
   if (h > 0) return `${h}h`;
   return `${m}m`;
+};
+
+// Format compact pour les graduations de l'axe Y (temps).
+const formatMinutesShort = (minutes: number): string => {
+  if (minutes <= 0) return '0';
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const h = minutes / 60;
+  // 1 décimale uniquement si non entier (ex. 1,5h)
+  return Number.isInteger(h) ? `${h}h` : `${h.toFixed(1)}h`;
 };
 
 const CustomTooltip = ({ active, payload, label }: {
@@ -209,6 +219,14 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
               axisLine={false}
               tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11, fontWeight: 600 }}
               tickMargin={8}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={4}
+              width={40}
+              tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11, fontWeight: 600 }}
+              tickFormatter={(v: number) => formatMinutesShort(v)}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
             {SERIES.map(s => (
