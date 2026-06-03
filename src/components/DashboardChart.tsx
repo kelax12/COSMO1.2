@@ -48,13 +48,30 @@ const formatMinutes = (minutes: number): string => {
   return `${m}m`;
 };
 
-// Format compact pour les graduations de l'axe Y (temps).
-const formatMinutesShort = (minutes: number): string => {
+// Format des graduations de l'axe Y (temps) : heures entières (« 2h ») ou,
+// sous une heure, en minutes (« 30min »). Jamais de décimales.
+const formatYTick = (minutes: number): string => {
   if (minutes <= 0) return '0';
-  if (minutes < 60) return `${Math.round(minutes)}m`;
-  const h = minutes / 60;
-  // 1 décimale uniquement si non entier (ex. 1,5h)
-  return Number.isInteger(h) ? `${h}h` : `${h.toFixed(1)}h`;
+  if (minutes < 60) return `${Math.round(minutes)}min`;
+  return `${Math.round(minutes / 60)}h`;
+};
+
+// Calcule des graduations Y « propres » (multiples de 60 min, ou pas de 30 min
+// si le maximum est sous une heure) pour garantir des libellés sans décimales.
+const computeYAxis = (maxValue: number): { ticks: number[]; domainMax: number } => {
+  if (maxValue <= 0) return { ticks: [0, 60], domainMax: 60 };
+  if (maxValue < 60) {
+    const top = Math.ceil(maxValue / 30) * 30 || 30;
+    const ticks: number[] = [];
+    for (let v = 0; v <= top; v += 30) ticks.push(v);
+    return { ticks, domainMax: top };
+  }
+  const maxHours = Math.ceil(maxValue / 60);
+  const stepHours = Math.max(1, Math.ceil(maxHours / 4)); // ~4-5 graduations
+  const topHours = Math.ceil(maxHours / stepHours) * stepHours;
+  const ticks: number[] = [];
+  for (let h = 0; h <= topHours; h += stepHours) ticks.push(h * 60);
+  return { ticks, domainMax: topHours * 60 };
 };
 
 const CustomTooltip = ({ active, payload, label }: {
@@ -154,6 +171,14 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
     return points;
   }, [tasks, events, habits, okrs, krCompletions, viewMode]);
 
+  const { ticks: yTicks, domainMax: yDomainMax } = useMemo(() => {
+    const maxValue = Math.max(
+      0,
+      ...chartData.flatMap((p) => [p.tasks, p.events, p.okrs, p.habits])
+    );
+    return computeYAxis(maxValue);
+  }, [chartData]);
+
   const periodLabel = viewMode === 'jour' ? '7 derniers jours' : viewMode === 'semaine' ? '4 dernières semaines' : '6 derniers mois';
 
   return (
@@ -225,8 +250,10 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
               axisLine={false}
               tickMargin={4}
               width={40}
+              domain={[0, yDomainMax]}
+              ticks={yTicks}
               tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11, fontWeight: 600 }}
-              tickFormatter={(v: number) => formatMinutesShort(v)}
+              tickFormatter={(v: number) => formatYTick(v)}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
             {SERIES.map(s => (
