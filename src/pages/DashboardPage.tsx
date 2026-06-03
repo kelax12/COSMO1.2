@@ -90,6 +90,10 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
   );
 };
 
+// Affichage du graphique "Répartition du temps" (DashboardBarChart).
+// Masqué pour l'instant — passer à true pour le réafficher.
+const SHOW_REPARTITION_CHART = false;
+
 const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('jour');
   const weeklyCheckin = useWeeklyCheckin();
@@ -386,7 +390,9 @@ const DashboardPage: React.FC = () => {
             <MobileCollapsible title="Tâches prioritaires" defaultOpen>
               <TodayTasks />
             </MobileCollapsible>
-            <DashboardBarChart viewMode={viewMode} />
+            {/* Graphique "Répartition du temps" masqué (conservé dans le code,
+                réactivable en repassant SHOW_REPARTITION_CHART à true). */}
+            {SHOW_REPARTITION_CHART && <DashboardBarChart viewMode={viewMode} />}
             <MobileCollapsible title="Tâches collaboratives">
               <CollaborativeTasks />
             </MobileCollapsible>
