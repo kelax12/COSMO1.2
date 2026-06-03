@@ -300,9 +300,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // (existing callsites do not await this function).
     clearDemoStorage();
     appModeStore.setDemo(true);
-    // Déclenche le tutoriel d'onboarding pour les nouveaux arrivants
-    // (lu et effacé par OnboardingOverlay au prochain mount de Dashboard).
-    try { localStorage.setItem('cosmo_onboarding_pending', '1'); } catch { /* ignore */ }
     resetRepositories();
     queryClient.clear();
     setUser({
