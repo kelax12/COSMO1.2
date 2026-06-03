@@ -9,6 +9,7 @@ import {
   Crown,
   Settings,
   Repeat,
+  Search,
   ChevronLeft,
   ChevronRight } from
   'lucide-react';
@@ -17,6 +18,16 @@ import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import MobileTabBar from './layout/MobileTabBar';
+
+// Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
+const IS_MAC =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+
+// Ouvre la palette de commandes (écoutée dans CommandPalette.tsx).
+const openCommandPalette = () => {
+  window.dispatchEvent(new CustomEvent('open-command-palette'));
+};
 
 // Couleurs du graphique "Répartition du temps"
 const CHART_COLORS = {
@@ -173,6 +184,35 @@ const NavItems = () =>
             <div className="mt-6 flex justify-center w-full">
               <ThemeToggle />
             </div>
+        </div>
+
+        {/* Recherche — rend la palette de commandes (⌘K) découvrable à la souris */}
+        <div className={`${isCollapsed ? 'px-2' : 'px-4'} pt-4`}>
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label={`Rechercher (${IS_MAC ? 'Cmd' : 'Ctrl'}+K)`}
+            title={`Rechercher (${IS_MAC ? '⌘K' : 'Ctrl K'})`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-2 px-3'} h-10 rounded-lg border transition-colors hover:border-blue-500`}
+            style={{
+              backgroundColor: 'rgb(var(--color-surface))',
+              borderColor: 'rgb(var(--color-border))',
+              color: 'rgb(var(--color-text-muted))',
+            }}
+          >
+            <Search size={18} aria-hidden="true" />
+            {!isCollapsed && (
+              <>
+                <span className="flex-1 text-left text-sm">Rechercher</span>
+                <kbd
+                  className="text-[11px] px-1.5 py-0.5 rounded border"
+                  style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}
+                >
+                  {IS_MAC ? '⌘K' : 'Ctrl K'}
+                </kbd>
+              </>
+            )}
+          </button>
         </div>
 
         <nav className={`flex-1 ${isCollapsed ? 'px-2' : 'px-4'} py-6 space-y-2 overflow-x-hidden overflow-y-auto`}>

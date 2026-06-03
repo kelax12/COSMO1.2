@@ -116,6 +116,15 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen]);
 
+  // Ouverture programmatique (boutons « Rechercher » sidebar desktop + sheet
+  // mobile). Permet de découvrir la palette à la souris/au tactile, pas
+  // seulement via le raccourci clavier.
+  useEffect(() => {
+    const open = () => setIsOpen(true);
+    window.addEventListener('open-command-palette', open);
+    return () => window.removeEventListener('open-command-palette', open);
+  }, []);
+
   // Reset state à l'ouverture + focus input
   useEffect(() => {
     if (isOpen) {
