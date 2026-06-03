@@ -7,7 +7,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, EventDragStartArg, EventDra
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
-import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2, Pencil } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -975,13 +975,31 @@ const AgendaPage: React.FC = () => {
                                 {label} · démarre le {startDate.toLocaleDateString('fr-FR')} à {startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
-                            <button
-                              onClick={() => updateEventMutation.mutate({ id: ev.id, updates: { recurrence: 'none' } })}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 border border-red-200 dark:border-red-800/40 transition-colors shrink-0"
-                            >
-                              <Trash2 size={13} />
-                              <span>Récurrence</span>
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => {
+                                  // Ouvre le modal d'édition de l'événement (sélecteur de
+                                  // récurrence inclus, dont « Personnaliser »).
+                                  setSelectedEvent(ev);
+                                  setSelectedInstanceDate(null);
+                                  setShowEditEventModal(true);
+                                  setShowRecurringManager(false);
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-200 dark:border-blue-800/40 transition-colors"
+                                aria-label="Modifier la récurrence"
+                              >
+                                <Pencil size={13} />
+                                <span>Modifier</span>
+                              </button>
+                              <button
+                                onClick={() => updateEventMutation.mutate({ id: ev.id, updates: { recurrence: 'none' } })}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 border border-red-200 dark:border-red-800/40 transition-colors"
+                                aria-label="Supprimer la récurrence"
+                              >
+                                <Trash2 size={13} />
+                                <span>Récurrence</span>
+                              </button>
+                            </div>
                           </li>
                         );
                       })}
