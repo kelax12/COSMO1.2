@@ -50,6 +50,20 @@ export interface TaskShare {
 }
 
 /**
+ * A sharing grant enrichi des deux extrémités (propriétaire + destinataire),
+ * pour afficher les avatars des collaborateurs côté propriétaire ET côté
+ * destinataire. Retourné par `getRelatedTaskShares()`.
+ */
+export interface RelatedTaskShare {
+  taskId: string;
+  /** auth.users.id du partageur (propriétaire de la tâche). */
+  sharedBy: string;
+  /** auth.users.id du destinataire. */
+  friendId: string;
+  role: 'viewer' | 'editor';
+}
+
+/**
  * Friend request status
  */
 export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected';

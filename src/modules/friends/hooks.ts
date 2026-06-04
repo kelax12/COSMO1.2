@@ -220,6 +220,33 @@ export const useSharesByTask = (): Map<string, string[]> => {
   }, [shares]);
 };
 
+/**
+ * Map taskId -> auth.uids des AUTRES participants (collaborateurs), vue des
+ * deux côtés : si je suis propriétaire → les destinataires ; si je suis
+ * destinataire → le propriétaire (et co-destinataires lisibles). Utilisé pour
+ * afficher les avatars de collaborateurs sur n'importe quelle tâche partagée,
+ * que je l'aie partagée ou reçue. `currentUserId` exclut ma propre vignette.
+ */
+export const useCollaboratorsByTask = (currentUserId?: string): Map<string, string[]> => {
+  const repository = useFriendsRepository();
+  const { data: shares = [] } = useQuery({
+    queryKey: friendKeys.relatedTaskShares(),
+    queryFn: () => repository.getRelatedTaskShares(),
+  });
+  return useMemo(() => {
+    const sets = new Map<string, Set<string>>();
+    for (const s of shares) {
+      const others = [s.sharedBy, s.friendId].filter((id) => id && id !== currentUserId);
+      const set = sets.get(s.taskId) ?? new Set<string>();
+      others.forEach((o) => set.add(o));
+      sets.set(s.taskId, set);
+    }
+    const out = new Map<string, string[]>();
+    sets.forEach((v, k) => out.set(k, [...v]));
+    return out;
+  }, [shares, currentUserId]);
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // RE-EXPORTS
 // ═══════════════════════════════════════════════════════════════════

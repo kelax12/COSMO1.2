@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare } from './types';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare, RelatedTaskShare } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -402,6 +402,27 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (error) throw normalizeApiError(error);
     return (data || []).map((r) => ({
       taskId: r.task_id as string,
+      friendId: r.friend_id as string,
+      role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+    }));
+  }
+
+  async getRelatedTaskShares(): Promise<RelatedTaskShare[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    // Policy `shared_tasks_select` : auth.uid() = shared_by OR = friend_id.
+    // user.id provient de auth.getUser() (uid de confiance, pas un input client)
+    // → interpolation sûre dans le filtre .or().
+    const { data, error } = await supabase
+      .from('shared_tasks')
+      .select('task_id, shared_by, friend_id, role')
+      .or(`shared_by.eq.${user.id},friend_id.eq.${user.id}`)
+      .limit(500);
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((r) => ({
+      taskId: r.task_id as string,
+      sharedBy: r.shared_by as string,
       friendId: r.friend_id as string,
       role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
     }));

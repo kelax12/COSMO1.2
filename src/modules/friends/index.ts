@@ -13,6 +13,7 @@ export type {
   PendingFriendRequest,
   FriendRequestStatus,
   TaskShare,
+  RelatedTaskShare,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -45,6 +46,7 @@ export {
   useTaskShares,
   useMyTaskShares,
   useSharesByTask,
+  useCollaboratorsByTask,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
