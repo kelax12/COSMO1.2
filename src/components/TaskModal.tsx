@@ -1224,9 +1224,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // the shared_tasks.friend_id FK require. Falls back to friend.id in demo
   // mode where there's no auth.
   const collabIdOf = (f: { id: string; userId?: string }) => f.userId ?? f.id;
+  // Un ami est « déjà collaborateur » si l'une de ses identités (auth.uid,
+  // id de ligne friends, ou email) figure dans `collaborators`. Robuste aux
+  // partages historiques stockés sous l'id de ligne plutôt que l'auth.uid, et
+  // aux cas où l'enrichissement `userId` n'a pas (encore) résolu l'auth.uid.
+  const isAlreadyCollaborator = (f: { id: string; userId?: string; email?: string }) =>
+    collaborators.includes(collabIdOf(f)) ||
+    collaborators.includes(f.id) ||
+    (!!f.userId && collaborators.includes(f.userId)) ||
+    (!!f.email && collaborators.includes(f.email));
   const availableFriends = friends || [];
   const filteredFriends = availableFriends.filter((friend) =>
-    !collaborators.includes(collabIdOf(friend)) && (
+    !isAlreadyCollaborator(friend) && (
       emailInput === '' ||
       friend.name.toLowerCase().includes(emailInput.toLowerCase()) ||
       friend.email.toLowerCase().includes(emailInput.toLowerCase())
