@@ -36,6 +36,9 @@ import {
 
 type SettingsTab = 'profile' | 'appearance' | 'security' | 'data' | 'guide';
 
+// Same lightweight format check used across the app (CollaboratorModal, etc.).
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /* ─── font loader ──────────────────────────────────────────────── */
 function useFonts() {
   useEffect(() => {
@@ -181,6 +184,13 @@ const SettingsPage: React.FC = () => {
     const email = profileDraft.email.trim();
     if (!name) { toast.error('Le nom ne peut pas être vide'); return; }
     if (!email) { toast.error("L'email ne peut pas être vide"); return; }
+    // Validate the format before the round-trip when the email is actually
+    // changing, so the user gets an instant, explicit message instead of a
+    // generic failure coming back from Supabase (error_code email_address_invalid).
+    if (!isThirdParty && email !== user.email && !emailRegex.test(email)) {
+      toast.error("Cette adresse email n'est pas valide.");
+      return;
+    }
     setSavingProfile(true);
     try {
       if (isDemo) {
@@ -195,7 +205,23 @@ const SettingsPage: React.FC = () => {
       // email is owned by the provider. Defensive: the input is also disabled.
       if (!isThirdParty && email !== user.email) payload.email = email;
       const { error } = await supabase.auth.updateUser(payload);
-      if (error) { console.error('[SettingsPage] updateUser:', error); toast.error('Impossible de mettre à jour le profil'); return; }
+      if (error) {
+        console.error('[SettingsPage] updateUser:', error);
+        // Map known Supabase auth error codes to explicit, safe French copy.
+        // We never surface the raw error.message in the UI (faille V7).
+        const code = (error as { code?: string }).code;
+        const status = (error as { status?: number }).status;
+        let message = 'Impossible de mettre à jour le profil';
+        if (code === 'email_exists' || status === 422) {
+          message = 'Cette adresse email est déjà utilisée par un autre compte.';
+        } else if (code === 'email_address_invalid') {
+          message = "Cette adresse email n'est pas valide.";
+        } else if (code === 'over_email_send_rate_limit' || status === 429) {
+          message = 'Trop de tentatives. Réessayez dans quelques minutes.';
+        }
+        toast.error(message);
+        return;
+      }
       if (payload.email) {
         toast.success('Profil mis à jour — vérifiez votre boîte mail pour confirmer le changement d\'email.');
       } else {
