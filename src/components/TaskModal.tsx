@@ -2030,12 +2030,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
 
                             {/* Pending outgoing friend requests — selectable as future collaborators */}
                             {(() => {
-                              const pendingContacts = sentRequests.filter(req =>
-                                !collaborators.includes(req.email) &&
-                                !pendingInvitesLocal.includes(req.email) &&
-                                !friends.some(f => f.email.toLowerCase() === req.email.toLowerCase()) &&
-                                (emailInput === '' || req.email.toLowerCase().includes(emailInput.toLowerCase()))
-                              );
+                              const seenEmails = new Set<string>();
+                              const pendingContacts = sentRequests.filter(req => {
+                                const email = req.email.toLowerCase();
+                                // Dédoublonnage par email : la table friend_requests peut
+                                // contenir plusieurs lignes pending pour le même destinataire
+                                // (double-clic / retries). On n'affiche qu'une carte par email.
+                                if (seenEmails.has(email)) return false;
+                                const keep =
+                                  !collaborators.includes(req.email) &&
+                                  !pendingInvitesLocal.includes(req.email) &&
+                                  !friends.some(f => f.email.toLowerCase() === email) &&
+                                  (emailInput === '' || email.includes(emailInput.toLowerCase()));
+                                if (keep) seenEmails.add(email);
+                                return keep;
+                              });
                               if (!pendingContacts.length) return null;
                               return (
                                 <div className="mt-3">
