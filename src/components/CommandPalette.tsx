@@ -182,7 +182,7 @@ export function CommandPalette() {
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={onInputKeyDown}
                 placeholder="Rechercher une commande..."
-                className="flex-1 bg-transparent outline-none text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] text-sm"
+                className="borderless-input flex-1 bg-transparent outline-none text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] text-sm py-1"
               />
               <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] bg-[rgb(var(--color-hover))]">
                 ESC
