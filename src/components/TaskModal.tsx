@@ -53,6 +53,7 @@ import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask,
 // BillingContext — vérification premium côté serveur
 // ═══════════════════════════════════════════════════════════════════
 import { useBilling } from '@/modules/billing/billing.context';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 // ─── Mobile cell atoms ────────────────────────────────────────────────────────
 
@@ -143,6 +144,11 @@ interface MobileBodyProps {
   isFormValid: () => boolean;
   taskId?: string;
   autoOpenCollaborators?: boolean;
+  /** L'utilisateur courant est-il propriétaire de la tâche ? (sinon vue
+   *  destinataire en lecture seule pour les collaborateurs) */
+  isTaskOwner: boolean;
+  /** auth.uid du propriétaire (pour badge « Propriétaire »). */
+  ownerId?: string;
 }
 
 // ─── TaskModalMobileBody ──────────────────────────────────────────────────────
@@ -156,7 +162,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   createCategoryMutation,
   isPremium, setShowPremiumGate,
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
-  taskId, autoOpenCollaborators,
+  taskId, autoOpenCollaborators, isTaskOwner, ownerId,
 }) => {
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
@@ -612,56 +618,69 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             >
               <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" /></div>
               <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2 shrink-0">Collaborateurs</p>
-              <div className="px-4 pb-3 shrink-0">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text" value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
-                      placeholder="Email ou nom…"
-                      className="w-full pl-9 pr-3 py-2 text-[15px] bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                    />
+              {!isTaskOwner && (
+                <p className="px-4 pb-2 text-[13px] text-gray-500 dark:text-gray-400 shrink-0">
+                  Cette tâche t'a été partagée. Seul le propriétaire peut gérer les collaborateurs.
+                </p>
+              )}
+              {isTaskOwner && (
+                <div className="px-4 pb-3 shrink-0">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text" value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
+                        placeholder="Email ou nom…"
+                        className="w-full pl-9 pr-3 py-2 text-[15px] bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                      />
+                    </div>
+                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-blue-500 disabled:bg-blue-300 text-white rounded-xl">
+                      <UserPlus size={16} />
+                    </button>
                   </div>
-                  <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-blue-500 disabled:bg-blue-300 text-white rounded-xl">
-                    <UserPlus size={16} />
-                  </button>
+                  {inputError && <p className="mt-1 text-[13px] text-red-500">{inputError}</p>}
                 </div>
-                {inputError && <p className="mt-1 text-[13px] text-red-500">{inputError}</p>}
-              </div>
+              )}
               {collaborators.length > 0 && (
                 <div className="px-4 pb-2 shrink-0 border-b border-gray-100 dark:border-gray-800">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 pb-1">Sélectionnés ({collaborators.length})</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 pb-1">{isTaskOwner ? `Sélectionnés (${collaborators.length})` : 'Participants'}</p>
                   {collaborators.map((id) => {
                     const info = displayInfo(id);
                     return (
                       <div key={id} className="flex items-center justify-between py-1.5">
-                        <span className="text-[14px] text-gray-900 dark:text-gray-100 truncate flex-1">{info.name}</span>
-                        <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
+                        <span className="text-[14px] text-gray-900 dark:text-gray-100 truncate flex-1">
+                          {info.name}{!isTaskOwner && id === ownerId ? ' · Propriétaire' : ''}
+                        </span>
+                        {isTaskOwner && (
+                          <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               )}
-              <div className="flex-1 overflow-y-auto px-4">
-                {filteredFriends.map((friend) => {
-                  const cId = collabIdOf(friend);
-                  const isSelected = collaborators.includes(cId);
-                  return (
-                    <button
-                      key={friend.id} type="button" onClick={() => toggleCollaborator(cId)}
-                      className="w-full flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0"
-                    >
-                      <span className="text-[15px] text-gray-900 dark:text-gray-100">{friend.name}</span>
-                      {isSelected ? <Check size={16} className="text-blue-500" /> : <Plus size={16} className="text-gray-400" />}
-                    </button>
-                  );
-                })}
-                {filteredFriends.length === 0 && (
-                  <p className="text-center py-6 text-[14px] text-gray-400">Aucun ami à ajouter</p>
-                )}
-              </div>
+              {isTaskOwner && (
+                <div className="flex-1 overflow-y-auto px-4">
+                  {filteredFriends.map((friend) => {
+                    const cId = collabIdOf(friend);
+                    const isSelected = collaborators.includes(cId);
+                    return (
+                      <button
+                        key={friend.id} type="button" onClick={() => toggleCollaborator(cId)}
+                        className="w-full flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                      >
+                        <span className="text-[15px] text-gray-900 dark:text-gray-100">{friend.name}</span>
+                        {isSelected ? <Check size={16} className="text-blue-500" /> : <Plus size={16} className="text-gray-400" />}
+                      </button>
+                    );
+                  })}
+                  {filteredFriends.length === 0 && (
+                    <p className="text-center py-6 text-[14px] text-gray-400">Aucun ami à ajouter</p>
+                  )}
+                </div>
+              )}
               <div className="h-3 shrink-0" />
             </motion.div>
           </motion.div>
@@ -713,6 +732,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   const sendFriendRequestMutation = useSendFriendRequest();
   const cancelFriendRequestMutation = useRejectFriendRequest();
 
+  const { user } = useAuth();
+
+  // Propriétaire de la tâche : seul lui peut gérer les collaborateurs (la policy
+  // RLS shared_tasks_insert exige auth.uid() = shared_by + propriété de la tâche).
+  // Pour une nouvelle tâche, l'utilisateur courant est forcément propriétaire.
+  // Pour une tâche reçue, `task.userId` = auth.uid du partageur ≠ moi.
+  const isTaskOwner = !task?.userId || task.userId === user?.id;
+
   // shared_tasks est la source de vérité du partage (colonne `tasks.collaborators`
   // supprimée — migration 028). On dérive l'état « assignés » des grants.
   const { data: shares = [] } = useTaskShares(task?.id);
@@ -721,6 +748,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     () => [...existingShareIds, ...(task?.pendingInvites || [])],
     [existingShareIds, task?.pendingInvites]
   );
+
+  // Liste des collaborateurs à afficher selon le point de vue :
+  //  - propriétaire → les destinataires (existingCollaboratorIds)
+  //  - destinataire → le propriétaire (task.userId) + co-destinataires lisibles,
+  //    en s'excluant soi-même (lecture seule).
+  const seedCollaboratorIds = useMemo(() => {
+    if (isTaskOwner) return existingCollaboratorIds;
+    const ids = new Set<string>();
+    if (task?.userId && task.userId !== user?.id) ids.add(task.userId);
+    existingShareIds.forEach((id) => { if (id !== user?.id) ids.add(id); });
+    return [...ids];
+  }, [isTaskOwner, existingCollaboratorIds, existingShareIds, task?.userId, user?.id]);
 
   // Premium — vérification côté serveur
   const { isPremium } = useBilling();
@@ -883,9 +922,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // focus), so this only fires for the initial load.
   useEffect(() => {
     if (!isOpen || !task || isCreating || hasChanges) return;
-    setCollaborators(existingCollaboratorIds);
+    setCollaborators(seedCollaboratorIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, task?.id, isCreating, existingCollaboratorIds.join(',')]);
+  }, [isOpen, task?.id, isCreating, seedCollaboratorIds.join(',')]);
 
   // Auto-promote pending invites that have since become friends
   useEffect(() => {
@@ -943,10 +982,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       formData.estimatedTime !== task.estimatedTime ||
       formData.completed !== task.completed ||
       formData.bookmarked !== task.bookmarked ||
-      JSON.stringify(collaborators) !== JSON.stringify(existingCollaboratorIds);
+      JSON.stringify(collaborators) !== JSON.stringify(seedCollaboratorIds);
 
     setHasChanges(hasFormChanges);
-  }, [formData, collaborators, task, existingCollaboratorIds]);
+  }, [formData, collaborators, task, seedCollaboratorIds]);
 
   // Validation rules
   const computeValidationErrors = (): { [key: string]: string } => {
@@ -1102,35 +1141,40 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
               }
             });
 
-            // Additions: nouveaux collaborateurs sélectionnés non encore
-            // partagés (et qui ne sont pas des invitations email en attente).
-            if (isPremium()) {
-              collaborators.forEach(userId => {
-                if (pendingInvitesLocal.includes(userId)) return;
-                if (!existingShareIds.includes(userId)) {
-                  // Find the friend's email so shareTask can resolve the
-                  // canonical auth.uid via profiles, even when userId is
-                  // actually a friends-table row id (no profile lookup yet).
-                  const friend = friends.find(
-                    f => (f.userId ?? f.id) === userId || f.id === userId
-                  );
-                  shareTaskMutation.mutate({
-                    taskId: task.id,
-                    friendId: userId,
-                    friendEmail: friend?.email,
-                    role: 'editor'
-                  });
+            // Seul le propriétaire gère les partages (RLS le rejetterait pour un
+            // destinataire de toute façon). On saute toute écriture shared_tasks
+            // quand l'utilisateur n'est pas propriétaire.
+            if (isTaskOwner) {
+              // Additions: nouveaux collaborateurs sélectionnés non encore
+              // partagés (et qui ne sont pas des invitations email en attente).
+              if (isPremium()) {
+                collaborators.forEach(userId => {
+                  if (pendingInvitesLocal.includes(userId)) return;
+                  if (!existingShareIds.includes(userId)) {
+                    // Find the friend's email so shareTask can resolve the
+                    // canonical auth.uid via profiles, even when userId is
+                    // actually a friends-table row id (no profile lookup yet).
+                    const friend = friends.find(
+                      f => (f.userId ?? f.id) === userId || f.id === userId
+                    );
+                    shareTaskMutation.mutate({
+                      taskId: task.id,
+                      friendId: userId,
+                      friendEmail: friend?.email,
+                      role: 'editor'
+                    });
+                  }
+                });
+              }
+
+              // Removals: grants shared_tasks dé-sélectionnés → on retire le
+              // partage (pas de gate premium pour retirer).
+              existingShareIds.forEach(shareId => {
+                if (!collaborators.includes(shareId)) {
+                  unshareTaskMutation.mutate({ taskId: task.id, friendId: shareId });
                 }
               });
             }
-
-            // Removals: grants shared_tasks dé-sélectionnés → on retire le
-            // partage (pas de gate premium pour retirer).
-            existingShareIds.forEach(shareId => {
-              if (!collaborators.includes(shareId)) {
-                unshareTaskMutation.mutate({ taskId: task.id, friendId: shareId });
-              }
-            });
 
             onClose();
           },
@@ -1315,6 +1359,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             isFormValid={isFormValid}
             taskId={task?.id}
             autoOpenCollaborators={showCollaborators}
+            isTaskOwner={isTaskOwner}
+            ownerId={task?.userId}
           />
         ) : (
         <div
@@ -1936,6 +1982,32 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                             <Button type="button" size="sm" onClick={() => setShowPremiumGate(true)} className="bg-blue-600 hover:bg-blue-500 text-white border-0">
                               Débloquer Premium
                             </Button>
+                          </div>
+                        ) : !isTaskOwner ? (
+                          /* Vue destinataire : participants en lecture seule.
+                             Seul le propriétaire gère les collaborateurs. */
+                          <div className="space-y-3">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Cette tâche t'a été partagée. Seul le propriétaire peut gérer les collaborateurs.
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {collaborators.map((id) => {
+                                const info = displayInfo(id);
+                                return (
+                                  <CollaboratorItem
+                                    key={id}
+                                    id={id}
+                                    name={info.name}
+                                    email={info.email}
+                                    avatar={info.avatar}
+                                    onAction={() => {}}
+                                    variant="remove"
+                                    readOnly
+                                    badge={id === task?.userId ? 'Propriétaire' : undefined}
+                                  />
+                                );
+                              })}
+                            </div>
                           </div>
                         ) : (
                           <>
