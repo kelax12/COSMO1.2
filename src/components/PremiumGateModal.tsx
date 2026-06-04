@@ -66,7 +66,12 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4"
+            // `pointer-events-auto` est indispensable : ce modal est souvent
+            // monté en frère d'un Radix Dialog ouvert (TaskModal / AddTaskForm),
+            // or Radix pose `pointer-events: none` sur <body> tant que son
+            // Dialog est ouvert. Sans override, le modal s'affiche mais aucun
+            // élément n'est cliquable.
+            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4 pointer-events-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

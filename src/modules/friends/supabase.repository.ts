@@ -225,10 +225,26 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) throw new Error('Non authentifié');
 
+    const email = input.email.toLowerCase();
+
+    // Anti-doublon : ne pas recréer une demande si une est déjà pending pour le
+    // même couple (sender, destinataire). Sans ce garde, un double-clic ou un
+    // retry réseau insère plusieurs lignes → la demande s'affiche en double
+    // dans la boîte de réception et le sélecteur de collaborateurs.
+    const { data: existing } = await supabase
+      .from('friend_requests')
+      .select('*')
+      .eq('sender_id', currentUser.id)
+      .eq('email', email)
+      .eq('status', 'pending')
+      .limit(1)
+      .maybeSingle();
+    if (existing) return this.mapRequestFromDb(existing);
+
     const { data, error } = await supabase
       .from('friend_requests')
       .insert([{
-        email: input.email,
+        email,
         status: 'pending',
         sent_at: new Date().toISOString(),
         sender_id: currentUser.id,

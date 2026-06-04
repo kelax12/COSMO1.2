@@ -51,10 +51,19 @@ const InboxMenu: React.FC = () => {
   const addInputRef = useRef<HTMLInputElement>(null);
   const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null);
 
-  const incomingRequests = useMemo(
-    () => requests.filter((r: PendingFriendRequest) => r.status === 'pending' && r.senderEmail),
-    [requests]
-  );
+  const incomingRequests = useMemo(() => {
+    // Dédoublonnage par expéditeur : friend_requests peut contenir plusieurs
+    // lignes pending pour le même couple (sender, receiver) après des
+    // double-clics / retries. On ne montre qu'une demande par expéditeur.
+    const seen = new Set<string>();
+    return requests.filter((r: PendingFriendRequest) => {
+      if (r.status !== 'pending' || !r.senderEmail) return false;
+      const key = (r.senderId || r.senderEmail).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [requests]);
 
   // Tâches reçues d'un ami et pas encore acceptées : `sharedBy` renseigné et
   // différent de l'utilisateur courant. (En mode démo `sharedBy` est stocké ;
