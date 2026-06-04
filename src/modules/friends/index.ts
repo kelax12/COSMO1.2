@@ -47,6 +47,7 @@ export {
   useMyTaskShares,
   useSharesByTask,
   useCollaboratorsByTask,
+  useRelatedTaskShares,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -60,4 +61,5 @@ export {
   useRemoveFriend,
   useShareTask,
   useUnshareTask,
+  useAcceptSharedTask,
 } from './hooks';

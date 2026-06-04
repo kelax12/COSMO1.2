@@ -18,7 +18,15 @@ interface CollaboratorItemProps {
   readOnly?: boolean;
   /** Badge optionnel sous le nom (ex. « Propriétaire »). */
   badge?: string;
+  /** Affiche une pastille « Envoyé » : le destinataire n'a pas encore accepté. */
+  sentBadge?: boolean;
 }
+
+const SentPill = () => (
+  <span className="ml-1 shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+    Envoyé
+  </span>
+);
 
 const getInitials = (value: string) => {
   if (!value) return '?';
@@ -39,6 +47,7 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
   compact = false,
   readOnly = false,
   badge,
+  sentBadge = false,
 }) => {
   const isEmoji = isEmojiAvatar(avatar);
   const isImage = isImageAvatar(avatar);
@@ -95,6 +104,7 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
         <span className="flex-1 text-xs font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
           {name || id}
         </span>
+        {sentBadge && <SentPill />}
         {isSelected
           ? <X size={14} className="shrink-0 text-blue-500" />
           : <UserPlus size={14} className="shrink-0 text-blue-500 opacity-60" />
@@ -133,9 +143,14 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
           </AvatarFallback>
         </Avatar>
         <div className="overflow-hidden">
-          <p className="text-sm font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{name || id}</p>
+          <p className="text-sm font-semibold truncate flex items-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            <span className="truncate">{name || id}</span>
+            {sentBadge && <SentPill />}
+          </p>
           {isPending ? (
             <p className="text-xs text-orange-500">⏳ Demande d'ami envoyée</p>
+          ) : sentBadge ? (
+            <p className="text-xs text-amber-600 dark:text-amber-400">En attente d'acceptation</p>
           ) : email && (
             <div className="flex items-center gap-1.5 text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
               <Mail size={12} className="shrink-0" />
