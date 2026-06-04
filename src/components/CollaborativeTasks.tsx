@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Users, UserPlus, Check, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import AddToListModal from './AddToListModal';
@@ -247,13 +248,13 @@ const CollaborativeTasks: React.FC = () => {
                       const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
                       const friend = friends.find(f => f.userId === collaborator || f.id === collaborator || f.name === collaborator);
                       const initials = collaborator.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                      const isEmoji = friend?.avatar && friend.avatar.length <= 2;
+                      const isEmoji = isEmojiAvatar(friend?.avatar);
 
                       return (
                         <div key={index} className="relative" title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}>
                           <Avatar className="size-9">
-                            {friend?.avatar && !isEmoji && friend.avatar.startsWith('http') && (
-                              <AvatarImage src={friend.avatar} alt={collaborator} />
+                            {isImageAvatar(friend?.avatar) && (
+                              <AvatarImage src={friend?.avatar} alt={collaborator} />
                             )}
                             <AvatarFallback className={
                               hasValidated

@@ -2,6 +2,7 @@ import React from 'react';
 import { Friend } from '@/modules/friends';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup, AvatarGroupCount } from './ui/avatar';
 import { cn } from '@/lib/utils';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 
 interface CollaboratorAvatarsProps {
   collaboratorIds?: string[];
@@ -36,12 +37,12 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
             className={cn(sizeClasses)}
             title={name}
           >
-            {friend?.avatar && friend.avatar.startsWith('http') ? (
-              <AvatarImage src={friend.avatar} alt={name} />
+            {isImageAvatar(friend?.avatar) ? (
+              <AvatarImage src={friend?.avatar} alt={name} />
             ) : null}
             <AvatarFallback className="bg-muted text-muted-foreground font-bold">
-              {friend?.avatar && !friend.avatar.startsWith('http') ? (
-                <span className={size === 'sm' ? 'text-xs' : 'text-base'}>{friend.avatar}</span>
+              {isEmojiAvatar(friend?.avatar) ? (
+                <span className={size === 'sm' ? 'text-xs' : 'text-base'}>{friend?.avatar}</span>
               ) : (
                 initials
               )}
