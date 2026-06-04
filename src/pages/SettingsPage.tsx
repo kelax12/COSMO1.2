@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Palette, BookOpen, LogOut,
@@ -181,7 +181,12 @@ const SettingsPage: React.FC = () => {
 
   const handleSaveProfile = async () => {
     const name = profileDraft.name.trim();
-    const email = profileDraft.email.trim();
+    // Copy-pasting an address from a contact card / mail client often injects
+    // invisible characters (zero-width space U+200B–U+200D, NBSP, BOM) that make
+    // a visually-correct email fail validation. `.trim()` alone doesn't remove
+    // zero-width chars. An email never contains whitespace, so strip them all
+    // (\s already covers NBSP U+00A0 and BOM U+FEFF in JS).
+    const email = profileDraft.email.replace(/[\s\u200B-\u200D]/g, '');
     if (!name) { toast.error('Le nom ne peut pas être vide'); return; }
     if (!email) { toast.error("L'email ne peut pas être vide"); return; }
     // Validate the format before the round-trip when the email is actually
