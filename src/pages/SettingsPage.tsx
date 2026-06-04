@@ -78,11 +78,12 @@ const NAV_GROUPS = [
 
 /* ─── reusable: LabeledInput ───────────────────────────────────── */
 function LabeledInput({
-  label, type = 'text', value, onChange, placeholder, icon: Icon, showToggle,
+  label, type = 'text', value, onChange, placeholder, icon: Icon, showToggle, disabled, hint,
 }: {
   label: string; type?: string; value: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string; icon?: React.ElementType; showToggle?: boolean;
+  disabled?: boolean; hint?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const inputType = showToggle ? (visible ? 'text' : 'password') : type;
@@ -94,9 +95,9 @@ function LabeledInput({
           <Icon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] group-focus-within:text-[rgb(var(--color-accent))] transition-colors pointer-events-none" />
         )}
         <input
-          type={inputType} value={value} onChange={onChange} placeholder={placeholder}
+          type={inputType} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
           style={{ fontFamily: "'DM Sans', sans-serif", minHeight: '48px' }}
-          className={`w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] outline-none transition-all duration-150 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgb(var(--color-accent))]/15 ${Icon ? 'pl-10' : 'pl-4'} ${showToggle ? 'pr-11' : 'pr-4'} py-3`}
+          className={`w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] outline-none transition-all duration-150 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgb(var(--color-accent))]/15 ${Icon ? 'pl-10' : 'pl-4'} ${showToggle ? 'pr-11' : 'pr-4'} py-3 ${disabled ? 'opacity-60 cursor-not-allowed bg-[rgb(var(--color-hover))]' : ''}`}
         />
         {showToggle && (
           <button type="button" tabIndex={-1} onClick={() => setVisible(v => !v)}
@@ -106,6 +107,9 @@ function LabeledInput({
           </button>
         )}
       </div>
+      {hint && (
+        <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{hint}</p>
+      )}
     </div>
   );
 }
@@ -167,6 +171,11 @@ const SettingsPage: React.FC = () => {
 
   if (!user) return null;
 
+  // Third-party (OAuth) accounts manage their email upstream (e.g. Google) —
+  // editing it here is locked. Native email/password (and demo) accounts can
+  // change their email inline. `provider` comes from Supabase app_metadata.
+  const isThirdParty = !isDemo && !!user.provider && user.provider !== 'email';
+
   const handleSaveProfile = async () => {
     const name = profileDraft.name.trim();
     const email = profileDraft.email.trim();
@@ -182,7 +191,9 @@ const SettingsPage: React.FC = () => {
         return;
       }
       const payload: { data: { name: string }; email?: string } = { data: { name } };
-      if (email !== user.email) payload.email = email;
+      // Never attempt an email change on a third-party (OAuth) account — its
+      // email is owned by the provider. Defensive: the input is also disabled.
+      if (!isThirdParty && email !== user.email) payload.email = email;
       const { error } = await supabase.auth.updateUser(payload);
       if (error) { console.error('[SettingsPage] updateUser:', error); toast.error('Impossible de mettre à jour le profil'); return; }
       if (payload.email) {
@@ -497,7 +508,7 @@ const SettingsPage: React.FC = () => {
                 <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
-                  <LabeledInput label="Adresse email" type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" />
+                  <LabeledInput label="Adresse email" type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" disabled={isThirdParty} hint={isThirdParty ? 'Email géré par votre connexion externe — non modifiable ici.' : undefined} />
                 </div>
                 <div className="flex justify-end mt-5">
                   <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
