@@ -14,6 +14,10 @@ interface CollaboratorItemProps {
   variant: 'add' | 'remove' | 'toggle';
   /** Compact 2-column card: hides email, smaller avatar */
   compact?: boolean;
+  /** Lecture seule : aucun bouton d'action (vue destinataire d'un partage). */
+  readOnly?: boolean;
+  /** Badge optionnel sous le nom (ex. « Propriétaire »). */
+  badge?: string;
 }
 
 const getInitials = (value: string) => {
@@ -33,9 +37,35 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
   onAction,
   variant,
   compact = false,
+  readOnly = false,
+  badge,
 }) => {
   const isEmoji = isEmojiAvatar(avatar);
   const isImage = isImageAvatar(avatar);
+
+  if (readOnly) {
+    return (
+      <div
+        className="flex items-center gap-2 p-2.5 rounded-xl border"
+        style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+      >
+        <Avatar className="size-8 shrink-0">
+          {!isPending && isImage && <AvatarImage src={avatar} alt={name} />}
+          <AvatarFallback className={
+            isEmoji
+              ? 'bg-[rgb(var(--color-hover))] text-base'
+              : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold text-xs'
+          }>
+            {isEmoji ? avatar : getInitials(name || id)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{name || id}</p>
+          {badge && <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400">{badge}</p>}
+        </div>
+      </div>
+    );
+  }
 
   if (compact) {
     // 2-column card: avatar + name + action, no email
