@@ -29,10 +29,21 @@ const useTasksRepository = (): ITasksRepository => {
  */
 export const useTasks = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
+  const isDemo = useIsDemo();
   return useQuery({
     queryKey: taskKeys.lists(),
     queryFn: () => withTimeout(repository.getAll(), 10_000),
     enabled: options?.enabled ?? true,
+    // Collaboration sans realtime : les modifications faites par un autre
+    // collaborateur (propriétaire ↔ éditeur) ne se propageaient jamais (cache
+    // React Query, focus-refetch désactivé globalement). On rafraîchit la liste
+    // toutes les 15 s UNIQUEMENT s'il existe au moins une tâche collaborative
+    // (zéro overhead pour les utilisateurs solo) + au retour sur l'onglet.
+    refetchInterval: isDemo
+      ? false
+      : (query) => ((query.state.data as Task[] | undefined)?.some((t) => t.isCollaborative) ? 15_000 : false),
+    refetchOnWindowFocus: isDemo ? false : true,
+    refetchIntervalInBackground: false,
   });
 };
 
