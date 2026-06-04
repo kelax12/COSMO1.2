@@ -23,6 +23,7 @@ import { useUpdateUserSettings } from '../modules/user';
 import ThemeToggle from '../components/ThemeToggle';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,9 +36,6 @@ import {
 } from "../components/ui/alert-dialog";
 
 type SettingsTab = 'profile' | 'appearance' | 'security' | 'data' | 'guide';
-
-// Same lightweight format check used across the app (CollaboratorModal, etc.).
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* ─── font loader ──────────────────────────────────────────────── */
 function useFonts() {
@@ -181,18 +179,15 @@ const SettingsPage: React.FC = () => {
 
   const handleSaveProfile = async () => {
     const name = profileDraft.name.trim();
-    // Copy-pasting an address from a contact card / mail client often injects
-    // invisible characters (zero-width space U+200B–U+200D, NBSP, BOM) that make
-    // a visually-correct email fail validation. `.trim()` alone doesn't remove
-    // zero-width chars. An email never contains whitespace, so strip them all
-    // (\s already covers NBSP U+00A0 and BOM U+FEFF in JS).
-    const email = profileDraft.email.replace(/[\s\u200B-\u200D]/g, '');
+    // sanitizeEmail strips copy-paste invisible chars (zero-width, NBSP, BOM)
+    // that would otherwise make a visually-correct address fail validation.
+    const email = sanitizeEmail(profileDraft.email);
     if (!name) { toast.error('Le nom ne peut pas être vide'); return; }
     if (!email) { toast.error("L'email ne peut pas être vide"); return; }
     // Validate the format before the round-trip when the email is actually
     // changing, so the user gets an instant, explicit message instead of a
     // generic failure coming back from Supabase (error_code email_address_invalid).
-    if (!isThirdParty && email !== user.email && !emailRegex.test(email)) {
+    if (!isThirdParty && email !== user.email && !isValidEmail(email)) {
       toast.error("Cette adresse email n'est pas valide.");
       return;
     }
