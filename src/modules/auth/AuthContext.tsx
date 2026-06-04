@@ -6,6 +6,7 @@ import { appModeStore, useIsDemo } from '../../lib/app-mode.store';
 import { taskKeys } from '../../modules/tasks/constants';
 import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
+import { sanitizeEmail, isValidEmail } from '../../lib/email';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
@@ -278,14 +279,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
+    // Sanitize (strip copy-paste invisible chars) then enforce a real email
+    // format BEFORE signUp. HTML5 `type=email` and Supabase both accept
+    // malformed domains without a TLD (e.g. "user@stcom"); such accounts then
+    // get stuck because the email-change flow rejects the invalid current
+    // address. Validating at this chokepoint blocks the problem at the source.
+    const cleanEmail = sanitizeEmail(email);
+    if (!isValidEmail(cleanEmail)) {
+      return { success: false, error: 'Veuillez saisir une adresse email valide.' };
+    }
     // Block the sentinel email at signup to prevent the email-based isDemo bypass
     // even on Supabase projects where email confirmation is disabled. Faille B0.
-    if (email.trim().toLowerCase() === DEMO_SENTINEL_EMAIL) {
+    if (cleanEmail.toLowerCase() === DEMO_SENTINEL_EMAIL) {
       return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
     }
     try {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
           data: {
