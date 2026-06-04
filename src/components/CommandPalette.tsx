@@ -15,7 +15,7 @@ import {
   Sun,
   LogOut,
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { useAuth } from '@/modules/auth/AuthContext';
 
 interface Command {
@@ -43,7 +43,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useDarkMode();
   const { logout, isAuthenticated } = useAuth();
 
   const commands: Command[] = useMemo(() => {
@@ -61,9 +61,8 @@ export function CommandPalette() {
       { id: 'nav-settings', label: 'Aller aux paramètres', group: 'Navigation', icon: <SettingsIcon size={18} />, run: nav('/settings'), keywords: ['settings', 'config'] },
       { id: 'nav-premium', label: 'Voir Premium', group: 'Navigation', icon: <Crown size={18} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] },
       // Préférences
-      { id: 'pref-theme-light', label: 'Thème clair', group: 'Préférences', icon: <Sun size={18} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour'] },
-      { id: 'pref-theme-dark', label: 'Thème sombre', group: 'Préférences', icon: <Moon size={18} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit'] },
-      { id: 'pref-theme-system', label: 'Thème système', group: 'Préférences', icon: <Sun size={18} />, run: () => { setTheme('system'); setIsOpen(false); }, keywords: ['theme', 'system', 'auto'] },
+      { id: 'pref-theme-light', label: 'Thème clair', group: 'Préférences', icon: <Sun size={18} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
+      { id: 'pref-theme-dark', label: 'Thème sombre', group: 'Préférences', icon: <Moon size={18} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
     ];
     if (isAuthenticated) {
       base.push({
@@ -243,7 +242,7 @@ export function CommandPalette() {
                 </span>
               </div>
               <span className="hidden sm:inline">
-                {theme === 'dark' ? 'Sombre' : theme === 'light' ? 'Clair' : 'Système'}
+                {theme === 'dark' ? 'Sombre' : 'Clair'}
               </span>
             </div>
           </motion.div>

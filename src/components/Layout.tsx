@@ -181,38 +181,19 @@ const NavItems = () =>
             <Logo showText={!isCollapsed} />
           </div>
 
-            <div className="mt-6 flex justify-center w-full">
+            {/* Thème + Recherche (loupe juste en dessous) */}
+            <div className="mt-6 flex flex-col items-center gap-3 w-full">
               <ThemeToggle />
+              <button
+                type="button"
+                onClick={openCommandPalette}
+                aria-label={`Rechercher (${IS_MAC ? 'Cmd' : 'Ctrl'}+K)`}
+                title={`Rechercher (${IS_MAC ? '⌘K' : 'Ctrl K'})`}
+                className="p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
+              >
+                <Search size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+              </button>
             </div>
-        </div>
-
-        {/* Recherche — rend la palette de commandes (⌘K) découvrable à la souris */}
-        <div className={`${isCollapsed ? 'px-2' : 'px-4'} pt-4`}>
-          <button
-            type="button"
-            onClick={openCommandPalette}
-            aria-label={`Rechercher (${IS_MAC ? 'Cmd' : 'Ctrl'}+K)`}
-            title={`Rechercher (${IS_MAC ? '⌘K' : 'Ctrl K'})`}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-2 px-3'} h-10 rounded-lg border transition-colors hover:border-blue-500`}
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-secondary))',
-            }}
-          >
-            <Search size={18} aria-hidden="true" />
-            {!isCollapsed && (
-              <>
-                <span className="flex-1 text-left text-sm">Rechercher</span>
-                <kbd
-                  className="text-[11px] px-1.5 py-0.5 rounded border"
-                  style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}
-                >
-                  {IS_MAC ? '⌘K' : 'Ctrl K'}
-                </kbd>
-              </>
-            )}
-          </button>
         </div>
 
         <nav className={`flex-1 ${isCollapsed ? 'px-2' : 'px-4'} py-6 space-y-2 overflow-x-hidden overflow-y-auto`}>
