@@ -176,7 +176,28 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       .order('sent_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapRequestFromDb);
+    const requests = (data || []).map(this.mapRequestFromDb);
+    if (requests.length === 0) return requests;
+
+    // Enrichissement avatar/nom de l'expéditeur. La policy SELECT de `profiles`
+    // (durcissement N12, migration 022) n'expose pas le profil d'un expéditeur
+    // non encore ami → on passe par la RPC SECURITY DEFINER scopée aux demandes
+    // qui nous sont adressées (migration 031). Best-effort : en cas d'erreur
+    // (RPC pas encore déployée), on garde les demandes sans avatar.
+    const { data: senders } = await supabase.rpc('get_incoming_request_senders');
+    if (Array.isArray(senders) && senders.length > 0) {
+      const byRequestId = new Map(
+        (senders as Array<{ request_id: string; avatar_url: string | null; display_name: string | null }>)
+          .map((s) => [s.request_id, s])
+      );
+      return requests.map((r) => {
+        const s = byRequestId.get(r.id);
+        return s
+          ? { ...r, senderAvatar: s.avatar_url ?? undefined, senderName: s.display_name ?? undefined }
+          : r;
+      });
+    }
+    return requests;
   }
 
   async getSentRequests(): Promise<PendingFriendRequest[]> {

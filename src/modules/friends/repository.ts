@@ -23,6 +23,8 @@ const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
     sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     senderId: 'user-lucas',
     senderEmail: 'lucas.moreau@email.com',
+    senderName: 'Lucas Moreau',
+    senderAvatar: '🧑',
   },
   {
     id: 'req-demo-2',
@@ -31,6 +33,8 @@ const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
     sentAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
     senderId: 'user-camille',
     senderEmail: 'camille.richard@email.com',
+    senderName: 'Camille Richard',
+    senderAvatar: '👩',
   },
 ];
 
