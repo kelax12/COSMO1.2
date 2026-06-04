@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserPlus, Trash2, X, Mail } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 
 interface CollaboratorItemProps {
   id: string;
@@ -33,7 +34,8 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
   variant,
   compact = false,
 }) => {
-  const isEmoji = avatar && avatar.length <= 2;
+  const isEmoji = isEmojiAvatar(avatar);
+  const isImage = isImageAvatar(avatar);
 
   if (compact) {
     // 2-column card: avatar + name + action, no email
@@ -49,7 +51,7 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
         aria-label={variant === 'remove' ? `Retirer ${name}` : `Ajouter ${name}`}
       >
         <Avatar className="size-8 shrink-0">
-          {!isPending && avatar && !isEmoji && <AvatarImage src={avatar} alt={name} />}
+          {!isPending && isImage && <AvatarImage src={avatar} alt={name} />}
           <AvatarFallback className={
             isPending
               ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white text-xs'
@@ -89,7 +91,7 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
     >
       <div className="flex items-center gap-3 overflow-hidden">
         <Avatar className="size-10 shrink-0">
-          {!isPending && avatar && !isEmoji && <AvatarImage src={avatar} alt={name} />}
+          {!isPending && isImage && <AvatarImage src={avatar} alt={name} />}
           <AvatarFallback className={
             isPending
               ? 'bg-gradient-to-br from-orange-400 to-amber-500 text-white'
