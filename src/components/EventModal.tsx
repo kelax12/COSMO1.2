@@ -760,9 +760,7 @@ const EventModal: React.FC<EventModalProps> = ({
                   />
                 </div>
 
-                <div
-                  className="p-4 rounded-2xl transition-colors relative bg-transparent space-y-3"
-                >
+                <div className="space-y-3">
                   {/* Sélecteur de date */}
                   <div ref={register('date')}>
                     <label

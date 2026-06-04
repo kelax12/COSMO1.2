@@ -7,7 +7,6 @@ import { useHabits } from '@/modules/habits';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { useEvents } from '@/modules/events';
 import DashboardBarChart from '../components/DashboardBarChart';
-import TodayFocus from '../components/TodayFocus';
 import TodayHabits from '../components/TodayHabits';
 import InboxMenu from '../components/InboxMenu';
 import TodayTasks from '../components/TodayTasks';
@@ -388,7 +387,6 @@ const DashboardPage: React.FC = () => {
             className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
-            <TodayFocus />
             <MobileCollapsible title="Tâches prioritaires" defaultOpen>
               <TodayTasks />
             </MobileCollapsible>
