@@ -21,7 +21,8 @@ import { useEvents, useDeleteEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
-import { useFriends, useSharesByTask } from '@/modules/friends';
+import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -52,7 +53,10 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const { colorSettings } = useColorSettings();
   const { priorityRange } = usePriorityRange();
   const { data: friends = [] } = useFriends();
-  const sharesByTask = useSharesByTask();
+  const { user } = useAuth();
+  // Collaborateurs (avatars) vus des deux côtés : destinataires si je suis
+  // propriétaire, propriétaire si je suis destinataire d'une tâche partagée.
+  const collaboratorsByTask = useCollaboratorsByTask(user?.id);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -337,8 +341,8 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                           P{task.priority}
                         </span>
                       )}
-                      {(sharesByTask.get(task.id)?.length ?? 0) > 0 && (
-                        <CollaboratorAvatars collaboratorIds={sharesByTask.get(task.id) ?? []} friends={friends} size="sm" />
+                      {(collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
+                        <CollaboratorAvatars collaboratorIds={collaboratorsByTask.get(task.id) ?? []} friends={friends} size="sm" />
                       )}
                     </div>
                   </div>

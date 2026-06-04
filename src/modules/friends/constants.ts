@@ -18,5 +18,6 @@ export const friendKeys = {
   sharedTasks: () => [...friendKeys.all, 'sharedTasks'] as const,
   taskShares: (taskId: string) => [...friendKeys.all, 'sharedTasks', 'task', taskId] as const,
   myTaskShares: () => [...friendKeys.all, 'sharedTasks', 'mine'] as const,
+  relatedTaskShares: () => [...friendKeys.all, 'sharedTasks', 'related'] as const,
 };
 
