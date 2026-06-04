@@ -14,8 +14,9 @@ import {
   type PendingFriendRequest,
 } from '@/modules/friends';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
-import { useUnshareTask } from '@/modules/friends';
+import { useUnshareTask, useAcceptSharedTask, useRelatedTaskShares } from '@/modules/friends';
 import { useQueryClient } from '@tanstack/react-query';
+import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
@@ -40,15 +41,19 @@ const InboxMenu: React.FC = () => {
   const { isPremium } = useBilling();
 
   const queryClient = useQueryClient();
+  const isDemo = useIsDemo();
   const { data: requests = [] } = useFriendRequests();
   const { data: tasks = [] } = useTasks();
+  const { data: relatedShares = [] } = useRelatedTaskShares();
   const acceptFriendMutation = useAcceptFriendRequest();
   const rejectFriendMutation = useRejectFriendRequest();
   const sendFriendMutation = useSendFriendRequest();
   const unshareTaskMutation = useUnshareTask();
+  const acceptSharedTaskMutation = useAcceptSharedTask();
 
-  // Acquittements locaux des tâches partagées (cf. lib/acknowledged-shares).
-  // `ackVersion` force un recalcul de `tasksToAccept` après accept/reject.
+  // Acquittements locaux des tâches partagées en mode démo (cf.
+  // lib/acknowledged-shares). En Supabase, l'état d'acceptation est porté par
+  // shared_tasks.accepted_at. `ackVersion` force un recalcul après accept/reject.
   const [ackVersion, setAckVersion] = useState(0);
 
   const [open, setOpen] = useState(false);
@@ -78,13 +83,22 @@ const InboxMenu: React.FC = () => {
   // en Supabase il est dérivé de la propriété de la tâche → on persiste
   // l'acquittement localement pour les sortir de la boîte de réception.)
   const tasksToAccept = useMemo(() => {
-    const ack = getAcknowledgedShares(user?.id);
-    return tasks.filter(
-      (t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed && !ack.has(t.id)
+    if (isDemo) {
+      // Démo : `sharedBy` est un vrai champ + acquittement local.
+      const ack = getAcknowledgedShares(user?.id);
+      return tasks.filter(
+        (t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed && !ack.has(t.id)
+      );
+    }
+    // Supabase : tâches reçues (friend_id = moi) dont la grant n'est pas encore
+    // acceptée (accepted_at NULL).
+    const pendingReceived = new Set(
+      relatedShares.filter((s) => s.friendId === user?.id && !s.accepted).map((s) => s.taskId)
     );
-    // ackVersion en dép : recalcul après accept/reject.
+    return tasks.filter((t) => pendingReceived.has(t.id) && !t.completed);
+    // ackVersion en dép : recalcul après accept/reject (démo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, user?.name, user?.id, ackVersion]);
+  }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const total = incomingRequests.length + tasksToAccept.length;
 
@@ -142,18 +156,27 @@ const InboxMenu: React.FC = () => {
       navigate('/premium');
       return;
     }
-    // Accepter = acquitter localement (l'accès est déjà accordé via shared_tasks).
-    // La tâche reste dans la to-do (marquée « Reçu de … ») mais sort de la boîte.
-    acknowledgeShare(user?.id, task.id);
-    setAckVersion((v) => v + 1);
-    toast.success('Tâche acceptée');
+    // Accepter : l'accès est déjà accordé via shared_tasks ; on persiste
+    // l'acceptation (accepted_at) pour que le PROPRIÉTAIRE voie « accepté » au
+    // lieu de « Envoyé ». La tâche reste dans la to-do, sort de la boîte.
+    if (isDemo) {
+      acknowledgeShare(user?.id, task.id);
+      setAckVersion((v) => v + 1);
+      toast.success('Tâche acceptée');
+    } else {
+      acceptSharedTaskMutation.mutate(task.id, {
+        onSuccess: () => toast.success('Tâche acceptée'),
+      });
+    }
   };
   const handleRejectTask = (task: Task) => {
     if (!user?.id) return;
     // Refuser = supprimer la grant shared_tasks (l'utilisateur perd l'accès →
-    // la tâche disparaît de sa to-do). On acquitte aussi pour éviter un flash.
-    acknowledgeShare(user.id, task.id);
-    setAckVersion((v) => v + 1);
+    // la tâche disparaît de sa to-do).
+    if (isDemo) {
+      acknowledgeShare(user.id, task.id);
+      setAckVersion((v) => v + 1);
+    }
     unshareTaskMutation.mutate(
       { taskId: task.id, friendId: user.id },
       {

@@ -173,6 +173,21 @@ export const useShareTask = () => {
   });
 };
 
+export const useAcceptSharedTask = () => {
+  const queryClient = useQueryClient();
+  const repository = useFriendsRepository();
+
+  return useMutation({
+    mutationFn: (taskId: string) => repository.acceptSharedTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible d'accepter la tâche : ${error.message}`);
+    },
+  });
+};
+
 export const useUnshareTask = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();
@@ -227,12 +242,22 @@ export const useSharesByTask = (): Map<string, string[]> => {
  * afficher les avatars de collaborateurs sur n'importe quelle tâche partagée,
  * que je l'aie partagée ou reçue. `currentUserId` exclut ma propre vignette.
  */
-export const useCollaboratorsByTask = (currentUserId?: string): Map<string, string[]> => {
+export const useRelatedTaskShares = () => {
   const repository = useFriendsRepository();
-  const { data: shares = [] } = useQuery({
+  return useQuery({
     queryKey: friendKeys.relatedTaskShares(),
     queryFn: () => repository.getRelatedTaskShares(),
+    // Collaboration sans realtime : poll régulier pour que la boîte de réception
+    // (tâches reçues en attente) et les avatars de collaborateurs reflètent un
+    // partage / une acceptation récents. getRelatedTaskShares retourne [] sans
+    // amis ni partages, donc coût négligeable.
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
+};
+
+export const useCollaboratorsByTask = (currentUserId?: string): Map<string, string[]> => {
+  const { data: shares = [] } = useRelatedTaskShares();
   return useMemo(() => {
     const sets = new Map<string, Set<string>>();
     for (const s of shares) {

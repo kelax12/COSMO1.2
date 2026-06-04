@@ -59,6 +59,8 @@ export interface IFriendsRepository {
   // Task sharing operations
   shareTask(input: ShareTaskInput): Promise<void>;
   unshareTask(taskId: string, friendId: string): Promise<void>;
+  /** Le destinataire courant accepte une tâche partagée (accepted_at = now). */
+  acceptSharedTask(taskId: string): Promise<void>;
 
   // Task sharing — read model (owner side)
   getTaskShares(taskId: string): Promise<TaskShare[]>;
@@ -254,7 +256,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
 
   async unshareTask(taskId: string, friendId: string): Promise<void> {
     const sharedTasks = JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
-    
+
     if (sharedTasks[taskId]) {
       sharedTasks[taskId] = sharedTasks[taskId].filter(
         (s: { friendId: string }) => s.friendId !== friendId
@@ -263,10 +265,22 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     }
   }
 
+  async acceptSharedTask(taskId: string): Promise<void> {
+    // Démo mono-utilisateur : pas de flux d'acceptation réel, on marque accepté.
+    const sharedTasks = JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
+    if (sharedTasks[taskId]) {
+      sharedTasks[taskId] = sharedTasks[taskId].map(
+        (s: { friendId: string; role?: string }) => ({ ...s, accepted: true })
+      );
+      localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+    }
+  }
+
   async getTaskShares(taskId: string): Promise<TaskShare[]> {
     const map = JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
-    const entries: { friendId: string; role?: 'viewer' | 'editor' }[] = map[taskId] || [];
-    return entries.map((s) => ({ taskId, friendId: s.friendId, role: s.role || 'viewer' }));
+    const entries: { friendId: string; role?: 'viewer' | 'editor'; accepted?: boolean }[] = map[taskId] || [];
+    // Démo : pas de flux d'acceptation → considéré accepté par défaut.
+    return entries.map((s) => ({ taskId, friendId: s.friendId, role: s.role || 'viewer', accepted: s.accepted ?? true }));
   }
 
   async getMyTaskShares(): Promise<TaskShare[]> {
@@ -286,9 +300,9 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     const map = JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
     const out: RelatedTaskShare[] = [];
     for (const taskId of Object.keys(map)) {
-      const entries: { friendId: string; role?: 'viewer' | 'editor' }[] = map[taskId] || [];
+      const entries: { friendId: string; role?: 'viewer' | 'editor'; accepted?: boolean }[] = map[taskId] || [];
       for (const s of entries) {
-        out.push({ taskId, sharedBy: 'demo-user', friendId: s.friendId, role: s.role || 'viewer' });
+        out.push({ taskId, sharedBy: 'demo-user', friendId: s.friendId, role: s.role || 'viewer', accepted: s.accepted ?? true });
       }
     }
     return out;

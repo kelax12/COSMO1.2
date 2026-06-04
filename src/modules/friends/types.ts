@@ -47,6 +47,8 @@ export interface TaskShare {
   /** Recipient's auth.users.id (Supabase) or friend.id (demo). */
   friendId: string;
   role: 'viewer' | 'editor';
+  /** Le destinataire a-t-il accepté la tâche ? (false = « Envoyé », en attente). */
+  accepted?: boolean;
 }
 
 /**
@@ -61,6 +63,8 @@ export interface RelatedTaskShare {
   /** auth.users.id du destinataire. */
   friendId: string;
   role: 'viewer' | 'editor';
+  /** Le destinataire a-t-il accepté la tâche ? */
+  accepted?: boolean;
 }
 
 /**

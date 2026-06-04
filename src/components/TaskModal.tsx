@@ -149,6 +149,8 @@ interface MobileBodyProps {
   isTaskOwner: boolean;
   /** auth.uid du propriétaire (pour badge « Propriétaire »). */
   ownerId?: string;
+  /** friend_ids des collaborateurs en attente d'acceptation (badge « Envoyé »). */
+  pendingShareIds: Set<string>;
 }
 
 // ─── TaskModalMobileBody ──────────────────────────────────────────────────────
@@ -162,7 +164,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   createCategoryMutation,
   isPremium, setShowPremiumGate,
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
-  taskId, autoOpenCollaborators, isTaskOwner, ownerId,
+  taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds,
 }) => {
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
@@ -648,11 +650,15 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 pb-1">{isTaskOwner ? `Sélectionnés (${collaborators.length})` : 'Participants'}</p>
                   {collaborators.map((id) => {
                     const info = displayInfo(id);
+                    const isSent = isTaskOwner && !info.isPending && pendingShareIds.has(id);
                     return (
-                      <div key={id} className="flex items-center justify-between py-1.5">
+                      <div key={id} className="flex items-center justify-between py-1.5 gap-2">
                         <span className="text-[14px] text-gray-900 dark:text-gray-100 truncate flex-1">
                           {info.name}{!isTaskOwner && id === ownerId ? ' · Propriétaire' : ''}
                         </span>
+                        {isSent && (
+                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Envoyé</span>
+                        )}
                         {isTaskOwner && (
                           <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
                         )}
@@ -744,6 +750,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   // supprimée — migration 028). On dérive l'état « assignés » des grants.
   const { data: shares = [] } = useTaskShares(task?.id);
   const existingShareIds = useMemo(() => shares.map((s) => s.friendId), [shares]);
+  // friend_ids des collaborateurs n'ayant pas encore accepté → badge « Envoyé ».
+  const pendingShareIds = useMemo(
+    () => new Set(shares.filter((s) => !s.accepted).map((s) => s.friendId)),
+    [shares]
+  );
   const existingCollaboratorIds = useMemo(
     () => [...existingShareIds, ...(task?.pendingInvites || [])],
     [existingShareIds, task?.pendingInvites]
@@ -1370,6 +1381,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             autoOpenCollaborators={showCollaborators}
             isTaskOwner={isTaskOwner}
             ownerId={task?.userId}
+            pendingShareIds={pendingShareIds}
           />
         ) : (
         <div
@@ -2039,6 +2051,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
                                         email={info.email}
                                         avatar={info.avatar}
                                         isPending={info.isPending}
+                                        sentBadge={!info.isPending && pendingShareIds.has(userId)}
                                         onAction={() => handleRemoveCollaborator(userId)}
                                         variant="remove"
                                       />

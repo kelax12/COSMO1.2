@@ -386,14 +386,21 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     // RLS `shared_tasks_select` lets the owner (shared_by) read these rows.
     const { data, error } = await supabase
       .from('shared_tasks')
-      .select('task_id, friend_id, role')
+      .select('task_id, friend_id, role, accepted_at')
       .eq('task_id', taskId);
     if (error) throw normalizeApiError(error);
     return (data || []).map((r) => ({
       taskId: r.task_id as string,
       friendId: r.friend_id as string,
       role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+      accepted: r.accepted_at != null,
     }));
+  }
+
+  async acceptSharedTask(taskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('accept_shared_task', { p_task_id: taskId });
+    if (error) throw normalizeApiError(error);
   }
 
   async getMyTaskShares(): Promise<TaskShare[]> {
@@ -422,7 +429,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     // → interpolation sûre dans le filtre .or().
     const { data, error } = await supabase
       .from('shared_tasks')
-      .select('task_id, shared_by, friend_id, role')
+      .select('task_id, shared_by, friend_id, role, accepted_at')
       .or(`shared_by.eq.${user.id},friend_id.eq.${user.id}`)
       .limit(500);
     if (error) throw normalizeApiError(error);
@@ -431,6 +438,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       sharedBy: r.shared_by as string,
       friendId: r.friend_id as string,
       role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
+      accepted: r.accepted_at != null,
     }));
   }
 
