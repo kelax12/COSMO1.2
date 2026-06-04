@@ -21,6 +21,10 @@ interface FriendRow {
   email: string;
   avatar?: string;
   user_id?: string;
+  /** auth.users.id de l'ami (rempli par accept_friend_request_v2 / migration 034).
+   *  Source canonique du `userId` côté UI — utilisée pour matcher les
+   *  collaborateurs (shared_tasks.friend_id) et résoudre les avatars. */
+  friend_user_id?: string;
   created_at?: string;
   [key: string]: unknown;
 }
@@ -80,7 +84,9 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       const profile = byEmail.get(f.email.toLowerCase());
       return {
         ...f,
-        userId: profile?.id ?? f.userId,
+        // Préférer le friend_user_id canonique (déjà dans f.userId via mapFromDb),
+        // puis l'id résolu via profiles en secours.
+        userId: f.userId ?? profile?.id,
         avatar: profile?.avatarUrl ?? f.avatar,
       };
     });
@@ -438,6 +444,10 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       name: row.name,
       email: row.email,
       avatar: row.avatar,
+      // `friend_user_id` = auth.uid de l'ami (canonique). Sert à matcher les
+      // collaborateurs et résoudre les avatars sans dépendre uniquement de
+      // l'enrichissement `profiles` (qui peut être bloqué par la RLS).
+      userId: row.friend_user_id,
     };
   }
 

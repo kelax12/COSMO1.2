@@ -8,6 +8,7 @@ import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { taskKeys } from './constants';
+import { friendKeys } from '@/modules/friends/constants';
 import { PaginationParams } from '@/lib/pagination.types';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -30,18 +31,29 @@ const useTasksRepository = (): ITasksRepository => {
 export const useTasks = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
   const isDemo = useIsDemo();
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: taskKeys.lists(),
     queryFn: () => withTimeout(repository.getAll(), 10_000),
     enabled: options?.enabled ?? true,
-    // Collaboration sans realtime : les modifications faites par un autre
-    // collaborateur (propriétaire ↔ éditeur) ne se propageaient jamais (cache
-    // React Query, focus-refetch désactivé globalement). On rafraîchit la liste
-    // toutes les 15 s UNIQUEMENT s'il existe au moins une tâche collaborative
-    // (zéro overhead pour les utilisateurs solo) + au retour sur l'onglet.
+    // Collaboration sans realtime : les modifications d'un collaborateur, ET
+    // surtout une NOUVELLE tâche qu'un ami vient de partager, ne se propageaient
+    // jamais (cache React Query, focus-refetch désactivé globalement).
+    // On rafraîchit la liste toutes les 15 s dès que la collaboration est
+    // possible — soit l'utilisateur a déjà une tâche collaborative, soit il a au
+    // moins un ami (donc peut recevoir un partage à tout moment). La présence
+    // d'amis est lue depuis le cache (aucune requête supplémentaire). Zéro
+    // overhead pour un utilisateur solo sans ami. Désactivé en démo.
     refetchInterval: isDemo
       ? false
-      : (query) => ((query.state.data as Task[] | undefined)?.some((t) => t.isCollaborative) ? 15_000 : false),
+      : (query) => {
+          const hasCollaborative = (query.state.data as Task[] | undefined)?.some((t) => t.isCollaborative);
+          const friends = queryClient.getQueryData<unknown[]>(friendKeys.lists());
+          const hasFriends = (friends?.length ?? 0) > 0;
+          return hasCollaborative || hasFriends ? 15_000 : false;
+        },
+    // Permet au focus/à la navigation de rapatrier un partage récent.
+    staleTime: isDemo ? undefined : 15_000,
     refetchOnWindowFocus: isDemo ? false : true,
     refetchIntervalInBackground: false,
   });

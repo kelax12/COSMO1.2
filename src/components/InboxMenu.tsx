@@ -13,10 +13,13 @@ import {
   useSendFriendRequest,
   type PendingFriendRequest,
 } from '@/modules/friends';
-import { useTasks, useUpdateTask, type Task } from '@/modules/tasks';
+import { useTasks, type Task, taskKeys } from '@/modules/tasks';
+import { useUnshareTask } from '@/modules/friends';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
+import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
 
 /**
  * Boîte de réception unifiée du Dashboard. Remplace l'ancien panneau
@@ -36,12 +39,17 @@ const InboxMenu: React.FC = () => {
   const { user } = useAuth();
   const { isPremium } = useBilling();
 
+  const queryClient = useQueryClient();
   const { data: requests = [] } = useFriendRequests();
   const { data: tasks = [] } = useTasks();
   const acceptFriendMutation = useAcceptFriendRequest();
   const rejectFriendMutation = useRejectFriendRequest();
   const sendFriendMutation = useSendFriendRequest();
-  const updateTaskMutation = useUpdateTask();
+  const unshareTaskMutation = useUnshareTask();
+
+  // Acquittements locaux des tâches partagées (cf. lib/acknowledged-shares).
+  // `ackVersion` force un recalcul de `tasksToAccept` après accept/reject.
+  const [ackVersion, setAckVersion] = useState(0);
 
   const [open, setOpen] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
@@ -65,13 +73,18 @@ const InboxMenu: React.FC = () => {
     });
   }, [requests]);
 
-  // Tâches reçues d'un ami et pas encore acceptées : `sharedBy` renseigné et
+  // Tâches reçues d'un ami et pas encore acquittées : `sharedBy` renseigné et
   // différent de l'utilisateur courant. (En mode démo `sharedBy` est stocké ;
-  // en Supabase il est dérivé de la propriété de la tâche.)
-  const tasksToAccept = useMemo(
-    () => tasks.filter((t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed),
-    [tasks, user?.name]
-  );
+  // en Supabase il est dérivé de la propriété de la tâche → on persiste
+  // l'acquittement localement pour les sortir de la boîte de réception.)
+  const tasksToAccept = useMemo(() => {
+    const ack = getAcknowledgedShares(user?.id);
+    return tasks.filter(
+      (t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed && !ack.has(t.id)
+    );
+    // ackVersion en dép : recalcul après accept/reject.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, user?.name, user?.id, ackVersion]);
 
   const total = incomingRequests.length + tasksToAccept.length;
 
@@ -129,15 +142,28 @@ const InboxMenu: React.FC = () => {
       navigate('/premium');
       return;
     }
-    updateTaskMutation.mutate(
-      { id: task.id, updates: { sharedBy: undefined, isCollaborative: true } },
-      { onSuccess: () => toast.success('Tâche acceptée') }
-    );
+    // Accepter = acquitter localement (l'accès est déjà accordé via shared_tasks).
+    // La tâche reste dans la to-do (marquée « Reçu de … ») mais sort de la boîte.
+    acknowledgeShare(user?.id, task.id);
+    setAckVersion((v) => v + 1);
+    toast.success('Tâche acceptée');
   };
   const handleRejectTask = (task: Task) => {
-    updateTaskMutation.mutate(
-      { id: task.id, updates: { sharedBy: undefined, isCollaborative: false } },
-      { onSuccess: () => toast.success('Tâche refusée') }
+    if (!user?.id) return;
+    // Refuser = supprimer la grant shared_tasks (l'utilisateur perd l'accès →
+    // la tâche disparaît de sa to-do). On acquitte aussi pour éviter un flash.
+    acknowledgeShare(user.id, task.id);
+    setAckVersion((v) => v + 1);
+    unshareTaskMutation.mutate(
+      { taskId: task.id, friendId: user.id },
+      {
+        onSuccess: () => {
+          // Invalide la liste de tâches : sans la grant, la RLS ne renvoie plus
+          // cette tâche au destinataire.
+          queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+          toast.success('Tâche refusée');
+        },
+      }
     );
   };
 
@@ -270,7 +296,6 @@ const InboxMenu: React.FC = () => {
                     <div className="flex gap-1.5 shrink-0">
                       <button
                         onClick={() => handleAcceptTask(task)}
-                        disabled={updateTaskMutation.isPending}
                         className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 monochrome:bg-white monochrome:text-zinc-900"
                         aria-label={`Accepter la tâche partagée ${task.name}`}
                       >
@@ -278,7 +303,7 @@ const InboxMenu: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleRejectTask(task)}
-                        disabled={updateTaskMutation.isPending}
+                        disabled={unshareTaskMutation.isPending}
                         className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                         aria-label={`Refuser la tâche partagée ${task.name}`}
                       >
