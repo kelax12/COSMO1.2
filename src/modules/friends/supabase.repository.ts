@@ -354,12 +354,11 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
         );
       }
       if (code === '42501') {
-        // RLS WITH CHECK : la policy shared_tasks_insert exige une amitié
-        // confirmée (friends.friend_user_id = destinataire). Si elle échoue,
-        // c'est que l'amitié n'est pas (ou plus) confirmée des deux côtés.
+        // RLS WITH CHECK : la policy shared_tasks_insert (migration 036) exige
+        // SOIT une amitié confirmée, SOIT une demande d'ami `pending` envoyée à
+        // ce destinataire. Si elle échoue, aucune des deux n'existe.
         throw new Error(
-          "Tu dois être ami confirmé avec cette personne pour lui partager une tâche. " +
-          "Vérifie que votre demande d'ami a bien été acceptée."
+          "Envoie d'abord une demande d'ami à cette personne pour pouvoir lui partager une tâche."
         );
       }
       throw normalizeApiError(error);
