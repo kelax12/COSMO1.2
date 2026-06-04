@@ -70,6 +70,10 @@ export type User = {
   name: string;
   email: string;
   avatar?: string;
+  // Auth provider used to sign in ('email' | 'google' | …). Sourced from
+  // Supabase `app_metadata.provider` (server-controlled, not spoofable). Used to
+  // gate email editing: third-party (OAuth) accounts manage their email upstream.
+  provider?: string;
   // Optional local-only preference (demo mode). Never sourced from user_metadata.
   autoValidation?: boolean;
 };
@@ -111,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Utilisateur',
     email: supabaseUser.email || '',
     avatar: supabaseUser.user_metadata?.avatar_url,
+    provider: supabaseUser.app_metadata?.provider,
   });
 
   useEffect(() => {
