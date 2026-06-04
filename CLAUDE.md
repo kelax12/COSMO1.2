@@ -1065,7 +1065,7 @@ Pour tout `<input type="file">` :
 ### Système d'amis & partage (RLS social)
 
 - ✅ `friends.INSERT` exige une `friend_requests` acceptée
-- ✅ `shared_tasks.INSERT` exige une amitié confirmée
+- ✅ `shared_tasks.INSERT` exige une amitié confirmée **OU** une demande d'ami `pending` envoyée par le partageur au destinataire (migration 036). La branche pending vérifie `sender_id = auth.uid()` (on ne cible qu'un destinataire à qui ON a envoyé une demande) ; le destinataire doit toujours accepter la tâche (`shared_tasks.accepted_at`)
 - ✅ `friend_requests.UPDATE` est split : sender peut seulement `cancel`, receiver peut seulement `accept/reject`
 - ❌ **Ne pas** ajouter une policy permissive sur ces tables sans repenser le modèle de confiance
 

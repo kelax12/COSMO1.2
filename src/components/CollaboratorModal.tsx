@@ -8,7 +8,7 @@ import CollaboratorItem from './CollaboratorItem';
 import { Button } from '@/components/ui/button';
 
 import { useTasks, useUpdateTask } from '@/modules/tasks';
-import { useFriends, useSendFriendRequest, useShareTask, useUnshareTask, useTaskShares } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
 import { useBilling } from '@/modules/billing/billing.context';
 
 type CollaboratorModalProps = {
@@ -24,6 +24,9 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const updateTaskMutation = useUpdateTask();
 
   const { data: friends = [] } = useFriends();
+  // Demandes d'ami ENVOYÉES encore en attente : on peut désormais partager une
+  // tâche avec ces destinataires sans attendre l'acceptation (migration 036).
+  const { data: sentRequests = [] } = useSentFriendRequests();
   const sendFriendRequestMutation = useSendFriendRequest();
   const shareTaskMutation = useShareTask();
   const unshareTaskMutation = useUnshareTask();
@@ -64,6 +67,20 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     [friends, assignedCollaborators, search]
   );
 
+  // Destinataires d'une demande d'ami ENVOYÉE encore en attente, résolus en
+  // auth.uid (receiverId) et inscrits sur Cosmo → partageables immédiatement
+  // (migration 036). On exclut ceux déjà assignés ou déjà amis confirmés.
+  const pendingContacts = useMemo(
+    () =>
+      (sentRequests || [])
+        .filter((r) => !!r.receiverId)
+        .filter((r) => !assignedCollaborators.includes(r.receiverId as string))
+        .filter((r) => !friends.some((f) => collabIdOf(f) === r.receiverId))
+        .filter((r) => search.trim() === '' || r.email.toLowerCase().includes(search.toLowerCase()))
+        .map((r) => ({ id: r.receiverId as string, email: r.email })),
+    [sentRequests, assignedCollaborators, friends, search]
+  );
+
   // ESC to close + lock body scroll
   useEffect(() => {
     if (!isOpen) return;
@@ -79,7 +96,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   if (!task) return null;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!task) return;
     // Le partage cross-user (shared_tasks → RLS du destinataire) est réservé
     // au Premium. On bloque l'ajout AVANT d'écrire `collaborators`, sinon la
@@ -118,26 +135,37 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         setInput('');
         return;
       }
-      if (assignedCollaborators.includes(value)) {
+      if (assignedCollaborators.includes(value) || pendingInvites.includes(value)) {
         setInput('');
         return;
       }
-      if (!pendingInvites.includes(value)) {
-        sendFriendRequestMutation.mutate({ email: value });
+      setInput('');
+      // Nouveau (migration 036) : on envoie la demande d'ami PUIS on partage
+      // immédiatement. L'ordre est important — la policy RLS « pending » exige
+      // que la demande existe AVANT l'INSERT shared_tasks. Si le destinataire
+      // n'est pas (encore) inscrit, le partage échoue (FK) → on retombe sur une
+      // invitation par email en attente (comportement historique).
+      try {
+        await sendFriendRequestMutation.mutateAsync({ email: value });
+        await shareTaskMutation.mutateAsync({ taskId: task.id, friendId: value, friendEmail: value, role: 'editor' });
+        // Succès : le destinataire apparaît via shared_tasks (friend_id = uid).
+        updateTaskMutation.mutate({
+          id: task.id,
+          updates: { isCollaborative: true, collaboratorValidations: { ...task.collaboratorValidations } },
+        });
+      } catch {
+        // Destinataire non inscrit / partage impossible : on garde l'invitation
+        // email en attente (la demande d'ami a tout de même été envoyée).
         updateTaskMutation.mutate({
           id: task.id,
           updates: {
             isCollaborative: true,
             pendingInvites: [...pendingInvites, value],
-            collaboratorValidations: {
-              ...task.collaboratorValidations,
-              [value]: false
-            }
-          }
+            collaboratorValidations: { ...task.collaboratorValidations, [value]: false },
+          },
         });
       }
     }
-    setInput('');
   };
 
   const handleToggleFriend = (collabId: string) => {
@@ -206,6 +234,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     const friend = friends?.find((f) => collabIdOf(f) === id || f.id === id || f.name === id);
     if (friend) {
       return { name: friend.name, email: friend.email, avatar: friend.avatar, isPending: false };
+    }
+    // Partage avec un destinataire dont la demande d'ami est encore en attente :
+    // on retrouve son email via les demandes envoyées (id = receiverId/auth.uid).
+    const sent = sentRequests.find((r) => r.receiverId === id);
+    if (sent) {
+      return { name: sent.email, email: sent.email, avatar: undefined, isPending: true };
     }
     const isPending = (task?.pendingInvites || []).includes(id);
     if (emailRegex.test(id)) {
@@ -397,7 +431,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   </div>
                 </div>
 
-                {availableFriends.length === 0 ? (
+                {availableFriends.length === 0 && pendingContacts.length === 0 ? (
                   <div className="p-6 rounded-2xl text-center transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                     <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun contact trouvé.</p>
                   </div>
@@ -418,6 +452,20 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                         />
                       );
                     })}
+                    {/* Destinataires avec demande d'ami en attente — partageables
+                        immédiatement (migration 036). Badge « en attente ». */}
+                    {pendingContacts.map((c) => (
+                      <CollaboratorItem
+                        key={`pending-${c.id}`}
+                        id={c.id}
+                        name={c.email}
+                        email={c.email}
+                        isPending
+                        onAction={() => handleToggleFriend(c.id)}
+                        variant="add"
+                        compact={isMobile}
+                      />
+                    ))}
                   </div>
                 )}
               </section>
