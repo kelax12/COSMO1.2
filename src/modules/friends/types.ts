@@ -65,4 +65,9 @@ export interface PendingFriendRequest {
   senderId?: string;
   senderEmail?: string; // email de l'expéditeur
   receiverId?: string;
+  /** Avatar de l'expéditeur (URL/data URL/emoji), résolu via la RPC
+   *  `get_incoming_request_senders` (Supabase) ou seedé en démo. */
+  senderAvatar?: string;
+  /** Nom affiché de l'expéditeur, même source que `senderAvatar`. */
+  senderName?: string;
 }

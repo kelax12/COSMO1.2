@@ -16,6 +16,7 @@ import {
 import { useTasks, useUpdateTask, type Task } from '@/modules/tasks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 
 /**
  * Boîte de réception unifiée du Dashboard. Remplace l'ancien panneau
@@ -193,12 +194,18 @@ const InboxMenu: React.FC = () => {
                     className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                        <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
+                      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                        {isImageAvatar(req.senderAvatar) ? (
+                          <img src={req.senderAvatar} alt="" className="w-full h-full object-cover" />
+                        ) : isEmojiAvatar(req.senderAvatar) ? (
+                          <span className="text-lg leading-none" aria-hidden="true">{req.senderAvatar}</span>
+                        ) : (
+                          <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                          {prettyName(req.senderEmail)}
+                          {req.senderName || prettyName(req.senderEmail)}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {req.senderEmail}{timeAgo ? ` · ${timeAgo}` : ''}
