@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { PageHeading } from '@/components/ui/typography';
 import { Button } from "@/components/ui/button";
 
 // Ordre : Tableau (défaut, plus dense) → Liste → Suivi global
@@ -67,9 +68,9 @@ const HabitsPage: React.FC = () => {
       <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          <PageHeading variant="standard" className="mb-2">
             Habitudes
-          </h1>
+          </PageHeading>
           <p className="text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Développez de bonnes habitudes au quotidien
           </p>

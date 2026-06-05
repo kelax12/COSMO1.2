@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PageHeading } from '@/components/ui/typography';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Zap, Play, Check, Users, Sparkles, Loader2, X, Minus } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
@@ -124,9 +125,9 @@ export function PremiumPage() {
               whileHover={{ scale: 1.02 }}
             >
               <Crown size={36} style={{ color: '#eab308' }} />
-              <h1 className="text-2xl sm:text-4xl font-bold text-[rgb(var(--color-text-primary))]">
+              <PageHeading variant="standard" className="sm:text-4xl">
                 Cosmo Premium
-              </h1>
+              </PageHeading>
             </motion.div>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-blue-200/80 mb-12">
             Débloquez tout le potentiel de votre productivité
