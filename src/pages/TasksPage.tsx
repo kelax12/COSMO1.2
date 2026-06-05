@@ -6,6 +6,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import SmartListMenu from '../components/SmartListMenu';
+import ListActionsSheet from '../components/ListActionsSheet';
 import { CalendarDays, X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -75,6 +76,27 @@ const TasksPage: React.FC = () => {
   const [listToDeleteId, setListToDeleteId] = useState<string | null>(null);
   const [selectingTasksForListId, setSelectingTasksForListId] = useState<string | null>(null);
   const [selectedTasksForList, setSelectedTasksForList] = useState<string[]>([]);
+
+  // Menu d'actions de liste (mobile) — ouvert par appui long sur une chip.
+  // Remplace les micro-boutons flottants hover-only (inaccessibles au tap).
+  const [actionSheetListId, setActionSheetListId] = useState<string | null>(null);
+  const chipLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chipLongPressFired = useRef(false);
+  const startChipLongPress = (listId: string) => {
+    if (!isMobile) return;
+    chipLongPressFired.current = false;
+    chipLongPressTimer.current = setTimeout(() => {
+      chipLongPressFired.current = true;
+      setActionSheetListId(listId);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    }, 500);
+  };
+  const cancelChipLongPress = () => {
+    if (chipLongPressTimer.current) {
+      clearTimeout(chipLongPressTimer.current);
+      chipLongPressTimer.current = null;
+    }
+  };
 
   const { priorityRange } = usePriorityRange();
 
@@ -534,11 +556,11 @@ const TasksPage: React.FC = () => {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 4 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
+                              className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-10"
                             >
                               <button
                                 onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}
-                                className="p-1 rounded bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 shadow-sm transition-colors"
+                                className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 shadow-sm transition-colors"
                                 title="Ajouter des tâches à aujourd'hui (pose leur échéance à aujourd'hui)"
                                 aria-label="Ajouter des tâches à aujourd'hui"
                               >
@@ -546,7 +568,7 @@ const TasksPage: React.FC = () => {
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setTodayHidden(true); }}
-                                className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
+                                className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
                                 title="Masquer la chip Aujourd'hui (réactivable depuis ✨)"
                                 aria-label="Masquer la chip Aujourd'hui"
                               >
@@ -589,7 +611,9 @@ const TasksPage: React.FC = () => {
                         const isSelected = selectedListId === list.id;
                         const isEditing = editingListId === list.id;
                         const isHovered = hoveredListId === list.id;
-                        const showActions = (isHovered || isSelected) && !isEditing;
+                        // Boutons flottants = desktop uniquement (hover). Sur mobile,
+                        // l'appui long ouvre ListActionsSheet (cibles ≥ 44 px).
+                        const showActions = (isHovered || isSelected) && !isEditing && !isMobile;
 
                         return (
                           <Reorder.Item
@@ -614,12 +638,12 @@ const TasksPage: React.FC = () => {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-7 inset-x-0 flex justify-center gap-2 z-10"
+                                  className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-10"
                                 >
                                   {/* Bouton "épingler par défaut" — seul un peut être actif */}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleToggleDefault(list); }}
-                                    className={`p-1 rounded border shadow-sm transition-colors ${
+                                    className={`p-2 rounded-lg border shadow-sm transition-colors ${
                                       list.isDefault
                                         ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300'
                                         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
@@ -633,7 +657,7 @@ const TasksPage: React.FC = () => {
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
-                                      className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title="Ajouter des tâches"
                                       aria-label="Ajouter des tâches"
                                     >
@@ -644,7 +668,7 @@ const TasksPage: React.FC = () => {
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startEditList(list); }}
-                                      className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title="Modifier la liste"
                                       aria-label="Modifier la liste"
                                     >
@@ -653,7 +677,7 @@ const TasksPage: React.FC = () => {
                                   )}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
-                                    className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                                    className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
                                     title="Supprimer la liste"
                                     aria-label="Supprimer la liste"
                                   >
@@ -720,7 +744,17 @@ const TasksPage: React.FC = () => {
                               </form>
                             ) : (
                               <button
-                                onClick={() => handleListSelect(list.id)}
+                                onClick={() => {
+                                  // Si un appui long vient d'ouvrir le menu d'actions,
+                                  // on n'enchaîne pas sur la sélection de la liste.
+                                  if (chipLongPressFired.current) { chipLongPressFired.current = false; return; }
+                                  handleListSelect(list.id);
+                                }}
+                                onPointerDown={() => startChipLongPress(list.id)}
+                                onPointerUp={cancelChipLongPress}
+                                onPointerCancel={cancelChipLongPress}
+                                onPointerLeave={cancelChipLongPress}
+                                onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
                                   isSelected
                                     ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
@@ -1162,6 +1196,18 @@ const TasksPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
+      <ListActionsSheet
+        list={lists.find(l => l.id === actionSheetListId) ?? null}
+        colorOptions={colorOptions}
+        resolveListColor={resolveListColor}
+        onClose={() => setActionSheetListId(null)}
+        onRename={(list) => startEditList(list)}
+        onToggleDefault={handleToggleDefault}
+        onDelete={(list) => setListToDeleteId(list.id)}
+        onPickColor={(list, colorValue) => updateListMutation.mutate({ id: list.id, updates: { color: colorValue } })}
+      />
 
       {/* Tutoriel page Tâches — variante adaptée au viewport */}
       <PageTutorial

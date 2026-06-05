@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
@@ -78,6 +78,8 @@ interface TaskCardProps {
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
+  /** true pour la 1ʳᵉ carte de la liste — déclenche le hint de swipe animé (1× / device). */
+  isFirst?: boolean;
 }
 
 const TaskCard = React.memo(({
@@ -93,6 +95,7 @@ const TaskCard = React.memo(({
   onDeleteTask,
   onScheduleTask,
   onDuplicate,
+  isFirst = false,
 }: TaskCardProps) => {
   // Lookup catégorie via hook React Query — re-render automatique quand
   // les catégories Supabase finissent de charger (asynchrone en prod).
@@ -115,6 +118,36 @@ const TaskCard = React.memo(({
   const grayOpacity = useTransform(x, [-80, -8, 0], [1, 1, 0]);
   const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
   const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
+
+  // Hint de geste animé — joue UNE seule fois (par device) sur la 1ʳᵉ carte :
+  // un léger nudge à gauche (révèle « Options ») puis à droite (révèle « Valider »),
+  // façon Things/Todoist. Enseigne le swipe sans bloquer l'interaction (le drag
+  // utilisateur reprend la main à tout moment). Respecte prefers-reduced-motion.
+  useEffect(() => {
+    if (!isFirst || addToListMode) return;
+    let alreadyPlayed = false;
+    try { alreadyPlayed = localStorage.getItem('cosmo_swipe_hint_anim_seen') === '1'; } catch { /* ignore */ }
+    if (alreadyPlayed) return;
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // On marque comme vu dans tous les cas pour ne jamais rejouer.
+    try { localStorage.setItem('cosmo_swipe_hint_anim_seen', '1'); } catch { /* ignore */ }
+    if (prefersReduced) return;
+    let controls: ReturnType<typeof animate> | undefined;
+    const startTimer = setTimeout(() => {
+      controls = animate(x, [0, -52, 0, 44, 0], {
+        duration: 1.7,
+        times: [0, 0.28, 0.5, 0.78, 1],
+        ease: 'easeInOut',
+      });
+    }, 650);
+    return () => {
+      clearTimeout(startTimer);
+      controls?.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFirst, addToListMode]);
 
   const startLongPress = (e: React.PointerEvent) => {
     if (addToListMode) return;
@@ -319,17 +352,15 @@ const TaskCard = React.memo(({
         </div>
       </div>
 
-      {/* Priority badge — couleur catégorie pour cohérence visuelle avec la barre.
-          Masqué si la tâche n'a pas de priorité (facultative). */}
+      {/* Priority badge — échelle d'URGENCE (task-priority-1..5 : rouge→orange→
+          jaune→bleu→gris), distincte de la couleur de catégorie (la barre gauche).
+          Réutilise les classes du tableau desktop pour une sémantique cohérente
+          mobile/desktop + dark mode. Masqué si priorité facultative (0). */}
       {task.priority > 0 && (
         <div
-          className="self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px]"
-          style={{
-            backgroundColor: `${categoryColor}20`,
-            color: categoryColor
-          }}
+          className={`self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px] task-priority-${task.priority}`}
         >
-          Priorité {task.priority}
+          P{task.priority}
         </div>
       )}
 
@@ -501,8 +532,8 @@ const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
   if (tasks.length < VIRTUALIZE_THRESHOLD) {
     return (
       <AnimatePresence mode="popLayout">
-        {tasks.map(task => (
-          <TaskCard key={task.id} {...cardProps(task)} />
+        {tasks.map((task, index) => (
+          <TaskCard key={task.id} {...cardProps(task)} isFirst={index === 0} />
         ))}
       </AnimatePresence>
     );
@@ -535,7 +566,7 @@ const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
               transform: `translateY(${virtualItem.start - (listRef.current?.offsetTop ?? 0)}px)`,
             }}
           >
-            <TaskCard {...cardProps(task)} />
+            <TaskCard {...cardProps(task)} isFirst={virtualItem.index === 0} />
           </div>
         );
       })}
