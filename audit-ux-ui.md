@@ -14,7 +14,52 @@ COSMO est un produit **étonnamment complet et techniquement soigné** pour son 
 
 Le **risque produit principal n'est pas la qualité d'exécution mais la charge cognitive** : l'app cumule 5 méthodologies de productivité dans une seule interface. Pour un nouvel utilisateur, la promesse « tout-en-un » est aussi sa principale source de confusion. Les frictions sont concentrées sur (1) l'absence d'onboarding guidé désormais (le tuto démo vient d'être retiré), (2) une densité d'information forte sur Dashboard/OKR/Stats, (3) des incohérences de design system entre pages (deux familles de couleurs : `--color-*` vs `slate-*`/`hsl(--card)`), (4) des parcours avancés (collaboration, smart lists, récurrence custom) peu découvrables.
 
-Notes globales : **UX 6.5/10 · UI 7.5/10 · Clarté 6/10 · Performance perçue 8/10.**
+Notes globales (état initial de l'audit) : **UX 6.5/10 · UI 7.5/10 · Clarté 6/10 · Performance perçue 8/10.**
+
+---
+
+## 0bis. MISE À JOUR — Avant / Après (implémenté)
+
+> Suite à l'audit, une série de correctifs a été livrée et poussée (commits sur `main`). Cette section trace ce qui a réellement changé. Statut : ✅ fait · 🟡 partiel · ⏳ à faire · ↩️ implémenté puis retiré (décision produit).
+
+### Tableau Avant / Après
+
+| Sujet | Avant | Après | Statut |
+|---|---|---|---|
+| **Découvrabilité recherche** (QW1, F2) | Palette de commandes accessible **uniquement** au clavier (⌘K), invisible → fonction morte | **Loupe visible** sous le bouton de thème (sidebar) + entrée « Rechercher » dans le menu « Plus » mobile ; champ épuré (borderless) | ✅ |
+| **Thème dans la palette** | Commandes « Thème clair/sombre » **sans effet** (branchées sur next-themes, pas le vrai thème) | Branchées sur `useDarkMode` → **changent réellement** le thème | ✅ |
+| **Priorité / échéance vides** (QW2, U4) | Priorité obligatoire ; échéance forcée au jour courant ; « — » ambigu / « Invalid Date » | **Facultatives** ; libellés **« Aucune priorité »** / **« Pas d'échéance »** ; plus jamais « Invalid Date » | ✅ |
+| **Catégorie** | Obligatoire à la création | **Facultative** (seul le nom requis) ; re-clic = désélection | ✅ |
+| **Contrastes a11y** (QW3, F7) | Combos < 4.5:1 (carte habit bleue, login, labels muted) | **Dashboard & Login : 0 violation `color-contrast`** ; « en retard » doublé d'une **icône + texte** | ✅ (résiduels OKR/landing) |
+| **Affordance des gestes** (QW5, F2/U2) | Options uniquement par long-press/clic droit (invisible) ; action destructive cachée | Bouton **« ⋯ » visible** sur chaque tâche sidebar + **hint dismissable** « glissez / maintenez » | ✅ |
+| **Landmark CookieBanner** (QW6, A-10) | Banner hors `<main>` → 3 nœuds `region` | Enveloppé dans `<aside aria-label>` → **0 `region`** | ✅ |
+| **Duplication de tâche** (AM11, F8) | Impossible (effort répété) | Action **« Dupliquer »** (sidebar + card + ligne desktop), 1 seule création | ✅ |
+| **Cohérence d'action modale** (U1) | Mobile : doublons (footer + header) / patterns divergents | EventModal mobile = **un seul** bouton (haut-droite) ; libellé « Créer » en convert | ✅ |
+| **Contraste champ/fond modales** (I1 partiel) | Champs et fond identiques (flat) | Pattern **corps gris / champs blancs** sur EventModal, TaskModal, HabitModal, OKRModal, ColorSettingsModal | ✅ |
+| **Alignement inputs EventModal** | Bloc Date/Début/Fin indenté de 16px vs Titre | Tous les champs **alignés** | ✅ |
+| **Undo / tolérance à l'erreur** | Aucune annulation | **Toast 5 s + barre de progression** sur validation + suppressions (tâche/habitude/OKR/event) ; restauration **immédiate** | ✅ |
+| **Récurrence d'événement** | Quotidien/hebdo seulement | Ajout **« Personnaliser »** + modal 7 jours ; **crayon** dans la popup de gestion | ✅ |
+| **Resize tactile agenda** (P5) | Non persisté sur mobile | **Persisté** (`eventResize`) | ✅ |
+| **Dashboard — focus** (P2/F6) | Graphiques en tête, pas de point focal | « Tâches prioritaires » **en gros à gauche** ; « Répartition du temps » **masqué** | 🟡 / ↩️ (« Focus du jour » retiré à la demande) |
+| **Statistiques** | Multi-courbes noyé dans le Dashboard | Toggle **« Tout / Voir le détail »** ; **axe Y en heures entières** | ✅ |
+| **Onboarding** (P3/F4) | Tuto démo « Bienvenue » | **Retiré** (décision produit) | ↩️ |
+
+### Statut des recommandations (section 7)
+- ✅ **QW1, QW2, QW5, QW6, AM11** ; **QW4** en grande partie.
+- ✅ **QW3** côté app (Dashboard/Login 0 contraste) — 🟡 résiduels **OKR** (`button-name` + pills palette = A-8) et **showcases Landing** (décoratifs).
+- ↩️ **AM7** (Focus du jour) implémenté puis retiré.
+- ⏳ Non démarrés : **AM8** (design system `slate-*`→`--color-*`), **AM9** (échelle typo), **AM10** (onboarding progressif), **CM12** (Dashboard cockpit), **CM13** (découvrabilité unifiée), **CM14** (a11y agenda/clavier).
+
+### Scores — Avant → Après
+
+| Axe | Avant | Après | Pourquoi |
+|---|---|---|---|
+| **UX** | 6.5/10 | **7.5/10** | Undo généralisé + restauration immédiate, friction de création réduite, gestes signalés, duplication. Reste : onboarding, OKR. |
+| **UI** | 7.5/10 | **8/10** | Contraste champ/fond unifié, inputs alignés, palette épurée, contrastes a11y corrigés. Reste : 2 design systems (AM8). |
+| **Clarté** | 6/10 | **6.5/10** | Libellés explicites, recherche visible, stats clarifiées. Reste : densité Dashboard + onboarding progressif (AM10). |
+| **Performance perçue** | 8/10 | **8/10** | Déjà solide ; graphique Dashboard masqué = un peu moins de charge. |
+
+**Global ≈ 7,5/10** (vs 7/10). Prochain palier : **AM8 (design system)** + **AM10/CM12 (charge cognitive)**.
 
 ---
 
