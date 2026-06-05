@@ -31,6 +31,7 @@ import { useOkrs } from '@/modules/okrs';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
+import { useActiveModules } from '@/modules/ui-states';
 
 interface PaletteCommand {
   id: string;
@@ -184,6 +185,7 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const { logout, isAuthenticated } = useAuth();
   const { theme, setTheme } = useDarkMode();
+  const activeModules = useActiveModules();
 
   const commands: PaletteCommand[] = useMemo(() => {
     const nav = (path: string, state?: Record<string, boolean>) => () => {
@@ -193,10 +195,12 @@ export function CommandPalette() {
     const base: PaletteCommand[] = [
       { id: 'nav-dashboard', label: "Aller à l'accueil", group: 'Navigation', icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
       { id: 'nav-tasks', label: 'Aller aux tâches', group: 'Navigation', icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
-      { id: 'nav-agenda', label: "Aller à l'agenda", group: 'Navigation', icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] },
-      { id: 'nav-habits', label: 'Aller aux habitudes', group: 'Navigation', icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] },
-      { id: 'nav-okr', label: 'Aller aux OKR', group: 'Navigation', icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] },
-      { id: 'nav-statistics', label: 'Aller aux statistiques', group: 'Navigation', icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
+      // Modules optionnels (AM10) — masqués de la palette si désactivés, sinon
+      // l'entrée serait une impasse (RequireModule redirige vers le dashboard).
+      ...(activeModules.agenda ? [{ id: 'nav-agenda', label: "Aller à l'agenda", group: 'Navigation' as const, icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] }] : []),
+      ...(activeModules.habits ? [{ id: 'nav-habits', label: 'Aller aux habitudes', group: 'Navigation' as const, icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] }] : []),
+      ...(activeModules.okr ? [{ id: 'nav-okr', label: 'Aller aux OKR', group: 'Navigation' as const, icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] }] : []),
+      ...(activeModules.statistics ? [{ id: 'nav-statistics', label: 'Aller aux statistiques', group: 'Navigation' as const, icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] }] : []),
       { id: 'nav-settings', label: 'Aller aux paramètres', group: 'Navigation', icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
       ...(PREMIUM_ENFORCED
         ? [{ id: 'nav-premium', label: 'Voir Premium', group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
@@ -269,7 +273,7 @@ export function CommandPalette() {
       );
     }
     return base;
-  }, [navigate, setTheme, logout, isAuthenticated]);
+  }, [navigate, setTheme, logout, isAuthenticated, activeModules]);
 
   // Filtrage manuel : substring insensible aux accents sur label + keywords.
   const filteredCommands = useMemo(() => {

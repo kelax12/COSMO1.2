@@ -316,6 +316,42 @@ React Query : 5 min stale, 30 min gc, retry 1, no refetchOnWindowFocus. Le `Toas
 
 Défini **uniquement** dans `src/modules/auth/AuthContext.tsx` (`src/modules/user/types.ts` le ré-exporte sans le redéfinir) :
 
+---
+
+## Modules actifs / onboarding progressif (AM10)
+
+Système « simple vs avancé » : l'utilisateur réel choisit quels modules optionnels
+afficher. Store : `src/modules/ui-states/active-modules.store.ts`.
+
+```typescript
+import { useActiveModules, setActiveModules, isModuleActive } from '@/modules/ui-states';
+
+const activeModules = useActiveModules();   // Record<ModuleKey, boolean>
+// ModuleKey = 'agenda' | 'habits' | 'okr' | 'statistics'
+```
+
+Règles non négociables :
+- **Dashboard + Tâches = socle, TOUJOURS actifs** (non désactivables — dépendances
+  tâches↔agenda↔dashboard). Seuls `agenda`, `habits`, `okr`, `statistics` sont optionnels.
+- **En mode démo → tous les modules forcés actifs** (override dans `getSnapshot`).
+  La démo ne doit jamais voir l'onboarding ni perdre d'onglet (fixtures E2E `loginDemo()`).
+- Persistance **localStorage** (clé `cosmo_active_modules`), défaut = tout actif
+  (rétro-compat : un utilisateur existant ne perd aucun onglet).
+- L'onboarding (`src/components/onboarding/ModuleOnboarding.tsx`, monté lazy au niveau
+  **App**) s'affiche une seule fois au 1er login réel (flag `cosmo_onboarding_modules_done`).
+  Ne jamais le déclencher en démo.
+- Toute nouvelle surface de nav qui liste les modules optionnels doit filtrer via
+  `useActiveModules()` : `Layout.tsx` (sidebar), `MobileTabBar.tsx`, `MobileMoreSheet.tsx`.
+- Les routes des modules optionnels sont gardées par `RequireModule` dans `src/App.tsx`
+  (redirect `/dashboard` si désactivé — bloque l'accès URL directe).
+- Réactivation : onglet « Modules » de `SettingsPage` (`ModulesTab`).
+- Module masqué ≠ donnée supprimée : on cache seulement nav + route.
+
+Pour ré-afficher l'onboarding en debug :
+`localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
+
+---
+
 ```typescript
 export type User = {
   id: string; name: string; email: string;

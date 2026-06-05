@@ -4,6 +4,7 @@ import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
   Mail, ChevronRight, Repeat, BarChart3, Keyboard, Clock, Languages,
+  Calendar, Target, BarChart2,
 } from 'lucide-react';
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '../components/keyboard-shortcuts';
@@ -16,6 +17,12 @@ import ThemeToggle from '../components/ThemeToggle';
 import LocaleToggle from '../components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
+import {
+  OPTIONAL_MODULES,
+  type ModuleKey,
+  useActiveModules,
+  activeModulesStore,
+} from '@/modules/ui-states';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
@@ -722,6 +729,9 @@ const SettingsPage: React.FC = () => {
             </motion.div>
           )}
 
+          {/* ── MODULES ── */}
+          {activeTab === 'modules' && <ModulesTab isDemo={isDemo} />}
+
           {/* ── DONNÉES ── */}
           {activeTab === 'data' && <DataTab />}
 
@@ -831,3 +841,95 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+
+/* ─── Onglet "Modules" — activer/désactiver (AM10) ─────────────── */
+const MODULE_META: Record<ModuleKey, { label: string; description: string; icon: React.ElementType; accent: string }> = {
+  agenda:     { label: 'Agenda',       description: 'Planifiez vos tâches en blocs horaires', icon: Calendar,  accent: '#ef4444' },
+  habits:     { label: 'Habitudes',    description: 'Suivez vos routines quotidiennes',        icon: Repeat,    accent: '#eab308' },
+  okr:        { label: 'OKR',          description: 'Objectifs & résultats clés',              icon: Target,    accent: '#22c55e' },
+  statistics: { label: 'Statistiques', description: 'Analysez votre progression',              icon: BarChart2, accent: '#8b5cf6' },
+};
+
+function ModulesTab({ isDemo }: { isDemo: boolean }) {
+  const activeModules = useActiveModules();
+
+  const toggle = (key: ModuleKey) => {
+    if (isDemo) {
+      toast.info('Les modules sont tous actifs en mode démo');
+      return;
+    }
+    const next = !activeModules[key];
+    activeModulesStore.setModule(key, next);
+    toast.success(next ? `${MODULE_META[key].label} activé` : `${MODULE_META[key].label} masqué`);
+  };
+
+  return (
+    <motion.div
+      key="modules"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2 }}
+      className="max-w-2xl flex flex-col gap-5"
+    >
+      <SectionCard>
+        <div>
+          <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">
+            Modules de l'application
+          </h3>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">
+            Activez uniquement ce dont vous avez besoin. Les modules masqués disparaissent de la navigation ; vos données sont conservées. Tâches &amp; Dashboard sont toujours présents.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          {OPTIONAL_MODULES.map((key) => {
+            const meta = MODULE_META[key];
+            const Icon = meta.icon;
+            const isOn = activeModules[key];
+            return (
+              <div
+                key={key}
+                className="flex items-center gap-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] px-4 py-3"
+              >
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: isOn ? meta.accent : 'rgb(var(--color-hover))' }}
+                >
+                  <Icon size={18} className={isOn ? 'text-white' : 'text-[rgb(var(--color-text-muted))]'} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{meta.label}</p>
+                  <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{meta.description}</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isOn}
+                  aria-label={`${isOn ? 'Masquer' : 'Activer'} le module ${meta.label}`}
+                  onClick={() => toggle(key)}
+                  disabled={isDemo}
+                  className={`relative w-11 h-6 rounded-full shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/50 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isOn ? 'bg-[rgb(var(--color-accent))]' : 'bg-[rgb(var(--color-border))]'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                      isOn ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {isDemo && (
+          <p className="text-[11px] text-[rgb(var(--color-text-muted))]">
+            En mode démo, tous les modules restent actifs.
+          </p>
+        )}
+      </SectionCard>
+    </motion.div>
+  );
+}

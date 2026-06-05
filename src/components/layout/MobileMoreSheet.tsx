@@ -8,6 +8,7 @@ import { useBilling } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useActiveOrganization } from '@/modules/organizations';
 import OrgSwitcher from '@/components/organization/OrgSwitcher';
+import { useActiveModules, type ModuleKey } from '@/modules/ui-states';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -24,11 +25,13 @@ interface SheetLink {
   descriptionKey: KeyOf<'common'>;
   icon: typeof Target;
   iconBg: string;
+  /** Onglet optionnel filtré selon AM10 (undefined → toujours visible). */
+  module?: ModuleKey;
 }
 
 const links: SheetLink[] = [
-  { to: '/okr',        labelKey: 'nav.okr',        descriptionKey: 'nav.descriptions.okr',        icon: Target,    iconBg: 'bg-green-500'  },
-  { to: '/statistics', labelKey: 'nav.statistics', descriptionKey: 'nav.descriptions.statistics', icon: BarChart2, iconBg: 'bg-violet-500' },
+  { to: '/okr',        labelKey: 'nav.okr',        descriptionKey: 'nav.descriptions.okr',        icon: Target,    iconBg: 'bg-green-500',  module: 'okr' },
+  { to: '/statistics', labelKey: 'nav.statistics', descriptionKey: 'nav.descriptions.statistics', icon: BarChart2, iconBg: 'bg-violet-500', module: 'statistics' },
   { to: '/premium',    labelKey: 'nav.premium',    descriptionKey: 'nav.descriptions.premium',    icon: Crown,     iconBg: 'bg-amber-400'  },
   { to: '/settings',   labelKey: 'nav.settings',   descriptionKey: 'nav.descriptions.settings',   icon: Settings,  iconBg: 'bg-gray-500'   },
 ];
@@ -38,13 +41,16 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const { user, logout } = useAuth();
   const { isPremium } = useBilling();
   const { activeOrg: myOrg, organizations } = useActiveOrganization();
+  const activeModules = useActiveModules();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
-  // Entrée « Entreprise » ajoutée uniquement pour les membres d'une org.
+  // Filtre par module actif (AM10), puis par premium, puis ajoute l'entrée
+  // « Entreprise » pour les membres d'une org.
   const visibleLinks: SheetLink[] = [
-    ...(PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium')),
+    ...(PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium')).filter(
+      (link) => !link.module || activeModules[link.module]
+    ),
     ...(myOrg
       ? [{
           to: '/entreprise',
