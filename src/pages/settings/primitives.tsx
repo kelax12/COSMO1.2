@@ -4,9 +4,9 @@
 // Typographie : Inter global — pas de font dédiée à cette page.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState } from 'react';
-import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2, LayoutGrid } from 'lucide-react';
 
-export type SettingsTab = 'profile' | 'appearance' | 'security' | 'data' | 'guide';
+export type SettingsTab = 'profile' | 'appearance' | 'modules' | 'security' | 'data' | 'guide';
 
 /* ─── nav config ───────────────────────────────────────────────── */
 export const NAV_GROUPS = [
@@ -19,7 +19,10 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Préférences',
-    items: [{ id: 'appearance' as SettingsTab, icon: Palette, label: 'Apparence' }],
+    items: [
+      { id: 'appearance' as SettingsTab, icon: Palette, label: 'Apparence' },
+      { id: 'modules' as SettingsTab, icon: LayoutGrid, label: 'Modules' },
+    ],
   },
   {
     label: 'Données',

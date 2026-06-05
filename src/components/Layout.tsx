@@ -29,6 +29,7 @@ import { usePendingRequestCount } from '@/modules/friends';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
 import OrgSwitcher from '@/components/organization/OrgSwitcher';
+import { useActiveModules } from '@/modules/ui-states';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
@@ -179,6 +180,7 @@ const Layout: React.FC = () => {
   const tasksDueTodayCount = allTasks.filter(
     (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
   ).length;
+  const activeModules = useActiveModules();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
@@ -225,17 +227,25 @@ const NavItems = () =>
         badge={tasksDueTodayCount} badgeVariant="neutral"
         badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
-      <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
+      {activeModules.agenda && (
+        <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
+          hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
+      )}
 
-      <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
+      {activeModules.okr && (
+        <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
+          hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
+      )}
 
-      <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
+      {activeModules.habits && (
+        <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
+          hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
+      )}
 
-      <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
-        hoverColor="#8b5cf6" collapsed={isCollapsed} />
+      {activeModules.statistics && (
+        <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
+          hoverColor="#8b5cf6" collapsed={isCollapsed} />
+      )}
 
       {myOrg && (
         <>
