@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 
 // Providers
@@ -188,6 +189,10 @@ const App: React.FC = () => {
       <AuthProvider>
         <BillingProvider>
           <TooltipProvider>
+            {/* reducedMotion="user" : respecte `prefers-reduced-motion` du système
+                pour TOUTES les animations Framer Motion (transforms réduits, pas
+                de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
+            <MotionConfig reducedMotion="user">
             <Toaster
               position="top-right"
               richColors
@@ -202,6 +207,7 @@ const App: React.FC = () => {
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
+            </MotionConfig>
           </TooltipProvider>
         </BillingProvider>
       </AuthProvider>
