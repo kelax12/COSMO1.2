@@ -137,17 +137,18 @@ export const getColorFr = (colorName: string) => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
             {/* Header */}
-            <div className="p-6 border-b dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+            <div className="p-6 border-b flex items-center justify-between z-10" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
                   <LayoutGrid className="text-blue-500" size={24} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-white">Gestion des catégories</h2>
-                  <p className="text-xs text-slate-400 font-medium">Organisez vos objectifs et tâches</p>
+                  <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Gestion des catégories</h2>
+                  <p className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Organisez vos objectifs et tâches</p>
                 </div>
               </div>
               <Button
@@ -173,11 +174,12 @@ export const getColorFr = (colorName: string) => {
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden mb-6"
                     >
-                      <form onSubmit={handleSubmit} className="relative bg-slate-50 dark:bg-slate-800/40 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/50 space-y-5">
+                      <form onSubmit={handleSubmit} className="relative p-5 rounded-2xl border space-y-5" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
                         <button
                           type="button"
                           onClick={cancelEdit}
-                          className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-lg transition-colors z-10"
+                          className="absolute top-4 right-4 p-1.5 rounded-lg transition-colors z-10 hover:text-blue-600 dark:hover:text-blue-400"
+                          style={{ color: 'rgb(var(--color-text-muted))' }}
                           title="Fermer"
                         >
                           <X size={16} />
@@ -186,7 +188,7 @@ export const getColorFr = (colorName: string) => {
                           <h3 className="text-xs font-bold text-blue-500 uppercase tracking-widest flex items-center">
                             {editingId ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
                           </h3>
-                          <div className="px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-2 mr-8">
+                          <div className="px-3 py-1 rounded-full border shadow-sm flex items-center gap-2 mr-8" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                             <div
                               className="w-5 h-5 rounded-md flex items-center justify-center text-xs shadow-sm transition-transform"
                               style={{
@@ -210,7 +212,8 @@ export const getColorFr = (colorName: string) => {
                             autoFocus
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-700 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+                            className="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold shadow-sm border"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                             placeholder="Nom de la catégorie (ex: Sport, Travail...)"
                           />
                         </div>
@@ -219,10 +222,10 @@ export const getColorFr = (colorName: string) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Icons Grid */}
                           <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 flex items-center gap-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
                               <LayoutGrid size={10} /> Icône
                             </label>
-                            <div className="grid grid-cols-6 gap-1.5 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-[140px] overflow-y-auto custom-scrollbar shadow-inner">
+                            <div className="grid grid-cols-6 gap-1.5 p-2 rounded-xl max-h-[140px] overflow-y-auto custom-scrollbar shadow-inner border" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                               {ICONS.map((icon) => (
                                 <button
                                   key={icon}
@@ -231,7 +234,7 @@ export const getColorFr = (colorName: string) => {
                                   className={`aspect-square rounded-lg text-lg flex items-center justify-center transition-all ${
                                     formData.icon === icon
                                       ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-105'
-                                      : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                      : 'hover:bg-[rgb(var(--color-hover))]'
                                   }`}
                                 >
                                   {icon}
@@ -242,10 +245,10 @@ export const getColorFr = (colorName: string) => {
 
                           {/* Colors Grid */}
                           <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 flex items-center gap-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
                               <Palette size={10} /> Couleur : <span style={{ color: getColorHex(formData.color) }} className="lowercase italic">{getColorFr(formData.color)}</span>
                             </label>
-                            <div className="grid grid-cols-4 gap-2 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-[140px] overflow-y-auto custom-scrollbar shadow-inner">
+                            <div className="grid grid-cols-4 gap-2 p-2 rounded-xl max-h-[140px] overflow-y-auto custom-scrollbar shadow-inner border" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                               {COLORS.map((color) => (
                                 <button
                                   key={color.name}
@@ -279,7 +282,8 @@ export const getColorFr = (colorName: string) => {
                           <button
                             type="button"
                             onClick={cancelEdit}
-                            className="px-6 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold transition-all hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-[0.98]"
+                            className="px-6 py-3 rounded-xl font-bold transition-all active:scale-[0.98] hover:opacity-80"
+                            style={{ backgroundColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                           >
                             Annuler
                           </button>
@@ -292,7 +296,7 @@ export const getColorFr = (colorName: string) => {
                 {/* Categories List */}
                 <div className="space-y-3 pb-4">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Vos catégories ({categories.length})</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgb(var(--color-text-muted))' }}>Vos catégories ({categories.length})</h3>
                     <button
                       onClick={() => setIsAdding(true)}
                       className="p-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition-all active:scale-90"
@@ -302,11 +306,11 @@ export const getColorFr = (colorName: string) => {
                     </button>
                   </div>
                   {categories.length === 0 ? (
-                    <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/50">
-                      <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <LayoutGrid size={24} className="text-slate-300" />
+                    <div className="text-center py-12 rounded-2xl border border-dashed" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+                        <LayoutGrid size={24} style={{ color: 'rgb(var(--color-text-muted))' }} />
                       </div>
-                      <p className="text-sm text-slate-400 font-medium">Aucune catégorie définie</p>
+                      <p className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucune catégorie définie</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">

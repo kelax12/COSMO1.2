@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { PageHeading } from '@/components/ui/typography';
 import { Plus, Calendar, Edit2, Trash2, CheckCircle, Clock, X, Target, Trash, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
@@ -263,9 +264,9 @@ const OKRPage: React.FC = () => {
 
       <div className="mb-8 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          <PageHeading variant="standard" className="mb-2">
             OKR - Objectifs & Résultats Clés
-          </h1>
+          </PageHeading>
           <p className="text-sm sm:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Définissez et suivez vos objectifs avec des résultats mesurables
           </p>

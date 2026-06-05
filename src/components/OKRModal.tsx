@@ -519,12 +519,12 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
               </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
                 <div>
-                  <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">
+                  <p className="text-[11px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     {editingObjective ? 'Modifier' : 'Nouvel objectif'} · {step}/2
                   </p>
-                  <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                  <h2 className="text-sm font-bold leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
                     {step === 1 ? 'Informations générales' : 'Résultats clés (KR)'}
                   </h2>
                 </div>
@@ -540,9 +540,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                   {[1, 2].map((s) => (
                     <div
                       key={s}
-                      className={`h-1 flex-1 rounded-full transition-all duration-400 ${
-                        step >= s ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
-                      }`}
+                      className="h-1 flex-1 rounded-full transition-all duration-400"
+                      style={{ backgroundColor: step >= s ? 'rgb(var(--color-accent))' : 'rgb(var(--color-border))' }}
                     />
                   ))}
                 </div>
@@ -562,7 +561,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                       >
                         {/* Titre */}
                         <div ref={register('title')}>
-                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                          <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                             Nom de l'objectif <span className="text-red-500 normal-case">*</span>
                           </label>
                           <input
@@ -570,9 +569,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             type="text"
                             value={info.title}
                             onChange={(e) => { setInfo({ ...info, title: e.target.value }); setStep1Error(''); clear('title'); }}
-                            className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-white dark:bg-slate-800 outline-none transition-all
-                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
-                              ${step1Error || isInvalid('title') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
+                            className={`w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${step1Error || isInvalid('title') ? 'border-red-400 dark:border-red-500' : ''}`}
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: step1Error || isInvalid('title') ? undefined : 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                             placeholder="Ex : Améliorer ma santé physique"
                           />
                           {step1Error && <p className="text-xs text-red-500 mt-1">{step1Error}</p>}
@@ -580,15 +578,15 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
 
                         {/* Description */}
                         <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                          <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                             Description
                           </label>
                           <textarea
                             value={info.description}
                             onChange={(e) => setInfo({ ...info, description: e.target.value })}
                             rows={3}
-                            className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all resize-none
-                              hover:border-slate-300 dark:hover:border-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                            className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-all resize-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                             placeholder="Ex : Prendre soin de mon corps à travers le sport et l'alimentation"
                           />
                         </div>
@@ -596,15 +594,15 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                         {/* Catégorie + Date */}
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               Catégorie
                             </label>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button
                                   type="button"
-                                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all flex items-center gap-2
-                                    hover:border-slate-300 dark:hover:border-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                  className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-all flex items-center gap-2 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                  style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                                 >
                                   {(() => {
                                     const cat = categories.find((c) => c.id === info.category);
@@ -614,10 +612,10 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                                         <span className="flex-1 text-left truncate">{cat.name}</span>
                                       </>
                                     ) : (
-                                      <span className="flex-1 text-left text-slate-400">Choisir...</span>
+                                      <span className="flex-1 text-left" style={{ color: 'rgb(var(--color-text-muted))' }}>Choisir...</span>
                                     );
                                   })()}
-                                  <ChevronDown size={14} className="text-slate-400 shrink-0 ml-auto" />
+                                  <ChevronDown size={14} className="shrink-0 ml-auto" style={{ color: 'rgb(var(--color-text-muted))' }} />
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start" className="w-56">
@@ -643,7 +641,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             </DropdownMenu>
                           </div>
                           <div ref={register('endDate')}>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                               Date de fin <span className="text-red-500 normal-case">*</span>
                             </label>
                             <DatePicker
@@ -679,7 +677,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                         className="px-6 py-5"
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs text-slate-400">Définissez comment mesurer votre succès</p>
+                          <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Définissez comment mesurer votre succès</p>
                           <button
                             type="button"
                             onClick={addKR}
@@ -701,17 +699,16 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.03 }}
-                                className={`group relative bg-slate-50 dark:bg-slate-800/60 border rounded-xl p-4 overflow-hidden transition-all ${
-                                  krInvalid ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'
-                                }`}
+                                className={`group relative rounded-xl p-4 overflow-hidden transition-all border ${krInvalid ? 'border-red-400 dark:border-red-500' : ''}`}
+                                style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: krInvalid ? undefined : 'rgb(var(--color-border))' }}
                               >
                                 {/* accent bar */}
                                 <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400/40 group-hover:bg-blue-500 rounded-l-xl transition-colors" />
 
                                 <div className="flex items-center justify-between mb-2.5">
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Résultat clé {idx + 1}</span>
+                                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgb(var(--color-text-muted))' }}>Résultat clé {idx + 1}</span>
                                   {keyResults.length > 1 && (
-                                    <button type="button" onClick={() => removeKR(idx)} className="text-slate-300 hover:text-red-500 transition-colors">
+                                    <button type="button" onClick={() => removeKR(idx)} className="hover:text-red-500 transition-colors" style={{ color: 'rgb(var(--color-text-muted))' }}>
                                       <Trash2 size={13} />
                                     </button>
                                   )}
@@ -721,8 +718,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                                   type="text"
                                   value={kr.title}
                                   onChange={(e) => updateKR(idx, 'title', e.target.value)}
-                                  className="w-full px-3 py-2 mb-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all
-                                    focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-slate-300"
+                                  className="w-full px-3 py-2 mb-2.5 rounded-lg border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                  style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                                   placeholder={ph.title}
                                 />
 
@@ -732,22 +729,22 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                                       type="number"
                                       value={kr.targetValue}
                                       onChange={(e) => updateKR(idx, 'targetValue', e.target.value)}
-                                      className="w-full px-3 py-2 pr-8 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all
-                                        focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-slate-300"
+                                      className="w-full px-3 py-2 pr-8 rounded-lg border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                      style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                                       placeholder={ph.target}
                                     />
-                                    <TrendingUp size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <TrendingUp size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
                                   </div>
                                   <div className="relative">
                                     <input
                                       type="number"
                                       value={kr.estimatedTime}
                                       onChange={(e) => updateKR(idx, 'estimatedTime', e.target.value)}
-                                      className="w-full px-3 py-2 pr-8 rounded-lg border border-slate-200 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 outline-none transition-all
-                                        focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 hover:border-slate-300"
+                                      className="w-full px-3 py-2 pr-8 rounded-lg border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                      style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                                       placeholder={ph.time}
                                     />
-                                    <Clock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    <Clock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
                                   </div>
                                 </div>
                               </motion.div>
@@ -761,7 +758,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-t shrink-0" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>
                 {step === 1 ? (
                   <>
                     <button

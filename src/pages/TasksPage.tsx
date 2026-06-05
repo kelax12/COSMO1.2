@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { PageHeading } from '@/components/ui/typography';
 import TaskTable from '../components/TaskTable';
 import TaskFilter from '../components/TaskFilter';
 import TaskModal from '../components/TaskModal';
@@ -412,14 +413,12 @@ const TasksPage: React.FC = () => {
           {/* Title row: H1 + Calendrier + shortcuts toggle */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <motion.h1
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-lg sm:text-3xl font-bold text-slate-900 dark:text-slate-50"
+              <PageHeading
+                as="h1"
+                variant="compact"
               >
                 To do list
-              </motion.h1>
+              </PageHeading>
               <motion.p
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}

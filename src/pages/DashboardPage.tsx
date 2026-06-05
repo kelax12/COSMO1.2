@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { PageHeading } from '@/components/ui/typography';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -294,7 +295,7 @@ const DashboardPage: React.FC = () => {
           >
             <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2 lg:mb-3">
+                <PageHeading variant="hero" className="mb-1 sm:mb-2 lg:mb-3">
                   <span>Bonjour, </span>
                 <TextType
                         text={displayUser.name}
@@ -307,7 +308,7 @@ const DashboardPage: React.FC = () => {
                         cursorClassName="text-blue-500 monochrome:text-white"
                         textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
                       />
-                </h1>
+                </PageHeading>
               <motion.p
                 className="text-[rgb(var(--color-text-secondary))] text-sm sm:text-base lg:text-lg"
                 initial={{ opacity: 0 }}

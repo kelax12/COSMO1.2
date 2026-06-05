@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { PageHeading } from '@/components/ui/typography';
 import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
@@ -493,7 +494,7 @@ export default function StatisticsPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Statistiques</h1>
+        <PageHeading variant="standard" className="mb-2">Statistiques</PageHeading>
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Analysez votre productivité et vos performances</p>
       </div>
 
