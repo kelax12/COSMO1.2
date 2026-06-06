@@ -52,6 +52,9 @@ const TodayTasks: React.FC = () => {
         return a.priority - b.priority;
       })
       .slice(0, 5);
+    // `today` est volontairement re-lu à chaque render (granularité jour) ; le
+    // mémo keyé sur `tasks` suffit pour la liste « du jour ».
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks]);
 
   const totalTime = useMemo(() => todayTasks.reduce((sum, t) => sum + t.estimatedTime, 0), [todayTasks]);

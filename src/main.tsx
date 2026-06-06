@@ -52,7 +52,6 @@ if (new URLSearchParams(window.location.search).has('debug')) {
   const script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/eruda';
   script.onload = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const eruda = (window as unknown as { eruda?: { init: () => void } }).eruda;
     eruda?.init();
     console.warn('[DEBUG] Eruda console ready. Hard refresh now to capture init timings.');

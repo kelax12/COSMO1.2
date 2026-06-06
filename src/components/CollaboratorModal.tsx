@@ -42,7 +42,9 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
 
-  const pendingInvites = task?.pendingInvites || [];
+  // useMemo : sans ça, `task?.pendingInvites || []` crée un nouveau tableau à
+  // chaque render quand pendingInvites est absent → invalide le useMemo voisin.
+  const pendingInvites = useMemo(() => task?.pendingInvites || [], [task?.pendingInvites]);
   // « Assignés » = grants shared_tasks (amis résolus en auth.uid) + invitations
   // par email encore en attente (pas d'auth.users, donc pas de shared_tasks row).
   const assignedCollaborators = useMemo(
