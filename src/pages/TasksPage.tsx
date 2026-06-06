@@ -719,12 +719,18 @@ const TasksPage: React.FC = () => {
                                   type="text"
                                   value={editListName}
                                   onChange={(e) => setEditListName(e.target.value)}
-                                  className="px-2 py-1 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 w-28"
+                                  /* size adapte la largeur au contenu (en caractères) :
+                                     +2 pour un peu de marge, min 6 pour les noms courts.
+                                     field-sizing:content (Chrome 123+) fait la même chose
+                                     nativement sans JS ; size sert de fallback universel. */
+                                  size={Math.max(editListName.length + 2, 6)}
+                                  className="px-2 py-1 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
                                   style={{
                                     backgroundColor: 'rgb(var(--color-surface))',
                                     borderColor: 'rgb(var(--color-border))',
-                                    color: 'rgb(var(--color-text-primary))'
-                                  }}
+                                    color: 'rgb(var(--color-text-primary))',
+                                    fieldSizing: 'content',
+                                  } as React.CSSProperties}
                                   onKeyDown={(e) => { if (e.key === 'Escape') cancelEditList(); }}
                                 />
                                 <button
@@ -878,12 +884,14 @@ const TasksPage: React.FC = () => {
                                 value={newListName}
                                 onChange={(e) => setNewListName(e.target.value)}
                                 placeholder="Nom de la liste…"
-                                className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+                                size={Math.max(newListName.length + 2, 14)}
+                                className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
                                 style={{
                                   backgroundColor: 'rgb(var(--color-surface))',
                                   borderColor: 'rgb(var(--color-border))',
-                                  color: 'rgb(var(--color-text-primary))'
-                                }}
+                                  color: 'rgb(var(--color-text-primary))',
+                                  fieldSizing: 'content',
+                                } as React.CSSProperties}
                                 onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateList(false); setNewListName(''); } }}
                               />
                               <button
