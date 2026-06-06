@@ -35,7 +35,12 @@ export const test = base.extend<{ demoPage: Page }>({
 
     // 3. Attendre le dashboard
     await page.waitForURL(/\/dashboard/, { timeout: 10_000 });
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/bonjour/i);
+    // Le dashboard est lazy-loadé et son h1 « Bonjour » a une animation d'opacité
+    // (cf. audit-a11y A-9). Au tout premier test (démarrage à froid du serveur
+    // Vite), le rendu peut dépasser le timeout par défaut de 5 s → flake. 20 s
+    // absorbent le cold start sans masquer un vrai problème (les autres tests,
+    // serveur chaud, passent bien en dessous).
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/bonjour/i, { timeout: 20_000 });
 
     // 4. Skip onboarding général + tutoriels par page
     //    L'overlay onboarding est posé 500ms après loginDemo() et bloque

@@ -209,6 +209,8 @@ const OKRPage: React.FC = () => {
       handleEditObjective(state.selectedOKRId);
       window.history.replaceState({}, document.title);
     }
+    // Déclenché par la navigation (location) ; handleEditObjective omis à dessein.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   // Détection des OKR à reviewer (deadline atteinte, non complétés, non encore

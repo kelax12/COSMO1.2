@@ -101,6 +101,9 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     setStep(1);
     setStep1Error('');
     setEndDateError('');
+    // Init du form à l'ouverture / au changement d'OKR édité ; resetForm est
+    // volontairement omis (réinitialiserait le form à chaque render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingObjective, isOpen]);
 
   const resetForm = () => {

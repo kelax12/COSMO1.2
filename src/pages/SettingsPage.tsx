@@ -168,6 +168,8 @@ const SettingsPage: React.FC = () => {
   const [profileDraft, setProfileDraft] = useState({ name: '', email: '' });
   useEffect(() => {
     if (user) setProfileDraft({ name: user.name, email: user.email });
+    // Deps primitives volontaires (plus précises que l'objet user entier).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, user?.name, user?.email]);
 
   if (!user) return null;

@@ -41,6 +41,9 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     setPhase('edit');
     setFlyTarget(null);
     validatedRef.current = false;
+    // Init uniquement sur okr.id (voir commentaire ci-dessus) — pas l'objet okr
+    // entier, sinon double-commit pendant l'animation fly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [okr?.id]);
 
   useEffect(() => {
