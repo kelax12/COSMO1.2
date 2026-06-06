@@ -44,6 +44,13 @@ function corsHeadersFor(req: Request) {
 // column rather than an FK to auth.users.
 // NOTE: `shared_tasks` is intentionally NOT in this list — its columns are
 // `friend_id` / `shared_by`, not `user_id`. It's handled separately below.
+// NOTE: `chat_messages` was removed (2026-06-07). The table does not exist in
+// the database (verified via schema inspection — no messages/chat/inbox table
+// exists; the "inbox" UI is derived from friend_requests/shared_tasks). The
+// stray entry made every DELETE loop hit a non-existent relation → PostgREST
+// error → `failedTables` → 500 `cleanup_failed`, which permanently BLOCKED
+// account deletion (RGPD article 17 + regression of fix B9). The loop below is
+// also now resilient to a missing table so this class of bug can't recur.
 const USER_OWNED_TABLES = [
   'kr_completions',
   'key_results',
@@ -56,8 +63,15 @@ const USER_OWNED_TABLES = [
   'categories',
   'lists',
   'subscriptions',
-  'chat_messages',
 ] as const
+
+// PostgREST / Postgres error signals for "table does not exist". Treated as a
+// no-op (nothing to delete) rather than a cleanup failure.
+function isMissingTableError(error: { code?: string; message?: string }): boolean {
+  const code = error.code ?? ''
+  if (code === '42P01' || code === 'PGRST205') return true
+  return /does not exist|find the table/i.test(error.message ?? '')
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -146,6 +160,12 @@ Deno.serve(async (req) => {
       if (table === 'friend_requests') continue
       const { error } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
       if (error) {
+        if (isMissingTableError(error)) {
+          // Table absent from this project → nothing to purge. Do NOT fail the
+          // whole deletion (would brick RGPD erasure for every user).
+          console.warn(`delete-account: table ${table} absent, skipping`)
+          continue
+        }
         console.error(`delete-account: failed to clean ${table}:`, error.message)
         failedTables.push(table)
       }
