@@ -410,7 +410,8 @@ export default function StatisticsPage() {
     };
     okrs.forEach(okr => {
       okr.keyResults.forEach(kr => {
-        const hist = (kr.history || []).filter(h => {
+        const krHistory = (kr as KeyResult & { history?: { date: string; increment: number }[] }).history || [];
+        const hist = krHistory.filter(h => {
           const hDate = parseLocalDate(h.date);
           const norm = new Date(hDate.getFullYear(), hDate.getMonth(), hDate.getDate());
           return norm >= rollingRange.start && norm <= rollingRange.end;
@@ -700,7 +701,7 @@ export default function StatisticsPage() {
             />
             <ChartTooltip
               cursor={false}
-              content={(props: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
+              content={((props: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
                 if (!props.active || !props.payload?.length) return null;
                 return (
                   <div
@@ -711,7 +712,7 @@ export default function StatisticsPage() {
                     <p className="font-black" style={{ color: sectionColor }}>{formatTime(props.payload[0].value)}</p>
                   </div>
                 );
-              }}
+              }) as unknown as React.ComponentProps<typeof ChartTooltip>['content']}
             />
             {showReferenceBar && referenceValue > 0 && (
               <ReferenceLine
@@ -882,7 +883,7 @@ const TasksStatistics: React.FC<{
   colorSettings: Record<string, string>;
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ tasks, colorSettings, categories }) => {
-  const getColorValue = (catId: string) => categories.find(c => c.id === catId)?.color || '#64748B';
+  const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || '#64748B';
   // Fix dots gris : itérer sur les VRAIES catégories (UUIDs), pas sur colorSettings (clés hardcodées cat-1...).
   // Fallback aux entrées colorSettings si aucune catégorie chargée (mode démo très précoce).
   const colorDistribution = (categories.length > 0
@@ -963,14 +964,14 @@ const AgendaStatistics: React.FC<{
   events: CalendarEvent[];
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ events, categories }) => {
-  const getColorValue = (hex: string) => hex || '#64748B';
+  const getColorValue = (hex: string | undefined) => hex || '#64748B';
   const formatTime = (minutes: number) => {
     const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
     return h === 0 ? `${m}min` : `${h}h${m < 10 ? '0' : ''}${m}`;
   };
 
   const timeByColor = useMemo(() => {
-    const uniqueHexColors = [...new Set(events.map(e => e.color).filter(Boolean))];
+    const uniqueHexColors = [...new Set(events.map(e => e.color).filter((c): c is string => Boolean(c)))];
     return uniqueHexColors.map(hexColor => {
       const colorEvents = events.filter(e => e.color === hexColor);
       const totalMinutes = colorEvents.reduce((sum, e) => sum + (new Date(e.end).getTime() - new Date(e.start).getTime()) / 60000, 0);

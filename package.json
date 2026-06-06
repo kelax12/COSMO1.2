@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build && node prerender.mjs",
     "lint": "eslint .",
+    "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

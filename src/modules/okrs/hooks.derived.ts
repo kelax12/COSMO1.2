@@ -38,6 +38,28 @@ const calculateOKRProgress = (okr: OKR): number => {
   return Math.round(totalProgress / okr.keyResults.length);
 };
 
+/**
+ * Derive an OKR status from its fields. The `OKR` model stores `completed`
+ * + `progress` + dates rather than a persisted `status`, so status is computed:
+ * - completed flag wins
+ * - behind expected schedule by ≥20% → at_risk
+ * - zero progress → not_started, otherwise in_progress
+ */
+const deriveOKRStatus = (okr: OKR): OKRStatus => {
+  if (okr.completed) return 'completed';
+  const progress = calculateOKRProgress(okr);
+  if (okr.startDate && okr.endDate) {
+    const start = new Date(okr.startDate).getTime();
+    const end = new Date(okr.endDate).getTime();
+    const now = Date.now();
+    const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+    const elapsed = (now - start) / (1000 * 60 * 60 * 24);
+    const expected = totalDays > 0 ? (elapsed / totalDays) * 100 : 0;
+    if (progress < expected - 20) return 'at_risk';
+  }
+  return progress <= 0 ? 'not_started' : 'in_progress';
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
@@ -77,10 +99,8 @@ export const useOkrsByStatus = () => {
     };
 
     okrs.forEach((okr) => {
-      const status = okr.status || 'not_started';
-      if (result[status]) {
-        result[status].push(okr);
-      }
+      const status = deriveOKRStatus(okr);
+      result[status].push(okr);
     });
 
     return result;
@@ -97,10 +117,11 @@ export const useOkrStats = () => {
 
   const stats = useMemo(() => {
     const total = okrs.length;
-    const completed = okrs.filter((o) => o.status === 'completed').length;
-    const atRisk = okrs.filter((o) => o.status === 'at_risk').length;
-    const inProgress = okrs.filter((o) => o.status === 'in_progress').length;
-    const notStarted = okrs.filter((o) => o.status === 'not_started').length;
+    const statuses = okrs.map(deriveOKRStatus);
+    const completed = statuses.filter((s) => s === 'completed').length;
+    const atRisk = statuses.filter((s) => s === 'at_risk').length;
+    const inProgress = statuses.filter((s) => s === 'in_progress').length;
+    const notStarted = statuses.filter((s) => s === 'not_started').length;
 
     // Calculate average progress
     const avgProgress =
@@ -155,7 +176,7 @@ export const useOkrsEndingSoon = (days: number = 7) => {
     futureDate.setDate(now.getDate() + days);
 
     return okrs.filter((okr) => {
-      if (okr.status === 'completed') return false;
+      if (okr.completed) return false;
       if (!okr.endDate) return false;
       const endDate = new Date(okr.endDate);
       return endDate >= now && endDate <= futureDate;
@@ -173,7 +194,7 @@ export const useAtRiskOkrs = () => {
 
   const atRisk = useMemo(() => {
     return okrs.filter((okr) => {
-      if (okr.status === 'completed') return false;
+      if (okr.completed) return false;
       if (!okr.startDate || !okr.endDate) return false;
 
       const start = new Date(okr.startDate);

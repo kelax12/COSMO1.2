@@ -3,7 +3,12 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
-import { DateSelectArg, EventClickArg, EventDropArg, EventDragStartArg, EventDragStopArg, DatesSetArg } from '@fullcalendar/core';
+import { DateSelectArg, EventClickArg, EventDropArg, EventApi, DatesSetArg } from '@fullcalendar/core';
+
+// FullCalendar v6 ne ré-exporte pas EventDragStartArg/EventDragStopArg depuis
+// core. Type local minimal couvrant ce que les handlers utilisent (compatible
+// avec l'arg réel passé par FullCalendar, qui contient ces champs + d'autres).
+type EventDragArg = { event: EventApi; el?: HTMLElement; jsEvent?: UIEvent | null };
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
@@ -375,7 +380,7 @@ const AgendaPage: React.FC = () => {
   const draggedEventIdRef = useRef<string | null>(null);
   const dragEndHandlerRef = useRef<((clientX?: number, clientY?: number) => void) | null>(null);
 
-  const handleEventDragStart = (info: EventDragStartArg) => {
+  const handleEventDragStart = (info: EventDragArg) => {
     draggedEventIdRef.current = info.event.id;
 
     const je = info.jsEvent as MouseEvent | undefined;
@@ -476,7 +481,7 @@ const AgendaPage: React.FC = () => {
     window.addEventListener('pointercancel', onCancel);
   };
 
-  const handleEventDragStop = (info: EventDragStopArg) => {
+  const handleEventDragStop = (info: EventDragArg) => {
     const je = info.jsEvent as MouseEvent | undefined;
     dragEndHandlerRef.current?.(je?.clientX, je?.clientY);
   };
@@ -608,15 +613,6 @@ const AgendaPage: React.FC = () => {
       handleMobileSetView('timeGridDay');
     }
     api.gotoDate(date);
-  };
-
-  const _handleMobileGoToMonth = () => { handleMobileSetView('dayGridMonth'); };
-
-  const _handleMobileGoToday = () => {
-    const today = new Date();
-    setMobileSelectedDate(today);
-    handleMobileSetView('timeGridDay');
-    setTimeout(() => { mobileCalendarRef.current?.getApi().gotoDate(today); }, 50);
   };
 
   const handleMobileMonthPrev = () => { mobileCalendarRef.current?.getApi().prev(); };

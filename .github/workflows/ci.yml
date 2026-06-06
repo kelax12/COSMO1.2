@@ -8,8 +8,13 @@ on:
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
-  # Lint + tests unitaires (Vitest) + build. Bloquant : un test rouge
-  # casse la CI. Rapide (pas de navigateur) → gate principale des PR.
+  # Lint + type-check + tests unitaires (Vitest) + build. Bloquant : une
+  # erreur de type, un test rouge ou un lint cassé casse la CI. Rapide
+  # (pas de navigateur) → gate principale des PR.
+  #
+  # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Sans l'étape
+  # `tsc -b` ci-dessous, des erreurs de type partent en prod (140 erreurs
+  # accumulées avant l'ajout de ce gate — cf. audit). Ne pas la retirer.
   # ──────────────────────────────────────────────────────────────────
   lint-test-build:
     runs-on: ubuntu-latest
@@ -21,6 +26,8 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
+      - name: Type-check (tsc --noEmit)
+        run: npx tsc -b
       - run: npm test
       - run: npm run build
         env:

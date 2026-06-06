@@ -781,8 +781,8 @@ const OKRPage: React.FC = () => {
         isOpen={showAddObjective}
         onClose={handleModalClose}
         categories={categories}
-        editingObjective={editingObjective}
-        onSubmit={handleModalSubmit}
+        editingObjective={editingObjective as React.ComponentProps<typeof OKRModal>['editingObjective']}
+        onSubmit={handleModalSubmit as React.ComponentProps<typeof OKRModal>['onSubmit']}
       />
 
         <AnimatePresence>
@@ -855,8 +855,7 @@ const OKRPage: React.FC = () => {
               estimatedTime: selectedKeyResultForModal.kr.estimatedTime,
               deadline: selectedKeyResultForModal.obj.endDate,
               bookmarked: false,
-              createdAt: '', // Added missing properties
-              notes: ''      // Added missing properties
+              createdAt: '',
             }}
           onAddEvent={(event) => {
             createEventMutation.mutate(event);
