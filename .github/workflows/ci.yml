@@ -7,7 +7,11 @@ on:
     branches: [main]
 
 jobs:
-  lint-build:
+  # ──────────────────────────────────────────────────────────────────
+  # Lint + tests unitaires (Vitest) + build. Bloquant : un test rouge
+  # casse la CI. Rapide (pas de navigateur) → gate principale des PR.
+  # ──────────────────────────────────────────────────────────────────
+  lint-test-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +21,37 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+  # ──────────────────────────────────────────────────────────────────
+  # Tests E2E Playwright (3 parcours démo + scan a11y axe-core).
+  # Job séparé : télécharge Chromium (~150 MB), plus lent. Le webServer
+  # de playwright.config.ts lance `npm start` automatiquement.
+  # ──────────────────────────────────────────────────────────────────
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E (Chromium)
+        run: npx playwright test --project=chromium
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

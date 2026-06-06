@@ -8,6 +8,9 @@ import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+// Source unique du calcul de progression OKR — fonction pure testable.
+import { recalcProgress } from './progress';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -80,18 +83,7 @@ const mapKRToDb = (kr: KeyResult, okrId: string, userId: string) => ({
   completed: kr.completed,
 });
 
-const recalcProgress = (keyResults: KeyResult[]): { progress: number; completed: boolean } => {
-  if (keyResults.length === 0) return { progress: 0, completed: false };
-  // Guard against `targetValue <= 0` (division by zero / Infinity / NaN) —
-  // a 0-target KR contributes 0% rather than corrupting the aggregate. Faille B17.
-  const total = keyResults.reduce((sum, kr) => {
-    if (!kr.targetValue || kr.targetValue <= 0) return sum;
-    return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);
-  }, 0);
-  const progress = Math.round(total / keyResults.length);
-  const completed = keyResults.every(kr => kr.targetValue > 0 && kr.currentValue >= kr.targetValue);
-  return { progress, completed };
-};
+// (recalcProgress importé en tête de fichier — fonction pure dans `./progress`)
 
 export class SupabaseOKRsRepository implements IOKRsRepository {
 
@@ -211,14 +203,20 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
   async getAll(): Promise<OKR[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('okrs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(500);
+    const db = supabase;
+    // Auto-pagination : plus de troncature silencieuse au-delà de 500 items.
+    const raw = await fetchAllPages(async (from, to) => {
+      const { data, error } = await db
+        .from('okrs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return (data || []) as OKRRow[];
+    });
 
-    if (error) throw normalizeApiError(error);
-    const rows = warnIfTruncated((data || []) as OKRRow[], 500, 'okrs');
+    const rows = warnIfTruncated(raw, MAX_ROWS, 'okrs');
     const krMap = await this.fetchKRsForOkrs(rows);
     return rows.map(row => this.mapFromDb(row, krMap.get(row.id) ?? []));
   }

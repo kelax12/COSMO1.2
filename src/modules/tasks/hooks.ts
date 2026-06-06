@@ -10,6 +10,8 @@ import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { taskKeys } from './constants';
 import { friendKeys } from '@/modules/friends/constants';
 import { PaginationParams } from '@/lib/pagination.types';
+import { validateOrThrow } from '@/lib/validation/validate';
+import { createTaskSchema, updateTaskSchema } from './task.schema';
 
 // ═══════════════════════════════════════════════════════════════════
 // Repository - Via centralized factory (demo/production mode)
@@ -148,7 +150,11 @@ export const useCreateTask = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    mutationFn: (input: CreateTaskInput) => repository.create(input),
+    mutationFn: (input: CreateTaskInput) => {
+      // Garde UX : message FR lisible avant l'appel réseau (cf. lib/validation).
+      validateOrThrow(createTaskSchema, input);
+      return repository.create(input);
+    },
     onSuccess: (newTask) => {
       // Injecte directement dans le cache sans refetch réseau
       queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
@@ -175,8 +181,10 @@ export const useUpdateTask = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateTaskInput }) =>
-      repository.update(id, updates),
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateTaskInput }) => {
+      validateOrThrow(updateTaskSchema, updates);
+      return repository.update(id, updates);
+    },
     onSuccess: (updatedTask) => {
       // Update specific task in cache
       queryClient.setQueryData(taskKeys.detail(updatedTask.id), updatedTask);

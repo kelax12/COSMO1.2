@@ -4,6 +4,7 @@ import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 
 /**
  * Supabase DB row type for habits table (snake_case)
@@ -37,16 +38,20 @@ interface HabitDbInput {
 
 export class SupabaseHabitsRepository implements IHabitsRepository {
   async fetchHabits(): Promise<Habit[]> {
-    const { data, error } = await supabase
-      .from('habits')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(500);
-
-    if (error) throw normalizeApiError(error);
+    // Auto-pagination : plus de troncature silencieuse au-delà de 500 items.
+    const rows = await fetchAllPages(async (from, to) => {
+      const { data, error } = await supabase
+        .from('habits')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return data || [];
+    });
 
     // Map snake_case to camelCase
-    return warnIfTruncated(data || [], 500, 'habits').map(this.mapFromDb);
+    return warnIfTruncated(rows, MAX_ROWS, 'habits').map(this.mapFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Habit>> {

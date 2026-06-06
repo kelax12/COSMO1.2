@@ -11,6 +11,8 @@ import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
+import { validateOrThrow } from '@/lib/validation/validate';
+import { createOKRSchema, updateOKRSchema } from './okr.schema';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -122,7 +124,10 @@ export const useCreateOkr = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: (input: CreateOKRInput) => repository.create(input),
+    mutationFn: (input: CreateOKRInput) => {
+      validateOrThrow(createOKRSchema, input);
+      return repository.create(input);
+    },
     onSuccess: () => {
       invalidateAllOKRQueries(queryClient);
     },
@@ -140,8 +145,10 @@ export const useUpdateOkr = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateOKRInput }) =>
-      repository.update(id, updates),
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateOKRInput }) => {
+      validateOrThrow(updateOKRSchema, updates);
+      return repository.update(id, updates);
+    },
 
     // Optimistic update
     onMutate: async ({ id, updates }) => {

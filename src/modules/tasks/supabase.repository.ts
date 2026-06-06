@@ -4,6 +4,7 @@ import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 
 /**
  * Supabase DB row type for tasks table (snake_case)
@@ -55,17 +56,24 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async getAll(): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    const db = supabase;
     // Exclude `description` (long text, not shown in list) and
     // `collaborator_validations` (JSONB, only needed in TaskModal detail view).
     // getById() keeps select('*') so TaskModal always has the full payload.
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,pending_invites,user_id')
-      .order('created_at', { ascending: false })
-      .limit(500);
+    // Auto-pagination (range) : plus de troncature silencieuse au-delà de 500
+    // (cf. fetch-all-pages.ts). `id` en tiebreak pour un ordre stable entre pages.
+    const rows = await fetchAllPages(async (from, to) => {
+      const { data, error } = await db
+        .from('tasks')
+        .select('id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,pending_invites,user_id')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return data || [];
+    });
 
-    if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(warnIfTruncated(data || [], 500, 'tasks').map(this.mapFromDb));
+    return this.enrichSharedBy(warnIfTruncated(rows, MAX_ROWS, 'tasks').map(this.mapFromDb));
   }
 
   /**

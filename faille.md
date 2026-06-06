@@ -670,3 +670,62 @@ Toutes les entrées **UX1 → L4** du tableau récapitulatif détaillées ici.
 
 ---
 
+
+---
+
+## 🔎 Findings DB — inspection schéma réel (2026-06-06)
+
+Audit technique : inspection lecture seule du projet Supabase actif
+(`cosmo test` / `ykeugqfgklejcdbrmawy`) via MCP. Deux dettes confirmées,
+**aucune corrigée automatiquement** (chirurgie DB / perte de données →
+nécessite validation humaine).
+
+### D-1 🟠 Drift historique de migrations ↔ fichiers `supabase/migration/`
+
+`list_migrations` (ledger `supabase_migrations.schema_migrations`) ne contient
+qu'un **sous-ensemble** des 37 fichiers, avec des noms différents pour les
+premières (créées au dashboard, hors versioning) :
+
+- **Tracées** : `008_key_results`, `021`, `022_…retry`, `023`, `024`, `025`,
+  `028`, `031`–`036`, `fix_task_sharing_unified`, + 6 early dashboard
+  (`create_subscriptions_table`, `fix_friend_requests_*`, etc.).
+- **NON tracées** (appliquées hors ledger ou jamais) : `001`–`007`, `009`,
+  `010*`, `011`, `012`, `013`, `014`, `015`, `016`, `017`, `018`, `019`,
+  `020`, `026`, `027`, `029`, `030`.
+
+**Risque** : un futur `supabase db push` peut re-tenter d'appliquer 001–020 →
+conflit (`relation already exists`) ou, pire, croire qu'elles sont à appliquer.
+
+**Remédiation (à faire par le mainteneur, accès DB requis)** :
+1. `supabase migration list` (compare local ↔ remote).
+2. Pour chaque fichier déjà appliqué hors ledger :
+   `supabase migration repair --status applied <version>`.
+3. Geler : interdire tout DDL hors `supabase/migration/*.sql` (plus de dashboard).
+4. Idéalement, capturer une **baseline** via `supabase db dump --schema public`
+   commitée comme migration 000 de référence.
+
+### D-2 🟡 JSONB `okrs.key_results` = source primaire, table `key_results` quasi vide
+
+Données réelles : **5 OKRs, les 5 ont des KR en JSONB ; la table dédiée
+`key_results` ne contient que 2 lignes (1 seul OKR couvert)**. Pire, le JSONB
+est dans un **format legacy** différent de la table :
+
+```jsonc
+// JSONB okrs.key_results (ancien) :
+{ "id":"kr1", "title":"…", "unit":"%", "target":100, "current":85,
+  "history":[{"date":"…","increment":20}] }
+// table key_results (nouveau) : target_value, current_value, estimated_time, completed
+```
+
+**Conséquence** : ❌ **ne PAS DROP la colonne JSONB** — perte de KR pour 4/5
+OKRs. Le fallback `fetchKRsForOkrs` (lit le JSONB quand la table est vide)
+est **load-bearing**.
+
+**Remédiation (à faire avant tout retrait, accès DB + revue requise)** :
+1. Migration de **backfill** : pour chaque OKR sans ligne `key_results`,
+   insérer depuis le JSONB en **traduisant** `target→target_value`,
+   `current→current_value`, défauts `estimated_time=0`,
+   `completed=(current>=target)`. Mapper/écarter `history`.
+2. Vérifier `okrs_with_table_krs == okrs_total`.
+3. *Ensuite seulement* : `ALTER TABLE okrs DROP COLUMN key_results` + retrait
+   du fallback dans `okrs/supabase.repository.ts`.
