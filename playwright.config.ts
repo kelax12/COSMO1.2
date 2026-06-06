@@ -11,7 +11,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 30_000,
+  // 60 s : le tout premier `page.goto('/')` déclenche la compilation Vite à
+  // froid de l'app (≈46k LOC) qui peut dépasser 30 s sur un dev server neuf
+  // (cold start). Les navigations suivantes (serveur chaud) sont rapides.
+  timeout: 60_000,
   expect: { timeout: 5_000 },
   fullyParallel: false, // mode démo partage localStorage → exécution séquentielle
   forbidOnly: !!process.env.CI,

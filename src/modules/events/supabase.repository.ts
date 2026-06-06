@@ -8,6 +8,7 @@ import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 
 /**
  * Supabase DB row type for events table (snake_case)
@@ -52,14 +53,19 @@ export class SupabaseEventsRepository implements IEventsRepository {
 
   async getAll(): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .order('start_time', { ascending: true })
-      .limit(500);
-
-    if (error) throw normalizeApiError(error);
-    return warnIfTruncated(data || [], 500, 'events').map(this.mapFromDb);
+    const db = supabase;
+    // Auto-pagination : plus de troncature silencieuse au-delà de 500 items.
+    const rows = await fetchAllPages(async (from, to) => {
+      const { data, error } = await db
+        .from('events')
+        .select('*')
+        .order('start_time', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return data || [];
+    });
+    return warnIfTruncated(rows, MAX_ROWS, 'events').map(this.mapFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<CalendarEvent>> {

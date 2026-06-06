@@ -30,6 +30,8 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | Dates | date-fns 3 (locale `fr` toujours importé nominalement) |
 | Calendrier | FullCalendar |
 | Virtualisation | `@tanstack/react-virtual` (TaskList mobile au-delà de 50 items) |
+| Validation | `zod` (garde UX côté client sur les mutations create/update — cf. `src/lib/validation/`) |
+| Tests unitaires | Vitest (`*.test.ts` à côté du code — logique pure) |
 | Tests E2E | Playwright (3 parcours démo critiques + scan a11y axe-core dans `e2e/`) |
 | Tests A11y | `@axe-core/playwright` (devDep) — `e2e/a11y-audit.spec.ts` scanne 6 routes |
 | Monitoring | Sentry (`@sentry/react`) — `beforeSend` strip emails/UUIDs (M-9) |
@@ -45,6 +47,8 @@ npm start          # Serveur dev réseau (port 3000)
 npm run build      # Build production → dist/
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
+npm test           # Vitest — tests unitaires de logique métier pure (run once)
+npm run test:watch # Vitest en mode watch
 npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (axe scan 6 routes)
 ```
 
@@ -406,6 +410,22 @@ Les composants shadcn/ui sont dans `src/components/ui/` — ne pas les modifier 
 - Préférer `interface` pour les objets, `type` pour les unions
 - Variables/args/catch inutilisés intentionnellement → préfixer par `_` (autorisé par ESLint)
 
+### Validation de schéma (zod) — garde UX côté client
+
+`src/lib/validation/validate.ts` (`validateOrThrow` / `safeValidate` + `ValidationError`)
++ schémas par module (`src/modules/tasks/task.schema.ts`, `src/modules/okrs/okr.schema.ts`).
+
+- Câblé dans les `mutationFn` des hooks de création/MAJ (`useCreateTask`/`useUpdateTask`,
+  `useCreateOkr`/`useUpdateOkr`) → message FR lisible avant l'appel réseau, capté par
+  le `onError` (toast) existant.
+- ⚠️ **Ce n'est PAS la frontière de sécurité** — celle-ci reste RLS + whitelist `mapToDb`.
+  zod = garde UX + defense-in-depth.
+- Schémas **fidèles au comportement actuel** : rejeter l'invalide évident (nom vide,
+  nombre négatif, priorité hors bornes) sans durcir un flux accepté (ex. `targetValue: 0`
+  reste toléré — neutralisé par `recalcProgress`, faille B17).
+- Pour étendre à un module : créer `<module>.schema.ts`, le tester (`*.schema.test.ts`),
+  puis `validateOrThrow(schema, input)` en tête de la `mutationFn`.
+
 ### ESLint
 - Configuration : `eslint.config.js`
 - Lint **doit retourner 0 erreur** avant chaque commit
@@ -413,11 +433,17 @@ Les composants shadcn/ui sont dans `src/components/ui/` — ne pas les modifier 
 - Warnings autorisés : Fast refresh sur les contextes (Auth, Billing) et les fichiers ui shadcn (18 warnings préexistants OK)
 
 ### Limites de requêtes
-Toutes les méthodes `getAll()` des repositories Supabase doivent avoir `.limit()` :
-- tasks, events, habits, okrs → `.limit(500)`
-- categories, lists, friends → `.limit(200)`
+Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto-pagination
+`fetchAllPages()` (`src/lib/fetch-all-pages.ts`) : ils paginent via `.range(from, to)`
+par pages de `PAGE_SIZE` (1000) jusqu'à épuisement, plafonnés à `MAX_ROWS` (5000).
+Plus de troncature silencieuse à 500 (faille §9). Pour ≤ 1000 items → **une seule
+requête** (coût inchangé). `warnIfTruncated(..., MAX_ROWS, ...)` n'alerte plus qu'au
+plafond réel (compte pathologique). Ordre stable entre pages garanti par un tiebreak
+`.order('id')`.
 
-> Pas de pagination côté UI au-delà de la limite — à 500+ tâches, les données sont silencieusement tronquées (cf. `faille.md` §9).
+- Les `getAll()` à faible volume (categories, lists, friends) gardent `.limit(200)`.
+- ❌ Ne pas réintroduire un `.limit(500)` sec sur tasks/events/habits/okrs.
+- ✅ Tout nouveau `getAll()` volumineux doit passer par `fetchAllPages()`.
 
 ### Pagination cursor-based — `assertValidCursor`
 
@@ -436,6 +462,31 @@ if (params.cursor && params.cursorDate) {
 ---
 
 ## Tests
+
+### Vitest — tests unitaires de logique métier pure (2026-06-06)
+
+Config `vitest.config.ts` (séparée de `vite.config.ts`), environnement `node`.
+Les tests vivent **à côté** du code testé (`*.test.ts`). Lancer : `npm test`.
+
+```bash
+npm test           # run once (utilisé en CI, bloquant)
+npm run test:watch # mode watch
+```
+
+Couvre la logique pure et testable (pas de DOM, pas de réseau) :
+- `src/modules/okrs/progress.test.ts` — `recalcProgress` (moyenne, plafond 100 %,
+  garde anti division par zéro B17, complétion).
+- `src/modules/lists/smart-rules.test.ts` — presets `overdue`/`this-week`/`high-priority`,
+  `tasksInList`, `tasksDueToday`.
+- `src/lib/pagination.types.test.ts` — `assertValidCursor` (UUID/ISO + rejet injection N6/H-1).
+- `src/lib/fetch-all-pages.test.ts` — auto-pagination `getAll` (plafond, pages, erreurs).
+
+**Règles** :
+- ✅ Tester en priorité les **fonctions pures** (extraire la logique d'un god component
+  ou d'un repo dans un module pur, puis tester ce module — cf. `okrs/progress.ts`
+  extrait de `okrs/supabase.repository.ts`).
+- ✅ Fixtures déterministes (`now` figé, pas de `Math.random()` non seedé).
+- ❌ Ne pas mettre de test qui dépend du DOM ici sans `// @vitest-environment jsdom`.
 
 ### Playwright E2E — 3 parcours critiques actifs
 
@@ -813,6 +864,13 @@ Règles non négociables :
 
 `TaskModal` et `AddTaskForm` sont **full-screen** sur mobile (override des classes shadcn Dialog avec `top-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[100dvh] sm:rounded-2xl sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-2xl`). Utiliser `100dvh` (dynamic viewport height) plutôt que `100vh` pour gérer correctement la barre d'URL mobile.
 
+> **Structure TaskModal** (refactor 2026-06-06) : le corps mobile full-screen est
+> extrait dans `src/components/task-modal/` (`TaskModalMobileBody.tsx` + `primitives.tsx`
+> pour les atomes `Cell`/`SectionCard`/… + `constants.ts` pour `PRIORITY_OPTIONS`/`priorityColor`).
+> `TaskModalMobileBody` est **entièrement piloté par props** (`MobileBodyProps`) — il ne lit
+> aucun état du parent par closure. `TaskModal.tsx` conserve l'orchestration (state, mutations,
+> validation, collaboration) + le corps desktop. Ne pas refusionner ces fichiers.
+
 ### TaskCard mobile (`src/components/TaskTable.tsx → TaskCard`)
 
 Layout style "agenda" :
@@ -1164,8 +1222,9 @@ Toute nouvelle modif doit s'ajouter dans cette table.
 Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
-2. ✅ `npm run build` → succès (le drop console.* se fait au build). Vérifier qu'aucun chunk first-paint ne dépasse **150 kB gzip** (budget audit-perf P-budget). Le warning Vite `chunkSizeWarningLimit: 400 kB` ne doit déclencher que pour `vendor-charts` (lazy, attendu).
-3. ✅ `npm run test:e2e` → **9/9 passent** : 3 smoke legacy + 6 a11y axe (sur dev server `npm start` port 3000).
+2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant en CI — `.github/workflows/ci.yml`)
+3. ✅ `npm run build` → succès (le drop console.* se fait au build). Vérifier qu'aucun chunk first-paint ne dépasse **150 kB gzip** (budget audit-perf P-budget). Le warning Vite `chunkSizeWarningLimit: 400 kB` ne doit déclencher que pour `vendor-charts` (lazy, attendu).
+4. ✅ `npm run test:e2e` → **9/9 passent** : 3 smoke legacy + 6 a11y axe (sur dev server `npm start` port 3000).
 4. ✅ **Smoke test mobile preview** sur viewport 375×812 (iPhone SE/12 mini) :
    - Login démo → Dashboard
    - Créer une tâche → fermer modal

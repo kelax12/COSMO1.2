@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useMatch, useResolvedPath } from 'react-router-dom';
+import { prefetchRoute } from '@/lib/route-prefetch';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -73,7 +74,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
       }
       style={groupHovered ? { transform: 'translateX(6.2px)' } : undefined}
-      onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); }}
+      onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
       onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
     >
       <div
