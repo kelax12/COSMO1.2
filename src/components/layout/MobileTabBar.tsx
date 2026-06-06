@@ -6,6 +6,7 @@ import {
   Calendar,
   Repeat,
   MoreHorizontal,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MobileMoreSheet from './MobileMoreSheet';
@@ -21,7 +22,7 @@ const NAV_COLORS = {
 interface TabConfig {
   to?: string;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   color: string;
   end?: boolean;
 }

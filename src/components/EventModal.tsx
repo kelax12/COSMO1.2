@@ -148,8 +148,8 @@ const EventModal: React.FC<EventModalProps> = ({
         setStartTime(start.toTimeString().slice(0, 5));
         setEndDate(end.toISOString().split("T")[0]);
         setEndTime(end.toTimeString().slice(0, 5));
-        if (task.description || task.notes) {
-          setNotes(task.description || task.notes || "");
+        if (task.description) {
+          setNotes(task.description || "");
           prefilled.add("notes");
         }
         prefilled.add("startDate");
@@ -162,8 +162,8 @@ const EventModal: React.FC<EventModalProps> = ({
         setStartDate(todayStr);
         setEndDate(todayStr);
 
-        if (task.description || task.notes) {
-          setNotes(task.description || task.notes || "");
+        if (task.description) {
+          setNotes(task.description || "");
           prefilled.add("notes");
         }
 

@@ -20,7 +20,7 @@
  * Vrai si `avatar` désigne une image affichable dans un `<img>` / `AvatarImage`.
  * Couvre les URLs distantes, les data URLs, les blobs et les chemins relatifs.
  */
-export function isImageAvatar(avatar?: string | null): avatar is string {
+export function isImageAvatar(avatar?: string | null): boolean {
   if (!avatar) return false;
   return /^(https?:|data:image\/|blob:|\/)/i.test(avatar.trim());
 }

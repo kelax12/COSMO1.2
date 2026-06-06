@@ -25,7 +25,7 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 // des chunks qui n'existent plus sur le CDN). On retry une fois, puis
 // on force un reload pour récupérer un index.html frais.
 // ──────────────────────────────────────────────────────────────────
-const lazyWithRetry = <T extends React.ComponentType<unknown>>(
+const lazyWithRetry = <T extends React.ComponentType<Record<string, never>>>(
   factory: () => Promise<{ default: T }>
 ) =>
   lazy(async () => {

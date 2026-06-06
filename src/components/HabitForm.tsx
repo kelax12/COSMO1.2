@@ -22,7 +22,7 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
   });
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
@@ -30,6 +30,8 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
       name: formData.name,
       estimatedTime: formData.estimatedTime,
       color: formData.color,
+      frequency: 'daily',
+      icon: '',
     }, {
       onSuccess: () => onClose()
     });
@@ -38,7 +40,7 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as React.FormEvent<HTMLFormElement>);
+      handleSubmit(e);
     }
   };
   

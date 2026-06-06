@@ -69,7 +69,7 @@ const AgendaShowcase: React.FC = () => {
   // Ghost positions (relative to container)
   const [ghostFrom, setGhostFrom] = useState({ x: 0, y: 0, w: 0, h: 0 });
   const [ghostTo,   setGhostTo]   = useState({ x: 0, y: 0, w: 0, h: 0 });
-  const [selPos,    setSelPos]     = useState({ x: 0, y: 0, w: 0, h: 0 });
+  const [, setSelPos]     = useState({ x: 0, y: 0, w: 0, h: 0 });
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const after = (ms: number, fn: () => void) => {

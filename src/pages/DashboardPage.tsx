@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { PageHeading } from '@/components/ui/typography';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
@@ -258,7 +258,7 @@ const DashboardPage: React.FC = () => {
   }, [tasks, events, habits, krCompletions, viewMode, today]);
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -268,7 +268,7 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,

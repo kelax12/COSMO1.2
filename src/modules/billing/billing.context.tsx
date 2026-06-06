@@ -39,7 +39,7 @@ const billingKeys = { subscription: ['billing', 'subscription'] as const };
 
 function mapRow(row: Record<string, unknown>): SubscriptionRow {
   return {
-    ...(row as SubscriptionRow),
+    ...(row as unknown as SubscriptionRow),
     premium_tokens: row.premium_tokens as number,
     win_streak: row.win_streak as number,
     // Camelcase aliases

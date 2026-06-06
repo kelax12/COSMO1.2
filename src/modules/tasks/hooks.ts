@@ -358,19 +358,21 @@ export const useToggleTaskBookmark = () => {
 export const useTasksInfinite = (pageSize = 50) => {
   const repository = useTasksRepository();
 
+  type PageCursor = { cursor: string; cursorDate: string };
+
   return useInfiniteQuery({
     queryKey: [...taskKeys.all, 'infinite', pageSize],
     queryFn: ({ pageParam }) => {
       const params: PaginationParams = { limit: pageSize };
       if (pageParam) {
-        params.cursor = (pageParam as { cursor: string; cursorDate: string }).cursor;
-        params.cursorDate = (pageParam as { cursor: string; cursorDate: string }).cursorDate;
+        params.cursor = pageParam.cursor;
+        params.cursorDate = pageParam.cursorDate;
       }
       return repository.getPage(params);
     },
-    initialPageParam: null,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.hasMore || !lastPage.nextCursor) return undefined;
+    initialPageParam: null as PageCursor | null,
+    getNextPageParam: (lastPage): PageCursor | undefined => {
+      if (!lastPage.hasMore || !lastPage.nextCursor || !lastPage.nextCursorDate) return undefined;
       return { cursor: lastPage.nextCursor, cursorDate: lastPage.nextCursorDate };
     },
   });

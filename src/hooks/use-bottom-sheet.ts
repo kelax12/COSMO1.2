@@ -1,12 +1,12 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { useMotionValue, useTransform, animate, useDragControls } from 'framer-motion';
-import type { PanInfo } from 'framer-motion';
+import type { PanInfo, MotionValue } from 'framer-motion';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 export interface BottomSheetHook {
   sheetRef: React.RefObject<HTMLDivElement>;
-  backdropOpacity: ReturnType<typeof useTransform>;
-  handleBarWidth: ReturnType<typeof useTransform>;
+  backdropOpacity: MotionValue<number>;
+  handleBarWidth: MotionValue<number>;
   sheetDragProps: Record<string, unknown>;
 }
 
