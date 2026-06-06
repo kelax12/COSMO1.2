@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pencil, Pin, PinOff, Trash2, Check } from 'lucide-react';
+import { Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
 
 export interface ListColorOption {
@@ -11,7 +11,6 @@ export interface ListColorOption {
 }
 
 interface ListActionsSheetProps {
-  /** Liste ciblée, ou null pour fermé. */
   list: TaskList | null;
   colorOptions: ListColorOption[];
   resolveListColor: (color: string) => string;
@@ -22,15 +21,6 @@ interface ListActionsSheetProps {
   onPickColor: (list: TaskList, colorValue: string) => void;
 }
 
-/**
- * Menu contextuel d'actions de liste — bottom-sheet déclenché par appui long
- * sur une chip de liste (mobile). Remplace les micro-boutons flottants hover-only
- * (inaccessibles au tap) par des cibles ≥ 44 px conformes WCAG 2.5.5.
- *
- * Pattern bottom-sheet standard du projet : portal + items-end, drag handle,
- * safe-area, ESC + backdrop pour fermer. Les smart lists masquent Renommer/Couleur
- * (leur règle est figée), comme sur desktop.
- */
 const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
   list,
   colorOptions,
@@ -43,17 +33,17 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
 }) => {
   const isOpen = !!list;
   const isSmart = list?.type === 'smart';
+  const currentColor = list ? resolveListColor(list.color) : '#3B82F6';
 
-  // ESC pour fermer + verrou scroll body pendant l'ouverture.
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
+    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prev;
     };
   }, [isOpen, onClose]);
 
@@ -64,112 +54,137 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 backdrop-blur-[2px]"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.7 }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%', transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
+            transition={{ type: 'spring', damping: 32, stiffness: 340, mass: 0.65 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full rounded-t-2xl shadow-2xl flex flex-col"
+            className="w-full flex flex-col"
             style={{
               backgroundColor: 'rgb(var(--color-surface))',
               paddingBottom: 'env(safe-area-inset-bottom)',
+              borderRadius: '20px 20px 0 0',
             }}
             role="dialog"
             aria-label={`Actions pour la liste ${list.name}`}
           >
             {/* Drag handle */}
-            <div className="flex justify-center pt-2.5 pb-1.5">
-              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+            <div className="flex justify-center pt-3 pb-2 shrink-0">
+              <div className="w-9 h-[4px] rounded-full" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
             </div>
 
-            {/* Header : pastille + nom */}
-            <div className="flex items-center gap-2.5 px-5 pt-1 pb-3 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+            {/* Header — nom + pastille couleur, compact */}
+            <div className="flex items-center gap-2.5 px-5 pb-3">
               <span
-                className="w-3.5 h-3.5 rounded-full shrink-0"
-                style={{ backgroundColor: resolveListColor(list.color) }}
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: currentColor }}
               />
-              <span className="font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
+              <span
+                className="text-[13px] font-semibold uppercase tracking-wider truncate"
+                style={{ color: 'rgb(var(--color-text-secondary))' }}
+              >
                 {list.name}
               </span>
             </div>
 
-            <div className="px-3 py-2">
-              {/* Palette couleur — masquée pour les smart lists (règle figée) */}
-              {!isSmart && (
-                <div className="px-2 py-2">
-                  <p className="text-xs font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    Couleur
-                  </p>
-                  <div className="flex flex-wrap gap-2.5">
+            {/* Séparateur */}
+            <div className="h-px mx-0" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+
+            {/* Palette couleur — petits cercles compacts, masquée pour smart */}
+            {!isSmart && (
+              <>
+                <div className="px-5 py-3.5">
+                  <div className="flex items-center gap-3 flex-wrap">
                     {colorOptions.map((opt) => {
-                      const selected = list.color === opt.value;
+                      const selected = list.color === opt.value ||
+                        (list.color.startsWith('#') && list.color.toLowerCase() === opt.color.toLowerCase());
                       return (
                         <button
                           key={opt.value}
                           type="button"
                           onClick={() => onPickColor(list, opt.value)}
-                          aria-label={`Couleur ${opt.name}`}
+                          aria-label={opt.name}
                           aria-pressed={selected}
-                          className="min-w-11 min-h-11 flex items-center justify-center rounded-lg transition-colors active:bg-slate-100 dark:active:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded-full"
+                          style={{ ['--tw-ring-color' as string]: opt.color }}
                         >
                           <span
-                            className="w-6 h-6 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-700 shadow-sm"
-                            style={{ backgroundColor: opt.color }}
-                          >
-                            {selected && <Check size={14} className="text-white" strokeWidth={3} />}
-                          </span>
+                            className="w-[26px] h-[26px] rounded-full transition-transform"
+                            style={{
+                              backgroundColor: opt.color,
+                              boxShadow: selected
+                                ? `0 0 0 2.5px rgb(var(--color-surface)), 0 0 0 4.5px ${opt.color}`
+                                : 'none',
+                              transform: selected ? 'scale(1.15)' : 'scale(1)',
+                            }}
+                          />
                         </button>
                       );
                     })}
                   </div>
                 </div>
-              )}
+                <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+              </>
+            )}
 
-              {/* Renommer — masqué pour les smart lists */}
+            {/* Actions — style iOS natif : icône nue + texte, séparateurs fins */}
+            <div>
+              {/* Renommer */}
               {!isSmart && (
-                <button
-                  type="button"
-                  onClick={() => { onRename(list); onClose(); }}
-                  className="w-full flex items-center gap-3.5 px-2 min-h-[52px] rounded-lg text-left transition-colors active:bg-slate-100 dark:active:bg-slate-800"
-                >
-                  <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    <Pencil size={18} aria-hidden="true" />
-                  </span>
-                  <span className="text-[15px] font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                    Renommer
-                  </span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { onRename(list); onClose(); }}
+                    className="w-full flex items-center gap-4 px-5 min-h-[54px] text-left active:opacity-50 transition-opacity"
+                  >
+                    <Pencil
+                      size={17}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      style={{ color: 'rgb(var(--color-text-secondary))', flexShrink: 0 }}
+                    />
+                    <span className="text-[16px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                      Renommer
+                    </span>
+                  </button>
+                  <div className="h-px ml-[60px]" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                </>
               )}
 
-              {/* Épingler / Désépingler par défaut */}
+              {/* Épingler / Désépingler */}
               <button
                 type="button"
                 onClick={() => { onToggleDefault(list); onClose(); }}
-                className="w-full flex items-center gap-3.5 px-2 min-h-[52px] rounded-lg text-left transition-colors active:bg-slate-100 dark:active:bg-slate-800"
+                className="w-full flex items-center gap-4 px-5 min-h-[54px] text-left active:opacity-50 transition-opacity"
               >
-                <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  {list.isDefault ? <PinOff size={18} aria-hidden="true" /> : <Pin size={18} aria-hidden="true" />}
-                </span>
-                <span className="text-[15px] font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {list.isDefault ? 'Retirer des listes par défaut' : 'Épingler comme liste par défaut'}
+                {list.isDefault
+                  ? <PinOff size={17} strokeWidth={1.75} aria-hidden="true" style={{ color: 'rgb(var(--color-text-secondary))', flexShrink: 0 }} />
+                  : <Pin    size={17} strokeWidth={1.75} aria-hidden="true" style={{ color: 'rgb(var(--color-text-secondary))', flexShrink: 0 }} />
+                }
+                <span className="text-[16px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  {list.isDefault ? 'Retirer des favoris' : 'Épingler par défaut'}
                 </span>
               </button>
+            </div>
 
-              {/* Supprimer */}
+            {/* Supprimer — groupe séparé, rouge */}
+            <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+            <div
+              className="mx-4 my-3 rounded-xl overflow-hidden"
+              style={{ backgroundColor: 'rgba(239,68,68,0.06)' }}
+            >
               <button
                 type="button"
                 onClick={() => { onDelete(list); onClose(); }}
-                className="w-full flex items-center gap-3.5 px-2 min-h-[52px] rounded-lg text-left transition-colors active:bg-red-50 dark:active:bg-red-900/20"
+                className="w-full flex items-center gap-4 px-4 min-h-[50px] text-left active:opacity-50 transition-opacity"
               >
-                <span className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-red-500/10 text-red-600 dark:text-red-400">
-                  <Trash2 size={18} aria-hidden="true" />
-                </span>
-                <span className="text-[15px] font-medium text-red-600 dark:text-red-400">
-                  Supprimer la liste
+                <Trash2 size={17} strokeWidth={1.75} aria-hidden="true" className="text-red-500 shrink-0" />
+                <span className="text-[16px] text-red-500">
+                  Supprimer
                 </span>
               </button>
             </div>
