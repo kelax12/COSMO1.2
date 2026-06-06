@@ -181,7 +181,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     if (!formData.name.trim()) newErrors.name = 'Le nom de la tâche est obligatoire';
     else if (formData.name.trim().length < 3) newErrors.name = 'Le nom doit contenir au moins 3 caractères';
     
-    if (formData.estimatedTime === '' || formData.estimatedTime === null) newErrors.estimatedTime = 'Le temps estimé est obligatoire';
+    if (String(formData.estimatedTime).trim() === '') newErrors.estimatedTime = 'Le temps estimé est obligatoire';
     else if (isNaN(Number(formData.estimatedTime)) || Number(formData.estimatedTime) < 0) newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
     
     // Priorité facultative : aucune validation bloquante.
@@ -200,7 +200,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   const isFormValid = () => {
     const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
-    const timeValid = formData.estimatedTime !== '' && formData.estimatedTime !== null && !isNaN(Number(formData.estimatedTime)) && Number(formData.estimatedTime) > 0;
+    const timeValid = String(formData.estimatedTime).trim() !== '' && !isNaN(Number(formData.estimatedTime)) && Number(formData.estimatedTime) > 0;
     // Priorité facultative : ne bloque pas la validation du formulaire.
     const categoryValid = !!formData.category;
     return nameValid && timeValid && categoryValid;
@@ -225,7 +225,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     });
     setCollaborators([]);
     setSelectedListIds([]);
-    setSearchUser('');
     setShowCollaboratorSection(false);
     setErrors({});
     setHasChanges(false);
@@ -333,7 +332,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                   e.currentTarget.style.color = 'rgb(var(--color-text-muted))';
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
-                aria-label="Fermer le formulaire"
               >
                 <X size={20} aria-hidden="true" />
               </button>

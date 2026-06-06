@@ -106,7 +106,7 @@ export function exportEventsCSV(events: CalendarEvent[]): void {
     e.end,
     e.color || '',
     e.notes || '',
-    e.recurrenceRule ? 'Oui' : 'Non',
+    e.recurrence ? 'Oui' : 'Non',
   ]);
   download(`cosmo-agenda-${todayStr()}.csv`, rowsToCSV(headers, rows));
 }

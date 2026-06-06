@@ -89,7 +89,7 @@ const StatsShowcase: React.FC = () => (
     {/* Summary row */}
     <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-white/5">
       {LEGEND.map(l => {
-        const total = CHART_DATA.reduce((s, d) => s + (d as Record<string, number>)[l.key], 0);
+        const total = CHART_DATA.reduce((s, d) => s + (d as unknown as Record<string, number>)[l.key], 0);
         return (
           <div key={l.key} className="text-center">
             <p className="text-xs font-bold" style={{ color: l.color }}>{fmtMin(total)}</p>
