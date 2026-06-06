@@ -185,11 +185,12 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
                   className="w-[190px]"
                   formatter={(value, name, item, index) => {
                     const key = name as keyof typeof chartConfig;
+                    const p = (item.payload ?? {}) as { tasks?: number; events?: number; okrs?: number; habits?: number };
                     const total =
-                      (item.payload.tasks ?? 0) +
-                      (item.payload.events ?? 0) +
-                      (item.payload.okrs ?? 0) +
-                      (item.payload.habits ?? 0);
+                      (p.tasks ?? 0) +
+                      (p.events ?? 0) +
+                      (p.okrs ?? 0) +
+                      (p.habits ?? 0);
                     return (
                       <>
                         <div

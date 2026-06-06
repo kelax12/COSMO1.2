@@ -56,7 +56,7 @@ export interface TutorialStep {
   /** Pour action='type' : texte à taper */
   typeText?: string;
   /** Pour action='custom' : fonction exécutée à l'arrivée de l'étape */
-  customAction?: (target: HTMLElement | null) => Promise<void> | void;
+  customAction?: (target: HTMLElement | null) => void | (() => void) | Promise<void | (() => void)>;
   /**
    * Animation de « ghost persistant » à travers plusieurs étapes (indépendante
    * de l'action one-shot ci-dessus). Utilisée pour les démos multi-étapes

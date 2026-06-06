@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Sparkles, CheckSquare, Repeat, ArrowRight, X } from 'lucide-react';
+import { Sparkles, CheckSquare, Repeat, ArrowRight, X, type LucideIcon } from 'lucide-react';
 import { useIsDemo } from '@/lib/app-mode.store';
 
 /**
@@ -22,7 +22,7 @@ import { useIsDemo } from '@/lib/app-mode.store';
  */
 
 interface Step {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   accent: string;
   title: string;
   description: string;
