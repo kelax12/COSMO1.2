@@ -323,32 +323,35 @@ const TaskCard = React.memo(({
       )}
 
       {/* Title + meta */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+        {/* Titre */}
         <p className={`font-semibold text-sm leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
           {task.name}
         </p>
-        <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-1' : ''}>
-            {isOverdue && <AlertTriangle size={11} aria-hidden="true" />}
+
+        {/* Collaborateur — ligne dédiée sous le titre, ne concurrence plus la méta */}
+        {task.sharedBy && (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[rgb(var(--color-accent))] truncate">
+            <Users size={10} aria-hidden="true" />
+            Reçu de {task.sharedBy}
+          </span>
+        )}
+        {!task.sharedBy && task.isCollaborative && (
+          <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <Users size={10} aria-hidden="true" />
+            <span>Partagé</span>
+          </span>
+        )}
+
+        {/* Méta : date · durée — toujours sur une ligne propre */}
+        <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
+            {isOverdue && <AlertTriangle size={10} aria-hidden="true" />}
             {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
             {isOverdue && <span className="sr-only"> (en retard)</span>}
           </span>
-          <span>·</span>
+          <span aria-hidden="true">·</span>
           <span>{task.estimatedTime}min</span>
-          {task.sharedBy ? (
-            <>
-              <span>·</span>
-              <span className="inline-flex items-center gap-1 text-[rgb(var(--color-accent))]">
-                <Users size={11} />
-                Reçu de {task.sharedBy}
-              </span>
-            </>
-          ) : task.isCollaborative ? (
-            <>
-              <span>·</span>
-              <Users size={11} className="opacity-70" />
-            </>
-          ) : null}
         </div>
       </div>
 
