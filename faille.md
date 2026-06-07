@@ -729,3 +729,43 @@ est **load-bearing**.
 2. Vérifier `okrs_with_table_krs == okrs_total`.
 3. *Ensuite seulement* : `ALTER TABLE okrs DROP COLUMN key_results` + retrait
    du fallback dans `okrs/supabase.repository.ts`.
+
+---
+
+## 🔧 Audit bugs moyens non-UI (2026-06-07) — inspection schéma réel via MCP
+
+Inspection lecture seule du projet prod (`ykeugqfgklejcdbrmawy`) puis correctifs.
+
+### MED-1 🔴 `delete-account` cassé par une table fantôme `chat_messages`
+
+**Fichier** : `supabase/functions/delete-account/index.ts`
+**Vecteur** : `USER_OWNED_TABLES` listait `chat_messages`, **table qui n'existe pas**
+(vérifié : aucune table message/chat/inbox/notif en base — l'« inbox » UI dérive
+de `friend_requests`/`shared_tasks`). Chaque suppression de compte exécutait donc
+`DELETE FROM chat_messages` → erreur PostgREST → `failedTables` → `500 cleanup_failed`.
+**Conséquence : la suppression de compte était totalement bloquée pour tous les
+utilisateurs** (RGPD art. 17 + régression du fix B9).
+**Fix** : retrait de `chat_messages` + le loop ignore désormais les erreurs
+« relation does not exist » (`42P01` / `PGRST205`) → cette classe de bug ne peut
+plus bricker l'effacement RGPD. **Redéploiement requis** : `supabase functions deploy delete-account`.
+
+### MED-2 🟡 `kr_completions` orphelins après suppression d'un KR (graph dashboard surcompté)
+
+**Fichier** : `supabase/migration/037_kr_completions_kr_cascade.sql`
+**Vecteur** : `kr_completions` n'avait de FK que sur `okr_id` (CASCADE), pas sur
+`kr_id`. Supprimer **un** KR (via `syncKRsToTable`, qui DELETE la ligne
+`key_results`) laissait ses lignes de journal orphelines → toujours comptées dans
+le graphique « KR réalisés ».
+**Fix** : FK `kr_completions.kr_id → key_results(id) ON DELETE CASCADE`. Vérifié
+sûr : 0 orphelin en prod (dry-run transactionnel `BEGIN … ROLLBACK` OK).
+`recordKRReps` s'exécutant toujours après `syncKRsToTable`, la FK ne bloque jamais
+un insert. **Application requise** : exécuter `037_kr_completions_kr_cascade.sql`.
+
+### Non corrigé (volontaire)
+
+- **`stripe-webhook` clobber tokens** (read-then-write sur `premium_tokens`/`win_streak`
+  pour les events non-reset) : race réelle mais très basse probabilité (event Stripe
+  concurrent d'un crédit pub dans la même fenêtre ~100 ms) et impact faible (1 token).
+  Modifier le webhook de paiement non testé pour ce gain n'est pas un bon ratio
+  risque/valeur → laissé documenté. Fix propre = ne pas écrire `premium_tokens`/
+  `win_streak` quand l'event ne doit pas les changer (omettre du payload upsert).
