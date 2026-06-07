@@ -23,7 +23,7 @@ import type { OKR } from '@/modules/okrs';
  * (OWASP) est de préfixer une apostrophe (`'`) — invisible à l'affichage,
  * neutralise l'interprétation formule.
  */
-function escapeCSV(value: unknown): string {
+export function escapeCSV(value: unknown): string {
   if (value === null || value === undefined) return '';
   let str = String(value);
   if (str.length > 0 && /^[=+\-@\t\r]/.test(str)) {
@@ -35,7 +35,7 @@ function escapeCSV(value: unknown): string {
   return str;
 }
 
-function rowsToCSV(headers: string[], rows: unknown[][]): string {
+export function rowsToCSV(headers: string[], rows: unknown[][]): string {
   const head = headers.map(escapeCSV).join(',');
   const body = rows.map(r => r.map(escapeCSV).join(',')).join('\n');
   // BOM UTF-8 pour Excel (sinon les accents s'affichent en gibberish)
