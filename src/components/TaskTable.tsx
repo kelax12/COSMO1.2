@@ -968,6 +968,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     </AnimatePresence>
                     <button
                       onClick={() => handleToggleComplete(task.id)}
+                      role="checkbox"
+                      aria-checked={task.completed}
+                      aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                         task.completed
                           ? 'bg-blue-500 border-blue-500'
@@ -1024,33 +1027,38 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.estimatedTime}</td>
                 <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
                   <div className="flex justify-center items-center gap-1">
-                      <button 
-                        onClick={() => handleToggleBookmark(task.id)} 
+                      <button
+                        onClick={() => handleToggleBookmark(task.id)}
+                        aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        aria-pressed={task.bookmarked}
                         className={`p-2 rounded transition-colors ${task.bookmarked ? 'favorite-icon filled' : ''}`}
-                        style={{ 
+                        style={{
                           color: task.bookmarked ? '#EAB308' : 'rgb(var(--color-text-muted))'
                         }}
                       >
                         {task.bookmarked ? <BookmarkCheck size={16} fill="#EAB308" /> : <Bookmark size={16} />}
                       </button>
                     {!task.completed && (
-                      <button 
+                      <button
                         onClick={() => setTaskToEventModal(task)}
+                        aria-label="Planifier dans l'agenda"
                         className="p-2 rounded transition-colors"
                         style={{ color: 'rgb(var(--color-text-muted))' }}
                       >
                         <Calendar size={16} />
                       </button>
                     )}
-                      <button 
+                      <button
                           onClick={() => setAddToListTask(task.id)}
+                          aria-label="Ajouter à une liste"
                           className="p-2 rounded transition-colors"
                           style={{ color: 'rgb(var(--color-text-muted))' }}
                         >
                           <MoreHorizontal size={16} />
                         </button>
-                      <button 
+                      <button
                         onClick={() => handleOpenCollaborator(task.id)}
+                        aria-label="Ajouter un collaborateur"
                         className="p-2 rounded transition-colors"
                         style={{ color: 'rgb(var(--color-text-muted))' }}
                       >
@@ -1067,6 +1075,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         </button>
                         <button
                           onClick={() => setTaskToDelete(task.id)}
+                          aria-label="Supprimer la tâche"
                           className="p-2 rounded transition-colors"
                           style={{ color: 'rgb(var(--color-text-muted))' }}
                         >

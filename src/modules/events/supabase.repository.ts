@@ -6,45 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
+import { mapEventFromDb, mapEventToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
-
-/**
- * Supabase DB row type for events table (snake_case)
- */
-interface EventRow {
-  id: string;
-  title: string;
-  start_time: string;
-  end_time: string;
-  color?: string;
-  description?: string;
-  notes?: string;
-  task_id?: string;
-  recurrence?: 'none' | 'daily' | 'weekly' | 'custom';
-  recurrence_days?: number[];
-  exceptions?: string[];
-  user_id?: string;
-  created_at?: string;
-}
-
-/**
- * DB input type for insert/update operations (snake_case)
- */
-interface EventDbInput {
-  title?: string;
-  start_time?: string;
-  end_time?: string;
-  color?: string;
-  description?: string;
-  notes?: string;
-  task_id?: string;
-  recurrence?: 'none' | 'daily' | 'weekly' | 'custom';
-  recurrence_days?: number[];
-  exceptions?: string[];
-  user_id?: string;
-}
 
 export class SupabaseEventsRepository implements IEventsRepository {
   // ═══════════════════════════════════════════════════════════════════
@@ -65,7 +30,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       if (error) throw normalizeApiError(error);
       return data || [];
     });
-    return warnIfTruncated(rows, MAX_ROWS, 'events').map(this.mapFromDb);
+    return warnIfTruncated(rows, MAX_ROWS, 'events').map(mapEventFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<CalendarEvent>> {
@@ -96,7 +61,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     const lastItem = items[items.length - 1];
 
     return {
-      data: items.map(this.mapFromDb),
+      data: items.map(mapEventFromDb),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.start_time : null,
@@ -115,7 +80,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       if (error.code === 'PGRST116') return null;
       throw normalizeApiError(error);
     }
-    return data ? this.mapFromDb(data) : null;
+    return data ? mapEventFromDb(data) : null;
   }
 
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
@@ -127,7 +92,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       .order('start_time', { ascending: true });
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return (data || []).map(mapEventFromDb);
   }
 
   async getFiltered(filters: EventFilters): Promise<CalendarEvent[]> {
@@ -157,7 +122,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     const { data, error } = await query.order('start_time', { ascending: true });
 
     if (error) throw normalizeApiError(error);
-    return (data || []).map(this.mapFromDb);
+    return (data || []).map(mapEventFromDb);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -168,7 +133,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...this.mapToDb(input), user_id: user.id };
+    const dbInput = { ...mapEventToDb(input), user_id: user.id };
 
     const { data, error } = await supabase
       .from('events')
@@ -177,12 +142,12 @@ export class SupabaseEventsRepository implements IEventsRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return mapEventFromDb(data);
   }
 
   async update(id: string, updates: UpdateEventInput): Promise<CalendarEvent> {
     if (!supabase) throw new Error('Supabase not configured');
-    const dbUpdates = this.mapToDb(updates);
+    const dbUpdates = mapEventToDb(updates);
 
     const { data, error } = await supabase
       .from('events')
@@ -192,7 +157,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return mapEventFromDb(data);
   }
 
   async delete(id: string): Promise<void> {
@@ -205,38 +170,4 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (error) throw normalizeApiError(error);
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // MAPPING (snake_case <-> camelCase)
-  // ═══════════════════════════════════════════════════════════════════
-
-  private mapFromDb(row: EventRow): CalendarEvent {
-    return {
-      id: row.id,
-      title: row.title,
-      start: row.start_time,
-      end: row.end_time,
-      color: row.color,
-      description: row.description,
-      notes: row.notes,
-      taskId: row.task_id,
-      recurrence: row.recurrence ?? 'none',
-      recurrenceDays: row.recurrence_days ?? [],
-      exceptions: row.exceptions ?? [],
-    };
-  }
-
-  private mapToDb(input: Partial<CalendarEvent>): EventDbInput {
-    const result: EventDbInput = {};
-    if (input.title !== undefined) result.title = input.title;
-    if (input.start !== undefined) result.start_time = input.start;
-    if (input.end !== undefined) result.end_time = input.end;
-    if (input.color !== undefined) result.color = input.color;
-    if (input.description !== undefined) result.description = input.description;
-    if (input.notes !== undefined) result.notes = input.notes;
-    if (input.taskId !== undefined) result.task_id = input.taskId;
-    if (input.recurrence !== undefined) result.recurrence = input.recurrence;
-    if (input.recurrenceDays !== undefined) result.recurrence_days = input.recurrenceDays;
-    if (input.exceptions !== undefined) result.exceptions = input.exceptions;
-    return result;
-  }
 }

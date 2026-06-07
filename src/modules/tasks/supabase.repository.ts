@@ -2,49 +2,10 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
-
-/**
- * Supabase DB row type for tasks table (snake_case)
- */
-interface TaskRow {
-  id: string;
-  name: string;
-  description?: string;
-  priority: number;
-  category: string;
-  deadline: string | null;
-  estimated_time: number;
-  created_at?: string;
-  bookmarked?: boolean;
-  completed?: boolean;
-  completed_at?: string;
-  is_collaborative?: boolean;
-  pending_invites?: string[];
-  collaborator_validations?: Record<string, boolean>;
-  user_id?: string;
-}
-
-/**
- * DB input type for insert/update operations (snake_case)
- */
-interface TaskDbInput {
-  name?: string;
-  description?: string;
-  priority?: number;
-  category?: string;
-  deadline?: string | null;
-  estimated_time?: number;
-  bookmarked?: boolean;
-  completed?: boolean;
-  completed_at?: string;
-  is_collaborative?: boolean;
-  pending_invites?: string[];
-  collaborator_validations?: Record<string, boolean>;
-  user_id?: string;
-}
 
 /** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
 type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
@@ -73,7 +34,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       return data || [];
     });
 
-    return this.enrichSharedBy(warnIfTruncated(rows, MAX_ROWS, 'tasks').map(this.mapFromDb));
+    return this.enrichSharedBy(warnIfTruncated(rows, MAX_ROWS, 'tasks').map(mapTaskFromDb));
   }
 
   /**
@@ -145,7 +106,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const lastItem = items[items.length - 1];
 
     return {
-      data: await this.enrichSharedBy(items.map(this.mapFromDb)),
+      data: await this.enrichSharedBy(items.map(mapTaskFromDb)),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.created_at : null,
@@ -165,7 +126,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       throw normalizeApiError(error);
     }
     if (!data) return null;
-    return (await this.enrichSharedBy([this.mapFromDb(data)]))[0];
+    return (await this.enrichSharedBy([mapTaskFromDb(data)]))[0];
   }
 
   async getByDate(date: string): Promise<Task[]> {
@@ -182,7 +143,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .order('deadline', { ascending: true });
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy((data || []).map(this.mapFromDb));
+    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
@@ -220,7 +181,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy((data || []).map(this.mapFromDb));
+    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -231,7 +192,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput: TaskDbCreateInput = { ...this.mapToDb(input), user_id: user.id };
+    const dbInput: TaskDbCreateInput = { ...mapTaskToDb(input), user_id: user.id };
 
     const { data, error } = await supabase
       .from('tasks')
@@ -240,12 +201,12 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return mapTaskFromDb(data);
   }
 
   async update(id: string, updates: UpdateTaskInput): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
-    const dbUpdates = this.mapToDb(updates);
+    const dbUpdates = mapTaskToDb(updates);
 
     const { data, error } = await supabase
       .from('tasks')
@@ -255,7 +216,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return mapTaskFromDb(data);
   }
 
   async delete(id: string): Promise<void> {
@@ -277,7 +238,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       p_task_id: id,
     });
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data as TaskRow);
+    return mapTaskFromDb(data as TaskRow);
   }
 
   async toggleBookmark(id: string): Promise<Task> {
@@ -286,48 +247,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       p_task_id: id,
     });
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data as TaskRow);
+    return mapTaskFromDb(data as TaskRow);
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // MAPPING (snake_case <-> camelCase)
-  // ═══════════════════════════════════════════════════════════════════
-  private mapFromDb(row: TaskRow): Task {
-    return {
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      priority: row.priority,
-      category: row.category,
-      deadline: row.deadline ?? '',
-      estimatedTime: row.estimated_time,
-      createdAt: row.created_at,
-      bookmarked: row.bookmarked ?? false,
-      completed: row.completed ?? false,
-      completedAt: row.completed_at,
-      isCollaborative: row.is_collaborative ?? false,
-      pendingInvites: row.pending_invites || [],
-      collaboratorValidations: row.collaborator_validations || {},
-      userId: row.user_id,
-    };
-  }
-
-  private mapToDb(input: Partial<Task>): TaskDbInput {
-    const result: TaskDbInput = {};
-    if (input.name !== undefined) result.name = input.name;
-    if (input.description !== undefined) result.description = input.description;
-    if (input.priority !== undefined) result.priority = input.priority;
-    if (input.category !== undefined) result.category = input.category;
-    // Échéance facultative : une chaîne vide signifie « pas de date » → NULL
-    // en base (la colonne deadline est un timestamp, '' n'est pas valide).
-    if (input.deadline !== undefined) result.deadline = input.deadline ? input.deadline : null;
-    if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
-    if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
-    if (input.completed !== undefined) result.completed = input.completed;
-    if (input.completedAt !== undefined) result.completed_at = input.completedAt;
-    if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
-    if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
-    if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;
-    return result;
-  }
 }
