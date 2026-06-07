@@ -6,15 +6,24 @@ on:
   pull_request:
     branches: [main]
 
+# Least-privilege default token. Jobs that need more elevate explicitly.
+permissions:
+  contents: read
+
+# A newer push to the same ref cancels the in-progress run — saves runner
+# minutes and gives faster feedback on the latest commit.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ──────────────────────────────────────────────────────────────────
-  # Lint + type-check + tests unitaires (Vitest) + build. Bloquant : une
-  # erreur de type, un test rouge ou un lint cassé casse la CI. Rapide
-  # (pas de navigateur) → gate principale des PR.
+  # Gate principale : lint + type-check + tests (coverage) + build, plus
+  # deux gardes statiques peu coûteuses (audit prod deps, validation des
+  # migrations SQL). Bloquant : tout rouge casse la PR.
   #
-  # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Sans l'étape
-  # `tsc -b` ci-dessous, des erreurs de type partent en prod (140 erreurs
-  # accumulées avant l'ajout de ce gate — cf. audit). Ne pas la retirer.
+  # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Sans `tsc -b`
+  # ci-dessous, des erreurs de type partent en prod. Ne pas retirer.
   # ──────────────────────────────────────────────────────────────────
   lint-test-build:
     runs-on: ubuntu-latest
@@ -25,19 +34,54 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run lint
-      - name: Type-check (tsc --noEmit)
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check (tsc -b)
         run: npx tsc -b
-      - run: npm test
-      - run: npm run build
+
+      - name: Validate SQL migrations
+        run: npm run validate:migrations
+
+      - name: Unit tests + coverage (enforced thresholds)
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+      - name: Build
+        run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
   # ──────────────────────────────────────────────────────────────────
-  # Tests E2E Playwright (3 parcours démo + scan a11y axe-core).
-  # Job séparé : télécharge Chromium (~150 MB), plus lent. Le webServer
-  # de playwright.config.ts lance `npm start` automatiquement.
+  # Garde sécurité dépendances : échoue si une vulnérabilité high/critical
+  # touche une dépendance de PRODUCTION (ce qui est livré au navigateur).
+  # Les advisories dev-only (vite/vitest/jsdom) ne bloquent pas — leur fix
+  # demande des majeures cassantes et elles ne sont pas expédiées.
+  # ──────────────────────────────────────────────────────────────────
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: npm audit (prod deps, high+)
+        run: npm audit --omit=dev --audit-level=high
+
+  # ──────────────────────────────────────────────────────────────────
+  # Tests E2E Playwright (3 parcours démo + scan a11y axe-core, bloquant
+  # sur impact=critical). Job séparé : Chromium ~150 MB, plus lent.
   # ──────────────────────────────────────────────────────────────────
   e2e:
     runs-on: ubuntu-latest

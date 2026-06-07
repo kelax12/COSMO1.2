@@ -2,39 +2,10 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
+import { HabitRow, mapHabitFromDb, mapHabitToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
-
-/**
- * Supabase DB row type for habits table (snake_case)
- */
-interface HabitRow {
-  id: string;
-  name: string;
-  description?: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
-  estimated_time: number;
-  color: string;
-  icon: string;
-  completions?: Record<string, boolean>;
-  created_at?: string;
-  user_id?: string;
-}
-
-/**
- * DB input type for insert/update operations (snake_case)
- */
-interface HabitDbInput {
-  name?: string;
-  description?: string;
-  frequency?: 'daily' | 'weekly' | 'monthly';
-  estimated_time?: number;
-  color?: string;
-  icon?: string;
-  completions?: Record<string, boolean>;
-  user_id?: string;
-}
 
 export class SupabaseHabitsRepository implements IHabitsRepository {
   async fetchHabits(): Promise<Habit[]> {
@@ -51,7 +22,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     });
 
     // Map snake_case to camelCase
-    return warnIfTruncated(rows, MAX_ROWS, 'habits').map(this.mapFromDb);
+    return warnIfTruncated(rows, MAX_ROWS, 'habits').map(mapHabitFromDb);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Habit>> {
@@ -82,7 +53,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     const lastItem = items[items.length - 1];
 
     return {
-      data: items.map(this.mapFromDb),
+      data: items.map(mapHabitFromDb),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.created_at : null,
@@ -100,13 +71,13 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       if (error.code === 'PGRST116') return null;
       throw normalizeApiError(error);
     }
-    return data ? this.mapFromDb(data) : null;
+    return data ? mapHabitFromDb(data) : null;
   }
 
   async createHabit(input: CreateHabitInput): Promise<Habit> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...this.mapToDb(input), user_id: user.id };
+    const dbInput = { ...mapHabitToDb(input), user_id: user.id };
 
     const { data, error } = await supabase
       .from('habits')
@@ -115,11 +86,11 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return mapHabitFromDb(data);
   }
 
   async updateHabit(id: string, updates: UpdateHabitInput): Promise<Habit> {
-    const dbUpdates = this.mapToDb(updates);
+    const dbUpdates = mapHabitToDb(updates);
     
     const { data, error } = await supabase
       .from('habits')
@@ -129,7 +100,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       .single();
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data);
+    return mapHabitFromDb(data);
   }
 
   async deleteHabit(id: string): Promise<void> {
@@ -151,35 +122,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     });
 
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data as HabitRow);
+    return mapHabitFromDb(data as HabitRow);
   }
 
-  // Map from Supabase snake_case to app camelCase
-  private mapFromDb(row: HabitRow): Habit {
-    return {
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      frequency: row.frequency,
-      estimatedTime: row.estimated_time,
-      color: row.color,
-      icon: row.icon,
-      completions: row.completions || {},
-      createdAt: row.created_at,
-      userId: row.user_id,
-    };
-  }
-
-  // Map from app camelCase to Supabase snake_case
-  private mapToDb(input: Partial<Habit>): HabitDbInput {
-    const result: HabitDbInput = {};
-    if (input.name !== undefined) result.name = input.name;
-    if (input.description !== undefined) result.description = input.description;
-    if (input.frequency !== undefined) result.frequency = input.frequency;
-    if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
-    if (input.color !== undefined) result.color = input.color;
-    if (input.icon !== undefined) result.icon = input.icon;
-    if (input.completions !== undefined) result.completions = input.completions;
-    return result;
-  }
 }

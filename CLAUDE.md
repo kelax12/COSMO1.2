@@ -47,10 +47,28 @@ npm start          # Serveur dev réseau (port 3000)
 npm run build      # Build production → dist/
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
-npm test           # Vitest — tests unitaires de logique métier pure (run once)
+npm test           # Vitest — tests unitaires (run once)
 npm run test:watch # Vitest en mode watch
+npm run test:coverage      # Vitest + couverture v8 (seuils par fichier — bloquant CI)
+npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (axe scan 6 routes)
 ```
+
+> **Tests** : Vitest couvre la logique pure + les **mappers de repository**
+> (`src/modules/{tasks,habits,events}/mappers.ts` — frontière sécurité
+> anti-mass-assignment, le `mapToDb` ne doit JAMAIS émettre `user_id`), les
+> **hooks** React Query (jsdom + `@testing-library/react`, repos mockés) et
+> quelques **composants** (`EmptyState`, `AppErrorBoundary`). Couverture pilotée
+> par seuils **par fichier** dans `vitest.config.ts → coverage.thresholds` (CI
+> bloquante). Tests DOM : `// @vitest-environment jsdom` en tête de fichier ;
+> cleanup auto via `src/test/setup.ts`. Ne pas remettre les mappers inline dans
+> les repos (réduit la testabilité).
+>
+> **CI** (`.github/workflows/ci.yml`, 3 jobs) : `lint-test-build` (lint, `tsc -b`,
+> `validate:migrations`, `test:coverage`, build), `audit` (`npm audit --omit=dev
+> --audit-level=high` — bloque sur CVE prod), `e2e`. `concurrency` annule les runs
+> obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
+> Runbook deploy/rollback : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 > Le build prod **drope automatiquement** `console.log`, `console.info`, `console.debug`, `console.warn`, `console.error` et `debugger` (via `vite.config.ts → esbuild.pure/drop`). Les erreurs sont remontées via Sentry (`@sentry/react`) — voir variable d'env `VITE_SENTRY_DSN` ci-dessous.
 

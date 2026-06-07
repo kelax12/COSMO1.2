@@ -230,6 +230,7 @@ const HabitTable: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigatePeriod('prev')}
+                  aria-label="Période précédente"
                   className="border md:border-0"
                   style={{
                     color: 'rgb(var(--color-text-secondary))',
@@ -246,6 +247,7 @@ const HabitTable: React.FC = () => {
                   size="icon"
                   onClick={() => navigatePeriod('next')}
                   disabled={!canNavigateNext()}
+                  aria-label="Période suivante"
                   className="border md:border-0"
                   style={{
                     color: canNavigateNext() ? 'rgb(var(--color-text-secondary))' : 'rgb(var(--color-text-muted))',

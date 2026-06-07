@@ -55,6 +55,11 @@ async function scan(page: Page, label: string) {
 }
 
 test.describe('a11y audit', () => {
+  // The first navigation triggers vite's on-demand compile of heavy pages
+  // (LandingPage + showcases). Give the cold-start headroom so the suite
+  // doesn't flake on the very first goto under CI/loaded machines.
+  test.describe.configure({ timeout: 120_000 });
+
   test('Landing (public)', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');

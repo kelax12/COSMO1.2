@@ -636,12 +636,14 @@ const OKRPage: React.FC = () => {
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                       <button
                         onClick={() => handleEditObjective(objective.id)}
+                        aria-label="Modifier l'objectif"
                         className="p-1.5 transition-colors hover:bg-hover rounded-md"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => setDeletingObjective(objective.id)}
+                        aria-label="Supprimer l'objectif"
                         className="p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Trash2 size={16} />
