@@ -1,32 +1,30 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Migration 039 — Plafond journalier sur les crédits premium "pub"
+-- Migration 039 — Plafond quotidien sur les crédits premium "pub"
 --
--- Faille (audit architecture 2026-06-07, TOP-1) :
---   `credit_premium_token_from_ad()` (mig. 015/016) n'était throttlé qu'à
---   30 secondes et posait plan='premium' + status='active' + premium_tokens+1
---   SANS aucune attestation qu'une publicité ait réellement été visionnée.
---   Un client authentifié pouvait donc scripter l'appel (1 / 30 s = 2880/jour)
---   et s'octroyer un premium gratuit illimité → bypass total de la
---   monétisation.
+-- Modèle produit voulu : l'utilisateur regarde autant de pubs qu'il veut et
+-- gagne 1 token premium par pub (token = premium complet, comme l'abonnement
+-- Stripe). On NE bride donc PAS le rythme — on borne seulement le total à
+-- 20 crédits / 24 h glissantes.
 --
--- Fix :
---   Plafond strict de 1 crédit / 24 h, mesuré sur une colonne DÉDIÉE
---   `last_ad_credit_at` (et non `updated_at`, qui est muté par
---   `consume_premium_token` et le webhook Stripe, donc inexploitable comme
---   horloge anti-abus).
+-- ⚠️ Limite de sécurité INHÉRENTE à AdSense : AdSense est un réseau d'affichage
+--    (display), PAS un réseau "rewarded" avec Server-Side Verification. Il est
+--    donc IMPOSSIBLE de prouver côté serveur qu'une pub a réellement été vue —
+--    un script peut appeler cette RPC sans regarder de pub. Ce plafond est
+--    DISSUASIF (borne les dégâts à 20 jours premium / 24 h par compte), pas
+--    inviolable. La seule façon de fermer totalement le trou serait de passer
+--    à un réseau rewarded avec callback SSV signé (AdMob/Unity/ironSource) et
+--    de créditer depuis une Edge Function qui vérifie la signature.
 --
---   Le free tier "ad-supported" reste intentionnel (≈ 1 jour de premium par
---   jour de pub regardée), mais un script n'obtient désormais STRICTEMENT
---   RIEN de plus qu'un utilisateur légitime : le rythme maximal d'octroi est
---   identique. La voie de revenu Stripe n'est plus contournable.
---
--- Idempotent : ADD COLUMN IF NOT EXISTS + CREATE OR REPLACE FUNCTION.
--- À appliquer en prod via `supabase db push` (non auto-appliqué par le
--- déploiement Vercel front).
+-- Remplace la 1ʳᵉ version de cette migration (cap 1/24h, jamais appliquée en
+-- prod) qui cassait le modèle "pubs illimitées". Idempotent.
+-- À appliquer via `supabase db push` (non auto-appliqué par le déploiement front).
 -- ═══════════════════════════════════════════════════════════════════
 
+-- Compteur de fenêtre glissante. `last_ad_credit_at` (ancienne v1) n'est plus
+-- utilisé mais on le laisse si déjà présent — sans dépendance.
 ALTER TABLE subscriptions
-  ADD COLUMN IF NOT EXISTS last_ad_credit_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS ad_credits_window_start TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS ad_credits_in_window    INTEGER NOT NULL DEFAULT 0;
 
 CREATE OR REPLACE FUNCTION credit_premium_token_from_ad()
 RETURNS subscriptions
@@ -35,36 +33,47 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  result subscriptions;
-  last_credit TIMESTAMPTZ;
+  result  subscriptions;
+  v_start TIMESTAMPTZ;
+  v_count INTEGER;
+  c_daily_cap CONSTANT INTEGER := 20;  -- max crédits par fenêtre de 24 h
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  SELECT last_ad_credit_at INTO last_credit
+  SELECT ad_credits_window_start, ad_credits_in_window
+    INTO v_start, v_count
   FROM subscriptions
   WHERE user_id = auth.uid();
-
-  -- Plafond anti-abus : 1 crédit toutes les 24 h. Un script n'obtient pas
-  -- plus qu'un viewer légitime (même rythme d'octroi).
-  IF last_credit IS NOT NULL AND last_credit > NOW() - INTERVAL '24 hours' THEN
-    RAISE EXCEPTION 'Rate limit: only one ad credit per 24 hours';
-  END IF;
-
-  UPDATE subscriptions
-    SET premium_tokens   = premium_tokens + 1,
-        -- Activer plan/status pour que isPremium() passe (cf. mig. 016).
-        plan             = 'premium',
-        status           = 'active',
-        last_ad_credit_at = NOW(),
-        updated_at       = NOW()
-    WHERE user_id = auth.uid()
-  RETURNING * INTO result;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Subscription not found';
   END IF;
+
+  -- Ouvre une nouvelle fenêtre de 24 h si jamais créditée ou fenêtre expirée.
+  IF v_start IS NULL OR v_start <= NOW() - INTERVAL '24 hours' THEN
+    v_start := NOW();
+    v_count := 0;
+  END IF;
+
+  -- Plafond anti-farm. ERRCODE check_violation (23514) pour que le client
+  -- distingue ce cas d'une vraie erreur et affiche un message dédié.
+  IF v_count >= c_daily_cap THEN
+    RAISE EXCEPTION 'Daily ad-credit limit reached (% per 24h)', c_daily_cap
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE subscriptions
+    SET premium_tokens          = premium_tokens + 1,
+        -- Activer plan/status pour que isPremium() passe (cf. mig. 016).
+        plan                    = 'premium',
+        status                  = 'active',
+        ad_credits_window_start = v_start,
+        ad_credits_in_window    = v_count + 1,
+        updated_at              = NOW()
+    WHERE user_id = auth.uid()
+  RETURNING * INTO result;
 
   RETURN result;
 END;
