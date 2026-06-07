@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { Crown, Play, X, Zap, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
+import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdModal from './AdModal';
@@ -25,8 +26,12 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
       await addTokens(1);
       toast.success('+1 jour Premium crédité ! Vous pouvez maintenant accéder à ' + featureName + '.');
       await refreshBillingStatus();
-    } catch {
-      toast.error('Erreur lors du crédit — réessayez dans 30 secondes.');
+    } catch (err) {
+      if (isDailyAdLimitError(err)) {
+        toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
+      } else {
+        toast.error('Erreur lors du crédit — réessayez.');
+      }
     }
     setShowAdModal(false);
     onClose();

@@ -5,6 +5,7 @@ import { Crown, Zap, Play, Check, Users, Sparkles, Loader2, X, Minus } from 'luc
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import { useBilling } from '@/modules/billing/billing.context';
+import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -106,8 +107,12 @@ export function PremiumPage() {
     try {
       await addTokens(1);
       toast.success('+1 jour Premium crédité !');
-    } catch {
-      toast.error('Erreur lors du crédit du jour');
+    } catch (err) {
+      if (isDailyAdLimitError(err)) {
+        toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
+      } else {
+        toast.error('Erreur lors du crédit du jour');
+      }
     }
     setShowAdModal(false);
   };
