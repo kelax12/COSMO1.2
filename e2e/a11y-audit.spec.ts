@@ -2,19 +2,32 @@
 // Audit a11y WCAG AA — 2026-05-29
 //
 // Lance axe-core sur les routes publiques + protégées (mode démo) et
-// dump les violations dans le rapport HTML Playwright. Non bloquant pour
-// la CI (`test.fail` n'est PAS appelé) — l'audit produit la matière du
-// rapport audit-a11y.md, pas un guard de régression.
+// dump les violations dans le rapport HTML Playwright.
 //
-// Pour transformer en guard plus tard : `expect(results.violations).toEqual([])`
-// sur les niveaux wcag2a + wcag2aa + best-practice.
+// Guard CI (audit architecture TOP-8) : les violations d'impact `critical`
+// sont désormais BLOQUANTES (`expect(criticals).toHaveLength(0)`). Les
+// niveaux `serious`/`moderate`/`minor` restent dumpés mais non bloquants
+// (roadmap A-7/A-8/A-10 de audit-a11y.md, Serious 8 résiduel). Une nouvelle
+// régression critical (bouton icon-only sans aria-label, input sans label,
+// page sans landmark…) casse la CI au lieu de partir en prod.
 // ═══════════════════════════════════════════════════════════════════
 
 import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
+import type { Result } from 'axe-core';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
+
+// Échoue le test si au moins une violation d'impact `critical` est présente,
+// en listant les ids pour un diagnostic immédiat dans le rapport CI.
+function assertNoCritical(violations: Result[], route: string) {
+  const criticals = violations.filter(v => v.impact === 'critical');
+  expect(
+    criticals,
+    `[a11y] ${route} — violation(s) critical: ${criticals.map(v => v.id).join(', ')}`,
+  ).toHaveLength(0);
+}
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'];
 const OUT_DIR = 'test-results/a11y';
@@ -47,7 +60,7 @@ test.describe('a11y audit', () => {
     await page.waitForLoadState('networkidle');
     const violations = await scan(page, 'landing');
     console.log(`[a11y] Landing: ${violations.length} violation(s)`);
-    expect(violations.length).toBeGreaterThanOrEqual(0);
+    assertNoCritical(violations, 'Landing');
   });
 
   test('Login (public)', async ({ page }) => {
@@ -55,13 +68,13 @@ test.describe('a11y audit', () => {
     await page.waitForLoadState('networkidle');
     const violations = await scan(page, 'login');
     console.log(`[a11y] Login: ${violations.length} violation(s)`);
-    expect(violations.length).toBeGreaterThanOrEqual(0);
+    assertNoCritical(violations, 'Login');
   });
 
   test('Dashboard (demo)', async ({ demoPage }) => {
     const violations = await scan(demoPage, 'dashboard');
     console.log(`[a11y] Dashboard: ${violations.length} violation(s)`);
-    expect(violations.length).toBeGreaterThanOrEqual(0);
+    assertNoCritical(violations, 'Dashboard');
   });
 
   // SPA navigation only — `goto()` reloads, which resets the in-memory
@@ -72,7 +85,7 @@ test.describe('a11y audit', () => {
     await demoPage.waitForLoadState('networkidle');
     const violations = await scan(demoPage, 'tasks');
     console.log(`[a11y] Tasks: ${violations.length} violation(s)`);
-    expect(violations.length).toBeGreaterThanOrEqual(0);
+    assertNoCritical(violations, 'Tasks');
   });
 
   test('Habits (demo)', async ({ demoPage }) => {
@@ -81,7 +94,7 @@ test.describe('a11y audit', () => {
     await demoPage.waitForLoadState('networkidle');
     const violations = await scan(demoPage, 'habits');
     console.log(`[a11y] Habits: ${violations.length} violation(s)`);
-    expect(violations.length).toBeGreaterThanOrEqual(0);
+    assertNoCritical(violations, 'Habits');
   });
 
   test('OKR (demo)', async ({ demoPage }) => {
@@ -90,6 +103,6 @@ test.describe('a11y audit', () => {
     await demoPage.waitForLoadState('networkidle');
     const violations = await scan(demoPage, 'okr');
     console.log(`[a11y] OKR: ${violations.length} violation(s)`);
-    expect(violations.length).toBeGreaterThanOrEqual(0);
+    assertNoCritical(violations, 'OKR');
   });
 });

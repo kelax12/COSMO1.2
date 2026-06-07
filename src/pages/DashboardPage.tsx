@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, Suspense } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -7,7 +7,11 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { useEvents } from '@/modules/events';
-import DashboardBarChart from '../components/DashboardBarChart';
+// Lazy : DashboardBarChart importe recharts (vendor-charts ~365 kB). Un import
+// statique le ferait retomber dans le chunk de DashboardPage (page post-login)
+// dès que SHOW_REPARTITION_CHART repasserait à true. Lazy = recharts payé
+// uniquement si le graphique est réellement rendu (audit perf P-2 / TOP-9).
+const DashboardBarChart = React.lazy(() => import('../components/DashboardBarChart'));
 import TodayHabits from '../components/TodayHabits';
 import InboxMenu from '../components/InboxMenu';
 import TodayTasks from '../components/TodayTasks';
@@ -393,7 +397,11 @@ const DashboardPage: React.FC = () => {
             </MobileCollapsible>
             {/* Graphique "Répartition du temps" masqué (conservé dans le code,
                 réactivable en repassant SHOW_REPARTITION_CHART à true). */}
-            {SHOW_REPARTITION_CHART && <DashboardBarChart viewMode={viewMode} />}
+            {SHOW_REPARTITION_CHART && (
+              <Suspense fallback={null}>
+                <DashboardBarChart viewMode={viewMode} />
+              </Suspense>
+            )}
             <MobileCollapsible title="Tâches collaboratives">
               <CollaborativeTasks />
             </MobileCollapsible>
