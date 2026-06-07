@@ -199,35 +199,51 @@ async function applySubscriptionToDb(
     ? Math.max(1, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0
 
-  // Read the existing row so we can preserve fields that should not be touched
-  // on every event (faille B10/W6).
-  const { data: existing } = await supabaseAdmin
-    .from('subscriptions')
-    .select('premium_tokens, win_streak')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const currentTokens = existing?.premium_tokens ?? 0
-  const currentWinStreak = existing?.win_streak ?? 0
-
-  let nextTokens = currentTokens
-  if (opts.resetTokens) nextTokens = daysLeft
-  else if (!isActive) nextTokens = 0
-
-  let nextWinStreak = currentWinStreak
-  if (opts.resetWinStreak) nextWinStreak = isActive ? 1 : 0
-  else if (opts.incrementWinStreak && isActive) nextWinStreak = currentWinStreak + 1
-  else if (!isActive) nextWinStreak = 0
-
-  const payload = {
+  // Always-written subscription state.
+  const payload: {
+    user_id: string
+    plan: string
+    status: string
+    current_period_end: string | null
+    stripe_customer_id: string
+    stripe_subscription_id: string
+    premium_tokens?: number
+    win_streak?: number
+  } = {
     user_id: userId,
     plan: isActive ? 'premium' : 'free',
     status: isActive ? 'active' : 'cancelled',
     current_period_end: isActive ? periodEnd.toISOString() : null,
-    premium_tokens: nextTokens,
-    win_streak: nextWinStreak,
     stripe_customer_id: customerId,
     stripe_subscription_id: subscription.id,
+  }
+
+  // premium_tokens / win_streak are only INCLUDED in the upsert when this event
+  // is actually meant to change them. Omitting them means `ON CONFLICT DO UPDATE`
+  // leaves the existing values untouched — WITHOUT a read-then-write that could
+  // clobber a concurrent `credit_premium_token_from_ad` increment (token race).
+  // Previously every event read the row then wrote both fields back, so a
+  // subscription.updated firing alongside an ad-credit could erase the credit.
+  if (!isActive) {
+    // Cancellation / expiry: explicitly zero out.
+    payload.premium_tokens = 0
+    payload.win_streak = 0
+  } else {
+    if (opts.resetTokens) payload.premium_tokens = daysLeft
+    if (opts.resetWinStreak) {
+      payload.win_streak = 1
+    } else if (opts.incrementWinStreak) {
+      // Renewal (invoice.payment_succeeded): +1. This single read-modify-write
+      // path is not concurrent with ad-credits in practice (renewals are not
+      // user-triggered), so it stays read-based.
+      const { data: existing } = await supabaseAdmin
+        .from('subscriptions')
+        .select('win_streak')
+        .eq('user_id', userId)
+        .maybeSingle()
+      payload.win_streak = (existing?.win_streak ?? 0) + 1
+    }
+    // else: pure preserve (e.g. subscription.updated) → omit both fields.
   }
 
   // Atomic upsert keyed by user_id — replaces the previous UPDATE-then-INSERT
