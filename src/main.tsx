@@ -21,12 +21,19 @@ if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
     environment: import.meta.env.MODE,
+    // Release = SHA du commit (injecté par vite.config `define` depuis
+    // VERCEL_GIT_COMMIT_SHA). Lie chaque erreur/transaction au déploiement
+    // exact → régressions attribuables à un commit, et rollback ciblé.
+    release: __APP_RELEASE__,
     // Tracing perf activé à 10 % (audit architecture TOP-7 — angle mort
     // observabilité). browserTracingIntegration auto-instrumente pageload +
     // navigations SPA. Échantillonnage bas pour rester dans le quota Sentry
     // tout en donnant une visibilité TTFB/LCP/navigations en prod.
     integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 0.1,
+    // Propage le contexte de trace aux requêtes Supabase (corrèle un appel
+    // PostgREST/RPC lent à la transaction front qui l'a déclenché).
+    tracePropagationTargets: [/^\//, /supabase\.co/],
     sendDefaultPii: false,
     ignoreErrors: [
       'ResizeObserver loop limit exceeded',

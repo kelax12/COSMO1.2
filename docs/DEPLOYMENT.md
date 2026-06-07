@@ -102,7 +102,23 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
 `build` / `e2e`).
 
-> **Drift connu** : certaines fonctions/triggers `SECURITY DEFINER` existent en
-> prod sans migration versionnée (`faille.md §8`). Tant que ce drift n'est pas
-> résorbé, la base **n'est pas reproductible** à 100 % depuis le repo — point
-> ouvert pour la conformité DR / ISO 27001.
+## 6. Schéma & ledger de migration (DR / ISO 27001)
+
+État vérifié **2026-06-07** (introspection `pg_proc` / `pg_trigger` vs migrations) :
+- ✅ **Toutes** les fonctions et triggers de prod sont versionnés → la base est
+  **reproductible** depuis `supabase/migration/*.sql` sur une instance vierge.
+- ✅ Tables orphelines `billing` / `user_profiles` supprimées (mig. 040).
+- ⚠️ **Ledger partiel** : `supabase_migrations.schema_migrations` ne liste que
+  ~22 des 40 fichiers (la majorité a été appliquée via SQL dashboard, pas
+  `db push`). Les objets existent tous et les migrations sont idempotentes, donc
+  pas de risque data/sécu — mais `supabase db push` tenterait de rejouer les
+  migrations non listées.
+
+**Réconcilier le ledger** (à faire une fois, depuis un poste avec la CLI liée) :
+```bash
+supabase link --project-ref ykeugqfgklejcdbrmawy
+# Marque comme déjà appliquées les migrations dont les objets sont en prod :
+supabase migration repair --status applied <version>   # pour chaque manquante
+supabase migration list   # vérifier l'alignement local ↔ remote
+```
+Après réconciliation, `supabase db push` ne rejoue que le réel manquant.

@@ -5,6 +5,13 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  // Release injecté au build pour Sentry (observabilité). Vercel expose
+  // VERCEL_GIT_COMMIT_SHA ; fallback 'dev' en local. Statique → tree-shaké.
+  define: {
+    __APP_RELEASE__: JSON.stringify(
+      (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev',
+    ),
+  },
   server: {
     // Bind to all interfaces only when explicitly requested (mobile testing).
     // Otherwise loopback to keep the dev server off shared networks. Faille N10.
