@@ -761,11 +761,44 @@ sûr : 0 orphelin en prod (dry-run transactionnel `BEGIN … ROLLBACK` OK).
 `recordKRReps` s'exécutant toujours après `syncKRsToTable`, la FK ne bloque jamais
 un insert. **Application requise** : exécuter `037_kr_completions_kr_cascade.sql`.
 
-### Non corrigé (volontaire)
+### MED-3 🟡 `stripe-webhook` token clobber race — corrigé
 
-- **`stripe-webhook` clobber tokens** (read-then-write sur `premium_tokens`/`win_streak`
-  pour les events non-reset) : race réelle mais très basse probabilité (event Stripe
-  concurrent d'un crédit pub dans la même fenêtre ~100 ms) et impact faible (1 token).
-  Modifier le webhook de paiement non testé pour ce gain n'est pas un bon ratio
-  risque/valeur → laissé documenté. Fix propre = ne pas écrire `premium_tokens`/
-  `win_streak` quand l'event ne doit pas les changer (omettre du payload upsert).
+**Fichier** : `supabase/functions/stripe-webhook/index.ts`
+**Vecteur** : `applySubscriptionToDb` lisait puis réécrivait `premium_tokens`/
+`win_streak` à **chaque** event ; un `subscription.updated` concurrent d'un crédit
+pub (`credit_premium_token_from_ad`) pouvait écraser l'incrément (read-then-write).
+**Fix** : ces deux colonnes ne sont désormais **incluses dans l'upsert que si
+l'event doit les changer** (reset au checkout/renouvellement, ou remise à 0 sur
+annulation). Pour un event « preserve » (`subscription.updated` actif), elles sont
+**omises du payload** → `ON CONFLICT DO UPDATE` les conserve sans lecture → plus de
+clobber. L'incrément de `win_streak` au renouvellement (`invoice.payment_succeeded`,
+non concurrent d'un crédit pub) reste en read-modify-write. **Redéploiement requis** :
+`supabase functions deploy stripe-webhook`.
+
+### D-2 🟡 Backfill JSONB → table `key_results` — corrigé (étape 1)
+
+**Fichier** : `supabase/migration/038_backfill_okr_key_results.sql`
+**Constat** : la JSONB legacy (`{target, current, history}`) ne mappe pas sur
+`KeyResult` (`targetValue`/`currentValue`) → valeurs cassées (NaN dans les stats)
+pour les 4 OKRs JSONB-only. Le backfill traduit la JSONB en lignes table typées
+(`current→current_value`, `target→target_value`, `estimated_time=0`,
+`completed=(target>0 AND current>=target)`, nouvel UUID). **JSONB conservée** (archive +
+fallback load-bearing, cf. D-2 — ne pas DROP sans migration revue dédiée). Validé
+dry-run prod : 5/5 OKRs avec lignes table, 14 lignes, 0 null. **Application requise** :
+exécuter `038_backfill_okr_key_results.sql`.
+
+### D-1 🟠 Drift ledger migrations — documenté (fix process, pas de mutation aveugle)
+
+**Fichier** : `supabase/migration/README.md`
+Le dossier `supabase/migration/` (singulier) est un **changelog manuel** non géré
+par la CLI (`supabase/migrations/`, pluriel). Muter le ledger prod à l'aveugle est
+risqué → on documente la convention, le footgun (`db push` ré-appliquerait 001–020)
+et la procédure de réconciliation CLI (`migration repair` + baseline) pour exécution
+humaine.
+
+### Couverture de tests — +56 tests purs (logique critique)
+
+`src/lib/csv-export.test.ts` (injection formule N11), `normalizeApiError.test.ts`
+(non-leak message brut V7), `avatar.test.ts`, `events/recurrence.test.ts`
+(expansion récurrente). 65 → **121 tests**. (`escapeCSV`/`rowsToCSV` exportés pour
+test.)
