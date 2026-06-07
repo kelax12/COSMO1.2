@@ -8,6 +8,7 @@ import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '../../lib/email';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/react';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
@@ -106,6 +107,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // était contournable en s'inscrivant avec demo@cosmo.app via supabase.auth.signUp).
   const isDemo = useIsDemo();
   const isAuthenticated = !!user;
+
+  // Observabilité : corrèle les erreurs/transactions Sentry à l'utilisateur.
+  // Id uniquement — pas d'email ni de PII (cohérent avec sendDefaultPii:false).
+  useEffect(() => {
+    Sentry.setUser(user ? { id: user.id } : null);
+  }, [user]);
 
   // Map a Supabase session user to our App user type.
   // We deliberately read ONLY identity fields. Premium/authorization state must

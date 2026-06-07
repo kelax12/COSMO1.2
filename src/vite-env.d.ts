@@ -10,3 +10,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Injecté par vite.config `define` (SHA du commit, ou 'dev' en local).
+declare const __APP_RELEASE__: string;

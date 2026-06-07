@@ -377,14 +377,28 @@ Pour lister à jour : `ls supabase/migration/`.
 
 Toutes les tables ont **Row Level Security (RLS) activée** avec policies `auth.uid() = user_id`. Toutes les `CREATE POLICY` utilisent des guillemets non-échappés (`"..."`) — ne pas réintroduire de `\"`.
 
-**Fonctions SECURITY DEFINER** (créées hors versioning, en dashboard Supabase — voir `faille.md` §8 « drift ») :
-- `accept_friend_request(request_id uuid)` — crée l'amitié bidirectionnelle en bypassant RLS
-
-**Triggers automatiques** (idem, drift à versionner) :
-- `trg_set_receiver_id` — remplit `friend_requests.receiver_id` depuis `auth.users`
-- `trg_set_sender_email` — remplit `friend_requests.sender_email`
-- `trg_key_result_completed_at` — remplit `key_results.completed_at` automatiquement
-- `update_*_updated_at` — par table, met à jour `updated_at`
+> **Drift schéma — état vérifié 2026-06-07** (introspection live `pg_proc` /
+> `pg_trigger` vs migrations) : **toutes les fonctions et tous les triggers de
+> prod SONT versionnés** dans `supabase/migration/*.sql` (le drift « fonctions/
+> triggers en dashboard » de `faille.md §8` est résolu/obsolète). Les seuls
+> écarts résiduels constatés :
+> 1. **Ledger de migration** (`supabase_migrations.schema_migrations`) partiel :
+>    ~22 entrées pour 40 fichiers (la plupart appliqués via SQL dashboard, pas
+>    `db push`). Objets tous présents + migrations idempotentes → réapplication
+>    sûre, mais réconcilier le ledger via `supabase migration repair` (cf.
+>    `docs/DEPLOYMENT.md`). N'est PAS un risque data/sécu.
+> 2. **Tables orphelines** `billing` / `user_profiles` (0 ligne, non référencées)
+>    → supprimées par `040_drop_legacy_orphan_tables.sql` (appliquée).
+>
+> **Fonctions SECURITY DEFINER** clés (toutes versionnées) : `accept_friend_request_v2`
+> (008/023/026/034), `accept_shared_task` (035), `consume_premium_token` /
+> `credit_premium_token_from_ad` (015/016/039), `remove_friendship` /
+> `resolve_profile_by_email` (022), `get_incoming_request_senders` (031),
+> `handle_new_user_profile` (018), `prevent_user_id_change` (010/011).
+> **Triggers** clés : `trg_prevent_user_id_change` (010, boucle DO sur 8 tables),
+> `trg_set_receiver_id` / `trg_set_sender_email` (012), `trg_key_result_completed_at`
+> + `update_*_updated_at` (008/001…). Schéma `friend_requests` = `sender_id` /
+> `receiver_id` (les migrations s'appuient sur le schéma réel, cf. 010/012).
 
 ---
 
