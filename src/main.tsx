@@ -21,7 +21,12 @@ if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
     environment: import.meta.env.MODE,
-    tracesSampleRate: 0,
+    // Tracing perf activé à 10 % (audit architecture TOP-7 — angle mort
+    // observabilité). browserTracingIntegration auto-instrumente pageload +
+    // navigations SPA. Échantillonnage bas pour rester dans le quota Sentry
+    // tout en donnant une visibilité TTFB/LCP/navigations en prod.
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 0.1,
     sendDefaultPii: false,
     ignoreErrors: [
       'ResizeObserver loop limit exceeded',
