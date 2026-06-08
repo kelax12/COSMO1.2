@@ -18,7 +18,6 @@ import {
   Repeat,
   ArrowRight,
   BarChart2,
-  ChevronDown,
   Star
 } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
@@ -44,43 +43,7 @@ import {
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { USE_CASES, ENTRY_OFFSETS, FAQ_ITEMS } from './landing/data';
 import { useFaqSchema } from './landing/faq-schema';
-
-// ── FAQ item accordion ────────────────────────────────────────────────────
-const FaqItem: React.FC<{ question: string; answer: string; index: number }> = ({ question, answer, index }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-white/8 last:border-0">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between gap-4 py-5 text-left group"
-        aria-expanded={open}
-      >
-        <span className="text-base font-medium text-white group-hover:text-blue-200 transition-colors leading-snug">
-          {question}
-        </span>
-        <ChevronDown
-          size={18}
-          className="shrink-0 text-slate-400 transition-transform duration-300"
-          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-        />
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key={`faq-${index}`}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <p className="pb-5 text-sm text-slate-400 leading-relaxed">{answer}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
+import FaqItem from './landing/FaqItem';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
