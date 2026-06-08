@@ -36,6 +36,7 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategoryLookup } from '@/modules/categories';
 
 import { usePriorityRange } from '@/modules/ui-states';
+import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -690,66 +691,18 @@ const TaskTable: React.FC<TaskTableProps> = ({
     try { localStorage.setItem('cosmo_swipe_hint_dismissed', '1'); } catch { /* ignore */ }
   };
 
-  // Filtrage et tri mémoïsés
-  const filteredAndSortedTasks = useMemo(() => {
-    const now = new Date();
-    let filteredTasksForView: Task[];
-
-    switch (activeQuickFilter) {
-      case 'favoris':
-        filteredTasksForView = tasks.filter(task => task.bookmarked && !task.completed);
-        break;
-      case 'terminées':
-        filteredTasksForView = tasks.filter(task => task.completed);
-        break;
-      case 'retard':
-        filteredTasksForView = tasks.filter(task => !task.completed && new Date(task.deadline) < now);
-        break;
-      case 'collaboration':
-        filteredTasksForView = tasks.filter(task => task.isCollaborative && !task.completed);
-        break;
-      default:
-        filteredTasksForView = showCompleted 
-          ? tasks.filter(task => task.completed)
-          : tasks.filter(task => !task.completed);
-    }
-
-    const filteredTasks = filteredTasksForView.filter(task =>
-      // Priorité facultative : une tâche sans priorité (0) reste toujours visible.
-      task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1])
-    );
-
-    const sorted = [...filteredTasks].sort((a, b) => {
-      if (localSortField) {
-        let comparison = 0;
-        if (localSortField === 'name') {
-          comparison = a.name.localeCompare(b.name);
-        } else if (localSortField === 'priority') {
-          comparison = a.priority - b.priority;
-        } else if (localSortField === 'deadline') {
-          comparison = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-        } else if (localSortField === 'estimatedTime') {
-          comparison = a.estimatedTime - b.estimatedTime;
-        } else if (localSortField === 'createdAt') {
-          comparison = new Date(a.createdAt || '').getTime() - new Date(b.createdAt || '').getTime();
-        } else if (localSortField === 'category') {
-          comparison = a.category.localeCompare(b.category);
-        } else if (localSortField === 'completedAt' && showCompleted) {
-          const aDate = a.completedAt ? new Date(a.completedAt).getTime() : 0;
-          const bDate = b.completedAt ? new Date(b.completedAt).getTime() : 0;
-          comparison = aDate - bDate;
-        }
-        return sortDirection === 'asc' ? comparison : -comparison;
-      }
-
-      if (a.bookmarked && !b.bookmarked) return -1;
-      if (!a.bookmarked && b.bookmarked) return 1;
-
-      return 0;
-    });
-
-    return sorted;
-  }, [tasks, activeQuickFilter, showCompleted, priorityRange, localSortField, sortDirection]);
+  // Filtrage et tri mémoïsés — logique pure extraite (task-filtering.ts, testée).
+  const filteredAndSortedTasks = useMemo(
+    () => filterAndSortTasks({
+      tasks,
+      quickFilter: activeQuickFilter,
+      showCompleted,
+      priorityRange,
+      sortField: localSortField,
+      sortDirection,
+    }),
+    [tasks, activeQuickFilter, showCompleted, priorityRange, localSortField, sortDirection],
+  );
 
   const sortedTasks = filteredAndSortedTasks;
 
