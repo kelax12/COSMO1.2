@@ -30,10 +30,16 @@ import { useFavoriteColors } from '@/modules/ui-states';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
-// Libellés courts des jours, indexés sur Date.getDay() (0 = dimanche).
-const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-// Ordre d'affichage lundi → dimanche pour le sélecteur de jours.
-const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+// Logique pure extraite (cf. event-modal/helpers.ts).
+import {
+  DAY_LABELS,
+  DAY_ORDER,
+  formatEventDuration,
+  headerTitle,
+  submitButtonText,
+  getMissingEventFields,
+  validateEventRange,
+} from './event-modal/helpers';
 
 type EventData = {
   title: string;
@@ -246,11 +252,7 @@ const EventModal: React.FC<EventModalProps> = ({
   };
 
   const doSave = () => {
-    const missing: string[] = [];
-    if (!title.trim()) missing.push('title');
-    if (!startDate || !endDate) missing.push('date');
-    if (!startTime) missing.push('startTime');
-    if (!endTime) missing.push('endTime');
+    const missing = getMissingEventFields({ title, startDate, endDate, startTime, endTime });
     if (missing.length) {
       trigger(missing);
       return;
@@ -259,12 +261,12 @@ const EventModal: React.FC<EventModalProps> = ({
     const start = new Date(`${startDate}T${startTime}`).toISOString();
     const end = new Date(`${endDate}T${endTime}`).toISOString();
 
-    if (isNaN(new Date(start).getTime()) || isNaN(new Date(end).getTime())) {
+    const rangeStatus = validateEventRange(start, end);
+    if (rangeStatus === 'invalid-date') {
       trigger(['date']);
       return;
     }
-
-    if (new Date(end) <= new Date(start)) {
+    if (rangeStatus === 'end-before-start') {
       trigger(['endTime']);
       return;
     }
@@ -330,40 +332,9 @@ const EventModal: React.FC<EventModalProps> = ({
     }
   };
 
-  const calculateDuration = () => {
-    if (!startDate || !startTime || !endDate || !endTime) return null;
-    const start = new Date(`${startDate}T${startTime}`);
-    const end = new Date(`${endDate}T${endTime}`);
-    const diffMs = end.getTime() - start.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    if (diffMs <= 0) return "⚠️ Fin avant début";
-    if (diffHours === 0) return `${diffMinutes} min`;
-    if (diffMinutes === 0) return `${diffHours}h`;
-    return `${diffHours}h${diffMinutes}min`;
-  };
-
-  const getHeaderTitle = () => {
-    switch (mode) {
-      case 'add':
-        return "Ajouter un événement";
-      case 'edit':
-        return "Modifier l'événement";
-      case 'convert':
-        return "Convertir en événement";
-    }
-  };
-
-  const getSubmitButtonText = () => {
-    switch (mode) {
-      case 'add':
-        return "Valider";
-      case 'edit':
-        return "Enregistrer";
-      case 'convert':
-        return "Convertir en événement";
-    }
-  };
+  const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
+  const getHeaderTitle = () => headerTitle(mode);
+  const getSubmitButtonText = () => submitButtonText(mode);
 
   if (!isOpen) return null;
   if (mode === 'edit' && !event) return null;
