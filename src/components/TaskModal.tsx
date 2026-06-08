@@ -51,6 +51,12 @@ import {
   isStep1Valid as isStep1ValidFor,
   missingStep1Fields as missingStep1FieldsFor,
 } from './task-modal/validation';
+// Helpers d'identité/affichage des collaborateurs (cf. task-modal/collaborators.ts).
+import {
+  collabIdOf,
+  filterFriendsForCollab,
+  resolveCollaboratorDisplay,
+} from './task-modal/collaborators';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -62,7 +68,6 @@ interface TaskModalProps {
   showCollaborators?: boolean;
   initialData?: Partial<Task> & { isFromOKR?: boolean };
 }
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }) => {
   // ═══════════════════════════════════════════════════════════════════
@@ -543,54 +548,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     onClose();
   };
 
-  // A friend's canonical "collaborator id" is their auth.users.id (userId),
-  // which is what Supabase RLS (auth.uid()::text = ANY(collaborators)) and
-  // the shared_tasks.friend_id FK require. Falls back to friend.id in demo
-  // mode where there's no auth.
-  const collabIdOf = (f: { id: string; userId?: string }) => f.userId ?? f.id;
-  // Un ami est « déjà collaborateur » si l'une de ses identités (auth.uid,
-  // id de ligne friends, ou email) figure dans `collaborators`. Robuste aux
-  // partages historiques stockés sous l'id de ligne plutôt que l'auth.uid, et
-  // aux cas où l'enrichissement `userId` n'a pas (encore) résolu l'auth.uid.
-  const isAlreadyCollaborator = (f: { id: string; userId?: string; email?: string }) =>
-    collaborators.includes(collabIdOf(f)) ||
-    collaborators.includes(f.id) ||
-    (!!f.userId && collaborators.includes(f.userId)) ||
-    (!!f.email && collaborators.includes(f.email));
-  const availableFriends = friends || [];
-  const filteredFriends = availableFriends.filter((friend) =>
-    !isAlreadyCollaborator(friend) && (
-      emailInput === '' ||
-      friend.name.toLowerCase().includes(emailInput.toLowerCase()) ||
-      friend.email.toLowerCase().includes(emailInput.toLowerCase())
-    )
-  );
-
-  const displayInfo = (id: string) => {
-    const friend = friends?.find((f) => collabIdOf(f) === id || f.id === id || f.name === id);
-    if (friend) {
-      return { name: friend.name, email: friend.email, avatar: friend.avatar, isPending: false };
-    }
-    // Collaborateur sélectionné via une demande d'ami en attente (id = receiverId
-    // / auth.uid) : retrouver son email pour ne pas afficher un UUID brut.
-    const sent = sentRequests.find((r) => r.receiverId === id);
-    if (sent) {
-      return { name: sent.email, email: sent.email, avatar: undefined, isPending: true };
-    }
-    const isPending = pendingInvitesLocal.includes(id);
-    if (emailRegex.test(id)) {
-      return { name: id, email: id, avatar: undefined, isPending };
-    }
-    // Garde-fou : un id non résolu qui ressemble à un UUID (auth.users.id) ne
-    // doit JAMAIS s'afficher brut à la place d'un pseudo. Cela arrive si la
-    // résolution friend_id → ami échoue (ex. ami non enrichi, ou partage dont
-    // le destinataire ouvre la tâche). On affiche un libellé générique.
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    if (isUuid) {
-      return { name: 'Collaborateur', email: undefined, avatar: undefined, isPending };
-    }
-    return { name: id, email: undefined, avatar: undefined, isPending };
-  };
+  // Helpers d'identité/affichage des collaborateurs — logique pure extraite
+  // dans task-modal/collaborators.ts (testée). On lie ici les dépendances d'état.
+  const filteredFriends = filterFriendsForCollab(friends, collaborators, emailInput);
+  const displayInfo = (id: string) =>
+    resolveCollaboratorDisplay(id, { friends, sentRequests, pendingInvitesLocal });
 
   const handleAddEmail = () => {
     const value = emailInput.trim().toLowerCase();
