@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { X, Clock, Plus, CalendarIcon, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { X, Clock, Plus, CalendarIcon } from "lucide-react";
+import { motion } from "framer-motion";
 import { useBottomSheet } from "@/hooks/use-bottom-sheet";
 import { useInvalidShake } from "@/hooks/use-invalid-shake";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
@@ -33,13 +33,14 @@ export type EventModalMode = 'add' | 'edit' | 'convert';
 // Logique pure extraite (cf. event-modal/helpers.ts).
 import {
   DAY_LABELS,
-  DAY_ORDER,
   formatEventDuration,
   headerTitle,
   submitButtonText,
   getMissingEventFields,
   validateEventRange,
 } from './event-modal/helpers';
+import RecurrenceDaysModal from './event-modal/RecurrenceDaysModal';
+import DeleteEventConfirm from './event-modal/DeleteEventConfirm';
 
 type EventData = {
   title: string;
@@ -119,7 +120,6 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
-  const { sheetRef: deleteSheetRef, handleBarWidth: deleteHandleBarWidth, sheetDragProps: deleteSheetDragProps } = useBottomSheet(() => setShowDeleteConfirm(false));
 
 
   useEffect(() => {
@@ -1164,143 +1164,19 @@ const EventModal: React.FC<EventModalProps> = ({
       />
 
       {/* Modal de sélection des jours de répétition (récurrence personnalisée) */}
-      <AnimatePresence>
-        {showDaysModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center z-[70] sm:p-4"
-            onClick={() => setShowDaysModal(false)}
-          >
-            <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              className="rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full sm:max-w-md"
-              style={{ backgroundColor: 'rgb(var(--color-surface))', paddingBottom: 'env(safe-area-inset-bottom)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sm:hidden flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-              </div>
-              <div className="px-5 sm:px-6 py-4">
-                <h3 className="text-base font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  Répéter les jours
-                </h3>
-                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  Sélectionnez les jours de la semaine où l'événement se répète.
-                </p>
-                <div className="space-y-1">
-                  {DAY_ORDER.map((d) => {
-                    const checked = recurrenceDays.includes(d);
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        role="checkbox"
-                        aria-checked={checked}
-                        onClick={() =>
-                          setRecurrenceDays((prev) =>
-                            prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-                          )
-                        }
-                        className="w-full flex items-center justify-between px-3 min-h-11 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))]"
-                      >
-                        <span className="text-[15px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][d]}
-                        </span>
-                        <span
-                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                            checked ? 'bg-blue-500 border-blue-500' : 'border-slate-400 dark:border-slate-500'
-                          }`}
-                        >
-                          {checked && (
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Si aucun jour coché en sortie, on revient à 'none' pour éviter
-                    // une récurrence custom vide silencieuse.
-                    if (recurrenceDays.length === 0) setRecurrence('none');
-                    setShowDaysModal(false);
-                  }}
-                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                >
-                  Valider
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <RecurrenceDaysModal
+        isOpen={showDaysModal}
+        onClose={() => setShowDaysModal(false)}
+        recurrenceDays={recurrenceDays}
+        setRecurrenceDays={setRecurrenceDays}
+        setRecurrence={setRecurrence}
+      />
 
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
-            onClick={() => setShowDeleteConfirm(false)}
-          >
-            <motion.div
-              ref={deleteSheetRef}
-              {...deleteSheetDragProps}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              className="rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-md transition-colors"
-              style={{
-                backgroundColor: "rgb(var(--color-surface))",
-                paddingBottom: 'env(safe-area-inset-bottom)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <motion.div style={{ width: deleteHandleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-              </div>
-              <div className="p-5 sm:p-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                  Supprimer l'événement
-                </h3>
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                  Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.
-                </p>
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1 min-h-11"
-                    onClick={() => setShowDeleteConfirm(false)}
-                  >
-                    Annuler
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white"
-                    onClick={confirmDelete}
-                  >
-                    Supprimer
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DeleteEventConfirm
+        isOpen={showDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+      />
     </>
   );
 };
