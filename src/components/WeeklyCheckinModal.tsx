@@ -230,6 +230,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 <input
                   type="number"
                   inputMode="decimal"
+                  aria-label={`Avancement de ${current.kr.title} sur ${current.kr.targetValue} ${current.kr.unit}`}
                   value={currentValue}
                   onChange={e => {
                     const v = parseFloat(e.target.value);

@@ -578,6 +578,227 @@ const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
   );
 };
 
+// ═══════════════════════════════════════════════════════════════════
+// Desktop TaskRow — extrait au niveau module et mémoïsé (shallow). Une ligne
+// ne re-render que si SA tâche (ou un flag de vue) change, pas quand une autre
+// tâche bascule. Les handlers parents sont stables (useCallback / setState).
+// ═══════════════════════════════════════════════════════════════════
+interface TaskRowProps {
+  task: Task;
+  addToListMode: boolean;
+  selectedForListIds: string[];
+  activeQuickFilter: 'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration';
+  showCompleted: boolean;
+  onSelectTask: (id: string) => void;
+  onToggleTaskForList?: (id: string) => void;
+  onToggleComplete: (id: string) => void;
+  onToggleBookmark: (id: string) => void;
+  onScheduleTask: (task: Task) => void;
+  onAddToList: (id: string) => void;
+  onOpenCollaborator: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDeleteTask: (id: string) => void;
+}
+
+const TaskRow = React.memo(({
+  task,
+  addToListMode,
+  selectedForListIds,
+  activeQuickFilter,
+  showCompleted,
+  onSelectTask,
+  onToggleTaskForList,
+  onToggleComplete,
+  onToggleBookmark,
+  onScheduleTask,
+  onAddToList,
+  onOpenCollaborator,
+  onDuplicate,
+  onDeleteTask,
+}: TaskRowProps) => {
+  return (
+    <tr
+      className={`animate-fade-in transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
+      onClick={() => { if (!addToListMode) onSelectTask(task.id); }}
+      style={{
+        backgroundColor: addToListMode
+          ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
+          : (activeQuickFilter === 'retard'
+              ? 'rgb(var(--color-error) / 0.3)'
+              : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent')),
+        borderLeft: addToListMode
+          ? (selectedForListIds.includes(task.id) ? '4px solid #3B82F6' : '3px solid transparent')
+          : (activeQuickFilter === 'retard'
+              ? '4px solid rgb(var(--color-error))'
+              : (task.bookmarked ? '4px solid #EAB308' : '3px solid transparent'))
+      }}
+    >
+      <td className="px-2 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-5">
+          <AnimatePresence>
+            {addToListMode && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 28, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                className="shrink-0 flex items-center"
+              >
+                <motion.button
+                  onClick={() => onToggleTaskForList?.(task.id)}
+                  animate={{}}
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.88 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
+                    selectedForListIds.includes(task.id)
+                      ? 'bg-blue-500 border-blue-500'
+                      : 'border-slate-600 dark:border-slate-400'
+                  }`}
+                >
+                  <motion.svg
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{
+                      scale: selectedForListIds.includes(task.id) ? 1 : 0,
+                      opacity: selectedForListIds.includes(task.id) ? 1 : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                    className="w-3.5 h-3.5 text-white"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </motion.svg>
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <button
+            onClick={() => onToggleComplete(task.id)}
+            role="checkbox"
+            aria-checked={task.completed}
+            aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+              task.completed
+                ? 'bg-blue-500 border-blue-500'
+                : addToListMode
+                  ? 'border-gray-600 dark:border-gray-500 hover:border-blue-500'
+                  : 'border-gray-400 hover:border-blue-500'
+            }`}
+          >
+            {task.completed && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </td>
+      <td className="px-1 py-4 whitespace-nowrap">
+        <TaskCategoryIndicator category={task.category} />
+      </td>
+      <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base ${task.completed ? 'line-through' : ''}`}
+          style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
+        <div className="flex items-center gap-2">
+          <span className="truncate" title={task.name}>{task.name}</span>
+          {task.sharedBy ? (
+            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Reçu de {task.sharedBy}</span>
+          ) : task.isCollaborative ? (
+            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
+          ) : null}
+        </div>
+      </td>
+      <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>
+        {task.priority === 0 ? (
+          <span
+            className="inline-flex justify-center items-center w-8 h-8 text-base font-medium"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+            title="Aucune priorité"
+            aria-label="Aucune priorité"
+          >
+            —
+          </span>
+        ) : (
+          <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
+            {task.priority}
+          </span>
+        )}
+      </td>
+      <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
+        {activeQuickFilter === 'terminées'
+          ? (task.completedAt ? formatDate(task.completedAt) : '—')
+          : (task.deadline
+              ? formatDate(task.deadline)
+              : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Pas d'échéance</span>)}
+      </td>
+      <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.estimatedTime}</td>
+      <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
+        <div className="flex justify-center items-center gap-1">
+            <button
+              onClick={() => onToggleBookmark(task.id)}
+              aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              aria-pressed={task.bookmarked}
+              className={`p-2 rounded transition-colors ${task.bookmarked ? 'favorite-icon filled' : ''}`}
+              style={{
+                color: task.bookmarked ? '#EAB308' : 'rgb(var(--color-text-muted))'
+              }}
+            >
+              {task.bookmarked ? <BookmarkCheck size={16} fill="#EAB308" /> : <Bookmark size={16} />}
+            </button>
+          {!task.completed && (
+            <button
+              onClick={() => onScheduleTask(task)}
+              aria-label="Planifier dans l'agenda"
+              className="p-2 rounded transition-colors"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
+            >
+              <Calendar size={16} />
+            </button>
+          )}
+            <button
+                onClick={() => onAddToList(task.id)}
+                aria-label="Ajouter à une liste"
+                className="p-2 rounded transition-colors"
+                style={{ color: 'rgb(var(--color-text-muted))' }}
+              >
+                <MoreHorizontal size={16} />
+              </button>
+            <button
+              onClick={() => onOpenCollaborator(task.id)}
+              aria-label="Ajouter un collaborateur"
+              className="p-2 rounded transition-colors"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
+            >
+              <UserPlus size={16} />
+            </button>
+              <button
+                onClick={() => onDuplicate(task.id)}
+                className="p-2 rounded transition-colors"
+                style={{ color: 'rgb(var(--color-text-muted))' }}
+                aria-label="Dupliquer la tâche"
+                title="Dupliquer"
+              >
+                <Copy size={16} />
+              </button>
+              <button
+                onClick={() => onDeleteTask(task.id)}
+                aria-label="Supprimer la tâche"
+                className="p-2 rounded transition-colors"
+                style={{ color: 'rgb(var(--color-text-muted))' }}
+              >
+                <Trash2 size={16} />
+              </button>
+        </div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap text-base" style={{ color: 'rgb(var(--color-text-primary))' }}>
+        {showCompleted && task.completedAt
+          ? formatDate(task.completedAt)
+          : formatDate(task.createdAt)
+        }
+      </td>
+    </tr>
+  );
+});
+
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
   sortField: propSortField,
@@ -863,186 +1084,23 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </thead>
           <tbody className="divide-y divide-gray-200">
             {sortedTasks.map((task) => (
-              <tr
+              <TaskRow
                 key={task.id}
-                className={`animate-fade-in transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
-                onClick={() => { if (!addToListMode) { setSelectedTaskForCollaborators(null); setSelectedTask(task.id); } }}
-                style={{
-                  backgroundColor: addToListMode
-                    ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
-                    : (activeQuickFilter === 'retard'
-                        ? 'rgb(var(--color-error) / 0.3)'
-                        : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent')),
-                  borderLeft: addToListMode
-                    ? (selectedForListIds.includes(task.id) ? '4px solid #3B82F6' : '3px solid transparent')
-                    : (activeQuickFilter === 'retard'
-                        ? '4px solid rgb(var(--color-error))'
-                        : (task.bookmarked ? '4px solid #EAB308' : '3px solid transparent'))
-                }}
-              >
-                <td className="px-2 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center gap-5">
-                    <AnimatePresence>
-                      {addToListMode && (
-                        <motion.div
-                          initial={{ width: 0, opacity: 0 }}
-                          animate={{ width: 28, opacity: 1 }}
-                          exit={{ width: 0, opacity: 0 }}
-                          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-                          className="shrink-0 flex items-center"
-                        >
-                          <motion.button
-                            onClick={() => onToggleTaskForList?.(task.id)}
-                            animate={{}}
-                            whileHover={{ scale: 1.15 }}
-                            whileTap={{ scale: 0.88 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                            className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
-                              selectedForListIds.includes(task.id)
-                                ? 'bg-blue-500 border-blue-500'
-                                : 'border-slate-600 dark:border-slate-400'
-                            }`}
-                          >
-                            <motion.svg
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{
-                                scale: selectedForListIds.includes(task.id) ? 1 : 0,
-                                opacity: selectedForListIds.includes(task.id) ? 1 : 0,
-                              }}
-                              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                              className="w-3.5 h-3.5 text-white"
-                              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </motion.svg>
-                          </motion.button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    <button
-                      onClick={() => handleToggleComplete(task.id)}
-                      role="checkbox"
-                      aria-checked={task.completed}
-                      aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                        task.completed
-                          ? 'bg-blue-500 border-blue-500'
-                          : addToListMode
-                            ? 'border-gray-600 dark:border-gray-500 hover:border-blue-500'
-                            : 'border-gray-400 hover:border-blue-500'
-                      }`}
-                    >
-                      {task.completed && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </td>
-                <td className="px-1 py-4 whitespace-nowrap">
-                  <TaskCategoryIndicator category={task.category} />
-                </td>
-                <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base ${task.completed ? 'line-through' : ''}`}
-                    style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
-                  <div className="flex items-center gap-2">
-                    <span className="truncate" title={task.name}>{task.name}</span>
-                    {task.sharedBy ? (
-                      <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Reçu de {task.sharedBy}</span>
-                    ) : task.isCollaborative ? (
-                      <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
-                    ) : null}
-                  </div>
-                </td>
-                <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>
-                  {task.priority === 0 ? (
-                    <span
-                      className="inline-flex justify-center items-center w-8 h-8 text-base font-medium"
-                      style={{ color: 'rgb(var(--color-text-muted))' }}
-                      title="Aucune priorité"
-                      aria-label="Aucune priorité"
-                    >
-                      —
-                    </span>
-                  ) : (
-                    <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
-                      {task.priority}
-                    </span>
-                  )}
-                </td>
-                <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
-                  {activeQuickFilter === 'terminées'
-                    ? (task.completedAt ? formatDate(task.completedAt) : '—')
-                    : (task.deadline
-                        ? formatDate(task.deadline)
-                        : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Pas d'échéance</span>)}
-                </td>
-                <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.estimatedTime}</td>
-                <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
-                  <div className="flex justify-center items-center gap-1">
-                      <button
-                        onClick={() => handleToggleBookmark(task.id)}
-                        aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                        aria-pressed={task.bookmarked}
-                        className={`p-2 rounded transition-colors ${task.bookmarked ? 'favorite-icon filled' : ''}`}
-                        style={{
-                          color: task.bookmarked ? '#EAB308' : 'rgb(var(--color-text-muted))'
-                        }}
-                      >
-                        {task.bookmarked ? <BookmarkCheck size={16} fill="#EAB308" /> : <Bookmark size={16} />}
-                      </button>
-                    {!task.completed && (
-                      <button
-                        onClick={() => setTaskToEventModal(task)}
-                        aria-label="Planifier dans l'agenda"
-                        className="p-2 rounded transition-colors"
-                        style={{ color: 'rgb(var(--color-text-muted))' }}
-                      >
-                        <Calendar size={16} />
-                      </button>
-                    )}
-                      <button
-                          onClick={() => setAddToListTask(task.id)}
-                          aria-label="Ajouter à une liste"
-                          className="p-2 rounded transition-colors"
-                          style={{ color: 'rgb(var(--color-text-muted))' }}
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
-                      <button
-                        onClick={() => handleOpenCollaborator(task.id)}
-                        aria-label="Ajouter un collaborateur"
-                        className="p-2 rounded transition-colors"
-                        style={{ color: 'rgb(var(--color-text-muted))' }}
-                      >
-                        <UserPlus size={16} />
-                      </button>
-                        <button
-                          onClick={() => handleDuplicate(task.id)}
-                          className="p-2 rounded transition-colors"
-                          style={{ color: 'rgb(var(--color-text-muted))' }}
-                          aria-label="Dupliquer la tâche"
-                          title="Dupliquer"
-                        >
-                          <Copy size={16} />
-                        </button>
-                        <button
-                          onClick={() => setTaskToDelete(task.id)}
-                          aria-label="Supprimer la tâche"
-                          className="p-2 rounded transition-colors"
-                          style={{ color: 'rgb(var(--color-text-muted))' }}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                  </div>
-                </td>
-                <td className="px-2 py-4 whitespace-nowrap text-base" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {showCompleted && task.completedAt 
-                    ? formatDate(task.completedAt) 
-                    : formatDate(task.createdAt)
-                  }
-                </td>
-              </tr>
+                task={task}
+                addToListMode={addToListMode}
+                selectedForListIds={selectedForListIds}
+                activeQuickFilter={activeQuickFilter}
+                showCompleted={showCompleted}
+                onSelectTask={handleSelectTask}
+                onToggleTaskForList={onToggleTaskForList}
+                onToggleComplete={handleToggleComplete}
+                onToggleBookmark={handleToggleBookmark}
+                onScheduleTask={setTaskToEventModal}
+                onAddToList={setAddToListTask}
+                onOpenCollaborator={handleOpenCollaborator}
+                onDuplicate={handleDuplicate}
+                onDeleteTask={setTaskToDelete}
+              />
             ))}
           </tbody>
         </table>
