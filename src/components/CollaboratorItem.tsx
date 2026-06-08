@@ -35,7 +35,7 @@ const getInitials = (value: string) => {
   return firstTwo.join('') || value.charAt(0).toUpperCase();
 };
 
-const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
+const CollaboratorItemBase: React.FC<CollaboratorItemProps> = ({
   id,
   name,
   email,
@@ -181,5 +181,10 @@ const CollaboratorItem: React.FC<CollaboratorItemProps> = ({
     </div>
   );
 };
+
+// Leaf présentationnel rendu en liste (amis / collaborateurs sélectionnés) —
+// mémoïsé (shallow) pour éviter les re-rendus quand les props d'un item ne
+// changent pas, comme TaskRow (cf. task-table/list.tsx).
+const CollaboratorItem = React.memo(CollaboratorItemBase);
 
 export default CollaboratorItem;
