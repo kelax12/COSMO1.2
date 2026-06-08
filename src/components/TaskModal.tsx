@@ -53,6 +53,13 @@ import { useAuth } from '@/modules/auth/AuthContext';
 
 // Corps mobile full-screen extrait (cf. task-modal/TaskModalMobileBody.tsx).
 import TaskModalMobileBody from './task-modal/TaskModalMobileBody';
+// Logique de validation pure extraite (cf. task-modal/validation.ts).
+import {
+  computeValidationErrors as computeValidationErrorsFor,
+  isFormValid as isFormValidFor,
+  isStep1Valid as isStep1ValidFor,
+  missingStep1Fields as missingStep1FieldsFor,
+} from './task-modal/validation';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -355,36 +362,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     setHasChanges(hasFormChanges);
   }, [formData, collaborators, task, seedCollaboratorIds]);
 
-  // Validation rules
-  const computeValidationErrors = (): { [key: string]: string } => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Le nom de la tâche est obligatoire';
-    } else if (formData.name.trim().length < 3) {
-      newErrors.name = 'Le nom doit contenir au moins 3 caractères';
-    } else if (formData.name.trim().length > 100) {
-      newErrors.name = 'Le nom ne peut pas dépasser 100 caractères';
-    }
-
-    // Temps estimé : facultatif. Ne valide que la cohérence si une valeur
-    // (autre que vide) est saisie — jamais bloquant quand vide.
-    if (String(formData.estimatedTime).trim() !== '') {
-      if (isNaN(Number(formData.estimatedTime))) {
-        newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
-      } else if (Number(formData.estimatedTime) < 0) {
-        newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
-      }
-    }
-
-    // Priorité ET catégorie facultatives : aucune validation bloquante.
-    // Seul le nom est requis.
-
-    // Échéance : facultative, n'est jamais bloquante (une date passée est
-    // autorisée, ex. journalisation d'une tâche rétroactive).
-
-    return newErrors;
-  };
+  // Validation rules — déléguées au module pur task-modal/validation.ts.
+  const computeValidationErrors = (): { [key: string]: string } =>
+    computeValidationErrorsFor(formData);
 
   const validateForm = () => {
     const newErrors = computeValidationErrors();
@@ -393,22 +373,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
   };
 
   // Temps estimé et échéance sont facultatifs → ne bloquent jamais.
-  const isFormValid = () => {
-    // Seul le nom est obligatoire (priorité + catégorie facultatives).
-    return formData.name.length >= 1 && formData.name.length <= 100;
-  };
+  const isFormValid = () => isFormValidFor(formData);
 
-  const isStep1Valid = () => {
-    return formData.name.trim().length >= 1 && formData.name.trim().length <= 100;
-  };
+  const isStep1Valid = () => isStep1ValidFor(formData);
 
   // Liste des champs step 1 manquants — alimente le shake desktop.
-  // (échéance et temps estimé exclus : facultatifs)
-  const missingStep1Fields = (): string[] => {
-    const m: string[] = [];
-    if (!(formData.name.trim().length >= 1 && formData.name.trim().length <= 100)) m.push('name');
-    return m;
-  };
+  const missingStep1Fields = (): string[] => missingStep1FieldsFor(formData);
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
