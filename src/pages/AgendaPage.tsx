@@ -12,11 +12,10 @@ type EventDragArg = { event: EventApi; el?: HTMLElement; jsEvent?: UIEvent | nul
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
-import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2, Pencil } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, addDays, isSameDay, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import PageTutorial from '@/components/tutorial/PageTutorial';
@@ -24,207 +23,9 @@ import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
 import { getInitialScrollTime, buildCalendarEvents } from './agenda/calendar-events';
-
-type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
-
-const mobileCalendarStyles = `
-  .mobile-calendar .fc-timegrid-slot { height: 20px !important; }
-  .mobile-calendar .fc-timegrid-slot-label {
-    font-size: 10px !important;
-    padding: 0 4px !important;
-    vertical-align: top;
-    color: rgb(var(--color-text-muted));
-  }
-  .mobile-calendar .fc-timegrid-axis { width: 40px !important; }
-  .mobile-calendar .fc-col-header { display: none !important; }
-  .mobile-calendar .fc-scroller::-webkit-scrollbar { display: none; }
-  .mobile-calendar .fc-scroller { -ms-overflow-style: none; scrollbar-width: none; }
-  .mobile-calendar .fc-timegrid-slot-minor { border-top-style: none !important; }
-`;
-
-// ── Mobile Header ────────────────────────────────────────────────────────────
-interface MobileAgendaHeaderProps {
-  currentDate: Date;
-  viewMode: MobileView;
-  showTaskSidebar: boolean;
-  onToggleSidebar: () => void;
-  onSetView: (v: MobileView) => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
-  onAddEvent: () => void;
-}
-
-const MobileAgendaHeader: React.FC<MobileAgendaHeaderProps> = ({
-  currentDate,
-  viewMode,
-  showTaskSidebar,
-  onToggleSidebar,
-  onSetView,
-  onPrevMonth,
-  onNextMonth,
-  onAddEvent,
-}) => {
-  const monthYear = format(currentDate, 'MMMM yyyy', { locale: fr });
-  const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
-  const isMonthView = viewMode === 'dayGridMonth';
-
-  // Segmented view selector
-  const views: { key: MobileView; label: string }[] = [
-    { key: 'timeGridDay', label: 'Jour' },
-    { key: 'timeGrid2Day', label: '2J' },
-    { key: 'dayGridMonth', label: 'Mois' },
-  ];
-
-  return (
-    <div
-      className="md:hidden shrink-0 border-b"
-      style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
-    >
-      {/* Row 1: main controls */}
-      <div className="flex items-center justify-between px-3 py-1">
-        {/* Left: Tâches toggle */}
-        <button
-          onClick={onToggleSidebar}
-          data-tutorial-id="agenda-mobile-tasks-toggle"
-          className={`flex items-center gap-1 px-2 min-h-[44px] rounded-lg text-xs font-medium transition-colors`}
-          style={{
-            backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'transparent',
-            color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
-          }}
-        >
-          <Calendar size={15} />
-          <span>Tâches</span>
-        </button>
-
-        {/* Right */}
-        <div className="flex items-center gap-1">
-          {/* 3-way view selector */}
-          <div
-            data-tutorial-id="agenda-mobile-view-switcher"
-            className="flex rounded-lg overflow-hidden border text-xs"
-            style={{ borderColor: 'rgb(var(--color-border))' }}
-          >
-            {views.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => onSetView(key)}
-                className="px-2 py-1.5 font-medium transition-colors"
-                style={{
-                  backgroundColor:
-                    viewMode === key ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
-                  color: viewMode === key ? 'white' : 'rgb(var(--color-text-secondary))',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Add */}
-          <button
-            onClick={onAddEvent}
-            data-tutorial-id="agenda-mobile-add-button"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg"
-            style={{ color: 'rgb(var(--color-accent))' }}
-          >
-            <Plus size={22} />
-          </button>
-        </div>
-      </div>
-
-      {/* Row 2 (month mode only): < Mois Année > navigation */}
-      {isMonthView && (
-        <div
-          className="flex items-center justify-center gap-4 pb-2 px-3"
-          style={{ color: 'rgb(var(--color-text-primary))' }}
-        >
-          <button
-            onClick={onPrevMonth}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-            style={{ color: 'rgb(var(--color-text-secondary))' }}
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <span className="font-semibold text-base">{capitalMonthYear}</span>
-          <button
-            onClick={onNextMonth}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-            style={{ color: 'rgb(var(--color-text-secondary))' }}
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Mobile Day Strip ─────────────────────────────────────────────────────────
-interface MobileDayStripProps {
-  selectedDate: Date;
-  onSelectDate: (date: Date) => void;
-}
-
-const MobileDayStrip: React.FC<MobileDayStripProps> = ({ selectedDate, onSelectDate }) => {
-  // Tableau ancré sur aujourd'hui : 3 jours passés + 90 jours futurs
-  // Aujourd'hui est à l'index 3, visible sans scroll dès le premier rendu
-  const todayRef = new Date();
-  const days: Date[] = [];
-  for (let i = -3; i <= 90; i++) {
-    days.push(addDays(todayRef, i));
-  }
-
-  return (
-    <div
-      className="flex overflow-x-auto px-2"
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
-    >
-      {days.map((day) => {
-        const key = format(day, 'yyyy-MM-dd');
-        const selected = isSameDay(day, selectedDate);
-        const today = isToday(day);
-        const initial = format(day, 'EEEEE', { locale: fr }).toUpperCase();
-        const num = format(day, 'd');
-
-        return (
-          <button
-            key={key}
-            onClick={() => onSelectDate(day)}
-            className="flex flex-col items-center gap-1 min-w-[44px] py-2 flex-shrink-0"
-          >
-            <span
-              className="text-[10px] font-semibold uppercase"
-              style={{ color: 'rgb(var(--color-text-muted))' }}
-            >
-              {initial}
-            </span>
-            <span className="relative w-8 h-8 flex items-center justify-center">
-              {selected && (
-                <motion.span
-                  layoutId="mobile-day-indicator"
-                  className="absolute inset-0 rounded-full bg-black dark:bg-white"
-                  transition={{ type: 'spring', damping: 28, stiffness: 380 }}
-                />
-              )}
-              <span
-                className={`relative z-10 text-sm font-semibold ${selected ? 'text-white dark:text-black' : ''}`}
-                style={
-                  !selected && today
-                    ? { color: 'rgb(var(--color-accent))' }
-                    : !selected
-                    ? { color: 'rgb(var(--color-text-primary))' }
-                    : {}
-                }
-              >
-                {num}
-              </span>
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-};
+import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
+import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
+import RecurringEventsManager from './agenda/RecurringEventsManager';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
@@ -658,90 +459,19 @@ const AgendaPage: React.FC = () => {
         />
 
         {/* ── DESKTOP HEADER (hidden on mobile) ── */}
-        <div className="hidden md:block">
-          <motion.div
-            initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
-            className="px-4 py-3 border-b"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                onClick={() => setShowTaskSidebar(!showTaskSidebar)}
-                data-tutorial-id="agenda-task-sidebar-toggle"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm shrink-0 border ${showTaskSidebar ? 'shadow-md' : ''}`}
-                style={{
-                  backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
-                  borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
-                  color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))',
-                }}
-              >
-                <Calendar size={18} />
-                <span className="font-medium text-sm lg:text-base">Tâches</span>
-              </motion.button>
-
-              <div className="flex items-center gap-2 lg:gap-3">
-                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomIn}
-                    disabled={zoomLevel === 0}
-                    className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
-                    <ZoomIn size={18} />
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomOut}
-                    disabled={zoomLevel === zoomDurations.length - 1}
-                    className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
-                    <ZoomOut size={18} />
-                  </motion.button>
-                </div>
-
-                <div className="flex gap-1 p-1 rounded-xl border"
-                  data-tutorial-id="agenda-view-switcher"
-                  style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
-                  {(['timeGridDay', 'timeGridWeek', 'dayGridMonth'] as const).map(view => (
-                    <button key={view} onClick={() => handleViewChange(view)}
-                      className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
-                        currentView === view
-                          ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
-                          : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
-                      }`}>
-                      {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                    onClick={() => calendarRef.current?.getApi().prev()}
-                    className="p-2 rounded-lg transition-colors hover:text-blue-600"
-                    style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    <ChevronLeft size={18} />
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                    onClick={() => calendarRef.current?.getApi().next()}
-                    className="p-2 rounded-lg transition-colors hover:text-blue-600"
-                    style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    <ChevronRight size={18} />
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowRecurringManager(true)}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-all border shrink-0 whitespace-nowrap"
-                  style={{ backgroundColor: 'rgb(var(--color-chip-bg))', borderColor: 'rgb(var(--color-chip-border))', color: 'rgb(var(--color-text-primary))' }}>
-                  <span className="text-sm lg:text-base">Récurrences</span>
-                </motion.button>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  onClick={handleOpenAddModal}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black shrink-0 whitespace-nowrap">
-                  <Plus size={18} />
-                  <span className="font-medium text-sm lg:text-base">Nouveau</span>
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        <AgendaDesktopHeader
+          showTaskSidebar={showTaskSidebar}
+          setShowTaskSidebar={setShowTaskSidebar}
+          handleZoomIn={handleZoomIn}
+          handleZoomOut={handleZoomOut}
+          zoomLevel={zoomLevel}
+          zoomDurations={zoomDurations}
+          handleViewChange={handleViewChange}
+          currentView={currentView}
+          calendarRef={calendarRef}
+          setShowRecurringManager={setShowRecurringManager}
+          handleOpenAddModal={handleOpenAddModal}
+        />
 
         {/* ── MOBILE : bandeau jours + label (masqué en vue mois) ── */}
         {!isMonthView && (
@@ -902,89 +632,15 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
-      <AnimatePresence>
-        {showRecurringManager && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowRecurringManager(false)}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              onClick={e => e.stopPropagation()}
-              className="rounded-2xl shadow-2xl w-full overflow-hidden border"
-              style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', maxWidth: 'calc(32rem * 1.08)' }}
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                <h3 className="text-base font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements récurrents</h3>
-                <button onClick={() => setShowRecurringManager(false)}
-                  className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  <CloseIcon size={18} />
-                </button>
-              </div>
-              <div className="max-h-[60vh] overflow-y-auto">
-                {(() => {
-                  const recurring = events.filter(e => (e.recurrence ?? 'none') !== 'none');
-                  if (recurring.length === 0) {
-                    return (
-                      <div className="px-6 py-10 text-center">
-                        <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Aucun événement récurrent pour le moment.</p>
-                      </div>
-                    );
-                  }
-                  return (
-                    <ul className="divide-y" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                      {recurring.map(ev => {
-                        const startDate = new Date(ev.start);
-                        const label = ev.recurrence === 'daily' ? 'Quotidien' : ev.recurrence === 'weekly' ? 'Hebdomadaire' : 'Récurrent';
-                        return (
-                          <li key={ev.id} className="px-6 py-3 flex items-center gap-3" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ev.color || 'rgb(var(--color-accent))' }} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{ev.title}</p>
-                              <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                                {label} · démarre le {startDate.toLocaleDateString('fr-FR')} à {startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                onClick={() => {
-                                  // Ouvre le modal d'édition de l'événement (sélecteur de
-                                  // récurrence inclus, dont « Personnaliser »).
-                                  setSelectedEvent(ev);
-                                  setSelectedInstanceDate(null);
-                                  setShowEditEventModal(true);
-                                  setShowRecurringManager(false);
-                                }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-200 dark:border-blue-800/40 transition-colors"
-                                aria-label="Modifier la récurrence"
-                              >
-                                <Pencil size={13} />
-                                <span>Modifier</span>
-                              </button>
-                              <button
-                                onClick={() => updateEventMutation.mutate({ id: ev.id, updates: { recurrence: 'none' } })}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 border border-red-200 dark:border-red-800/40 transition-colors"
-                                aria-label="Supprimer la récurrence"
-                              >
-                                <Trash2 size={13} />
-                                <span>Récurrence</span>
-                              </button>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  );
-                })()}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <RecurringEventsManager
+        isOpen={showRecurringManager}
+        setShowRecurringManager={setShowRecurringManager}
+        events={events}
+        updateEventMutation={updateEventMutation}
+        setSelectedEvent={setSelectedEvent}
+        setSelectedInstanceDate={setSelectedInstanceDate}
+        setShowEditEventModal={setShowEditEventModal}
+      />
 
       {showEditEventModal && selectedEvent && (
         <EventModal
