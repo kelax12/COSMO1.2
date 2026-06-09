@@ -20,6 +20,7 @@ import { useVisibilityInterval } from '../lib/hooks/usePerformance';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
+import { formatTime, formatTimeShort } from './statistics/format';
 
 // Graphique multi-séries « Temps de travail » (déplacé du Dashboard).
 // Lazy : recharts ne charge que si l'utilisateur ouvre la vue détaillée (faille P-2).
@@ -443,20 +444,6 @@ export default function StatisticsPage() {
       year:  pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 364), eod, { tasks, events, habits, okrs })),
     };
   }, [tasks, events, habits, okrs, now, selectedSection]);
-
-  const formatTime = (minutes: number) => {
-    const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
-    if (h === 0) return `${m}min`;
-    if (m === 0) return `${h}h`;
-    return `${h}h${m < 10 ? '0' : ''}${m}`;
-  };
-
-  const formatTimeShort = (minutes: number) => {
-    const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
-    if (h === 0) return `${m}min`;
-    if (m === 0) return `${h}h`;
-    return `${h}h${m < 10 ? '0' : ''}${m}`;
-  };
 
   const periodDescriptiveText: Record<TimePeriod, string> = {
     day: "aujourd'hui",
