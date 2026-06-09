@@ -22,6 +22,7 @@ import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
 import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
+import { getProgress, filterObjectivesByCategory } from './okr/okr-page-logic';
 
 type Objective = OKR & { estimatedTime?: number };
 
@@ -109,13 +110,6 @@ const OKRPage: React.FC = () => {
     });
   };
 
-  const getProgress = (keyResults: KeyResult[]) => {
-    if (keyResults.length === 0) return 0;
-    const totalProgress = keyResults.reduce((sum, kr) => {
-      return sum + (kr.targetValue > 0 ? (kr.currentValue / kr.targetValue * 100) : 0);
-    }, 0);
-    return Math.round(totalProgress / keyResults.length);
-  };
 
   const updateKeyResult = (objectiveId: string, keyResultId: string, newValue: number) => {
     const obj = objectives.find((o) => o.id === objectiveId);
@@ -172,11 +166,7 @@ const OKRPage: React.FC = () => {
     setEditingObjective(null);
   };
 
-  const filteredObjectives = selectedCategory === 'finished' ?
-  objectives.filter((obj) => obj.completed) :
-  selectedCategory === 'all' ?
-  objectives.filter((obj) => !obj.completed) :
-  objectives.filter((obj) => !obj.completed && obj.category === selectedCategory);
+  const filteredObjectives = filterObjectivesByCategory(objectives, selectedCategory);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6' },
