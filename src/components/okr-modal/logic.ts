@@ -8,6 +8,33 @@ export type KeyResultForm = {
   estimatedTime: string;
 };
 
+export type KeyResult = {
+  id: string;
+  title: string;
+  currentValue: number;
+  targetValue: number;
+  unit: string;
+  completed: boolean;
+  estimatedTime: number;
+  history?: { date: string; increment: number }[];
+};
+
+export type Objective = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  keyResults: KeyResult[];
+  completed: boolean;
+  estimatedTime: number;
+};
+
+export type Category = { id: string; name: string; color: string };
+
+export type OKRInfo = { title: string; description: string; category: string; endDate: string };
+
 // Durée lisible entre deux dates (YYYY-MM-DD). null si incomplet, isError si
 // la date de fin est antérieure au début.
 export function calcOkrDuration(
