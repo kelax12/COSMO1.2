@@ -1,0 +1,234 @@
+// Carte d'un objectif (OKR) — extraite verbatim de OKRPage, prop-driven + mémoïsée.
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Edit2, Trash2, Clock, CheckCircle, Calendar } from 'lucide-react';
+import type { KeyResult } from '@/modules/okrs';
+import { getProgress, type Objective } from './okr-page-logic';
+
+interface OKRCardProps {
+  objective: Objective;
+  index: number;
+  getCategoryById: (id: string) => { name: string; color: string } | undefined;
+  resolveColor: (color: string) => string;
+  formatTime: (m: number) => string;
+  handleEditObjective: (id: string) => void;
+  setDeletingObjective: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedKeyResultForModal: React.Dispatch<React.SetStateAction<{ kr: KeyResult; obj: Objective } | null>>;
+  setShowAddTaskModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowAddEventModal: React.Dispatch<React.SetStateAction<boolean>>;
+  updateKeyResult: (objectiveId: string, keyResultId: string, newValue: number) => void;
+}
+
+const OKRCardBase: React.FC<OKRCardProps> = ({
+  objective, index, getCategoryById, resolveColor, formatTime, handleEditObjective,
+  setDeletingObjective, setSelectedKeyResultForModal, setShowAddTaskModal, setShowAddEventModal,
+  updateKeyResult,
+}) => {
+              const progress = getProgress(objective.keyResults);
+              const category = getCategoryById(objective.category);
+
+              const start = new Date(objective.startDate);
+              const end = new Date(objective.endDate);
+              const today = new Date();
+              const totalTime = end.getTime() - start.getTime();
+              const elapsedTime = today.getTime() - start.getTime();
+              const remainingTime = end.getTime() - today.getTime();
+              const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
+              const timeProgress = totalTime > 0 ? Math.min(Math.max((elapsedTime / totalTime) * 100, 0), 100) : 0;
+              
+              // New Logic: Comparison between progress and time elapsed
+              // Using ratio of progress / timeProgress to determine health
+              let hue = 120;
+                const saturation = 80;
+                const lightness = 45;
+
+                if (timeProgress > 0) {
+                    const ratio = progress / timeProgress;
+                    if (ratio >= 1.5) {
+                      hue = 120; // Green for being way ahead
+                    } else if (ratio >= 1.0) {
+                      hue = 145; // Darker/Vibrant Green (on track or slightly ahead)
+                    } else if (ratio >= 0.8) {
+                    hue = 60; // Yellow (slightly behind)
+                  } else if (ratio >= 0.5) {
+                    hue = 30; // Orange (behind)
+                  } else {
+                    hue = 0; // Red (significantly behind)
+                  }
+                }
+              
+              const healthColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.1)`;
+              const healthBorder = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.2)`;
+              const healthText = `hsl(${hue}, ${saturation}%, ${lightness - 5}%)`;
+
+              return (
+                <motion.div
+                  key={objective.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: index * 0.05 }}
+                  data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
+                  className="rounded-lg shadow-sm border p-6 transition-all relative overflow-hidden group"
+                  style={{
+                    backgroundColor: 'rgb(var(--color-surface))',
+                    borderColor: 'rgb(var(--color-border))'
+                  }}>
+                  <div className="flex justify-between items-center mb-4 gap-4">
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
+                      <span>{category?.name ?? objective.category}</span>
+                    </span>
+
+                    <div className="flex-1 flex items-center justify-center gap-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <span>→</span>
+                      <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      <button
+                        onClick={() => handleEditObjective(objective.id)}
+                        aria-label="Modifier l'objectif"
+                        className="p-1.5 transition-colors hover:bg-hover rounded-md"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingObjective(objective.id)}
+                        aria-label="Supprimer l'objectif"
+                        className="p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {remainingDays > 0 && (
+                    <div className="mb-4">
+                      <div
+                        className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full backdrop-blur-md border shadow-sm transition-transform group-hover:scale-105 w-fit"
+                        style={{
+                          backgroundColor: healthColor,
+                          borderColor: healthBorder,
+                          color: healthText
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                          <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: healthText }}></span>
+                          {remainingDays}j restants
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
+                    <p className="text-xs sm:text-sm line-clamp-2 mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
+                  </div>
+
+                <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
+                    <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-border-muted))" strokeWidth="8" fill="none" />
+                      <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-accent))" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 32}`} strokeDashoffset={2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-lg sm:text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 w-full">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression globale</span>
+                      <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
+                    </div>
+                    <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                      <div className="h-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
+                  {objective.keyResults.map((keyResult) => {
+                    const krProgress = keyResult.currentValue / keyResult.targetValue * 100;
+
+                    return (
+                      <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                        <div className="flex justify-between items-center mb-3 gap-2">
+                          <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                            <button
+                              onClick={() => {
+                                setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
+                                setShowAddTaskModal(true);
+                              }}
+                              className="p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              title="Créer une tâche">
+
+                              <CheckCircle size={14} className="text-blue-500" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
+                                setShowAddEventModal(true);
+                              }}
+                              className="p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              title="Planifier un événement">
+
+                              <Calendar size={14} className="text-purple-500" />
+                            </button>
+                            <span className="text-[10px] sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                              <Clock size={12} />
+                              {keyResult.estimatedTime}min
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <input
+                              type="number"
+                              aria-label={`Avancement de ${keyResult.title} sur ${keyResult.targetValue}`}
+                              value={keyResult.currentValue}
+                              onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
+                              className="w-16 sm:w-20 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none"
+                              style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))', borderColor: 'rgb(var(--color-border))' }} />
+
+                            <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 w-full">
+                            <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
+                            </div>
+                            <span className="text-[10px] sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
+                          </div>
+                        </div>
+                      </div>);
+
+                  })}
+                </div>
+
+                {(() => {
+                  const doneMins = objective.keyResults.reduce((sum, kr) => sum + Math.round(kr.currentValue * kr.estimatedTime), 0);
+                  const totalMins = objective.keyResults.reduce((sum, kr) => sum + Math.round(kr.estimatedTime * kr.targetValue), 0);
+                  return totalMins > 0 ? (
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={13} style={{ color: 'rgb(var(--color-text-muted))' }} />
+                        <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Temps effectué</span>
+                      </div>
+                      <span className="text-xs font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                        {formatTime(doneMins)} <span style={{ color: 'rgb(var(--color-text-muted))' }}>/ {formatTime(totalMins)}</span>
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
+            </motion.div>);
+};
+
+const OKRCard = React.memo(OKRCardBase);
+
+export default OKRCard;

@@ -2,6 +2,9 @@
 // Comportement déplacé verbatim depuis OKRPage.tsx.
 import type { OKR, KeyResult } from '@/modules/okrs';
 
+// Objectif enrichi (champ optionnel local). Partagé OKRPage ↔ OKRCard.
+export type Objective = OKR & { estimatedTime?: number };
+
 // Progression moyenne (%) d'un objectif à partir de ses key results.
 // Garde anti division par zéro (targetValue > 0), cf. faille B17.
 export function getProgress(keyResults: KeyResult[]): number {
