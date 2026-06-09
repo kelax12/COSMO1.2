@@ -9,7 +9,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, EventApi, DatesSetArg } fro
 // core. Type local minimal couvrant ce que les handlers utilisent (compatible
 // avec l'arg réel passé par FullCalendar, qui contient ces champs + d'autres).
 type EventDragArg = { event: EventApi; el?: HTMLElement; jsEvent?: UIEvent | null };
-import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, expandRecurringEvents, getMasterId } from '@/modules/events';
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut, X as CloseIcon, Trash2, Pencil } from 'lucide-react';
@@ -23,6 +23,7 @@ import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
+import { getInitialScrollTime, buildCalendarEvents } from './agenda/calendar-events';
 
 type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
 
@@ -264,13 +265,6 @@ const AgendaPage: React.FC = () => {
   const [mobileSelectedDate, setMobileSelectedDate] = useState<Date>(() => new Date());
   const [mobileCalendarKey, setMobileCalendarKey] = useState(0);
   const [mobileViewMode, setMobileViewMode] = useState<MobileView>('timeGridDay');
-
-  const getInitialScrollTime = () => {
-    const now = new Date();
-    const hour = now.getHours();
-    const scrollHour = Math.max(0, hour - 4);
-    return `${scrollHour.toString().padStart(2, '0')}:00:00`;
-  };
 
   const handleZoomIn = () => {
     if (zoomLevel > 0) { setZoomLevel(prev => prev - 1); setCalendarKey(prev => prev + 1); }
@@ -533,23 +527,7 @@ const AgendaPage: React.FC = () => {
     createEventMutation.mutate(newEvent);
   };
 
-  const projectionFrom = new Date();
-  projectionFrom.setMonth(projectionFrom.getMonth() - 13);
-  const projectionTo = new Date();
-  projectionTo.setMonth(projectionTo.getMonth() + 13);
-  const expandedEvents = expandRecurringEvents(events, projectionFrom, projectionTo);
-
-  const calendarEvents = expandedEvents.map(event => ({
-    id: event.id,
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    backgroundColor: event.color,
-    borderColor: event.color,
-    textColor: '#ffffff',
-    editable: !event.id.includes('::'),
-    extendedProps: { notes: event.notes, taskId: event.taskId, isRecurringInstance: event.id.includes('::') },
-  }));
+  const calendarEvents = buildCalendarEvents(events);
 
   const handleAddEvent = (eventData: CreateEventInput) => {
     createEventMutation.mutate({ ...eventData, taskId: eventData.taskId || undefined });
