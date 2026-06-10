@@ -4,6 +4,8 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 
 > **Avant un déploiement** : consulter [`faille.md`](./faille.md) — répertorie les failles de sécurité et bugs bloquants identifiés (Stripe à finaliser, secrets à rotater, RLS à durcir).
 >
+> **Source de vérité sécurité = `faille.md`.** CLAUDE.md ne duplique PAS les statuts de failles ; en cas de divergence entre les deux fichiers, `faille.md` fait foi (l'audit 2026-06-10 a trouvé une contradiction sur §2 — corrigée, ne pas la réintroduire).
+>
 > **Avant de toucher la version mobile** : consulter [`a-faire.md`](./a-faire.md) — répertorie les bugs/régressions mobile non résolus (notamment le panneau de couleur swipe TaskCard).
 >
 > **Rapports d'audit versionnés** (mis à jour 2026-05-30) :
@@ -246,7 +248,7 @@ const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
 
 > `useBilling()` doit être utilisé uniquement à l'intérieur de `BillingProvider`.
 
-> ⚠️ La logique d'activation Premium côté client (`addTokens(amount, true)`) écrit directement dans `subscriptions` via Supabase. Tant que le backend Stripe n'existe pas, n'importe quel utilisateur peut s'auto-promouvoir Premium depuis devtools (cf. `faille.md` §2).
+> ✅ Depuis la migration `015_subscriptions_rpc.sql`, le client ne peut PLUS écrire `subscriptions` directement (policy UPDATE supprimée). `addTokens(1)` passe par la RPC `credit_premium_token_from_ad` (SECURITY DEFINER, cap 20 crédits/24 h — mig. 039) ; tout autre montant est rejeté côté client ET côté DB. La migration `041_subscriptions_insert_lockdown.sql` verrouille aussi l'INSERT d'amorçage (plan `free`, zéro token uniquement — fiche N14). Limite résiduelle assumée : AdSense sans Server-Side Verification (voir commentaire mig. 039).
 
 ### UI States — couleurs et filtres
 ```typescript
@@ -1121,8 +1123,7 @@ Pour toute requête `subscriptions` (et tables sensibles à la propriété) :
 ### Pas d'écriture client directe sur tables financières
 
 ❌ **Interdit** : `supabase.from('subscriptions').update({plan: 'premium', ...})` côté client.
-✅ Une fois Stripe en place, passer par une Edge Function avec service_role.
-Cf. faille §2 — pour l'instant la policy UPDATE existe mais doit disparaître.
+✅ État actuel : la policy UPDATE client est **supprimée** (mig. 015) et l'INSERT est verrouillé sur la ligne d'amorçage `free`/zéro token (mig. 041). Les seules écritures client passent par les RPCs `consume_premium_token` / `credit_premium_token_from_ad` ; le webhook Stripe écrit en service_role.
 
 ### Sources de vérité authentification & premium
 

@@ -114,11 +114,74 @@ Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
   pas de risque data/sécu — mais `supabase db push` tenterait de rejouer les
   migrations non listées.
 
-**Réconcilier le ledger** (à faire une fois, depuis un poste avec la CLI liée) :
+**⚠️ Vérité opérationnelle (audit 2026-06-10)** : le repo stocke ses migrations
+dans `supabase/migration/` (singulier) avec des préfixes `NNN_` — un layout que
+la CLI Supabase **ne reconnaît pas** (`db push` / `migration repair` n'opèrent
+que sur `supabase/migrations/<timestamp14>_*.sql`). Le ledger n'a donc **jamais
+été** la source de vérité de ce projet et ne peut pas être « réparé » tel quel :
+les 23 entrées présentes viennent du dashboard et de l'outil MCP
+`apply_migration` (qui, lui, enregistre une entrée à chaque application — c'est
+le workflow courant et recommandé ici).
+
+**Source de vérité réelle** : le dossier `supabase/migration/*.sql` (gardé par
+`npm run validate:migrations` en CI) + l'introspection live. Pas le ledger.
+
+**Si un jour on veut basculer sur le workflow CLI** (à faire une seule fois) :
 ```bash
 supabase link --project-ref ykeugqfgklejcdbrmawy
-# Marque comme déjà appliquées les migrations dont les objets sont en prod :
-supabase migration repair --status applied <version>   # pour chaque manquante
+# 1. Convertir le layout : copier chaque NNN_<nom>.sql vers
+#    supabase/migrations/2026MMDDHHMMSS_<nom>.sql (timestamps croissants).
+# 2. Marquer comme appliquées celles dont les objets existent déjà en prod :
+supabase migration repair --status applied <version>   # pour chaque fichier
 supabase migration list   # vérifier l'alignement local ↔ remote
 ```
-Après réconciliation, `supabase db push` ne rejoue que le réel manquant.
+Tant que cette conversion n'est pas faite, **ne pas utiliser `db push`** —
+passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
+
+## 7. Backup & Disaster Recovery (runbook)
+
+**État** : backups automatiques Supabase quotidiens (rétention selon plan ;
+PITR seulement à partir du plan Pro + add-on). **Aucune restauration n'a encore
+été testée** — un backup non testé n'est pas un backup.
+
+### Restauration (procédure)
+1. `Dashboard → Database → Backups` → choisir le snapshot → **Restore**
+   (⚠️ écrase l'instance ; pour un test, restaurer vers un **nouveau projet**).
+2. Vérifier post-restore : `select count(*) from tasks;` + spot-check RLS
+   (`select * from subscriptions` avec un JWT user → ne doit voir que sa ligne).
+3. Re-pointer le front si projet différent : Vercel env `VITE_SUPABASE_URL` /
+   `VITE_SUPABASE_ANON_KEY` + redeploy.
+4. Redéployer les Edge Functions + `supabase secrets set …` sur le nouveau ref.
+
+### Drill trimestriel (à planifier — non fait à ce jour)
+- [ ] Restaurer le dernier backup vers un projet jetable.
+- [ ] Dérouler les vérifs du §2 ci-dessus + login réel + création d'une tâche.
+- [ ] Chronométrer (objectif RTO < 2 h) et noter la date du drill ici.
+- [ ] Supprimer le projet jetable.
+
+### Export hors-fournisseur (complément au backup Supabase)
+```bash
+# Dump logique complet (schéma + données), stockable hors Supabase :
+pg_dump "$SUPABASE_DB_URL" --no-owner --format=custom -f cosmo-$(date +%F).dump
+```
+À automatiser (cron mensuel) si le produit dépasse le stade early — voir aussi
+`docs/SCALABILITY.md §6` (plan de sortie fournisseur).
+
+## 8. Alerting backend (Edge Functions)
+
+`supabase/functions/_shared/alert.ts` envoie un POST JSON sur
+`OPS_ALERT_WEBHOOK_URL` (Slack/Discord webhook) pour les échecs critiques :
+- `stripe-webhook` : handler en échec (Stripe va retry → si répété, perte de
+  revenu) et échec d'écriture du marqueur d'idempotence ;
+- `delete-account` : purge RGPD avortée, ou `auth.admin.deleteUser` en échec
+  après purge réussie.
+
+**Activation** (sans le secret, no-op silencieux) :
+```bash
+supabase secrets set OPS_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/…
+```
+
+**Prérequis déploiement `delete-account`** (fonction PAS encore déployée au
+2026-06-10) : `supabase secrets set APP_URL=https://<domaine-prod>` d'abord —
+sans lui l'allowlist CORS ne contient que localhost et le bouton « Supprimer le
+compte » échoue au lieu de tomber sur le fallback email.

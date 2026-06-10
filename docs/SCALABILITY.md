@@ -87,7 +87,35 @@ Non modifiable par le code applicatif. À traiter dans les dashboards.
 
 ---
 
-## 5. Capacité estimée (rappel audit)
+## 5. Dépendance mono-fournisseur — plan de sortie (audit P1)
+
+Supabase est à la fois l'auth, la DB, les Edge Functions et la frontière de
+sécurité (RLS). Un incident fournisseur = panne totale. On ne « code » pas la
+sortie aujourd'hui (YAGNI), mais on maintient les conditions qui la rendent
+possible en jours plutôt qu'en mois :
+
+| Actif | Portabilité actuelle | Geste qui la préserve |
+|---|---|---|
+| **Données** | Postgres standard, schéma 100 % versionné (`supabase/migration/`) | Export `pg_dump` mensuel hors Supabase (cf. `DEPLOYMENT.md §7`) |
+| **Accès données** | Pattern repository : 8 interfaces `I*Repository`, 2 implémentations chacune | ❌ Ne jamais appeler `supabase.from()` hors d'un repository |
+| **Auth** | Standard GoTrue (JWT) ; `useAuth` est l'unique façade | Migration possible vers tout IdP OIDC ; les `user_id` UUID survivent à un export `auth.users` |
+| **Edge Functions** | Deno standard, 3 fonctions, zéro API propriétaire hors `supabase-js` | Portables vers Deno Deploy / Cloudflare Workers avec un client PG |
+| **RLS (sécurité)** | ⚠️ Le point dur : la sécurité EST le SQL Postgres | Toute cible de sortie doit être un Postgres (RDS, Neon, autohébergé) — les policies se réimportent telles quelles |
+
+**Décision** : pas d'abstraction supplémentaire (le coût dépasserait le risque).
+Le plan = Postgres-vers-Postgres + façades existantes. Réévaluer si Supabase
+change sa tarification ou si l'app dépasse ~10 k utilisateurs actifs.
+
+## 6. Items explicitement différés (décisions, pas des oublis)
+
+| Item audit | Statut | Pourquoi |
+|---|---|---|
+| God-components > 600 LOC (P2) | 🔁 Track continu `#6 refactor` (TaskModal, LandingPage, OKRModal, OKRPage faits) | Un split par PR, avec tests — pas un lot unique risqué |
+| Vraie pagination UI (P2) | 📋 Projet séparé (cf. §3) | Exige le passage des filtres/compteurs côté SQL ; plafond actuel 5 000 items/compte acceptable |
+| Prerender maison → SSR/SSG (P3) | ❄️ Gelé | Migration de framework complète ; à reconsidérer si le SEO devient un canal d'acquisition mesuré |
+| Cache Redis / file d'attente | ❄️ YAGNI | Aucun besoin mesuré ; React Query + webhook idempotent suffisent |
+
+## 7. Capacité estimée (rappel audit)
 
 - **×10 utilisateurs** : ✅ sans modification.
 - **×100 utilisateurs** : 🟡 pooling + replica + report charts Dashboard.

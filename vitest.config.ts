@@ -48,6 +48,10 @@ export default defineConfig({
       thresholds: {
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         'src/modules/billing/ad-limit.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
+        // Définition canonique de « premium » côté client — extraite de
+        // billing.context.tsx (audit 2026-06-10). Une régression ici = accès
+        // premium incorrect pour tous les comptes.
+        'src/modules/billing/subscription.logic.ts': { lines: 100, functions: 100, statements: 100, branches: 85 },
         'src/lib/email.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
         'src/lib/withTimeout.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
         'src/lib/workTimeCalculator.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },

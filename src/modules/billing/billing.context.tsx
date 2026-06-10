@@ -2,6 +2,7 @@ import React, { createContext, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { isPremiumSubscription } from './subscription.logic';
 
 interface SubscriptionRow {
   id: string;
@@ -95,19 +96,12 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     onSuccess: () => queryClient.invalidateQueries({ queryKey: billingKeys.subscription }),
   });
 
-  const isPremium = useCallback((): boolean => {
-    if (isDemo) return true;
-    if (!subscription) return false;
-    if (subscription.status === 'cancelled') return false;
-    const tokens = subscription.premium_tokens ?? 0;
-    if (tokens <= 0) return false;
-    // Paid subscription: also validate period_end hasn't expired
-    if (subscription.plan === 'premium' && subscription.current_period_end) {
-      return new Date(subscription.current_period_end) >= new Date();
-    }
-    // Ad-based tokens: active as long as tokens > 0 and not cancelled
-    return subscription.status === 'active';
-  }, [subscription, isDemo]);
+  // Logique extraite dans subscription.logic.ts (pure, testée) — ne pas
+  // ré-inliner ici (audit 2026-06-10, couverture des chemins critiques).
+  const isPremium = useCallback(
+    (): boolean => isPremiumSubscription(subscription, { isDemo }),
+    [subscription, isDemo],
+  );
 
   const stats: BillingStats = {
     tokenUsage: 0,
