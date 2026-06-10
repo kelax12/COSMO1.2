@@ -24,6 +24,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
+import { validateAvatarFile, computeAvatarDimensions } from '@/lib/avatar-upload';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -306,16 +307,14 @@ const SettingsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    const MAX_BYTES = 500_000;
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error('Format non supporté', { description: 'Utilisez JPEG, PNG, WebP ou GIF.' });
-      e.target.value = '';
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      toast.error('Image trop grande', { description: 'Taille maximale : 500 Ko.' });
+    // Validation extraite dans lib/avatar-upload.ts (pur, testé — faille V5).
+    const verdict = validateAvatarFile(file);
+    if (!verdict.ok) {
+      if (verdict.reason === 'type') {
+        toast.error('Format non supporté', { description: 'Utilisez JPEG, PNG, WebP ou GIF.' });
+      } else {
+        toast.error('Image trop grande', { description: 'Taille maximale : 500 Ko.' });
+      }
       e.target.value = '';
       return;
     }
@@ -329,11 +328,10 @@ const SettingsPage: React.FC = () => {
       }
       const img = new Image();
       img.onload = async () => {
-        const MAX_DIM = 256;
-        const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+        const dims = computeAvatarDimensions(img.width, img.height);
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
+        canvas.width = dims.width;
+        canvas.height = dims.height;
         const ctx = canvas.getContext('2d');
         const dataUrl = ctx
           ? (ctx.drawImage(img, 0, 0, canvas.width, canvas.height), canvas.toDataURL('image/jpeg', 0.85))
