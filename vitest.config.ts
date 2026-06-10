@@ -46,7 +46,24 @@ export default defineConfig({
       // anti-mass-assignment, lib utilitaire, garde billing) doit rester
       // hautement couvert. Une régression de couverture y casse la CI.
       thresholds: {
+        // ── Plancher GLOBAL (audit 9/10 phase 1) ──
+        // Posé sous le réel mesuré (12 % lignes au 2026-06-10) pour empêcher
+        // toute régression nette. À remonter au fil des phases (jamais
+        // au-dessus du mesuré courant).
+        lines: 10,
+        statements: 10,
+        functions: 45,
+        branches: 60,
+        // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
+        // Repositories Supabase = frontière sécurité (anti-mass-assignment,
+        // gardes injection, RPCs atomiques). Min mesuré : friends 68L / lists 38B.
+        'src/modules/**/supabase.repository.ts': { lines: 65, functions: 55, statements: 65, branches: 35 },
+        'src/lib/app-mode.store.ts': { lines: 70, functions: 75, statements: 70, branches: 75 },
+        'src/lib/utils.ts': { lines: 100, functions: 100, statements: 100, branches: 100 },
+        'src/lib/hooks/use-habit-pauses.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
+        'src/lib/hooks/useDebounce.ts': { lines: 60, functions: 60, statements: 60, branches: 80 },
+        'src/modules/tasks/hooks.derived.ts': { lines: 65, functions: 60, statements: 65, branches: 85 },
         'src/modules/billing/ad-limit.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
         // Définition canonique de « premium » côté client — extraite de
         // billing.context.tsx (audit 2026-06-10). Une régression ici = accès
