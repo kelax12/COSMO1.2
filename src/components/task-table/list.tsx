@@ -47,7 +47,7 @@ interface TaskCardProps {
   isFirst?: boolean;
 }
 
-export const TaskCard = React.memo(({
+const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   task,
   addToListMode,
   selectedForListIds,
@@ -61,7 +61,7 @@ export const TaskCard = React.memo(({
   onScheduleTask,
   onDuplicate,
   isFirst = false,
-}: TaskCardProps) => {
+}: TaskCardProps, ref) => {
   // Lookup catégorie via hook React Query — re-render automatique quand
   // les catégories Supabase finissent de charger (asynchrone en prod).
   const getCategoryById = useCategoryLookup();
@@ -147,6 +147,7 @@ export const TaskCard = React.memo(({
 
   return (
     <motion.div
+      ref={ref}
       className="relative mb-2"
       layout
       animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}
@@ -428,7 +429,10 @@ export const TaskCard = React.memo(({
     </AnimatePresence>
   </motion.div>
   );
-}, (prevProps, nextProps) => {
+});
+TaskCardInner.displayName = 'TaskCard';
+
+export const TaskCard = React.memo(TaskCardInner, (prevProps, nextProps) => {
   return (
     prevProps.task.id === nextProps.task.id &&
     prevProps.task.name === nextProps.task.name &&
