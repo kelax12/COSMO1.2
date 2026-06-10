@@ -1258,7 +1258,7 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
 2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant en CI — `.github/workflows/ci.yml`)
 3. ✅ `npm run build` → succès (le drop console.* se fait au build). Vérifier qu'aucun chunk first-paint ne dépasse **150 kB gzip** (budget audit-perf P-budget). Le warning Vite `chunkSizeWarningLimit: 400 kB` ne doit déclencher que pour `vendor-charts` (lazy, attendu).
-4. ✅ `npm run test:e2e` → **9/9 passent** : 3 smoke legacy + 6 a11y axe (sur dev server `npm start` port 3000).
+4. ✅ `npm run test:e2e` → **12/12 passent** : 3 smoke legacy + 3 parcours profonds (`demo-journeys.spec.ts` : mutation + persistance SPA) + 6 a11y axe (sur dev server `npm start` port 3000).
 4. ✅ **Smoke test mobile preview** sur viewport 375×812 (iPhone SE/12 mini) :
    - Login démo → Dashboard
    - Créer une tâche → fermer modal
