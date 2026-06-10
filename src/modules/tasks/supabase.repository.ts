@@ -10,6 +10,17 @@ import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 /** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
 type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
 
+/**
+ * Colonnes minimales pour les lectures de LISTE (audit scalabilité — réduction
+ * payload). Exclut volontairement `description` (texte long) et
+ * `collaborator_validations` (JSONB) : aucune vue liste ne les consomme — le
+ * détail complet passe par `getById` (select '*') que la TaskModal utilise.
+ * Source unique pour getAll/getByDate/getFiltered → pas de drift de colonnes.
+ * Ne PAS y ajouter une colonne sans vérifier qu'un consommateur de liste la lit.
+ */
+const TASK_LIST_COLUMNS =
+  'id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,pending_invites,user_id' as const;
+
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
@@ -26,7 +37,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const rows = await fetchAllPages(async (from, to) => {
       const { data, error } = await db
         .from('tasks')
-        .select('id,name,priority,category,deadline,estimated_time,created_at,bookmarked,completed,completed_at,is_collaborative,pending_invites,user_id')
+        .select(TASK_LIST_COLUMNS)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(from, to);
@@ -137,7 +148,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select(TASK_LIST_COLUMNS)
       .gte('deadline', startOfDay)
       .lte('deadline', endOfDay)
       .order('deadline', { ascending: true });
@@ -148,7 +159,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    let query = supabase.from('tasks').select('*');
+    let query = supabase.from('tasks').select(TASK_LIST_COLUMNS);
 
     if (filters.completed !== undefined) {
       query = query.eq('completed', filters.completed);
