@@ -126,6 +126,16 @@ le workflow courant et recommandé ici).
 **Source de vérité réelle** : le dossier `supabase/migration/*.sql` (gardé par
 `npm run validate:migrations` en CI) + l'introspection live. Pas le ledger.
 
+**Garde anti-dérive** (ajouté 2026-06-10, suite aux findings 017/N15) :
+```bash
+node scripts/check-prod-drift.mjs --print-sql   # → SQL d'introspection (read-only)
+# Exécuter ce SQL sur la prod (SQL editor / MCP), sauver le JSON, puis :
+node scripts/check-prod-drift.mjs introspection.json   # exit ≠ 0 si objet manquant
+```
+À lancer **après chaque migration appliquée** et avant tout audit. Les
+divergences assumées (fresh-install only) et les équivalences de noms de
+policies sont documentées dans le script lui-même.
+
 **Si un jour on veut basculer sur le workflow CLI** (à faire une seule fois) :
 ```bash
 supabase link --project-ref ykeugqfgklejcdbrmawy
