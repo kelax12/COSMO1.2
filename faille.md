@@ -64,6 +64,7 @@ Légende :
 | N11 | 🟠 Medium    | CSV formula injection dans export RGPD          | ✅ Corrigé   | `csv-export.ts` (prefix apostrophe sur `=+-@\t\r`) |
 | N12 | 🟠 Medium    | `profiles SELECT` ouvert → énumération emails  | ✅ Corrigé   | `022_security_n12_n13.sql` (policy restreinte amis + RPC `resolve_profile_by_email`) |
 | N13 | 🟠 Medium    | `removeFriend` reciprocal silently no-op       | ✅ Corrigé   | `022_security_n12_n13.sql` + RPC `remove_friendship` |
+| N14 | 🟠 High      | `subscriptions.INSERT` sans contrainte de valeurs → self-premium à la 1ʳᵉ ligne | ✅ Corrigé   | `041_subscriptions_insert_lockdown.sql` (appliquée en prod 2026-06-10, policy vérifiée live) |
 
 ---
 
@@ -373,6 +374,23 @@ Audit ciblé sur les changements depuis le cycle Deepsec (51 features livrées e
 - Nouvelle policy : lecture autorisée sur son propre profil OU sur les profils des amis confirmés (lien `friends`)
 - RPC `resolve_profile_by_email(p_email)` `SECURITY DEFINER` qui retourne UNIQUEMENT l'`id` (pas l'avatar/display_name) — utilisée par `shareTask` et `getByEmail` pour résoudre auth.uid sans nécessiter un SELECT direct sur `profiles`.
 - `friends.supabase.repository.ts` migré sur la RPC pour `getByEmail` et `shareTask`.
+
+### N14 — `subscriptions.INSERT` sans contrainte de valeurs (High / abus économique) — audit 2026-06-10
+
+**Vecteur** : la migration 015 a supprimé la policy UPDATE client, mais la policy
+INSERT (créée en dashboard, jamais versionnée) n'avait que
+`WITH CHECK (auth.uid() = user_id)`. Un compte **sans ligne subscription**
+(fenêtre avant l'auto-create du `BillingProvider`) pouvait s'auto-insérer
+`plan='premium', premium_tokens=9999` — ou `ad_credits_in_window=-1000000`
+pour neutraliser le cap pub de la migration 039.
+**Fix** (migration 041, appliquée en prod + policy vérifiée live via
+introspection `pg_policy`) : le `WITH CHECK` n'accepte que la ligne d'amorçage
+exacte du `BillingProvider` — `plan='free'`, tokens/win_streak/fenêtre pub à
+zéro, champs Stripe NULL. Le webhook Stripe (service_role) bypasse RLS, non
+affecté. La seule mutation client restante passe par les RPCs
+`consume_premium_token` / `credit_premium_token_from_ad` (cap 20/24 h).
+**Résiduel assumé** : AdSense sans Server-Side Verification (cf. mig. 039) —
+un script peut créditer sans regarder la pub, borné à 20 tokens/24 h.
 
 ### N13 — `removeFriend` reciprocal silently no-op (Medium / bug)
 

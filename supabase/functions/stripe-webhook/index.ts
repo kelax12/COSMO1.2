@@ -1,5 +1,6 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { opsAlert } from '../_shared/alert.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -79,6 +80,10 @@ Deno.serve(async (req) => {
     }
   } catch (err) {
     console.error(`Error handling event ${event.type}:`, err)
+    // Alerting P1 (audit 2026-06-10) : un handler qui échoue déclenche les
+    // retries Stripe ; si l'erreur persiste, Stripe finit par abandonner →
+    // perte de revenu silencieuse. Résumé générique only (pas d'err brut).
+    await opsAlert('stripe-webhook', `handler failed for event type ${event.type} (id ${event.id}) — Stripe will retry`)
     return new Response('Internal error', { status: 500 })
   }
 
@@ -99,6 +104,7 @@ Deno.serve(async (req) => {
       // Persistence failure (schema drift, RLS, network) — without the marker
       // we lose idempotency. Force Stripe to retry. Faille M-5.
       console.error('processed_stripe_events insert error:', dedupError)
+      await opsAlert('stripe-webhook', `idempotency marker insert failed for event ${event.id} (code ${code ?? 'unknown'}) — forcing Stripe retry`)
       return new Response('Internal error', { status: 500 })
     }
   }

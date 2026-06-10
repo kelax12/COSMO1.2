@@ -19,6 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { opsAlert } from '../_shared/alert.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 
@@ -176,6 +177,10 @@ Deno.serve(async (req) => {
     // to purge later (RGPD violation). The client can retry; the function is
     // idempotent (DELETE … WHERE on already-empty tables is a no-op).
     if (failedTables.length > 0) {
+      // Alerting P1 (audit 2026-06-10) : un cleanup qui échoue de façon
+      // répétée = demande RGPD article 17 bloquée → doit être vu par un humain.
+      // Pas de PII : noms de tables uniquement.
+      await opsAlert('delete-account', `RGPD erasure aborted — cleanup failed on: ${failedTables.join(', ')}`)
       return new Response(
         JSON.stringify({ error: 'cleanup_failed', tables: failedTables }),
         { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } },
@@ -185,6 +190,7 @@ Deno.serve(async (req) => {
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
     if (authDeleteError) {
       console.error('delete-account: failed to drop auth user:', authDeleteError.message)
+      await opsAlert('delete-account', 'auth.admin.deleteUser failed after successful data purge — manual follow-up required (RGPD)')
       return new Response(JSON.stringify({ error: 'Internal server error' }), {
         status: 500,
         headers: { ...cors, 'Content-Type': 'application/json' },
