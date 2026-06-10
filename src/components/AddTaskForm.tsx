@@ -34,6 +34,7 @@ import { useFriends, useShareTask } from '@/modules/friends';
 // BillingContext — vérification premium côté serveur
 // ═══════════════════════════════════════════════════════════════════
 import { useBilling } from '@/modules/billing/billing.context';
+import { computeAddTaskErrors, isAddTaskFormValid } from '@/components/AddTaskForm.validation';
 
 type AddTaskFormProps = {
   onFormToggle?: (isOpen: boolean) => void;
@@ -176,35 +177,15 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     setHasChanges(true);
   };
 
+  // Règles extraites dans AddTaskForm.validation.ts (pur, testé) — ne pas
+  // ré-inliner ; volontairement plus strictes que task-modal/validation.ts.
   const validateForm = () => {
-    const newErrors: {[key: string]: string;} = {};
-    if (!formData.name.trim()) newErrors.name = 'Le nom de la tâche est obligatoire';
-    else if (formData.name.trim().length < 3) newErrors.name = 'Le nom doit contenir au moins 3 caractères';
-    
-    if (String(formData.estimatedTime).trim() === '') newErrors.estimatedTime = 'Le temps estimé est obligatoire';
-    else if (isNaN(Number(formData.estimatedTime)) || Number(formData.estimatedTime) < 0) newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
-    
-    // Priorité facultative : aucune validation bloquante.
-    if (!formData.category) newErrors.category = 'Veuillez choisir une catégorie';
-    
-    if (formData.deadline) {
-      const deadlineDate = new Date(formData.deadline);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (deadlineDate < today) newErrors.deadline = 'La date limite ne peut pas être dans le passé';
-    }
-
+    const newErrors = computeAddTaskErrors(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const isFormValid = () => {
-    const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
-    const timeValid = String(formData.estimatedTime).trim() !== '' && !isNaN(Number(formData.estimatedTime)) && Number(formData.estimatedTime) > 0;
-    // Priorité facultative : ne bloque pas la validation du formulaire.
-    const categoryValid = !!formData.category;
-    return nameValid && timeValid && categoryValid;
-  };
+  const isFormValid = () => isAddTaskFormValid(formData);
 
   const handleInputChange = (field: string, value: string | number | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
