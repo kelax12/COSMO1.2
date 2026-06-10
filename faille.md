@@ -65,6 +65,7 @@ Légende :
 | N12 | 🟠 Medium    | `profiles SELECT` ouvert → énumération emails  | ✅ Corrigé   | `022_security_n12_n13.sql` (policy restreinte amis + RPC `resolve_profile_by_email`) |
 | N13 | 🟠 Medium    | `removeFriend` reciprocal silently no-op       | ✅ Corrigé   | `022_security_n12_n13.sql` + RPC `remove_friendship` |
 | N14 | 🟠 High      | `subscriptions.INSERT` sans contrainte de valeurs → self-premium à la 1ʳᵉ ligne | ✅ Corrigé   | `041_subscriptions_insert_lockdown.sql` (appliquée en prod 2026-06-10, policy vérifiée live) |
+| N15 | 🟠 Medium    | Régression M-2 : la 034 a redéfini `accept_friend_request_v2` SANS `sanitize_display_name` (et la 026 n'avait jamais été appliquée en prod) | ✅ Corrigé   | `042_restore_sanitize_accept_v2.sql` (fusion 026+034, appliquée + vérifiée live `pg_get_functiondef`). Détectée par `scripts/check-prod-drift.mjs` |
 
 ---
 
@@ -374,6 +375,23 @@ Audit ciblé sur les changements depuis le cycle Deepsec (51 features livrées e
 - Nouvelle policy : lecture autorisée sur son propre profil OU sur les profils des amis confirmés (lien `friends`)
 - RPC `resolve_profile_by_email(p_email)` `SECURITY DEFINER` qui retourne UNIQUEMENT l'`id` (pas l'avatar/display_name) — utilisée par `shareTask` et `getByEmail` pour résoudre auth.uid sans nécessiter un SELECT direct sur `profiles`.
 - `friends.supabase.repository.ts` migré sur la RPC pour `getByEmail` et `shareTask`.
+
+### N15 — Régression M-2 par la migration 034 (Medium / XSS second-ordre) — audit 2026-06-10
+
+**Vecteur** : double dérive découverte par le nouveau garde
+`scripts/check-prod-drift.mjs` :
+1. la migration 026 (`sanitize_display_name`, fix M-2) n'avait **jamais** été
+   appliquée en prod (0 occurrence `pg_proc`) ;
+2. la migration 034 (fix `friend_user_id`), elle bien appliquée, a redéfini
+   `accept_friend_request_v2` **sans** la sanitization — recopie brute de
+   `raw_user_meta_data->>'name'` dans `friends.name`. M-2 était donc rouvert
+   dans le repo ET en prod, alors que ce document le marquait corrigé.
+**Fix** (042, appliquée + vérifiée live via `pg_get_functiondef`) : fusion des
+deux fixes — corps 034 (friend_user_id sur les 2 lignes + ON CONFLICT) avec
+les display names passés par `sanitize_display_name` (026).
+**Leçon process** : toute migration qui redéfinit une fonction DOIT repartir de
+la dernière définition versionnée, pas d'un dump antérieur. Le garde
+`check-prod-drift.mjs` (CI-able) détecte désormais ce type d'écart.
 
 ### N14 — `subscriptions.INSERT` sans contrainte de valeurs (High / abus économique) — audit 2026-06-10
 
