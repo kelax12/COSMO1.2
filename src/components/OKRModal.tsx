@@ -129,7 +129,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
         title: info.title,
         description: info.description,
         category: info.category,
-        startDate: editingObjective ? editingObjective.startDate : new Date().toISOString().split('T')[0],
+        startDate: editingObjective ? editingObjective.startDate : new Date().toLocaleDateString('en-CA'),
         endDate: info.endDate,
         completed: false,
         estimatedTime: valid.reduce((s, kr) => s + Number(kr.estimatedTime) * Number(kr.targetValue), 0),
@@ -157,7 +157,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   };
 
   const duration = calcOkrDuration(
-    editingObjective ? editingObjective.startDate : new Date().toISOString().split('T')[0],
+    editingObjective ? editingObjective.startDate : new Date().toLocaleDateString('en-CA'),
     info.endDate
   );
 

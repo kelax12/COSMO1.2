@@ -121,20 +121,26 @@ const DashboardPage: React.FC = () => {
 
   const displayUser = authUser || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
 
-  const today = new Date().toISOString().split('T')[0];
+  // Date LOCALE ('en-CA' → YYYY-MM-DD) — les complétions d'habitudes sont
+  // keyées en date locale et les timestamps ISO (completedAt, e.start) sont en
+  // UTC : tout passe par toLocaleDateString pour attribuer chaque item au bon
+  // jour calendaire local (l'ancien toISOString décalait d'un jour la nuit).
+  const today = new Date().toLocaleDateString('en-CA');
 
   const statCards = useMemo(() => {
+    const localDay = (iso: string) => new Date(iso).toLocaleDateString('en-CA');
+
     // KR helpers — count completion records per period (simple & reliable)
     const krCompletedInPeriod = (start: string, end: string) =>
       krCompletions.filter(c => {
-        const d = c.completedAt.split('T')[0];
+        const d = localDay(c.completedAt);
         return d >= start && d <= end;
       }).length;
 
     const krChartByDay = (days: string[]) =>
       days.map(date => ({
         date,
-        value: krCompletions.filter(c => c.completedAt.split('T')[0] === date).length,
+        value: krCompletions.filter(c => localDay(c.completedAt) === date).length,
       }));
 
     if (viewMode === 'jour') {
@@ -142,20 +148,20 @@ const DashboardPage: React.FC = () => {
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        days.push(d.toISOString().split('T')[0]);
+        days.push(d.toLocaleDateString('en-CA'));
       }
       return [
         {
           label: 'Tâches complétées',
           color: '#3b82f6',
-          value: tasks.filter(t => t.completed && t.completedAt?.startsWith(today)).length,
-          chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt?.startsWith(date)).length })),
+          value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === today).length,
+          chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === date).length })),
         },
         {
           label: 'Agenda',
           color: '#ef4444',
-          value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === today).length,
-          chartData: days.map(date => ({ date, value: events.filter(e => new Date(e.start).toISOString().split('T')[0] === date).length })),
+          value: events.filter(e => localDay(e.start) === today).length,
+          chartData: days.map(date => ({ date, value: events.filter(e => localDay(e.start) === date).length })),
         },
         {
           label: 'KR réalisés',
@@ -180,8 +186,8 @@ const DashboardPage: React.FC = () => {
         const start = new Date(end);
         start.setDate(start.getDate() - 6);
         weeks.push({
-          start: start.toISOString().split('T')[0],
-          end: end.toISOString().split('T')[0],
+          start: start.toLocaleDateString('en-CA'),
+          end: end.toLocaleDateString('en-CA'),
           label: `S${4 - i}`,
         });
       }
@@ -190,14 +196,14 @@ const DashboardPage: React.FC = () => {
         {
           label: 'Tâches complétées',
           color: '#3b82f6',
-          value: tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= thisWeek.start && t.completedAt.split('T')[0] <= thisWeek.end).length,
-          chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= w.start && t.completedAt.split('T')[0] <= w.end).length })),
+          value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) >= thisWeek.start && localDay(t.completedAt) <= thisWeek.end).length,
+          chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) >= w.start && localDay(t.completedAt) <= w.end).length })),
         },
         {
           label: 'Agenda',
           color: '#ef4444',
-          value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= thisWeek.start && d <= thisWeek.end; }).length,
-          chartData: weeks.map(w => ({ date: w.label, value: events.filter(e => { const d = new Date(e.start).toISOString().split('T')[0]; return d >= w.start && d <= w.end; }).length })),
+          value: events.filter(e => { const d = localDay(e.start); return d >= thisWeek.start && d <= thisWeek.end; }).length,
+          chartData: weeks.map(w => ({ date: w.label, value: events.filter(e => { const d = localDay(e.start); return d >= w.start && d <= w.end; }).length })),
         },
         {
           label: 'KR réalisés',
@@ -224,11 +230,14 @@ const DashboardPage: React.FC = () => {
     }
     const thisMonth = months[months.length - 1];
     const monthRange = (m: { year: number; month: number }) => {
-      const start = new Date(m.year, m.month, 1).toISOString().split('T')[0];
-      const end = new Date(m.year, m.month + 1, 0).toISOString().split('T')[0];
+      // toLocaleDateString (pas toISOString) : new Date(y, m, 1) est à minuit
+      // LOCAL — converti en UTC il retombait sur le dernier jour du mois
+      // précédent, excluant systématiquement le dernier jour de chaque mois.
+      const start = new Date(m.year, m.month, 1).toLocaleDateString('en-CA');
+      const end = new Date(m.year, m.month + 1, 0).toLocaleDateString('en-CA');
       return { start, end };
     };
-    const tasksByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return tasks.filter(t => t.completed && t.completedAt && t.completedAt.split('T')[0] >= start && t.completedAt.split('T')[0] <= end).length; };
+    const tasksByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) >= start && localDay(t.completedAt) <= end).length; };
     const eventsByMonth = (m: { year: number; month: number }) => events.filter(e => { const d = new Date(e.start); return d.getFullYear() === m.year && d.getMonth() === m.month; }).length;
     const habitsByMonth = (m: { year: number; month: number }) => { const { start, end } = monthRange(m); return habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= start && d <= end).length, 0); };
 

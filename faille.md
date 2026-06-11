@@ -17,7 +17,7 @@ Légende :
 
 | ID  | Sévérité     | Sujet                                          | État         | Commit / Fichier |
 |-----|--------------|------------------------------------------------|--------------|------------------|
-| §1  | 🔴 Critique  | Secrets Supabase dans l'historique git public  | 🔴 Ouvert    | Action manuelle dashboard |
+| §1  | 🟢 Non applicable | Secrets dans l'historique git public — projet **supprimé**, pas la prod | ✅ Clos | Vérifié 2026-06-11 : le `.env` fuité ne contient que les clés du projet `pzrpwyqwultyenvqfyhg` (supprimé, absent du compte). La prod `ykeugqfgklejcdbrmawy` n'a JAMAIS eu de credentials en git. |
 | §2  | 🔴 Critique  | Auto-upgrade Premium gratuit (RLS subscriptions)| ✅ Corrigé   | `015_subscriptions_rpc.sql` — DROP UPDATE policy + RPCs SECURITY DEFINER |
 | §3  | 🔴 Critique  | Stripe non fonctionnel                         | ✅ Corrigé   | Edge Functions + migration `014_stripe_columns.sql` (bypass service_role triple-check) |
 | §4  | 🟠 Important | Tests Vitest référencés mais non installés      | ✅ Corrigé   | Playwright E2E installé (`e2e/` + 3 tests démo) — Vitest `src/__test__/` ignoré ESLint, à supprimer dans une PR séparée |
@@ -25,11 +25,11 @@ Légende :
 | §6  | 🟠 Important | CSP absente                                    | ✅ Corrigé   | `vercel.json` |
 | §7  | 🟠 Important | Vulnérabilités npm résiduelles (esbuild)        | ✅ Corrigé   | `vite ^7.x` — 0 vulns |
 | §8  | 🟠 Important | Drift DB ↔ migrations (`friend_requests`)      | ✅ Corrigé   | `012_friend_requests_align.sql` |
-| §9  | 🟠 Important | Pagination absente côté UI                     | 🟢 Partiel   | Toast utilisateur prod (sonner, dedupé par table) via `pagination.warning.ts` + console.warn dev. Pagination UI complète à terme. |
-| §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | 🔴 Ouvert    | Refactor progressif (continu) |
-| §11 | 🟡 À plan.   | Bundles JS lourds                              | 🟢 Partiel   | date-fns v3 (-4 KB), GSAP/Recharts à auditer |
+| §9  | 🟠 Important | Pagination absente côté UI                     | ✅ Corrigé   | `fetch-all-pages.ts` — auto-pagination des `getAll()` volumineux (tasks/events/habits/okrs), plafond 5000 + `warnIfTruncated` ; plus de troncature silencieuse à 500 |
+| §10 | 🟡 À plan.   | Fichiers > 1000 lignes                         | ✅ Corrigé   | Track #6 : **0 fichier > 1000 lignes** (max actuel : `EventModalForm.tsx` 849 — vérifié 2026-06-11) |
+| §11 | 🟡 À plan.   | Bundles JS lourds                              | ✅ Corrigé   | Audit perf 2026-05-30 (`audit-perf.md`) — GSAP supprimé, Recharts/FullCalendar lazy, entry 403→124 kB (34 kB gzip) |
 | §12 | 🟡 À plan.   | `react-day-picker` v9 ↔ `date-fns` v2          | ✅ Corrigé   | `date-fns ^3.x` migré |
-| §13 | 🟡 À plan.   | 25 warnings ESLint résiduels                   | 🟢 Partiel   | 25 → 18 (fast-refresh restant = refactor structurel) |
+| §13 | 🟡 À plan.   | 25 warnings ESLint résiduels                   | ✅ Corrigé   | 25 → 11 ; le résiduel = fast-refresh contextes/shadcn, documenté « préexistants OK » dans CLAUDE.md |
 | UX1 | 🟠 Important | Audit UI/UX — découvrabilité actions TaskCard mobile zéro | ✅ Corrigé   | Bouton « ... » permanent ajouté sur TaskCard mobile (TaskTable.tsx) |
 | UX2 | 🟠 Important | Pas d'undo après suppression de tâche          | ✅ Corrigé   | Toast Sonner action « Annuler » 6s + snapshot recréation (TaskTable + TodayTasks) |
 | UX3 | 🟠 Important | Stats — bug « dots gris » sur Répartition par couleur | ✅ Corrigé   | StatisticsPage : itère sur `categories` (UUIDs) au lieu de `colorSettings` (clés `cat-1` hardcodées) |
@@ -69,44 +69,53 @@ Légende :
 
 ---
 
-## 🔴 BLOQUANTS (avant déploiement prod)
+## 🟢 CLOS / NON BLOQUANTS
 
-### §1. Secrets Supabase dans l'historique git public
+### §1. Secrets dans l'historique git — projet supprimé, PAS la prod ✅
 
-**Risque** : compromission totale de la base de données.
+**Statut** : 🟢 **Non applicable à la production** — vérifié et clos le 2026-06-11.
 
-Le fichier `.env` a été committé en clair dans 3 commits avant d'être untracké :
-- `900ee3e` — Initial commit
-- `0b5d9b6` — Update .env
-- `f3ee9d2` — chore: untrack .env file from git history
+Le fichier `.env` a bien été committé en clair dans 2 commits avant d'être untracké
+(`900ee3e` initial, `0b5d9b6` update ; retiré dès `f3ee9d2`). L'historique du repo
+public contient donc encore `SERVICE_ROLE_KEY`, `DATABASE_URL` (mot de passe
+Postgres), `ANON_KEY` et `BETTER_AUTH_SECRET`.
 
-L'historique du repo public https://github.com/kelax12/COSMO1.2 contient encore :
-- `VITE_SUPABASE_SERVICE_ROLE_KEY` — **bypass total des RLS, droits admin sur la DB**
-- `DATABASE_URL` avec mot de passe Postgres en clair
-- `VITE_SUPABASE_ANON_KEY`
+**MAIS ces credentials ne concernent PAS la production.** Investigation menée :
 
-**Correctif** :
-1. Settings → API → **Reset le JWT secret** (régénère anon + service_role)
-2. Settings → Database → **Reset database password**
-3. Mettre à jour `.env` local + variables Vercel
-4. Optionnel : `git filter-repo --path .env --invert-paths && git push --force origin main`
+| Vérification | Résultat |
+|---|---|
+| Projet ciblé par le `.env` fuité (URL + DATABASE_URL + JWT `ref`) | **`pzrpwyqwultyenvqfyhg`** |
+| Projet de prod actif | **`ykeugqfgklejcdbrmawy`** (« cosmo test », ACTIVE_HEALTHY) |
+| `pzrpwyqwultyenvqfyhg` présent dans le compte Supabase ? | **Non** — absent de `list_projects` → **supprimé** |
+| Un `.env` de l'historique a-t-il jamais contenu les clés de `ykeugqfgklejcdbrmawy` ? | **Non** — `git grep` sur tout l'historique : le ref prod n'apparaît que dans des fichiers non-secrets (`faille.md`, `docs/DEPLOYMENT.md`, `supabase/.temp/project-ref`). Un project-ref n'est pas un secret (il est dans l'URL de chaque appel API). |
+
+**Conclusion** : les clés fuitées appartiennent à un projet Supabase **supprimé**
+(throwaway de début de projet). Elles sont **inertes** — pointant vers une instance
+qui n'existe plus. La base de données de production n'a jamais été exposée.
+`BETTER_AUTH_SECRET` est également mort (better-auth n'est pas utilisé — l'auth
+passe par Supabase). Aucune rotation de la prod n'était requise pour cette fuite.
+
+> ℹ️ Reste une bonne hygiène (optionnelle, non bloquante) : purger le `.env` de
+> l'historique public pour ne pas laisser traîner des secrets même morts —
+> `git filter-repo --path .env --invert-paths && git push --force origin main`.
+> Et si le projet `pzrpwyqwultyenvqfyhg` était seulement *pausé* plutôt que
+> supprimé, le supprimer définitivement (il est déjà absent du compte → a priori
+> fait).
 
 ---
 
 ### §2. Auto-upgrade Premium gratuit
 
-**Statut** : 🟢 partiellement mitigé.
+**Statut** : ✅ corrigé (chaîne complète 011 → 015 → 039 → 041).
 
 Avant : `subscriptions.UPDATE` policy `USING (auth.uid() = user_id)` sans WITH CHECK ; n'importe qui pouvait `update({plan:'premium', premium_tokens:9999})` depuis la console.
 
-Mitigations appliquées :
-- Migration `011_security_hardening_v2.sql` ajoute `WITH CHECK (auth.uid() = user_id)` + trigger `prevent_user_id_change` sur `subscriptions`.
-- Defense-in-depth `.eq('user_id', user.id)` ajouté dans `billing.repository.ts` et `billing.context.tsx`.
+Chaîne de fixes appliquée (l'historique « reste à faire » ci-dessous est soldé) :
+1. ✅ Edge Function `stripe-webhook` (service_role) consomme `checkout.session.completed` — déployée (v11 en prod).
+2. ✅ Policy UPDATE client **supprimée** (mig. 015) ; INSERT verrouillé sur la ligne d'amorçage `free`/zéro token (mig. 041, fiche N14, vérifiée live).
+3. ✅ Le client ne touche `subscriptions` que via les RPCs `consume_premium_token` / `credit_premium_token_from_ad` (cap 20/24 h, mig. 039).
 
-**Reste à faire** (lié à §3 Stripe) :
-1. Edge Function `stripe-webhook` qui consomme `checkout.session.completed` avec service_role.
-2. Restreindre les colonnes mutables côté client : interdire `plan`, `status`, `current_period_end`, `premium_tokens`, `win_streak` aux utilisateurs (ou retirer la policy UPDATE complète).
-3. Côté client : appeler l'Edge Function au lieu de `supabase.from('subscriptions').update()`.
+Defense-in-depth conservée : `WITH CHECK` + trigger `prevent_user_id_change` (011), `.eq('user_id', user.id)` dans `billing.repository.ts` / `billing.context.tsx`.
 
 ---
 
@@ -178,21 +187,32 @@ La table `friend_requests` en prod utilise `sender_id` / `receiver_id` / `sender
 
 **Correctif** : créer `supabase/migration/012_friend_requests_align.sql` qui ajoute ces colonnes/triggers/fonction et reflète l'état réel. Tester sur projet Supabase neuf.
 
-### §9. Pagination absente côté UI
-`.limit(500)` sur tasks/events/habits/okrs, `.limit(200)` sur categories/lists/friends. Au-delà, données silencieusement tronquées.
-**Correctif** : `useInfiniteQuery` ou avertissement quand `data.length === limit`.
+### §9. Pagination absente côté UI — ✅ corrigé
+~~`.limit(500)` sur tasks/events/habits/okrs, `.limit(200)` sur categories/lists/friends. Au-delà, données silencieusement tronquées.~~
+**Fix final** : `src/lib/fetch-all-pages.ts` — les `getAll()` à fort volume paginent
+via `.range()` par pages de 1000 jusqu'à épuisement (plafond `MAX_ROWS` 5000,
+tiebreak `.order('id')`). `warnIfTruncated` n'alerte plus qu'au plafond réel.
+Les repos à faible volume (categories/lists/friends, kr_completions) gardent un
+`.limit()` simple + warning. Testé (`fetch-all-pages.test.ts`).
 
 ---
 
 ## 🟡 À PLANIFIER
 
-### §10. Fichiers monolithiques (> 1000 lignes)
-`TaskModal.tsx` 1339, `SettingsPage.tsx` 1300, `LandingPage.tsx` 1027, `StatisticsPage.tsx` 1064, `MessagingPage.tsx` 1010.
-**Correctif** : refactor progressif en sous-composants + hooks dédiés.
+### §10. Fichiers monolithiques (> 1000 lignes) — ✅ corrigé
+~~`TaskModal.tsx` 1339, `SettingsPage.tsx` 1300, `LandingPage.tsx` 1027, `StatisticsPage.tsx` 1064, `MessagingPage.tsx` 1010.~~
+**État vérifié 2026-06-11** : 0 fichier > 1000 lignes ; un seul > 800
+(`src/components/event-modal/EventModalForm.tsx`, 849 — découpe restante du
+track #6). TaskModal éclaté en `src/components/task-modal/` (+ `DesktopCollaboratorsStep`),
+StatisticsPage en `src/pages/statistics/`, TasksPage en `src/pages/tasks/`,
+MessagingPage supprimée.
 
-### §11. Bundles JS lourds
-`vendor-react` 254 kB, `vendor-calendar` 263 kB, `index` 297 kB, `CartesianChart` 320 kB.
-**Pistes** : auditer GSAP, migrer `date-fns@^3`, code-splitter Recharts, importer les plugins FullCalendar minimaux.
+### §11. Bundles JS lourds — ✅ corrigé (audit perf 2026-05-30)
+~~`vendor-react` 254 kB, `vendor-calendar` 263 kB, `index` 297 kB, `CartesianChart` 320 kB.~~
+Voir [`audit-perf.md`](./audit-perf.md) : GSAP supprimé (P-1), Recharts lazy
+(P-2, chunk `vendor-charts` chargé à la demande), FullCalendar lazy (`/agenda`),
+entry chunk 403 → 124 kB (34 kB gzip). Budgets et règles `manualChunks`
+documentés dans CLAUDE.md §Performance.
 
 ### §12. `react-day-picker@^9.14.0` ↔ `date-fns@^2.30.0`
 v9 attend `date-fns@^3.x` — risque de bug runtime.
@@ -283,7 +303,7 @@ Tout ce qui restait dans `faille.md` hors scope OAuth/Stripe/rotation manuelle :
 
 ### Deuxième cycle de finalisation du 2026-05-01
 
-Reprise des derniers items hors §1 (rotation clés) et §3 (Stripe) :
+Reprise des derniers items hors §1 (depuis clos — fuite = projet supprimé) et §3 (Stripe) :
 
 - ✅ **§2** — Migration `013_subscriptions_lockdown.sql` : trigger `subscriptions_guard` qui rejette toute mutation client de `plan`, `status`, `current_period_end`, `win_streak` et limite `premium_tokens` à un delta ∈ [-1, +1]. Bloque l'auto-upgrade Premium même sans Stripe. Quand l'Edge Function Stripe sera en place, elle utilisera `service_role` pour bypasser ce trigger (ou le trigger sera adapté).
 - ✅ **§7** — `vite ^5.4.2 → ^7.x` : `npm audit` retourne désormais 0 vulnérabilité (avant : 2 modérées via esbuild). Build et lint OK.
@@ -303,16 +323,23 @@ Vérification finale par re-audit indépendant :
 
 ---
 
-## Ordre de priorité avant déploiement prod
+## Ordre de priorité avant déploiement prod (à jour 2026-06-11)
 
 | # | Action | Effort | Bloque déploiement ? |
 |---|---|---|---|
-| 1 | Rotation clés Supabase (§1) | 15 min | **Oui** — manuel, dashboard |
-| 2 | Pagination UI complète (§9) | 1 j | Non — warning dev-only actif |
-| 3 | Refactor monolithes (§10) | continu | Non |
-| 4 | Bundles : audit GSAP + code-split Recharts (§11) | continu | Non |
-| 5 | Warnings Fast refresh (§13 résiduel) | ~1 j refactor | Non |
-| 6 | Sentry pour `console.error` runtime (§14 v2) | 1 j | Non — droppés en prod |
+| ~~1~~ | ~~`supabase secrets set APP_URL=<url prod>`~~ | — | ✅ **FAIT** — `APP_URL=https://thecosmo.app` configuré + vérifié 2026-06-11 sur `delete-account` et `stripe-create-checkout` (ACAO + Vary:Origin corrects, origine pirate rejetée) |
+| 1 | Activer HaveIBeenPwned (Dashboard → Auth → Policies) | 2 min | Non — recommandé |
+| 2 | `OPS_ALERT_WEBHOOK_URL` (alerting RGPD/Stripe) | 5 min | Non — no-op sans le secret |
+| 3 | Réconciliation ledger migrations (D-1, `supabase migration repair`) | 1 h | Non — objets tous présents, procédure dans `supabase/migration/README.md` |
+| 4 | TOCTOU-4 — atomicité write OKR/KR | PR dédiée | Non — risque résiduel faible (single-user writes) |
+| — | ~~Rotation clés Supabase (§1)~~ | — | **Non requis** — fuite = projet supprimé, pas la prod (cf. §1) |
+
+> **Aucun bloquant technique avant déploiement.** Si Stripe est activé : secrets
+> `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID` + endpoint
+> webhook Stripe (cf. §3).
+
+Les anciens points 2-6 (pagination §9, monolithes §10, bundles §11, warnings §13,
+Sentry §14) sont **clos** — voir tableau récapitulatif.
 
 ---
 
@@ -783,7 +810,16 @@ de `friend_requests`/`shared_tasks`). Chaque suppression de compte exécutait do
 utilisateurs** (RGPD art. 17 + régression du fix B9).
 **Fix** : retrait de `chat_messages` + le loop ignore désormais les erreurs
 « relation does not exist » (`42P01` / `PGRST205`) → cette classe de bug ne peut
-plus bricker l'effacement RGPD. **Redéploiement requis** : `supabase functions deploy delete-account`.
+plus bricker l'effacement RGPD.
+**Déployée 2026-06-11** (via MCP, v1 ACTIVE, `verify_jwt=true`) — l'inspection
+live a montré que la fonction n'avait en fait **jamais** été déployée (seules
+`stripe-create-checkout` et `stripe-webhook` existaient) : la suppression de
+compte renvoyait 404 depuis le début. ✅ **`APP_URL=https://thecosmo.app`
+configuré et vérifié 2026-06-11** : `Access-Control-Allow-Origin: https://thecosmo.app`
+sur les deux fonctions, origine hostile rejetée (aucun ACAO header).
+`stripe-create-checkout` redéployé en v10 (l'ancienne v9 déployée avait encore
+CORS wildcard `*` malgré le fix N7 dans le repo). Optionnel : `OPS_ALERT_WEBHOOK_URL`
+pour l'alerting RGPD/Stripe.
 
 ### MED-2 🟡 `kr_completions` orphelins après suppression d'un KR (graph dashboard surcompté)
 
@@ -795,7 +831,8 @@ le graphique « KR réalisés ».
 **Fix** : FK `kr_completions.kr_id → key_results(id) ON DELETE CASCADE`. Vérifié
 sûr : 0 orphelin en prod (dry-run transactionnel `BEGIN … ROLLBACK` OK).
 `recordKRReps` s'exécutant toujours après `syncKRsToTable`, la FK ne bloque jamais
-un insert. **Application requise** : exécuter `037_kr_completions_kr_cascade.sql`.
+un insert. **✅ Appliquée en prod** — FK `kr_completions_kr_id_fkey` vérifiée live
+via `pg_constraint` le 2026-06-11.
 
 ### MED-3 🟡 `stripe-webhook` token clobber race — corrigé
 
@@ -820,8 +857,8 @@ pour les 4 OKRs JSONB-only. Le backfill traduit la JSONB en lignes table typées
 (`current→current_value`, `target→target_value`, `estimated_time=0`,
 `completed=(target>0 AND current>=target)`, nouvel UUID). **JSONB conservée** (archive +
 fallback load-bearing, cf. D-2 — ne pas DROP sans migration revue dédiée). Validé
-dry-run prod : 5/5 OKRs avec lignes table, 14 lignes, 0 null. **Application requise** :
-exécuter `038_backfill_okr_key_results.sql`.
+dry-run prod : 5/5 OKRs avec lignes table, 14 lignes, 0 null. **✅ Appliquée en
+prod** — vérifié live le 2026-06-11 : 5/5 OKRs couverts par la table, 14 lignes.
 
 ### D-1 🟠 Drift ledger migrations — documenté (fix process, pas de mutation aveugle)
 
@@ -838,3 +875,67 @@ humaine.
 (non-leak message brut V7), `avatar.test.ts`, `events/recurrence.test.ts`
 (expansion récurrente). 65 → **121 tests**. (`escapeCSV`/`rowsToCSV` exportés pour
 test.)
+
+---
+
+## 🔧 Audit bugs applicatifs (2026-06-11) — recherche approfondie + remédiation prod
+
+Audit bugs complet (hors sécu) ; 12 bugs corrigés, validés par tsc 0 erreur,
+ESLint 0 erreur, Vitest 434/434, build OK, E2E chromium 12/12.
+
+### BUG-1 🔴 EventModal — date UTC + heure locale = événement déplacé d'un jour
+
+Édition d'un événement situé entre minuit et ~2h (France UTC+1/+2) : la date
+était extraite via `toISOString()` (UTC) mais l'heure via `toTimeString()`
+(locale) → recombinaison à la sauvegarde **reculait l'événement d'un jour**
+(corruption de donnée silencieuse). Fix : `toLocaleDateString('en-CA')` sur
+les 8 occurrences d'`EventModal.tsx`.
+
+### BUG-2 🔴 Dashboard vue « mois » — bornes UTC
+
+`new Date(y, m, 1).toISOString()` = minuit local converti en UTC = dernier
+jour du mois **précédent** → le dernier jour de chaque mois n'était jamais
+compté (bug permanent, pas seulement nocturne). Fix : `monthRange` en local.
+
+### BUG-3 🔴 Streaks/stats habitudes — mix UTC (hooks) vs local (UI)
+
+L'UI écrit `completions[date]` en date locale ; `hooks.derived.ts` comparait à
+un « aujourd'hui » UTC → streak affiché 0 et progression du jour fausse entre
+minuit et ~2h. Fix : dates locales partout (`calculateStreak`,
+`calculateCompletionRate`, `useHabitStats`, `useTodaysHabitStatus`) + même
+correction dans `DashboardPage` (jour/semaine), `useTodaysTasks`, `OKRModal`
+(startDate), seeds démo habits.
+
+### BUG-4 🟠 Repo démo friends — `JSON.parse` non défensif (B14 résiduel)
+
+6 occurrences sur la map `shared_tasks` → une clé corrompue plantait la zone
+Amis en démo. Fix : getter `getSharedTasksMap()` avec try/catch.
+
+### BUG-5 🟠 A11y critique — bouton sans nom accessible (Landing mobile)
+
+`MobileShowcases.tsx` : bouton décoratif « … » sans `aria-label` → violation
+axe `button-name` (critical) visible uniquement au viewport mobile. Fix :
+`aria-label` + `tabIndex={-1}` + icône `aria-hidden`. Guard a11y vert sur
+les 2 projects Playwright.
+
+### BUG-6 🟠 Mobile divers
+
+PremiumPage sans padding tab-bar (contenu masqué) ; `h-[94vh]` → `94dvh` sur
+TaskModal/AddTaskForm ; `min-h-screen` → `min-h-[100dvh]` sur CGU/Mentions/
+Politique/Guide ; `mockData.ts` (code mort, 7,6 kB) supprimé (V9).
+
+### Remédiations prod effectuées le 2026-06-11 (via MCP)
+
+- **`delete-account` déployée** (v1, `verify_jwt=true`) — n'avait jamais été
+  déployée, cf. fiche MED-1 mise à jour. Prérequis `APP_URL` restant.
+- **037 / 038 vérifiées appliquées** (FK cascade + backfill — introspection live).
+- **Advisors sécurité** : 8 warnings, tous connus/intentionnels (7 RPCs
+  SECURITY DEFINER documentées + HaveIBeenPwned manuel). Aucun nouveau.
+
+### Infra E2E mobile
+
+Le project Playwright `mobile-safari` n'avait jamais tourné (WebKit non
+installé, CI chromium-only). WebKit installé, 6 specs rendues viewport-aware
+(`navTo()` dans `e2e/fixtures.ts` : sidebar desktop / tab bar / sheet « Plus »),
++ 3 tests gestes tactiles (`demo-touch-gestures.spec.ts` : swipe droit,
+long-press, bottom-sheet) — couvre a-faire.md #4.

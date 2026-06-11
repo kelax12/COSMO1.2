@@ -32,11 +32,15 @@ const calculateStreak = (completedDates: string[]): number => {
   if (completedDates.length === 0) return 0;
 
   const sorted = [...completedDates].sort().reverse();
-  const today = new Date().toISOString().split('T')[0];
+  // Date LOCALE ('en-CA' → YYYY-MM-DD) — les complétions sont écrites avec la
+  // date locale côté UI (HabitCard/HabitTable/TodayHabits). toISOString() (UTC)
+  // décalait « aujourd'hui » d'un jour entre minuit et ~2h (France UTC+1/+2) :
+  // streak affiché à 0 juste après une complétion nocturne.
+  const today = new Date().toLocaleDateString('en-CA');
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = yesterday.toLocaleDateString('en-CA');
 
   if (sorted[0] !== today && sorted[0] !== yesterdayStr) {
     return 0;
@@ -55,14 +59,16 @@ const calculateStreak = (completedDates: string[]): number => {
 
 const calculateCompletionRate = (completedDates: string[], days: number): number => {
   if (days <= 0) return 0;
-  const now = new Date();
-  const startDate = new Date();
-  startDate.setDate(now.getDate() - days);
+  // Comparaison de chaînes YYYY-MM-DD locales — évite le mix UTC/local de
+  // l'ancien `new Date(date)` (parse UTC minuit) vs bornes locales.
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const start = new Date();
+  start.setDate(start.getDate() - (days - 1));
+  const startStr = start.toLocaleDateString('en-CA');
 
-  const recentCompletions = completedDates.filter((date) => {
-    const d = new Date(date);
-    return d >= startDate && d <= now;
-  });
+  const recentCompletions = completedDates.filter(
+    (date) => date >= startStr && date <= todayStr
+  );
 
   return Math.round((recentCompletions.length / days) * 100);
 };
@@ -114,7 +120,7 @@ export const useHabitStats = () => {
 
   const stats = useMemo(() => {
     const total = habits.length;
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
 
     const dateLists = habits.map((h) => completedDatesFromCompletions(h.completions));
 
@@ -167,7 +173,7 @@ export const useTodaysHabitStatus = () => {
   const { data: habits = [], ...rest } = useHabits();
 
   const status = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
     return habits.map((habit) => {
       const dates = completedDatesFromCompletions(habit.completions);
       return {

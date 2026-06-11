@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test, expect, navTo } from './fixtures';
 
 /**
  * Parcours approfondis (audit 9/10 phase 4) — vont au-delà des smoke tests :
@@ -20,14 +20,16 @@ import { test, expect } from './fixtures';
  */
 
 test('démo : compléter une tâche décrémente les tâches non cochées', async ({ demoPage: page }) => {
-  await page.getByRole('link', { name: /to ?do|tâches|tasks/i }).first().click();
-  await page.waitForURL(/\/tasks/);
+  await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
   await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 15_000 });
 
   const list = page.locator('[data-tutorial-id="tasks-list"]');
   await expect(list).toBeVisible({ timeout: 15_000 });
 
-  const unchecked = list.locator('[role="checkbox"][aria-checked="false"]');
+  // filter({ visible: true }) : desktop (table) et mobile (cards) coexistent
+  // dans le DOM, masqués par CSS responsive — sans le filtre, `.first()` peut
+  // résoudre une checkbox cachée et le compte inclut les doublons invisibles.
+  const unchecked = list.locator('[role="checkbox"][aria-checked="false"]').filter({ visible: true });
   await expect(unchecked.first()).toBeVisible({ timeout: 10_000 });
   const before = await unchecked.count();
   expect(before).toBeGreaterThan(0);
@@ -42,8 +44,7 @@ test('démo : compléter une tâche décrémente les tâches non cochées', asyn
 });
 
 test('démo : toggle d\'habitude PERSISTE à travers une navigation SPA', async ({ demoPage: page }) => {
-  await page.getByRole('link', { name: /habitudes|habits/i }).first().click();
-  await page.waitForURL(/\/habits/);
+  await navTo(page, /habitudes|habits/i, /\/habits/);
   // Compile à froid Vite : attendre le rendu avant de chercher le marqueur.
   await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 15_000 });
 
@@ -63,10 +64,8 @@ test('démo : toggle d\'habitude PERSISTE à travers une navigation SPA', async 
   const after = await checkedCount();
 
   // Aller-retour SPA : l'état doit survivre (repo localStorage démo).
-  await page.getByRole('link', { name: /accueil|dashboard|tableau/i }).first().click();
-  await page.waitForURL(/\/$|\/dashboard/);
-  await page.getByRole('link', { name: /habitudes|habits/i }).first().click();
-  await page.waitForURL(/\/habits/);
+  await navTo(page, /accueil|dashboard|tableau/i, /\/$|\/dashboard/);
+  await navTo(page, /habitudes|habits/i, /\/habits/);
 
   const mainAfter = page.getByRole('main');
   await expect(mainAfter.locator('[role="checkbox"]').first()).toBeVisible({ timeout: 15_000 });
@@ -78,8 +77,8 @@ test('démo : toggle d\'habitude PERSISTE à travers une navigation SPA', async 
 });
 
 test('démo : la page OKR rend la première carte avec sa progression', async ({ demoPage: page }) => {
-  await page.getByRole('link', { name: /okr/i }).first().click();
-  await page.waitForURL(/\/okr/);
+  // Viewport-aware : sur mobile, OKR est dans le sheet « Plus » de la tab bar
+  await navTo(page, /okr/i, /\/okr/);
 
   // Marqueur stable du tutoriel — première carte OKR rendue.
   const firstCard = page.locator('[data-tutorial-id="okr-first-card"]');

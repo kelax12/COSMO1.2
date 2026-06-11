@@ -1,6 +1,6 @@
 # À faire — bugs & points en suspens (mobile)
 
-> **Statut** : 1 bug majeur résolu · 4 points mineurs ouverts · **Origine** : refonte mobile page Tâches
+> **Statut** : 2 résolus (#1, #5) · 3 points mineurs ouverts (#2, #3, #4) · **Origine** : refonte mobile page Tâches
 > **Lié depuis CLAUDE.md** : oui (lignes 7 et 745, §Mobile-first). ⚠️ Ces lignes décrivent encore le
 > « panneau de couleur swipe TaskCard » comme **non résolu** — c'est **périmé** : le bug est corrigé (voir §Résolu).
 > Je ne modifie pas CLAUDE.md ; ce fichier reflète l'état réel.
@@ -10,30 +10,37 @@
 
 ## ⏳ Ouvert / actionnable
 
-### #5 — ESLint : variable `navigate` inutilisée (hors scope mobile, mais visible à chaque lint)
-- **Fichier** : `src/pages/MessagingPage.tsx:84` — `navigate` déclarée jamais utilisée.
-- **Action** : supprimer la variable, ou la préfixer `_navigate` (autorisé par ESLint).
-- **Critère** : `npm run lint` → 0 erreur.
-
 ### #4 — Aucun test E2E pour les interactions tactiles
 - **Symptôme** : swipe / long-press / bottom-sheet ne sont couverts par aucun test. La simulation via
   `preview_eval` ne reproduit pas fidèlement les `PointerEvent` attendus par Framer Motion (la card bouge
   visuellement via CSS transform mais `useMotionValue` ne se met pas à jour → `useTransform` ne fire pas).
 - **Piste** : Playwright `page.touchscreen.tap()` / `page.touchscreen.swipe()` pour valider les flows critiques.
 
+---
+
+## 🚧 Limitations connues (non corrigeables en web)
+
 ### #2 — Pas de feedback haptique de fin de swipe sur Safari iOS
 - `navigator.vibrate()` n'est **pas supporté** sur Safari iOS (uniquement Android Chrome / Edge / Firefox).
-  Aucune alternative web standard.
+  Aucune alternative web standard — ce n'est pas un bug corrigeable, c'est une limitation plateforme.
 - **Piste roadmap** : si portage Capacitor, utiliser `Haptics.impact({ style: ImpactStyle.Light })`.
-
-### #3 — Long-press desktop (souris) à re-vérifier
-- Le long-press passe par `onPointerDown` + `setTimeout`, donc fonctionne aussi à la souris desktop.
-  Le clic-droit (`oncontextmenu`) est désactivé via `e.preventDefault()` pour ne pas bloquer le menu natif.
-- **Action** : tester sur trackpad / souris qu'aucune régression UX desktop n'apparaît.
+- Le code actuel garde le `navigator.vibrate(15)` derrière un guard `if (navigator.vibrate)` —
+  no-op propre sur iOS, haptique active sur Android.
 
 ---
 
 ## ✅ Résolu
+
+### #3 — Long-press desktop (souris) — vérifié, pas de régression possible
+Vérifié par revue de code le 2026-06-11 (`src/components/task-table/list.tsx`) :
+- La TaskCard swipeable est **mobile-only** (`md:hidden`) ; le desktop rend la `<table>`
+  (`hidden md:block`) qui n'a **aucun** handler long-press → aucune surface de régression desktop.
+- `startLongPress` ignore tout bouton souris ≠ gauche (`e.pointerType === 'mouse' && e.button !== 0`).
+- `onContextMenu preventDefault` ne s'applique qu'à la card mobile, jamais à la table.
+- Les parcours desktop sont couverts par les E2E chromium (12/12).
+
+### #5 — ESLint : variable `navigate` inutilisée (MessagingPage)
+Obsolète : `src/pages/MessagingPage.tsx` n'existe plus dans le repo. `npm run lint` → 0 erreur (vérifié 2026-06-11).
 
 ### #1 — Panneaux de couleur swipe TaskCard ne s'affichaient pas
 **Localisation** : `src/components/TaskTable.tsx → TaskCard`.

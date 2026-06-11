@@ -109,8 +109,10 @@ export const TaskCardMobileShowcase: React.FC = () => {
             animate={{ scale: [1, 1.2, 1], color: ['#94a3b8', '#3b82f6', '#94a3b8'] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
             className="self-center p-1.5 rounded-lg"
+            aria-label="Plus d'options (démonstration)"
+            tabIndex={-1}
           >
-            <MoreHorizontal size={16} />
+            <MoreHorizontal size={16} aria-hidden="true" />
           </motion.button>
         </div>
       </div>

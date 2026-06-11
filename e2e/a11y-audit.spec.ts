@@ -12,7 +12,7 @@
 // page sans landmark…) casse la CI au lieu de partir en prod.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect } from './fixtures';
+import { test, expect, navTo } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import type { Result } from 'axe-core';
@@ -85,8 +85,7 @@ test.describe('a11y audit', () => {
   // SPA navigation only — `goto()` reloads, which resets the in-memory
   // demo flag and bounces back to Landing (false negatives in audit).
   test('Tasks (demo)', async ({ demoPage }) => {
-    await demoPage.getByRole('link', { name: /to ?do|tâches|tasks/i }).first().click();
-    await demoPage.waitForURL(/\/tasks/);
+    await navTo(demoPage, /to ?do|tâches|tasks/i, /\/tasks/);
     await demoPage.waitForLoadState('networkidle');
     const violations = await scan(demoPage, 'tasks');
     console.log(`[a11y] Tasks: ${violations.length} violation(s)`);
@@ -94,8 +93,7 @@ test.describe('a11y audit', () => {
   });
 
   test('Habits (demo)', async ({ demoPage }) => {
-    await demoPage.getByRole('link', { name: /habitudes|habits/i }).first().click();
-    await demoPage.waitForURL(/\/habits/);
+    await navTo(demoPage, /habitudes|habits/i, /\/habits/);
     await demoPage.waitForLoadState('networkidle');
     const violations = await scan(demoPage, 'habits');
     console.log(`[a11y] Habits: ${violations.length} violation(s)`);
@@ -103,8 +101,8 @@ test.describe('a11y audit', () => {
   });
 
   test('OKR (demo)', async ({ demoPage }) => {
-    await demoPage.getByRole('link', { name: /okr/i }).first().click();
-    await demoPage.waitForURL(/\/okr/);
+    // Viewport-aware : sur mobile, OKR est dans le sheet « Plus » de la tab bar
+    await navTo(demoPage, /okr/i, /\/okr/);
     await demoPage.waitForLoadState('networkidle');
     const violations = await scan(demoPage, 'okr');
     console.log(`[a11y] OKR: ${violations.length} violation(s)`);

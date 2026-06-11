@@ -4,11 +4,13 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagi
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
-// Helper pour générer des dates
+// Helper pour générer des dates — date LOCALE (en-CA → YYYY-MM-DD), même
+// convention que l'UI (HabitCard/HabitTable keyent les complétions en local) ;
+// toISOString (UTC) décalait les seeds d'un jour entre minuit et ~2h.
 const getDateString = (daysFromNow: number = 0): string => {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
-  return date.toISOString().split('T')[0];
+  return date.toLocaleDateString('en-CA');
 };
 
 // Génère un historique de complétion déterministe sur toute une période
