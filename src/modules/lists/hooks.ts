@@ -24,6 +24,7 @@ export const useLists = () => {
   return useQuery({
     queryKey: listKeys.lists(),
     queryFn: () => repository.getAll(),
+    staleTime: 1000 * 60 * 10, // 10 minutes — changent rarement, mutations invalident le cache
   });
 };
 
@@ -33,6 +34,7 @@ export const useList = (id: string) => {
     queryKey: listKeys.detail(id),
     queryFn: () => repository.getById(id),
     enabled: !!id,
+    staleTime: 1000 * 60 * 10, // 10 minutes — changent rarement, mutations invalident le cache
   });
 };
 

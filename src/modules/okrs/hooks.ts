@@ -55,6 +55,7 @@ export const useOkrs = (options?: { enabled?: boolean }) => {
     queryKey: okrsKeys.lists(),
     queryFn: () => repository.getAll(),
     enabled: options?.enabled ?? true,
+    staleTime: 1000 * 60 * 5, // 5 minutes explicite — les mutations invalident déjà le cache
   });
 };
 
