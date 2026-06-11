@@ -32,6 +32,7 @@ export const useFriends = () => {
     // Calls `getAll()` (was wrongly `getFriends()` which is private on the
     // local repo and absent on the Supabase repo → silent break in prod). B3.
     queryFn: () => repository.getAll(),
+    staleTime: 1000 * 60 * 10, // 10 minutes — liste d'amis stable, mutations invalident le cache
   });
 };
 
@@ -41,6 +42,7 @@ export const useFriendRequests = () => {
     queryKey: friendKeys.requests(),
     queryFn: () => repository.getPendingRequests(),
     refetchInterval: 15000, // polling toutes les 15s pour recevoir les demandes en temps réel
+    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (notifications)
   });
 };
 
@@ -50,6 +52,7 @@ export const useSentFriendRequests = () => {
     queryKey: friendKeys.sentRequests(),
     queryFn: () => repository.getSentRequests(),
     refetchInterval: 15000,
+    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (notifications)
   });
 };
 
@@ -63,6 +66,7 @@ export const useTaskShares = (taskId: string | undefined) => {
     queryKey: friendKeys.taskShares(taskId ?? ''),
     queryFn: () => repository.getTaskShares(taskId as string),
     enabled: !!taskId,
+    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (partages)
   });
 };
 
@@ -71,6 +75,7 @@ export const useMyTaskShares = () => {
   return useQuery({
     queryKey: friendKeys.myTaskShares(),
     queryFn: () => repository.getMyTaskShares(),
+    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (partages)
   });
 };
 
