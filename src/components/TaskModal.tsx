@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import PremiumGateModal from './PremiumGateModal';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { toast } from 'sonner';
@@ -34,7 +33,6 @@ import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask,
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
 // ═══════════════════════════════════════════════════════════════════
-import { useBilling } from '@/modules/billing/billing.context';
 import { useAuth } from '@/modules/auth/AuthContext';
 
 // Corps mobile full-screen extrait (cf. task-modal/TaskModalMobileBody.tsx).
@@ -131,9 +129,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
     return [...ids];
   }, [isTaskOwner, existingCollaboratorIds, existingShareIds, task?.userId, user?.id]);
 
-  // Premium — vérification côté serveur
-  const { isPremium } = useBilling();
-  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   // Marqueur visuel (shake + bordure rouge) des champs requis non remplis
   // au clic sur un bouton de validation non validable (desktop).
@@ -311,14 +306,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       if (!friend) return;
       promotedNames.push(friend.name);
       // Le partage réel = ligne shared_tasks. Plus de colonne `collaborators`.
-      if (isPremium()) {
-        shareTaskMutation.mutate({
-          taskId: task.id,
-          friendId: friend.userId ?? friend.id,
-          friendEmail: friend.email,
-          role: 'editor'
-        });
-      }
+      shareTaskMutation.mutate({
+        taskId: task.id,
+        friendId: friend.userId ?? friend.id,
+        friendEmail: friend.email,
+        role: 'editor'
+      });
     });
 
     const newPendingEmails = new Set(toPromote.map(e => e.toLowerCase()));
@@ -413,7 +406,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
           // Le partage réel passe par shared_tasks (plus de colonne
           // `collaborators`). On ignore les invitations email en attente —
           // elles vivent dans pendingInvites jusqu'à acceptation.
-          if (isPremium() && newTask) {
+          if (newTask) {
             collaborators.forEach((userId) => {
               if (pendingInvitesLocal.includes(userId)) return;
               const friend = friends.find(
@@ -474,25 +467,23 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             if (isTaskOwner) {
               // Additions: nouveaux collaborateurs sélectionnés non encore
               // partagés (et qui ne sont pas des invitations email en attente).
-              if (isPremium()) {
-                collaborators.forEach(userId => {
-                  if (pendingInvitesLocal.includes(userId)) return;
-                  if (!existingShareIds.includes(userId)) {
-                    // Find the friend's email so shareTask can resolve the
-                    // canonical auth.uid via profiles, even when userId is
-                    // actually a friends-table row id (no profile lookup yet).
-                    const friend = friends.find(
-                      f => (f.userId ?? f.id) === userId || f.id === userId
-                    );
-                    shareTaskMutation.mutate({
-                      taskId: task.id,
-                      friendId: userId,
-                      friendEmail: friend?.email,
-                      role: 'editor'
-                    });
-                  }
-                });
-              }
+              collaborators.forEach(userId => {
+                if (pendingInvitesLocal.includes(userId)) return;
+                if (!existingShareIds.includes(userId)) {
+                  // Find the friend's email so shareTask can resolve the
+                  // canonical auth.uid via profiles, even when userId is
+                  // actually a friends-table row id (no profile lookup yet).
+                  const friend = friends.find(
+                    f => (f.userId ?? f.id) === userId || f.id === userId
+                  );
+                  shareTaskMutation.mutate({
+                    taskId: task.id,
+                    friendId: userId,
+                    friendEmail: friend?.email,
+                    role: 'editor'
+                  });
+                }
+              });
 
               // Removals: grants shared_tasks dé-sélectionnés → on retire le
               // partage (pas de gate premium pour retirer).
@@ -620,7 +611,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
       <DialogContent
         showCloseButton={false}
         variant={isMobile ? 'bottom-sheet' : 'default'}
-        className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94vh] max-h-[94vh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
+        className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94dvh] max-h-[94dvh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-[1120px] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
           {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
@@ -647,8 +638,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             handleRemoveCollaborator={handleRemoveCollaborator}
             toggleCollaborator={toggleCollaborator}
             createCategoryMutation={createCategoryMutation}
-            isPremium={isPremium}
-            setShowPremiumGate={setShowPremiumGate}
             handleSave={handleSave}
             handleClose={handleClose}
             handleDelete={handleDelete}
@@ -694,8 +683,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             handleClose={handleClose}
             handleSave={handleSave}
             handleDelete={handleDelete}
-            isPremium={isPremium}
-            setShowPremiumGate={setShowPremiumGate}
             isTaskOwner={isTaskOwner}
             task={task}
             collaborators={collaborators}
@@ -731,12 +718,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating
             />
           </DialogContent>
         </Dialog>
-
-        <PremiumGateModal
-          isOpen={showPremiumGate}
-          onClose={() => setShowPremiumGate(false)}
-          featureName="la collaboration"
-        />
     </>
     );
   };

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PremiumGateModal from './PremiumGateModal';
 import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, List, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import {
@@ -30,10 +29,6 @@ import { useLists, useAddTaskToList } from '@/modules/lists';
 
 import { useFriends, useShareTask } from '@/modules/friends';
 
-// ═══════════════════════════════════════════════════════════════════
-// BillingContext — vérification premium côté serveur
-// ═══════════════════════════════════════════════════════════════════
-import { useBilling } from '@/modules/billing/billing.context';
 import { computeAddTaskErrors, isAddTaskFormValid } from '@/components/AddTaskForm.validation';
 
 type AddTaskFormProps = {
@@ -70,9 +65,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const { data: friends = [] } = useFriends();
   const shareTaskMutation = useShareTask();
 
-  // Premium — vérification côté serveur
-  const { isPremium } = useBilling();
-  const [showPremiumGate, setShowPremiumGate] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(expanded);
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -234,10 +226,10 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
           addTaskToListMutation.mutate({ taskId: newTask.id, listId });
         });
         
-        // Partager avec les collaborateurs si Premium. Passe l'email pour
+        // Partager avec les collaborateurs (gratuit). Passe l'email pour
         // que shareTask puisse résoudre le auth.uid canonique via profiles,
         // même si `userId` est en réalité le friend.id (pas le auth.uid).
-        if (collaborators.length > 0 && isPremium()) {
+        if (collaborators.length > 0) {
           collaborators.forEach((userId) => {
             const friend = friends?.find(f => (f.userId ?? f.id) === userId || f.id === userId);
             shareTaskMutation.mutate({
@@ -268,7 +260,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
   return (
     <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
-      <DialogContent showCloseButton={false} className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-4xl lg:max-w-5xl w-full h-[94vh] max-h-[94vh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-4xl lg:max-w-5xl w-full h-[94dvh] max-h-[94dvh] sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col">
         <div
           className="flex flex-col h-full w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
@@ -612,16 +604,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
                       {showCollaboratorSection && (
                         <div className="rounded-lg p-4 border transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
-                          {!isPremium() ? (
-                            <div className="text-center py-6">
-                              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <Users size={24} className="text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Fonctionnalité Premium requise</p>
-                              <button type="button" onClick={() => setShowPremiumGate(true)} className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full transition-colors">Débloquer Premium</button>
-                            </div>
-                          ) : (
-                            <>
+                          <>
                               {/* Input unique : filtre les amis ET permet d'ajouter par email/identifiant */}
                               <div className="mb-4">
                                 <div className="flex gap-2">
@@ -668,8 +651,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                                   </div>
                                 </div>
                               )}
-                            </>
-                          )}
+                          </>
                         </div>
                       )}
                     </div>
@@ -739,12 +721,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
       <ColorSettingsModal
         isOpen={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
-      />
-
-      <PremiumGateModal
-        isOpen={showPremiumGate}
-        onClose={() => setShowPremiumGate(false)}
-        featureName="la collaboration"
       />
 
     </Dialog>

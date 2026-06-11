@@ -69,8 +69,6 @@ export interface DesktopBodyProps {
   handleClose: () => void;
   handleSave: () => void;
   handleDelete: () => void;
-  isPremium: () => boolean;
-  setShowPremiumGate: React.Dispatch<React.SetStateAction<boolean>>;
   isTaskOwner: boolean;
   task?: Task;
   collaborators: string[];
@@ -104,7 +102,6 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   lists, selectedListIds, setSelectedListIds, createListMutation,
   isLoading, isCreating,
   handleClose, handleSave, handleDelete,
-  isPremium, setShowPremiumGate,
   isTaskOwner, task,
   collaborators, displayInfo, pendingShareIds, handleRemoveCollaborator,
   emailInput, setEmailInput, inputError, setInputError, handleAddEmail,
@@ -718,8 +715,6 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 {step === 2 && (
                   <DesktopCollaboratorsStep
                     collaboratorRef={collaboratorRef}
-                    isPremium={isPremium}
-                    setShowPremiumGate={setShowPremiumGate}
                     isTaskOwner={isTaskOwner}
                     task={task}
                     collaborators={collaborators}

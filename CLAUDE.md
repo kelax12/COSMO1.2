@@ -2,7 +2,7 @@
 
 Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute modification.
 
-> **Avant un déploiement** : consulter [`faille.md`](./faille.md) — répertorie les failles de sécurité et bugs bloquants identifiés (Stripe à finaliser, secrets à rotater, RLS à durcir).
+> **Avant un déploiement** : consulter [`faille.md`](./faille.md) — répertorie les failles de sécurité et bugs bloquants identifiés. **Aucun bloquant technique restant.** `APP_URL` configuré + vérifié sur les 2 Edge Functions (2026-06-11). Stripe à finaliser si activé. (§1 « secrets git » CLOS : la fuite concerne un projet Supabase supprimé, pas la prod — vérifié 2026-06-11.)
 >
 > **Source de vérité sécurité = `faille.md`.** CLAUDE.md ne duplique PAS les statuts de failles ; en cas de divergence entre les deux fichiers, `faille.md` fait foi (l'audit 2026-06-10 a trouvé une contradiction sur §2 — corrigée, ne pas la réintroduire).
 >
@@ -249,6 +249,15 @@ const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
 > `useBilling()` doit être utilisé uniquement à l'intérieur de `BillingProvider`.
 
 > ✅ Depuis la migration `015_subscriptions_rpc.sql`, le client ne peut PLUS écrire `subscriptions` directement (policy UPDATE supprimée). `addTokens(1)` passe par la RPC `credit_premium_token_from_ad` (SECURITY DEFINER, cap 20 crédits/24 h — mig. 039) ; tout autre montant est rejeté côté client ET côté DB. La migration `041_subscriptions_insert_lockdown.sql` verrouille aussi l'INSERT d'amorçage (plan `free`, zéro token uniquement — fiche N14). Limite résiduelle assumée : AdSense sans Server-Side Verification (voir commentaire mig. 039).
+
+#### Modèle Premium (refonte 2026-06-11)
+
+- **Partage de tâches → 100 % gratuit** (canal d'acquisition viral). Aucun gate `isPremium()` sur la collaboration : ni création/édition (`AddTaskForm`, `TaskModal`, `CollaboratorModal`, `DesktopCollaboratorsStep`, `TaskModalMobileBody`), ni la liste (`CollaborativeTasks`), ni **l'acceptation** d'une tâche reçue (`InboxMenu`). La sécurité reste la RLS `shared_tasks` + lien d'amitié/pending. **Ne PAS réintroduire** ces gates.
+- **Statistiques → restent premium** (`StatisticsPage`, gate `isPremium()` inchangé).
+- **Habitudes → mur-pub quotidien** : `HabitsPage` monte `<HabitsAdGate>` (cf. `src/components/HabitsAdGate.tsx`) pour les non-abonnés une fois par jour. Regarder la pub → `addTokens(1)` + pose le flag du jour. Fermer sans regarder → `navigate('/')`.
+- ⚠️ **Le mur est piloté par un flag localStorage daté** (`useDailyAdGate('habits')` → clé `cosmo_adwall_habits`, format `en-CA`), **PAS** par `isPremium()`. Raison : `consume_premium_token` n'est **pas câblé** côté client (`incrementTokenUsage` est un no-op) → un token gagné ne se périme jamais, donc un mur basé sur `isPremium()` ne s'afficherait qu'une fois. Dette connue assumée ; ne pas brancher la consommation sans repenser l'impact sur les abonnés payants (leur premium dépend aussi de `tokens > 0`).
+- **Abonnés payants** (Stripe → `subscription.current_period_end` futur) et **mode démo** (`isDemo`) ne voient JAMAIS le mur. `current_period_end` est le seul marqueur fiable du payant (la mig. 039 met `plan='premium'` même sur crédit pub).
+- Conséquence assumée : la pub crédite un token permanent → un gratuit débloque aussi les stats après sa 1re pub. Le vrai différenciateur payant est « sans pub ». Pour des stats strictement payantes : ne pas appeler `addTokens` dans `HabitsAdGate`.
 
 ### UI States — couleurs et filtres
 ```typescript

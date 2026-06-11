@@ -8,14 +8,14 @@
 // Sections : gate premium → vue destinataire lecture seule → sélectionnés →
 // input recherche/ajout → grille d'amis → demandes d'amis pending (mig. 036).
 import React from 'react';
-import { X, Users, Search, UserPlus, Clock, Plus, Check } from 'lucide-react';
+import { X, Search, UserPlus, Clock, Plus, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import type { DesktopBodyProps } from './TaskModalDesktopBody';
 
 export type DesktopCollaboratorsStepProps = Pick<DesktopBodyProps,
-  | 'collaboratorRef' | 'isPremium' | 'setShowPremiumGate' | 'isTaskOwner' | 'task'
+  | 'collaboratorRef' | 'isTaskOwner' | 'task'
   | 'collaborators' | 'displayInfo' | 'pendingShareIds' | 'handleRemoveCollaborator'
   | 'emailInput' | 'setEmailInput' | 'inputError' | 'setInputError' | 'handleAddEmail'
   | 'filteredFriends' | 'collabIdOf' | 'toggleCollaborator'
@@ -23,7 +23,7 @@ export type DesktopCollaboratorsStepProps = Pick<DesktopBodyProps,
 >;
 
 const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
-  collaboratorRef, isPremium, setShowPremiumGate, isTaskOwner, task,
+  collaboratorRef, isTaskOwner, task,
   collaborators, displayInfo, pendingShareIds, handleRemoveCollaborator,
   emailInput, setEmailInput, inputError, setInputError, handleAddEmail,
   filteredFriends, collabIdOf, toggleCollaborator,
@@ -41,19 +41,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                       </div>
 
                       <div ref={collaboratorRef}>
-                        {!isPremium() ? (
-                          <div className="text-center py-6">
-                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-                              <Users size={24} className="text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <p className="text-sm mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                              Fonctionnalité Premium requise
-                            </p>
-                            <Button type="button" size="sm" onClick={() => setShowPremiumGate(true)} className="bg-blue-600 hover:bg-blue-500 text-white border-0">
-                              Débloquer Premium
-                            </Button>
-                          </div>
-                        ) : !isTaskOwner ? (
+                        {!isTaskOwner ? (
                           /* Vue destinataire : participants en lecture seule.
                              Seul le propriétaire gère les collaborateurs. */
                           <div className="space-y-3">

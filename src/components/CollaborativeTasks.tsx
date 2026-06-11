@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, UserPlus, Check, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import TaskModal from './TaskModal';
@@ -20,7 +19,6 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useBilling } from '@/modules/billing/billing.context';
 import { useFriends, useSharesByTask } from '@/modules/friends';
 
 const CollaborativeTasks: React.FC = () => {
@@ -38,9 +36,7 @@ const CollaborativeTasks: React.FC = () => {
   const { data: categories = [] } = useCategories();
 
   const { user } = useAuth();
-  const { isPremium } = useBilling();
   const { data: friends = [] } = useFriends();
-  const navigate = useNavigate();
 
   // shared_tasks = source de vérité du partage (colonne `tasks.collaborators`
   // supprimée — migration 028). Map taskId -> friendIds pour compteurs/avatars.
@@ -70,7 +66,6 @@ const CollaborativeTasks: React.FC = () => {
     deleteMutation.mutate(taskToDelete, { onSuccess: () => setTaskToDelete(null) });
   };
 
-  const premium = isPremium();
   // Exclude tasks assigned by others that haven't been accepted yet (still pending in SocialRequests)
   const collaborativeTasks = tasks.filter(task =>
     task.isCollaborative && (!task.sharedBy || task.sharedBy === user?.name)
@@ -88,70 +83,6 @@ const CollaborativeTasks: React.FC = () => {
           {[1, 2, 3].map(i => (
             <div key={i} className="h-20 bg-[rgb(var(--color-border))] rounded-xl"></div>
           ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!premium) {
-    const dummyTasks = [
-      { id: '1', name: 'Refonte site web — Sprint 2', collaborators: ['Alice', 'Bob'], color: '#3B82F6' },
-      { id: '2', name: 'Préparer la présentation client', collaborators: ['Charlie'], color: '#10B981' },
-      { id: '3', name: 'Revue des performances Q2', collaborators: ['Alice', 'Bob', 'Charlie'], color: '#8B5CF6' },
-    ];
-    return (
-      <div className="relative p-8 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden">
-        {/* Preview content — blurred */}
-        <div className="select-none pointer-events-none blur-[3px] opacity-60">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Tâches collaboratives</h2>
-              <p className="text-[rgb(var(--color-text-secondary))] text-sm">3 tâches partagées</p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-sm font-medium text-white bg-blue-600">
-              <UserPlus size={16} />
-              <span>Gérer</span>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {dummyTasks.map(t => (
-              <div
-                key={t.id}
-                className="p-4 rounded-2xl border"
-                style={{ backgroundColor: `${t.color}25`, borderColor: `${t.color}60` }}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-[rgb(var(--color-text-primary))]">{t.name}</h3>
-                    <div className="flex items-center gap-1.5 mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                      <Users size={14} />
-                      <span>{t.collaborators.length} collaborateur{t.collaborators.length > 1 ? 's' : ''}</span>
-                    </div>
-                  </div>
-                  <div className="flex -space-x-2">
-                    {t.collaborators.slice(0, 3).map((c, i) => (
-                      <div
-                        key={i}
-                        className="w-8 h-8 rounded-full bg-blue-500 border-2 border-[rgb(var(--color-surface))] flex items-center justify-center text-white text-xs font-bold"
-                      >
-                        {c[0]}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Premium overlay */}
-        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[3px] bg-[rgb(var(--color-surface))]/50 rounded-2xl z-10">
-          <button
-            onClick={() => navigate('/premium')}
-            className="px-6 py-3 rounded-xl font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 active:scale-[0.97] transition-all shadow-lg"
-          >
-            Débloquer Premium
-          </button>
         </div>
       </div>
     );

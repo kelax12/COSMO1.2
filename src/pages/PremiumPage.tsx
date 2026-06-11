@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Crown, Zap, Play, Check, Users, Sparkles, Loader2, X, Minus } from 'lucide-react';
+import { Crown, Zap, Play, Check, BarChart3, Sparkles, Loader2, X, Minus } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -64,9 +64,14 @@ export function PremiumPage() {
 
   const features = [
     {
-      icon: Users,
-      title: 'Collaboration',
-      description: 'Partagez vos tâches avec votre équipe',
+      icon: Sparkles,
+      title: 'Habitudes sans publicité',
+      description: 'Accédez à vos habitudes sans la pub quotidienne',
+    },
+    {
+      icon: BarChart3,
+      title: 'Statistiques avancées',
+      description: 'Analyses détaillées, heatmaps et tendances',
     },
   ];
 
@@ -118,7 +123,7 @@ export function PremiumPage() {
   };
 
   return (
-    <div className="p-4 sm:p-8 h-fit font-sans">
+    <div className="p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8 h-fit font-sans">
       <motion.div
         className="relative z-10 max-w-5xl mx-auto"
         variants={containerVariants}
@@ -441,7 +446,7 @@ export function PremiumPage() {
             Gratuit ou Premium ?
           </h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
-            Tout ce dont vous avez besoin reste gratuit. Premium débloque la collaboration et les analyses avancées.
+            Tout ce dont vous avez besoin reste gratuit, partage de tâches inclus. Premium retire la pub des habitudes et débloque les analyses avancées.
           </p>
 
           {(() => {
@@ -453,7 +458,8 @@ export function PremiumPage() {
               { label: 'Statistiques de base', free: true, pro: true },
               { label: 'Sync multi-appareils', free: true, pro: true },
               { label: 'Mode démo', free: true, pro: true },
-              { label: 'Collaboration & partage de tâches', free: false, pro: true },
+              { label: 'Collaboration & partage de tâches', free: true, pro: true },
+              { label: 'Habitudes sans pub quotidienne', free: false, pro: true },
               { label: 'Statistiques avancées', free: false, pro: true },
               { label: 'Sans publicité', free: false, pro: true },
               { label: 'Support prioritaire', free: false, pro: true },

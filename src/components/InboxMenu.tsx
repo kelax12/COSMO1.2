@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { Inbox, UserPlus, Check, X, User, Users, Send, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,7 +17,6 @@ import { useUnshareTask, useAcceptSharedTask, useRelatedTaskShares } from '@/mod
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useBilling } from '@/modules/billing/billing.context';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
 
@@ -32,13 +30,11 @@ import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shar
  * Une pastille de notification affiche le total d'éléments en attente
  * (demandes d'amis + tâches à accepter).
  *
- * Accepter une tâche partagée est une fonctionnalité Premium : un utilisateur
- * non-premium est redirigé vers `/premium` avec un message explicatif.
+ * Le partage de tâches est gratuit (canal d'acquisition) : accepter une tâche
+ * partagée n'est plus gated par le Premium.
  */
 const InboxMenu: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { isPremium } = useBilling();
 
   const queryClient = useQueryClient();
   const isDemo = useIsDemo();
@@ -149,13 +145,6 @@ const InboxMenu: React.FC = () => {
   };
 
   const handleAcceptTask = (task: Task) => {
-    // Le partage de tâches est réservé au Premium : on redirige sinon.
-    if (!isPremium()) {
-      setOpen(false);
-      toast.info('Le partage de tâches est une fonctionnalité Premium.');
-      navigate('/premium');
-      return;
-    }
     // Accepter : l'accès est déjà accordé via shared_tasks ; on persiste
     // l'acceptation (accepted_at) pour que le PROPRIÉTAIRE voie « accepté » au
     // lieu de « Envoyé ». La tâche reste dans la to-do, sort de la boîte.
