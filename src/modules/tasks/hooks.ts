@@ -105,7 +105,9 @@ export const useFilteredTasks = (filters: TaskFilters, options?: { enabled?: boo
  * Get today's tasks
  */
 export const useTodaysTasks = () => {
-  const today = new Date().toISOString().split('T')[0];
+  // Date locale (en-CA → YYYY-MM-DD), pas toISOString (UTC) — sinon le jour
+  // courant est décalé entre minuit et ~2h en France (UTC+1/+2).
+  const today = new Date().toLocaleDateString('en-CA');
   return useTasksByDate(today);
 };
 

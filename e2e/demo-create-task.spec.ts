@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test, expect, navTo } from './fixtures';
 
 /**
  * Parcours critique #1 : login démo → naviguer vers Tasks → ouvrir le
@@ -12,17 +12,17 @@ import { test, expect } from './fixtures';
  * formulaire qui ne s'affiche pas, etc.).
  */
 test('démo : ouvrir le formulaire de création de tâche', async ({ demoPage: page }) => {
-  // Navigation SPA via la sidebar desktop
-  await page.getByRole('link', { name: /to ?do|tâches|tasks/i }).first().click();
-  await page.waitForURL(/\/tasks/);
+  // Navigation SPA viewport-aware (sidebar desktop ou tab bar mobile)
+  await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
 
   // Attendre que la page Tasks soit interactive
   await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
 
-  // Cliquer le bouton de création (FAB ou bouton header)
+  // Cliquer le bouton de création (FAB mobile ou bouton header desktop) —
+  // filter({ visible: true }) car les deux coexistent dans le DOM (CSS responsive).
   const fab = page.locator(
     'button[aria-label*="jouter une tâche" i], button[aria-label*="ouvelle tâche" i], button:has-text("Nouvelle tâche")'
-  ).first();
+  ).filter({ visible: true }).first();
   await fab.click({ timeout: 10_000 });
 
   // Le dialog "Créer une nouvelle tâche" doit s'ouvrir

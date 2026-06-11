@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test, expect, navTo } from './fixtures';
 
 /**
  * Parcours critique #3 : login démo → naviguer vers OKR (SPA).
@@ -7,8 +7,9 @@ import { test, expect } from './fixtures';
  * objectif (seed démo) ou un bouton de création doit être visible.
  */
 test('démo : naviguer vers OKR affiche la page', async ({ demoPage: page }) => {
-  await page.getByRole('link', { name: /^okr$/i }).first().click();
-  await page.waitForURL(/\/okr/);
+  // Viewport-aware : sur mobile, OKR est dans le sheet « Plus » de la tab bar
+  // (item <button> dont le nom accessible inclut la description — pas de ^$).
+  await navTo(page, /okr/i, /\/okr/);
 
   // H1 ou bouton de création visible
   await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });

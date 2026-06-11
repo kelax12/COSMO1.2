@@ -126,9 +126,12 @@ const EventModal: React.FC<EventModalProps> = ({
       const start = new Date(event.start);
       const end = new Date(event.end);
 
-      setStartDate(start.toISOString().split("T")[0]);
+      // Date LOCALE (en-CA) — l'heure vient de toTimeString() (locale) : mixer
+      // avec une date UTC décalait l'événement d'un jour à la sauvegarde
+      // quand date UTC ≠ date locale (ex. event à 00h30 en France).
+      setStartDate(start.toLocaleDateString("en-CA"));
       setStartTime(start.toTimeString().slice(0, 5));
-      setEndDate(end.toISOString().split("T")[0]);
+      setEndDate(end.toLocaleDateString("en-CA"));
       setEndTime(end.toTimeString().slice(0, 5));
     } else if (mode === 'add' && task) {
       setRecurrence('none');
@@ -139,9 +142,9 @@ const EventModal: React.FC<EventModalProps> = ({
       if (prefilledTimeSlot) {
         const start = new Date(prefilledTimeSlot.start);
         const end = new Date(prefilledTimeSlot.end);
-        setStartDate(start.toISOString().split("T")[0]);
+        setStartDate(start.toLocaleDateString("en-CA"));
         setStartTime(start.toTimeString().slice(0, 5));
-        setEndDate(end.toISOString().split("T")[0]);
+        setEndDate(end.toLocaleDateString("en-CA"));
         setEndTime(end.toTimeString().slice(0, 5));
         if (task.description) {
           setNotes(task.description || "");
@@ -153,7 +156,7 @@ const EventModal: React.FC<EventModalProps> = ({
         prefilled.add("endTime");
       } else if (task.id !== "") {
         const now = new Date();
-        const todayStr = now.toISOString().split("T")[0];
+        const todayStr = now.toLocaleDateString("en-CA");
         setStartDate(todayStr);
         setEndDate(todayStr);
 
@@ -168,7 +171,7 @@ const EventModal: React.FC<EventModalProps> = ({
           const startTimeDate = new Date(`${todayStr}T${defaultStart}`);
           const endTimeDate = new Date(startTimeDate.getTime() + task.estimatedTime * 60000);
           setEndTime(endTimeDate.toTimeString().slice(0, 5));
-          setEndDate(endTimeDate.toISOString().split("T")[0]);
+          setEndDate(endTimeDate.toLocaleDateString("en-CA"));
           prefilled.add("endTime");
           prefilled.add("endDate");
           prefilled.add("startTime");
@@ -197,7 +200,7 @@ const EventModal: React.FC<EventModalProps> = ({
       // valeurs par défaut sensées. Sans ça, les sélecteurs d'heure restaient
       // vides et la conversion échouait silencieusement (date/heure manquantes).
       const now = new Date();
-      const todayStr = now.toISOString().split("T")[0];
+      const todayStr = now.toLocaleDateString("en-CA");
       setStartDate(todayStr);
       setEndDate(todayStr);
 
@@ -207,7 +210,7 @@ const EventModal: React.FC<EventModalProps> = ({
       const durationMin = task.estimatedTime && task.estimatedTime > 0 ? task.estimatedTime : 60;
       const endTimeDate = new Date(startTimeDate.getTime() + durationMin * 60000);
       setEndTime(endTimeDate.toTimeString().slice(0, 5));
-      setEndDate(endTimeDate.toISOString().split("T")[0]);
+      setEndDate(endTimeDate.toLocaleDateString("en-CA"));
 
       if (task.category) {
         const categoryColor = categories.find((cat) => cat.id === task.category)?.color;

@@ -19,7 +19,7 @@ const MentionsLegalesPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <button
           onClick={() => navigate('/')}

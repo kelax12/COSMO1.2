@@ -57,6 +57,9 @@ export const test = base.extend<{ demoPage: Page }>({
           // Ancien flag (rétro-compat avec versions précédentes)
           localStorage.setItem(`cosmo_tutorial_seen_${page}`, '1');
         }
+        // Neutralise le wiggle d'invite au swipe de la 1ʳᵉ TaskCard mobile
+        // (animation x de 1,7 s qui rendrait les tests de gestes flaky).
+        localStorage.setItem('cosmo_swipe_hint_anim_seen', '1');
       } catch { /* ignore */ }
     });
 
@@ -73,3 +76,35 @@ export const test = base.extend<{ demoPage: Page }>({
 });
 
 export { expect };
+
+/**
+ * Navigation SPA viewport-aware : clique le lien VISIBLE (sidebar desktop ou
+ * tab bar mobile). `.first()` seul peut résoudre un lien caché par le CSS
+ * responsive (sidebar `hidden` sur mobile) → timeout. Sur mobile, les sections
+ * absentes de la tab bar (OKR, Statistiques…) vivent dans le sheet « Plus » —
+ * on l'ouvre d'abord. Jamais de page.goto() (full reload = perte du mode démo).
+ */
+export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promise<void> {
+  const visibleLink = page.getByRole('link', { name }).filter({ visible: true }).first();
+  if (await visibleLink.isVisible().catch(() => false)) {
+    try {
+      await visibleLink.click({ timeout: 10_000 });
+    } catch {
+      // WebKit/Windows : les animations continues (curseur TextType, charts)
+      // font flapper le check « stable » de Playwright sur la tab bar fixe.
+      // Le lien est visible et cliquable — on force le dispatch.
+      await visibleLink.click({ force: true });
+    }
+  } else {
+    // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
+    // Les items du sheet sont des <button> (navigate()), pas des <a>.
+    await page.getByRole('button', { name: /plus d'options/i }).click();
+    const sheetItem = page
+      .getByRole('link', { name })
+      .or(page.getByRole('button', { name }))
+      .filter({ visible: true })
+      .first();
+    await sheetItem.click({ timeout: 5_000 });
+  }
+  await page.waitForURL(urlPattern);
+}
