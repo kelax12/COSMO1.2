@@ -44,8 +44,6 @@ export interface MobileBodyProps {
   handleRemoveCollaborator: (id: string) => void;
   toggleCollaborator: (id: string) => void;
   createCategoryMutation: ReturnType<typeof useCreateCategory>;
-  isPremium: () => boolean;
-  setShowPremiumGate: React.Dispatch<React.SetStateAction<boolean>>;
   handleSave: () => void;
   handleClose: () => void;
   handleDelete: () => void;
@@ -70,7 +68,6 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   friends: _friends, filteredFriends, sentRequests: _sentRequests, collabIdOf, displayInfo,
   handleAddEmail, handleRemoveCollaborator, toggleCollaborator,
   createCategoryMutation,
-  isPremium, setShowPremiumGate,
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
   taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds,
 }) => {
@@ -323,26 +320,15 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           {/* ── Section COLLABORATION ── */}
           <SectionTitle>Collaboration</SectionTitle>
           <SectionCard>
-            {!isPremium() ? (
-              <button
-                type="button"
-                onClick={() => setShowPremiumGate(true)}
-                className="w-full flex items-center justify-between px-4 min-h-11 active:bg-gray-100 dark:active:bg-gray-800"
-              >
-                <span className="text-[15px] text-gray-900 dark:text-gray-100">Collaborateurs</span>
-                <span className="text-[12px] font-semibold text-white bg-blue-500 rounded-full px-2 py-0.5">Premium</span>
-              </button>
-            ) : (
-              <Cell
-                label="Collaborateurs"
-                value={
-                  collaborators.length > 0
-                    ? <span className="text-blue-500">{collaborators.length}</span>
-                    : <span className="text-gray-400">0</span>
-                }
-                onTap={() => setShowCollabSheet(true)}
-              />
-            )}
+            <Cell
+              label="Collaborateurs"
+              value={
+                collaborators.length > 0
+                  ? <span className="text-blue-500">{collaborators.length}</span>
+                  : <span className="text-gray-400">0</span>
+              }
+              onTap={() => setShowCollabSheet(true)}
+            />
           </SectionCard>
 
           {/* ── Supprimer (édition uniquement) ── */}

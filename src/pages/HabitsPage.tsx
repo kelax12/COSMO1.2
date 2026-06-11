@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeading } from '@/components/ui/typography';
@@ -23,10 +24,15 @@ import { useTutorial } from '@/components/tutorial/useTutorial';
 import { habitsTutorialStepsDesktop } from '@/tutorials/habits.desktop';
 import { habitsTutorialStepsMobile } from '@/tutorials/habits.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useBilling } from '@/modules/billing/billing.context';
+import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
+import HabitsAdGate from '@/components/HabitsAdGate';
 
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
@@ -35,6 +41,19 @@ const HabitsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+
+  // ── Mur-pub quotidien ────────────────────────────────────────────────
+  // Habitudes = gratuites mais ad-supported : un non-abonné regarde 1 pub/jour.
+  // Les abonnés PAYANTS (Stripe → current_period_end) n'en voient jamais. La
+  // démo non plus. Le flag daté (useDailyAdGate) garantit la récurrence : il ne
+  // dépend PAS de isPremium() (qui ne se périme jamais côté client, cf. CLAUDE.md).
+  const { isDemo } = useAuth();
+  const { subscription, isLoading: billingLoading } = useBilling();
+  const { seenToday, markSeenToday } = useDailyAdGate('habits');
+  const isPaidSubscriber =
+    !!subscription?.current_period_end &&
+    new Date(subscription.current_period_end) >= new Date();
+  const showAdWall = !isDemo && !billingLoading && !isPaidSubscriber && !seenToday;
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
@@ -241,6 +260,11 @@ const HabitsPage: React.FC = () => {
         onClose={tutorial.close}
         accentColor="#EAB308"
       />
+
+      {/* Mur-pub quotidien (non-abonnés uniquement) */}
+      {showAdWall && (
+        <HabitsAdGate onUnlocked={markSeenToday} onDismiss={() => navigate('/')} />
+      )}
     </div>
   );
 };

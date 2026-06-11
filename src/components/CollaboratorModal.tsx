@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { X, Users, UserPlus, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button';
 
 import { useTasks, useUpdateTask } from '@/modules/tasks';
 import { useFriends, useSendFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
-import { useBilling } from '@/modules/billing/billing.context';
 
 type CollaboratorModalProps = {
   isOpen: boolean;
@@ -30,7 +28,6 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
   const sendFriendRequestMutation = useSendFriendRequest();
   const shareTaskMutation = useShareTask();
   const unshareTaskMutation = useUnshareTask();
-  const { isPremium } = useBilling();
 
   const task = tasks.find((t) => t.id === taskId);
   const isMobile = useIsMobile();
@@ -100,14 +97,8 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const handleAdd = async () => {
     if (!task) return;
-    // Le partage cross-user (shared_tasks → RLS du destinataire) est réservé
-    // au Premium. On bloque l'ajout AVANT d'écrire `collaborators`, sinon la
-    // tâche apparaît collaborative côté propriétaire mais n'est jamais visible
-    // pour le destinataire (cause n°1 du bug de partage).
-    if (!isPremium()) {
-      toast.error('Le partage de tâches est réservé aux membres Premium.');
-      return;
-    }
+    // Le partage de tâches est gratuit (canal d'acquisition). Le contrôle de
+    // sécurité reste la RLS Supabase (shared_tasks) + le lien d'amitié/pending.
     const value = input.trim().toLowerCase();
     if (!value) return;
 
@@ -187,11 +178,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         }
       });
     } else {
-      // Ajout = partage cross-user → réservé au Premium.
-      if (!isPremium()) {
-        toast.error('Le partage de tâches est réservé aux membres Premium.');
-        return;
-      }
+      // Ajout = partage cross-user (gratuit). Sécurité = RLS shared_tasks.
       const friend = friends.find((f) => collabIdOf(f) === collabId);
       updateTaskMutation.mutate({
         id: task.id,
