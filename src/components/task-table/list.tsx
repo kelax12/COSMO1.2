@@ -586,7 +586,7 @@ export const TaskRow = React.memo(({
   addToListMode,
   selectedForListIds,
   activeQuickFilter,
-  showCompleted: _showCompleted,
+  showCompleted,
   onSelectTask,
   onToggleTaskForList,
   onToggleComplete,
@@ -766,6 +766,12 @@ export const TaskRow = React.memo(({
                 <Trash2 size={16} />
               </button>
         </div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap text-base" style={{ color: 'rgb(var(--color-text-primary))' }}>
+        {showCompleted && task.completedAt
+          ? formatDate(task.completedAt)
+          : formatDate(task.createdAt)
+        }
       </td>
     </tr>
   );

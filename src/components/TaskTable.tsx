@@ -319,6 +319,16 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 )}
               </th>
               <th className="text-center px-1 py-3" style={{ width: '220px' }}>Actions</th>
+              <th
+                className="cursor-pointer px-2 py-3"
+                onClick={() => handleSort(showCompleted ? 'completedAt' : 'createdAt')}
+                style={{ width: '90px' }}
+              >
+                {showCompleted ? 'Réalisé' : 'Créé'}
+                {localSortField === (showCompleted ? 'completedAt' : 'createdAt') && (
+                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                )}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
