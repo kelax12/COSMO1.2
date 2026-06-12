@@ -11,7 +11,7 @@ import {
   useSpring,
   useMotionValueEvent,
 } from 'framer-motion';
-import { ArrowRight, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
 import AppWindowShowcase from '../components/showcase/AppWindowShowcase';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -263,23 +263,6 @@ const LandingPage: React.FC = () => {
 
             {/* ── Colonne gauche : copy ── */}
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-              {/* Badge d'annonce */}
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0, y: -12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="group mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-slate-300 backdrop-blur-md monochrome:border-white/30"
-              >
-                <span className="relative flex h-2 w-2">
-                  {!reduceMotion && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />}
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                </span>
-                <span className="font-medium text-white">100% gratuit</span>
-                <span className="text-slate-500" aria-hidden="true">·</span>
-                <span className="hidden sm:inline">sans carte bancaire, sans inscription</span>
-                <span className="sm:hidden">sans inscription</span>
-              </motion.div>
-
               <motion.h1
                 initial={reduceMotion ? false : { opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -305,7 +288,7 @@ const LandingPage: React.FC = () => {
                 initial={reduceMotion ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.35, duration: 0.8 }}
-                className="text-lg lg:text-xl text-slate-400 mb-8 max-w-xl leading-relaxed"
+                className="text-lg lg:text-xl text-slate-400 mb-12 lg:mb-16 max-w-xl leading-relaxed"
               >
                 Tâches, habitudes, agenda avec time-blocking et méthode OKR —
                 connectés dans un seul outil pensé pour vous faire avancer. Sans friction.
@@ -347,30 +330,6 @@ const LandingPage: React.FC = () => {
               >
                 Démo pré-remplie de 100 tâches · aucune installation · prêt en 1 clic
               </motion.p>
-
-              {/* Barre de social proof */}
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1, duration: 0.6 }}
-                className="mt-8 flex flex-col sm:flex-row items-center gap-3 sm:gap-4"
-              >
-                <div className="flex -space-x-2.5" aria-hidden="true">
-                  {['from-blue-400 to-blue-600', 'from-violet-400 to-violet-600', 'from-emerald-400 to-emerald-600', 'from-amber-400 to-amber-600', 'from-fuchsia-400 to-fuchsia-600'].map((g, i) => (
-                    <span key={i} className={`w-8 h-8 rounded-full bg-gradient-to-br ${g} ring-2 ring-slate-900`} />
-                  ))}
-                </div>
-                <div className="flex flex-col items-center sm:items-start">
-                  <div className="flex items-center gap-0.5" aria-hidden="true">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-xs text-slate-400">
-                    <span className="font-semibold text-slate-200">4,9/5</span> · rejoint par des milliers d'utilisateurs
-                  </span>
-                </div>
-              </motion.div>
             </div>
 
             {/* ── Colonne droite : mockup produit ── */}
