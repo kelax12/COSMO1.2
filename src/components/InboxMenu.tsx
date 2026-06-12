@@ -13,7 +13,7 @@ import {
   type PendingFriendRequest,
 } from '@/modules/friends';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
-import { useUnshareTask, useAcceptSharedTask, useRelatedTaskShares } from '@/modules/friends';
+import { useFriends, useUnshareTask, useAcceptSharedTask, useRelatedTaskShares } from '@/modules/friends';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -40,6 +40,7 @@ const InboxMenu: React.FC = () => {
   const isDemo = useIsDemo();
   const { data: requests = [] } = useFriendRequests();
   const { data: tasks = [] } = useTasks();
+  const { data: friends = [] } = useFriends();
   const { data: relatedShares = [] } = useRelatedTaskShares();
   const acceptFriendMutation = useAcceptFriendRequest();
   const rejectFriendMutation = useRejectFriendRequest();
@@ -97,6 +98,13 @@ const InboxMenu: React.FC = () => {
   }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const total = incomingRequests.length + tasksToAccept.length;
+
+  // Résout l'ami partageur d'une tâche reçue (pour son avatar/nom).
+  // Prod : la tâche appartient au partageur → `task.userId` = son auth.uid.
+  // Démo : on retombe sur le nom stocké (`task.sharedBy`).
+  const sharerOf = (task: Task): { name: string; avatar?: string } | undefined =>
+    (task.userId ? friends.find((f) => f.userId === task.userId) : undefined) ??
+    (task.sharedBy ? friends.find((f) => f.name === task.sharedBy) : undefined);
 
   // Mesure la position viewport du trigger → popover en position:fixed.
   useLayoutEffect(() => {
@@ -291,18 +299,31 @@ const InboxMenu: React.FC = () => {
               <Users size={12} aria-hidden="true" /> Tâches partagées ({tasksToAccept.length})
             </p>
             <div className="space-y-2">
-              {tasksToAccept.map((task) => (
+              {tasksToAccept.map((task) => {
+                const sharer = sharerOf(task);
+                const sharerAvatar = sharer?.avatar;
+                const sharerName = sharer?.name ?? task.sharedBy;
+                return (
                 <div
                   key={task.id}
                   className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 >
                   <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                      {isImageAvatar(sharerAvatar) ? (
+                        <img src={sharerAvatar} alt="" className="w-full h-full object-cover" />
+                      ) : isEmojiAvatar(sharerAvatar) ? (
+                        <span className="text-lg leading-none" aria-hidden="true">{sharerAvatar}</span>
+                      ) : (
+                        <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                         {task.name}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate inline-flex items-center gap-1">
-                        <Users size={11} aria-hidden="true" /> Reçu de {task.sharedBy}
+                        <Users size={11} aria-hidden="true" /> Reçu de {sharerName}
                       </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
@@ -324,7 +345,8 @@ const InboxMenu: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
