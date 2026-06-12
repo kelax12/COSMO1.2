@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, animate, useInView, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, animate, useInView } from 'framer-motion';
 import {
   LayoutDashboard, CheckCircle2, Calendar, Repeat, Target, BarChart3,
   Search, Bell, Plus, Flame, MousePointer2,
@@ -139,7 +139,6 @@ const INITIAL_DEMO: DemoState = {
 };
 
 const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = false }) => {
-  const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const inView = useInView(containerRef, { amount: 0.3 });
 
@@ -150,7 +149,12 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false, pressed: false, duration: 0.6 });
   const [clickTick, setClickTick] = useState(0);
 
-  const animating = inView && !reduceMotion;
+  // Démo produit = motion INFORMATIONNEL (elle explique ce que fait l'app).
+  // On l'anime même sous prefers-reduced-motion : c'est une demande explicite
+  // (« que l'user comprenne tout ») et les mouvements sont de faible amplitude,
+  // confinés au mockup — pas de parallax vestibulaire (celui-ci reste géré et
+  // gaté côté LandingPage). Seule condition : être visible à l'écran.
+  const animating = inView;
 
   useEffect(() => {
     if (!animating) return;
@@ -273,10 +277,7 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
     };
   }, [animating, compact]);
 
-  // Fallback reduced-motion : état final figé (tout est lisible sans animation).
-  const state = reduceMotion
-    ? { ...INITIAL_DEMO, firstDone: true, ghostGrow: true, ghostSolid: true }
-    : demo;
+  const state = demo;
 
   const tasksDone = (t: { done: boolean }, i: number) => (i === 0 ? state.firstDone || t.done : t.done);
   const remaining = TASKS.filter((t, i) => !tasksDone(t, i)).length + (state.showNewTask ? 1 : 0);
@@ -586,32 +587,30 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
         </AnimatePresence>
 
         {/* ── Faux curseur + ripple de clic ── */}
-        {!reduceMotion && (
-          <motion.div
-            className="absolute top-0 left-0 z-30 pointer-events-none"
-            initial={false}
-            animate={{ x: cursor.x, y: cursor.y, opacity: cursor.visible ? 1 : 0, scale: cursor.pressed ? 0.85 : 1 }}
-            transition={{
-              x: { type: 'tween', duration: cursor.duration, ease: 'easeInOut' },
-              y: { type: 'tween', duration: cursor.duration, ease: 'easeInOut' },
-              scale: { duration: 0.15 },
-            }}
-          >
-            <AnimatePresence>
-              {clickTick > 0 && (
-                <motion.span
-                  key={clickTick}
-                  className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full border-2 border-blue-400/80"
-                  initial={{ scale: 0.3, opacity: 0.9 }}
-                  animate={{ scale: 1.7, opacity: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                />
-              )}
-            </AnimatePresence>
-            <MousePointer2 size={20} fill="white" className="text-slate-900 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
-          </motion.div>
-        )}
+        <motion.div
+          className="absolute top-0 left-0 z-30 pointer-events-none"
+          initial={false}
+          animate={{ x: cursor.x, y: cursor.y, opacity: cursor.visible ? 1 : 0, scale: cursor.pressed ? 0.85 : 1 }}
+          transition={{
+            x: { type: 'tween', duration: cursor.duration, ease: 'easeInOut' },
+            y: { type: 'tween', duration: cursor.duration, ease: 'easeInOut' },
+            scale: { duration: 0.15 },
+          }}
+        >
+          <AnimatePresence>
+            {clickTick > 0 && (
+              <motion.span
+                key={clickTick}
+                className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full border-2 border-blue-400/80"
+                initial={{ scale: 0.3, opacity: 0.9 }}
+                animate={{ scale: 1.7, opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              />
+            )}
+          </AnimatePresence>
+          <MousePointer2 size={20} fill="white" className="text-slate-900 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
+        </motion.div>
       </div>
     </div>
   );
