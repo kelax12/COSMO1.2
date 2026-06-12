@@ -4,7 +4,7 @@
 // Feature Supabase-only : un lien d'invitation cross-user n'a pas de sens en
 // LocalStorage (pas de 2ᵉ utilisateur en démo) → pas d'implémentation repo
 // démo, les hooks sont `enabled`/no-op hors prod. La section UI est masquée
-// en mode démo (CollaboratorModal).
+// en mode démo (cf. ShareLinkField).
 // ═══════════════════════════════════════════════════════════════════
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';

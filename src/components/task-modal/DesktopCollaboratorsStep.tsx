@@ -12,6 +12,7 @@ import { X, Search, UserPlus, Clock, Plus, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
+import ShareLinkField from '@/components/ShareLinkField';
 import type { DesktopBodyProps } from './TaskModalDesktopBody';
 
 export type DesktopCollaboratorsStepProps = Pick<DesktopBodyProps,
@@ -69,6 +70,13 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                           </div>
                         ) : (
                           <>
+                            {/* Lien d'invitation copiable (Supabase only) */}
+                            <ShareLinkField
+                              taskId={task?.id}
+                              ownerCanShare={isTaskOwner}
+                              className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700"
+                            />
+
                             {/* Selected collaborators — affiché en premier */}
                             {collaborators.length > 0 && (
                               <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">

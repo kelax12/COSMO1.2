@@ -16,6 +16,7 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useCreateCategory } from '@/modules/categories';
 import AddToListModal from '../AddToListModal';
+import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
 
@@ -537,6 +538,8 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     </button>
                   </div>
                   {inputError && <p className="mt-1 text-[13px] text-red-500">{inputError}</p>}
+                  {/* Lien d'invitation copiable (Supabase only) */}
+                  <ShareLinkField taskId={taskId} ownerCanShare={isTaskOwner} className="pt-3" />
                 </div>
               )}
               {collaborators.length > 0 && (
