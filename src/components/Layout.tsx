@@ -73,7 +73,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       className={({ isActive }) =>
         `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
       }
-      style={groupHovered ? { transform: 'translateX(6.2px)' } : undefined}
+      style={groupHovered ? { transform: 'translateX(7.44px) scale(1.15)' } : undefined}
       onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
       onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
     >
@@ -83,7 +83,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         onMouseLeave={() => setIconHovered(false)}
         style={{
           transition: 'transform 0.2s ease, color 0.2s ease',
-          transform: (iconHovered || groupHovered) ? 'scale(1.2)' : 'scale(1)',
+          transform: (iconHovered || groupHovered) ? 'scale(1.32)' : 'scale(1)',
           color: isColored ? hoverColor : undefined,
         }}
       >
