@@ -11,8 +11,10 @@ import { fr } from "date-fns/locale";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { Bookmark, BookmarkCheck, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle } from "lucide-react";
 import TaskCategoryIndicator from "../TaskCategoryIndicator";
+import CollaboratorAvatars from "../CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
+import { Friend } from "@/modules/friends";
 
 // ═══════════════════════════════════════════════════════════════════
 // Helpers
@@ -43,6 +45,8 @@ interface TaskCardProps {
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
+  collaboratorsByTask: Map<string, string[]>;
+  friends: Friend[];
   /** true pour la 1ʳᵉ carte de la liste — déclenche le hint de swipe animé (1× / device). */
   isFirst?: boolean;
 }
@@ -60,6 +64,8 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onDeleteTask,
   onScheduleTask,
   onDuplicate,
+  collaboratorsByTask,
+  friends,
   isFirst = false,
 }: TaskCardProps, ref) => {
   // Lookup catégorie via hook React Query — re-render automatique quand
@@ -302,11 +308,13 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             Reçu de {task.sharedBy}
           </span>
         )}
-        {!task.sharedBy && task.isCollaborative && (
-          <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <Users size={10} aria-hidden="true" />
-            <span>Partagé</span>
-          </span>
+        {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
+          <CollaboratorAvatars
+            collaboratorIds={collaboratorsByTask.get(task.id)}
+            friends={friends}
+            size="sm"
+            maxVisible={3}
+          />
         )}
 
         {/* Méta : date · durée — toujours sur une ligne propre */}
@@ -469,6 +477,8 @@ interface VirtualizedTaskListProps {
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
+  collaboratorsByTask: Map<string, string[]>;
+  friends: Friend[];
 }
 
 export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
@@ -488,6 +498,8 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
     onDeleteTask: props.onDeleteTask,
     onScheduleTask: props.onScheduleTask,
     onDuplicate: props.onDuplicate,
+    collaboratorsByTask: props.collaboratorsByTask,
+    friends: props.friends,
   });
 
   // useWindowVirtualizer : le scroll est sur la fenêtre (les pages COSMO
@@ -564,8 +576,9 @@ interface TaskRowProps {
   onScheduleTask: (task: Task) => void;
   onAddToList: (id: string) => void;
   onOpenCollaborator: (id: string) => void;
-  onDuplicate: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  collaboratorsByTask: Map<string, string[]>;
+  friends: Friend[];
 }
 
 export const TaskRow = React.memo(({
@@ -573,7 +586,7 @@ export const TaskRow = React.memo(({
   addToListMode,
   selectedForListIds,
   activeQuickFilter,
-  showCompleted,
+  showCompleted: _showCompleted,
   onSelectTask,
   onToggleTaskForList,
   onToggleComplete,
@@ -581,8 +594,9 @@ export const TaskRow = React.memo(({
   onScheduleTask,
   onAddToList,
   onOpenCollaborator,
-  onDuplicate,
   onDeleteTask,
+  collaboratorsByTask,
+  friends,
 }: TaskRowProps) => {
   return (
     <tr
@@ -670,8 +684,13 @@ export const TaskRow = React.memo(({
           <span className="truncate" title={task.name}>{task.name}</span>
           {task.sharedBy ? (
             <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Reçu de {task.sharedBy}</span>
-          ) : task.isCollaborative ? (
-            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
+          ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
+            <CollaboratorAvatars
+              collaboratorIds={collaboratorsByTask.get(task.id)}
+              friends={friends}
+              size="sm"
+              maxVisible={3}
+            />
           ) : null}
         </div>
       </td>
@@ -739,15 +758,6 @@ export const TaskRow = React.memo(({
               <UserPlus size={16} />
             </button>
               <button
-                onClick={() => onDuplicate(task.id)}
-                className="p-2 rounded transition-colors"
-                style={{ color: 'rgb(var(--color-text-muted))' }}
-                aria-label="Dupliquer la tâche"
-                title="Dupliquer"
-              >
-                <Copy size={16} />
-              </button>
-              <button
                 onClick={() => onDeleteTask(task.id)}
                 aria-label="Supprimer la tâche"
                 className="p-2 rounded transition-colors"
@@ -756,12 +766,6 @@ export const TaskRow = React.memo(({
                 <Trash2 size={16} />
               </button>
         </div>
-      </td>
-      <td className="px-2 py-4 whitespace-nowrap text-base" style={{ color: 'rgb(var(--color-text-primary))' }}>
-        {showCompleted && task.completedAt
-          ? formatDate(task.completedAt)
-          : formatDate(task.createdAt)
-        }
       </td>
     </tr>
   );

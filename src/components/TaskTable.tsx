@@ -29,6 +29,8 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 
 import { usePriorityRange } from '@/modules/ui-states';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
+import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -71,6 +73,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { priorityRange } = usePriorityRange();
   const { isPremium } = useBilling();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: friends = [] } = useFriends();
+  const collaboratorsByTask = useCollaboratorsByTask(user?.id);
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -314,16 +319,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 )}
               </th>
               <th className="text-center px-1 py-3" style={{ width: '220px' }}>Actions</th>
-              <th 
-                className="cursor-pointer px-2 py-3"
-                onClick={() => handleSort(showCompleted ? 'completedAt' : 'createdAt')}
-                style={{ width: '90px' }}
-              >
-                {showCompleted ? 'Réalisé' : 'Créé'}
-                {localSortField === (showCompleted ? 'completedAt' : 'createdAt') && (
-                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -342,8 +337,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 onScheduleTask={setTaskToEventModal}
                 onAddToList={setAddToListTask}
                 onOpenCollaborator={handleOpenCollaborator}
-                onDuplicate={handleDuplicate}
                 onDeleteTask={setTaskToDelete}
+                collaboratorsByTask={collaboratorsByTask}
+                friends={friends}
               />
             ))}
           </tbody>
@@ -385,6 +381,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onDeleteTask={setTaskToDelete}
           onScheduleTask={setTaskToEventModal}
           onDuplicate={handleDuplicate}
+          collaboratorsByTask={collaboratorsByTask}
+          friends={friends}
         />
       </div>
 

@@ -43,6 +43,7 @@ export function DatePicker({
             !selectedDate && "text-muted-foreground",
             className
           )}
+          style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <span>
             {selectedDate
