@@ -13,6 +13,7 @@ import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
+import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
@@ -67,6 +68,7 @@ const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'));
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'));
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
+const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -163,6 +165,9 @@ const AppRoutes = () => (
     <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
     <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
     <Route path="cgu" element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
+    {/* Lien d'invitation de partage — public : pose le token puis redirige
+        (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
+    <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
@@ -204,6 +209,9 @@ const App: React.FC = () => {
             />
             <AppRoutes />
             <CookieBanner />
+            {/* Popup d'invitation de partage — niveau App pour survivre aux
+                changements de route (claim après login OU fin d'inscription). */}
+            <ShareInviteClaimer />
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>

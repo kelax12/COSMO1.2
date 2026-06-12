@@ -63,3 +63,16 @@ export {
   useUnshareTask,
   useAcceptSharedTask,
 } from './hooks';
+
+// ═══════════════════════════════════════════════════════════════════
+// SHARE LINKS (liens d'invitation — Supabase only, mig. 046)
+// ═══════════════════════════════════════════════════════════════════
+
+export {
+  useShareLink,
+  useClaimShareLink,
+  buildInviteUrl,
+  isValidInviteToken,
+  PENDING_INVITE_STORAGE_KEY,
+} from './share-link.hooks';
+export type { ClaimShareLinkResult } from './share-link.hooks';
