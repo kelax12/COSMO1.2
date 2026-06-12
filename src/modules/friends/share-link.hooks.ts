@@ -17,6 +17,8 @@ export interface ClaimShareLinkResult {
   task_id: string;
   task_name: string;
   owner_name: string;
+  /** Avatar du partageur (data URL ou URL distante depuis profiles.avatar_url). */
+  owner_avatar: string | null;
   already_accepted: boolean;
 }
 
