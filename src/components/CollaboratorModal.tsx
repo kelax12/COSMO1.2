@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, Users, UserPlus, Search, Link2, Copy, Check } from 'lucide-react';
+import { X, Users, UserPlus, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { useIsDemo } from '@/lib/app-mode.store';
 import CollaboratorItem from './CollaboratorItem';
+import ShareLinkField from './ShareLinkField';
 import { Button } from '@/components/ui/button';
 
 import { useTasks, useUpdateTask } from '@/modules/tasks';
-import { useFriends, useSendFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests, useShareLink, buildInviteUrl } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
 
 type CollaboratorModalProps = {
   isOpen: boolean;
@@ -33,25 +32,6 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   const task = tasks.find((t) => t.id === taskId);
   const isMobile = useIsMobile();
-  const isDemo = useIsDemo();
-
-  // ── Lien d'invitation (Supabase only — pas de cross-user en démo) ──
-  // Get-or-create lazy : déclenché uniquement quand le modal est ouvert.
-  const { data: inviteToken, isLoading: inviteLoading } = useShareLink(taskId, isOpen && !isDemo);
-  const inviteUrl = inviteToken ? buildInviteUrl(inviteToken) : '';
-  const [linkCopied, setLinkCopied] = useState(false);
-
-  const handleCopyInviteLink = async () => {
-    if (!inviteUrl) return;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setLinkCopied(true);
-      toast.success('Lien d\'invitation copié !');
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      toast.error('Impossible de copier — sélectionnez le lien manuellement.');
-    }
-  };
 
   // shared_tasks est désormais la source de vérité du partage (la colonne
   // dénormalisée `tasks.collaborators` a été supprimée — migration 028).
@@ -409,41 +389,8 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                 )}
               </section>
 
-              {/* Invite link — masqué en démo (pas de cross-user en LocalStorage) */}
-              {!isDemo && (
-                <section className="space-y-3">
-                  <h3 className="text-sm font-semibold inline-flex items-center gap-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    <Link2 size={14} aria-hidden="true" /> Lien d'invitation
-                  </h3>
-                  <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                    Toute personne avec ce lien pourra rejoindre la tâche, même sans compte (valable 7 jours).
-                  </p>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      type="text"
-                      readOnly
-                      value={inviteLoading ? 'Génération du lien…' : inviteUrl}
-                      onFocus={(e) => e.currentTarget.select()}
-                      aria-label="Lien d'invitation à copier"
-                      className="flex-1 px-4 py-3 min-h-11 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-hover))',
-                        borderColor: 'rgb(var(--color-border))',
-                        color: 'rgb(var(--color-text-secondary))'
-                      }}
-                    />
-                    <Button
-                      variant="default"
-                      onClick={handleCopyInviteLink}
-                      disabled={!inviteUrl}
-                      className={`inline-flex items-center justify-center gap-2 min-h-11 ${linkCopied ? 'bg-emerald-600 hover:bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                    >
-                      {linkCopied ? <Check size={16} data-icon="inline-start" /> : <Copy size={16} data-icon="inline-start" />}
-                      {linkCopied ? 'Copié !' : 'Copier'}
-                    </Button>
-                  </div>
-                </section>
-              )}
+              {/* Invite link — composant auto-contenu (masqué en démo) */}
+              <ShareLinkField taskId={taskId} ownerCanShare />
 
               {/* Available friends */}
               <section className="space-y-3 sm:space-y-4">
