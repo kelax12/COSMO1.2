@@ -13,6 +13,7 @@ import {
   type ClaimShareLinkResult,
 } from '@/modules/friends';
 import { taskKeys } from '@/modules/tasks';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 
 /**
  * Monté au niveau App (comme CookieBanner) : dès que l'utilisateur est
@@ -130,8 +131,18 @@ const ShareInviteClaimer: React.FC = () => {
             </div>
 
             <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
-                <Users size={26} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
+                {isImageAvatar(invite.owner_avatar) ? (
+                  <img src={invite.owner_avatar ?? undefined} alt="" className="w-full h-full object-cover" />
+                ) : isEmojiAvatar(invite.owner_avatar) ? (
+                  <span className="text-2xl leading-none" aria-hidden="true">{invite.owner_avatar}</span>
+                ) : invite.owner_name ? (
+                  <span className="text-lg font-bold text-blue-700 dark:text-blue-300" aria-hidden="true">
+                    {invite.owner_name.trim().charAt(0).toUpperCase()}
+                  </span>
+                ) : (
+                  <Users size={26} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                )}
               </div>
               <h2 id="share-invite-title" className="text-lg font-bold text-slate-900 dark:text-white mb-1">
                 Tâche partagée avec vous
