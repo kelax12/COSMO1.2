@@ -304,7 +304,7 @@ const GuidePage: React.FC = () => {
 
               <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
                 <FeatureRow icon={<Bookmark size={15} />}   label="Favoris"        desc="Mettez en favori une tâche importante — elle apparaît en surbrillance dorée et dans le filtre Favoris." />
-                <FeatureRow icon={<Clock size={15} />}      label="Durée estimée"  desc="Renseignez le temps estimé pour chaque tâche. Le Dashboard vous affiche votre charge de travail totale." />
+                <FeatureRow icon={<Clock size={15} />}      label="Durée"  desc="Renseignez la durée pour chaque tâche. Le Dashboard vous affiche votre charge de travail totale." />
                 <FeatureRow icon={<Filter size={15} />}     label="Filtres"        desc="Filtrez par Favoris, Terminées, En retard ou Collaboratives. Les filtres se combinent." />
                 <FeatureRow icon={<Users size={15} />}      label="Collaboration"  desc="Partagez une tâche avec un ami via l'icône de partage. Il peut la voir et la valider depuis son compte." />
                 <FeatureRow icon={<Flag size={15} />}       label="Catégories"     desc="Associez chaque tâche à une catégorie colorée (Travail, Personnel, Santé...) pour mieux visualiser votre temps." />

@@ -22,7 +22,7 @@ export function computeAddTaskErrors(
   if (!formData.name.trim()) newErrors.name = 'Le nom de la tâche est obligatoire';
   else if (formData.name.trim().length < 3) newErrors.name = 'Le nom doit contenir au moins 3 caractères';
 
-  if (String(formData.estimatedTime).trim() === '') newErrors.estimatedTime = 'Le temps estimé est obligatoire';
+  if (String(formData.estimatedTime).trim() === '') newErrors.estimatedTime = 'La durée est obligatoire';
   else if (isNaN(Number(formData.estimatedTime)) || Number(formData.estimatedTime) < 0) newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
 
   // Priorité facultative : aucune validation bloquante.

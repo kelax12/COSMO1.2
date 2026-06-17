@@ -278,7 +278,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <tr className="monochrome:bg-neutral-900 monochrome:text-neutral-200">
               {/* A11y: empty <th> need a label for screen readers. */}
               <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '40px' }}><span className="sr-only">Compléter</span></th>
-              <th className="px-1 py-3 monochrome:border-neutral-700" style={{ width: '30px' }}><span className="sr-only">Favori</span></th>
+              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '150px' }}>Catégorie</th>
               <th 
                 className="cursor-pointer px-2 py-3 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800"
                 onClick={() => handleSort('name')}
@@ -313,22 +313,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   onClick={() => handleSort('estimatedTime')}
                   style={{ width: '70px' }}
                 >
-                  TEMPS (min)
+                  Durée
                   {localSortField === 'estimatedTime' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
-              <th className="text-center px-1 py-3" style={{ width: '220px' }}>Actions</th>
-              <th
-                className="cursor-pointer px-2 py-3"
-                onClick={() => handleSort(showCompleted ? 'completedAt' : 'createdAt')}
-                style={{ width: '90px' }}
-              >
-                {showCompleted ? 'Réalisé' : 'Créé'}
-                {localSortField === (showCompleted ? 'completedAt' : 'createdAt') && (
-                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </th>
+              <th className="text-center px-1 py-3" style={{ width: '70px' }}>Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">

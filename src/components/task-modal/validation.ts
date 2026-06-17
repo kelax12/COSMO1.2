@@ -30,7 +30,7 @@ export function computeValidationErrors(
     if (isNaN(Number(formData.estimatedTime))) {
       newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
     } else if (Number(formData.estimatedTime) < 0) {
-      newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
+      newErrors.estimatedTime = 'La durée ne peut pas être négative';
     }
   }
 

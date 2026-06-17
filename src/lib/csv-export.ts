@@ -64,7 +64,7 @@ function todayStr(): string {
 // ═══════════════════════════════════════════════════════════════════
 
 export function exportTasksCSV(tasks: Task[]): void {
-  const headers = ['ID', 'Nom', 'Catégorie', 'Priorité', 'Échéance', 'Temps estimé (min)', 'Complétée', 'Favori', 'Créée le'];
+  const headers = ['ID', 'Nom', 'Catégorie', 'Priorité', 'Échéance', 'Durée (min)', 'Complétée', 'Favori', 'Créée le'];
   const rows = tasks.map(t => [
     t.id,
     t.name,
@@ -80,7 +80,7 @@ export function exportTasksCSV(tasks: Task[]): void {
 }
 
 export function exportHabitsCSV(habits: Habit[]): void {
-  const headers = ['ID', 'Nom', 'Description', 'Fréquence', 'Temps estimé (min)', 'Couleur', 'Complétions', 'Créée le'];
+  const headers = ['ID', 'Nom', 'Description', 'Fréquence', 'Durée (min)', 'Couleur', 'Complétions', 'Créée le'];
   const rows = habits.map(h => {
     const completionsCount = Object.values(h.completions).filter(Boolean).length;
     return [

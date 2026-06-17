@@ -3,6 +3,7 @@ import { ChevronDown, Filter, X, Search, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 
 import { useCategories } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
@@ -110,10 +111,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
-            <label htmlFor="task-filter" className="text-xs sm:text-sm font-medium whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              <span className="hidden sm:inline">Trier par :</span>
-              <span className="sm:hidden">Tri :</span>
-            </label>
+            <label htmlFor="task-filter" className="sr-only">Trier par</label>
             <div className="relative w-36 sm:w-44">
               <select
                 id="task-filter"
@@ -149,30 +147,77 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             </div>
           </div>
 
-          {/* Advanced Filters Toggle (hidden on mobile) */}
-          <Button
-            variant={showAdvancedFilters || hasActiveFilters ? 'default' : 'outline'}
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`hidden sm:inline-flex items-center justify-center gap-2 shrink-0 px-5 py-2.5 text-sm ${
-              showAdvancedFilters || hasActiveFilters
-                ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-            }`}
-            aria-label={showAdvancedFilters ? "Masquer les filtres avancés" : "Afficher les filtres avancés"}
-            aria-expanded={showAdvancedFilters}
-          >
-            <Filter size={20} data-icon="inline-start" aria-hidden="true" />
-            <span>Filtres</span>
-            {hasActiveFilters && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+          {/* Filtres — popup en superposition (desktop) */}
+          <Popover open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={`hidden sm:inline-flex items-center justify-center gap-2 shrink-0 px-5 py-2.5 text-sm rounded-lg border font-medium transition-colors ${
+                  showAdvancedFilters || hasActiveFilters
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
+                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                }`}
+                aria-label="Afficher les filtres avancés"
+                aria-expanded={showAdvancedFilters}
               >
-                {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
-              </motion.span>
-            )}
-          </Button>
+                <Filter size={18} aria-hidden="true" />
+                <span>Filtres</span>
+                {hasActiveFilters && (
+                  <span className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                    {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-[min(92vw,400px)] max-h-[70vh] overflow-y-auto"
+              style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
+            >
+              <div className="space-y-5">
+                {/* Catégories */}
+                <div>
+                  <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégories</label>
+                  <div className="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+                    {categories.map((category) => (
+                      <Button
+                        key={category.id}
+                        variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
+                        onClick={() => toggleCategory(category.id)}
+                        className={`flex items-center gap-2 shrink-0 ${
+                          selectedCategories.includes(category.id)
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
+                            : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                        }`}
+                        aria-pressed={selectedCategories.includes(category.id)}
+                      >
+                        <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: category.color }} aria-hidden="true" />
+                        <span className="truncate">{category.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                {/* Priorité */}
+                <div>
+                  <div className="flex items-center justify-between gap-4 mb-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Intervalle de priorité</label>
+                    <span className="text-xs font-bold" style={{ color: 'rgb(var(--color-text-secondary))' }}>P{priorityRange[0]} – P{priorityRange[1]}</span>
+                  </div>
+                  <Slider
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={priorityRange}
+                    onValueChange={(value) => setPriorityRange(value as [number, number])}
+                    className="cursor-pointer [&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
+                  />
+                  <div className="flex justify-between mt-2 text-[10px] text-slate-500">
+                    <span>Très haute</span><span>Très basse</span>
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {/* + d'options — mobile only, clickable blue text */}
           <button
@@ -213,107 +258,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
           </AnimatePresence>
         </div>
 
-      {/* Advanced Filters Panel */}
-      <AnimatePresence>
-        {showAdvancedFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <motion.div 
-              initial={{ y: -20 }}
-              animate={{ y: 0 }}
-              className="p-6 rounded-xl border shadow-lg space-y-6"
-              style={{
-                backgroundColor: 'rgb(var(--color-surface))',
-                borderColor: 'rgb(var(--color-border))'
-              }}
-            >
-                {/* Categories Filter */}
-                    <div>
-                      <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                         Filtrer par catégories
-                      </label>
-                      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                        {categories.map((category) => (
-                            <Button
-                              key={category.id}
-                              variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
-                              onClick={() => toggleCategory(category.id)}
-                              className={`flex items-center gap-2 shrink-0 ${
-                                selectedCategories.includes(category.id)
-                                  ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                                  : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-                              }`}
-                              aria-label={`${selectedCategories.includes(category.id) ? 'Retirer' : 'Ajouter'} le filtre ${category.name}`}
-                              aria-pressed={selectedCategories.includes(category.id)}
-                            >
-                              <div
-                                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shadow-sm"
-                                style={{ backgroundColor: category.color }}
-                                aria-hidden="true"
-                              />
-                              <span className="truncate">{category.name}</span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-  
-                  {/* Priority Range */}
-                  <div className="bg-slate-50 dark:bg-slate-800/50 monochrome:bg-neutral-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 shadow-inner">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                         Intervalle de priorité
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 monochrome:bg-neutral-800 border border-blue-200 dark:border-blue-500/30 monochrome:border-neutral-600 text-blue-600 dark:text-blue-400 monochrome:text-neutral-300 text-xs font-bold">
-                          Priorité {priorityRange[0]}
-                        </span>
-                        <span className="text-slate-400 dark:text-slate-600">à</span>
-                        <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 monochrome:bg-neutral-800 border border-blue-200 dark:border-blue-500/30 monochrome:border-neutral-600 text-blue-600 dark:text-blue-400 monochrome:text-neutral-300 text-xs font-bold">
-                          Priorité {priorityRange[1]}
-                        </span>
-                      </div>
-                    </div>
-
-
-                <div className="px-4 py-2">
-                  <Slider
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={priorityRange}
-                    onValueChange={(value) => setPriorityRange(value as [number, number])}
-                    className="cursor-pointer [&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
-                  />
-                </div>
-
-                <div className="flex justify-between mt-6 px-1">
-                  {[1, 2, 3, 4, 5].map(p => {
-                    const isActive = p >= priorityRange[0] && p <= priorityRange[1];
-                    return (
-                      <div key={p} className="flex flex-col items-center gap-2">
-                        <div className={`text-xs font-black transition-colors ${isActive ? 'text-blue-400 monochrome:text-white scale-110' : 'text-slate-600'}`}>
-                          Priorité {p}
-                        </div>
-                        <div className={`h-2 w-2 rounded-full transition-all duration-300 ${isActive ? 'bg-blue-500 monochrome:bg-white ring-4 ring-blue-500/20 monochrome:ring-white/20' : 'bg-slate-800'}`} />
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          {p === 1 ? 'Très haute' : p === 5 ? 'Très basse' : ''}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
