@@ -493,7 +493,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                           )}
                         </div>
                         <div>
-                          <label htmlFor="task-time" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Temps (min)</label>
+                          <label htmlFor="task-time" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Durée (min)</label>
                           <input
                             id="task-time"
                             type="number"

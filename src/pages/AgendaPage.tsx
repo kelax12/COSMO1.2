@@ -14,6 +14,15 @@ import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -47,6 +56,9 @@ const AgendaPage: React.FC = () => {
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showRecurringManager, setShowRecurringManager] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ start: string; end: string } | null>(null);
+  // Création rapide depuis une plage : petite popup ancrée au clic (remplace
+  // l'ouverture d'EventModal, jugé trop lourd visuellement).
+  const [quickSlot, setQuickSlot] = useState<{ start: string; end: string; x: number; y: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
   const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
@@ -150,8 +162,31 @@ const AgendaPage: React.FC = () => {
   };
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
-    setSelectedTimeSlot({ start: selectInfo.start.toISOString(), end: selectInfo.end.toISOString() });
-    setShowAddEventModal(true);
+    const je = selectInfo.jsEvent as MouseEvent | null;
+    setQuickSlot({
+      start: selectInfo.start.toISOString(),
+      end: selectInfo.end.toISOString(),
+      x: je?.clientX ?? Math.round(window.innerWidth / 2),
+      y: je?.clientY ?? Math.round(window.innerHeight / 2),
+    });
+  };
+
+  const handleQuickCreate = (title: string, color?: string) => {
+    if (!quickSlot) return;
+    createEventMutation.mutate({ title, start: quickSlot.start, end: quickSlot.end, color });
+    setQuickSlot(null);
+    setTimeout(() => {
+      calendarRef.current?.getApi().unselect();
+      mobileCalendarRef.current?.getApi().unselect();
+    }, 50);
+  };
+
+  const handleQuickClose = () => {
+    setQuickSlot(null);
+    setTimeout(() => {
+      calendarRef.current?.getApi().unselect();
+      mobileCalendarRef.current?.getApi().unselect();
+    }, 50);
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
@@ -621,6 +656,15 @@ const AgendaPage: React.FC = () => {
         </motion.div>
       </div>
 
+      {quickSlot && (
+        <QuickEventCard
+          slot={quickSlot}
+          categories={categories}
+          onCreate={handleQuickCreate}
+          onClose={handleQuickClose}
+        />
+      )}
+
       {showAddEventModal && (
         <EventModal
           mode="add"
@@ -661,6 +705,64 @@ const AgendaPage: React.FC = () => {
         accentColor="#EF4444"
       />
     </motion.div>
+  );
+};
+
+// ── Petite popup de création rapide depuis une plage horaire ────────────────
+interface QuickEventCardProps {
+  slot: { start: string; end: string; x: number; y: number };
+  categories: { id: string; name: string; color: string }[];
+  onCreate: (title: string, color?: string) => void;
+  onClose: () => void;
+}
+
+const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCreate, onClose }) => {
+  const [title, setTitle] = useState('');
+  const [cat, setCat] = useState(categories[0]?.id ?? '');
+  const start = new Date(slot.start);
+  const end = new Date(slot.end);
+  const fmt = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const color = categories.find((c) => c.id === cat)?.color;
+  const submit = () => { if (title.trim()) onCreate(title.trim(), color); };
+  const left = Math.max(8, Math.min(slot.x, window.innerWidth - 272));
+  const top = Math.max(8, Math.min(slot.y, window.innerHeight - 240));
+  return (
+    <div className="fixed inset-0 z-[60]" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-popover text-popover-foreground border-border absolute w-64 rounded-lg border p-3 shadow-xl"
+        style={{ left, top }}
+      >
+        <div className="text-muted-foreground mb-2 text-xs">
+          {start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })} · {fmt(start)} – {fmt(end)}
+        </div>
+        <Input
+          autoFocus
+          value={title}
+          placeholder="Titre de l'événement"
+          className="mb-2 h-8"
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose(); }}
+        />
+        {categories.length > 0 && (
+          <Select value={cat} onValueChange={setCat}>
+            <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>Annuler</Button>
+          <Button type="button" size="sm" disabled={!title.trim()} onClick={submit}>Créer</Button>
+        </div>
+      </div>
+    </div>
   );
 };
 

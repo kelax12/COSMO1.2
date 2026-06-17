@@ -12,7 +12,7 @@ import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/modules/categories';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
-import OKRModal from '../components/OKRModal';
+import OKRModalSheet from '../components/OKRModalSheet';
 import OKRDeadlineReviewModal from '../components/OKRDeadlineReviewModal';
 import CompletedOKRsModal from '../components/CompletedOKRsModal';
 import { toast } from 'sonner';
@@ -578,12 +578,12 @@ const OKRPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      <OKRModal
+      <OKRModalSheet
         isOpen={showAddObjective}
         onClose={handleModalClose}
         categories={categories}
-        editingObjective={editingObjective as React.ComponentProps<typeof OKRModal>['editingObjective']}
-        onSubmit={handleModalSubmit as React.ComponentProps<typeof OKRModal>['onSubmit']}
+        editingObjective={editingObjective}
+        onSubmit={handleModalSubmit}
       />
 
         <DeleteObjectiveConfirm

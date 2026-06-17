@@ -9,8 +9,14 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Bookmark, BookmarkCheck, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle } from "lucide-react";
-import TaskCategoryIndicator from "../TaskCategoryIndicator";
+import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Pencil, ListPlus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "../ui/dropdown-menu";
 import CollaboratorAvatars from "../CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
@@ -26,6 +32,36 @@ export const formatDate = (dateString: string | undefined) => {
   } catch {
     return '—';
   }
+};
+
+// Échéance « intelligente » : Aujourd'hui / Demain / « 4 juin ».
+export const formatDeadlineSmart = (dateString: string | undefined): string => {
+  if (!dateString) return '—';
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return '—';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(d); target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return 'Demain';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+};
+
+// Durée « x h xx min » / « 45 min » / « 2 h ».
+export const formatDuration = (minutes: number | undefined): string => {
+  if (!minutes || minutes <= 0) return '—';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${String(m).padStart(2, '0')} min`;
+};
+
+// En retard : échéance passée et tâche non complétée.
+const isTaskOverdue = (deadline: string | undefined, completed: boolean): boolean => {
+  if (completed || !deadline) return false;
+  const d = new Date(deadline);
+  return !Number.isNaN(d.getTime()) && d < new Date();
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -586,7 +622,6 @@ export const TaskRow = React.memo(({
   addToListMode,
   selectedForListIds,
   activeQuickFilter,
-  showCompleted,
   onSelectTask,
   onToggleTaskForList,
   onToggleComplete,
@@ -598,6 +633,10 @@ export const TaskRow = React.memo(({
   collaboratorsByTask,
   friends,
 }: TaskRowProps) => {
+  const getCategoryById = useCategoryLookup();
+  const category = getCategoryById(task.category);
+  const categoryColor = category?.color || '#94a3b8';
+  const overdue = isTaskOverdue(task.deadline, task.completed);
   return (
     <tr
       className={`animate-fade-in transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
@@ -675,8 +714,11 @@ export const TaskRow = React.memo(({
           </button>
         </div>
       </td>
-      <td className="px-1 py-4 whitespace-nowrap">
-        <TaskCategoryIndicator category={task.category} />
+      <td className="px-2 py-4 whitespace-nowrap">
+        <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: categoryColor }} />
+          <span className="truncate">{category?.name ?? '—'}</span>
+        </span>
       </td>
       <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base ${task.completed ? 'line-through' : ''}`}
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
@@ -712,66 +754,47 @@ export const TaskRow = React.memo(({
       </td>
       <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
         {activeQuickFilter === 'terminées'
-          ? (task.completedAt ? formatDate(task.completedAt) : '—')
+          ? (task.completedAt ? formatDeadlineSmart(task.completedAt) : '—')
           : (task.deadline
-              ? formatDate(task.deadline)
+              ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
               : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Pas d'échéance</span>)}
       </td>
-      <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.estimatedTime}</td>
-      <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
-        <div className="flex justify-center items-center gap-1">
+      <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>
+      <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap text-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <button
-              onClick={() => onToggleBookmark(task.id)}
-              aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              aria-pressed={task.bookmarked}
-              className={`p-2 rounded transition-colors ${task.bookmarked ? 'favorite-icon filled' : ''}`}
-              style={{
-                color: task.bookmarked ? '#EAB308' : 'rgb(var(--color-text-muted))'
-              }}
-            >
-              {task.bookmarked ? <BookmarkCheck size={16} fill="#EAB308" /> : <Bookmark size={16} />}
-            </button>
-          {!task.completed && (
-            <button
-              onClick={() => onScheduleTask(task)}
-              aria-label="Planifier dans l'agenda"
-              className="p-2 rounded transition-colors"
+              aria-label={`Actions pour ${task.name}`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
               style={{ color: 'rgb(var(--color-text-muted))' }}
             >
-              <Calendar size={16} />
+              <MoreHorizontal size={18} />
             </button>
-          )}
-            <button
-                onClick={() => onAddToList(task.id)}
-                aria-label="Ajouter à une liste"
-                className="p-2 rounded transition-colors"
-                style={{ color: 'rgb(var(--color-text-muted))' }}
-              >
-                <MoreHorizontal size={16} />
-              </button>
-            <button
-              onClick={() => onOpenCollaborator(task.id)}
-              aria-label="Ajouter un collaborateur"
-              className="p-2 rounded transition-colors"
-              style={{ color: 'rgb(var(--color-text-muted))' }}
-            >
-              <UserPlus size={16} />
-            </button>
-              <button
-                onClick={() => onDeleteTask(task.id)}
-                aria-label="Supprimer la tâche"
-                className="p-2 rounded transition-colors"
-                style={{ color: 'rgb(var(--color-text-muted))' }}
-              >
-                <Trash2 size={16} />
-              </button>
-        </div>
-      </td>
-      <td className="px-2 py-4 whitespace-nowrap text-base" style={{ color: 'rgb(var(--color-text-primary))' }}>
-        {showCompleted && task.completedAt
-          ? formatDate(task.completedAt)
-          : formatDate(task.createdAt)
-        }
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onSelectTask(task.id)}>
+              <Pencil aria-hidden="true" /> Modifier
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onToggleBookmark(task.id)}>
+              <Bookmark aria-hidden="true" /> {task.bookmarked ? 'Retirer le favori' : 'Favori'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddToList(task.id)}>
+              <ListPlus aria-hidden="true" /> Ajouter à une liste
+            </DropdownMenuItem>
+            {!task.completed && (
+              <DropdownMenuItem onClick={() => onScheduleTask(task)}>
+                <Calendar aria-hidden="true" /> Planifier
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => onOpenCollaborator(task.id)}>
+              <UserPlus aria-hidden="true" /> Collaborateur
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => onDeleteTask(task.id)}>
+              <Trash2 aria-hidden="true" /> Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </td>
     </tr>
   );

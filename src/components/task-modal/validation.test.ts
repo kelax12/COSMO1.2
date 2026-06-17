@@ -35,7 +35,7 @@ describe('TaskModal validation', () => {
 
     it('rejects a negative estimatedTime', () => {
       const errors = computeValidationErrors({ name: 'Valid name', estimatedTime: -5 });
-      expect(errors.estimatedTime).toBe('Le temps estimé ne peut pas être négatif');
+      expect(errors.estimatedTime).toBe('La durée ne peut pas être négative');
     });
 
     it('rejects a non-numeric estimatedTime', () => {
