@@ -1174,7 +1174,7 @@ Pour tout `<input type="file">` :
 ### CSP & headers
 
 - ✅ Tous les headers de sécurité Vercel doivent rester (HSTS, X-Frame-Options, etc.)
-- 🟠 CSP à ajouter (faille §6) — toute nouvelle origine externe (CDN, Stripe, etc.) doit y être whitelistée
+- ✅ CSP **présente** dans `vercel.json` (faille §6 CLOSE) : `default-src 'self'` + Stripe (`js.stripe.com`/`api.stripe.com`) + Supabase (`*.supabase.co`) + Sentry (`*.ingest.de.sentry.io`) + Google Fonts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`. Toute nouvelle origine externe (CDN, AdSense, etc.) doit y être whitelistée explicitement, sinon elle sera bloquée.
 
 ### Avant tout commit qui touche `supabase/migration/*.sql`
 
