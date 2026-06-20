@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
-import EventModal from './EventModal';
+import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList, TaskRow } from './task-table/list';
 
@@ -22,11 +22,6 @@ import {
   Task
 } from '@/modules/tasks';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module events - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
-import { useCreateEvent, CreateEventInput } from '@/modules/events';
-
 import { usePriorityRange } from '@/modules/ui-states';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
 import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
@@ -35,6 +30,8 @@ import { useAuth } from '@/modules/auth/AuthContext';
 type TaskTableProps = {
   tasks?: Task[];
   sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSortDirectionChange?: (direction: 'asc' | 'desc') => void;
   showCompleted?: boolean;
   selectedTaskId?: string | null;
   onTaskModalClose?: () => void;
@@ -48,6 +45,8 @@ type TaskTableProps = {
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
   sortField: propSortField,
+  sortDirection = 'asc',
+  onSortDirectionChange,
   showCompleted = false,
   selectedTaskId: externalSelectedTaskId,
   onTaskModalClose,
@@ -65,11 +64,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const toggleCompleteMutation = useToggleTaskComplete();
   const toggleBookmarkMutation = useToggleTaskBookmark();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // EVENTS - Depuis le module events (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
-  const createEventMutation = useCreateEvent();
-
   const { priorityRange } = usePriorityRange();
   const { isPremium } = useBilling();
   const navigate = useNavigate();
@@ -80,7 +74,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
 
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [localSortField, setLocalSortField] = useState<string | undefined>(propSortField);
 
   useEffect(() => {
@@ -88,10 +81,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
       setLocalSortField(propSortField);
     }
   }, [propSortField]);
-
-  useEffect(() => {
-    setSortDirection('asc');
-  }, [localSortField]);
 
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [selectedTaskForCollaborators, setSelectedTaskForCollaborators] = useState<string | null>(null);
@@ -119,10 +108,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const handleSort = (field: string) => {
     if (localSortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      onSortDirectionChange?.(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setLocalSortField(field);
-      setSortDirection('asc');
+      onSortDirectionChange?.('asc');
     }
   };
 
@@ -178,16 +167,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
-
-  const handleCreateEventFromTask = (eventData: CreateEventInput) => {
-    if (taskToEventModal) {
-      createEventMutation.mutate({
-        ...eventData,
-        taskId: taskToEventModal.id
-      });
-    }
-    setTaskToEventModal(null);
-  };
 
   const handleOpenCollaborator = useCallback((taskId: string) => {
     if (!isPremium()) {
@@ -278,8 +257,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <tr className="monochrome:bg-neutral-900 monochrome:text-neutral-200">
               {/* A11y: empty <th> need a label for screen readers. */}
               <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '40px' }}><span className="sr-only">Compléter</span></th>
-              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '150px' }}>Catégorie</th>
-              <th 
+              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '48px' }}><span className="sr-only">Catégorie (couleur)</span></th>
+              <th
                 className="cursor-pointer px-2 py-3 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800"
                 onClick={() => handleSort('name')}
               >
@@ -288,6 +267,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
+              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '150px' }}>Catégorie</th>
               <th 
                 className="cursor-pointer text-center px-1 py-3"
                 onClick={() => handleSort('priority')}
@@ -337,6 +317,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 onScheduleTask={setTaskToEventModal}
                 onAddToList={setAddToListTask}
                 onOpenCollaborator={handleOpenCollaborator}
+                onDuplicate={handleDuplicate}
                 onDeleteTask={setTaskToDelete}
                 collaboratorsByTask={collaboratorsByTask}
                 friends={friends}
@@ -423,12 +404,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
       )}
 
       {taskToEventModal && (
-        <EventModal
-          mode="convert"
-          isOpen={true}
-          onClose={() => setTaskToEventModal(null)}
+        <ScheduleEventModal
+          open={true}
+          onOpenChange={(o) => { if (!o) setTaskToEventModal(null); }}
           task={taskToEventModal}
-          onConvert={handleCreateEventFromTask}
         />
       )}
 

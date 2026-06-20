@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { ChevronDown, Filter, X, Search, Plus } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, X, Search, Plus, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 
 import { useCategories } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
-import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
   currentFilter: string;
+  sortDirection?: 'asc' | 'desc';
+  onToggleSortDirection?: () => void;
   showCompleted?: boolean;
   onShowCompletedChange?: (show: boolean) => void;
   // Props contrôlés pour le filtrage (reçus de TasksPage)
@@ -27,6 +30,8 @@ type TaskFilterProps = {
 const TaskFilter: React.FC<TaskFilterProps> = ({
   onFilterChange,
   currentFilter,
+  sortDirection = 'asc',
+  onToggleSortDirection,
   showCompleted = false,
   onShowCompletedChange,
   // Props contrôlés avec valeurs par défaut
@@ -40,7 +45,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
 }) => {
   const { data: categories = [] } = useCategories();
   const { priorityRange, setPriorityRange } = usePriorityRange();
-  const isMobile = useIsMobile();
 
   // État local de secours si pas contrôlé (rétrocompatibilité)
   const [localSearchTerm, setLocalSearchTerm] = useState('');
@@ -65,7 +69,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
     setSearchTerm('');
     setSelectedCategories([]);
     setPriorityRange?.([1, 5]);
-    onFilterChange('');
+    onFilterChange('priority');
     onShowCompletedChange?.(false);
   };
 
@@ -79,15 +83,15 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
       <div className="space-y-3">
         {/* Single row: Search + Sort + Filters + Reset */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          {/* Search Bar */}
-          <div className="relative flex-1 min-w-[180px] sm:flex-none sm:w-80 shrink-0">
+          {/* Search Bar — flexible : absorbe l'espace restant et repousse les contrôles à droite */}
+          <div className="relative flex-1 min-w-[150px]">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" aria-hidden="true" />
             <input
               id="search-tasks-main"
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filtrer par nom..."
+              placeholder="Rechercher..."
               className="w-full pl-9 pr-12 py-[11px] sm:py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-xs sm:text-sm"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
@@ -112,10 +116,10 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
             <label htmlFor="task-filter" className="sr-only">Trier par</label>
-            <div className="relative w-36 sm:w-44">
+            <div className="relative w-40 sm:w-52 shrink-0">
               <select
                 id="task-filter"
-                className="w-full appearance-none border rounded-lg pl-3 pr-10 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
@@ -134,18 +138,52 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 value={showCompleted ? 'completed' : currentFilter}
                 aria-label="Trier les tâches par"
               >
-                <option value="">{isMobile ? 'Tout' : 'Toutes les tâches'}</option>
                 <option value="priority">Par priorité</option>
                 <option value="deadline">Par échéance</option>
                 <option value="createdAt">Par date de création</option>
                 <option value="name">Par nom</option>
                 <option value="category">Par catégorie</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
+              {/* Flèche du select (indicateur, non cliquable) */}
+              <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 <ChevronDown size={16} aria-hidden="true" />
               </div>
+              {/* Toggle ordre croissant / décroissant — placé après la flèche */}
+              {onToggleSortDirection && (
+                <button
+                  type="button"
+                  onClick={onToggleSortDirection}
+                  aria-label={sortDirection === 'asc' ? 'Tri croissant — cliquer pour décroissant' : 'Tri décroissant — cliquer pour croissant'}
+                  title={sortDirection === 'asc' ? 'Ordre croissant' : 'Ordre décroissant'}
+                  className="absolute inset-y-0 right-1 my-auto z-10 flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
+                >
+                  <ArrowUpDown size={15} aria-hidden="true" />
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Reset — poussé à droite, juste avant le bouton Filtres */}
+          <AnimatePresence>
+            {hasActiveFilters && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 monochrome:bg-neutral-900 text-red-600 dark:text-red-400 monochrome:text-neutral-300 hover:bg-red-100 dark:hover:bg-red-900/40 monochrome:hover:bg-neutral-800 border-red-200 dark:border-red-800/50 monochrome:border-neutral-700 shrink-0"
+                  aria-label="Réinitialiser tous les filtres"
+                >
+                  <X size={16} data-icon="inline-start" aria-hidden="true" />
+                  <span>Réinitialiser</span>
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Filtres — popup en superposition (desktop) */}
           <Popover open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
@@ -160,7 +198,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 aria-label="Afficher les filtres avancés"
                 aria-expanded={showAdvancedFilters}
               >
-                <Filter size={18} aria-hidden="true" />
+                <SlidersHorizontal size={18} aria-hidden="true" />
                 <span>Filtres</span>
                 {hasActiveFilters && (
                   <span className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold">
@@ -171,32 +209,12 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             </PopoverTrigger>
             <PopoverContent
               align="end"
-              className="w-[min(92vw,400px)] max-h-[70vh] overflow-y-auto"
+              alignOffset={-1000}
+              collisionPadding={16}
+              className="w-72 max-h-[70vh] overflow-y-auto"
               style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
             >
-              <div className="space-y-5">
-                {/* Catégories */}
-                <div>
-                  <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégories</label>
-                  <div className="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
-                    {categories.map((category) => (
-                      <Button
-                        key={category.id}
-                        variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
-                        onClick={() => toggleCategory(category.id)}
-                        className={`flex items-center gap-2 shrink-0 ${
-                          selectedCategories.includes(category.id)
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                            : 'monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
-                        }`}
-                        aria-pressed={selectedCategories.includes(category.id)}
-                      >
-                        <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: category.color }} aria-hidden="true" />
-                        <span className="truncate">{category.name}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-4">
                 {/* Priorité */}
                 <div>
                   <div className="flex items-center justify-between gap-4 mb-3">
@@ -215,6 +233,30 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     <span>Très haute</span><span>Très basse</span>
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Catégories */}
+                <div>
+                  <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégories</label>
+                  <div className="grid max-h-[180px] gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                    {categories.map((category) => (
+                      <label
+                        key={category.id}
+                        className="flex cursor-pointer items-center gap-2 py-1 text-sm"
+                        style={{ color: 'rgb(var(--color-text-primary))' }}
+                      >
+                        <Checkbox
+                          checked={selectedCategories.includes(category.id)}
+                          onCheckedChange={() => toggleCategory(category.id)}
+                        />
+                        <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} aria-hidden="true" />
+                        <span className="truncate">{category.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </PopoverContent>
           </Popover>
@@ -236,26 +278,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${showQuickFilters ? 'rotate-180' : ''}`} />
           </button>
 
-          {/* Reset - inline next to Filters */}
-          <AnimatePresence>
-            {hasActiveFilters && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-              >
-                <Button
-                  variant="outline"
-                  onClick={clearAllFilters}
-                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 monochrome:bg-neutral-900 text-red-600 dark:text-red-400 monochrome:text-neutral-300 hover:bg-red-100 dark:hover:bg-red-900/40 monochrome:hover:bg-neutral-800 border-red-200 dark:border-red-800/50 monochrome:border-neutral-700 shrink-0"
-                  aria-label="Réinitialiser tous les filtres"
-                >
-                  <X size={16} data-icon="inline-start" aria-hidden="true" />
-                  <span>Réinitialiser</span>
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
     </div>

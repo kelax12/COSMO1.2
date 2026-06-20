@@ -250,7 +250,7 @@ const OKRPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-[100dvh] p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8 max-w-7xl mx-auto"
+      className="min-h-[100dvh] p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 max-w-7xl mx-auto"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
       <div className="mb-8 flex items-start justify-between gap-3">

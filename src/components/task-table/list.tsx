@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import CollaboratorAvatars from "../CollaboratorAvatars";
+import TaskCategoryIndicator from "../TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
 import { Friend } from "@/modules/friends";
@@ -361,7 +362,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             {isOverdue && <span className="sr-only"> (en retard)</span>}
           </span>
           <span aria-hidden="true">·</span>
-          <span>{task.estimatedTime}min</span>
+          <span>{formatDuration(task.estimatedTime)}</span>
         </div>
       </div>
 
@@ -612,6 +613,7 @@ interface TaskRowProps {
   onScheduleTask: (task: Task) => void;
   onAddToList: (id: string) => void;
   onOpenCollaborator: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onDeleteTask: (id: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   friends: Friend[];
@@ -629,6 +631,7 @@ export const TaskRow = React.memo(({
   onScheduleTask,
   onAddToList,
   onOpenCollaborator,
+  onDuplicate,
   onDeleteTask,
   collaboratorsByTask,
   friends,
@@ -714,18 +717,17 @@ export const TaskRow = React.memo(({
           </button>
         </div>
       </td>
-      <td className="px-2 py-4 whitespace-nowrap">
-        <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: categoryColor }} />
-          <span className="truncate">{category?.name ?? '—'}</span>
-        </span>
+      <td className="px-2 py-4">
+        <div className="flex justify-center">
+          <TaskCategoryIndicator category={task.category} />
+        </div>
       </td>
       <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base ${task.completed ? 'line-through' : ''}`}
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
           <span className="truncate" title={task.name}>{task.name}</span>
           {task.sharedBy ? (
-            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Reçu de {task.sharedBy}</span>
+            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
             <CollaboratorAvatars
               collaboratorIds={collaboratorsByTask.get(task.id)}
@@ -735,6 +737,12 @@ export const TaskRow = React.memo(({
             />
           ) : null}
         </div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: categoryColor }} />
+          <span className="truncate">{category?.name ?? '—'}</span>
+        </span>
       </td>
       <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>
         {task.priority === 0 ? (
@@ -789,9 +797,16 @@ export const TaskRow = React.memo(({
             <DropdownMenuItem onClick={() => onOpenCollaborator(task.id)}>
               <UserPlus aria-hidden="true" /> Collaborateur
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDuplicate(task.id)}>
+              <Copy aria-hidden="true" /> Dupliquer la tâche
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => onDeleteTask(task.id)}>
-              <Trash2 aria-hidden="true" /> Supprimer
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => onDeleteTask(task.id)}
+              className="!text-red-500 focus:!text-red-500"
+            >
+              <Trash2 className="!text-red-500" aria-hidden="true" /> Supprimer
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

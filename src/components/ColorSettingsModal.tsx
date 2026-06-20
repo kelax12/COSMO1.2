@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -261,20 +260,18 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                     Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
                   </p>
                   <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                    <Button
-                      variant="outline"
-                      className="flex-1 min-h-11"
+                    <button
                       onClick={() => setCategoryToDelete(null)}
+                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 monochrome:border-neutral-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                     >
                       Annuler
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white"
+                    </button>
+                    <button
                       onClick={confirmDeleteLocal}
+                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
                     >
                       Supprimer
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </motion.div>

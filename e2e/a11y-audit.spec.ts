@@ -108,4 +108,38 @@ test.describe('a11y audit', () => {
     console.log(`[a11y] OKR: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'OKR');
   });
+
+  test('Agenda (demo)', async ({ demoPage }) => {
+    await navTo(demoPage, /agenda/i, /\/agenda/);
+    await demoPage.waitForLoadState('networkidle');
+    // FullCalendar est heavy — laisser le temps au rendu initial
+    await demoPage.waitForTimeout(1_000);
+    const violations = await scan(demoPage, 'agenda');
+    console.log(`[a11y] Agenda: ${violations.length} violation(s)`);
+    assertNoCritical(violations, 'Agenda');
+  });
+
+  test('Statistics (demo)', async ({ demoPage }) => {
+    await navTo(demoPage, /statistiques?|statistics/i, /\/statistics/);
+    await demoPage.waitForLoadState('networkidle');
+    const violations = await scan(demoPage, 'statistics');
+    console.log(`[a11y] Statistics: ${violations.length} violation(s)`);
+    assertNoCritical(violations, 'Statistics');
+  });
+
+  test('Settings (demo)', async ({ demoPage }) => {
+    await navTo(demoPage, /param[èe]tres?|settings/i, /\/settings/);
+    await demoPage.waitForLoadState('networkidle');
+    const violations = await scan(demoPage, 'settings');
+    console.log(`[a11y] Settings: ${violations.length} violation(s)`);
+    assertNoCritical(violations, 'Settings');
+  });
+
+  test('Premium (demo)', async ({ demoPage }) => {
+    await navTo(demoPage, /premium/i, /\/premium/);
+    await demoPage.waitForLoadState('networkidle');
+    const violations = await scan(demoPage, 'premium');
+    console.log(`[a11y] Premium: ${violations.length} violation(s)`);
+    assertNoCritical(violations, 'Premium');
+  });
 });

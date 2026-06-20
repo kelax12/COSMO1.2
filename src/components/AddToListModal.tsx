@@ -81,7 +81,7 @@ const InlineForm: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.15 }}
-      className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3"
+      className="rounded-xl bg-[rgb(var(--color-surface))] p-4 space-y-3"
     >
       <input
         ref={inputRef}

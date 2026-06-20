@@ -1254,6 +1254,7 @@ Les composants dans `src/components/ui/` sont normalement **non modifiés** (ils
 | Fichier | Modification | Raison | Commit |
 |---|---|---|---|
 | `dialog.tsx` | `DialogOverlay` : `bg-black/50` → `bg-black/30 backdrop-blur-md` | Cohérence iOS sheet style avec les autres modals custom | `5e2336a` |
+| `dialog.tsx` | `DialogOverlay` : `function` → `React.forwardRef` + `displayName` | Radix `Primitive.div.SlotClone` passait un ref → warning React "cannot be given refs". Test non-régression : `src/components/ui/dialog.test.tsx` | `2026-06-19` |
 | `dialog.tsx` | `DialogContent` : prop `variant` ajoutée (`'default'` \| `'bottom-sheet'`) — `bottom-sheet` remplace zoom par slide-from-bottom avec easing iOS (`cubic-bezier(0.32,0.72,0,1)` open, `(0.4,0,1,1)` close) | Animation fluide bottom-sheet mobile TaskModal | `pending` |
 | `chart.tsx` | `ChartStyle` : whitelist regex sur `color` (`#…`, `var(--…)`, `hsl()`, `rgb()`) + sanitization de `id` / `key` (`/^[a-zA-Z0-9_-]+$/`) avant interpolation dans `dangerouslySetInnerHTML` | M-11 audit 2026-05-29 — durcir CSS injection si une couleur user-input atterrit dans ChartConfig | `pending` |
 | `chart.tsx` | `ChartTooltipContent` / `ChartLegendContent` : types de props découplés de Recharts (type local `ChartTooltipPayloadItem` + payload/label/formatter explicites) au lieu de `React.ComponentProps<typeof RechartsPrimitive.Tooltip>` / `Pick<LegendProps,…>` | Recharts v3 a remanié les types Tooltip/Legend (payload/verticalAlign plus exposés pareil) → 8 erreurs `tsc`. Runtime inchangé. Gate `tsc -b` CI | `pending` |

@@ -589,10 +589,10 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Mode d'affichage</p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Clair · Sombre · Monochrome · Glass</p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Test' : 'Clair · Sombre'}</p>
                     </div>
                   </div>
-                  <ThemeToggle showLabel />
+                  <ThemeToggle showLabel allowTest={user?.email?.endsWith('@thecosmo.app') ?? false} />
                 </div>
               </SectionCard>
             </motion.div>
