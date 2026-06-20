@@ -29,6 +29,17 @@ type TaskSidebarProps = {
   onDragStart?: () => void;
 };
 
+// Durée « 40 h » / « 1 h 30 min » / « 45 min » — cohérent avec la TaskCard
+// (bug B10 : la sidebar affichait « 2400 min » au lieu de « 40 h »).
+const formatDuration = (minutes: number | undefined): string => {
+  if (!minutes || minutes <= 0) return '—';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${String(m).padStart(2, '0')} min`;
+};
+
 const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
 
 const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
@@ -351,7 +362,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   <div className="flex items-center gap-1">
                     <Clock size={12} />
-                    <span>{task.estimatedTime} min</span>
+                    <span>{formatDuration(task.estimatedTime)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs px-2 py-1 rounded border" style={{
