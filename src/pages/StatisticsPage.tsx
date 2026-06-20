@@ -319,14 +319,16 @@ export default function StatisticsPage() {
                 <button
                   key={section.id}
                   onClick={() => setSelectedSection(section.id as StatSection)}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${isSelected ? 'shadow-sm' : ''}`}
+                  aria-label={section.label}
+                  aria-pressed={isSelected}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isSelected ? 'shadow-sm' : ''}`}
                   style={{
                     backgroundColor: isSelected ? 'rgb(var(--color-surface))' : 'transparent',
                     color: isSelected ? section.color : 'rgb(var(--color-text-secondary))',
                   }}
                 >
-                  <Icon size={16} style={{ color: isSelected ? section.color : 'rgb(var(--color-text-secondary))' }} />
-                  <span className="hidden sm:inline">{section.label}</span>
+                  <Icon size={16} aria-hidden="true" style={{ color: isSelected ? section.color : 'rgb(var(--color-text-secondary))' }} />
+                  <span>{section.label}</span>
                 </button>
               );
             })}
@@ -450,7 +452,7 @@ export default function StatisticsPage() {
               tickLine={false}
               axisLine={false}
               tickMargin={4}
-              width={38}
+              width={56}
               tickFormatter={(v: number) => formatTimeShort(v)}
             />
             <ChartTooltip
@@ -474,7 +476,7 @@ export default function StatisticsPage() {
                 stroke="#3B82F6"
                 strokeDasharray="8 4"
                 strokeWidth={2}
-                label={{ value: formatTimeShort(referenceValue), position: 'insideTopRight', fill: '#3B82F6', fontSize: 11, fontWeight: 700 }}
+                label={{ value: `Objectif ${formatTimeShort(referenceValue)}`, position: 'insideTopLeft', fill: '#3B82F6', fontSize: 11, fontWeight: 700 }}
               />
             )}
             <Area

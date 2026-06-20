@@ -19,6 +19,7 @@ import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import MobileTabBar from './layout/MobileTabBar';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
 const IS_MAC =
@@ -103,6 +104,8 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const allowTest = user?.email?.endsWith('@thecosmo.app') ?? false;
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
@@ -184,7 +187,7 @@ const NavItems = () =>
 
             {/* Thème + Recherche (loupe juste en dessous) */}
             <div className="mt-6 flex flex-col items-center gap-3 w-full">
-              <ThemeToggle />
+              <ThemeToggle allowTest={allowTest} />
               <button
                 type="button"
                 onClick={openCommandPalette}

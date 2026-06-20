@@ -43,8 +43,8 @@ const LandingPage: React.FC = () => {
   // Tilt 3D du mockup suivant la souris (désactivé mobile / reduced-motion).
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
-  const rotateX = useSpring(useTransform(pointerY, [-0.5, 0.5], ['7deg', '-7deg']), { stiffness: 150, damping: 18 });
-  const rotateY = useSpring(useTransform(pointerX, [-0.5, 0.5], ['-9deg', '9deg']), { stiffness: 150, damping: 18 });
+  const rotateX = useSpring(useTransform(pointerY, [-0.5, 0.5], [7, -7]), { stiffness: 150, damping: 18 });
+  const rotateY = useSpring(useTransform(pointerX, [-0.5, 0.5], [-9, 9]), { stiffness: 150, damping: 18 });
 
   const handleMockupPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

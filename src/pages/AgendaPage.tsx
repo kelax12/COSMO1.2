@@ -747,11 +747,13 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
         {categories.length > 0 && (
           <Select value={cat} onValueChange={setCat}>
             <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder="Catégorie" /></SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[70]">
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
-                  {c.name}
+                  <span className="inline-flex items-center gap-2">
+                    <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                    {c.name}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -759,7 +761,19 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>Annuler</Button>
-          <Button type="button" size="sm" disabled={!title.trim()} onClick={submit}>Créer</Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!title.trim()}
+            onClick={submit}
+            className={`!text-white !border-0 ${
+              !title.trim()
+                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
+                : '!bg-blue-600 hover:!bg-blue-700'
+            }`}
+          >
+            Créer
+          </Button>
         </div>
       </div>
     </div>

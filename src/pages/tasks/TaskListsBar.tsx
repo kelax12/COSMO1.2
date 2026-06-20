@@ -396,10 +396,10 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
                               onClick={() => setShowCreateList(true)}
-                              className="flex items-center justify-center w-9 h-9 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                              className="inline-flex shrink-0 items-center gap-1.5 h-9 px-3 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
                               title="Nouvelle liste manuelle"
                             >
-                              <Plus size={16} />
+                              <Plus size={16} /> Liste
                             </motion.button>
                           ) : (
                             <motion.form

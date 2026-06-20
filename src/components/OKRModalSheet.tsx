@@ -133,7 +133,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader>
           <SheetTitle>{isEdit ? "Modifier l'objectif" : 'Nouvel objectif'}</SheetTitle>
           <SheetDescription>Définis un objectif et ses résultats clés mesurables.</SheetDescription>
@@ -181,7 +181,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
             <div className="flex items-center justify-between">
               <Label>Résultats clés</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => setKeyResults((p) => [...p, newKR()])}>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setKeyResults((p) => [...p, newKR()])}
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+              >
                 <Plus aria-hidden="true" /> Ajouter
               </Button>
             </div>
@@ -208,6 +213,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       step={1}
                       value={[Math.min(kr.currentValue, kr.targetValue)]}
                       onValueChange={(v) => setKR(kr.id, { currentValue: v[0] })}
+                      className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -232,7 +238,18 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
         <SheetFooter className="flex-row justify-end gap-2 border-t">
           <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
-          <Button type="button" disabled={!canSave} onClick={handleSave}>{isEdit ? 'Enregistrer' : 'Créer'}</Button>
+          <Button
+            type="button"
+            disabled={!canSave}
+            onClick={handleSave}
+            className={`!text-white !border-0 ${
+              !canSave
+                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
+                : '!bg-blue-600 hover:!bg-blue-700'
+            }`}
+          >
+            {isEdit ? 'Enregistrer' : 'Créer'}
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

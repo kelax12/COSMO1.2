@@ -97,6 +97,13 @@ vite.config.ts.timestamp-*
 /test-results/
 /playwright-report/
 /playwright/.cache/
+.playwright/
+.playwright-cli/
+
+# Visual audit artefacts (PNG captures + autonomous HTML report — local tooling, not app code)
+visual-audit/
+visual-audit-before/
+visual-audit*.log
 
 # Skill framework artifacts (local tooling, not app code)
 .agents/

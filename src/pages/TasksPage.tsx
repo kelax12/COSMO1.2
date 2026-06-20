@@ -108,7 +108,8 @@ const TasksPage: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const location = useLocation();
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState('priority');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
   const [showQuickFilters, setShowQuickFilters] = useState(false);
@@ -186,7 +187,11 @@ const TasksPage: React.FC = () => {
   
   const handleFilterChange = (value: string) => {
     setFilter(value);
+    // Changer de critère de tri repart en ordre croissant (cohérent avec TaskTable).
+    setSortDirection('asc');
   };
+
+  const toggleSortDirection = () => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
 
   const handleShowCompletedChange = (show: boolean) => {
     setShowCompleted(show);
@@ -523,6 +528,8 @@ const TasksPage: React.FC = () => {
                     <TaskFilter
                       onFilterChange={handleFilterChange}
                       currentFilter={filter}
+                      sortDirection={sortDirection}
+                      onToggleSortDirection={toggleSortDirection}
                       showCompleted={showCompleted}
                       onShowCompletedChange={handleShowCompletedChange}
                       searchTerm={searchTerm}
@@ -567,6 +574,8 @@ const TasksPage: React.FC = () => {
                 <TaskTable
                   tasks={filteredTasks}
                   sortField={filter}
+                  sortDirection={sortDirection}
+                  onSortDirectionChange={setSortDirection}
                   showCompleted={showCompleted}
                   selectedTaskId={selectedTaskId}
                   onTaskModalClose={() => setSelectedTaskId(null)}

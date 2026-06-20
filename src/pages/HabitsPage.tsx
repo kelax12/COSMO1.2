@@ -83,7 +83,7 @@ const HabitsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+    <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div>

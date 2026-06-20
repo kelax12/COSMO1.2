@@ -206,22 +206,6 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     }
                   </div>
 
-                  {/* Description */}
-                  <div>
-                    <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      Description <span className="normal-case font-normal opacity-60">(Facultatif)</span>
-                    </label>
-                    <textarea
-                      id="task-description"
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      rows={3}
-                      placeholder="Détails de la tâche…"
-                      className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base resize-none border-slate-200 dark:border-slate-700"
-                      style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                    />
-                  </div>
-
                   {/* Priority and Category */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div ref={dRegister('priority')}>
@@ -523,6 +507,22 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                         </div>
                       }
                     </div>
+                  </div>
+
+                  {/* Description — placée en bas, juste avant les actions */}
+                  <div>
+                    <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                      Description <span className="normal-case font-normal opacity-60">(Facultatif)</span>
+                    </label>
+                    <textarea
+                      id="task-description"
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      rows={3}
+                      placeholder="Détails de la tâche…"
+                      className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base resize-none border-slate-200 dark:border-slate-700"
+                      style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                    />
                   </div>
 
                   {/* Status toggles */}
