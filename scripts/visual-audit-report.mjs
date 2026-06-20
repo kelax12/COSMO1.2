@@ -218,6 +218,17 @@ const bugs = [
     fixed: `<code>task-table/list.tsx:365</code> : <code>{task.estimatedTime}min</code> → <code>{formatDuration(task.estimatedTime)}</code>. Mobile et desktop affichent désormais la durée de façon identique (« 40 h », « 1 h 30 min »).`,
     shots: [['mobile-light', 'tasks-default.png', 'Mobile · Clair', '« 2400min » et « 90min » non formatés']],
   },
+  {
+    id: 'B10', sev: 'MEDIUM', status: 'fixed', logicFix: true,
+    title: 'Durée non formatée dans la sidebar « Tâches disponibles » de l\'Agenda',
+    meta: ['Desktop 1440×900', '/agenda · TaskSidebar', 'src/components/TaskSidebar.tsx'],
+    desc: `<strong>Nouveau bug — détecté lors de l'inspection des modals (passe 4).</strong> La sidebar « Tâches disponibles » de l'Agenda affichait la durée en minutes brutes, comme B09 mais dans un composant différent :<br><br>
+      • « Cours deep learning Coursera » → <code>2400 min</code> (devrait être <code>40 h</code>)<br><br>
+      Visible sur la capture <code>agenda-event-modal-add</code> (sidebar gauche). Le correctif B09 ne couvrait que la TaskCard ; <code>TaskSidebar</code> interpolait aussi <code>{task.estimatedTime} min</code> en dur.`,
+    fix: `Ajouter un helper <code>formatDuration()</code> local (même format que la TaskCard) et l'utiliser à la place de l'interpolation brute.`,
+    fixed: `<code>TaskSidebar.tsx</code> : helper <code>formatDuration()</code> ajouté + <code>{task.estimatedTime} min</code> → <code>{formatDuration(task.estimatedTime)}</code>. <em>(Correctif de code postérieur à ce run d'audit — la preuve visuelle « 40 h » apparaîtra au prochain run.)</em>`,
+    shots: [['desktop-light', 'agenda-event-modal-add.png', 'Desktop · Clair', 'Sidebar : « 2400 min » (avant correctif)']],
+  },
 ];
 
 const counts = { HIGH: 0, MEDIUM: 0, LOW: 0 };
