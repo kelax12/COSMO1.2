@@ -723,6 +723,15 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
   const end = new Date(slot.end);
   const fmt = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const color = categories.find((c) => c.id === cat)?.color;
+
+  // Recolore l'aperçu de sélection FullCalendar (.fc-event-mirror) selon la
+  // catégorie choisie. Nettoyé à la fermeture de la popup.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (color) root.style.setProperty('--fc-mirror-color', color);
+    else root.style.removeProperty('--fc-mirror-color');
+    return () => root.style.removeProperty('--fc-mirror-color');
+  }, [color]);
   const submit = () => { if (title.trim()) onCreate(title.trim(), color); };
   const left = Math.max(8, Math.min(slot.x, window.innerWidth - 272));
   const top = Math.max(8, Math.min(slot.y, window.innerHeight - 240));
