@@ -342,7 +342,8 @@
       "Bash(awk '{print \"report.html:\", $5}')",
       "Bash(echo \"EXIT_TSC=$?\")",
       "Bash(awk '$2!=\"total\"{n++; if\\($1>600\\)big++; else if\\($1>300\\)mid++; else small++} END{print \"  >600 LOC : \"big\" \\(god components\\)\"; print \"  300-600  : \"mid; print \"  <300 LOC : \"small; print \"  total    : \"n}')",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(grep -nE \"^\\( {0,4}\\)\\(const|function|return|\\\\}\\\\\\);|export|// ──|/\\\\* ──|\\\\{/\\\\* \\)\" src/components/task-modal/TaskModalDesktopBody.tsx)"
     ]
   },
   "enabledMcpjsonServers": [
