@@ -26,6 +26,8 @@ import { habitsTutorialStepsMobile } from '@/tutorials/habits.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
+import { shouldShowAdWall } from '@/modules/billing/subscription.logic';
+import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
 import HabitsAdGate from '@/components/HabitsAdGate';
 
@@ -53,7 +55,14 @@ const HabitsPage: React.FC = () => {
   const isPaidSubscriber =
     !!subscription?.current_period_end &&
     new Date(subscription.current_period_end) >= new Date();
-  const showAdWall = !isDemo && !billingLoading && !isPaidSubscriber && !seenToday;
+  // Premium désactivé (PREMIUM_ENFORCED=false) → mur-pub jamais affiché.
+  const showAdWall = shouldShowAdWall({
+    enforced: PREMIUM_ENFORCED,
+    isDemo,
+    billingLoading,
+    isPaidSubscriber,
+    seenToday,
+  });
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
