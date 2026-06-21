@@ -16,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
-import CollaboratorAvatars from "../CollaboratorAvatars";
 import TaskCategoryIndicator from "../TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
@@ -264,12 +263,21 @@ export const TaskRow = React.memo(({
           {task.sharedBy ? (
             <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
-            <CollaboratorAvatars
-              collaboratorIds={collaboratorsByTask.get(task.id)}
-              friends={friends}
-              size="sm"
-              maxVisible={3}
-            />
+            <span className="flex items-center gap-1 shrink-0">
+              {(collaboratorsByTask.get(task.id) ?? []).map((id) => {
+                const friend = friends.find((f) => f.userId === id || f.id === id || f.name === id);
+                const name = friend?.name ?? id;
+                return (
+                  <span
+                    key={id}
+                    className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full"
+                    title={name}
+                  >
+                    {name}
+                  </span>
+                );
+              })}
+            </span>
           ) : null}
         </div>
       </td>
