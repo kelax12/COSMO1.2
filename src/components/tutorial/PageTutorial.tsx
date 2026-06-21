@@ -1,8 +1,19 @@
 import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, X, ArrowDown, ArrowUp } from 'lucide-react';
-import { TutorialStep, ArrowSide, CardPlacement } from './types';
+import { TutorialStep } from './types';
+import {
+  TargetRect,
+  GhostState,
+  PADDING,
+  findTarget,
+  getRect,
+  autoPlacement,
+  autoArrow,
+  runAction,
+} from './page-tutorial-helpers';
+import TutorialArrow from './TutorialArrow';
+import TutorialCard from './TutorialCard';
 
 interface PageTutorialProps {
   /** Liste ordonnée des étapes */
@@ -14,131 +25,9 @@ interface PageTutorialProps {
   accentColor?: string;
 }
 
-interface TargetRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
-// État du « ghost persistant » multi-étapes (drag-place / resize-grow / select-create).
-// Survit aux changements d'étape via une key stable + Framer Motion interpole entre
-// les snapshots successifs.
-interface GhostState {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  opacity: number;
-  label: string;
-  isDashed?: boolean;
-}
-
-// ───────────────────────────────────────────────────────────────────
-// Helpers : recherche d'élément + calcul du rect (en coordonnées viewport)
-// ───────────────────────────────────────────────────────────────────
-const findTarget = (selector: string | undefined): HTMLElement | null => {
-  if (!selector) return null;
-  try {
-    return document.querySelector<HTMLElement>(selector);
-  } catch {
-    return null;
-  }
-};
-
-const getRect = (el: HTMLElement | null): TargetRect | null => {
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  return { top: r.top, left: r.left, width: r.width, height: r.height };
-};
-
-// Calcule où placer la carte : si la cible est dans la moitié haute → carte en bas, sinon en haut
-const autoPlacement = (rect: TargetRect | null): CardPlacement => {
-  if (!rect) return 'center';
-  const vh = window.innerHeight;
-  if (rect.top + rect.height / 2 < vh / 2) return 'bottom';
-  return 'top';
-};
-
-const autoArrow = (placement: CardPlacement): ArrowSide => {
-  switch (placement) {
-    case 'top': return 'bottom';
-    case 'bottom': return 'top';
-    case 'left': return 'right';
-    case 'right': return 'left';
-    default: return 'bottom';
-  }
-};
-
-// ───────────────────────────────────────────────────────────────────
-// Actions automatiques (démo)
-// ───────────────────────────────────────────────────────────────────
-const runAction = async (step: TutorialStep, target: HTMLElement | null) => {
-  if (!step.action || step.action === 'pulse') return; // pulse = effet visuel CSS seulement
-  if (!target) return;
-
-  switch (step.action) {
-    case 'click':
-      target.click();
-      break;
-    case 'type':
-      if (step.typeText && target instanceof HTMLInputElement) {
-        target.focus();
-        // Tape caractère par caractère (visuellement plus parlant)
-        for (const ch of step.typeText) {
-          target.value += ch;
-          target.dispatchEvent(new Event('input', { bubbles: true }));
-          await new Promise(r => setTimeout(r, 60));
-        }
-      }
-      break;
-    case 'drag-ghost':
-      // Démo visuelle : un fantôme glisse du target vers dragTo.
-      // C'est purement visuel — pas de manipulation DOM réelle (FullCalendar
-      // par exemple ne supporte pas le drag programmatique fiable).
-      // Le ghost est créé/déplacé/supprimé par TutorialOverlay.
-      break;
-    case 'custom':
-      if (step.customAction) await step.customAction(target);
-      break;
-  }
-};
-
-// ───────────────────────────────────────────────────────────────────
-// Flèche animée
-// ───────────────────────────────────────────────────────────────────
-const TutorialArrow: React.FC<{ side: ArrowSide; color: string }> = ({ side, color }) => {
-  // Anim spring vers le centre de la cible (légère bobine)
-  const variants: Record<ArrowSide, { initial: { x?: number; y?: number }; animate: { x?: number; y?: number } }> = {
-    top:    { initial: { y: -30 }, animate: { y: 0 } },
-    bottom: { initial: { y:  30 }, animate: { y: 0 } },
-    left:   { initial: { x: -30 }, animate: { x: 0 } },
-    right:  { initial: { x:  30 }, animate: { x: 0 } },
-  };
-
-  const Icon = side === 'top' ? ArrowDown
-             : side === 'bottom' ? ArrowUp
-             : side === 'left' ? ArrowRight
-             : ArrowLeft;
-
-  return (
-    <motion.div
-      initial={variants[side].initial}
-      animate={variants[side].animate}
-      transition={{ duration: 0.9, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-      style={{ color }}
-      className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
-    >
-      <Icon size={44} strokeWidth={3} />
-    </motion.div>
-  );
-};
-
 // ───────────────────────────────────────────────────────────────────
 // Composant principal
 // ───────────────────────────────────────────────────────────────────
-const PADDING = 8; // espace entre le rect de la cible et la carte/flèche
-
 const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, accentColor = '#3B82F6' }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
@@ -690,79 +579,17 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
         )}
 
         {/* Carte info */}
-        <motion.div
-          key={`card-${stepIndex}`}
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', damping: 24, stiffness: 320 }}
-          className="absolute pointer-events-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-5 border-2"
-          style={{
-            ...cardStyle,
-            width: CARD_W,
-            borderColor: accentColor,
-          }}
-          role="dialog"
-          aria-labelledby="tut-card-title"
-        >
-          {/* Skip button */}
-          <button
-            onClick={handleClose}
-            aria-label="Passer le tutoriel"
-            className="absolute top-2 right-2 min-w-9 min-h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2"
-            style={{ outlineColor: accentColor }}
-          >
-            <X size={16} />
-          </button>
-
-          <h3
-            id="tut-card-title"
-            className="text-base sm:text-lg font-bold mb-1 pr-8 text-slate-900 dark:text-white"
-          >
-            {step.title}
-          </h3>
-          <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {step.description}
-          </p>
-
-          {/* Progress dots */}
-          <div className="flex items-center gap-1.5 mt-4 mb-3">
-            {visibleSteps.map((_, i) => (
-              <span
-                key={i}
-                aria-hidden
-                className="h-1.5 rounded-full transition-all"
-                style={{
-                  width: i === stepIndex ? 22 : 7,
-                  backgroundColor: i === stepIndex ? accentColor : 'rgb(203 213 225)',
-                }}
-              />
-            ))}
-            <span className="ml-auto text-xs font-semibold text-slate-400">
-              {stepIndex + 1} / {totalSteps}
-            </span>
-          </div>
-
-          {/* Boutons */}
-          <div className="flex items-center justify-between gap-2 mt-3">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={stepIndex === 0}
-              className="px-3 py-2 rounded-lg font-medium text-sm text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed"
-            >
-              ← Précédent
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className="px-4 py-2 rounded-lg font-bold text-sm text-white shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform flex items-center gap-1.5"
-              style={{ backgroundColor: accentColor }}
-            >
-              {stepIndex === totalSteps - 1 ? 'Terminé' : 'Suivant'}
-              {stepIndex < totalSteps - 1 && <ArrowRight size={14} />}
-            </button>
-          </div>
-        </motion.div>
+        <TutorialCard
+          step={step}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          visibleSteps={visibleSteps}
+          accentColor={accentColor}
+          cardStyle={cardStyle}
+          onClose={handleClose}
+          onPrev={handlePrev}
+          onNext={handleNext}
+        />
       </motion.div>
     </AnimatePresence>,
     document.body
