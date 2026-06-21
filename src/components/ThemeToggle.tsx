@@ -1,26 +1,23 @@
 import React from 'react';
-import { Sun, Moon, FlaskConical } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 
-type Theme = 'light' | 'dark' | 'test';
+type Theme = 'light' | 'dark';
 
 interface ThemeToggleProps {
   className?: string;
   /** true → segmented control (un bouton par thème) ; false (défaut) → bouton cyclique */
   showLabel?: boolean;
-  /** true → affiche et autorise le mode Test (réservé aux emails @thecosmo.app) */
-  allowTest?: boolean;
 }
 
 const THEMES: { id: Theme; icon: React.ElementType; label: string }[] = [
-  { id: 'light', icon: Sun,          label: 'Clair'  },
-  { id: 'dark',  icon: Moon,         label: 'Sombre' },
-  { id: 'test',  icon: FlaskConical, label: 'Test'   },
+  { id: 'light', icon: Sun,  label: 'Clair'  },
+  { id: 'dark',  icon: Moon, label: 'Sombre' },
 ];
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false, allowTest = false }) => {
-  const { theme, setTheme, toggleTheme } = useDarkMode(allowTest);
-  const visibleThemes = allowTest ? THEMES : THEMES.filter(t => t.id !== 'test');
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {
+  const { theme, setTheme, toggleTheme } = useDarkMode();
+  const visibleThemes = THEMES;
 
   /* ── Segmented control (3 buttons) ── */
   if (showLabel) {

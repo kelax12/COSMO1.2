@@ -592,7 +592,7 @@ const SettingsPage: React.FC = () => {
                       <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Test' : 'Clair · Sombre'}</p>
                     </div>
                   </div>
-                  <ThemeToggle showLabel allowTest={user?.email?.endsWith('@thecosmo.app') ?? false} />
+                  <ThemeToggle showLabel />
                 </div>
               </SectionCard>
             </motion.div>
