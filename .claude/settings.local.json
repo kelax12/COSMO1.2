@@ -346,7 +346,8 @@
       "Bash(grep -nE \"^\\( {0,4}\\)\\(const|function|return|\\\\}\\\\\\);|export|// ──|/\\\\* ──|\\\\{/\\\\* \\)\" src/components/task-modal/TaskModalDesktopBody.tsx)",
       "Bash(grep -nE \"^\\(export |const |function |interface |type \\)|^const [A-Z].*=.*\\\\\\(|React.FC|=> \\\\{$\" src/components/task-table/list.tsx)",
       "Bash(grep -nE \"^\\(import|const|function|export|interface|type \\)|return \\\\\\(|=> \\\\{$|const [A-Z][a-zA-Z]+ \" src/pages/GuidePage.tsx)",
-      "Bash(grep -nE \"\\\\[$|\\\\] = |const .*= \\\\[|SECTIONS|STEPS|FAQ|data\" src/pages/GuidePage.tsx)"
+      "Bash(grep -nE \"\\\\[$|\\\\] = |const .*= \\\\[|SECTIONS|STEPS|FAQ|data\" src/pages/GuidePage.tsx)",
+      "Bash(perl -0pi -e 's/this\\\\.mapFromDb\\\\\\(/mapOkrFromDb\\(/g; s/this\\\\.mapToDb\\\\\\(/mapOkrToDb\\(/g' src/modules/okrs/supabase.repository.ts)"
     ]
   },
   "enabledMcpjsonServers": [

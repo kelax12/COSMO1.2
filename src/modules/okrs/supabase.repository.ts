@@ -11,79 +11,22 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 // Source unique du calcul de progression OKR — fonction pure testable.
 import { recalcProgress } from './progress';
+import {
+  OKRRow,
+  KRRow,
+  mapKRFromDb,
+  mapKRToDb,
+  mapOkrFromDb,
+  mapOkrToDb,
+} from './mappers';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (id: string): boolean => UUID_REGEX.test(id);
 
-// ─── DB row types ────────────────────────────────────────────────────────────
-
-interface OKRRow {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  progress: number;
-  completed: boolean;
-  key_results: KeyResult[]; // JSONB — kept for backward compat
-  start_date: string;
-  end_date: string;
-  user_id?: string;
-  created_at?: string;
-}
-
-interface KRRow {
-  id: string;
-  okr_id: string;
-  user_id: string;
-  title: string;
-  unit: string;
-  current_value: number;
-  target_value: number;
-  estimated_time: number;
-  completed: boolean;
-  completed_at: string | null;
-}
-
-interface OKRDbInput {
-  title?: string;
-  description?: string;
-  category?: string;
-  progress?: number;
-  completed?: boolean;
-  key_results?: KeyResult[];
-  start_date?: string;
-  end_date?: string;
-  user_id?: string;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const mapKRFromDb = (row: KRRow): KeyResult => ({
-  id: row.id,
-  title: row.title,
-  unit: row.unit,
-  currentValue: Number(row.current_value),
-  targetValue: Number(row.target_value),
-  estimatedTime: row.estimated_time,
-  completed: row.completed,
-  completedAt: row.completed_at ?? null,
-});
-
-const mapKRToDb = (kr: KeyResult, okrId: string, userId: string) => ({
-  id: kr.id,
-  okr_id: okrId,
-  user_id: userId,
-  title: kr.title,
-  unit: kr.unit,
-  current_value: kr.currentValue,
-  target_value: kr.targetValue,
-  estimated_time: kr.estimatedTime,
-  completed: kr.completed,
-});
-
-// (recalcProgress importé en tête de fichier — fonction pure dans `./progress`)
+// Row types + mappers (mapKRFromDb/mapKRToDb/mapOkrFromDb/mapOkrToDb) extraits
+// dans ./mappers. recalcProgress = fonction pure dans ./progress.
 
 export class SupabaseOKRsRepository implements IOKRsRepository {
 
@@ -123,33 +66,6 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     }
 
     return krMap;
-  }
-
-  private mapFromDb(row: OKRRow, keyResults: KeyResult[]): OKR {
-    return {
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      category: row.category,
-      progress: row.progress,
-      completed: row.completed,
-      keyResults,
-      startDate: row.start_date,
-      endDate: row.end_date,
-    };
-  }
-
-  private mapToDb(input: Partial<OKR>): OKRDbInput {
-    const result: OKRDbInput = {};
-    if (input.title !== undefined) result.title = input.title;
-    if (input.description !== undefined) result.description = input.description;
-    if (input.category !== undefined) result.category = input.category;
-    if (input.progress !== undefined) result.progress = input.progress;
-    if (input.completed !== undefined) result.completed = input.completed;
-    if (input.keyResults !== undefined) result.key_results = input.keyResults;
-    if (input.startDate !== undefined) result.start_date = input.startDate;
-    if (input.endDate !== undefined) result.end_date = input.endDate;
-    return result;
   }
 
   // ─── Sync KRs to dedicated table (upsert) ───────────────────────────────
@@ -218,7 +134,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     const rows = warnIfTruncated(raw, MAX_ROWS, 'okrs');
     const krMap = await this.fetchKRsForOkrs(rows);
-    return rows.map(row => this.mapFromDb(row, krMap.get(row.id) ?? []));
+    return rows.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? []));
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<OKR>> {
@@ -257,7 +173,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const krMap = await this.fetchKRsForOkrs(items);
 
     return {
-      data: items.map(row => this.mapFromDb(row, krMap.get(row.id) ?? [])),
+      data: items.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? [])),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.created_at ?? null : null,
@@ -280,7 +196,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     const row = data as OKRRow;
     const krMap = await this.fetchKRsForOkrs([row]);
-    return this.mapFromDb(row, krMap.get(row.id) ?? []);
+    return mapOkrFromDb(row, krMap.get(row.id) ?? []);
   }
 
   async getByCategory(category: string): Promise<OKR[]> {
@@ -294,7 +210,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (error) throw normalizeApiError(error);
     const rows = (data || []) as OKRRow[];
     const krMap = await this.fetchKRsForOkrs(rows);
-    return rows.map(row => this.mapFromDb(row, krMap.get(row.id) ?? []));
+    return rows.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? []));
   }
 
   async getFiltered(filters: OKRFilters): Promise<OKR[]> {
@@ -311,7 +227,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     const rows = (data || []) as OKRRow[];
     const krMap = await this.fetchKRsForOkrs(rows);
-    return rows.map(row => this.mapFromDb(row, krMap.get(row.id) ?? []));
+    return rows.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? []));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -323,7 +239,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const dbInput = { ...this.mapToDb(input), user_id: user.id };
+    const dbInput = { ...mapOkrToDb(input), user_id: user.id };
 
     const { data, error } = await supabase
       .from('okrs')
@@ -349,7 +265,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       }
     }
 
-    return this.mapFromDb(row, input.keyResults ?? []);
+    return mapOkrFromDb(row, input.keyResults ?? []);
   }
 
   async update(id: string, updates: UpdateOKRInput): Promise<OKR> {
@@ -364,7 +280,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       }
     }
 
-    const dbUpdates = this.mapToDb(updates);
+    const dbUpdates = mapOkrToDb(updates);
 
     const { data, error } = await supabase
       .from('okrs')
@@ -398,7 +314,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     }
 
     const krMap = await this.fetchKRsForOkrs([row]);
-    return this.mapFromDb(row, krMap.get(row.id) ?? []);
+    return mapOkrFromDb(row, krMap.get(row.id) ?? []);
   }
 
   async delete(id: string): Promise<void> {
@@ -504,7 +420,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       }
     }
 
-    return this.mapFromDb(data as OKRRow, keyResults);
+    return mapOkrFromDb(data as OKRRow, keyResults);
   }
 
   /**
@@ -620,6 +536,6 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       await this.removeKRReps(updatedKr.id, -delta);
     }
 
-    return this.mapFromDb(data as OKRRow, okr.keyResults);
+    return mapOkrFromDb(data as OKRRow, okr.keyResults);
   }
 }
