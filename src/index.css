@@ -678,8 +678,11 @@ body {
 }
 
 /* Aperçu de sélection (mirror) recoloré selon la catégorie choisie dans la
-   popup de création rapide. --fc-mirror-color est piloté par QuickEventCard. */
-.fc-event.fc-event-mirror {
+   popup de création rapide. Scopé à .fc-quick-preview (ajouté uniquement quand
+   la popup est ouverte) pour NE PAS affecter le mirror de drag&drop, qui doit
+   garder la couleur réelle de l'événement. --fc-mirror-color piloté par
+   QuickEventCard. */
+body.fc-quick-preview .fc-event.fc-event-mirror {
   background-color: var(--fc-mirror-color, #3b82f6) !important;
   border-color: var(--fc-mirror-color, #3b82f6) !important;
 }
