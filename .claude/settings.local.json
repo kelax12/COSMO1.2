@@ -348,7 +348,9 @@
       "Bash(grep -nE \"^\\(import|const|function|export|interface|type \\)|return \\\\\\(|=> \\\\{$|const [A-Z][a-zA-Z]+ \" src/pages/GuidePage.tsx)",
       "Bash(grep -nE \"\\\\[$|\\\\] = |const .*= \\\\[|SECTIONS|STEPS|FAQ|data\" src/pages/GuidePage.tsx)",
       "Bash(perl -0pi -e 's/this\\\\.mapFromDb\\\\\\(/mapOkrFromDb\\(/g; s/this\\\\.mapToDb\\\\\\(/mapOkrToDb\\(/g' src/modules/okrs/supabase.repository.ts)",
-      "Bash(grep -nE \"^\\(import|const|function|export|interface|type \\)|= \\\\[$|const [A-Z].*= \\\\[|FEATURES|PLANS|FAQ|TESTIMONIAL|BENEFITS|data =\" src/pages/PremiumPage.tsx)"
+      "Bash(grep -nE \"^\\(import|const|function|export|interface|type \\)|= \\\\[$|const [A-Z].*= \\\\[|FEATURES|PLANS|FAQ|TESTIMONIAL|BENEFITS|data =\" src/pages/PremiumPage.tsx)",
+      "Bash(awk 'NR==70{print \"export { HabitHeatmap } from '\"'\"'./HabitHeatmap'\"'\"';\"} NR>=70 && NR<=237{next} {print}' src/pages/statistics/sections.tsx)",
+      "Bash(mv /tmp/sections.tsx src/pages/statistics/sections.tsx)"
     ]
   },
   "enabledMcpjsonServers": [
