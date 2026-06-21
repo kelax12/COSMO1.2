@@ -181,9 +181,25 @@ const TodayTasks: React.FC = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{task.name}</h3>
                       {getPriorityIcon(task.priority)}
-                      {task.isCollaborative && (
-                        <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">Collaboratif</span>
-                      )}
+                      {task.sharedBy ? (
+                        <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0" title={task.sharedBy}>
+                          {task.sharedBy}
+                        </span>
+                      ) : task.isCollaborative ? (
+                        (sharesByTask.get(task.id) ?? []).map((id) => {
+                          const friend = friends.find((f) => f.userId === id || f.id === id || f.name === id);
+                          const name = friend?.name ?? id;
+                          return (
+                            <span
+                              key={id}
+                              className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0"
+                              title={name}
+                            >
+                              {name}
+                            </span>
+                          );
+                        })
+                      ) : null}
                     </div>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-[rgb(var(--color-text-secondary))]">
                       <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
