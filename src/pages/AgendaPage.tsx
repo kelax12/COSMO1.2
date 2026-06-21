@@ -3,26 +3,12 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
-import { DateSelectArg, EventClickArg, EventDropArg, EventApi, DatesSetArg } from '@fullcalendar/core';
-
-// FullCalendar v6 ne ré-exporte pas EventDragStartArg/EventDragStopArg depuis
-// core. Type local minimal couvrant ce que les handlers utilisent (compatible
-// avec l'arg réel passé par FullCalendar, qui contient ces champs + d'autres).
-type EventDragArg = { event: EventApi; el?: HTMLElement; jsEvent?: UIEvent | null };
+import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -35,6 +21,8 @@ import { getInitialScrollTime, buildCalendarEvents } from './agenda/calendar-eve
 import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
+import QuickEventCard from './agenda/QuickEventCard';
+import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
@@ -67,9 +55,6 @@ const AgendaPage: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const categoriesRef = useRef(categories);
-  // Timestamp pour suppression du clic résiduel après un drag — auto-expire après 300ms
-  // (jamais "stuck" même si le cleanup ne tourne pas).
-  const lastDragEndAtRef = useRef<number>(0);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -207,114 +192,14 @@ const AgendaPage: React.FC = () => {
     }
   };
 
-  const draggedEventIdRef = useRef<string | null>(null);
-  const dragEndHandlerRef = useRef<((clientX?: number, clientY?: number) => void) | null>(null);
-
-  const handleEventDragStart = (info: EventDragArg) => {
-    draggedEventIdRef.current = info.event.id;
-
-    const je = info.jsEvent as MouseEvent | undefined;
-    const startPos = je && typeof je.clientX === 'number' ? { x: je.clientX, y: je.clientY } : null;
-
-    let handled = false;
-    let lastX: number | undefined = startPos?.x;
-    let lastY: number | undefined = startPos?.y;
-    const draggedId = info.event.id;
-    const taskId = info.event.extendedProps?.taskId as string | undefined;
-
-    const onPointerMove = (e: PointerEvent) => { lastX = e.clientX; lastY = e.clientY; };
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0] || e.changedTouches[0];
-      if (t) { lastX = t.clientX; lastY = t.clientY; }
-    };
-
-    const removeWindowListeners = () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('pointercancel', onCancel);
-    };
-
-    const handleEnd = (clientX?: number, clientY?: number) => {
-      if (handled) return;
-      handled = true;
-      dragEndHandlerRef.current = null;
-      removeWindowListeners();
-      draggedEventIdRef.current = null;
-      lastDragEndAtRef.current = Date.now();
-
-      const x = typeof clientX === 'number' ? clientX : lastX;
-      const y = typeof clientY === 'number' ? clientY : lastY;
-
-      // 1) Drop sur la sidebar → suppression
-      if (typeof x === 'number' && typeof y === 'number') {
-        const sidebar = document.getElementById('agenda-task-sidebar-dropzone');
-        if (sidebar) {
-          const rect = sidebar.getBoundingClientRect();
-          if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-            const masterId = getMasterId(draggedId);
-            const ev = events.find(e2 => e2.id === masterId);
-            if (ev) {
-              // Quand un event FC est droppé hors de ses drop zones, FC entre
-              // dans un état d'auto-revert qui retient la référence DOM de
-              // l'event. Même si React Query retire l'event de son cache
-              // (optimistic update de useDeleteEvent), FC ne se re-sync pas et
-              // garde un ghost visible + bloque tous les pointer events suivants.
-              //
-              // Solution nucléaire mais fiable : bumper la key de FullCalendar
-              // pour forcer un remount complet (qui se re-initialise sur la
-              // bonne date via mobileSelectedDate / currentView). On défère
-              // mutation + remount au prochain tick pour laisser FC sortir
-              // proprement de son pointerup handler.
-              setTimeout(() => {
-                deleteEventMutation.mutate(ev.id);
-                setCalendarKey(k => k + 1);
-                setMobileCalendarKey(k => k + 1);
-              }, 0);
-            }
-            return;
-          }
-        }
-      }
-
-      // 2) Long-press sans mouvement → traiter comme un clic (ouvrir EventModal)
-      if (
-        startPos &&
-        typeof x === 'number' && typeof y === 'number' &&
-        Math.abs(x - startPos.x) < 5 && Math.abs(y - startPos.y) < 5
-      ) {
-        const masterId = getMasterId(draggedId);
-        const ev = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
-        if (ev) {
-          setSelectedEvent(ev);
-          setShowEditEventModal(true);
-        }
-        return;
-      }
-
-      // 3) Drag intra-calendar normal → FC gère eventDrop naturellement.
-    };
-
-    const onPointerUp = (e: PointerEvent) => handleEnd(e.clientX, e.clientY);
-    const onTouchEnd = (e: TouchEvent) => {
-      const t = e.changedTouches[0];
-      handleEnd(t?.clientX, t?.clientY);
-    };
-    const onCancel = () => handleEnd();
-
-    dragEndHandlerRef.current = handleEnd;
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('touchend', onTouchEnd);
-    window.addEventListener('pointercancel', onCancel);
-  };
-
-  const handleEventDragStop = (info: EventDragArg) => {
-    const je = info.jsEvent as MouseEvent | undefined;
-    dragEndHandlerRef.current?.(je?.clientX, je?.clientY);
-  };
+  const { lastDragEndAtRef, handleEventDragStart, handleEventDragStop } = useAgendaEventDrag({
+    events,
+    deleteEvent: (id: string) => deleteEventMutation.mutate(id),
+    setSelectedEvent,
+    setShowEditEventModal,
+    setCalendarKey,
+    setMobileCalendarKey,
+  });
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
     const masterId = getMasterId(dropInfo.event.id);
@@ -705,93 +590,6 @@ const AgendaPage: React.FC = () => {
         accentColor="#EF4444"
       />
     </motion.div>
-  );
-};
-
-// ── Petite popup de création rapide depuis une plage horaire ────────────────
-interface QuickEventCardProps {
-  slot: { start: string; end: string; x: number; y: number };
-  categories: { id: string; name: string; color: string }[];
-  onCreate: (title: string, color?: string) => void;
-  onClose: () => void;
-}
-
-const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCreate, onClose }) => {
-  const [title, setTitle] = useState('');
-  const [cat, setCat] = useState(categories[0]?.id ?? '');
-  const start = new Date(slot.start);
-  const end = new Date(slot.end);
-  const fmt = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  const color = categories.find((c) => c.id === cat)?.color;
-
-  // Recolore l'aperçu de sélection FullCalendar (.fc-event-mirror) selon la
-  // catégorie choisie. La classe body.fc-quick-preview scope la règle CSS à la
-  // création rapide uniquement (sinon le mirror de drag&drop perdrait sa
-  // couleur réelle). Tout est nettoyé à la fermeture de la popup.
-  useEffect(() => {
-    const root = document.documentElement;
-    document.body.classList.add('fc-quick-preview');
-    if (color) root.style.setProperty('--fc-mirror-color', color);
-    else root.style.removeProperty('--fc-mirror-color');
-    return () => {
-      document.body.classList.remove('fc-quick-preview');
-      root.style.removeProperty('--fc-mirror-color');
-    };
-  }, [color]);
-  const submit = () => { if (title.trim()) onCreate(title.trim(), color); };
-  const left = Math.max(8, Math.min(slot.x, window.innerWidth - 272));
-  const top = Math.max(8, Math.min(slot.y, window.innerHeight - 240));
-  return (
-    <div className="fixed inset-0 z-[60]" onClick={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-popover text-popover-foreground border-border absolute w-64 rounded-lg border p-3 shadow-xl"
-        style={{ left, top }}
-      >
-        <div className="text-muted-foreground mb-2 text-xs">
-          {start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })} · {fmt(start)} – {fmt(end)}
-        </div>
-        <Input
-          autoFocus
-          value={title}
-          placeholder="Titre de l'événement"
-          className="mb-2 h-8"
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose(); }}
-        />
-        {categories.length > 0 && (
-          <Select value={cat} onValueChange={setCat}>
-            <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder="Catégorie" /></SelectTrigger>
-            <SelectContent className="z-[70]">
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
-                    {c.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>Annuler</Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={!title.trim()}
-            onClick={submit}
-            className={`!text-white !border-0 ${
-              !title.trim()
-                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
-                : '!bg-blue-600 hover:!bg-blue-700'
-            }`}
-          >
-            Créer
-          </Button>
-        </div>
-      </div>
-    </div>
   );
 };
 
