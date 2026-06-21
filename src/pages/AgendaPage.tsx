@@ -725,12 +725,18 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
   const color = categories.find((c) => c.id === cat)?.color;
 
   // Recolore l'aperçu de sélection FullCalendar (.fc-event-mirror) selon la
-  // catégorie choisie. Nettoyé à la fermeture de la popup.
+  // catégorie choisie. La classe body.fc-quick-preview scope la règle CSS à la
+  // création rapide uniquement (sinon le mirror de drag&drop perdrait sa
+  // couleur réelle). Tout est nettoyé à la fermeture de la popup.
   useEffect(() => {
     const root = document.documentElement;
+    document.body.classList.add('fc-quick-preview');
     if (color) root.style.setProperty('--fc-mirror-color', color);
     else root.style.removeProperty('--fc-mirror-color');
-    return () => root.style.removeProperty('--fc-mirror-color');
+    return () => {
+      document.body.classList.remove('fc-quick-preview');
+      root.style.removeProperty('--fc-mirror-color');
+    };
   }, [color]);
   const submit = () => { if (title.trim()) onCreate(title.trim(), color); };
   const left = Math.max(8, Math.min(slot.x, window.innerWidth - 272));
