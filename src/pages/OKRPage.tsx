@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
-import { Plus, Edit2, X, Target, Trash, CalendarCheck, CheckCircle2 } from 'lucide-react';
+import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '../components/CategoryManager';
@@ -24,6 +24,8 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { filterObjectivesByCategory, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
+import CategoryFilterBar from './okr/CategoryFilterBar';
+import DeleteCategoryConfirm from './okr/DeleteCategoryConfirm';
 
 const OKRPage: React.FC = () => {
   const isMobile = useIsMobile();
@@ -327,203 +329,31 @@ const OKRPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6" data-tutorial-id="okr-category-filter">
-        <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégorie :</span>
-        <div className="flex gap-2 flex-wrap">
-            <button
-            onClick={() => setSelectedCategory('all')}
-            className="px-3 py-1 rounded-full text-sm font-medium transition-all border"
-            style={{
-              backgroundColor: selectedCategory === 'all' ? 'rgb(var(--color-accent) / 0.1)' : 'rgb(var(--color-chip-bg))',
-              borderColor: selectedCategory === 'all' ? 'rgb(var(--color-accent) / 0.3)' : 'rgb(var(--color-chip-border))',
-              color: selectedCategory === 'all' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-secondary))'
-            }}>
-
-              Tous
-            </button>
-            {categories.map((category) => {
-              const isHovered = hoveredCategoryId === category.id;
-              const isEditing = editingCategoryId === category.id;
-              return (
-                <div
-                  key={category.id}
-                  className="relative"
-                  onMouseEnter={() => setHoveredCategoryId(category.id)}
-                  onMouseLeave={() => setHoveredCategoryId(null)}
-                >
-                  {/* Barre flottante d'actions au-dessus de la chip — visible au hover,
-                      cachée pendant l'édition (les boutons d'action passent dans le form). */}
-                  <AnimatePresence>
-                    {isHovered && !isEditing && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute -top-7 inset-x-0 mx-auto w-fit flex items-center gap-1 z-10"
-                      >
-                        {/* Crayon — modifier la catégorie (nom + couleur) */}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); startEditCategory(category); }}
-                          className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                          title="Modifier la catégorie"
-                          aria-label="Modifier la catégorie"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        {/* Corbeille — supprimer la catégorie */}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
-                          className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
-                          title="Supprimer la catégorie"
-                          aria-label="Supprimer la catégorie"
-                        >
-                          <Trash size={14} />
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {isEditing ? (
-                    /* Mode édition inline : pastille couleur cyclique + input nom + OK/Annuler */
-                    <form
-                      onSubmit={(e) => { e.preventDefault(); submitEditCategory(); }}
-                      className="flex items-center gap-2 px-3 py-1 rounded-full border bg-white dark:bg-slate-800"
-                      style={{ borderColor: resolveColor(editCategoryColor) + '60' }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const idx = colorOptions.findIndex(c => c.value === editCategoryColor);
-                          setEditCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
-                        }}
-                        className="w-4 h-4 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                        style={{ backgroundColor: resolveColor(editCategoryColor) }}
-                        title="Changer la couleur"
-                      />
-                      <input
-                        autoFocus
-                        type="text"
-                        value={editCategoryName}
-                        onChange={(e) => setEditCategoryName(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Escape') cancelEditCategory(); }}
-                        className="bg-transparent text-sm font-medium focus:outline-none w-24"
-                        style={{ color: 'rgb(var(--color-text-primary))' }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={editCategoryName.trim().length < 2}
-                        className="px-2 py-0.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-40 transition-all"
-                      >
-                        OK
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEditCategory}
-                        className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                        title="Annuler"
-                      >
-                        <X size={12} />
-                      </button>
-                    </form>
-                  ) : (
-                    <button
-                      onClick={() => setSelectedCategory(category.id)}
-                      className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
-                      style={{
-                        backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
-                        borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
-                        color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
-                        boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
-                      }}>
-                      <span>{category.name}</span>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-
-          <AnimatePresence mode="wait">
-            {!showCreateCategory ? (
-              <motion.button
-                key="add-btn"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                onClick={() => setShowCreateCategory(true)}
-                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
-                title="Nouvelle catégorie"
-              >
-                <Plus size={14} />
-              </motion.button>
-            ) : (
-              <motion.form
-                key="add-form"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 'auto' }}
-                exit={{ opacity: 0, width: 0 }}
-                className="flex items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const name = newCategoryName.trim();
-                  if (name.length < 2) {
-                    toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
-                    return;
-                  }
-                  createCategoryMutation.mutate({ name, color: newCategoryColor }, {
-                    onSuccess: () => {
-                      setNewCategoryName('');
-                      setNewCategoryColor('blue');
-                      setShowCreateCategory(false);
-                    }
-                  });
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    const idx = colorOptions.findIndex(c => c.value === newCategoryColor);
-                    setNewCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
-                  }}
-                  className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                  style={{ backgroundColor: colorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
-                  title="Changer la couleur"
-                />
-                <input
-                  autoFocus
-                  type="text"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Nom de la catégorie…"
-                  className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
-                  style={{
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    borderColor: 'rgb(var(--color-border))',
-                    color: 'rgb(var(--color-text-primary))'
-                  }}
-                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateCategory(false); setNewCategoryName(''); } }}
-                />
-                <button
-                  type="submit"
-                  disabled={newCategoryName.trim().length < 2}
-                  className="px-3 py-1 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
-                >
-                  Créer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowCreateCategory(false); setNewCategoryName(''); }}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  <X size={13} />
-                </button>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+      <CategoryFilterBar
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        hoveredCategoryId={hoveredCategoryId}
+        setHoveredCategoryId={setHoveredCategoryId}
+        editingCategoryId={editingCategoryId}
+        editCategoryName={editCategoryName}
+        setEditCategoryName={setEditCategoryName}
+        editCategoryColor={editCategoryColor}
+        setEditCategoryColor={setEditCategoryColor}
+        startEditCategory={startEditCategory}
+        cancelEditCategory={cancelEditCategory}
+        submitEditCategory={submitEditCategory}
+        setCategoryToDeleteId={setCategoryToDeleteId}
+        colorOptions={colorOptions}
+        resolveColor={resolveColor}
+        showCreateCategory={showCreateCategory}
+        setShowCreateCategory={setShowCreateCategory}
+        newCategoryName={newCategoryName}
+        setNewCategoryName={setNewCategoryName}
+        newCategoryColor={newCategoryColor}
+        setNewCategoryColor={setNewCategoryColor}
+        createCategoryMutation={createCategoryMutation}
+      />
 
       {filteredObjectives.length === 0 && (
         <motion.div
@@ -629,44 +459,12 @@ const OKRPage: React.FC = () => {
       }
 
       {/* Dialog suppression catégorie */}
-      <AnimatePresence>
-        {categoryToDeleteId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-[#1e2235] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-700/50"
-            >
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-3">Confirmer la suppression</h3>
-                <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                  Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-white">"{categories.find(c => c.id === categoryToDeleteId)?.name}"</strong> ? Les OKR associés conserveront leur catégorie mais ne seront plus filtrables.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setCategoryToDeleteId(null)}
-                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white border border-slate-600 hover:bg-slate-800 transition-all duration-200"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={confirmDeleteCategory}
-                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DeleteCategoryConfirm
+        open={!!categoryToDeleteId}
+        categoryName={categories.find(c => c.id === categoryToDeleteId)?.name}
+        onCancel={() => setCategoryToDeleteId(null)}
+        onConfirm={confirmDeleteCategory}
+      />
 
       {/* FAB Nouvel objectif — mobile only */}
       <motion.button
