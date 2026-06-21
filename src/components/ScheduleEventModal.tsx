@@ -63,10 +63,11 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
 
   useEffect(() => {
     if (!open) return;
-    const slot = defaultSlot(task);
+    // Les champs date/heure restent vides à l'ouverture : l'utilisateur choisit
+    // explicitement le créneau (pas de pré-remplissage via defaultSlot).
     setTitle(task?.name ?? '');
-    setStart(slot.start);
-    setEnd(slot.end);
+    setStart('');
+    setEnd('');
     setNotes('');
   }, [open, task]);
 

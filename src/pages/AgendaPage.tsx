@@ -571,7 +571,7 @@ const AgendaPage: React.FC = () => {
               eventResize={handleEventResize}
               eventReceive={handleEventReceive}
               unselectAuto={true}
-              unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event"
+              unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
               datesSet={handleMobileDatesSet}
               eventContent={(eventInfo) => (
                 <div className="h-full w-full flex items-center p-1 text-xs cursor-pointer">
@@ -633,7 +633,7 @@ const AgendaPage: React.FC = () => {
                 eventResize={handleEventResize}
                 eventReceive={handleEventReceive}
                 unselectAuto={true}
-                unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event"
+                unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
                 eventContent={(eventInfo) => (
                   <div className="h-full w-full flex items-center justify-center p-1 text-xs cursor-pointer">
                     <div className="font-medium text-white truncate text-center leading-tight">
