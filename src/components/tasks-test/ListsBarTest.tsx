@@ -74,7 +74,8 @@ export default function ListsBarTest({
     if (!def) return;
     const existing = smartActive(preset);
     if (existing) {
-      onSelectList(existing.id);
+      // Active → un clic supprime la liste intelligente (elle disparaît de la barre).
+      handleDelete(existing);
       return;
     }
     createList.mutate(

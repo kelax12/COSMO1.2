@@ -44,6 +44,7 @@ const COLOR_HEX: Record<string, string> = {
 const SmartListMenu: React.FC<SmartListMenuProps> = ({
   existingSmartLists,
   onSelect,
+  onRevokeSmart,
   todayHidden = false,
   onToggleToday,
   todayCount = 0,
@@ -131,13 +132,20 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
 
         {/* Smart presets */}
         {SMART_PRESETS.map(preset => {
-          const isActive = smartByPreset.has(preset.preset);
+          const existing = smartByPreset.get(preset.preset);
+          const isActive = !!existing;
           return (
             <li key={preset.preset}>
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { onSelect(preset.preset); setOpen(false); }}
+                onClick={() => {
+                  // Active → un clic supprime la liste intelligente (elle disparaît
+                  // de la barre de chips). Inactive → la crée et la sélectionne.
+                  if (existing) onRevokeSmart(existing);
+                  else onSelect(preset.preset);
+                  setOpen(false);
+                }}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none"
               >
                 <span
