@@ -677,6 +677,13 @@ body {
   transition: background-color 0.3s ease;
 }
 
+/* Aperçu de sélection (mirror) recoloré selon la catégorie choisie dans la
+   popup de création rapide. --fc-mirror-color est piloté par QuickEventCard. */
+.fc-event.fc-event-mirror {
+  background-color: var(--fc-mirror-color, #3b82f6) !important;
+  border-color: var(--fc-mirror-color, #3b82f6) !important;
+}
+
 .fc .fc-button {
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
   border: none;
