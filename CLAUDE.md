@@ -252,6 +252,15 @@ const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
 
 #### Modèle Premium (refonte 2026-06-11)
 
+> 🟢 **Premium NON APPLIQUÉ depuis 2026-06-21** — kill-switch `PREMIUM_ENFORCED`
+> dans `src/modules/billing/premium-config.ts` (= `false`). Tant qu'il vaut
+> `false` : `isPremium()` renvoie `true` pour tous (tout débloqué : stats, etc.)
+> et le mur-pub Habitudes est masqué (`shouldShowAdWall` court-circuité). **Aucun
+> code premium n'est supprimé** (Stripe/RPC/`HabitsAdGate`/`PremiumPage`/gates
+> restent en place, dormants). Pour réactiver la monétisation : passer le flag à
+> `true` (puis finaliser Stripe — cf. `docs/POST-AUDIT-GUIDE.md` point 3 option C).
+> Les sections ci-dessous décrivent le comportement **quand `PREMIUM_ENFORCED=true`**.
+
 - **Partage de tâches → 100 % gratuit** (canal d'acquisition viral). Aucun gate `isPremium()` sur la collaboration : ni création/édition (`AddTaskForm`, `TaskModal`, `DesktopCollaboratorsStep`, `TaskModalMobileBody`), ni la liste (`CollaborativeTasks`), ni **l'acceptation** d'une tâche reçue (`InboxMenu`). La sécurité reste la RLS `shared_tasks` + lien d'amitié/pending. **Ne PAS réintroduire** ces gates.
 - **Liens d'invitation** (mig. 046) : `ShareLinkField` (dans la vue Collaborateurs de `TaskModal` — `DesktopCollaboratorsStep` + collab-sheet de `TaskModalMobileBody`) affiche un lien copiable `/invite/<token>` (table `share_links`, token = uuid, 7 jours, révocable par DELETE). `InvitePage` (route publique) pose le token dans `localStorage.cosmo_pending_share_invite` puis redirige ; `ShareInviteClaimer` (monté au niveau App) claim via la RPC SECURITY DEFINER `claim_share_link` dès que l'utilisateur est authentifié (couvre login ET fin d'inscription) et affiche la popup Accepter/Refuser. La RPC crée l'amitié bidirectionnelle (forme canonique `accept_friend_request_v2`) + la grant `shared_tasks` en attente. Feature Supabase-only — masquée en démo (`src/modules/friends/share-link.hooks.ts`).
 - ⚠️ **Récursion RLS `tasks ↔ shared_tasks`** : la policy `shared_tasks_insert` ne doit JAMAIS contenir d'`EXISTS` direct sur `tasks` (la policy « Collaborators can read shared tasks » de `tasks` référence `shared_tasks` → cycle → erreur 42P17 `infinite recursion`, partage cassé en prod après la mig. 043). Utiliser `public.owns_task(task_id)` (SECURITY DEFINER, mig. 045) pour tout check de propriété de tâche dans une policy de `shared_tasks` ou `share_links`.

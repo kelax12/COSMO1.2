@@ -38,3 +38,26 @@ export function isPremiumSubscription(
   // Ad-based tokens: active as long as tokens > 0 and not cancelled
   return subscription.status === 'active';
 }
+
+/**
+ * Faut-il afficher le mur-pub quotidien (Habitudes) ?
+ * Logique pure extraite de HabitsPage pour testabilité. Le mur ne dépend PAS
+ * de `isPremiumSubscription` (cf. CLAUDE.md — le flag daté `useDailyAdGate`
+ * garantit la récurrence). Quand le premium n'est pas appliqué
+ * (`enforced=false`, cf. premium-config.ts), le mur est toujours masqué.
+ */
+export function shouldShowAdWall(opts: {
+  enforced: boolean;
+  isDemo: boolean;
+  billingLoading: boolean;
+  isPaidSubscriber: boolean;
+  seenToday: boolean;
+}): boolean {
+  if (!opts.enforced) return false; // premium désactivé → jamais de mur
+  return (
+    !opts.isDemo &&
+    !opts.billingLoading &&
+    !opts.isPaidSubscriber &&
+    !opts.seenToday
+  );
+}
