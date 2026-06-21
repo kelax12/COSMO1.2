@@ -339,7 +339,8 @@
       "Bash(pkill -f \"8901\")",
       "Bash(pkill -f \"http.server\")",
       "Bash(xargs ls -lh)",
-      "Bash(awk '{print \"report.html:\", $5}')"
+      "Bash(awk '{print \"report.html:\", $5}')",
+      "Bash(echo \"EXIT_TSC=$?\")"
     ]
   },
   "enabledMcpjsonServers": [

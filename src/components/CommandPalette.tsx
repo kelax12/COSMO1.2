@@ -13,7 +13,6 @@ import {
   Repeat,
   Moon,
   Sun,
-  FlaskConical,
   LogOut,
 } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -44,9 +43,8 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { logout, isAuthenticated, user } = useAuth();
-  const allowTest = user?.email?.endsWith('@thecosmo.app') ?? false;
-  const { theme, setTheme } = useDarkMode(allowTest);
+  const { logout, isAuthenticated } = useAuth();
+  const { theme, setTheme } = useDarkMode();
 
   const commands: Command[] = useMemo(() => {
     const nav = (path: string) => () => {
@@ -66,9 +64,6 @@ export function CommandPalette() {
       { id: 'pref-theme-light', label: 'Thème clair', group: 'Préférences', icon: <Sun size={18} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
       { id: 'pref-theme-dark', label: 'Thème sombre', group: 'Préférences', icon: <Moon size={18} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
     ];
-    if (allowTest) {
-      base.push({ id: 'pref-theme-test', label: 'Thème test (refonte)', group: 'Préférences', icon: <FlaskConical size={18} />, run: () => { setTheme('test'); setIsOpen(false); }, keywords: ['theme', 'test', 'refonte', 'shadcn', 'beta'] });
-    }
     if (isAuthenticated) {
       base.push({
         id: 'action-logout',
@@ -80,7 +75,7 @@ export function CommandPalette() {
       });
     }
     return base;
-  }, [navigate, setTheme, logout, isAuthenticated, allowTest]);
+  }, [navigate, setTheme, logout, isAuthenticated]);
 
   // Filtrage : substring sur label + keywords (case-insensitive)
   const filtered = useMemo(() => {
