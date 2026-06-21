@@ -1,36 +1,14 @@
 import { useState, useEffect } from 'react';
 import { PageHeading } from '@/components/ui/typography';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Crown, Zap, Play, Check, BarChart3, Sparkles, Loader2, X, Minus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Crown, Zap, Play, Check, Sparkles, Loader2, X, Minus } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import { useBilling } from '@/modules/billing/billing.context';
 import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1
-    }
-  }
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94]
-    }
-  }
-};
+import { containerVariants, itemVariants, features, COMPARISON_ROWS } from './premium/data';
 
 export function PremiumPage() {
   const { user } = useAuth();
@@ -61,19 +39,6 @@ export function PremiumPage() {
   if (!user) return null;
 
   const premium = isPremium();
-
-  const features = [
-    {
-      icon: Sparkles,
-      title: 'Habitudes sans publicité',
-      description: 'Accédez à vos habitudes sans la pub quotidienne',
-    },
-    {
-      icon: BarChart3,
-      title: 'Statistiques avancées',
-      description: 'Analyses détaillées, heatmaps et tendances',
-    },
-  ];
 
   const handleCheckout = async () => {
     setIsCheckoutLoading(true);
@@ -450,20 +415,7 @@ export function PremiumPage() {
           </p>
 
           {(() => {
-            const rows: Array<{ label: string; free: boolean | string; pro: boolean | string }> = [
-              { label: 'Tâches illimitées', free: true, pro: true },
-              { label: 'Habitudes illimitées', free: true, pro: true },
-              { label: 'Agenda & événements', free: true, pro: true },
-              { label: 'OKR & Key Results', free: true, pro: true },
-              { label: 'Statistiques de base', free: true, pro: true },
-              { label: 'Sync multi-appareils', free: true, pro: true },
-              { label: 'Mode démo', free: true, pro: true },
-              { label: 'Collaboration & partage de tâches', free: true, pro: true },
-              { label: 'Habitudes sans pub quotidienne', free: false, pro: true },
-              { label: 'Statistiques avancées', free: false, pro: true },
-              { label: 'Sans publicité', free: false, pro: true },
-              { label: 'Support prioritaire', free: false, pro: true },
-            ];
+            const rows = COMPARISON_ROWS;
 
             const Cell = ({ value }: { value: boolean | string }) =>
               typeof value === 'string' ? (
