@@ -106,3 +106,44 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────
+  # Tests RLS d'intégration : démarre une stack Supabase locale (GoTrue +
+  # PostgREST + Postgres), rejoue TOUTES les migrations sur base vierge via
+  # scripts/apply-migrations.mjs, puis vérifie que la RLS isole bien les
+  # données entre utilisateurs (e2e/rls/). Filet de sécurité du modèle
+  # d'accès (cf. récursion 42P17, mig. 045). Job séparé : Docker + images.
+  # ──────────────────────────────────────────────────────────────────
+  rls-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+      - name: Export Supabase env
+        run: |
+          supabase status -o env > supabase.env
+          # `supabase status -o env` émet API_URL/ANON_KEY/SERVICE_ROLE_KEY/DB_URL.
+          # On les remappe vers les noms attendus par le loader et le harnais.
+          set -a; . ./supabase.env; set +a
+          {
+            echo "DATABASE_URL=$DB_URL"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+      - name: Apply migrations on fresh DB
+        run: node scripts/apply-migrations.mjs
+      - name: Run RLS integration tests
+        run: npm run test:rls
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: supabase stop
