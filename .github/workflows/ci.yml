@@ -44,6 +44,9 @@ jobs:
       - name: Validate SQL migrations
         run: npm run validate:migrations
 
+      - name: Validate file size (anti god-component ratchet)
+        run: npm run validate:file-size
+
       - name: Unit tests + coverage (enforced thresholds)
         run: npm run test:coverage
 

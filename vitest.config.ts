@@ -46,20 +46,25 @@ export default defineConfig({
       // anti-mass-assignment, lib utilitaire, garde billing) doit rester
       // hautement couvert. Une régression de couverture y casse la CI.
       thresholds: {
-        // ── Plancher GLOBAL (audit 9/10 phase 1) ──
-        // Posé sous le réel mesuré (12 % lignes au 2026-06-10) pour empêcher
-        // toute régression nette. À remonter au fil des phases (jamais
-        // au-dessus du mesuré courant).
-        lines: 10,
-        statements: 10,
-        functions: 45,
-        branches: 60,
+        // ── Plancher GLOBAL ──
+        // Posé JUSTE sous le réel mesuré pour empêcher toute régression nette
+        // (ratchet). À remonter au fil des phases, jamais au-dessus du mesuré.
+        // Mesuré 2026-06-22 (audit dette §9.1) : L/S 12.85 %, F 50.68 %, B 70.49 %.
+        lines: 12,
+        statements: 12,
+        functions: 50,
+        branches: 70,
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         // Repositories Supabase = frontière sécurité (anti-mass-assignment,
         // gardes injection, RPCs atomiques). Min mesuré : friends 68L / lists 38B.
         'src/modules/**/supabase.repository.ts': { lines: 65, functions: 55, statements: 65, branches: 35 },
         'src/lib/app-mode.store.ts': { lines: 70, functions: 75, statements: 70, branches: 75 },
+        // Factory d'aiguillage démo/prod = frontière de routage des données
+        // (faille B20 : singletons stale après flip de mode). Couverture 100 %.
+        'src/lib/repository.factory.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
+        // Kill-switch Premium : tripwire anti-divergence (Stripe non finalisé).
+        'src/modules/billing/premium-config.ts': { lines: 100, functions: 100, statements: 100, branches: 100 },
         'src/lib/utils.ts': { lines: 100, functions: 100, statements: 100, branches: 100 },
         'src/lib/hooks/use-habit-pauses.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
         'src/lib/hooks/useDebounce.ts': { lines: 60, functions: 60, statements: 60, branches: 80 },

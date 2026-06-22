@@ -1,0 +1,48 @@
+name: CodeQL
+
+# SAST statique (audit dette §9.6). Dependabot couvre déjà les CVE de
+# dépendances ; CodeQL couvre le code APPLICATIF (injection, XSS, mauvaise
+# gestion de flux, secrets en clair). Complémentaire, pas redondant.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Re-scan hebdomadaire : capte les nouvelles règles CodeQL même sans push.
+    - cron: '17 3 * * 1'
+
+# Least-privilege : seul security-events:write est élevé (upload SARIF).
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          # `security-and-quality` = pack étendu (sécurité + maintenabilité).
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
