@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useMatch, useResolvedPath } from 'react-router-dom';
 import { prefetchRoute } from '@/lib/route-prefetch';
+import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -135,8 +136,12 @@ const NavItems = () =>
 
   const CompanyItems = () =>
   <>
-      <NavItemLink to="/premium" label="Premium" icon={<Crown size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
+      {/* Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
+          Lien + page conservés, réapparaissent dès qu'on réactive le flag. */}
+      {PREMIUM_ENFORCED && (
+        <NavItemLink to="/premium" label="Premium" icon={<Crown size={20} aria-hidden="true" />}
+          hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
+      )}
 
       <NavItemLink to="/settings" label="Paramètres" icon={<Settings size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} />

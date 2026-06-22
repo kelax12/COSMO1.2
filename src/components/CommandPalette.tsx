@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 
 interface Command {
   id: string;
@@ -59,7 +60,10 @@ export function CommandPalette() {
       { id: 'nav-okr', label: 'Aller aux OKR', group: 'Navigation', icon: <Target size={18} />, run: nav('/okr'), keywords: ['objectives', 'key results'] },
       { id: 'nav-statistics', label: 'Aller aux statistiques', group: 'Navigation', icon: <TrendingUp size={18} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
       { id: 'nav-settings', label: 'Aller aux paramètres', group: 'Navigation', icon: <SettingsIcon size={18} />, run: nav('/settings'), keywords: ['settings', 'config'] },
-      { id: 'nav-premium', label: 'Voir Premium', group: 'Navigation', icon: <Crown size={18} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] },
+      // Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
+      ...(PREMIUM_ENFORCED
+        ? [{ id: 'nav-premium', label: 'Voir Premium', group: 'Navigation' as const, icon: <Crown size={18} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
+        : []),
       // Préférences
       { id: 'pref-theme-light', label: 'Thème clair', group: 'Préférences', icon: <Sun size={18} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
       { id: 'pref-theme-dark', label: 'Thème sombre', group: 'Préférences', icon: <Moon size={18} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
