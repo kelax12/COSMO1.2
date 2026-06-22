@@ -31,17 +31,41 @@ describe('SupabaseFriendsRepository — lecture', () => {
     expect(supabaseMock.rpcCalls).toHaveLength(0); // pas de fallback nécessaire
   });
 
-  it('getAll: falls back to resolve_profile_by_email RPC when profiles RLS hides the row (N12)', async () => {
+  it('getAll: falls back to resolve_profiles_by_emails (BATCH, un seul appel) when profiles RLS hides the row (N12)', async () => {
     supabaseMock.queueTable('friends', { data: [{ ...friendRow, friend_user_id: undefined }] });
     supabaseMock.queueTable('profiles', { data: [] }); // RLS a tout masqué
-    supabaseMock.queueRpc('resolve_profile_by_email', { data: 'alice-uid' });
+    supabaseMock.queueRpc('resolve_profiles_by_emails', { data: [{ email: 'alice@test.dev', id: 'alice-uid' }] });
 
     const result = await repo.getAll();
 
+    // UN SEUL aller-retour RPC pour tous les emails non résolus (plus de N+1).
     expect(supabaseMock.rpcCalls).toEqual([
-      { fn: 'resolve_profile_by_email', args: { p_email: 'alice@test.dev' } },
+      { fn: 'resolve_profiles_by_emails', args: { p_emails: ['alice@test.dev'] } },
     ]);
     expect(result[0].userId).toBe('alice-uid');
+  });
+
+  it('getAll: un seul appel batch même avec plusieurs amis non résolus (anti N+1)', async () => {
+    supabaseMock.queueTable('friends', {
+      data: [
+        { ...friendRow, id: 'f1', email: 'alice@test.dev', friend_user_id: undefined },
+        { ...friendRow, id: 'f2', email: 'bob@test.dev', friend_user_id: undefined },
+      ],
+    });
+    supabaseMock.queueTable('profiles', { data: [] });
+    supabaseMock.queueRpc('resolve_profiles_by_emails', {
+      data: [
+        { email: 'alice@test.dev', id: 'alice-uid' },
+        { email: 'bob@test.dev', id: 'bob-uid' },
+      ],
+    });
+
+    const result = await repo.getAll();
+
+    expect(supabaseMock.rpcCalls).toHaveLength(1); // <-- pas N appels
+    expect(supabaseMock.rpcCalls[0].fn).toBe('resolve_profiles_by_emails');
+    expect(result.find((f) => f.id === 'f1')?.userId).toBe('alice-uid');
+    expect(result.find((f) => f.id === 'f2')?.userId).toBe('bob-uid');
   });
 
   it('getByEmail: L-9 boundary guard — empty/oversized/no-@ inputs return null with ZERO query', async () => {
