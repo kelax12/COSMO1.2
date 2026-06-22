@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
-import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
+import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import TaskSidebar from '../components/TaskSidebar';
@@ -17,7 +17,7 @@ import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
-import { getInitialScrollTime, buildCalendarEvents } from './agenda/calendar-events';
+import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './agenda/calendar-events';
 import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
@@ -29,7 +29,17 @@ const AgendaPage: React.FC = () => {
   const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800);
   const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
-  const { data: events = [] } = useEvents();
+  // Pagination serveur de l'agenda : on ne charge que les événements de la
+  // fenêtre visible (+ tous les récurrents, cf. window.ts). La fenêtre est
+  // affinée par datesSet (desktop + mobile) ; init large pour un 1er paint sans flash.
+  const [eventsWindow, setEventsWindow] = useState(() => defaultEventsWindow());
+  const { data: events = [] } = useEventsWindow(eventsWindow.start, eventsWindow.end);
+  const applyVisibleRange = useCallback((rangeStart: Date, rangeEnd: Date) => {
+    const next = bufferedWindow(rangeStart, rangeEnd);
+    setEventsWindow((prev) =>
+      prev.start === next.start && prev.end === next.end ? prev : next,
+    );
+  }, []);
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
@@ -319,6 +329,12 @@ const AgendaPage: React.FC = () => {
 
   const handleMobileDatesSet = (info: DatesSetArg) => {
     setMobileSelectedDate(info.view.currentStart);
+    applyVisibleRange(info.start, info.end);
+  };
+
+  // Desktop : met à jour la fenêtre chargée selon la plage visible.
+  const handleDesktopDatesSet = (info: DatesSetArg) => {
+    applyVisibleRange(info.start, info.end);
   };
 
   const isMonthView = mobileViewMode === 'dayGridMonth';
@@ -517,6 +533,7 @@ const AgendaPage: React.FC = () => {
                 eventDrop={handleEventDrop}
                 eventResize={handleEventResize}
                 eventReceive={handleEventReceive}
+                datesSet={handleDesktopDatesSet}
                 unselectAuto={true}
                 unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
                 eventContent={(eventInfo) => (
