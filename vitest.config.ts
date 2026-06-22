@@ -49,11 +49,27 @@ export default defineConfig({
         // ── Plancher GLOBAL ──
         // Posé JUSTE sous le réel mesuré pour empêcher toute régression nette
         // (ratchet). À remonter au fil des phases, jamais au-dessus du mesuré.
-        // Mesuré 2026-06-22 (audit dette §9.1) : L/S 12.85 %, F 50.68 %, B 70.49 %.
-        lines: 12,
-        statements: 12,
-        functions: 50,
-        branches: 70,
+        // Mesuré 2026-06-22 (audit P0 couverture métier) : L/S 17.17 %,
+        // F 66.37 %, B 75.17 % (marge ~1 pt pour la stabilité cross-CI).
+        lines: 16,
+        statements: 16,
+        functions: 65,
+        branches: 74,
+        // ── Gates par fichier (code à fort risque) ──
+        // Logique métier dérivée + LocalStorage repositories (démo) — couverts
+        // à 95-100 % par l'audit P0. Ces gates verrouillent l'acquis.
+        'src/modules/okrs/hooks.derived.ts': { lines: 95, functions: 100, statements: 95, branches: 88 },
+        'src/modules/habits/hooks.derived.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
+        'src/modules/okrs/repository.ts': { lines: 95, functions: 100, statements: 95, branches: 80 },
+        'src/modules/kr-completions/repository.ts': { lines: 95, functions: 100, statements: 95, branches: 90 },
+        'src/modules/friends/repository.ts': { lines: 95, functions: 100, statements: 95, branches: 80 },
+        'src/modules/lists/repository.ts': { lines: 95, functions: 100, statements: 95, branches: 90 },
+        'src/modules/categories/repository.ts': { lines: 95, functions: 100, statements: 95, branches: 90 },
+        'src/modules/events/repository.ts': { lines: 90, functions: 90, statements: 90, branches: 80 },
+        'src/modules/habits/local.repository.ts': { lines: 95, functions: 100, statements: 95, branches: 80 },
+        'src/modules/tasks/local.repository.ts': { lines: 95, functions: 100, statements: 95, branches: 80 },
+        'src/modules/billing/billing.repository.ts': { lines: 95, functions: 95, statements: 95, branches: 60 },
+        'src/modules/friends/share-link.hooks.ts': { lines: 80, functions: 90, statements: 80, branches: 55 },
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         // Repositories Supabase = frontière sécurité (anti-mass-assignment,

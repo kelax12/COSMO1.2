@@ -939,3 +939,37 @@ installé, CI chromium-only). WebKit installé, 6 specs rendues viewport-aware
 (`navTo()` dans `e2e/fixtures.ts` : sidebar desktop / tab bar / sheet « Plus »),
 + 3 tests gestes tactiles (`demo-touch-gestures.spec.ts` : swipe droit,
 long-press, bottom-sheet) — couvre a-faire.md #4.
+
+---
+
+## Audit P0 (2026-06-22) — couverture métier + coût RLS collaboration
+
+### P0-1 — Coût RLS collaboration (mig. 049, vérifié live)
+
+| ID | Sévérité | Sujet | État | Détail |
+|----|----------|-------|------|--------|
+| P0-RLS | 🟠 Perf | `multiple_permissive_policies` sur `tasks` (SELECT/UPDATE) + `friend_requests` (SELECT/UPDATE) | ✅ Corrigé | `049_merge_permissive_policies.sql` — fusion des paires de policies permissives en UNE policy `OR` (sémantique 1:1). Vérifié en prod : `pg_policies` 2→1/action, advisor `multiple_permissive_policies` éteint, plan `EXPLAIN` identique (zéro régression). Benchmark détaillé : `docs/SCALABILITY.md` §8. |
+
+Constat clé : Postgres foldait déjà les permissives en `OR` avec sous-plan
+`shared_tasks` **hashé** (1 calcul, pas par ligne) ; index `idx_tasks_user_id` +
+`idx_shared_tasks_friend_task` (020) en place → chemin collaboration **indexable
+et linéaire**. Le coût RLS n'est pas le goulot à l'échelle (cf. §3 pagination).
+
+> Branche éphémère de benchmark **indisponible** (branching = plan Pro, projet en
+> Free) ; mesure faite par `EXPLAIN` + `pg_policies` + advisors live sur la prod,
+> sans seeding (sécurité des données).
+
+### P0-2 — Couverture métier de fond
+
+Tests ajoutés sur la logique métier pure (derived hooks OKR/Habits, LocalStorage
+repositories tasks/habits/events/okrs/lists/categories/friends/kr-completions,
+billing.repository, share-link.hooks). **Couverture : lignes 12.6 % → 17.2 %,
+fonctions 49 % → 66 %, branches 70 % → 75 %**. Tous les fichiers ciblés à
+95-100 %. Seuils CI ratchetés sur le réel (`vitest.config.ts`).
+
+### Bug UX corrigé en passant
+
+Nav « nouvel onglet au changement de page » : retrait du script global Google
+**Auto Ads** d'`index.html` (vignettes interstitielles au changement de page →
+nouvel onglet), désormais chargé à la demande par `AdModal`. + liens internes du
+footer landing convertis en `<Link>` SPA.

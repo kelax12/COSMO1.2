@@ -52,9 +52,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2572718224166714"
-     crossorigin="anonymous"></script>
+    <!-- AdSense — chargé À LA DEMANDE par AdModal (cf. src/components/AdModal.tsx).
+         Ne PAS remettre le script ici : chargé globalement, il active les
+         « Auto ads » (vignettes interstitielles déclenchées au changement de
+         page, dont le clic ouvre un nouvel onglet). Le mur-pub étant dormant
+         (PREMIUM_ENFORCED=false), le script n'est injecté que lorsque l'AdModal
+         s'ouvre réellement. -->
 
     <!-- JSON-LD : SoftwareApplication -->
     <script type="application/ld+json">

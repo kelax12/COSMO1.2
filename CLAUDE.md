@@ -294,6 +294,8 @@ Toutes les tables ont **RLS activée** avec policies `auth.uid() = user_id`. **P
 
 Fonctions SECURITY DEFINER clés (toutes versionnées) : `accept_friend_request_v2`, `accept_shared_task`, `consume_premium_token` / `credit_premium_token_from_ad`, `remove_friendship` / `resolve_profile_by_email`, `handle_new_user_profile`, `prevent_user_id_change`, `owns_task`, `claim_share_link`, `sanitize_display_name`. Schéma `friend_requests` = `sender_id` / `receiver_id`.
 
+> **Policies RLS — une seule PERMISSIVE par rôle+action** (mig. 049, advisor `multiple_permissive_policies`). Les anciens splits `tasks` (own / collaborator) et `friend_requests` (sender / receiver) sont **fusionnés en une policy `OR` unique** — sémantique strictement préservée (cf. `docs/SECURITY.md`). **Ne JAMAIS recréer deux policies permissives** pour le même rôle+action : élargir le `OR` de la policy existante. (Remplace la règle « split sender/receiver CONSERVÉ » de la mig. 043.)
+
 ### Pattern critique : journal append-only `kr_completions`
 
 Quand un KR transitionne `completed: false → true`, **les deux repositories OKR (LocalStorage + Supabase) doivent insérer une ligne dans `kr_completions`** atomiquement. Cette table alimente le graphique « KR réalisés » de `DashboardPage` (+ `DashboardChart` / `DashboardBarChart`).
