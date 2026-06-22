@@ -60,6 +60,8 @@ export interface MobileBodyProps {
   ownerId?: string;
   /** friend_ids des collaborateurs en attente d'acceptation (badge « Envoyé »). */
   pendingShareIds: Set<string>;
+  /** Crée la tâche à la volée (création) pour générer le lien d'invitation. */
+  onGenerateShareLink: () => Promise<string | null>;
 }
 
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
@@ -70,7 +72,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   handleAddEmail, handleRemoveCollaborator, toggleCollaborator,
   createCategoryMutation,
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
-  taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds,
+  taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds, onGenerateShareLink,
 }) => {
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
@@ -539,7 +541,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   </div>
                   {inputError && <p className="mt-1 text-[13px] text-red-500">{inputError}</p>}
                   {/* Lien d'invitation copiable (Supabase only) */}
-                  <ShareLinkField taskId={taskId} ownerCanShare={isTaskOwner} className="pt-3" />
+                  <ShareLinkField taskId={taskId} ownerCanShare={isTaskOwner} onGenerate={onGenerateShareLink} className="pt-3" />
                 </div>
               )}
               {collaborators.length > 0 && (

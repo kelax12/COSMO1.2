@@ -64,6 +64,8 @@ export interface DesktopBodyProps {
   handleDelete: () => void;
   isTaskOwner: boolean;
   task?: Task;
+  /** Crée la tâche à la volée (création) pour générer le lien d'invitation. */
+  onGenerateShareLink: () => Promise<string | null>;
   collaborators: string[];
   displayInfo: (id: string) => { name: string; email?: string; avatar?: string; isPending: boolean };
   pendingShareIds: Set<string>;
@@ -95,7 +97,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   lists, selectedListIds, setSelectedListIds, createListMutation,
   isLoading, isCreating,
   handleClose, handleSave, handleDelete,
-  isTaskOwner, task,
+  isTaskOwner, task, onGenerateShareLink,
   collaborators, displayInfo, pendingShareIds, handleRemoveCollaborator,
   emailInput, setEmailInput, inputError, setInputError, handleAddEmail,
   filteredFriends, collabIdOf, toggleCollaborator,
@@ -188,6 +190,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     collaboratorRef={collaboratorRef}
                     isTaskOwner={isTaskOwner}
                     task={task}
+                    onGenerateShareLink={onGenerateShareLink}
                     collaborators={collaborators}
                     displayInfo={displayInfo}
                     pendingShareIds={pendingShareIds}

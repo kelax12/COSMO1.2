@@ -16,8 +16,9 @@ import { useTaskModal, type TaskModalProps } from './task-modal/useTaskModal';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TaskModal: React.FC<TaskModalProps> = (props) => {
-  const { task, isOpen, isCreating = false, showCollaborators = false } = props;
+  const { isOpen, showCollaborators = false } = props;
   const {
+    task, isCreating, onGenerateShareLink,
     formData, setFormData, handleInputChange,
     errors, setErrors, okrFields, hasChanges, setHasChanges, step, setStep,
     categories, createCategoryMutation,
@@ -79,6 +80,7 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
             isTaskOwner={isTaskOwner}
             ownerId={task?.userId}
             pendingShareIds={pendingShareIds}
+            onGenerateShareLink={onGenerateShareLink}
           />
         ) : (
           <TaskModalDesktopBody
@@ -115,6 +117,7 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
             handleDelete={handleDelete}
             isTaskOwner={isTaskOwner}
             task={task}
+            onGenerateShareLink={onGenerateShareLink}
             collaborators={collaborators}
             displayInfo={displayInfo}
             pendingShareIds={pendingShareIds}

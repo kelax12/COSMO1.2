@@ -9,7 +9,7 @@ import type {
 import type { useAddTaskToList, useRemoveTaskFromList, useLists } from '@/modules/lists';
 import type { useFriends, useShareTask, useUnshareTask } from '@/modules/friends';
 
-interface TaskSaveFormData {
+export interface TaskSaveFormData {
   name: string;
   description: string;
   priority: number;
@@ -43,6 +43,60 @@ export interface TaskSaveDeps {
   onClose: () => void;
 }
 
+// Construit le payload de création d'une tâche depuis l'état du formulaire.
+export function buildCreateTaskInput(
+  formData: TaskSaveFormData,
+  collaborators: string[],
+  pendingInvitesLocal: string[],
+): CreateTaskInput {
+  return {
+    name: formData.name,
+    description: formData.description.trim() || undefined,
+    priority: formData.priority,
+    category: formData.category,
+    deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
+    estimatedTime: Number(formData.estimatedTime),
+    completed: formData.completed,
+    bookmarked: formData.bookmarked,
+    isCollaborative: collaborators.length > 0,
+    pendingInvites: pendingInvitesLocal,
+  };
+}
+
+type CreateTaskWithSharesDeps = Pick<TaskSaveDeps,
+  'formData' | 'collaborators' | 'pendingInvitesLocal' | 'friends'
+  | 'createTaskMutation' | 'shareTaskMutation'
+>;
+
+// Crée la tâche puis partage les collaborateurs sélectionnés (hors invitations
+// email en attente) — sans fermer la popup. Retourne la tâche créée. Partagé
+// entre le flux « Créer la tâche » (runTaskSave) et la génération de lien à la
+// volée (useTaskModal.onGenerateShareLink).
+export async function createTaskWithShares(deps: CreateTaskWithSharesDeps): Promise<Task> {
+  const { formData, collaborators, pendingInvitesLocal, friends, createTaskMutation, shareTaskMutation } = deps;
+  const newTask = await createTaskMutation.mutateAsync(
+    buildCreateTaskInput(formData, collaborators, pendingInvitesLocal)
+  );
+  // Le partage réel passe par shared_tasks (plus de colonne `collaborators`).
+  // On ignore les invitations email en attente — elles vivent dans
+  // pendingInvites jusqu'à acceptation.
+  if (newTask) {
+    collaborators.forEach((userId) => {
+      if (pendingInvitesLocal.includes(userId)) return;
+      const friend = friends.find(
+        f => (f.userId ?? f.id) === userId || f.id === userId
+      );
+      shareTaskMutation.mutate({
+        taskId: newTask.id,
+        friendId: userId,
+        friendEmail: friend?.email,
+        role: 'editor'
+      });
+    });
+  }
+  return newTask;
+}
+
 // Orchestration création / mise à jour d'une tâche + synchro listes + partages
 // shared_tasks. Logique extraite verbatim de TaskModal (handleSave).
 export async function runTaskSave(deps: TaskSaveDeps) {
@@ -65,46 +119,16 @@ export async function runTaskSave(deps: TaskSaveDeps) {
   if (!isCreating && !task) return;
 
   if (isCreating) {
-    // Use createTaskMutation for new tasks
-    const createData: CreateTaskInput = {
-      name: formData.name,
-      description: formData.description.trim() || undefined,
-      priority: formData.priority,
-      category: formData.category,
-      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
-      estimatedTime: Number(formData.estimatedTime),
-      completed: formData.completed,
-      bookmarked: formData.bookmarked,
-      isCollaborative: collaborators.length > 0,
-      pendingInvites: pendingInvitesLocal,
-    };
-
-    createTaskMutation.mutate(createData, {
-      onSuccess: (newTask) => {
-        // Le partage réel passe par shared_tasks (plus de colonne
-        // `collaborators`). On ignore les invitations email en attente —
-        // elles vivent dans pendingInvites jusqu'à acceptation.
-        if (newTask) {
-          collaborators.forEach((userId) => {
-            if (pendingInvitesLocal.includes(userId)) return;
-            const friend = friends.find(
-              f => (f.userId ?? f.id) === userId || f.id === userId
-            );
-            shareTaskMutation.mutate({
-              taskId: newTask.id,
-              friendId: userId,
-              friendEmail: friend?.email,
-              role: 'editor'
-            });
-          });
-        }
-        onClose();
-      },
-      onError: (err) => {
-        console.error('Error creating task:', err);
-        setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
-      }
-    });
+    try {
+      await createTaskWithShares({
+        formData, collaborators, pendingInvitesLocal, friends,
+        createTaskMutation, shareTaskMutation,
+      });
+      onClose();
+    } catch (err) {
+      console.error('Error creating task:', err);
+      setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
+    }
   } else if (task) {
     const taskData: UpdateTaskInput = {
       name: formData.name,

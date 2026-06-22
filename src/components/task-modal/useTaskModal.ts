@@ -44,7 +44,7 @@ import {
   filterFriendsForCollab,
   resolveCollaboratorDisplay,
 } from './collaborators';
-import { runTaskSave } from './save-task';
+import { runTaskSave, createTaskWithShares } from './save-task';
 
 export interface TaskModalProps {
   task?: Task;
@@ -62,6 +62,13 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
+
+  // Tâche créée à la volée pendant la création (clic « Générer le lien ») : une
+  // fois persistée, la popup bascule en mode édition sur cette tâche (le lien a
+  // besoin d'un task.id existant — FK share_links.task_id).
+  const [createdTask, setCreatedTask] = useState<Task | null>(null);
+  const effectiveTask: Task | undefined = task ?? createdTask ?? undefined;
+  const effectiveIsCreating = isCreating && !createdTask;
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
@@ -90,11 +97,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   // RLS shared_tasks_insert exige auth.uid() = shared_by + propriété de la tâche).
   // Pour une nouvelle tâche, l'utilisateur courant est forcément propriétaire.
   // Pour une tâche reçue, `task.userId` = auth.uid du partageur ≠ moi.
-  const isTaskOwner = !task?.userId || task.userId === user?.id;
+  const isTaskOwner = !effectiveTask?.userId || effectiveTask.userId === user?.id;
 
   // shared_tasks est la source de vérité du partage (colonne `tasks.collaborators`
   // supprimée — migration 028). On dérive l'état « assignés » des grants.
-  const { data: shares = [] } = useTaskShares(task?.id);
+  const { data: shares = [] } = useTaskShares(effectiveTask?.id);
   const existingShareIds = useMemo(() => shares.map((s) => s.friendId), [shares]);
   // friend_ids des collaborateurs n'ayant pas encore accepté → badge « Envoyé ».
   const pendingShareIds = useMemo(
@@ -102,8 +109,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     [shares]
   );
   const existingCollaboratorIds = useMemo(
-    () => [...existingShareIds, ...(task?.pendingInvites || [])],
-    [existingShareIds, task?.pendingInvites]
+    () => [...existingShareIds, ...(effectiveTask?.pendingInvites || [])],
+    [existingShareIds, effectiveTask?.pendingInvites]
   );
 
   // Liste des collaborateurs à afficher selon le point de vue :
@@ -113,10 +120,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const seedCollaboratorIds = useMemo(() => {
     if (isTaskOwner) return existingCollaboratorIds;
     const ids = new Set<string>();
-    if (task?.userId && task.userId !== user?.id) ids.add(task.userId);
+    if (effectiveTask?.userId && effectiveTask.userId !== user?.id) ids.add(effectiveTask.userId);
     existingShareIds.forEach((id) => { if (id !== user?.id) ids.add(id); });
     return [...ids];
-  }, [isTaskOwner, existingCollaboratorIds, existingShareIds, task?.userId, user?.id]);
+  }, [isTaskOwner, existingCollaboratorIds, existingShareIds, effectiveTask?.userId, user?.id]);
 
 
   // Marqueur visuel (shake + bordure rouge) des champs requis non remplis
@@ -370,7 +377,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
 
   const handleSave = async () => {
     await runTaskSave({
-      isCreating, task, formData, collaborators, pendingInvitesLocal, friends,
+      isCreating: effectiveIsCreating, task: effectiveTask, formData, collaborators, pendingInvitesLocal, friends,
       lists, selectedListIds, isTaskOwner, existingShareIds,
       createTaskMutation, updateTaskMutation, addTaskToListMutation,
       removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
@@ -378,16 +385,43 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     });
   };
 
+  // Génère le lien d'invitation pendant la création : persiste la tâche (avec
+  // ses collaborateurs déjà sélectionnés) puis bascule la popup en édition →
+  // ShareLinkField reçoit alors un task.id et affiche le vrai lien.
+  const onGenerateShareLink = async (): Promise<string | null> => {
+    if (effectiveTask) return effectiveTask.id;
+    const validationErrors = computeValidationErrors();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error(Object.values(validationErrors)[0]);
+      setStep(1); // desktop : ramène à l'étape 1 pour voir l'erreur
+      return null;
+    }
+    try {
+      const t = await createTaskWithShares({
+        formData, collaborators, pendingInvitesLocal, friends,
+        createTaskMutation, shareTaskMutation,
+      });
+      setCreatedTask(t);
+      setHasChanges(false);
+      return t.id;
+    } catch (err) {
+      console.error('Error creating task for share link:', err);
+      setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
+      return null;
+    }
+  };
+
   const handleDelete = () => {
-    if (task) {
+    if (effectiveTask) {
       setShowDeleteConfirm(true);
     }
   };
 
   const confirmDelete = () => {
-    if (task) {
-      const taskSnapshot = task;
-      deleteTaskMutation.mutate(task.id, {
+    if (effectiveTask) {
+      const taskSnapshot = effectiveTask;
+      deleteTaskMutation.mutate(effectiveTask.id, {
         onSuccess: () => {
           setShowDeleteConfirm(false);
           onClose();
@@ -479,6 +513,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const isMobile = useIsMobile();
 
   return {
+    // tâche effective (prop édition OU tâche créée à la volée) + mode
+    task: effectiveTask, isCreating: effectiveIsCreating,
     // form state
     formData, setFormData, handleInputChange,
     errors, setErrors, okrFields, hasChanges, setHasChanges, step, setStep,
@@ -496,7 +532,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // shake markers
     dRegister, dTrigger, dClear, dInvalid, collaboratorRef,
     // actions
-    handleSave, handleDelete, confirmDelete, handleClose,
+    handleSave, handleDelete, confirmDelete, handleClose, onGenerateShareLink,
     showDeleteConfirm, setShowDeleteConfirm,
     showCategoryModal, setShowCategoryModal,
     isLoading, isMobile,
