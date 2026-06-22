@@ -9,6 +9,25 @@ declare global {
   }
 }
 
+const ADSENSE_CLIENT = 'ca-pub-2572718224166714';
+
+/**
+ * Charge le script AdSense À LA DEMANDE (au 1ᵉʳ affichage d'une pub), au lieu
+ * de l'inclure globalement dans index.html. Inclus globalement, il active les
+ * « Auto ads » (vignettes interstitielles au changement de page → ouverture
+ * d'un nouvel onglet). Ici il n'est présent que quand l'AdModal est ouvert.
+ * Idempotent : une seule balise est injectée.
+ */
+function ensureAdSenseScript(): void {
+  if (document.querySelector('script[data-adsense]')) return;
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+  s.crossOrigin = 'anonymous';
+  s.setAttribute('data-adsense', 'true');
+  document.head.appendChild(s);
+}
+
 interface AdModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -49,6 +68,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
     const t = setTimeout(() => {
       pushAttempted.current = true;
       try {
+        ensureAdSenseScript();
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (_e) {
         // Adblocker ou script non chargé — countdown continue quand même
