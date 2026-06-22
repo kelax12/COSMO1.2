@@ -4,6 +4,7 @@ import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight } from 'lucide
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
+import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 interface MobileMoreSheetProps {
@@ -23,6 +24,9 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const { isPremium } = useBilling();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
+  const visibleLinks = PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium');
 
   const handleClose = () => onOpenChange(false);
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);
@@ -104,7 +108,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
                   {/* Premium badge or chevron */}
                   <div className="flex items-center gap-2 shrink-0">
-                    {isPremium() && (
+                    {PREMIUM_ENFORCED && isPremium() && (
                       <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[11px] font-semibold uppercase tracking-wide">
                         Premium
                       </span>
@@ -116,7 +120,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
               {/* — Navigation links — */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
-                {links.map(({ to, label, icon: Icon, iconBg, description }, idx) => (
+                {visibleLinks.map(({ to, label, icon: Icon, iconBg, description }, idx) => (
                   <React.Fragment key={to}>
                     {idx > 0 && (
                       <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-[68px]" />

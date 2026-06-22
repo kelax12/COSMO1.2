@@ -11,6 +11,7 @@ import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
 import { BillingProvider } from '@/modules/billing/billing.context';
+import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
@@ -179,7 +180,9 @@ const AppRoutes = () => (
         <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
         <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
-        <Route path="premium" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
+        {/* Premium masqué tant que PREMIUM_ENFORCED=false : la route redirige
+            vers le dashboard. Page + import conservés (réactivation via le flag). */}
+        <Route path="premium" element={PREMIUM_ENFORCED ? <PageWithSuspense><PremiumPage /></PageWithSuspense> : <Navigate to="/" replace />} />
       </Route>
     </Route>
 
