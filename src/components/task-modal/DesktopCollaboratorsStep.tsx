@@ -16,7 +16,7 @@ import ShareLinkField from '@/components/ShareLinkField';
 import type { DesktopBodyProps } from './TaskModalDesktopBody';
 
 export type DesktopCollaboratorsStepProps = Pick<DesktopBodyProps,
-  | 'collaboratorRef' | 'isTaskOwner' | 'task'
+  | 'collaboratorRef' | 'isTaskOwner' | 'task' | 'onGenerateShareLink'
   | 'collaborators' | 'displayInfo' | 'pendingShareIds' | 'handleRemoveCollaborator'
   | 'emailInput' | 'setEmailInput' | 'inputError' | 'setInputError' | 'handleAddEmail'
   | 'filteredFriends' | 'collabIdOf' | 'toggleCollaborator'
@@ -24,7 +24,7 @@ export type DesktopCollaboratorsStepProps = Pick<DesktopBodyProps,
 >;
 
 const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
-  collaboratorRef, isTaskOwner, task,
+  collaboratorRef, isTaskOwner, task, onGenerateShareLink,
   collaborators, displayInfo, pendingShareIds, handleRemoveCollaborator,
   emailInput, setEmailInput, inputError, setInputError, handleAddEmail,
   filteredFriends, collabIdOf, toggleCollaborator,
@@ -74,6 +74,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                             <ShareLinkField
                               taskId={task?.id}
                               ownerCanShare={isTaskOwner}
+                              onGenerate={onGenerateShareLink}
                               className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700"
                             />
 
