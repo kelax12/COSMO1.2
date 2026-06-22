@@ -122,3 +122,51 @@ change sa tarification ou si l'app dépasse ~10 k utilisateurs actifs.
 - **×1000 utilisateurs** : 🔴 nécessite §2 (trim généralisé) **et** §3 (vraie
   pagination server-side). Le code tiendrait ; le frein réel est la profondeur
   de données **par compte**, pas la concurrence.
+
+---
+
+## 8. Coût RLS collaboration — mesuré (audit P0, 2026-06-22)
+
+**Question** : le chemin de lecture collaboratif (`tasks` filtré par RLS avec le
+sous-`EXISTS` sur `shared_tasks`) tient-il à l'échelle ? Jusqu'ici **non prouvé**.
+
+**Méthode** : `EXPLAIN` sous le rôle `authenticated` (impersonation via
+`request.jwt.claims`) sur la prod, avant/après la mig. 049. Le benchmark sous
+gros volume sur **branche éphémère** était prévu mais **indisponible**
+(branching = plan Pro ; le projet est en Free) ; seeding de la prod écarté
+(sécurité). Mesure donc sur le plan réel + advisors live.
+
+**Constats** :
+
+1. **Postgres folde déjà les policies permissives en un OR unique.** Le plan de
+   `SELECT … FROM tasks` montre :
+   `Filter: (uid = user_id) OR (id = ANY (hashed SubPlan))`.
+   Le sous-`EXISTS` sur `shared_tasks` est **hashé (calculé UNE fois)**, pas
+   ré-évalué par ligne → le coût lecture collaboratif est **déjà maîtrisé**.
+2. **Index en place** : `idx_tasks_user_id` (branche own) et
+   `idx_shared_tasks_friend_task (friend_id, task_id)` (mig. 020, branche
+   partage, index-only) → à volume réel le planner peut basculer le `Seq Scan`
+   (choisi ici car table minuscule) en `BitmapOr` de deux index.
+3. **Advisor `multiple_permissive_policies`** : signalé sur `tasks`
+   (SELECT/UPDATE) et `friend_requests` (SELECT/UPDATE). Deux policies
+   permissives par rôle+action = surcoût d'évaluation RLS par requête.
+
+**Action (mig. 049)** : fusion de chaque paire de policies permissives en **une
+policy `OR` unique** (sémantique 1:1, cf. `docs/SECURITY.md`).
+
+**Résultat vérifié en live** :
+- `pg_policies` : **2 → 1** policy permissive par action (tasks + friend_requests).
+- `get_advisors(performance)` : **plus aucun** `multiple_permissive_policies`.
+- Plan `EXPLAIN` **identique** avant/après → **zéro régression** (Postgres
+  produisait déjà le même OR ; le gain est l'évaluation d'1 policy au lieu de 2
+  + le lint éteint).
+
+**Conclusion** : le coût RLS collaboration n'est **pas** un goulot à l'échelle
+visée — les index (020/044/048) + le fold OR + le sous-plan hashé le
+maintiennent linéaire et indexable. Le vrai frein scalabilité reste la
+**profondeur de données par compte** (§3 pagination), pas la RLS.
+
+> **Index `unused` résiduels** (advisor INFO) : `idx_tasks_deadline`,
+> `idx_subscriptions_stripe_customer_id`, `idx_friends_*`, `idx_kr_completions_*`,
+> `idx_share_links_owner_id` — **conservés volontairement** (décision mig. 044 :
+> chemins d'accès réels devenant chauds à volume, ou FK ON DELETE CASCADE).

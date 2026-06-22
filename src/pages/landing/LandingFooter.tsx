@@ -1,5 +1,6 @@
 // Pied de page de la LandingPage — extrait verbatim.
 import React from 'react';
+import { Link } from 'react-router';
 
 const LandingFooter: React.FC = () => (
       <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-10">
@@ -14,18 +15,19 @@ const LandingFooter: React.FC = () => (
               <span className="text-slate-400 text-sm hidden sm:inline">© 2026 Tous droits réservés.</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400 flex-wrap justify-center md:justify-end">
-              <a href="/guide" className="hover:text-white transition-colors">Guide d'utilisation</a>
-              <a href="/blog" className="hover:text-white transition-colors">Blog</a>
-              <a href="/pour-freelances" className="hover:text-white transition-colors">Pour les freelances</a>
-              <a href="/pour-etudiants" className="hover:text-white transition-colors">Pour les étudiants</a>
-              <a href="/pour-managers" className="hover:text-white transition-colors">Pour les managers</a>
-              <a href="/a-propos" className="hover:text-white transition-colors">À propos</a>
+              <Link to="/guide" className="hover:text-white transition-colors">Guide d'utilisation</Link>
+              <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+              <Link to="/pour-freelances" className="hover:text-white transition-colors">Pour les freelances</Link>
+              <Link to="/pour-etudiants" className="hover:text-white transition-colors">Pour les étudiants</Link>
+              <Link to="/pour-managers" className="hover:text-white transition-colors">Pour les managers</Link>
+              <Link to="/a-propos" className="hover:text-white transition-colors">À propos</Link>
+              {/* Ancre in-page (scroll vers la FAQ) — reste un <a href="#..."> */}
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-              <a href="/signup" className="hover:text-white transition-colors">Inscription gratuite</a>
-              <a href="/login" className="hover:text-white transition-colors">Connexion</a>
-              <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
-              <a href="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</a>
-              <a href="/cgu" className="hover:text-white transition-colors">CGU</a>
+              <Link to="/signup" className="hover:text-white transition-colors">Inscription gratuite</Link>
+              <Link to="/login" className="hover:text-white transition-colors">Connexion</Link>
+              <Link to="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
+              <Link to="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
+              <Link to="/cgu" className="hover:text-white transition-colors">CGU</Link>
             </div>
           </div>
         </div>
