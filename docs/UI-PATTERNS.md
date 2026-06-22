@@ -78,7 +78,9 @@ Pour les tâches : filtre `t.isCollaborative && t.sharedBy && t.sharedBy !== use
 
 ## Liens d'invitation (mig. 046)
 
-`ShareLinkField` (dans la vue Collaborateurs de `TaskModal`) affiche un lien copiable `/invite/<token>` (table `share_links`, token = uuid, 7 jours, révocable par DELETE). `InvitePage` (route publique) pose le token dans `localStorage.cosmo_pending_share_invite` puis redirige ; `ShareInviteClaimer` (monté au niveau App) claim via la RPC SECURITY DEFINER `claim_share_link` dès que l'utilisateur est authentifié. Feature Supabase-only — masquée en démo.
+`ShareLinkField` (dans la vue Collaborateurs de `TaskModal`) affiche un lien copiable `/invite/<token>` (table `share_links`, token = uuid, 7 jours, révocable par DELETE). `InvitePage` (route publique) pose le token dans `localStorage.cosmo_pending_share_invite` puis redirige ; `ShareInviteClaimer` (monté au niveau App) claim via la RPC SECURITY DEFINER `claim_share_link` dès que l'utilisateur est authentifié. Feature Supabase-only — masquée en démo. **En création** (pas encore de `taskId` → FK `share_links.task_id`), la section reste visible mais en placeholder désactivé (« Disponible après la création ») : le lien ne peut exister qu'une fois la tâche persistée.
+
+Collaborateur **en attente** : `CollaboratorItem` marque l'état via `isPending` (demande d'ami envoyée, avatar orange + « ⏳ Demande d'ami envoyée ») ou `sentBadge` (partage émis non accepté, pastille « Envoyé » + « En attente d'acceptation »). Côté listes (`TaskTable` desktop + `TaskCard` mobile), un **sablier** ambre (`Hourglass`) s'affiche à côté des avatars de collaborateurs quand `usePendingCollaboratorTaskIds` (partage émis avec `accepted !== true`) contient la tâche.
 
 ## Showcases LandingPage — mobile vs desktop
 

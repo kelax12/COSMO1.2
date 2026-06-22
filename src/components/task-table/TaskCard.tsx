@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle } from "lucide-react";
+import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Hourglass } from "lucide-react";
 import CollaboratorAvatars from "../CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
@@ -26,6 +26,7 @@ interface TaskCardProps {
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
   collaboratorsByTask: Map<string, string[]>;
+  pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
   /** true pour la 1ʳᵉ carte de la liste — déclenche le hint de swipe animé (1× / device). */
   isFirst?: boolean;
@@ -45,6 +46,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onScheduleTask,
   onDuplicate,
   collaboratorsByTask,
+  pendingCollaboratorTaskIds,
   friends,
   isFirst = false,
 }: TaskCardProps, ref) => {
@@ -289,12 +291,21 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           </span>
         )}
         {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
-          <CollaboratorAvatars
-            collaboratorIds={collaboratorsByTask.get(task.id)}
-            friends={friends}
-            size="sm"
-            maxVisible={3}
-          />
+          <span className="inline-flex items-center gap-1.5">
+            <CollaboratorAvatars
+              collaboratorIds={collaboratorsByTask.get(task.id)}
+              friends={friends}
+              size="sm"
+              maxVisible={3}
+            />
+            {pendingCollaboratorTaskIds.has(task.id) && (
+              <Hourglass
+                size={13}
+                className="shrink-0 text-amber-500"
+                aria-label="Invitation en attente d'acceptation"
+              />
+            )}
+          </span>
         )}
 
         {/* Méta : date · durée — toujours sur une ligne propre */}
@@ -431,7 +442,8 @@ export const TaskCard = React.memo(TaskCardInner, (prevProps, nextProps) => {
     prevProps.task.estimatedTime === nextProps.task.estimatedTime &&
     prevProps.task.category === nextProps.task.category &&
     prevProps.addToListMode === nextProps.addToListMode &&
-    prevProps.selectedForListIds === nextProps.selectedForListIds
+    prevProps.selectedForListIds === nextProps.selectedForListIds &&
+    prevProps.pendingCollaboratorTaskIds.has(prevProps.task.id) === nextProps.pendingCollaboratorTaskIds.has(nextProps.task.id)
   );
 });
 

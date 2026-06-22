@@ -47,6 +47,7 @@ export {
   useMyTaskShares,
   useSharesByTask,
   useCollaboratorsByTask,
+  usePendingCollaboratorTaskIds,
   useRelatedTaskShares,
 } from './hooks';
 

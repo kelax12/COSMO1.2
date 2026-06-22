@@ -24,7 +24,7 @@ import {
 
 import { usePriorityRange } from '@/modules/ui-states';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
-import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
+import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
 
 type TaskTableProps = {
@@ -70,6 +70,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { user } = useAuth();
   const { data: friends = [] } = useFriends();
   const collaboratorsByTask = useCollaboratorsByTask(user?.id);
+  const pendingCollaboratorTaskIds = usePendingCollaboratorTaskIds(user?.id);
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -320,6 +321,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 onDuplicate={handleDuplicate}
                 onDeleteTask={setTaskToDelete}
                 collaboratorsByTask={collaboratorsByTask}
+                pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
                 friends={friends}
               />
             ))}
@@ -363,6 +365,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onScheduleTask={setTaskToEventModal}
           onDuplicate={handleDuplicate}
           collaboratorsByTask={collaboratorsByTask}
+          pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
           friends={friends}
         />
       </div>
