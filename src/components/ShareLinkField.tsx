@@ -26,13 +26,23 @@ interface ShareLinkFieldProps {
  */
 const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, className = '' }) => {
   const isDemo = useIsDemo();
-  const enabled = ownerCanShare && !isDemo && !!taskId;
+  // Section visible pour le propriétaire hors démo. En CRÉATION (pas encore de
+  // taskId), on affiche un placeholder désactivé : le lien a besoin que la
+  // tâche existe (FK share_links.task_id) → généré après l'enregistrement.
+  const showSection = ownerCanShare && !isDemo;
+  const isCreating = !taskId;
+  const enabled = showSection && !isCreating;
   const { data: inviteToken, isLoading } = useShareLink(taskId ?? '', enabled);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  if (!enabled) return null;
+  if (!showSection) return null;
 
   const inviteUrl = inviteToken ? buildInviteUrl(inviteToken) : '';
+  const fieldValue = isCreating
+    ? 'Disponible après la création'
+    : isLoading
+      ? 'Génération du lien…'
+      : inviteUrl;
 
   const handleCopy = async () => {
     if (!inviteUrl) return;
@@ -58,10 +68,11 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
         <input
           type="text"
           readOnly
-          value={isLoading ? 'Génération du lien…' : inviteUrl}
-          onFocus={(e) => e.currentTarget.select()}
+          disabled={isCreating}
+          value={fieldValue}
+          onFocus={(e) => { if (!isCreating) e.currentTarget.select(); }}
           aria-label="Lien d'invitation à copier"
-          className="flex-1 px-4 py-3 min-h-11 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          className={`flex-1 px-4 py-3 min-h-11 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${isCreating ? 'opacity-60 cursor-not-allowed' : ''}`}
           style={{
             backgroundColor: 'rgb(var(--color-hover))',
             borderColor: 'rgb(var(--color-border))',
@@ -71,13 +82,18 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
         <Button
           variant="default"
           onClick={handleCopy}
-          disabled={!inviteUrl}
+          disabled={isCreating || !inviteUrl}
           className={`inline-flex items-center justify-center gap-2 min-h-11 ${linkCopied ? 'bg-emerald-600 hover:bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
         >
           {linkCopied ? <Check size={16} data-icon="inline-start" /> : <Copy size={16} data-icon="inline-start" />}
           {linkCopied ? 'Copié !' : 'Copier'}
         </Button>
       </div>
+      {isCreating && (
+        <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          Enregistre la tâche pour générer un lien d'invitation partageable.
+        </p>
+      )}
     </section>
   );
 };

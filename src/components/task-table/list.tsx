@@ -8,7 +8,7 @@
 import React, { useRef } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, Pencil, ListPlus } from "lucide-react";
+import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, Pencil, ListPlus, Hourglass } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -49,6 +49,7 @@ interface VirtualizedTaskListProps {
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
   collaboratorsByTask: Map<string, string[]>;
+  pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
 }
 
@@ -70,6 +71,7 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
     onScheduleTask: props.onScheduleTask,
     onDuplicate: props.onDuplicate,
     collaboratorsByTask: props.collaboratorsByTask,
+    pendingCollaboratorTaskIds: props.pendingCollaboratorTaskIds,
     friends: props.friends,
   });
 
@@ -150,6 +152,7 @@ interface TaskRowProps {
   onDuplicate: (id: string) => void;
   onDeleteTask: (id: string) => void;
   collaboratorsByTask: Map<string, string[]>;
+  pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
 }
 
@@ -168,6 +171,7 @@ export const TaskRow = React.memo(({
   onDuplicate,
   onDeleteTask,
   collaboratorsByTask,
+  pendingCollaboratorTaskIds,
   friends,
 }: TaskRowProps) => {
   const getCategoryById = useCategoryLookup();
@@ -277,6 +281,13 @@ export const TaskRow = React.memo(({
                   </span>
                 );
               })}
+              {pendingCollaboratorTaskIds.has(task.id) && (
+                <Hourglass
+                  size={14}
+                  className="shrink-0 text-amber-500"
+                  aria-label="Invitation en attente d'acceptation"
+                />
+              )}
             </span>
           ) : null}
         </div>

@@ -277,6 +277,25 @@ export const useCollaboratorsByTask = (currentUserId?: string): Map<string, stri
   }, [shares, currentUserId]);
 };
 
+/**
+ * Set des taskIds dont AU MOINS un collaborateur n'a pas encore accepté
+ * (partage émis par le propriétaire courant, `accepted !== true`). Alimente le
+ * badge « sablier » des vues liste (TaskTable). Vue propriétaire uniquement :
+ * on ne signale que les partages que J'AI émis et qui sont en attente.
+ */
+export const usePendingCollaboratorTaskIds = (currentUserId?: string): Set<string> => {
+  const { data: shares = [] } = useRelatedTaskShares();
+  return useMemo(() => {
+    const out = new Set<string>();
+    for (const s of shares) {
+      if (s.sharedBy === currentUserId && s.accepted !== true) {
+        out.add(s.taskId);
+      }
+    }
+    return out;
+  }, [shares, currentUserId]);
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // RE-EXPORTS
 // ═══════════════════════════════════════════════════════════════════
