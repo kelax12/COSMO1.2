@@ -19,6 +19,12 @@ export const eventsKeys = {
   all: ['events'] as const,
   lists: () => [...eventsKeys.all, 'list'] as const,
   list: (filters: EventFilters) => [...eventsKeys.lists(), filters] as const,
+  // Fenêtre temporelle de l'agenda — NICHÉE sous lists() à dessein : ainsi
+  // setQueriesData({ queryKey: eventsKeys.lists() }) met à jour le cache complet
+  // ET toutes les fenêtres en une passe (optimisme drag-drop préservé), sans
+  // toucher detail()/byTask().
+  window: (startISO: string, endISO: string) =>
+    [...eventsKeys.lists(), 'window', startISO, endISO] as const,
   details: () => [...eventsKeys.all, 'detail'] as const,
   detail: (id: string) => [...eventsKeys.details(), id] as const,
   byTask: (taskId: string) => [...eventsKeys.all, 'task', taskId] as const,

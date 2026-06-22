@@ -5,6 +5,7 @@
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { EVENTS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { selectEventsInWindow } from './window';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -119,6 +120,8 @@ export interface IEventsRepository {
   getByTaskId(taskId: string): Promise<CalendarEvent[]>;
   getFiltered(filters: EventFilters): Promise<CalendarEvent[]>;
   getPage(params?: PaginationParams): Promise<PaginatedResult<CalendarEvent>>;
+  /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */
+  getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]>;
 
   // Write operations
   create(input: CreateEventInput): Promise<CalendarEvent>;
@@ -166,6 +169,10 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
     const events = this.getEvents();
     return events.filter(e => e.taskId === taskId);
+  }
+
+  async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {
+    return selectEventsInWindow(this.getEvents(), startISO, endISO);
   }
 
   async getFiltered(filters: EventFilters): Promise<CalendarEvent[]> {

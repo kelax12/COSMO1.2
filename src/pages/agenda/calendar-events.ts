@@ -10,6 +10,30 @@ export function getInitialScrollTime(now: Date = new Date()): string {
   return `${scrollHour.toString().padStart(2, '0')}:00:00`;
 }
 
+// ── Fenêtre temporelle (pagination serveur de l'agenda) ────────────────
+export interface EventsWindow { start: string; end: string; }
+
+/**
+ * Fenêtre par défaut au 1er rendu (avant le 1er datesSet de FullCalendar) :
+ * large autour de `now` pour éviter un flash vide. Affinée ensuite par la plage
+ * réellement visible (bufferedWindow).
+ */
+export function defaultEventsWindow(now: Date = new Date()): EventsWindow {
+  const start = new Date(now); start.setMonth(start.getMonth() - 1);
+  const end = new Date(now); end.setMonth(end.getMonth() + 2);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+/**
+ * Élargit la plage visible de FullCalendar de ±bufferMonths pour limiter les
+ * refetch lors de petites navigations (semaine suivante, etc.).
+ */
+export function bufferedWindow(rangeStart: Date, rangeEnd: Date, bufferMonths = 1): EventsWindow {
+  const start = new Date(rangeStart); start.setMonth(start.getMonth() - bufferMonths);
+  const end = new Date(rangeEnd); end.setMonth(end.getMonth() + bufferMonths);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
 export interface FullCalendarEvent {
   id: string;
   title: string;

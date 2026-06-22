@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getEventsRepository } from '@/lib/repository.factory';
 import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
@@ -24,6 +24,25 @@ export const useEvents = () => {
   return useQuery({
     queryKey: eventsKeys.lists(),
     queryFn: () => repository.getAll(),
+  });
+};
+
+/**
+ * Charge UNIQUEMENT les événements de la fenêtre temporelle [startISO, endISO]
+ * (+ tous les récurrents — cf. window.ts). Pagination serveur de l'agenda :
+ * évite de tout charger en mémoire. La clé est nichée sous lists() → les
+ * mutations (setQueriesData lists()) mettent ce cache à jour de façon optimiste.
+ * Désactivé tant que la fenêtre n'est pas connue.
+ */
+export const useEventsWindow = (startISO: string | null, endISO: string | null) => {
+  const repository = useEventsRepository();
+  return useQuery({
+    queryKey: eventsKeys.window(startISO ?? '', endISO ?? ''),
+    queryFn: () => repository.getWindow(startISO!, endISO!),
+    enabled: !!startISO && !!endISO,
+    // Garde les events de la fenêtre précédente affichés pendant le chargement
+    // de la nouvelle (pas de flash vide en navigation calendrier).
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -56,10 +75,17 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: (input: CreateEventInput) => repository.create(input),
     onSuccess: (newEvent) => {
-      queryClient.setQueryData<CalendarEvent[]>(eventsKeys.lists(), (old = []) => [...old, newEvent]);
+      // Ajoute aux caches list-like (cache complet + toutes les fenêtres).
+      queryClient.setQueriesData<CalendarEvent[]>(
+        { queryKey: eventsKeys.lists() },
+        (old) => [...(old ?? []), newEvent],
+      );
       if (newEvent.taskId) {
         queryClient.invalidateQueries({ queryKey: eventsKeys.byTask(newEvent.taskId) });
       }
+      // Réconcilie les fenêtres (un nouvel event hors fenêtre courante sera
+      // retiré au refetch ; refetchType none = pas de round-trip immédiat).
+      invalidateAllEventQueries(queryClient);
       toast.success('Événement créé');
     },
     onError: (error: Error) => {
@@ -78,20 +104,17 @@ export const useUpdateEvent = () => {
 
     onMutate: async ({ id, updates }) => {
       await queryClient.cancelQueries({ queryKey: eventsKeys.all });
-      const previousEvents = queryClient.getQueryData<CalendarEvent[]>(eventsKeys.lists());
-      if (previousEvents) {
-        queryClient.setQueryData<CalendarEvent[]>(eventsKeys.lists(), (old) =>
-          old?.map((event) => event.id === id ? { ...event, ...updates } : event)
-        );
-      }
-      return { previousEvents };
+      // Snapshot de TOUS les caches list-like (complet + fenêtres) pour rollback.
+      const previous = queryClient.getQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.lists() });
+      queryClient.setQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.lists() }, (old) =>
+        old?.map((event) => (event.id === id ? { ...event, ...updates } : event)),
+      );
+      return { previous };
     },
 
-    // Rollback on error (useUpdateEvent)
+    // Rollback on error (useUpdateEvent) — restaure chaque cache snapshoté.
     onError: (error: Error, _variables, context) => {
-      if (context?.previousEvents) {
-        queryClient.setQueryData(eventsKeys.lists(), context.previousEvents);
-      }
+      context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
       toast.error(`Impossible de modifier l'événement : ${error.message}`);
     },
 
@@ -116,21 +139,22 @@ export const useDeleteEvent = () => {
 
     onMutate: async (id: string) => {
       await queryClient.cancelQueries({ queryKey: eventsKeys.all });
-      const previousEvents = queryClient.getQueryData<CalendarEvent[]>(eventsKeys.lists());
-      const eventToDelete = previousEvents?.find((e) => e.id === id);
-      if (previousEvents) {
-        queryClient.setQueryData<CalendarEvent[]>(eventsKeys.lists(), (old) =>
-          old?.filter((event) => event.id !== id)
-        );
+      const previous = queryClient.getQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.lists() });
+      // Récupère l'event supprimé depuis n'importe quel cache list-like.
+      let eventToDelete: CalendarEvent | undefined;
+      for (const [, data] of previous) {
+        const found = data?.find((e) => e.id === id);
+        if (found) { eventToDelete = found; break; }
       }
-      return { previousEvents, eventToDelete };
+      queryClient.setQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.lists() }, (old) =>
+        old?.filter((event) => event.id !== id),
+      );
+      return { previous, eventToDelete };
     },
 
-    // Rollback on error (useDeleteEvent)
+    // Rollback on error (useDeleteEvent) — restaure chaque cache snapshoté.
     onError: (error: Error, _id, context) => {
-      if (context?.previousEvents) {
-        queryClient.setQueryData(eventsKeys.lists(), context.previousEvents);
-      }
+      context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
       toast.error(`Impossible de supprimer l'événement : ${error.message}`);
     },
 

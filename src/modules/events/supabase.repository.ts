@@ -10,6 +10,7 @@ import { mapEventFromDb, mapEventToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+import { buildWindowOrFilter } from './window';
 
 export class SupabaseEventsRepository implements IEventsRepository {
   // ═══════════════════════════════════════════════════════════════════
@@ -66,6 +67,26 @@ export class SupabaseEventsRepository implements IEventsRepository {
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.start_time : null,
     };
+  }
+
+  async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const db = supabase;
+    const orFilter = buildWindowOrFilter(startISO, endISO);
+    // Récurrents (toujours) + non-récurrents chevauchant la fenêtre. Auto-paginé
+    // (une fenêtre chargée reste petite, mais on garde la garantie anti-troncature).
+    const rows = await fetchAllPages(async (from, to) => {
+      const { data, error } = await db
+        .from('events')
+        .select('*')
+        .or(orFilter)
+        .order('start_time', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return data || [];
+    });
+    return warnIfTruncated(rows, MAX_ROWS, 'events:window').map(mapEventFromDb);
   }
 
   async getById(id: string): Promise<CalendarEvent | null> {

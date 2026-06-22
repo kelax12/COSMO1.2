@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getInitialScrollTime, buildCalendarEvents } from './calendar-events';
+import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './calendar-events';
 import type { CalendarEvent } from '@/modules/events';
 
 describe('getInitialScrollTime', () => {
@@ -44,5 +44,28 @@ describe('buildCalendarEvents', () => {
 
   it('returns an array', () => {
     expect(Array.isArray(buildCalendarEvents([], now))).toBe(true);
+  });
+});
+
+describe('defaultEventsWindow', () => {
+  it('couvre -1 mois à +2 mois autour de now (1er paint sans flash)', () => {
+    const w = defaultEventsWindow(new Date('2026-06-15T12:00:00.000Z'));
+    expect(w.start).toBe(new Date('2026-05-15T12:00:00.000Z').toISOString());
+    expect(w.end).toBe(new Date('2026-08-15T12:00:00.000Z').toISOString());
+    expect(w.start < w.end).toBe(true);
+  });
+});
+
+describe('bufferedWindow', () => {
+  it('élargit la plage visible de ±1 mois par défaut', () => {
+    const w = bufferedWindow(new Date('2026-06-01T00:00:00.000Z'), new Date('2026-07-01T00:00:00.000Z'));
+    expect(w.start).toBe(new Date('2026-05-01T00:00:00.000Z').toISOString());
+    expect(w.end).toBe(new Date('2026-08-01T00:00:00.000Z').toISOString());
+  });
+
+  it('respecte un buffer personnalisé', () => {
+    const w = bufferedWindow(new Date('2026-06-10T00:00:00.000Z'), new Date('2026-06-17T00:00:00.000Z'), 2);
+    expect(w.start).toBe(new Date('2026-04-10T00:00:00.000Z').toISOString());
+    expect(w.end).toBe(new Date('2026-08-17T00:00:00.000Z').toISOString());
   });
 });
