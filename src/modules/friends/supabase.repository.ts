@@ -100,17 +100,19 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     // la même RPC SECURITY DEFINER que shareTask (résolution fiable, bypass RLS).
     const unresolved = enriched.filter(f => !f.userId && f.email);
     if (unresolved.length === 0) return enriched;
-    const resolvedPairs = await Promise.all(
-      unresolved.map(async f => {
-        const { data: uid } = await supabase!.rpc('resolve_profile_by_email', {
-          p_email: f.email.toLowerCase(),
-        });
-        return [f.id, (uid as string | null) ?? undefined] as const;
-      })
+    // Résolution BATCH : un seul aller-retour RPC pour tous les emails non
+    // résolus (au lieu d'un appel par ami — N+1 réseau). La RPC SECURITY
+    // DEFINER renvoie (email lowercased, id) ; on indexe par email pour
+    // re-mapper sur les lignes `friends` correspondantes. Cf. migration 050.
+    const unresolvedEmails = [...new Set(unresolved.map(f => f.email.toLowerCase()))];
+    const { data: rows } = await supabase!.rpc('resolve_profiles_by_emails', {
+      p_emails: unresolvedEmails,
+    });
+    const uidByEmail = new Map(
+      ((rows as { email: string; id: string }[] | null) ?? []).map(r => [r.email, r.id]),
     );
-    const uidByRowId = new Map(resolvedPairs);
     return enriched.map(f =>
-      f.userId ? f : { ...f, userId: uidByRowId.get(f.id) ?? f.userId }
+      f.userId ? f : { ...f, userId: uidByEmail.get(f.email.toLowerCase()) ?? f.userId },
     );
   }
 
