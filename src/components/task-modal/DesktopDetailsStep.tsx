@@ -274,7 +274,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               }
                             }}
                             placeholder="Nom de la catégorie..."
-                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
+                            className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                           />
                           <button
