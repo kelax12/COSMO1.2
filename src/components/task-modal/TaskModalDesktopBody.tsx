@@ -212,7 +212,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 
                 {/* ── Action Buttons ── */}
                 <div
-                  className="sticky bottom-0 -mx-6 px-4 sm:px-6 pt-3 pb-3 sm:pb-4 mt-6 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3"
+                  className="-mx-6 -mb-6 px-4 sm:px-6 pt-3 pb-3 sm:pb-4 mt-6 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3"
                   style={{
                     borderColor: 'rgb(var(--color-border))',
                     backgroundColor: 'rgb(var(--color-surface))',
