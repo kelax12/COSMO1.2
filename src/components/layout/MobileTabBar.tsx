@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePendingRequestCount } from '@/modules/friends';
 import MobileMoreSheet from './MobileMoreSheet';
 
 const NAV_COLORS = {
@@ -39,6 +40,7 @@ const tabBaseClasses =
 
 const MobileTabBar: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState(false);
+  const pendingRequestCount = usePendingRequestCount();
 
   return (
     <>
@@ -67,10 +69,17 @@ const MobileTabBar: React.FC = () => {
               >
                 {({ isActive }) => (
                   <>
-                    <Icon
-                      size={22}
-                      className={cn('transition-transform', isActive && 'scale-110')}
-                    />
+                    <span className="relative">
+                      <Icon
+                        size={22}
+                        className={cn('transition-transform', isActive && 'scale-110')}
+                      />
+                      {end && pendingRequestCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center">
+                          {pendingRequestCount}
+                        </span>
+                      )}
+                    </span>
                     <span className="leading-tight">{label}</span>
                   </>
                 )}

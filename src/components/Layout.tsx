@@ -19,6 +19,7 @@ import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { usePendingRequestCount } from '@/modules/friends';
 import MobileTabBar from './layout/MobileTabBar';
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
@@ -104,6 +105,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
+  const pendingRequestCount = usePendingRequestCount();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
@@ -115,7 +117,7 @@ const Layout: React.FC = () => {
 const NavItems = () =>
   <>
       <NavItemLink to="/" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
-        hoverColor="#94a3b8" collapsed={isCollapsed} end />
+        hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount} end />
 
       <NavItemLink to="/tasks" label="To do list" icon={<CheckSquare size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} />

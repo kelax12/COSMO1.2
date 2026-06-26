@@ -49,6 +49,8 @@ export {
   useCollaboratorsByTask,
   usePendingCollaboratorTaskIds,
   useRelatedTaskShares,
+  useFriendCount,
+  usePendingRequestCount,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
