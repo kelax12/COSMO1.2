@@ -105,7 +105,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 }) => {
   return (
         <div
-          className="flex flex-col h-full w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
+          className="flex flex-col flex-1 min-h-0 w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
         <div
@@ -114,7 +114,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
         >
           <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
         </div>
-        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit flex flex-col" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors flex-1 min-h-0 flex flex-col" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header — sticky */}
           <div
             className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
@@ -145,7 +145,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
             </button>
           </div>
 
-          <div className="p-6 overflow-y-auto h-[calc(100%-72px)] md:h-auto" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+          <div className="p-6 overflow-y-auto flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
             {/* Error display */}
             {errors.general &&
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
