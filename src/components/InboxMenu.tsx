@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, UserPlus, Check, X, User, Users, Send, Bell } from 'lucide-react';
+import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -13,7 +13,7 @@ import {
   type PendingFriendRequest,
 } from '@/modules/friends';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
-import { useFriends, useUnshareTask, useAcceptSharedTask, useRelatedTaskShares } from '@/modules/friends';
+import { useFriends, useUnshareTask, useAcceptSharedTask, useRelatedTaskShares, useRemoveFriend } from '@/modules/friends';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -47,6 +47,7 @@ const InboxMenu: React.FC = () => {
   const sendFriendMutation = useSendFriendRequest();
   const unshareTaskMutation = useUnshareTask();
   const acceptSharedTaskMutation = useAcceptSharedTask();
+  const removeFriendMutation = useRemoveFriend();
 
   // Acquittements locaux des tâches partagées en mode démo (cf.
   // lib/acknowledged-shares). En Supabase, l'état d'acceptation est porté par
@@ -55,6 +56,7 @@ const InboxMenu: React.FC = () => {
 
   const [open, setOpen] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
+  const [showManageFriends, setShowManageFriends] = useState(false);
   const [friendEmail, setFriendEmail] = useState('');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -144,6 +146,14 @@ const InboxMenu: React.FC = () => {
     if (showAddFriend) addInputRef.current?.focus();
   }, [showAddFriend]);
 
+  // Réinitialise les sous-vues à la fermeture du popover.
+  useEffect(() => {
+    if (!open) {
+      setShowAddFriend(false);
+      setShowManageFriends(false);
+    }
+  }, [open]);
+
   // ── Handlers ───────────────────────────────────────────────────────────
   const handleAcceptFriend = (id: string) => {
     acceptFriendMutation.mutate(id, { onSuccess: () => toast.success("Demande d'ami acceptée") });
@@ -187,6 +197,12 @@ const InboxMenu: React.FC = () => {
     );
   };
 
+  const handleRemoveFriend = (id: string, name: string) => {
+    removeFriendMutation.mutate(id, {
+      onSuccess: () => toast.success(`${name} retiré de vos amis`),
+    });
+  };
+
   const handleSendFriendRequest = () => {
     const email = friendEmail.trim();
     if (!email) return;
@@ -210,17 +226,96 @@ const InboxMenu: React.FC = () => {
   const popoverInner = (
     <>
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
-        <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-        <span className="font-bold text-sm text-slate-900 dark:text-white">Boîte de réception</span>
-        {total > 0 && (
-          <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-            {total} en attente
-          </span>
+        {showManageFriends ? (
+          <>
+            <button
+              onClick={() => setShowManageFriends(false)}
+              className="-ml-1 w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              aria-label="Retour à la boîte de réception"
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+            </button>
+            <Users size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <span className="font-bold text-sm text-slate-900 dark:text-white">Mes amis</span>
+            {friends.length > 0 && (
+              <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {friends.length}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <span className="font-bold text-sm text-slate-900 dark:text-white">Boîte de réception</span>
+            <div className="ml-auto flex items-center gap-2">
+              {total > 0 && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  {total} en attente
+                </span>
+              )}
+              <button
+                onClick={() => setShowManageFriends(true)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-label="Gérer mes amis"
+                title="Gérer mes amis"
+              >
+                <Settings size={15} aria-hidden="true" />
+              </button>
+            </div>
+          </>
         )}
       </div>
 
       <div className="max-h-[60vh] overflow-y-auto">
-        {total === 0 && (
+        {/* ── Gérer mes amis ── */}
+        {showManageFriends && (
+          friends.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2.5">
+                <Users size={18} className="text-slate-400" aria-hidden="true" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Aucun ami</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Ajoutez un ami pour commencer à collaborer.
+              </p>
+            </div>
+          ) : (
+            <div className="px-3 py-3 space-y-2">
+              {friends.map((friend) => (
+                <div
+                  key={friend.id}
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                      {isImageAvatar(friend.avatar) ? (
+                        <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : isEmojiAvatar(friend.avatar) ? (
+                        <span className="text-lg leading-none" aria-hidden="true">{friend.avatar}</span>
+                      ) : (
+                        <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{friend.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{friend.email}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveFriend(friend.id, friend.name)}
+                      disabled={removeFriendMutation.isPending}
+                      className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
+                      aria-label={`Retirer ${friend.name} de vos amis`}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {!showManageFriends && total === 0 && (
           <div className="px-4 py-8 text-center">
             <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2.5">
               <Bell size={18} className="text-slate-400" aria-hidden="true" />
@@ -233,7 +328,7 @@ const InboxMenu: React.FC = () => {
         )}
 
         {/* ── Demandes d'amis ── */}
-        {incomingRequests.length > 0 && (
+        {!showManageFriends && incomingRequests.length > 0 && (
           <div className="px-3 pt-3">
             <p className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
               <UserPlus size={12} aria-hidden="true" /> Demandes d'amis ({incomingRequests.length})
@@ -293,7 +388,7 @@ const InboxMenu: React.FC = () => {
         )}
 
         {/* ── Tâches à accepter ── */}
-        {tasksToAccept.length > 0 && (
+        {!showManageFriends && tasksToAccept.length > 0 && (
           <div className="px-3 pt-3 pb-1">
             <p className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
               <Users size={12} aria-hidden="true" /> Tâches partagées ({tasksToAccept.length})
