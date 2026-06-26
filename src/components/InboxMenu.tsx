@@ -19,6 +19,7 @@ import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
+import RemoveFriendConfirm from './RemoveFriendConfirm';
 
 /**
  * Boîte de réception unifiée du Dashboard. Remplace l'ancien panneau
@@ -57,6 +58,7 @@ const InboxMenu: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showManageFriends, setShowManageFriends] = useState(false);
+  const [friendToRemove, setFriendToRemove] = useState<{ id: string; name: string } | null>(null);
   const [friendEmail, setFriendEmail] = useState('');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -130,17 +132,25 @@ const InboxMenu: React.FC = () => {
   useEffect(() => {
     if (!open) return;
     const onClickOutside = (e: MouseEvent) => {
+      // Le dialog de confirmation (portal séparé) gère ses propres clics : ne pas
+      // fermer la boîte de réception tant qu'il est ouvert.
+      if (friendToRemove) return;
       const t = e.target as Node;
       if (!triggerRef.current?.contains(t) && !popoverRef.current?.contains(t)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      // ESC ferme d'abord le dialog de confirmation, sinon la boîte de réception.
+      if (friendToRemove) setFriendToRemove(null);
+      else setOpen(false);
+    };
     document.addEventListener('mousedown', onClickOutside);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onClickOutside);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, friendToRemove]);
 
   useEffect(() => {
     if (showAddFriend) addInputRef.current?.focus();
@@ -151,6 +161,7 @@ const InboxMenu: React.FC = () => {
     if (!open) {
       setShowAddFriend(false);
       setShowManageFriends(false);
+      setFriendToRemove(null);
     }
   }, [open]);
 
@@ -197,10 +208,13 @@ const InboxMenu: React.FC = () => {
     );
   };
 
-  const handleRemoveFriend = (id: string, name: string) => {
+  const confirmRemoveFriend = () => {
+    if (!friendToRemove) return;
+    const { id, name } = friendToRemove;
     removeFriendMutation.mutate(id, {
       onSuccess: () => toast.success(`${name} retiré de vos amis`),
     });
+    setFriendToRemove(null);
   };
 
   const handleSendFriendRequest = () => {
@@ -301,7 +315,7 @@ const InboxMenu: React.FC = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{friend.email}</p>
                     </div>
                     <button
-                      onClick={() => handleRemoveFriend(friend.id, friend.name)}
+                      onClick={() => setFriendToRemove({ id: friend.id, name: friend.name })}
                       disabled={removeFriendMutation.isPending}
                       className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
                       aria-label={`Retirer ${friend.name} de vos amis`}
@@ -523,6 +537,16 @@ const InboxMenu: React.FC = () => {
         )}
       </button>
       {typeof document !== 'undefined' && createPortal(popoverContent, document.body)}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <RemoveFriendConfirm
+            open={friendToRemove !== null}
+            friendName={friendToRemove?.name}
+            onCancel={() => setFriendToRemove(null)}
+            onConfirm={confirmRemoveFriend}
+          />,
+          document.body
+        )}
     </>
   );
 };
