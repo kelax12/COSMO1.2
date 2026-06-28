@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Hourglass } from "lucide-react";
+import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Hourglass, Pencil } from "lucide-react";
 import CollaboratorAvatars from "../CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
@@ -373,6 +373,13 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             borderColor: 'rgb(var(--color-border))',
             backgroundColor: 'rgb(var(--color-hover))'
           }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
+              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              aria-label="Modifier la tâche"
+            >
+              <Pencil size={18} />
+            </button>
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(task.id); setActionsVisible(false); }}
               className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}

@@ -14,19 +14,23 @@ import PendingSharedTasks from './task-table/PendingSharedTasks';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { showUndoToast } from '@/lib/undo-toast';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useTasks,
   useDeleteTask,
   useCreateTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
+  taskKeys,
   Task
 } from '@/modules/tasks';
 
 import { usePriorityRange } from '@/modules/ui-states';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
-import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds } from '@/modules/friends';
+import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useUnshareTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useIsDemo } from '@/lib/app-mode.store';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -69,9 +73,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { isPremium } = useBilling();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isDemo = useIsDemo();
+  const queryClient = useQueryClient();
   const { data: friends = [] } = useFriends();
   const collaboratorsByTask = useCollaboratorsByTask(user?.id);
   const pendingCollaboratorTaskIds = usePendingCollaboratorTaskIds(user?.id);
+  const unshareTaskMutation = useUnshareTask();
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -184,6 +191,27 @@ const TaskTable: React.FC<TaskTableProps> = ({
     if (!taskToDelete) return;
     // Snapshot la tâche AVANT suppression pour permettre l'undo
     const taskSnapshot = tasks.find(t => t.id === taskToDelete);
+
+    // Tâche collaborative REÇUE (prod) : on n'en est pas propriétaire, la RLS
+    // bloque le DELETE (qui échouait en silence → la tâche réapparaissait). On
+    // retire plutôt notre accès (quitter la tâche) en supprimant la grant.
+    const isReceivedProd =
+      !isDemo && !!taskSnapshot?.userId && !!user?.id && taskSnapshot.userId !== user.id;
+    if (isReceivedProd && user?.id) {
+      unshareTaskMutation.mutate(
+        { taskId: taskToDelete, friendId: user.id },
+        {
+          onSuccess: () => {
+            setTaskToDelete(null);
+            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+            toast.success('Vous avez quitté la tâche partagée');
+          },
+          onError: (err) => console.error('Leave shared task failed', err),
+        }
+      );
+      return;
+    }
+
     deleteMutation.mutate(taskToDelete, {
       onSuccess: () => {
         setTaskToDelete(null);
