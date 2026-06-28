@@ -8,6 +8,7 @@ import TaskModal from './TaskModal';
 import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList, TaskRow } from './task-table/list';
+import PendingSharedTasks from './task-table/PendingSharedTasks';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -207,6 +208,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <>
+      {!addToListMode && <PendingSharedTasks />}
       <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
         <div className="flex flex-wrap items-center gap-2">
           <Button
