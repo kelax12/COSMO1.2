@@ -268,25 +268,28 @@ export const TaskRow = React.memo(({
             <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
             <span className="flex items-center gap-1 shrink-0">
-              {(collaboratorsByTask.get(task.id) ?? []).map((id) => {
-                const friend = friends.find((f) => f.userId === id || f.id === id || f.name === id);
-                const name = friend?.name ?? id;
-                return (
+              {(collaboratorsByTask.get(task.id) ?? [])
+                // Masque les utilisateurs supprimés (id non résolu en ami) au
+                // lieu d'afficher leur UUID brut dans le tableau.
+                .map((id) => ({ id, friend: friends.find((f) => f.userId === id || f.id === id || f.name === id) }))
+                .filter((c): c is { id: string; friend: Friend } => !!c.friend)
+                .map(({ id, friend }) => (
                   <span
                     key={id}
                     className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full"
-                    title={name}
+                    title={friend.name}
                   >
-                    {name}
+                    {friend.name}
                   </span>
-                );
-              })}
+                ))}
               {pendingCollaboratorTaskIds.has(task.id) && (
-                <Hourglass
-                  size={14}
-                  className="shrink-0 text-amber-500"
-                  aria-label="Invitation en attente d'acceptation"
-                />
+                <span title="En attente d'acceptation" className="inline-flex shrink-0">
+                  <Hourglass
+                    size={14}
+                    className="text-amber-500"
+                    aria-label="Invitation en attente d'acceptation"
+                  />
+                </span>
               )}
             </span>
           ) : null}

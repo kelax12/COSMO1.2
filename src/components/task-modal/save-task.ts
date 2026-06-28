@@ -26,6 +26,9 @@ export interface TaskSaveDeps {
   task?: Task;
   formData: TaskSaveFormData;
   collaborators: string[];
+  /** L'utilisateur a-t-il explicitement modifié les collaborateurs ? Si false,
+   *  on saute toute synchro shared_tasks (évite de désassigner par erreur). */
+  collaboratorsDirty: boolean;
   pendingInvitesLocal: string[];
   friends: NonNullable<ReturnType<typeof useFriends>['data']>;
   lists: NonNullable<ReturnType<typeof useLists>['data']>;
@@ -101,7 +104,7 @@ export async function createTaskWithShares(deps: CreateTaskWithSharesDeps): Prom
 // shared_tasks. Logique extraite verbatim de TaskModal (handleSave).
 export async function runTaskSave(deps: TaskSaveDeps) {
   const {
-    isCreating, task, formData, collaborators, pendingInvitesLocal, friends,
+    isCreating, task, formData, collaborators, collaboratorsDirty, pendingInvitesLocal, friends,
     lists, selectedListIds, isTaskOwner, existingShareIds,
     createTaskMutation, updateTaskMutation, addTaskToListMutation,
     removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
@@ -167,7 +170,11 @@ export async function runTaskSave(deps: TaskSaveDeps) {
           // Seul le propriétaire gère les partages (RLS le rejetterait pour un
           // destinataire de toute façon). On saute toute écriture shared_tasks
           // quand l'utilisateur n'est pas propriétaire.
-          if (isTaskOwner) {
+          // On ne synchronise les partages QUE si l'utilisateur a explicitement
+          // modifié les collaborateurs. Sinon `collaborators` peut être obsolète
+          // (grants chargés après le début de l'édition) et on désassignerait
+          // par erreur des collaborateurs intacts.
+          if (isTaskOwner && collaboratorsDirty) {
             // Additions: nouveaux collaborateurs sélectionnés non encore
             // partagés (et qui ne sont pas des invitations email en attente).
             collaborators.forEach(userId => {

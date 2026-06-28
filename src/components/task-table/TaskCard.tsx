@@ -299,11 +299,13 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               maxVisible={3}
             />
             {pendingCollaboratorTaskIds.has(task.id) && (
-              <Hourglass
-                size={13}
-                className="shrink-0 text-amber-500"
-                aria-label="Invitation en attente d'acceptation"
-              />
+              <span title="En attente d'acceptation" className="inline-flex shrink-0">
+                <Hourglass
+                  size={13}
+                  className="text-amber-500"
+                  aria-label="Invitation en attente d'acceptation"
+                />
+              </span>
             )}
           </span>
         )}
