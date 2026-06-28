@@ -29,11 +29,34 @@ describe('CollaboratorAvatars', () => {
   it('caps visible avatars at maxVisible and shows the +N overflow badge', () => {
     render(
       <CollaboratorAvatars
-        collaboratorIds={['alice-uid', 'bob-uid', 'Carla Dupont', 'x', 'y']}
+        collaboratorIds={['alice-uid', 'bob-uid', 'Carla Dupont']}
+        friends={friends}
+        maxVisible={2}
+      />
+    );
+    expect(screen.getByText('+1')).toBeTruthy();
+  });
+
+  it('hides collaborator ids that do not resolve to a friend (deleted user)', () => {
+    // 'x' et 'y' ne correspondent à aucun ami → masqués (pas d'UUID/initiales
+    // dérivées). Seule Alice est rendue, donc pas de badge overflow.
+    const { container } = render(
+      <CollaboratorAvatars
+        collaboratorIds={['alice-uid', 'x', 'y']}
         friends={friends}
         maxVisible={3}
       />
     );
-    expect(screen.getByText('+2')).toBeTruthy();
+    expect(screen.queryByText('+2')).toBeNull();
+    expect(screen.queryByText('+1')).toBeNull();
+    // Un seul avatar (Alice) rendu.
+    expect(container.querySelectorAll('[data-slot="avatar"]').length).toBe(1);
+  });
+
+  it('renders nothing when no collaborator id resolves to a friend', () => {
+    const { container } = render(
+      <CollaboratorAvatars collaboratorIds={['x', 'y']} friends={friends} />
+    );
+    expect(container.innerHTML).toBe('');
   });
 });
