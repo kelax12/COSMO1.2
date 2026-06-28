@@ -21,9 +21,16 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
 }) => {
   if (!collaboratorIds || collaboratorIds.length === 0) return null;
 
+  // Masque les collaborateurs supprimés (id non résolu en ami) au lieu
+  // d'afficher des initiales dérivées d'un UUID brut.
+  const resolvedIds = collaboratorIds.filter((id) =>
+    friends.some((f) => f.userId === id || f.id === id || f.name === id)
+  );
+  if (resolvedIds.length === 0) return null;
+
   const sizeClasses = size === 'sm' ? 'size-7 text-[10px]' : 'size-9 text-xs';
-  const visible = collaboratorIds.slice(0, maxVisible);
-  const overflow = collaboratorIds.length - maxVisible;
+  const visible = resolvedIds.slice(0, maxVisible);
+  const overflow = resolvedIds.length - maxVisible;
 
   return (
     <AvatarGroup className={className}>

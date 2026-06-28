@@ -149,6 +149,12 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
 
   // Collaborator state (integrated from AddTaskForm)
   const [collaborators, setCollaborators] = useState<string[]>([]);
+  // L'utilisateur a-t-il explicitement modifié les collaborateurs ? Tant que
+  // false, on re-synchronise `collaborators` depuis les grants shared_tasks
+  // (même en cours d'édition d'autres champs) et on NE touche PAS aux partages
+  // à la sauvegarde — évite de désassigner des collaborateurs à cause d'une
+  // course entre le chargement async des grants et une édition (faille).
+  const [collaboratorsDirty, setCollaboratorsDirty] = useState(false);
   const [pendingInvitesLocal, setPendingInvitesLocal] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
   const [inputError, setInputError] = useState<string | null>(null);
@@ -227,6 +233,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       }
 
         setCollaborators([]);
+        setCollaboratorsDirty(false);
         setPendingInvitesLocal([]);
         setSelectedListIds([]);
       setHasChanges(false);
@@ -239,7 +246,9 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         priority: task.priority ?? 0,
         category: task.category || '',
         deadline: task.deadline ? task.deadline.split('T')[0] : '',
-        estimatedTime: task.estimatedTime || 30,
+        // Préserver 0 (= pas de durée) au lieu d'injecter un 30 min fantôme
+        // qui se persistait silencieusement à la sauvegarde.
+        estimatedTime: task.estimatedTime || 0,
         completed: task.completed || false,
         bookmarked: task.bookmarked || false,
         isFromOKR: (task as Task & { isFromOKR?: boolean }).isFromOKR || false
@@ -257,6 +266,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       }
 
       setCollaborators(existingCollaboratorIds);
+        setCollaboratorsDirty(false);
         setPendingInvitesLocal(task.pendingInvites || []);
 
         const taskLists = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
@@ -279,10 +289,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   // in-flight edits — shares are stale-stable during editing (no refetch on
   // focus), so this only fires for the initial load.
   useEffect(() => {
-    if (!isOpen || !task || isCreating || hasChanges) return;
+    if (!isOpen || !task || isCreating || collaboratorsDirty) return;
     setCollaborators(seedCollaboratorIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, task?.id, isCreating, seedCollaboratorIds.join(',')]);
+  }, [isOpen, task?.id, isCreating, collaboratorsDirty, seedCollaboratorIds.join(',')]);
 
   // Auto-promote pending invites that have since become friends
   useEffect(() => {
@@ -377,7 +387,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
 
   const handleSave = async () => {
     await runTaskSave({
-      isCreating: effectiveIsCreating, task: effectiveTask, formData, collaborators, pendingInvitesLocal, friends,
+      isCreating: effectiveIsCreating, task: effectiveTask, formData, collaborators, collaboratorsDirty, pendingInvitesLocal, friends,
       lists, selectedListIds, isTaskOwner, existingShareIds,
       createTaskMutation, updateTaskMutation, addTaskToListMutation,
       removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
@@ -462,6 +472,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       const collabId = collabIdOf(friend);
       if (!collaborators.includes(collabId)) {
         setCollaborators([...collaborators, collabId]);
+        setCollaboratorsDirty(true);
       }
     } else {
       // Reject input that doesn't look like an email — prevents garbage
@@ -477,6 +488,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       }
       sendFriendRequestMutation.mutate({ email: value });
       setCollaborators([...collaborators, value]);
+      setCollaboratorsDirty(true);
       setPendingInvitesLocal([...pendingInvitesLocal, value]);
       // No immediate updateTaskMutation — deferred to handleSave() to avoid
       // cache invalidation that would set hasChanges=false.
@@ -488,6 +500,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const handleRemoveCollaborator = (collaboratorName: string) => {
     const newCollaborators = collaborators.filter((c) => c !== collaboratorName);
     setCollaborators(newCollaborators);
+    setCollaboratorsDirty(true);
     const newPendingInvites = pendingInvitesLocal.filter(e => e !== collaboratorName);
     setPendingInvitesLocal(newPendingInvites);
     // NOTE: no immediate updateTaskMutation here — changes are batched into
@@ -504,6 +517,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     } else {
       // Defer to handleSave(), no immediate mutation.
       setCollaborators((prev) => [...prev, collabId]);
+      setCollaboratorsDirty(true);
     }
   };
 
