@@ -103,6 +103,34 @@ const InboxMenu: React.FC = () => {
 
   const total = incomingRequests.length + tasksToAccept.length;
 
+  // Aperçu de l'impact d'une suppression d'ami : tâches dont je suis
+  // propriétaire et que j'ai partagées avec lui (il perdra l'accès) + tâches
+  // qu'il m'a partagées (je perdrai l'accès). Alimente le dialog de confirmation.
+  const removalPreview = useMemo(() => {
+    if (!friendToRemove) return { ownedShared: [] as string[], received: [] as string[] };
+    const friend = friends.find((f) => f.id === friendToRemove.id);
+    const friendIds = new Set<string>([friendToRemove.id]);
+    if (friend?.userId) friendIds.add(friend.userId);
+    if (friend?.id) friendIds.add(friend.id);
+    const me = user?.id;
+    const nameOf = (taskId: string) => tasks.find((t) => t.id === taskId)?.name;
+
+    const ownedIds = new Set<string>();
+    const receivedIds = new Set<string>();
+    relatedShares.forEach((s) => {
+      if (s.sharedBy === me && friendIds.has(s.friendId)) ownedIds.add(s.taskId);
+      if (friendIds.has(s.sharedBy) && s.friendId === me) receivedIds.add(s.taskId);
+    });
+    // Démo : la tâche reçue porte le nom du partageur dans `sharedBy`.
+    tasks.forEach((t) => {
+      if (t.sharedBy && friend && t.sharedBy === friend.name) receivedIds.add(t.id);
+    });
+
+    const ownedShared = [...ownedIds].map(nameOf).filter((n): n is string => !!n);
+    const received = [...receivedIds].map(nameOf).filter((n): n is string => !!n);
+    return { ownedShared, received };
+  }, [friendToRemove, friends, relatedShares, tasks, user?.id]);
+
   // Résout l'ami partageur d'une tâche reçue (pour son avatar/nom).
   // Prod : la tâche appartient au partageur → `task.userId` = son auth.uid.
   // Démo : on retombe sur le nom stocké (`task.sharedBy`).
@@ -542,6 +570,8 @@ const InboxMenu: React.FC = () => {
           <RemoveFriendConfirm
             open={friendToRemove !== null}
             friendName={friendToRemove?.name}
+            ownedSharedTasks={removalPreview.ownedShared}
+            receivedSharedTasks={removalPreview.received}
             onCancel={() => setFriendToRemove(null)}
             onConfirm={confirmRemoveFriend}
           />,

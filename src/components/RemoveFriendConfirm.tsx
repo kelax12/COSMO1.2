@@ -3,15 +3,58 @@ import React from 'react';
 interface RemoveFriendConfirmProps {
   open: boolean;
   friendName: string | undefined;
+  /** Tâches dont je suis propriétaire et partagées avec cet ami : il perdra l'accès. */
+  ownedSharedTasks?: string[];
+  /** Tâches que cet ami m'a partagées : je perdrai l'accès. */
+  receivedSharedTasks?: string[];
   onCancel: () => void;
   onConfirm: () => void;
 }
+
+const MAX_PREVIEW = 5;
+
+const TaskPreviewList: React.FC<{ title: string; tasks: string[] }> = ({ title, tasks }) => {
+  if (tasks.length === 0) return null;
+  const shown = tasks.slice(0, MAX_PREVIEW);
+  const overflow = tasks.length - shown.length;
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+        {title} ({tasks.length})
+      </p>
+      <ul className="space-y-1">
+        {shown.map((name, i) => (
+          <li
+            key={i}
+            className="text-sm truncate px-2.5 py-1.5 rounded-lg"
+            style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-primary))' }}
+            title={name}
+          >
+            {name}
+          </li>
+        ))}
+        {overflow > 0 && (
+          <li className="text-xs px-2.5 py-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            +{overflow} autre{overflow > 1 ? 's' : ''}…
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+};
 
 // Dialog (bottom-sheet mobile) de confirmation de suppression d'un ami.
 // Rendu conditionnel en CSS pur (pas de framer-motion) : garantit un montage
 // en place et un démontage immédiat — l'overlay plein écran ne doit jamais
 // rester invisible et bloquer les clics.
-const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({ open, friendName, onCancel, onConfirm }) => {
+const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
+  open,
+  friendName,
+  ownedSharedTasks = [],
+  receivedSharedTasks = [],
+  onCancel,
+  onConfirm,
+}) => {
   if (!open) return null;
 
   return (
@@ -37,13 +80,30 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({ open, friendN
           <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>
             Retirer cet ami
           </h3>
-          <p className="text-sm leading-relaxed mb-5 sm:mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             Êtes-vous sûr de vouloir retirer{' '}
             <strong style={{ color: 'rgb(var(--color-text-primary))' }}>
               {friendName}
             </strong>
-            {' de vos amis ? Vous ne pourrez plus partager de tâches ensemble tant que vous ne serez pas à nouveau amis.'}
+            {' de vos amis ?'}
           </p>
+          <p className="text-sm leading-relaxed mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            Cette personne sera retirée de <strong style={{ color: 'rgb(var(--color-text-primary))' }}>toutes vos tâches</strong>,
+            et vous serez retiré de <strong style={{ color: 'rgb(var(--color-text-primary))' }}>toutes les siennes</strong>.
+          </p>
+
+          {(ownedSharedTasks.length > 0 || receivedSharedTasks.length > 0) && (
+            <div className="mb-5 sm:mb-6 max-h-52 overflow-y-auto">
+              <TaskPreviewList
+                title="Tâches dont il perdra l'accès"
+                tasks={ownedSharedTasks}
+              />
+              <TaskPreviewList
+                title="Tâches partagées auxquelles vous perdrez l'accès"
+                tasks={receivedSharedTasks}
+              />
+            </div>
+          )}
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={onCancel}
