@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router-dom';
 import { useLastVisitedPage } from '@/modules/ui-states';
 import { prefetchRoute } from '@/lib/route-prefetch';
@@ -22,6 +22,9 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { usePendingRequestCount } from '@/modules/friends';
 import MobileTabBar from './layout/MobileTabBar';
+
+// Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
+const QuickAddBar = lazy(() => import('./QuickAddBar'));
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
 const IS_MAC =
@@ -231,6 +234,11 @@ const NavItems = () =>
 
         <Outlet />
       </main>
+
+      {/* Quick-add global (touche N) — lazy : n'alourdit pas le chunk d'entrée */}
+      <Suspense fallback={null}>
+        <QuickAddBar />
+      </Suspense>
     </div>);
 
 };

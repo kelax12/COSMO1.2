@@ -62,6 +62,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   lists, selectedListIds, setSelectedListIds, createListMutation,
   isCreating, isLoading, handleDelete,
 }) => {
+  // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
+  const [showAllFields, setShowAllFields] = useState(!isCreating);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
@@ -103,6 +105,23 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     }
                   </div>
 
+                  {/* Formulaire minimal (#2) : en création, seuls le nom + ce
+                      toggle sont visibles. Les champs facultatifs (priorité,
+                      catégorie, échéance, durée…) se déplient à la demande —
+                      seul le nom est requis (cf. validation.ts). */}
+                  {isCreating && !showAllFields && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllFields(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-blue-400/60 hover:bg-blue-500/5 border-slate-300 dark:border-slate-600"
+                      style={{ color: 'rgb(var(--color-text-secondary))' }}
+                    >
+                      <ChevronDown size={16} aria-hidden="true" />
+                      Plus d'options — échéance, catégorie, priorité, durée, listes
+                    </button>
+                  )}
+
+                  {showAllFields && (<>
                   {/* Priority and Category */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div ref={dRegister('priority')}>
@@ -622,6 +641,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 })}
                               </div>
                   </div>
+                  </>)}
                 </div>
   );
 };

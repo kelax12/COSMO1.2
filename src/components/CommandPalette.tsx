@@ -70,6 +70,18 @@ export function CommandPalette() {
     ];
     if (isAuthenticated) {
       base.push({
+        id: 'action-quick-add',
+        label: 'Créer une tâche rapide',
+        hint: 'N',
+        group: 'Actions',
+        icon: <CheckSquare size={18} />,
+        run: () => {
+          setIsOpen(false);
+          window.dispatchEvent(new CustomEvent('open-quick-add'));
+        },
+        keywords: ['nouvelle', 'tache', 'quick add', 'creer', 'ajouter'],
+      });
+      base.push({
         id: 'action-logout',
         label: 'Se déconnecter',
         group: 'Actions',
