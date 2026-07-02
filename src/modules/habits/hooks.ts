@@ -5,7 +5,7 @@ import { getHabitsRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { withTimeout } from '@/lib/withTimeout';
 import { IHabitsRepository } from './repository';
-import { CreateHabitInput, UpdateHabitInput } from './types';
+import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
 
 // Repository - Via centralized factory (demo/production mode)
@@ -66,11 +66,29 @@ export const useUpdateHabit = () => {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateHabitInput }) =>
       repository.updateHabit(id, updates),
+
+    // Optimistic update : la liste reflète la modification immédiatement
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: habitKeys.lists() });
+      const previousHabits = queryClient.getQueryData<Habit[]>(habitKeys.lists());
+      if (previousHabits) {
+        queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
+          old?.map((habit) => (habit.id === id ? { ...habit, ...updates } : habit))
+        );
+      }
+      return { previousHabits };
+    },
+
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
       queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
     },
-    onError: (error: Error) => {
+
+    // Rollback on error
+    onError: (error: Error, _vars, context) => {
+      if (context?.previousHabits) {
+        queryClient.setQueryData(habitKeys.lists(), context.previousHabits);
+      }
       toast.error(`Impossible de modifier l'habitude : ${error.message}`);
     },
   });
@@ -85,11 +103,29 @@ export const useDeleteHabit = () => {
   
   return useMutation({
     mutationFn: (id: string) => repository.deleteHabit(id),
+
+    // Optimistic update : l'habitude disparaît immédiatement de la liste
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: habitKeys.lists() });
+      const previousHabits = queryClient.getQueryData<Habit[]>(habitKeys.lists());
+      if (previousHabits) {
+        queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
+          old?.filter((habit) => habit.id !== id)
+        );
+      }
+      return { previousHabits };
+    },
+
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
       queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
     },
-    onError: (error: Error) => {
+
+    // Rollback on error
+    onError: (error: Error, _id, context) => {
+      if (context?.previousHabits) {
+        queryClient.setQueryData(habitKeys.lists(), context.previousHabits);
+      }
       toast.error(`Impossible de supprimer l'habitude : ${error.message}`);
     },
   });
@@ -105,11 +141,37 @@ export const useToggleHabitCompletion = () => {
   return useMutation({
     mutationFn: ({ id, date }: { id: string; date: string }) =>
       repository.toggleCompletion(id, date),
+
+    // Optimistic update : le check du jour s'affiche immédiatement (0 ms),
+    // sans attendre l'aller-retour réseau. Rollback si le serveur refuse.
+    onMutate: async ({ id, date }) => {
+      await queryClient.cancelQueries({ queryKey: habitKeys.lists() });
+      const previousHabits = queryClient.getQueryData<Habit[]>(habitKeys.lists());
+      if (previousHabits) {
+        queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
+          old?.map((habit) =>
+            habit.id === id
+              ? {
+                  ...habit,
+                  completions: { ...habit.completions, [date]: !habit.completions[date] },
+                }
+              : habit
+          )
+        );
+      }
+      return { previousHabits };
+    },
+
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
     },
-    onError: (error: Error) => {
+
+    // Rollback on error
+    onError: (error: Error, _vars, context) => {
+      if (context?.previousHabits) {
+        queryClient.setQueryData(habitKeys.lists(), context.previousHabits);
+      }
       toast.error(`Impossible de mettre à jour l'habitude : ${error.message}`);
     },
   });

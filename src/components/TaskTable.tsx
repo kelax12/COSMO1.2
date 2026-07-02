@@ -96,6 +96,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [addToListTask, setAddToListTask] = useState<string | null>(null);
   const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [showCreateFromEmpty, setShowCreateFromEmpty] = useState(false);
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration'>('none');
 
   const toggleQuickFilter = (filter: 'favoris' | 'terminées' | 'retard' | 'collaboration') => {
@@ -187,10 +188,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setSelectedTaskForCollaborators(taskId);
   }, [isPremium, navigate]);
 
-  const confirmDelete = () => {
-    if (!taskToDelete) return;
+  const deleteTaskById = (taskId: string) => {
     // Snapshot la tâche AVANT suppression pour permettre l'undo
-    const taskSnapshot = tasks.find(t => t.id === taskToDelete);
+    const taskSnapshot = tasks.find(t => t.id === taskId);
 
     // Tâche collaborative REÇUE (prod) : on n'en est pas propriétaire, la RLS
     // bloque le DELETE (qui échouait en silence → la tâche réapparaissait). On
@@ -199,7 +199,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       !isDemo && !!taskSnapshot?.userId && !!user?.id && taskSnapshot.userId !== user.id;
     if (isReceivedProd && user?.id) {
       unshareTaskMutation.mutate(
-        { taskId: taskToDelete, friendId: user.id },
+        { taskId, friendId: user.id },
         {
           onSuccess: () => {
             setTaskToDelete(null);
@@ -212,7 +212,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       return;
     }
 
-    deleteMutation.mutate(taskToDelete, {
+    deleteMutation.mutate(taskId, {
       onSuccess: () => {
         setTaskToDelete(null);
         if (taskSnapshot) {
@@ -226,6 +226,25 @@ const TaskTable: React.FC<TaskTableProps> = ({
       onError: (err) => console.error('Delete failed', err),
     });
   };
+
+  const confirmDelete = () => {
+    if (taskToDelete) deleteTaskById(taskToDelete);
+  };
+
+  // Tâche perso : suppression directe, réversible via le toast « Annuler ».
+  // La popup de confirmation n'est gardée que pour les tâches collaboratives
+  // ou reçues (impact sur d'autres personnes, partages non restaurés).
+  const handleDeleteRequest = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    const isReceivedProd =
+      !isDemo && !!task?.userId && !!user?.id && task.userId !== user.id;
+    if (task?.isCollaborative || isReceivedProd) {
+      setTaskToDelete(taskId);
+    } else {
+      deleteTaskById(taskId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, isDemo, user?.id]);
 
   const handleSelectTask = useCallback((id: string) => {
     setSelectedTaskForCollaborators(null);
@@ -349,7 +368,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 onAddToList={setAddToListTask}
                 onOpenCollaborator={handleOpenCollaborator}
                 onDuplicate={handleDuplicate}
-                onDeleteTask={setTaskToDelete}
+                onDeleteTask={handleDeleteRequest}
                 collaboratorsByTask={collaboratorsByTask}
                 pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
                 friends={friends}
@@ -391,7 +410,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onOpenCollaborator={handleOpenCollaborator}
           onSelectTask={handleSelectTask}
           onAddToList={setAddToListTask}
-          onDeleteTask={setTaskToDelete}
+          onDeleteTask={handleDeleteRequest}
           onScheduleTask={setTaskToEventModal}
           onDuplicate={handleDuplicate}
           collaboratorsByTask={collaboratorsByTask}
@@ -416,8 +435,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <p className="text-sm">
             {showCompleted ? 'Complétez des tâches pour les voir ici' : 'Créez votre première tâche pour commencer'}
           </p>
+          {!showCompleted && !addToListMode && (
+            <button
+              type="button"
+              onClick={() => setShowCreateFromEmpty(true)}
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm"
+            >
+              Créer une tâche
+            </button>
+          )}
         </div>
       )}
+
+      {/* Création directe depuis l'état vide (#45) */}
+      <TaskModal
+        isOpen={showCreateFromEmpty}
+        onClose={() => setShowCreateFromEmpty(false)}
+        isCreating={true}
+      />
 
       {selectedTaskData && (
         <TaskModal

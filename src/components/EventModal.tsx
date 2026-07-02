@@ -30,7 +30,6 @@ import {
   validateEventRange,
 } from './event-modal/helpers';
 import RecurrenceDaysModal from './event-modal/RecurrenceDaysModal';
-import DeleteEventConfirm from './event-modal/DeleteEventConfirm';
 import EventModalForm from './event-modal/EventModalForm';
 
 type EventData = {
@@ -107,7 +106,6 @@ const EventModal: React.FC<EventModalProps> = ({
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   const [showDaysModal, setShowDaysModal] = useState(false);
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
 
 
@@ -313,14 +311,11 @@ const EventModal: React.FC<EventModalProps> = ({
     setRecurrenceDays([]);
   };
 
+  // Suppression directe sans popup de confirmation : le parent (AgendaPage)
+  // affiche un toast « Annuler » (undo-toast) qui rend l'action réversible.
   const handleDelete = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = () => {
     if (event && onDeleteEvent) {
       onDeleteEvent(event.id);
-      setShowDeleteConfirm(false);
     }
   };
 
@@ -398,11 +393,6 @@ const EventModal: React.FC<EventModalProps> = ({
         setRecurrence={setRecurrence}
       />
 
-      <DeleteEventConfirm
-        isOpen={showDeleteConfirm}
-        onCancel={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDelete}
-      />
     </>
   );
 };

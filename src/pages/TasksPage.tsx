@@ -5,7 +5,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListActionsSheet from '../components/ListActionsSheet';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks, useUpdateTask } from '@/modules/tasks';
+import { showUndoToast } from '@/lib/undo-toast';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
@@ -31,7 +32,7 @@ import {
 } from '@/modules/lists';
 
 // ═══════════════════════════════════════════════════════════════════
-import { usePriorityRange } from '@/modules/ui-states';
+import { usePriorityRange, useTaskSortPrefs, SORT_PREF_ALL_TASKS_KEY } from '@/modules/ui-states';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
@@ -45,7 +46,6 @@ import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
 import TasksErrorState from './tasks/TasksErrorState';
-import DeleteListConfirm from './tasks/DeleteListConfirm';
 import { useChipLongPress } from './tasks/useChipLongPress';
 
 const TasksPage: React.FC = () => {
@@ -78,7 +78,6 @@ const TasksPage: React.FC = () => {
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editListName, setEditListName] = useState('');
   const [editListColor, setEditListColor] = useState('blue');
-  const [listToDeleteId, setListToDeleteId] = useState<string | null>(null);
   const [selectingTasksForListId, setSelectingTasksForListId] = useState<string | null>(null);
   const [selectedTasksForList, setSelectedTasksForList] = useState<string[]>([]);
 
@@ -171,13 +170,36 @@ const TasksPage: React.FC = () => {
     }
   }, [location]);
   
+  // Tri mémorisé par liste : chaque liste retient son critère + sa direction
+  // (localStorage via ui-states). Clé '__all__' quand aucune liste n'est active.
+  const { sortPrefs, setSortPref } = useTaskSortPrefs();
+  const sortPrefKey = selectedListId ?? SORT_PREF_ALL_TASKS_KEY;
+
+  useEffect(() => {
+    const pref = sortPrefs[sortPrefKey];
+    setFilter(pref?.field ?? 'priority');
+    setSortDirection(pref?.direction ?? 'asc');
+    // Relit uniquement au changement de liste (pas à chaque écriture de pref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortPrefKey]);
+
   const handleFilterChange = (value: string) => {
     setFilter(value);
     // Changer de critère de tri repart en ordre croissant (cohérent avec TaskTable).
     setSortDirection('asc');
+    setSortPref(sortPrefKey, { field: value, direction: 'asc' });
   };
 
-  const toggleSortDirection = () => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+  const toggleSortDirection = () => {
+    const next = sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortDirection(next);
+    setSortPref(sortPrefKey, { field: filter, direction: next });
+  };
+
+  const handleSortDirectionChange = (direction: 'asc' | 'desc') => {
+    setSortDirection(direction);
+    setSortPref(sortPrefKey, { field: filter, direction });
+  };
 
   const handleShowCompletedChange = (show: boolean) => {
     setShowCompleted(show);
@@ -210,13 +232,26 @@ const TasksPage: React.FC = () => {
     cancelEditList(); // Fermeture immédiate + mise à jour optimiste du hook
   };
 
-  const confirmDeleteList = () => {
-    if (!listToDeleteId) return;
-    deleteListMutation.mutate(listToDeleteId, {
+  // Suppression directe sans popup : réversible via le toast « Annuler »
+  // (recrée la liste puis restaure ses taskIds — create force taskIds à []).
+  const deleteListById = (listId: string) => {
+    const snapshot = lists.find(l => l.id === listId);
+    deleteListMutation.mutate(listId, {
       onSuccess: () => {
-        setListToDeleteId(null);
-        if (selectedListId === listToDeleteId) setSelectedListId(null);
-      }
+        if (selectedListId === listId) setSelectedListId(null);
+        if (snapshot) {
+          showUndoToast('Liste supprimée', () => {
+            const { id: _id, taskIds, ...rest } = snapshot;
+            createListMutation.mutate(rest, {
+              onSuccess: (newList) => {
+                if (taskIds.length > 0) {
+                  updateListMutation.mutate({ id: newList.id, updates: { taskIds } });
+                }
+              },
+            });
+          });
+        }
+      },
     });
   };
 
@@ -401,7 +436,7 @@ const TasksPage: React.FC = () => {
                 setEditListColor={setEditListColor}
                 selectingTasksForListId={selectingTasksForListId}
                 selectedTasksForList={selectedTasksForList}
-                setListToDeleteId={setListToDeleteId}
+                setListToDeleteId={deleteListById}
                 createListMutation={createListMutation}
                 deleteListMutation={deleteListMutation}
                 clearListFilter={clearListFilter}
@@ -459,7 +494,53 @@ const TasksPage: React.FC = () => {
                 </motion.div>
               )}
 
-              <TaskModal 
+              {/* Chip de filtre actif (#35) : rend visible tout filtre qui réduit
+                  la liste (liste, catégories, recherche) + compteur n/N, avec un
+                  ✕ pour le retirer — évite le « où sont passées mes tâches ? ». */}
+              {!showAddTaskForm && (selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '') && (
+                <div className="flex flex-wrap items-center gap-2 mb-4" role="status">
+                  {selectedListId && (
+                    <button
+                      type="button"
+                      onClick={clearListFilter}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      aria-label="Retirer le filtre de liste"
+                    >
+                      Liste : {selectedListId === VIRTUAL_TODAY_ID
+                        ? "Aujourd'hui"
+                        : lists.find(l => l.id === selectedListId)?.name ?? 'Liste'}
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  )}
+                  {selectedCategories.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategories([])}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      aria-label="Retirer le filtre de catégories"
+                    >
+                      {selectedCategories.length === 1 ? 'Catégorie' : `Catégories : ${selectedCategories.length}`}
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  )}
+                  {searchTerm.trim() !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      aria-label="Effacer la recherche"
+                    >
+                      Recherche : « {searchTerm.trim()} »
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  )}
+                  <span className="text-sm text-[rgb(var(--color-text-secondary))]">
+                    {filteredTasks.length} / {tasks.length} tâches affichées
+                  </span>
+                </div>
+              )}
+
+              <TaskModal
                 isOpen={showAddTaskForm}
                 onClose={() => setShowAddTaskForm(false)}
                 isCreating={true}
@@ -478,7 +559,7 @@ const TasksPage: React.FC = () => {
                   tasks={filteredTasks}
                   sortField={filter}
                   sortDirection={sortDirection}
-                  onSortDirectionChange={setSortDirection}
+                  onSortDirectionChange={handleSortDirectionChange}
                   showCompleted={showCompleted}
                   selectedTaskId={selectedTaskId}
                   onTaskModalClose={() => setSelectedTaskId(null)}
@@ -553,14 +634,6 @@ const TasksPage: React.FC = () => {
         </motion.button>
       )}
 
-      {/* Dialog suppression liste */}
-      <DeleteListConfirm
-        open={!!listToDeleteId}
-        listName={lists.find(l => l.id === listToDeleteId)?.name}
-        onCancel={() => setListToDeleteId(null)}
-        onConfirm={confirmDeleteList}
-      />
-
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
       <ListActionsSheet
         list={lists.find(l => l.id === actionSheetListId) ?? null}
@@ -569,7 +642,7 @@ const TasksPage: React.FC = () => {
         onClose={() => setActionSheetListId(null)}
         onRename={(list) => startEditList(list)}
         onToggleDefault={handleToggleDefault}
-        onDelete={(list) => setListToDeleteId(list.id)}
+        onDelete={(list) => deleteListById(list.id)}
         onPickColor={(list, colorValue) => updateListMutation.mutate({ id: list.id, updates: { color: colorValue } })}
       />
 

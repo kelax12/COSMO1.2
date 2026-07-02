@@ -36,7 +36,8 @@ interface TaskListsBarProps {
   setEditListColor: React.Dispatch<React.SetStateAction<string>>;
   selectingTasksForListId: string | null;
   selectedTasksForList: string[];
-  setListToDeleteId: React.Dispatch<React.SetStateAction<string | null>>;
+  /** Déclenche la suppression (directe + toast « Annuler ») de la liste. */
+  setListToDeleteId: (listId: string) => void;
   createListMutation: ReturnType<typeof useCreateList>;
   deleteListMutation: ReturnType<typeof useDeleteList>;
   clearListFilter: () => void;

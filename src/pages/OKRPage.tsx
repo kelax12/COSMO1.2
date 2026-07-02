@@ -23,6 +23,7 @@ import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { filterObjectivesByCategory, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
+import { OKRListSkeleton } from '@/components/skeletons';
 import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
 import CategoryFilterBar from './okr/CategoryFilterBar';
 import DeleteCategoryConfirm from './okr/DeleteCategoryConfirm';
@@ -37,7 +38,7 @@ const OKRPage: React.FC = () => {
   // composant (en prod il s'auto-déclenche lundi/mardi depuis le Dashboard).
   const [showCheckin, setShowCheckin] = useState(false);
   // Use new OKR module hooks
-  const { data: objectives = [] } = useOkrs();
+  const { data: objectives = [], isLoading: isLoadingOkrs } = useOkrs();
   const createOkrMutation = useCreateOkr();
   const updateOkrMutation = useUpdateOkr();
   const deleteOkrMutation = useDeleteOkr();
@@ -355,7 +356,9 @@ const OKRPage: React.FC = () => {
         createCategoryMutation={createCategoryMutation}
       />
 
-      {filteredObjectives.length === 0 && (
+      {isLoadingOkrs && objectives.length === 0 && <OKRListSkeleton count={4} />}
+
+      {!isLoadingOkrs && filteredObjectives.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

@@ -423,8 +423,15 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   };
 
   const handleDelete = () => {
-    if (effectiveTask) {
+    if (!effectiveTask) return;
+    // Tâche perso : suppression directe, réversible via le toast « Annuler »
+    // (confirmDelete). La popup de confirmation n'est gardée que pour les
+    // tâches collaboratives — la suppression impacte d'autres personnes et
+    // l'annulation ne restaurerait pas les partages.
+    if (effectiveTask.isCollaborative) {
       setShowDeleteConfirm(true);
+    } else {
+      confirmDelete();
     }
   };
 
