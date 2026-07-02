@@ -53,6 +53,7 @@ type EventModalProps = {
   onAddEvent?: (event: EventData) => void;
   onUpdateEvent?: (eventId: string, eventData: Omit<EventData, 'taskId'>) => void;
   onDeleteEvent?: (eventId: string) => void;
+  onDuplicateEvent?: (eventId: string) => void;
   onConvert?: (eventData: EventData) => void;
   /**
    * Liste des champs à verrouiller (lecture seule). Valeurs supportées :
@@ -73,6 +74,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onAddEvent,
   onUpdateEvent,
   onDeleteEvent,
+  onDuplicateEvent,
   onConvert,
   lockedFields = [],
 }) => {
@@ -319,6 +321,11 @@ const EventModal: React.FC<EventModalProps> = ({
     }
   };
 
+  // Dupliquer (#3) : délégué au parent (création de la copie + toast).
+  const handleDuplicate = event && onDuplicateEvent
+    ? () => onDuplicateEvent(event.id)
+    : undefined;
+
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
   const getHeaderTitle = () => headerTitle(mode);
   const getSubmitButtonText = () => submitButtonText(mode);
@@ -371,6 +378,7 @@ const EventModal: React.FC<EventModalProps> = ({
           doSave={doSave}
           handleSubmit={handleSubmit}
           handleDelete={handleDelete}
+          handleDuplicate={handleDuplicate}
           getHeaderTitle={getHeaderTitle}
           getSubmitButtonText={getSubmitButtonText}
           duration={duration}

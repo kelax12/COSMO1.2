@@ -18,7 +18,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   recurrence, setRecurrence, recurrenceDays, setShowDaysModal,
   showDescription, setShowDescription, setIsColorSettingsOpen,
   categories, lockedSet, register, isInvalid,
-  handleFieldChange, doSave, handleDelete,
+  handleFieldChange, doSave, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, duration, isMobileFormValid,
 }) => (
   <div className="flex flex-col bg-gray-50 dark:bg-gray-950 h-full">
@@ -293,6 +293,19 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           </button>
         )}
       </div>
+
+      {/* Dupliquer (#3) — mode édition uniquement */}
+      {mode === 'edit' && handleDuplicate && (
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden mt-5">
+          <button
+            type="button"
+            onClick={handleDuplicate}
+            className="flex items-center justify-center px-4 min-h-11 w-full active:bg-blue-50 dark:active:bg-blue-950/20"
+          >
+            <span className="text-[15px] text-blue-600 dark:text-blue-400 font-medium">Dupliquer l'événement</span>
+          </button>
+        </div>
+      )}
 
       {/* Supprimer — mode édition uniquement */}
       {mode === 'edit' && (

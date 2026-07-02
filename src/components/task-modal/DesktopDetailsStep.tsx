@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DatePicker } from '@/components/ui/date-picker';
+import SubtaskChecklist from './SubtaskChecklist';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 
@@ -52,6 +53,8 @@ export interface DesktopDetailsStepProps {
   isCreating: boolean;
   isLoading: boolean;
   handleDelete: () => void;
+  /** Tâche existante (mode édition) — requis pour la checklist de sous-tâches. */
+  task?: import('@/modules/tasks').Task | null;
 }
 
 const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
@@ -60,7 +63,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   dRegister, dClear, dInvalid,
   categories, createCategoryMutation, listColorOptions,
   lists, selectedListIds, setSelectedListIds, createListMutation,
-  isCreating, isLoading, handleDelete,
+  isCreating, isLoading, handleDelete, task,
 }) => {
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
@@ -424,6 +427,9 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       }
                     </div>
                   </div>
+
+                  {/* Sous-tâches (#12) — édition uniquement (la tâche doit exister) */}
+                  {!isCreating && task && <SubtaskChecklist taskId={task.id} initialSubtasks={task.subtasks} />}
 
                   {/* Description — placée en bas, juste avant les actions */}
                   <div>

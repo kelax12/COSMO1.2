@@ -4,7 +4,7 @@
 // it must NEVER emit `user_id` (anti-mass-assignment, faille V1). The id is
 // added server-side in the repository from `auth.getUser()`.
 // ═══════════════════════════════════════════════════════════════════
-import { Task } from './types';
+import { Task, Subtask } from './types';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
@@ -19,6 +19,7 @@ export interface TaskRow {
   bookmarked?: boolean;
   completed?: boolean;
   completed_at?: string;
+  subtasks?: Subtask[];
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -36,6 +37,7 @@ export interface TaskDbInput {
   bookmarked?: boolean;
   completed?: boolean;
   completed_at?: string;
+  subtasks?: Subtask[];
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -55,6 +57,7 @@ export function mapTaskFromDb(row: TaskRow): Task {
     bookmarked: row.bookmarked ?? false,
     completed: row.completed ?? false,
     completedAt: row.completed_at,
+    subtasks: row.subtasks || [],
     isCollaborative: row.is_collaborative ?? false,
     pendingInvites: row.pending_invites || [],
     collaboratorValidations: row.collaborator_validations || {},
@@ -75,6 +78,7 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
   if (input.completed !== undefined) result.completed = input.completed;
   if (input.completedAt !== undefined) result.completed_at = input.completedAt;
+  if (input.subtasks !== undefined) result.subtasks = input.subtasks;
   if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
   if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
   if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;

@@ -26,6 +26,17 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
 
   const totalTasks = tasks.length;
 
+  // Charge du jour (#14) : durée estimée cumulée des tâches non complétées
+  // dont la deadline est aujourd'hui — rend la surcharge visible avant qu'elle
+  // n'arrive (« ~3 h 30 planifiées aujourd'hui »).
+  const today = new Date().toLocaleDateString('en-CA');
+  const todayMinutes = tasks
+    .filter(t => t.deadline && t.deadline.startsWith(today))
+    .reduce((sum, t) => sum + (t.estimatedTime || 0), 0);
+  const todayLoadLabel = todayMinutes >= 60
+    ? `${Math.floor(todayMinutes / 60)} h${todayMinutes % 60 ? ` ${String(todayMinutes % 60).padStart(2, '0')}` : ''}`
+    : `${todayMinutes} min`;
+
   const [isHovered, setIsHovered] = useState(false);
 
   if (isLoading) {
@@ -90,8 +101,14 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
           </button>
         </div>
         
-        <h2 className="text-xl font-bold mb-4 pr-16" style={{ color: 'rgb(var(--color-text-primary))' }}>Taches en cour : {totalTasks}</h2>
-        
+        <h2 className="text-xl font-bold mb-1 pr-16" style={{ color: 'rgb(var(--color-text-primary))' }}>Taches en cour : {totalTasks}</h2>
+        {todayMinutes > 0 && (
+          <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            ≈ {todayLoadLabel} planifiées aujourd'hui
+          </p>
+        )}
+        {todayMinutes === 0 && <div className="mb-3" />}
+
         <div className={`grid ${isBottomPosition ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-x-6 gap-y-3 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar`}>
           {categories.map((category) => (
             <div key={category.id} className="flex items-center gap-2 shrink-0">

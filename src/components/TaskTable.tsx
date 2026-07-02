@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, BookmarkCheck, CheckCircle2, AlertTriangle, Users, X, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -20,6 +20,7 @@ import {
   useTasks,
   useDeleteTask,
   useCreateTask,
+  useUpdateTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
   taskKeys,
@@ -28,6 +29,15 @@ import {
 
 import { usePriorityRange } from '@/modules/ui-states';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
+import { getSnoozeOptions } from '@/modules/tasks/snooze';
+import { isTaskOverdue } from './task-table/helpers';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { useLists, useAddTaskToList } from '@/modules/lists';
 import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useUnshareTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useIsDemo } from '@/lib/app-mode.store';
@@ -66,6 +76,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { data: moduleTasks = [], isLoading: isLoadingTasks } = useTasks();
   const deleteMutation = useDeleteTask();
   const createMutation = useCreateTask();
+  const updateMutation = useUpdateTask();
   const toggleCompleteMutation = useToggleTaskComplete();
   const toggleBookmarkMutation = useToggleTaskBookmark();
 
@@ -97,6 +108,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [showCreateFromEmpty, setShowCreateFromEmpty] = useState(false);
+
+  // Sélection multiple (#10) : réutilise le rendu checkbox du mode
+  // « ajout à une liste » (addToListMode) pour un mode générique avec barre
+  // d'actions groupées (compléter / ajouter à une liste / supprimer).
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { data: allLists = [] } = useLists();
+  const addTaskToListMutation = useAddTaskToList();
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }, []);
+
+  const exitSelectMode = () => { setSelectMode(false); setSelectedIds([]); };
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration'>('none');
 
   const toggleQuickFilter = (filter: 'favoris' | 'terminées' | 'retard' | 'collaboration') => {
@@ -251,7 +276,69 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setSelectedTask(id);
   }, []);
 
+  // Snooze (#8) : reporte la deadline (mutation optimiste → effet immédiat).
+  const handleSnooze = useCallback((taskId: string, deadline: string) => {
+    updateMutation.mutate({ id: taskId, updates: { deadline } });
+    toast.success('Tâche reportée');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Section « En retard » (#9) : tâches non complétées à deadline dépassée.
+  const overdueTasks = useMemo(
+    () => tasks.filter(t => isTaskOverdue(t.deadline, t.completed)),
+    [tasks]
+  );
+
+  const handleSnoozeAllOverdue = (deadline: string) => {
+    overdueTasks.forEach(t => updateMutation.mutate({ id: t.id, updates: { deadline } }));
+    toast.success(`${overdueTasks.length} tâche${overdueTasks.length > 1 ? 's' : ''} replanifiée${overdueTasks.length > 1 ? 's' : ''}`);
+  };
+
+  // ── Actions groupées du mode sélection (#10) ──
+  const bulkComplete = () => {
+    const toComplete = tasks.filter(t => selectedIds.includes(t.id) && !t.completed);
+    toComplete.forEach(t => toggleCompleteMutation.mutate(t.id));
+    toast.success(`${toComplete.length} tâche${toComplete.length > 1 ? 's' : ''} complétée${toComplete.length > 1 ? 's' : ''}`);
+    exitSelectMode();
+  };
+
+  const bulkAddToList = (listId: string) => {
+    selectedIds.forEach(taskId => addTaskToListMutation.mutate({ taskId, listId }));
+    const listName = allLists.find(l => l.id === listId)?.name ?? 'la liste';
+    toast.success(`${selectedIds.length} tâche${selectedIds.length > 1 ? 's' : ''} ajoutée${selectedIds.length > 1 ? 's' : ''} à ${listName}`);
+    exitSelectMode();
+  };
+
+  const bulkDelete = () => {
+    // On ne supprime en lot que les tâches perso (les collaboratives/reçues
+    // gardent leur flux individuel avec confirmation).
+    const snapshots = tasks.filter(t =>
+      selectedIds.includes(t.id) &&
+      !t.isCollaborative &&
+      !(!isDemo && !!t.userId && !!user?.id && t.userId !== user.id)
+    );
+    snapshots.forEach(t => deleteMutation.mutate(t.id));
+    if (snapshots.length > 0) {
+      showUndoToast(`${snapshots.length} tâche${snapshots.length > 1 ? 's' : ''} supprimée${snapshots.length > 1 ? 's' : ''}`, () => {
+        snapshots.forEach(s => {
+          const { id: _id, createdAt: _ca, ...rest } = s;
+          createMutation.mutate(rest);
+        });
+      });
+    }
+    const skipped = selectedIds.length - snapshots.length;
+    if (skipped > 0) {
+      toast.info(`${skipped} tâche${skipped > 1 ? 's' : ''} collaborative${skipped > 1 ? 's' : ''} ignorée${skipped > 1 ? 's' : ''} — suppression individuelle requise`);
+    }
+    exitSelectMode();
+  };
+
+
+
+  // Le mode sélection (#10) réutilise le rendu checkbox du mode addToList.
+  const effectiveAddToListMode = addToListMode || selectMode;
+  const effectiveSelectedForListIds = selectMode ? selectedIds : selectedForListIds;
+  const effectiveToggleForList = selectMode ? toggleSelected : onToggleTaskForList;
 
   return (
     <>
@@ -297,8 +384,47 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <span className="hidden sm:inline">Collaboration</span>
             <span className="sm:hidden">Collab</span>
           </Button>
+
+          {!addToListMode && (
+            <Button
+              variant="outline"
+              onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+              className={`flex items-center gap-2 ${selectMode ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
+            >
+              <CheckSquare size={20} data-icon="inline-start" />
+              <span>{selectMode ? 'Annuler' : 'Sélectionner'}</span>
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
+          deadline — replanification groupée en un clic. */}
+      {!addToListMode && !showCompleted && activeQuickFilter === 'none' && overdueTasks.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10">
+          <AlertTriangle size={18} className="text-red-500 shrink-0" aria-hidden="true" />
+          <span className="flex-1 text-sm font-medium text-red-700 dark:text-red-300">
+            {overdueTasks.length} tâche{overdueTasks.length > 1 ? 's' : ''} en retard
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+              >
+                Tout replanifier
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {getSnoozeOptions().map((opt) => (
+                <DropdownMenuItem key={opt.id} onClick={() => handleSnoozeAllOverdue(opt.deadline)}>
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
 
       {/* Desktop View (Table) */}
       <div className="hidden md:block table-container shadow-sm overflow-x-auto">
@@ -356,12 +482,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <TaskRow
                 key={task.id}
                 task={task}
-                addToListMode={addToListMode}
-                selectedForListIds={selectedForListIds}
+                addToListMode={effectiveAddToListMode}
+                selectedForListIds={effectiveSelectedForListIds}
                 activeQuickFilter={activeQuickFilter}
                 showCompleted={showCompleted}
                 onSelectTask={handleSelectTask}
-                onToggleTaskForList={onToggleTaskForList}
+                onToggleTaskForList={effectiveToggleForList}
                 onToggleComplete={handleToggleComplete}
                 onToggleBookmark={handleToggleBookmark}
                 onScheduleTask={setTaskToEventModal}
@@ -369,6 +495,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 onOpenCollaborator={handleOpenCollaborator}
                 onDuplicate={handleDuplicate}
                 onDeleteTask={handleDeleteRequest}
+                onSnooze={handleSnooze}
                 collaboratorsByTask={collaboratorsByTask}
                 pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
                 friends={friends}
@@ -402,9 +529,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
         )}
         <VirtualizedTaskList
           tasks={sortedTasks}
-          addToListMode={addToListMode}
-          selectedForListIds={selectedForListIds}
-          onToggleTaskForList={onToggleTaskForList}
+          addToListMode={effectiveAddToListMode}
+          selectedForListIds={effectiveSelectedForListIds}
+          onToggleTaskForList={effectiveToggleForList}
           onToggleComplete={handleToggleComplete}
           onToggleBookmark={handleToggleBookmark}
           onOpenCollaborator={handleOpenCollaborator}
@@ -413,6 +540,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onDeleteTask={handleDeleteRequest}
           onScheduleTask={setTaskToEventModal}
           onDuplicate={handleDuplicate}
+          onSnooze={handleSnooze}
           collaboratorsByTask={collaboratorsByTask}
           pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
           friends={friends}
@@ -446,6 +574,60 @@ const TaskTable: React.FC<TaskTableProps> = ({
           )}
         </div>
       )}
+
+      {/* Barre d'actions groupées du mode sélection (#10) */}
+      <AnimatePresence>
+        {selectMode && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="fixed left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl border shadow-2xl"
+            style={{
+              bottom: 'calc(env(safe-area-inset-bottom) + 84px)',
+              backgroundColor: 'rgb(var(--color-surface))',
+              borderColor: 'rgb(var(--color-border))',
+            }}
+          >
+            <span className="text-sm font-semibold whitespace-nowrap" style={{ color: 'rgb(var(--color-text-primary))' }}>
+              {selectedIds.length} sélectionnée{selectedIds.length > 1 ? 's' : ''}
+            </span>
+            <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <CheckCircle2 size={16} data-icon="inline-start" />
+              <span className="hidden sm:inline">Compléter</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={selectedIds.length === 0 || allLists.length === 0}>
+                  <ListPlus size={16} data-icon="inline-start" />
+                  <span className="hidden sm:inline">Liste</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                {allLists.map(list => (
+                  <DropdownMenuItem key={list.id} onClick={() => bulkAddToList(list.id)}>
+                    {list.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button size="sm" variant="outline" onClick={bulkDelete} disabled={selectedIds.length === 0} className="!text-red-500 hover:!bg-red-500/10">
+              <Trash2 size={16} data-icon="inline-start" />
+              <span className="hidden sm:inline">Supprimer</span>
+            </Button>
+            <button
+              type="button"
+              onClick={exitSelectMode}
+              aria-label="Quitter la sélection"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Création directe depuis l'état vide (#45) */}
       <TaskModal

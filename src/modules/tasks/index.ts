@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus } from './types';
+export type { Task, Subtask, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus } from './types';
 
 // Constants
 export { taskKeys, TASKS_STORAGE_KEY } from './constants';

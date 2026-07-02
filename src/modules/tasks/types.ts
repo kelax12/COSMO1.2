@@ -1,3 +1,10 @@
+/** Élément de checklist d'une tâche (#12). */
+export interface Subtask {
+  id: string;
+  name: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   name: string;
@@ -10,6 +17,7 @@ export interface Task {
   bookmarked: boolean;
   completed: boolean;
   completedAt?: string;
+  subtasks?: Subtask[];
   isCollaborative?: boolean;
   pendingInvites?: string[];
   collaboratorValidations?: Record<string, boolean>;
