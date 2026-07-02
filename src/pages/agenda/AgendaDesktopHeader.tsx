@@ -81,6 +81,13 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <ChevronLeft size={18} />
                   </motion.button>
+                  {/* Retour à aujourd'hui (#16) */}
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    onClick={() => calendarRef.current?.getApi().today()}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:text-blue-600 hover:border-blue-400/60"
+                    style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}>
+                    Aujourd'hui
+                  </motion.button>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => calendarRef.current?.getApi().next()}
                     className="p-2 rounded-lg transition-colors hover:text-blue-600"
