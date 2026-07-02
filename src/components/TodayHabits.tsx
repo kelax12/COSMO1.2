@@ -67,7 +67,14 @@ const TodayHabits: React.FC = () => {
       <div>
         <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
         <p className="text-[rgb(var(--color-text-secondary))] text-sm">
-          {completedCount}/{todayHabits.length} complétées • {Math.floor(totalTime / 60)}h{totalTime % 60}min
+          {/* Célébration (#39) : récompenser le zéro restant, pas juste le compter */}
+          {todayHabits.length > 0 && completedCount === todayHabits.length ? (
+            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+              Journée bouclée 🎉 {completedCount}/{todayHabits.length} complétées
+            </span>
+          ) : (
+            <>{completedCount}/{todayHabits.length} complétées • {Math.floor(totalTime / 60)}h{totalTime % 60}min</>
+          )}
         </p>
       </div>
     </div>

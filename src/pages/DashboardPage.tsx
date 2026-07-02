@@ -1,4 +1,5 @@
 import React, { useMemo, useState, Suspense } from 'react';
+import { Link } from 'react-router-dom';
 import { PageHeading } from '@/components/ui/typography';
 import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -322,13 +323,47 @@ const DashboardPage: React.FC = () => {
                         textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
                       />
                 </PageHeading>
+              {/* Résumé contextuel cliquable (#38) + « Journée bouclée » (#39) */}
               <motion.p
                 className="text-[rgb(var(--color-text-secondary))] text-sm sm:text-base lg:text-lg"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                Voici votre tableau de bord pour aujourd'hui
+                {(() => {
+                  const remainingTasks = tasks.filter(t => !t.completed && t.deadline && new Date(t.deadline).toLocaleDateString('en-CA') === today).length;
+                  const now = new Date();
+                  const nextEvent = events
+                    .filter(e => new Date(e.start).toLocaleDateString('en-CA') === today && new Date(e.start) >= now)
+                    .sort((a, b) => a.start.localeCompare(b.start))[0];
+                  const remainingHabits = habits.filter(h => !h.completions[today]).length;
+
+                  if (remainingTasks === 0 && !nextEvent && remainingHabits === 0 && (tasks.length > 0 || habits.length > 0)) {
+                    return <span className="font-medium text-emerald-600 dark:text-emerald-400">Journée bouclée 🎉 Tout est fait pour aujourd'hui.</span>;
+                  }
+
+                  const parts: React.ReactNode[] = [];
+                  parts.push(
+                    <Link key="tasks" to="/tasks" className="hover:underline underline-offset-2">
+                      {remainingTasks === 0 ? 'aucune tâche restante' : `${remainingTasks} tâche${remainingTasks > 1 ? 's' : ''} aujourd'hui`}
+                    </Link>
+                  );
+                  if (nextEvent) {
+                    parts.push(
+                      <Link key="event" to="/agenda" className="hover:underline underline-offset-2">
+                        « {nextEvent.title} » à {new Date(nextEvent.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </Link>
+                    );
+                  }
+                  if (remainingHabits > 0) {
+                    parts.push(
+                      <Link key="habits" to="/habits" className="hover:underline underline-offset-2">
+                        {remainingHabits} habitude{remainingHabits > 1 ? 's' : ''} restante{remainingHabits > 1 ? 's' : ''}
+                      </Link>
+                    );
+                  }
+                  return parts.flatMap((p, i) => (i === 0 ? [p] : [<span key={`sep-${i}`}> · </span>, p]));
+                })()}
               </motion.p>
             </div>
             {/* Boîte de réception : demandes d'amis + tâches partagées à accepter */}

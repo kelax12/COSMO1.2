@@ -18,6 +18,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import SubtaskChecklist from './SubtaskChecklist';
 import { useOkrs } from '@/modules/okrs';
+import CopyShareLinkButton from './CopyShareLinkButton';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 
@@ -57,6 +58,8 @@ export interface DesktopDetailsStepProps {
   handleDelete: () => void;
   /** Tâche existante (mode édition) — requis pour la checklist de sous-tâches. */
   task?: import('@/modules/tasks').Task | null;
+  /** Propriétaire de la tâche (= peut générer un lien de partage, #42). */
+  isTaskOwner?: boolean;
 }
 
 const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
@@ -65,7 +68,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   dRegister, dClear, dInvalid,
   categories, createCategoryMutation, listColorOptions,
   lists, selectedListIds, setSelectedListIds, createListMutation,
-  isCreating, isLoading, handleDelete, task,
+  isCreating, isLoading, handleDelete, task, isTaskOwner = false,
 }) => {
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
@@ -508,6 +511,11 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         >
                           <Trash2 size={20} className="text-red-500" />
                         </button>
+                      )}
+
+                      {/* Partage en un clic (#42) */}
+                      {!isCreating && task && (
+                        <CopyShareLinkButton taskId={task.id} ownerCanShare={isTaskOwner} />
                       )}
 
                       <DropdownMenu>

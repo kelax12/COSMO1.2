@@ -21,6 +21,19 @@ import { useCategories } from '@/modules/categories';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useFriends, useSharesByTask } from '@/modules/friends';
 
+// « il y a 2 h » / « à l'instant » — fraîcheur d'une tâche partagée (#40).
+const formatRelativeTime = (iso: string): string => {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `il y a ${days} j`;
+  return `le ${new Date(iso).toLocaleDateString('fr-FR')}`;
+};
+
 const CollaborativeTasks: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -130,6 +143,12 @@ const CollaborativeTasks: React.FC = () => {
                           </div>
                         )}
                         <span>{sharesByTask.get(task.id)?.length ?? 0} collaborateurs</span>
+                        {/* Fraîcheur (#40) : dernière modification de la tâche partagée */}
+                        {task.updatedAt && (
+                          <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                            modifiée {formatRelativeTime(task.updatedAt)}
+                          </span>
+                        )}
                       </div>
                     </div>
 
