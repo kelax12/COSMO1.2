@@ -3,7 +3,6 @@ import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, Pause } fro
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
 import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
@@ -47,7 +46,6 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const toggleCompletionMutation = useToggleHabitCompletion();
 
   const [showDetails, setShowDetails] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   const streak = calculateStreak(habit.completions);
@@ -67,7 +65,6 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
         });
       },
     });
-    setIsDeleting(false);
   };
 
   const generateDays = (count: number) => {
@@ -189,58 +186,12 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               </Button>
               {/* Menu « ... » — popover avec « Créer une tâche » + « Planifier dans l'agenda » */}
               <HabitActionsMenu habit={habit} />
-              <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={() => setIsDeleting(true)}>
+              <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={handleDelete}>
                 <Trash2 size={18} className="md:w-4 md:h-4" />
               </Button>
             </div>
           </div>
         </div>
-
-        {/* Confirmation suppression */}
-        <AnimatePresence>
-          {isDeleting && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/50 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
-              onClick={() => setIsDeleting(false)}
-            >
-              <motion.div
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-                transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-                className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="sm:hidden flex justify-center pt-4 pb-3">
-                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-                </div>
-                <div className="p-5 sm:p-6">
-                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                    <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                    Supprimer l'habitude
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                    Êtes-vous sûr de vouloir supprimer l'habitude "{habit.name}" ? Cette action est irréversible.
-                  </p>
-                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                    <Button type="button" variant="outline" className="flex-1 min-h-11" onClick={() => setIsDeleting(false)}>
-                      Annuler
-                    </Button>
-                    <Button type="button" variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white" onClick={handleDelete}>
-                      Supprimer
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Calendrier compact 7 jours */}
         <div className="mb-4 overflow-x-auto pb-2 -mx-1 px-1 hide-scrollbar">

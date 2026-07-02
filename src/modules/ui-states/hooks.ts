@@ -3,10 +3,12 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { ColorSettings, PriorityRange } from './types';
+import { ColorSettings, PriorityRange, TaskSortPref, TaskSortPrefs } from './types';
 import {
   FAVORITE_COLORS_KEY,
   PRIORITY_RANGE_KEY,
+  TASK_SORT_PREFS_KEY,
+  LAST_VISITED_PAGE_KEY,
   DEFAULT_FAVORITE_COLORS,
   DEFAULT_PRIORITY_RANGE,
   DEFAULT_COLOR_SETTINGS,
@@ -38,11 +40,34 @@ function readFavoriteColors(): string[] {
   return DEFAULT_FAVORITE_COLORS;
 }
 
+function readTaskSortPrefs(): TaskSortPrefs {
+  try {
+    const stored = localStorage.getItem(TASK_SORT_PREFS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as TaskSortPrefs;
+    }
+  } catch { /* ignore */ }
+  return {};
+}
+
+function readLastVisitedPage(): string | null {
+  try {
+    return localStorage.getItem(LAST_VISITED_PAGE_KEY);
+  } catch { return null; }
+}
+
 let priorityRangeState: PriorityRange = readPriorityRange();
 const priorityRangeListeners = new Set<() => void>();
 
 let favoriteColorsState: string[] = readFavoriteColors();
 const favoriteColorsListeners = new Set<() => void>();
+
+let taskSortPrefsState: TaskSortPrefs = readTaskSortPrefs();
+const taskSortPrefsListeners = new Set<() => void>();
+
+let lastVisitedPageState: string | null = readLastVisitedPage();
+const lastVisitedPageListeners = new Set<() => void>();
 
 // ═══════════════════════════════════════════════════════════════════
 // FAVORITE COLORS HOOK
@@ -85,6 +110,49 @@ export const usePriorityRange = () => {
   return { priorityRange, setPriorityRange };
 };
 
+// ═══════════════════════════════════════════════════════════════════
+// TASK SORT PREFS HOOK — tri mémorisé par liste (clé '__all__' hors liste)
+// ═══════════════════════════════════════════════════════════════════
+
+export const useTaskSortPrefs = () => {
+  const sortPrefs = useSyncExternalStore(
+    (cb) => { taskSortPrefsListeners.add(cb); return () => taskSortPrefsListeners.delete(cb); },
+    () => taskSortPrefsState,
+    () => taskSortPrefsState,
+  );
+
+  const setSortPref = useCallback((listKey: string, pref: TaskSortPref) => {
+    taskSortPrefsState = { ...taskSortPrefsState, [listKey]: pref };
+    try { localStorage.setItem(TASK_SORT_PREFS_KEY, JSON.stringify(taskSortPrefsState)); } catch { /* ignore */ }
+    taskSortPrefsListeners.forEach(l => l());
+  }, []);
+
+  return { sortPrefs, setSortPref };
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// LAST VISITED PAGE HOOK — réouverture de l'app sur la page quittée
+// ═══════════════════════════════════════════════════════════════════
+
+export const useLastVisitedPage = () => {
+  const lastVisitedPage = useSyncExternalStore(
+    (cb) => { lastVisitedPageListeners.add(cb); return () => lastVisitedPageListeners.delete(cb); },
+    () => lastVisitedPageState,
+    () => lastVisitedPageState,
+  );
+
+  const setLastVisitedPage = useCallback((path: string) => {
+    lastVisitedPageState = path;
+    try { localStorage.setItem(LAST_VISITED_PAGE_KEY, path); } catch { /* ignore */ }
+    lastVisitedPageListeners.forEach(l => l());
+  }, []);
+
+  return { lastVisitedPage, setLastVisitedPage };
+};
+
+/** Lecture directe (hors React) — utilisée pour la redirection au démarrage. */
+export const getLastVisitedPage = (): string | null => lastVisitedPageState;
+
 // Cross-tab sync (storage event)
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
@@ -94,6 +162,12 @@ if (typeof window !== 'undefined') {
     } else if (e.key === FAVORITE_COLORS_KEY) {
       favoriteColorsState = readFavoriteColors();
       favoriteColorsListeners.forEach(l => l());
+    } else if (e.key === TASK_SORT_PREFS_KEY) {
+      taskSortPrefsState = readTaskSortPrefs();
+      taskSortPrefsListeners.forEach(l => l());
+    } else if (e.key === LAST_VISITED_PAGE_KEY) {
+      lastVisitedPageState = readLastVisitedPage();
+      lastVisitedPageListeners.forEach(l => l());
     }
   });
 }

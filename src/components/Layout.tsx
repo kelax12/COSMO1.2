@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useMatch, useResolvedPath } from 'react-router-dom';
+import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router-dom';
+import { useLastVisitedPage } from '@/modules/ui-states';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import {
@@ -113,6 +114,14 @@ const Layout: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
+
+  // Mémorise la page courante : à la prochaine ouverture, l'app rouvre ici
+  // (RootRoute lit cette valeur) au lieu de toujours retomber sur le dashboard.
+  const location = useLocation();
+  const { setLastVisitedPage } = useLastVisitedPage();
+  useEffect(() => {
+    setLastVisitedPage(location.pathname);
+  }, [location.pathname, setLastVisitedPage]);
 
 const NavItems = () =>
   <>

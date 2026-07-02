@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { showUndoToast } from '@/lib/undo-toast';
 import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import TaskModal from './TaskModal';
@@ -81,28 +82,36 @@ const TodayTasks: React.FC = () => {
     setTaskToEventModal(null);
   };
 
-  const confirmDelete = () => {
-    if (!taskToDelete) return;
-    const snapshot = tasks.find(t => t.id === taskToDelete);
-    deleteMutation.mutate(taskToDelete, {
+  const deleteTaskNow = (taskId: string) => {
+    const snapshot = tasks.find(t => t.id === taskId);
+    deleteMutation.mutate(taskId, {
       onSuccess: () => {
         setTaskToDelete(null);
         if (snapshot) {
-          toast.success('Tâche supprimée', {
-            action: {
-              label: 'Annuler',
-              onClick: () => {
-                const { id: _id, createdAt: _ca, ...rest } = snapshot;
-                createMutation.mutate(rest, {
-                  onSuccess: () => toast.success('Tâche restaurée'),
-                });
-              },
-            },
-            duration: 6000,
+          const { id: _id, createdAt: _ca, ...rest } = snapshot;
+          showUndoToast('Tâche supprimée', () => {
+            createMutation.mutate(rest, {
+              onSuccess: () => toast.success('Tâche restaurée'),
+            });
           });
         }
       },
     });
+  };
+
+  // Tâche perso : suppression directe, réversible via le toast « Annuler ».
+  // La popup de confirmation n'est gardée que pour les tâches collaboratives
+  // (impact sur d'autres personnes, partages non restaurés par l'annulation).
+  const handleDeleteClick = (task: Task) => {
+    if (task.isCollaborative) {
+      setTaskToDelete(task.id);
+    } else {
+      deleteTaskNow(task.id);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (taskToDelete) deleteTaskNow(taskToDelete);
   };
 
   if (isLoadingTasks) {
@@ -234,7 +243,7 @@ const TodayTasks: React.FC = () => {
                     <button onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Collaborateurs">
                       <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Supprimer">
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(task); }} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Supprimer">
                       <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
                     </button>
                   </div>

@@ -1,19 +1,26 @@
 import React from 'react';
 import { Target, TrendingUp, Clock } from 'lucide-react';
 import { useOkrs, KeyResult } from '@/modules/okrs';
+import { DashboardCardSkeleton } from '@/components/skeletons';
 
 const ActiveOKRs: React.FC = () => {
-  const { data: okrs = [] } = useOkrs();
-  
+  const { data: okrs = [], isLoading } = useOkrs();
+
   const activeOKRs = okrs.filter(okr => !okr.completed).slice(0, 3);
 
   const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
     const totalProgress = keyResults.reduce((sum, kr) => {
+      // Guard targetValue > 0 (B17) : évite NaN quand la cible vaut 0.
+      if (kr.targetValue <= 0) return sum;
       return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);
     }, 0);
     return Math.round(totalProgress / keyResults.length);
   };
+
+    if (isLoading && okrs.length === 0) {
+      return <DashboardCardSkeleton />;
+    }
 
     return (
         <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">

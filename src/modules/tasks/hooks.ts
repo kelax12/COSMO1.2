@@ -187,13 +187,31 @@ export const useUpdateTask = () => {
       validateOrThrow(updateTaskSchema, updates);
       return repository.update(id, updates);
     },
+
+    // Optimistic update : la liste reflète la modification immédiatement
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
+      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
+      if (previousTasks) {
+        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+          old?.map((task) => (task.id === id ? { ...task, ...updates } : task))
+        );
+      }
+      return { previousTasks };
+    },
+
     onSuccess: (updatedTask) => {
       // Update specific task in cache
       queryClient.setQueryData(taskKeys.detail(updatedTask.id), updatedTask);
       // Invalidate all list queries
       invalidateAllTaskQueries(queryClient);
     },
-    onError: (error: Error) => {
+
+    // Rollback on error
+    onError: (error: Error, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
+      }
       toast.error(`Impossible de modifier la tâche : ${error.message}`);
     },
   });
@@ -208,13 +226,31 @@ export const useDeleteTask = () => {
 
   return useMutation({
     mutationFn: (id: string) => repository.delete(id),
+
+    // Optimistic update : la tâche disparaît immédiatement de la liste
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
+      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
+      if (previousTasks) {
+        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+          old?.filter((task) => task.id !== id)
+        );
+      }
+      return { previousTasks };
+    },
+
     onSuccess: (_result, deletedId) => {
       // Remove from detail cache
       queryClient.removeQueries({ queryKey: taskKeys.detail(deletedId) });
       // Invalidate all list queries
       invalidateAllTaskQueries(queryClient);
     },
-    onError: (error: Error) => {
+
+    // Rollback on error
+    onError: (error: Error, _id, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
+      }
       toast.error(`Impossible de supprimer la tâche : ${error.message}`);
     },
   });

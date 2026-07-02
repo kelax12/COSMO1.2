@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
+import { getLastVisitedPage } from '@/modules/ui-states';
 
 // Providers
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -146,10 +147,19 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
   </AppErrorBoundary>
 );
 
+// Pages protégées éligibles à la réouverture « dernière page visitée » (#34).
+const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings'];
+
 const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <LoadingSpinner />;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) {
+    // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
+    // fallback dashboard si inconnue ou invalide.
+    const last = getLastVisitedPage();
+    const target = last && RESUMABLE_PAGES.includes(last) ? last : '/dashboard';
+    return <Navigate to={target} replace />;
+  }
   return <PageWithSuspense><LandingPage /></PageWithSuspense>;
 };
 
