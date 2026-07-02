@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { useFormDraft } from '@/lib/hooks/use-form-draft';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
 
@@ -144,6 +145,9 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     krId: ''
   });
 
+  // Brouillon de création (#47) : la saisie survit à une fermeture accidentelle.
+  const { readDraft, saveDraft, clearDraft } = useFormDraft<typeof formData>('task-create');
+
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [okrFields, setOkrFields] = useState<Record<string, boolean>>({});
@@ -195,6 +199,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     };
   }, [showCollaboratorSection]);
 
+  // Sauvegarde du brouillon (#47) : pendant la saisie en création uniquement.
+  useEffect(() => {
+    if (isOpen && isCreating && hasChanges) saveDraft(formData);
+  }, [formData, isOpen, isCreating, hasChanges, saveDraft]);
+
   // Reset to step 1 ONLY when the modal opens. Putting `setStep(1)` inside
   // the form-init effect (with `lists`/`task` in its deps) caused the modal
   // to bounce back to step 1 every time a mutation invalidated the React
@@ -211,7 +220,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     if (!isOpen) return;
 
     if (isCreating) {
-      setFormData({
+      // Brouillon (#47) : si le modal a été fermé par erreur en cours de
+      // saisie (sans initialData — le flux OKR garde ses champs pré-remplis),
+      // on restaure le brouillon au lieu de repartir de zéro.
+      const draft = !initialData ? readDraft() : null;
+      setFormData(draft ?? {
         name: initialData?.name || '',
         description: initialData?.description || '',
         priority: initialData?.priority || 0,
@@ -394,7 +407,9 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       lists, selectedListIds, isTaskOwner, existingShareIds,
       createTaskMutation, updateTaskMutation, addTaskToListMutation,
       removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
-      computeValidationErrors, setErrors, onClose,
+      // onClose n'est appelé par runTaskSave qu'en cas de SUCCÈS → on peut
+      // purger le brouillon (#47) ici sans risquer de perdre une saisie.
+      computeValidationErrors, setErrors, onClose: () => { clearDraft(); onClose(); },
     });
   };
 

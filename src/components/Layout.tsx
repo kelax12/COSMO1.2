@@ -27,6 +27,10 @@ import MobileTabBar from './layout/MobileTabBar';
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Rappel habitudes du soir (#24) — lazy également.
 const HabitEveningReminder = lazy(() => import('./HabitEveningReminder'));
+// Aide raccourcis clavier (#48) — touche « ? ».
+const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
+// Tâches d'exemple au premier login (#49) — headless.
+const OnboardingExampleTasks = lazy(() => import('./OnboardingExampleTasks'));
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
 const IS_MAC =
@@ -244,6 +248,16 @@ const NavItems = () =>
       {/* Quick-add global (touche N) — lazy : n'alourdit pas le chunk d'entrée */}
       <Suspense fallback={null}>
         <QuickAddBar />
+      </Suspense>
+
+      {/* Aide raccourcis (touche ?) */}
+      <Suspense fallback={null}>
+        <ShortcutsHelp />
+      </Suspense>
+
+      {/* Tâches d'exemple au premier login prod (#49) */}
+      <Suspense fallback={null}>
+        <OnboardingExampleTasks />
       </Suspense>
     </div>);
 

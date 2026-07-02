@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useFormDraft } from '@/lib/hooks/use-form-draft';
 import { useInvalidShake } from "@/hooks/use-invalid-shake";
 import ColorSettingsModal from "./ColorSettingsModal";
 
@@ -110,6 +111,12 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
 
+  // Brouillon de création libre (#47) — titre/notes survivent à une fermeture.
+  const { readDraft, saveDraft, clearDraft } = useFormDraft<{ title: string; notes: string }>('event-create');
+  useEffect(() => {
+    if (isOpen && mode === 'add' && !task?.name && title.trim()) saveDraft({ title, notes });
+  }, [isOpen, mode, task?.name, title, notes, saveDraft]);
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -190,6 +197,14 @@ const EventModal: React.FC<EventModalProps> = ({
       } else {
         setColor(categories[0]?.color || "#3B82F6");
       }
+
+      // Brouillon (#47) : restaure titre/notes d'une saisie interrompue
+      // (uniquement en création libre — pas quand le titre est pré-rempli).
+      if (!task.name) {
+        const draft = readDraft();
+        if (draft?.title) setTitle(draft.title);
+        if (draft?.notes) setNotes(draft.notes);
+      }
     } else if (mode === 'convert' && task) {
       setTitle(task.name || "");
       setNotes("");
@@ -221,7 +236,7 @@ const EventModal: React.FC<EventModalProps> = ({
     }
 
     setPrefilledFields(prefilled);
-  }, [isOpen, mode, task, event, prefilledTimeSlot, categories, favoriteColors]);
+  }, [isOpen, mode, task, event, prefilledTimeSlot, categories, favoriteColors, readDraft]);
 
   const SHAKE_KEY: Record<string, string> = {
     title: 'title',
@@ -264,6 +279,7 @@ const EventModal: React.FC<EventModalProps> = ({
     }
 
     if (mode === 'add' && onAddEvent && task) {
+      clearDraft(); // Brouillon (#47) : purge à la création réussie
       onAddEvent({
         title: title.trim(),
         start,

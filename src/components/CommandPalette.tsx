@@ -82,6 +82,18 @@ export function CommandPalette() {
         keywords: ['nouvelle', 'tache', 'quick add', 'creer', 'ajouter'],
       });
       base.push({
+        id: 'action-shortcuts',
+        label: 'Afficher les raccourcis clavier',
+        hint: '?',
+        group: 'Actions',
+        icon: <Search size={18} />,
+        run: () => {
+          setIsOpen(false);
+          window.dispatchEvent(new CustomEvent('open-shortcuts-help'));
+        },
+        keywords: ['raccourcis', 'clavier', 'aide', 'shortcuts', 'help'],
+      });
+      base.push({
         id: 'action-logout',
         label: 'Se déconnecter',
         group: 'Actions',
