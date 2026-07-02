@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
+import { useFormDraft } from '@/lib/hooks/use-form-draft';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 import { useCreateHabit } from '@/modules/habits';
@@ -15,12 +16,19 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
   const { data: categories = [] } = useCategories();
   const createHabitMutation = useCreateHabit();
   
-  const [formData, setFormData] = useState({
+  // Brouillon (#47) : la saisie survit à une fermeture accidentelle du form.
+  const { readDraft, saveDraft, clearDraft } = useFormDraft<{ name: string; estimatedTime: number; color: string }>('habit-create');
+
+  const [formData, setFormData] = useState(() => readDraft() ?? {
     name: '',
     estimatedTime: 30,
     color: categories[0]?.color || favoriteColors[0] || '#3B82F6'
   });
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (formData.name.trim()) saveDraft(formData);
+  }, [formData, saveDraft]);
 
   const handleSubmit = (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
@@ -33,7 +41,7 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
       frequency: 'daily',
       icon: '',
     }, {
-      onSuccess: () => onClose()
+      onSuccess: () => { clearDraft(); onClose(); }
     });
   };
 
