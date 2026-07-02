@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
-  Mail, ChevronRight,
+  Mail, ChevronRight, Repeat,
 } from 'lucide-react';
+import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useUpdateUserSettings } from '../modules/user';
@@ -39,6 +40,7 @@ import { DataTab } from './settings/DataTab';
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
   useFonts();
+  const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
 
   const { user, logout, isDemo } = useAuth();
   const updateUserSettings = useUpdateUserSettings();
@@ -490,6 +492,35 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                   <ThemeToggle showLabel />
+                </div>
+
+                {/* Rappel habitudes du soir (#24) — opt-in */}
+                <div style={{ minHeight: '72px' }}
+                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
+                  <div className="flex items-center gap-3.5">
+                    <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500 group-hover:scale-105 transition-transform">
+                      <Repeat size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Rappel habitudes du soir</p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Après 18 h, un bandeau signale les habitudes non cochées</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={habitReminderEnabled}
+                    aria-label="Activer le rappel habitudes du soir"
+                    onClick={() => setHabitReminderEnabled(!habitReminderEnabled)}
+                    className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                      habitReminderEnabled ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+                    }`}
+                  >
+                    <span
+                      className="absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200"
+                      style={{ left: habitReminderEnabled ? 'calc(100% - 29px)' : '2px' }}
+                    />
+                  </button>
                 </div>
               </SectionCard>
             </motion.div>

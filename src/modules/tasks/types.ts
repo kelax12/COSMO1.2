@@ -18,6 +18,8 @@ export interface Task {
   completed: boolean;
   completedAt?: string;
   subtasks?: Subtask[];
+  /** Id du Key Result OKR auquel la tâche contribue (#28). */
+  krId?: string;
   isCollaborative?: boolean;
   pendingInvites?: string[];
   collaboratorValidations?: Record<string, boolean>;

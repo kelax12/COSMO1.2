@@ -25,6 +25,8 @@ import MobileTabBar from './layout/MobileTabBar';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
+// Rappel habitudes du soir (#24) — lazy également.
+const HabitEveningReminder = lazy(() => import('./HabitEveningReminder'));
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
 const IS_MAC =
@@ -232,6 +234,10 @@ const NavItems = () =>
         className="flex-1 overflow-auto relative"
         style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
+        {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
+        <Suspense fallback={null}>
+          <HabitEveningReminder />
+        </Suspense>
         <Outlet />
       </main>
 

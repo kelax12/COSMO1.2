@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Edit2, Trash2, Clock, CheckCircle, Calendar } from 'lucide-react';
 import type { KeyResult } from '@/modules/okrs';
+import { useTasks } from '@/modules/tasks';
 import { getProgress, type Objective } from './okr-page-logic';
 
 interface OKRCardProps {
@@ -26,6 +27,13 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 }) => {
               const progress = getProgress(objective.keyResults);
               const category = getCategoryById(objective.category);
+
+              // Tâches liées aux KR de cet objectif (#28) — compteur par KR.
+              const { data: linkedTasks = [] } = useTasks();
+              const tasksByKr = new Map<string, number>();
+              for (const t of linkedTasks) {
+                if (t.krId && !t.completed) tasksByKr.set(t.krId, (tasksByKr.get(t.krId) ?? 0) + 1);
+              }
 
               const start = new Date(objective.startDate);
               const end = new Date(objective.endDate);
@@ -152,7 +160,10 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                 <div className="space-y-3">
                   <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
                   {objective.keyResults.map((keyResult) => {
-                    const krProgress = keyResult.currentValue / keyResult.targetValue * 100;
+                    // Guard targetValue > 0 (B17) : évite NaN quand la cible vaut 0.
+                    const krProgress = keyResult.targetValue > 0
+                      ? keyResult.currentValue / keyResult.targetValue * 100
+                      : 0;
 
                     return (
                       <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
@@ -179,6 +190,14 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 
                               <Calendar size={14} className="text-purple-500" />
                             </button>
+                            {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
+                              <span
+                                className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
+                                title="Tâches en cours liées à ce résultat clé"
+                              >
+                                {tasksByKr.get(keyResult.id)} tâche{(tasksByKr.get(keyResult.id) ?? 0) > 1 ? 's' : ''}
+                              </span>
+                            )}
                             <span className="text-[10px] sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
                               <Clock size={12} />
                               {keyResult.estimatedTime}min
@@ -187,14 +206,34 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                            {/* Incrément rapide (#27) : passer de 4 à 5 sans ouvrir de modal */}
+                            <button
+                              type="button"
+                              onClick={() => updateKeyResult(objective.id, keyResult.id, Math.max(0, keyResult.currentValue - 1))}
+                              disabled={keyResult.currentValue <= 0}
+                              aria-label={`Diminuer ${keyResult.title}`}
+                              className="w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
+                            >
+                              −
+                            </button>
                             <input
                               type="number"
                               aria-label={`Avancement de ${keyResult.title} sur ${keyResult.targetValue}`}
                               value={keyResult.currentValue}
                               onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
-                              className="w-16 sm:w-20 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none"
+                              className="w-14 sm:w-16 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none text-center"
                               style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))', borderColor: 'rgb(var(--color-border))' }} />
+                            <button
+                              type="button"
+                              onClick={() => updateKeyResult(objective.id, keyResult.id, keyResult.currentValue + 1)}
+                              aria-label={`Augmenter ${keyResult.title}`}
+                              className="w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
+                            >
+                              +
+                            </button>
 
                             <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
                           </div>

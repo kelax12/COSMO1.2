@@ -20,6 +20,7 @@ export interface TaskRow {
   completed?: boolean;
   completed_at?: string;
   subtasks?: Subtask[];
+  kr_id?: string | null;
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -38,6 +39,7 @@ export interface TaskDbInput {
   completed?: boolean;
   completed_at?: string;
   subtasks?: Subtask[];
+  kr_id?: string | null;
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -58,6 +60,7 @@ export function mapTaskFromDb(row: TaskRow): Task {
     completed: row.completed ?? false,
     completedAt: row.completed_at,
     subtasks: row.subtasks || [],
+    krId: row.kr_id ?? undefined,
     isCollaborative: row.is_collaborative ?? false,
     pendingInvites: row.pending_invites || [],
     collaboratorValidations: row.collaborator_validations || {},
@@ -79,6 +82,8 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.completed !== undefined) result.completed = input.completed;
   if (input.completedAt !== undefined) result.completed_at = input.completedAt;
   if (input.subtasks !== undefined) result.subtasks = input.subtasks;
+  // Lien KR (#28) : chaîne vide = « délié » → NULL en base.
+  if (input.krId !== undefined) result.kr_id = input.krId ? input.krId : null;
   if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
   if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
   if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;

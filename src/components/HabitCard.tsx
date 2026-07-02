@@ -4,6 +4,7 @@ import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
+import { calculateStreakWithJoker } from '@/modules/habits/streak';
 import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
@@ -13,33 +14,6 @@ interface HabitCardProps {
   habit: Habit;
 }
 
-const calculateStreak = (completions: Record<string, boolean>): number => {
-  const completed = Object.entries(completions)
-    .filter(([, v]) => v)
-    .map(([k]) => k)
-    .sort()
-    .reverse();
-
-  if (completed.length === 0) return 0;
-
-  const today = new Date().toLocaleDateString('en-CA');
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-
-  if (completed[0] !== today && completed[0] !== yesterdayStr) return 0;
-
-  let streak = 1;
-  for (let i = 1; i < completed.length; i++) {
-    const curr = new Date(completed[i - 1]);
-    const prev = new Date(completed[i]);
-    const diff = Math.round((curr.getTime() - prev.getTime()) / 86400000);
-    if (diff === 1) streak++;
-    else break;
-  }
-  return streak;
-};
-
 const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const deleteHabitMutation = useDeleteHabit();
   const createHabitMutation = useCreateHabit();
@@ -48,7 +22,9 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
-  const streak = calculateStreak(habit.completions);
+  // Streak avec joker (#23) : 1 jour manqué toléré par semaine glissante —
+  // un oubli ponctuel ne remet plus la série à zéro (logique : modules/habits/streak.ts).
+  const { streak, jokerUsed } = calculateStreakWithJoker(habit.completions);
   const { isPaused, getPauseUntil } = useHabitPauses();
   const paused = isPaused(habit.id);
   const pausedUntil = getPauseUntil(habit.id);
@@ -149,9 +125,12 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                   <Clock size={12} className="md:w-3.5 md:h-3.5" />
                   <span>{habit.estimatedTime} min</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div
+                  className="flex items-center gap-1"
+                  title={jokerUsed ? 'Série maintenue grâce au joker (1 oubli toléré par semaine)' : undefined}
+                >
                   <Flame size={12} className="md:w-3.5 md:h-3.5 text-orange-500" />
-                  <span>{streak} jours</span>
+                  <span>{streak} jours{jokerUsed ? ' 🃏' : ''}</span>
                 </div>
                 {paused && pausedUntil && (
                   <div

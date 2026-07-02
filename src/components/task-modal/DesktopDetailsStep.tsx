@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DatePicker } from '@/components/ui/date-picker';
 import SubtaskChecklist from './SubtaskChecklist';
+import { useOkrs } from '@/modules/okrs';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 
@@ -30,6 +31,7 @@ type TaskFormState = {
   completed: boolean;
   bookmarked: boolean;
   isFromOKR: boolean;
+  krId: string;
 };
 
 export interface DesktopDetailsStepProps {
@@ -67,6 +69,9 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
 }) => {
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
+  // OKRs actifs pour le sélecteur « Contribue à un résultat clé » (#28).
+  const { data: okrs = [] } = useOkrs();
+  const activeOkrs = okrs.filter(o => !o.completed && o.keyResults.length > 0);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
@@ -427,6 +432,31 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       }
                     </div>
                   </div>
+
+                  {/* Lien vers un Key Result OKR (#28) */}
+                  {activeOkrs.length > 0 && (
+                    <div>
+                      <label htmlFor="task-kr" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        Contribue à un résultat clé <span className="normal-case font-normal opacity-60">(Facultatif)</span>
+                      </label>
+                      <select
+                        id="task-kr"
+                        value={formData.krId}
+                        onChange={(e) => handleInputChange('krId', e.target.value)}
+                        className="w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 transition-all text-base border-slate-200 dark:border-slate-700"
+                        style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                      >
+                        <option value="">Aucun</option>
+                        {activeOkrs.map((okr) => (
+                          <optgroup key={okr.id} label={okr.title}>
+                            {okr.keyResults.map((kr) => (
+                              <option key={kr.id} value={kr.id}>{kr.title}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Sous-tâches (#12) — édition uniquement (la tâche doit exister) */}
                   {!isCreating && task && <SubtaskChecklist taskId={task.id} initialSubtasks={task.subtasks} />}

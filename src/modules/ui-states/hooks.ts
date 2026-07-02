@@ -9,6 +9,7 @@ import {
   PRIORITY_RANGE_KEY,
   TASK_SORT_PREFS_KEY,
   LAST_VISITED_PAGE_KEY,
+  HABIT_REMINDER_KEY,
   DEFAULT_FAVORITE_COLORS,
   DEFAULT_PRIORITY_RANGE,
   DEFAULT_COLOR_SETTINGS,
@@ -68,6 +69,12 @@ const taskSortPrefsListeners = new Set<() => void>();
 
 let lastVisitedPageState: string | null = readLastVisitedPage();
 const lastVisitedPageListeners = new Set<() => void>();
+
+function readHabitReminder(): boolean {
+  try { return localStorage.getItem(HABIT_REMINDER_KEY) === '1'; } catch { return false; }
+}
+let habitReminderState: boolean = readHabitReminder();
+const habitReminderListeners = new Set<() => void>();
 
 // ═══════════════════════════════════════════════════════════════════
 // FAVORITE COLORS HOOK
@@ -152,6 +159,29 @@ export const useLastVisitedPage = () => {
 
 /** Lecture directe (hors React) — utilisée pour la redirection au démarrage. */
 export const getLastVisitedPage = (): string | null => lastVisitedPageState;
+
+// ═══════════════════════════════════════════════════════════════════
+// HABIT REMINDER HOOK — rappel de fin de journée (opt-in, #24)
+// ═══════════════════════════════════════════════════════════════════
+
+export const useHabitReminderPref = () => {
+  const habitReminderEnabled = useSyncExternalStore(
+    (cb) => { habitReminderListeners.add(cb); return () => habitReminderListeners.delete(cb); },
+    () => habitReminderState,
+    () => habitReminderState,
+  );
+
+  const setHabitReminderEnabled = useCallback((enabled: boolean) => {
+    habitReminderState = enabled;
+    try {
+      if (enabled) localStorage.setItem(HABIT_REMINDER_KEY, '1');
+      else localStorage.removeItem(HABIT_REMINDER_KEY);
+    } catch { /* ignore */ }
+    habitReminderListeners.forEach(l => l());
+  }, []);
+
+  return { habitReminderEnabled, setHabitReminderEnabled };
+};
 
 // Cross-tab sync (storage event)
 if (typeof window !== 'undefined') {
