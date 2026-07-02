@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { resetRepositories, clearDemoStorage, getTasksRepository, getHabitsRepository } from '../../lib/repository.factory';
-import { appModeStore, useIsDemo } from '../../lib/app-mode.store';
+import { appModeStore, useIsDemo, wasDemoPersisted } from '../../lib/app-mode.store';
 import { taskKeys } from '../../modules/tasks/constants';
 import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
@@ -186,6 +186,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       dlog('initializeAuth: start');
+      // Session démo persistée (flag cosmo_demo_active) : un F5 pendant une
+      // démo restaure l'utilisateur démo avec SES données (pas de
+      // clearDemoStorage ici — seul un loginDemo() explicite réinitialise).
+      if (wasDemoPersisted()) {
+        dlog('initializeAuth: restoring persisted demo session');
+        appModeStore.setDemo(true);
+        setUser({
+          id: 'demo-user',
+          name: 'Utilisateur Démo',
+          email: DEMO_SENTINEL_EMAIL,
+        });
+        setIsLoading(false);
+        return;
+      }
       try {
         dlog('initializeAuth: calling getSession()');
         const { data: { session } } = await supabase.auth.getSession();
@@ -271,10 +285,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sort proprement du mode démo avant une authentification réelle. Sans ça,
+  // le flag démo persistant (cosmo_demo_active) rendrait la démo « collante » :
+  // onAuthStateChange ignore les événements tant que isDemo est vrai, et un
+  // reload restaurerait la démo par-dessus la vraie session.
+  const exitDemoIfActive = () => {
+    if (!appModeStore.isDemo) return;
+    clearDemoStorage();
+    appModeStore.setDemo(false);
+    resetRepositories();
+    queryClient.clear();
+  };
+
   const login = async (email: string, password: string) => {
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
+    exitDemoIfActive();
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message || 'Erreur de connexion' };
@@ -302,6 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (cleanEmail.toLowerCase() === DEMO_SENTINEL_EMAIL) {
       return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
     }
+    exitDemoIfActive();
     try {
       const { error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -347,6 +375,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
+    exitDemoIfActive();
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

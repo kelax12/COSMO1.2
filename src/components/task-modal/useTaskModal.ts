@@ -199,10 +199,14 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     };
   }, [showCollaboratorSection]);
 
-  // Sauvegarde du brouillon (#47) : pendant la saisie en création uniquement.
+  // Sauvegarde du brouillon (#47) : pendant la saisie en création libre
+  // uniquement (pas le flux OKR pré-rempli). Un nom non vide suffit —
+  // `hasChanges` n'est pas fiable ici (handleInputChange ne le pose pas).
   useEffect(() => {
-    if (isOpen && isCreating && hasChanges) saveDraft(formData);
-  }, [formData, isOpen, isCreating, hasChanges, saveDraft]);
+    if (isOpen && isCreating && !initialData && formData.name.trim() !== '') {
+      saveDraft(formData);
+    }
+  }, [formData, isOpen, isCreating, initialData, saveDraft]);
 
   // Reset to step 1 ONLY when the modal opens. Putting `setStep(1)` inside
   // the form-init effect (with `lists`/`task` in its deps) caused the modal
