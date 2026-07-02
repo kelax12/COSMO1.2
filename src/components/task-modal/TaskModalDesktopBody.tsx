@@ -182,6 +182,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     isLoading={isLoading}
                     handleDelete={handleDelete}
                     task={task}
+                    isTaskOwner={isTaskOwner}
                   />
                 )} {/* end step 1 */}
 

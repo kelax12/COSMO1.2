@@ -14,6 +14,8 @@ export interface Task {
   deadline: string;
   estimatedTime: number;
   createdAt?: string;
+  /** Dernière modification (géré serveur — lecture seule, #40). */
+  updatedAt?: string;
   bookmarked: boolean;
   completed: boolean;
   completedAt?: string;

@@ -16,6 +16,7 @@ export interface TaskRow {
   deadline: string | null;
   estimated_time: number;
   created_at?: string;
+  updated_at?: string;
   bookmarked?: boolean;
   completed?: boolean;
   completed_at?: string;
@@ -56,6 +57,7 @@ export function mapTaskFromDb(row: TaskRow): Task {
     deadline: row.deadline ?? '',
     estimatedTime: row.estimated_time,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     bookmarked: row.bookmarked ?? false,
     completed: row.completed ?? false,
     completedAt: row.completed_at,
