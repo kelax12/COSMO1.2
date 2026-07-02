@@ -3,7 +3,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
-import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
+import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
+import { useTasks, Task } from '@/modules/tasks';
+import TaskModal from '../components/TaskModal';
+import { findNextFreeSlot } from './agenda/free-slot';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
@@ -192,6 +195,13 @@ const AgendaPage: React.FC = () => {
     // sans mouvement notamment). Auto-expire après 300ms : pas de blocage permanent.
     if (Date.now() - lastDragEndAtRef.current < 300) return;
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
+    // Tâche à deadline (#20) : ouvre la TaskModal, pas l'EventModal.
+    const deadlineTaskId = clickInfo.event.extendedProps?.deadlineTaskId;
+    if (deadlineTaskId) {
+      const t = agendaTasks.find(x => x.id === deadlineTaskId);
+      if (t) setDeadlineTask(t);
+      return;
+    }
     const rawId = clickInfo.event.id;
     const masterId = getMasterId(rawId);
     const taskId = clickInfo.event.extendedProps?.taskId;
@@ -263,6 +273,45 @@ const AgendaPage: React.FC = () => {
 
   const calendarEvents = buildCalendarEvents(events);
 
+  // Tâches à deadline dans l'agenda (#20) : bandeau all-day cliquable
+  // (read-only — la deadline se déplace depuis la page Tâches).
+  const { data: agendaTasks = [] } = useTasks();
+  const [deadlineTask, setDeadlineTask] = useState<Task | null>(null);
+  const taskDeadlineEvents: EventInput[] = React.useMemo(
+    () => agendaTasks
+      .filter(t => !t.completed && t.deadline)
+      .map(t => ({
+        id: `taskdl-${t.id}`,
+        title: `☑ ${t.name}`,
+        start: t.deadline.slice(0, 10),
+        allDay: true,
+        editable: false,
+        backgroundColor: 'rgba(59, 130, 246, 0.65)',
+        borderColor: 'transparent',
+        textColor: '#ffffff',
+        extendedProps: { deadlineTaskId: t.id },
+      })),
+    [agendaTasks]
+  );
+  const allCalendarEvents: EventInput[] = React.useMemo(
+    () => [...(calendarEvents as EventInput[]), ...taskDeadlineEvents],
+    [calendarEvents, taskDeadlineEvents]
+  );
+
+  // Conflits (#21) : ids des événements horaires qui se chevauchent.
+  const conflictIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    const sorted = [...calendarEvents].sort((a, b) => a.start.localeCompare(b.start));
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (sorted[j].start >= sorted[i].end) break;
+        ids.add(sorted[i].id);
+        ids.add(sorted[j].id);
+      }
+    }
+    return ids;
+  }, [calendarEvents]);
+
   const handleAddEvent = (eventData: CreateEventInput) => {
     createEventMutation.mutate({ ...eventData, taskId: eventData.taskId || undefined });
     setShowAddEventModal(false);
@@ -313,7 +362,11 @@ const AgendaPage: React.FC = () => {
     setSelectedInstanceDate(null);
   };
 
-  const handleOpenAddModal = () => { setSelectedTimeSlot(null); setShowAddEventModal(true); };
+  // « Nouveau » sans plage sélectionnée : propose le prochain créneau libre (#19).
+  const handleOpenAddModal = () => {
+    setSelectedTimeSlot(findNextFreeSlot(calendarEvents));
+    setShowAddEventModal(true);
+  };
 
   const handleCloseAddModal = () => {
     setShowAddEventModal(false);
@@ -406,6 +459,7 @@ const AgendaPage: React.FC = () => {
           onPrevMonth={handleMobileMonthPrev}
           onNextMonth={handleMobileMonthNext}
           onAddEvent={handleOpenAddModal}
+          onToday={() => handleMobileSelectDate(new Date())}
         />
 
         {/* ── DESKTOP HEADER (hidden on mobile) ── */}
@@ -459,7 +513,7 @@ const AgendaPage: React.FC = () => {
               views={{
                 timeGrid2Day: { type: 'timeGrid', duration: { days: 2 } },
               }}
-              events={calendarEvents}
+              events={allCalendarEvents}
               editable={true}
               droppable={true}
               selectable={true}
@@ -516,7 +570,7 @@ const AgendaPage: React.FC = () => {
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView={currentView}
                 headerToolbar={false}
-                events={calendarEvents}
+                events={allCalendarEvents}
                 editable={true}
                 droppable={true}
                 eventStartEditable={true}
@@ -530,7 +584,8 @@ const AgendaPage: React.FC = () => {
                 slotMinTime="00:00:00"
                 slotMaxTime="24:00:00"
                 scrollTime={getInitialScrollTime()}
-                allDaySlot={false}
+                allDaySlot={true}
+                allDayText="Tâches"
                 nowIndicator={true}
                 eventDisplay="block"
                 eventLongPressDelay={250}
@@ -557,7 +612,10 @@ const AgendaPage: React.FC = () => {
                     </div>
                   </div>
                 )}
-                eventClassNames="rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+                eventClassNames={(arg) => [
+                  'rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105',
+                  conflictIds.has(arg.event.id) ? 'event-conflict' : '',
+                ]}
               />
               <style>{`
                 .dark .fc-theme-standard td.fc-day:hover,
@@ -566,11 +624,22 @@ const AgendaPage: React.FC = () => {
                 .dark .fc-theme-standard .fc-timegrid-col { background-color: transparent !important; }
                 .fc-event { transition: all 0.2s ease; }
                 .fc-event:hover { transform: scale(1.02); z-index: 999; }
+                /* Conflit d'horaires (#21) : liseré d'alerte discret */
+                .fc-event.event-conflict { box-shadow: inset 4px 0 0 #ef4444, 0 1px 2px rgba(0,0,0,0.1); }
               `}</style>
             </div>
           </div>
         </motion.div>
       </div>
+
+      {/* TaskModal ouverte depuis une tâche deadline de l'agenda (#20) */}
+      {deadlineTask && (
+        <TaskModal
+          task={deadlineTask}
+          isOpen={!!deadlineTask}
+          onClose={() => setDeadlineTask(null)}
+        />
+      )}
 
       {quickSlot && (
         <QuickEventCard

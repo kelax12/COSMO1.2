@@ -33,6 +33,8 @@ interface MobileAgendaHeaderProps {
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onAddEvent: () => void;
+  /** Retour à aujourd'hui (#16). */
+  onToday: () => void;
 }
 
 const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
@@ -44,6 +46,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onPrevMonth,
   onNextMonth,
   onAddEvent,
+  onToday,
 }) => {
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: fr });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
@@ -100,6 +103,16 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
               </button>
             ))}
           </div>
+
+          {/* Aujourd'hui (#16) */}
+          <button
+            onClick={onToday}
+            aria-label="Revenir à aujourd'hui"
+            className="px-2 min-h-[44px] flex items-center justify-center rounded-lg text-xs font-semibold border"
+            style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
+          >
+            Auj.
+          </button>
 
           {/* Add */}
           <button
