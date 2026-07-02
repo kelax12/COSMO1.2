@@ -9,6 +9,7 @@ import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle
 import CollaboratorAvatars from "../CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
+import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { formatDate, formatDuration } from "./helpers";
 
@@ -25,6 +26,7 @@ interface TaskCardProps {
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
+  onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
@@ -45,6 +47,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onDeleteTask,
   onScheduleTask,
   onDuplicate,
+  onSnooze,
   collaboratorsByTask,
   pendingCollaboratorTaskIds,
   friends,
@@ -319,6 +322,15 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           </span>
           <span aria-hidden="true">·</span>
           <span>{formatDuration(task.estimatedTime)}</span>
+          {/* Compteur sous-tâches (#12) */}
+          {(task.subtasks?.length ?? 0) > 0 && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span title="Sous-tâches complétées">
+                ☑ {task.subtasks!.filter(s => s.completed).length}/{task.subtasks!.length}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -417,6 +429,19 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             >
               <Copy size={18} />
             </button>
+            {isOverdue && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSnooze(task.id, getSnoozeOptions()[0].deadline);
+                  setActionsVisible(false);
+                }}
+                className="min-w-11 min-h-11 p-2 rounded-lg text-amber-500 flex items-center justify-center"
+                aria-label="Reporter à demain"
+              >
+                <Hourglass size={18} />
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
               className="min-w-11 min-h-11 p-2 rounded-lg text-red-500 flex items-center justify-center"

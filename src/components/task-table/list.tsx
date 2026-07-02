@@ -8,7 +8,7 @@
 import React, { useRef } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, Pencil, ListPlus, Hourglass } from "lucide-react";
+import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, Pencil, ListPlus, ListChecks, Hourglass } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -19,6 +19,7 @@ import {
 import TaskCategoryIndicator from "../TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
+import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
 import { isTaskOverdue, formatDeadlineSmart, formatDuration } from "./helpers";
@@ -48,6 +49,7 @@ interface VirtualizedTaskListProps {
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
   onDuplicate: (id: string) => void;
+  onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
@@ -70,6 +72,7 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
     onDeleteTask: props.onDeleteTask,
     onScheduleTask: props.onScheduleTask,
     onDuplicate: props.onDuplicate,
+    onSnooze: props.onSnooze,
     collaboratorsByTask: props.collaboratorsByTask,
     pendingCollaboratorTaskIds: props.pendingCollaboratorTaskIds,
     friends: props.friends,
@@ -151,6 +154,7 @@ interface TaskRowProps {
   onOpenCollaborator: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
@@ -170,6 +174,7 @@ export const TaskRow = React.memo(({
   onOpenCollaborator,
   onDuplicate,
   onDeleteTask,
+  onSnooze,
   collaboratorsByTask,
   pendingCollaboratorTaskIds,
   friends,
@@ -264,6 +269,17 @@ export const TaskRow = React.memo(({
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
           <span className="truncate" title={task.name}>{task.name}</span>
+          {/* Compteur sous-tâches (#12) : « 2/5 » quand la checklist existe */}
+          {(task.subtasks?.length ?? 0) > 0 && (
+            <span
+              className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md shrink-0"
+              style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
+              title="Sous-tâches complétées"
+            >
+              <ListChecks size={12} aria-hidden="true" />
+              {task.subtasks!.filter(s => s.completed).length}/{task.subtasks!.length}
+            </span>
+          )}
           {task.sharedBy ? (
             <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
@@ -351,6 +367,12 @@ export const TaskRow = React.memo(({
                 <Calendar aria-hidden="true" /> Planifier
               </DropdownMenuItem>
             )}
+            {/* Snooze (#8) : report rapide de la deadline d'une tâche en retard */}
+            {overdue && getSnoozeOptions().map((opt) => (
+              <DropdownMenuItem key={opt.id} onClick={() => onSnooze(task.id, opt.deadline)}>
+                <Hourglass aria-hidden="true" /> Reporter : {opt.label.toLowerCase()}
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuItem onClick={() => onOpenCollaborator(task.id)}>
               <UserPlus aria-hidden="true" /> Collaborateur
             </DropdownMenuItem>

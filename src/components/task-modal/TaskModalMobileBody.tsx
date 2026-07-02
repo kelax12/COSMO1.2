@@ -18,6 +18,7 @@ import { useCreateCategory } from '@/modules/categories';
 import AddToListModal from '../AddToListModal';
 import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
+import SubtaskChecklist from './SubtaskChecklist';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
 
 export interface MobileBodyProps {
@@ -319,6 +320,18 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               </button>
             </div>
           </SectionCard>
+
+          {/* ── Section SOUS-TÂCHES (#12) — édition uniquement ── */}
+          {!isCreating && taskId && (
+            <>
+              <SectionTitle>Sous-tâches</SectionTitle>
+              <SectionCard>
+                <div className="px-4 py-3">
+                  <SubtaskChecklist taskId={taskId} hideLabel />
+                </div>
+              </SectionCard>
+            </>
+          )}
 
           {/* ── Section COLLABORATION ── */}
           <SectionTitle>Collaboration</SectionTitle>

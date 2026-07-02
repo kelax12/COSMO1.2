@@ -38,6 +38,8 @@ export interface EventModalFormProps {
   doSave: () => void;
   handleSubmit: (e: React.FormEvent) => void;
   handleDelete: () => void;
+  /** Dupliquer l'événement (#3) — visible en mode édition si fourni. */
+  handleDuplicate?: () => void;
   getHeaderTitle: () => string;
   getSubmitButtonText: () => string;
   duration: string | null;

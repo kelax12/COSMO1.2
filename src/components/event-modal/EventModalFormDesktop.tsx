@@ -21,7 +21,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
   recurrence, setRecurrence, recurrenceDays, setShowDaysModal,
   showDescription, setShowDescription, setIsColorSettingsOpen,
   prefilledFields, categories, lockedSet, register, isInvalid,
-  handleFieldChange, handleSubmit, handleDelete,
+  handleFieldChange, handleSubmit, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, isPrefilledMode,
 }) => {
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
@@ -502,6 +502,16 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   className="min-h-11 sm:flex-1 text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
                 >
                   Supprimer
+                </Button>
+              )}
+              {mode === 'edit' && handleDuplicate && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDuplicate}
+                  className="min-h-11 sm:flex-1 text-sm font-semibold rounded-lg transition-all"
+                >
+                  Dupliquer
                 </Button>
               )}
               <Button

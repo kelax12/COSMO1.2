@@ -13,6 +13,12 @@ export const createTaskSchema = z.object({
   bookmarked: z.boolean(),
   completed: z.boolean(),
   completedAt: z.string().optional(),
+  // Sous-tâches (#12) : garde UX — 50 items max, nom 200 caractères max.
+  subtasks: z.array(z.object({
+    id: z.string(),
+    name: z.string().trim().min(1).max(200, 'Sous-tâche trop longue'),
+    completed: z.boolean(),
+  })).max(50, 'Trop de sous-tâches (50 max)').optional(),
   isCollaborative: z.boolean().optional(),
   pendingInvites: z.array(z.string()).optional(),
   collaboratorValidations: z.record(z.boolean()).optional(),

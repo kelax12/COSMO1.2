@@ -17,7 +17,7 @@ import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
-import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './agenda/calendar-events';
+import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
 import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
@@ -101,7 +101,10 @@ const AgendaPage: React.FC = () => {
             const catColor = categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280';
             return {
               title: taskData.name,
-              duration: { minutes: taskData.estimatedTime },
+              // Garde anti-aperçu-invisible : une tâche sans durée estimée
+              // (estimatedTime = 0, défaut du formulaire) donnerait duration:0 →
+              // mirror FullCalendar de hauteur nulle. On retombe sur 60 min.
+              duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
               backgroundColor: catColor,
               borderColor: catColor,
               textColor: '#ffffff',
@@ -245,7 +248,7 @@ const AgendaPage: React.FC = () => {
       start: eventData.start?.toISOString() ?? new Date().toISOString(),
       end: eventData.end
         ? eventData.end.toISOString()
-        : new Date((eventData.start?.getTime() ?? Date.now()) + (eventData.extendedProps.estimatedTime as number) * 60000).toISOString(),
+        : new Date((eventData.start?.getTime() ?? Date.now()) + taskEventDurationMinutes(eventData.extendedProps.estimatedTime as number) * 60000).toISOString(),
       color: eventData.backgroundColor ?? undefined,
       notes: `Priorité: ${eventData.extendedProps.priority} | Catégorie: ${eventData.extendedProps.categoryName}`,
       taskId: eventData.extendedProps.taskId as string,
@@ -294,6 +297,17 @@ const AgendaPage: React.FC = () => {
         createEventMutation.mutate(rest as CreateEventInput);
       });
     }
+    setShowEditEventModal(false);
+    setSelectedEvent(null);
+    setSelectedInstanceDate(null);
+  };
+
+  // Dupliquer un événement (#3) : copie « (copie) » aux mêmes horaires.
+  const handleDuplicateEvent = (eventId: string) => {
+    const source = events.find(e => e.id === eventId);
+    if (!source) return;
+    const { id: _id, ...rest } = source;
+    createEventMutation.mutate({ ...rest, title: `${source.title} (copie)` } as CreateEventInput);
     setShowEditEventModal(false);
     setSelectedEvent(null);
     setSelectedInstanceDate(null);
@@ -596,6 +610,7 @@ const AgendaPage: React.FC = () => {
           event={selectedEvent}
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}
+          onDuplicateEvent={handleDuplicateEvent}
         />
       )}
 
