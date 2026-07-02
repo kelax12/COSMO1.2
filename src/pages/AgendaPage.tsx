@@ -523,7 +523,8 @@ const AgendaPage: React.FC = () => {
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
               scrollTime={getInitialScrollTime()}
-              allDaySlot={false}
+              allDaySlot={true}
+              allDayText="Tâches"
               nowIndicator={true}
               eventDisplay="block"
               eventLongPressDelay={250}
@@ -549,7 +550,10 @@ const AgendaPage: React.FC = () => {
                   </div>
                 </div>
               )}
-              eventClassNames="rounded-lg shadow-sm border-0 cursor-pointer"
+              eventClassNames={(arg) => [
+                'rounded-lg shadow-sm border-0 cursor-pointer',
+                conflictIds.has(arg.event.id) ? 'event-conflict' : '',
+              ]}
             />
             <style>{mobileCalendarStyles}</style>
           </div>

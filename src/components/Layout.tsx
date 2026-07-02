@@ -168,6 +168,26 @@ const NavItems = () =>
     </>;
 
 
+  // Composants globaux montés dans les DEUX variantes du Layout (mobile a son
+  // propre return early — sans ce bloc partagé, quick-add/rappel/onboarding
+  // n'existaient tout simplement pas sur mobile).
+  const globalOverlays = (
+    <>
+      {/* Quick-add global (touche N / FAB éclair) — lazy */}
+      <Suspense fallback={null}>
+        <QuickAddBar />
+      </Suspense>
+      {/* Aide raccourcis (touche ?) */}
+      <Suspense fallback={null}>
+        <ShortcutsHelp />
+      </Suspense>
+      {/* Tâches d'exemple au premier login prod (#49) */}
+      <Suspense fallback={null}>
+        <OnboardingExampleTasks />
+      </Suspense>
+    </>
+  );
+
   if (isMobile) {
     return (
       <div
@@ -178,9 +198,14 @@ const NavItems = () =>
           className="flex-1 overflow-auto pb-20"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
+          {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
+          <Suspense fallback={null}>
+            <HabitEveningReminder />
+          </Suspense>
           <Outlet />
         </main>
         <MobileTabBar />
+        {globalOverlays}
       </div>
     );
   }
@@ -245,20 +270,7 @@ const NavItems = () =>
         <Outlet />
       </main>
 
-      {/* Quick-add global (touche N) — lazy : n'alourdit pas le chunk d'entrée */}
-      <Suspense fallback={null}>
-        <QuickAddBar />
-      </Suspense>
-
-      {/* Aide raccourcis (touche ?) */}
-      <Suspense fallback={null}>
-        <ShortcutsHelp />
-      </Suspense>
-
-      {/* Tâches d'exemple au premier login prod (#49) */}
-      <Suspense fallback={null}>
-        <OnboardingExampleTasks />
-      </Suspense>
+      {globalOverlays}
     </div>);
 
 };

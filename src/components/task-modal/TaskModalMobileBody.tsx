@@ -15,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useCreateCategory } from '@/modules/categories';
+import { useOkrs } from '@/modules/okrs';
 import AddToListModal from '../AddToListModal';
 import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
@@ -26,6 +27,7 @@ export interface MobileBodyProps {
     name: string; priority: number; category: string;
     deadline: string; estimatedTime: number | string;
     completed: boolean; bookmarked: boolean; isFromOKR: boolean;
+    krId: string;
   };
   handleInputChange: (field: string, value: string | number | boolean) => void;
   categories: Array<{ id: string; name: string; color: string }>;
@@ -92,6 +94,9 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   const [stepperDir, setStepperDir] = useState<1 | -1 | 0>(0);
   const { sheetRef, sheetDragProps } = useBottomSheet(handleClose);
   const { register, trigger, clear, isInvalid } = useInvalidShake();
+  // OKRs actifs — sélecteur « Résultat clé » (#28), parité avec le desktop.
+  const { data: okrs = [] } = useOkrs();
+  const activeOkrs = okrs.filter(o => !o.completed && o.keyResults.length > 0);
 
   const isValid = isFormValid();
 
@@ -294,6 +299,30 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               onTap={() => setShowListsModal(true)}
               showChevron={!!taskId}
             />
+            {/* Résultat clé OKR (#28) — select natif iOS */}
+            {activeOkrs.length > 0 && (
+              <>
+                <CellSeparator />
+                <div className="flex items-center justify-between px-4 min-h-11 gap-3">
+                  <span className="text-[15px] text-gray-900 dark:text-gray-100 shrink-0">Résultat clé</span>
+                  <select
+                    value={formData.krId}
+                    onChange={(e) => handleInputChange('krId', e.target.value)}
+                    aria-label="Contribue à un résultat clé"
+                    className="flex-1 min-w-0 text-right text-[15px] bg-transparent text-blue-500 focus:outline-none truncate"
+                  >
+                    <option value="">Aucun</option>
+                    {activeOkrs.map((okr) => (
+                      <optgroup key={okr.id} label={okr.title}>
+                        {okr.keyResults.map((kr) => (
+                          <option key={kr.id} value={kr.id}>{kr.title}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
             <CellSeparator />
             {/* Favori — toggle iOS */}
             <div className="flex items-center justify-between px-4 min-h-11">

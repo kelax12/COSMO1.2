@@ -5,7 +5,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListActionsSheet from '../components/ListActionsSheet';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -621,17 +621,30 @@ const TasksPage: React.FC = () => {
 
       {/* FAB Nouvelle tâche — mobile only */}
       {!showCompleted && !showAddTaskForm && (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={() => setShowAddTaskForm(true)}
-          data-tutorial-id="tasks-fab"
-          aria-label="Nouvelle tâche"
-          className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-transform"
-        >
-          <Plus size={28} />
-        </motion.button>
+        <>
+          {/* Quick-add langage naturel (#1) — accès mobile : FAB éclair */}
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
+            aria-label="Création rapide en langage naturel"
+            className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px+64px)] z-30 w-11 h-11 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-blue-500 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <Zap size={20} />
+          </motion.button>
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setShowAddTaskForm(true)}
+            data-tutorial-id="tasks-fab"
+            aria-label="Nouvelle tâche"
+            className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <Plus size={28} />
+          </motion.button>
+        </>
       )}
 
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}

@@ -6,6 +6,18 @@ import { useSyncExternalStore } from 'react';
 
 type ModeChangeListener = (isDemo: boolean) => void;
 
+// Persistance de la session démo : sans ce flag, un simple F5 déconnectait
+// l'utilisateur démo (état mémoire seulement) et la ré-entrée via loginDemo()
+// effaçait toutes ses données (clearDemoStorage). Le flag est posé/retiré par
+// setDemo() ; loginDemo() le repose APRÈS son clearDemoStorage() (qui balaye
+// cosmo_* — ordre garanti par la séquence documentée dans CLAUDE.md).
+const DEMO_ACTIVE_KEY = 'cosmo_demo_active';
+
+/** true si une session démo a été explicitement ouverte puis persistée. */
+export const wasDemoPersisted = (): boolean => {
+  try { return localStorage.getItem(DEMO_ACTIVE_KEY) === '1'; } catch { return false; }
+};
+
 class AppModeStore {
   private _isDemo: boolean;
   private listeners: Set<ModeChangeListener> = new Set();
@@ -19,6 +31,13 @@ class AppModeStore {
   }
 
   setDemo(value: boolean): void {
+    // Persistance idempotente AVANT le guard : loginDemo() appelle setDemo(true)
+    // alors que _isDemo est déjà true après un reload restauré — sans écriture
+    // ici, le flag balayé par clearDemoStorage() ne serait jamais reposé.
+    try {
+      if (value) localStorage.setItem(DEMO_ACTIVE_KEY, '1');
+      else localStorage.removeItem(DEMO_ACTIVE_KEY);
+    } catch { /* ignore (mode privé) */ }
     if (this._isDemo === value) return; // Pas de changement → pas de notification
     this._isDemo = value;
     this.listeners.forEach(fn => fn(value));
@@ -37,7 +56,9 @@ const hasSupabaseConfig = !!(
   import.meta.env.VITE_SUPABASE_URL !== 'undefined'
 );
 
-export const appModeStore = new AppModeStore(!hasSupabaseConfig);
+// Restaure la session démo persistée (F5 pendant une démo) en plus du mode
+// démo « forcé » quand les variables Supabase sont absentes.
+export const appModeStore = new AppModeStore(!hasSupabaseConfig || wasDemoPersisted());
 
 /**
  * Hook React — retourne true si l'app est en mode démo
