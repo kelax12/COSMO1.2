@@ -19,6 +19,8 @@ export const createTaskSchema = z.object({
     name: z.string().trim().min(1).max(200, 'Sous-tâche trop longue'),
     completed: z.boolean(),
   })).max(50, 'Trop de sous-tâches (50 max)').optional(),
+  // Lien vers un Key Result OKR (#28) — '' signifie « aucun lien ».
+  krId: z.string().max(100).optional(),
   isCollaborative: z.boolean().optional(),
   pendingInvites: z.array(z.string()).optional(),
   collaboratorValidations: z.record(z.boolean()).optional(),

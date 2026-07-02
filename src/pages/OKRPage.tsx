@@ -433,6 +433,7 @@ const OKRPage: React.FC = () => {
           name: selectedKeyResultForModal.kr.title,
           estimatedTime: selectedKeyResultForModal.kr.estimatedTime,
           category: selectedKeyResultForModal.obj.category,
+          krId: selectedKeyResultForModal.kr.id,
           isFromOKR: true
         } : undefined}
       />

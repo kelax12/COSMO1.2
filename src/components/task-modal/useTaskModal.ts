@@ -140,7 +140,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     estimatedTime: 0,
     completed: false,
     bookmarked: false,
-    isFromOKR: false
+    isFromOKR: false,
+    krId: ''
   });
 
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
@@ -219,7 +220,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         estimatedTime: initialData?.estimatedTime || 0,
         completed: initialData?.completed || false,
         bookmarked: initialData?.bookmarked || false,
-        isFromOKR: initialData?.isFromOKR || false
+        isFromOKR: initialData?.isFromOKR || false,
+        krId: initialData?.krId || ''
       });
 
       if (initialData?.isFromOKR) {
@@ -251,7 +253,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         estimatedTime: task.estimatedTime || 0,
         completed: task.completed || false,
         bookmarked: task.bookmarked || false,
-        isFromOKR: (task as Task & { isFromOKR?: boolean }).isFromOKR || false
+        isFromOKR: (task as Task & { isFromOKR?: boolean }).isFromOKR || false,
+        krId: task.krId || ''
       });
 
       const isFromOKR = (task as Task & { isFromOKR?: boolean }).isFromOKR || false;

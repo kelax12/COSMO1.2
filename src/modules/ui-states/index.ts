@@ -27,4 +27,5 @@ export {
   useTaskSortPrefs,
   useLastVisitedPage,
   getLastVisitedPage,
+  useHabitReminderPref,
 } from './hooks';

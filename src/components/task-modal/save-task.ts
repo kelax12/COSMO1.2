@@ -19,6 +19,8 @@ export interface TaskSaveFormData {
   completed: boolean;
   bookmarked: boolean;
   isFromOKR: boolean;
+  /** Lien vers un Key Result OKR (#28) — '' = aucun. */
+  krId: string;
 }
 
 export interface TaskSaveDeps {
@@ -61,6 +63,7 @@ export function buildCreateTaskInput(
     estimatedTime: Number(formData.estimatedTime),
     completed: formData.completed,
     bookmarked: formData.bookmarked,
+    krId: formData.krId || undefined,
     isCollaborative: collaborators.length > 0,
     pendingInvites: pendingInvitesLocal,
   };
@@ -142,6 +145,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       estimatedTime: Number(formData.estimatedTime),
       completed: formData.completed,
       bookmarked: formData.bookmarked,
+      krId: formData.krId,
       isCollaborative: collaborators.length > 0,
       pendingInvites: pendingInvitesLocal,
     };
