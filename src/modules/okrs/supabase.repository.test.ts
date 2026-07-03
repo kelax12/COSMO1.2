@@ -83,11 +83,10 @@ describe('SupabaseOKRsRepository — syncKRsToTable (M-1)', () => {
     expect(krQueries[0].calls.some((c) => c.method === 'not')).toBe(false);
   });
 
-  it('create: seeds the kr_completions journal with initial currentValue reps', async () => {
+  it('create: ne journalise PAS la valeur initiale du KR (état de base, pas des reps du jour)', async () => {
     supabaseMock.queueTable('okrs', { data: okrRow });
     supabaseMock.queueTable('key_results', { data: null }); // upsert
     supabaseMock.queueTable('key_results', { data: null }); // delete not.in
-    supabaseMock.queueTable('kr_completions', { data: null });
 
     await repo.create({
       title: 'X', description: '', category: 'c',
@@ -95,9 +94,9 @@ describe('SupabaseOKRsRepository — syncKRsToTable (M-1)', () => {
       keyResults: [{ ...jsonbKR, currentValue: 3 }],
     } as never);
 
-    const inserted = supabaseMock.argsOf('kr_completions', 'insert')?.[0] as Record<string, unknown>[];
-    expect(inserted).toHaveLength(3); // 1 ligne = 1 rep
-    expect(inserted[0]).toMatchObject({ user_id: ME(), kr_id: KR_UUID, okr_id: 'okr1' });
+    // Créer un KR à 3/N ne doit insérer AUCUNE ligne kr_completions — sinon le
+    // dashboard afficherait « 3 KR réalisés aujourd'hui » à la création.
+    expect(supabaseMock.argsOf('kr_completions', 'insert')).toBeUndefined();
   });
 });
 
