@@ -254,15 +254,11 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (input.keyResults?.length) {
       await this.syncKRsToTable(row.id, user.id, input.keyResults);
 
-      // Journal append-only : 1 ligne = 1 rep réalisée. À la création d'un
-      // KR avec currentValue > 0, on enregistre `currentValue` reps comme
-      // déjà faites (le user dit « j'en ai déjà fait N »).
-      for (const kr of input.keyResults) {
-        const reps = Math.max(0, Math.round(kr.currentValue));
-        if (reps > 0) {
-          await this.recordKRReps(row.id, kr, row.title, reps);
-        }
-      }
+      // Journal append-only : on N'enregistre PAS la valeur initiale d'un KR à
+      // la création. `currentValue` de départ = état de base (progression
+      // antérieure au suivi dans l'app), pas des reps « réalisées aujourd'hui » —
+      // sinon créer un KR à 32/100 gonfle le graphe dashboard de 32 ce jour-là.
+      // Seuls les incréments ultérieurs (update/updateKeyResult) sont journalisés.
     }
 
     return mapOkrFromDb(row, input.keyResults ?? []);

@@ -286,14 +286,11 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     };
     this.saveOKRs([...okrs, newOKR]);
 
-    // Journal append-only : 1 ligne = 1 rep. À la création, currentValue
-    // déjà > 0 = autant de reps déjà faites par l'user.
-    for (const kr of newOKR.keyResults ?? []) {
-      const reps = Math.max(0, Math.round(kr.currentValue));
-      if (reps > 0) {
-        this.appendKRReps(newOKR.id, kr, newOKR.title, reps);
-      }
-    }
+    // Journal append-only : on N'enregistre PAS la valeur initiale d'un KR à
+    // la création. `currentValue` de départ = état de base (progression
+    // antérieure au suivi dans l'app), pas des reps « réalisées aujourd'hui » —
+    // sinon créer un KR à 32/100 gonfle le graphe dashboard de 32 ce jour-là.
+    // Seuls les incréments ultérieurs (update/updateKeyResult) sont journalisés.
 
     return newOKR;
   }
