@@ -1,5 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Migration 050 — Lien tâche ↔ résultat clé OKR (#28 UX)
+-- Migration 052 — Lien tâche ↔ résultat clé OKR (#28 UX)
+-- (renumérotée 050 → 052 : les versions 049/050 étaient déjà prises en prod)
 --
 -- Ajoute `kr_id` (text, nullable) sur public.tasks : identifiant du Key
 -- Result auquel la tâche contribue. Les KR vivent dans le JSONB
