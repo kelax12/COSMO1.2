@@ -362,12 +362,14 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
 
     const hasFormChanges =
       formData.name !== task.name ||
+      formData.description !== (task.description ?? '') ||
       formData.priority !== task.priority ||
       formData.category !== task.category ||
       formData.deadline !== (task.deadline ? task.deadline.split('T')[0] : '') ||
       formData.estimatedTime !== task.estimatedTime ||
       formData.completed !== task.completed ||
       formData.bookmarked !== task.bookmarked ||
+      formData.krId !== (task.krId ?? '') ||
       JSON.stringify(collaborators) !== JSON.stringify(seedCollaboratorIds);
 
     setHasChanges(hasFormChanges);
