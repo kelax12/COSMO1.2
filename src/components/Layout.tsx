@@ -134,7 +134,7 @@ const Layout: React.FC = () => {
 
 const NavItems = () =>
   <>
-      <NavItemLink to="/" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
+      <NavItemLink to="/dashboard" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount} end />
 
       <NavItemLink to="/tasks" label="To do list" icon={<CheckSquare size={20} aria-hidden="true" />}

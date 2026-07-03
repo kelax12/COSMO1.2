@@ -99,7 +99,9 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const setKR = (id: string, patch: Partial<KRDraft>) =>
     setKeyResults((prev) => prev.map((k) => (k.id === id ? { ...k, ...patch } : k)));
 
-  const canSave = title.trim().length > 0;
+  // Un objectif sans résultat clé n'est pas mesurable : au moins 1 KR nommé requis.
+  const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
+  const canSave = title.trim().length > 0 && hasKeyResult;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -236,7 +238,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           </div>
         </ScrollArea>
 
-        <SheetFooter className="flex-row justify-end gap-2 border-t">
+        <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
+          {!hasKeyResult && (
+            <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
+              Ajoute au moins 1 résultat clé pour créer l'objectif.
+            </span>
+          )}
           <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
           <Button
             type="button"

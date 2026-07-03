@@ -4,8 +4,6 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
-import { useTasks, Task } from '@/modules/tasks';
-import TaskModal from '../components/TaskModal';
 import { findNextFreeSlot } from './agenda/free-slot';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -195,13 +193,6 @@ const AgendaPage: React.FC = () => {
     // sans mouvement notamment). Auto-expire après 300ms : pas de blocage permanent.
     if (Date.now() - lastDragEndAtRef.current < 300) return;
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
-    // Tâche à deadline (#20) : ouvre la TaskModal, pas l'EventModal.
-    const deadlineTaskId = clickInfo.event.extendedProps?.deadlineTaskId;
-    if (deadlineTaskId) {
-      const t = agendaTasks.find(x => x.id === deadlineTaskId);
-      if (t) setDeadlineTask(t);
-      return;
-    }
     const rawId = clickInfo.event.id;
     const masterId = getMasterId(rawId);
     const taskId = clickInfo.event.extendedProps?.taskId;
@@ -272,31 +263,9 @@ const AgendaPage: React.FC = () => {
   };
 
   const calendarEvents = buildCalendarEvents(events);
-
-  // Tâches à deadline dans l'agenda (#20) : bandeau all-day cliquable
-  // (read-only — la deadline se déplace depuis la page Tâches).
-  const { data: agendaTasks = [] } = useTasks();
-  const [deadlineTask, setDeadlineTask] = useState<Task | null>(null);
-  const taskDeadlineEvents: EventInput[] = React.useMemo(
-    () => agendaTasks
-      .filter(t => !t.completed && t.deadline)
-      .map(t => ({
-        id: `taskdl-${t.id}`,
-        title: `☑ ${t.name}`,
-        start: t.deadline.slice(0, 10),
-        allDay: true,
-        editable: false,
-        backgroundColor: 'rgba(59, 130, 246, 0.65)',
-        borderColor: 'transparent',
-        textColor: '#ffffff',
-        extendedProps: { deadlineTaskId: t.id },
-      })),
-    [agendaTasks]
-  );
-  const allCalendarEvents: EventInput[] = React.useMemo(
-    () => [...(calendarEvents as EventInput[]), ...taskDeadlineEvents],
-    [calendarEvents, taskDeadlineEvents]
-  );
+  // (#20 retiré à la demande utilisateur : plus de rangée all-day des tâches
+  // à deadline — le calendrier n'affiche que les événements.)
+  const allCalendarEvents: EventInput[] = calendarEvents as EventInput[];
 
   // Conflits (#21) : ids des événements horaires qui se chevauchent.
   const conflictIds = React.useMemo(() => {
@@ -635,15 +604,6 @@ const AgendaPage: React.FC = () => {
           </div>
         </motion.div>
       </div>
-
-      {/* TaskModal ouverte depuis une tâche deadline de l'agenda (#20) */}
-      {deadlineTask && (
-        <TaskModal
-          task={deadlineTask}
-          isOpen={!!deadlineTask}
-          onClose={() => setDeadlineTask(null)}
-        />
-      )}
 
       {quickSlot && (
         <QuickEventCard

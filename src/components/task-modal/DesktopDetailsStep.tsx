@@ -33,6 +33,7 @@ type TaskFormState = {
   bookmarked: boolean;
   isFromOKR: boolean;
   krId: string;
+  subtasks?: import('@/modules/tasks').Subtask[];
 };
 
 export interface DesktopDetailsStepProps {
@@ -461,8 +462,15 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     </div>
                   )}
 
-                  {/* Sous-tâches (#12) — édition uniquement (la tâche doit exister) */}
+                  {/* Sous-tâches (#12) — édition : persistance immédiate ;
+                      création : contrôlé, incluses dans le payload createTask. */}
                   {!isCreating && task && <SubtaskChecklist taskId={task.id} initialSubtasks={task.subtasks} />}
+                  {isCreating && (
+                    <SubtaskChecklist
+                      value={formData.subtasks ?? []}
+                      onChange={(subtasks) => setFormData(prev => ({ ...prev, subtasks }))}
+                    />
+                  )}
 
                   {/* Description — placée en bas, juste avant les actions */}
                   <div>

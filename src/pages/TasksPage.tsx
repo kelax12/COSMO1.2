@@ -314,13 +314,14 @@ const TasksPage: React.FC = () => {
     [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists]
   );
 
-  // Compteur de tâches par liste (calculé une fois, partagé entre toutes les chips).
-  // On compte avec les filtres "Aujourd'hui = non complétées" cohérents.
+  // Compteur de tâches par liste (calculé une fois, partagé entre toutes les
+  // chips). Seules les tâches NON terminées comptent — le chiffre représente
+  // le reste à faire de la liste, pas son volume total.
   const tasksCountByListId = useMemo(() => {
     const map = new Map<string, number>();
     map.set(VIRTUAL_TODAY_ID, tasksDueToday(tasks).length);
     for (const list of lists) {
-      map.set(list.id, tasksInList(list, tasks).length);
+      map.set(list.id, tasksInList(list, tasks).filter(t => !t.completed).length);
     }
     return map;
   }, [lists, tasks]);

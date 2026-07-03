@@ -29,7 +29,7 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
-  { to: '/',       label: 'Accueil',  icon: LayoutDashboard, color: NAV_COLORS.dashboard, end: true },
+  { to: '/dashboard', label: 'Accueil',  icon: LayoutDashboard, color: NAV_COLORS.dashboard, end: true },
   { to: '/tasks',  label: 'Tâches',   icon: CheckSquare,     color: NAV_COLORS.tasks },
   { to: '/agenda', label: 'Agenda',   icon: Calendar,        color: NAV_COLORS.agenda },
   { to: '/habits', label: 'Habitudes', icon: Repeat,         color: NAV_COLORS.habits },

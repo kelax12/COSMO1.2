@@ -14,7 +14,7 @@ const completionsFor = (daysAgo: number[]) =>
 
 describe('calculateStreakWithJoker', () => {
   it('aucune complétion → streak 0, pas de joker', () => {
-    expect(calculateStreakWithJoker({}, NOW)).toEqual({ streak: 0, jokerUsed: false });
+    expect(calculateStreakWithJoker({}, NOW)).toEqual({ streak: 0, jokerUsed: false, jokerDates: [] });
   });
 
   it('série simple sans trou (aujourd\'hui + 4 jours)', () => {
@@ -34,6 +34,8 @@ describe('calculateStreakWithJoker', () => {
     const r = calculateStreakWithJoker(completionsFor([0, 2, 3, 4]), NOW);
     expect(r.streak).toBe(4);
     expect(r.jokerUsed).toBe(true);
+    // La date du jour manqué couvert par le joker est exposée pour l'UI.
+    expect(r.jokerDates).toEqual([key(1)]);
   });
 
   it('deux jours manqués dans la même semaine cassent la série', () => {

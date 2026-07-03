@@ -51,6 +51,7 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
           <TaskModalMobileBody
             formData={formData}
             handleInputChange={handleInputChange}
+            onSubtasksChange={(subtasks) => setFormData(prev => ({ ...prev, subtasks }))}
             categories={categories}
             lists={lists}
             selectedListIds={selectedListIds}

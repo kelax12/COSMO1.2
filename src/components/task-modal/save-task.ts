@@ -5,6 +5,7 @@ import type {
   CreateTaskInput,
   UpdateTaskInput,
   Task,
+  Subtask,
 } from '@/modules/tasks';
 import type { useAddTaskToList, useRemoveTaskFromList, useLists } from '@/modules/lists';
 import type { useFriends, useShareTask, useUnshareTask } from '@/modules/friends';
@@ -21,6 +22,8 @@ export interface TaskSaveFormData {
   isFromOKR: boolean;
   /** Lien vers un Key Result OKR (#28) — '' = aucun. */
   krId: string;
+  /** Sous-tâches saisies pendant la création (#12) — [] en édition. */
+  subtasks?: Subtask[];
 }
 
 export interface TaskSaveDeps {
@@ -64,6 +67,7 @@ export function buildCreateTaskInput(
     completed: formData.completed,
     bookmarked: formData.bookmarked,
     krId: formData.krId || undefined,
+    subtasks: formData.subtasks?.length ? formData.subtasks : undefined,
     isCollaborative: collaborators.length > 0,
     pendingInvites: pendingInvitesLocal,
   };

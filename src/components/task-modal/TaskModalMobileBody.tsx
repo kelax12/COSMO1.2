@@ -28,8 +28,11 @@ export interface MobileBodyProps {
     deadline: string; estimatedTime: number | string;
     completed: boolean; bookmarked: boolean; isFromOKR: boolean;
     krId: string;
+    subtasks?: import('@/modules/tasks').Subtask[];
   };
   handleInputChange: (field: string, value: string | number | boolean) => void;
+  /** Création : remonte les sous-tâches saisies vers le formData parent (#12). */
+  onSubtasksChange?: (subtasks: import('@/modules/tasks').Subtask[]) => void;
   categories: Array<{ id: string; name: string; color: string }>;
   lists: Array<{ id: string; name: string; color: string; taskIds: string[]; type?: string; smartRule?: string; isDefault?: boolean; position?: number }>;
   selectedListIds: string[];
@@ -68,7 +71,7 @@ export interface MobileBodyProps {
 }
 
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
-  formData, handleInputChange,
+  formData, handleInputChange, onSubtasksChange,
   categories, lists, selectedListIds, listColorOptions,
   collaborators, pendingInvitesLocal: _pendingInvitesLocal, emailInput, setEmailInput, inputError,
   friends: _friends, filteredFriends, sentRequests: _sentRequests, collabIdOf, displayInfo,
@@ -350,13 +353,18 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             </div>
           </SectionCard>
 
-          {/* ── Section SOUS-TÂCHES (#12) — édition uniquement ── */}
-          {!isCreating && taskId && (
+          {/* ── Section SOUS-TÂCHES (#12) — édition : persistance immédiate ;
+                création : contrôlé, incluses dans le payload createTask. ── */}
+          {((!isCreating && taskId) || (isCreating && onSubtasksChange)) && (
             <>
               <SectionTitle>Sous-tâches</SectionTitle>
               <SectionCard>
                 <div className="px-4 py-3">
-                  <SubtaskChecklist taskId={taskId} hideLabel />
+                  {!isCreating && taskId ? (
+                    <SubtaskChecklist taskId={taskId} hideLabel />
+                  ) : (
+                    <SubtaskChecklist hideLabel value={formData.subtasks ?? []} onChange={onSubtasksChange} />
+                  )}
                 </div>
               </SectionCard>
             </>

@@ -12,6 +12,8 @@ export interface StreakResult {
   streak: number;
   /** true si la série en cours a survécu grâce à un joker. */
   jokerUsed: boolean;
+  /** Dates (YYYY-MM-DD) des jours manqués couverts par un joker actif. */
+  jokerDates: string[];
 }
 
 export function calculateStreakWithJoker(
@@ -24,8 +26,10 @@ export function calculateStreakWithJoker(
   if (!completions[dayKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
 
   let streak = 0;
-  // Indices (jours écoulés depuis le départ) où un joker a été consommé.
+  // Indices (jours écoulés depuis le départ) où un joker a été consommé,
+  // avec la date correspondante pour l'affichage.
   const jokerDays: number[] = [];
+  const jokerDayDates: string[] = [];
   // Index du jour coché le plus ancien de la série — sert à distinguer un
   // joker « au milieu » (utile) d'un joker en bout de série (sans objet).
   let lastCheckedIndex = -1;
@@ -41,13 +45,15 @@ export function calculateStreakWithJoker(
       if (usedInWindow >= jokerPerWeek) break;
       // Un joker ne sauve la série que s'il reste des jours cochés avant.
       jokerDays.push(dayIndex);
+      jokerDayDates.push(dayKey(cursor));
     }
     cursor.setDate(cursor.getDate() - 1);
   }
 
   // Seuls les jokers situés ENTRE deux jours cochés ont servi la série ;
   // ceux en bout de série (plus anciens que le dernier jour coché) sont inertes.
-  const jokerUsed = jokerDays.some(i => i < lastCheckedIndex);
+  const jokerDates = jokerDayDates.filter((_, k) => jokerDays[k] < lastCheckedIndex);
+  const jokerUsed = jokerDates.length > 0;
 
-  return { streak, jokerUsed };
+  return { streak, jokerUsed, jokerDates };
 }

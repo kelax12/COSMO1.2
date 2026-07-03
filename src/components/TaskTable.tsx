@@ -115,6 +115,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { data: allLists = [] } = useLists();
+  // Listes manuelles uniquement pour l'ajout groupé (#10) — les smart lists
+  // sont pilotées par règle et ignorent taskIds.
+  const manualLists = useMemo(() => allLists.filter(l => l.type !== 'smart'), [allLists]);
   const addTaskToListMutation = useAddTaskToList();
 
   const toggleSelected = useCallback((id: string) => {
@@ -627,13 +630,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" disabled={selectedIds.length === 0 || allLists.length === 0}>
+                {/* Smart lists exclues : leur contenu est calculé par règle,
+                    y « ajouter » une tâche n'aurait aucun effet visible. */}
+                <Button size="sm" variant="outline" disabled={selectedIds.length === 0 || manualLists.length === 0}>
                   <ListPlus size={16} data-icon="inline-start" />
                   <span className="hidden sm:inline">Liste</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center">
-                {allLists.map(list => (
+                {manualLists.map(list => (
                   <DropdownMenuItem key={list.id} onClick={() => bulkAddToList(list.id)}>
                     {list.name}
                   </DropdownMenuItem>
