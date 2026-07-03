@@ -51,16 +51,20 @@ export function mapTaskFromDb(row: TaskRow): Task {
   return {
     id: row.id,
     name: row.name,
-    description: row.description,
+    // Postgres renvoie NULL (pas undefined) pour les colonnes vides. Le modèle
+    // domaine et les gardes zod attendent des strings (ou undefined) — on
+    // coerce les NULL, sinon recréer une tâche via l'undo échoue avec
+    // « Expected string, received null ».
+    description: row.description ?? undefined,
     priority: row.priority,
-    category: row.category,
+    category: row.category ?? '',
     deadline: row.deadline ?? '',
     estimatedTime: row.estimated_time,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     bookmarked: row.bookmarked ?? false,
     completed: row.completed ?? false,
-    completedAt: row.completed_at,
+    completedAt: row.completed_at ?? undefined,
     subtasks: row.subtasks || [],
     krId: row.kr_id ?? undefined,
     isCollaborative: row.is_collaborative ?? false,
