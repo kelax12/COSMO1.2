@@ -1,5 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Migration 049 — Sous-tâches / checklist sur les tâches (#12 UX)
+-- Migration 051 — Sous-tâches / checklist sur les tâches (#12 UX)
+-- (renumérotée 049 → 051 : les versions 049/050 étaient déjà prises en prod)
 --
 -- Ajoute une colonne JSONB `subtasks` sur public.tasks :
 --   [{ "id": "<uuid>", "name": "…", "completed": false }, …]
