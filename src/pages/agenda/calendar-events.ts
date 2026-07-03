@@ -3,6 +3,19 @@
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 
+// Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la
+// sidebar. Une tâche sans durée estimée a `estimatedTime = 0` (défaut du
+// formulaire de création) : sans garde, FullCalendar reçoit `duration: 0` →
+// l'aperçu (mirror) ET l'événement créé ont une hauteur nulle, donc invisibles.
+// On retombe sur 60 min (cohérent avec EventModal/handleAddEvent).
+export const DEFAULT_TASK_EVENT_MINUTES = 60;
+
+export function taskEventDurationMinutes(estimatedTime: number | undefined | null): number {
+  return typeof estimatedTime === 'number' && estimatedTime > 0
+    ? estimatedTime
+    : DEFAULT_TASK_EVENT_MINUTES;
+}
+
 // Heure de scroll initiale : 4 h avant l'heure courante (bornée à 00:00).
 export function getInitialScrollTime(now: Date = new Date()): string {
   const hour = now.getHours();

@@ -1,6 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './calendar-events';
+import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes, DEFAULT_TASK_EVENT_MINUTES } from './calendar-events';
 import type { CalendarEvent } from '@/modules/events';
+
+describe('taskEventDurationMinutes', () => {
+  it('conserve une durée estimée valide', () => {
+    expect(taskEventDurationMinutes(90)).toBe(90);
+    expect(taskEventDurationMinutes(20)).toBe(20);
+  });
+  it('retombe sur 60 min quand la tâche n\'a pas de durée (0 / undefined / null)', () => {
+    // Cas réel : tâche créée sans catégorie ET sans durée → estimatedTime = 0.
+    // Sans cette garde, FullCalendar reçoit duration:0 → aperçu invisible.
+    expect(taskEventDurationMinutes(0)).toBe(DEFAULT_TASK_EVENT_MINUTES);
+    expect(taskEventDurationMinutes(undefined)).toBe(DEFAULT_TASK_EVENT_MINUTES);
+    expect(taskEventDurationMinutes(null)).toBe(DEFAULT_TASK_EVENT_MINUTES);
+    expect(taskEventDurationMinutes(-5)).toBe(DEFAULT_TASK_EVENT_MINUTES);
+    expect(taskEventDurationMinutes(NaN)).toBe(DEFAULT_TASK_EVENT_MINUTES);
+  });
+});
 
 describe('getInitialScrollTime', () => {
   it('returns 4 hours before the current hour, zero-padded', () => {
