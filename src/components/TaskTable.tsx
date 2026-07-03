@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -294,6 +294,18 @@ const TaskTable: React.FC<TaskTableProps> = ({
     toast.success(`${overdueTasks.length} tâche${overdueTasks.length > 1 ? 's' : ''} replanifiée${overdueTasks.length > 1 ? 's' : ''}`);
   };
 
+  // « Choisir une date… » : input date natif hors du menu (le menu Radix se
+  // ferme au clic, l'input doit donc survivre à la fermeture).
+  const snoozeDateInputRef = useRef<HTMLInputElement>(null);
+  const openSnoozeDatePicker = () => {
+    const input = snoozeDateInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === 'function') {
+      try { input.showPicker(); return; } catch { /* fallback below */ }
+    }
+    input.click();
+  };
+
   // ── Actions groupées du mode sélection (#10) ──
   const bulkComplete = () => {
     const toComplete = tasks.filter(t => selectedIds.includes(t.id) && !t.completed);
@@ -421,8 +433,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   {opt.label}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuItem onClick={openSnoozeDatePicker}>
+                Choisir une date…
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <input
+            ref={snoozeDateInputRef}
+            type="date"
+            min={new Date().toLocaleDateString('en-CA')}
+            onChange={(e) => {
+              if (!e.target.value) return;
+              handleSnoozeAllOverdue(e.target.value);
+              e.target.value = '';
+            }}
+            aria-label="Replanifier toutes les tâches en retard à une date précise"
+            tabIndex={-1}
+            className="absolute w-px h-px p-0 opacity-0 pointer-events-none"
+          />
         </div>
       )}
 
