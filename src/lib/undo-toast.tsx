@@ -1,5 +1,5 @@
+import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
 import { Undo2 } from 'lucide-react';
 
 /**
@@ -40,6 +40,27 @@ interface UndoToastCardProps {
   onUndo: () => void;
 }
 
+/**
+ * Barre de progression 100 % → 0 % via la Web Animations API : contrairement
+ * à framer-motion, elle ignore `MotionConfig reducedMotion` et le réglage OS
+ * « réduire les animations » ne gèle donc pas le décompte visuel.
+ */
+function ProgressBar({ duration }: { duration: number }) {
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el || typeof el.animate !== 'function') return;
+    const anim = el.animate(
+      [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }],
+      { duration, easing: 'linear', fill: 'forwards' }
+    );
+    return () => anim.cancel();
+  }, [duration]);
+
+  return <div ref={barRef} className="h-full w-full bg-blue-500 origin-left" />;
+}
+
 function UndoToastCard({ message, duration, onUndo }: UndoToastCardProps) {
   return (
     <div
@@ -66,15 +87,10 @@ function UndoToastCard({ message, duration, onUndo }: UndoToastCardProps) {
         </button>
       </div>
       <div
-        className="h-1 w-full overflow-hidden"
+        className="h-1.5 w-full overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-hover))' }}
       >
-        <motion.div
-          initial={{ width: '100%' }}
-          animate={{ width: '0%' }}
-          transition={{ duration: duration / 1000, ease: 'linear' }}
-          className="h-full bg-blue-500"
-        />
+        <ProgressBar duration={duration} />
       </div>
     </div>
   );

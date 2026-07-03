@@ -1,41 +1,53 @@
 // ═══════════════════════════════════════════════════════════════════
-// SubtaskChecklist — checklist de sous-tâches d'une tâche existante (#12).
-// État local pour un feedback 0 ms, persistance en arrière-plan via
-// useUpdateTask (subtasks jsonb, whitelist mapTaskToDb, garde zod ≤ 50).
-// Monté en mode édition uniquement (la tâche doit exister pour être mutée).
+// SubtaskChecklist — checklist de sous-tâches (#12).
+// Deux modes :
+//   - Édition (taskId) : état local pour un feedback 0 ms, persistance en
+//     arrière-plan via useUpdateTask (subtasks jsonb, whitelist mapTaskToDb,
+//     garde zod ≤ 50).
+//   - Création (value/onChange) : contrôlé par le formulaire parent, les
+//     sous-tâches partent dans le payload createTask.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useTask, useUpdateTask, Subtask } from '@/modules/tasks';
 
 interface SubtaskChecklistProps {
-  taskId: string;
+  /** Mode édition : id de la tâche à muter. Omis en mode création contrôlé. */
+  taskId?: string;
   /** Snapshot déjà connu de l'appelant — affiché en attendant le détail. */
   initialSubtasks?: Subtask[];
   /** Masque le label interne (quand l'appelant affiche déjà un titre de section). */
   hideLabel?: boolean;
+  /** Mode création contrôlé : liste courante… */
+  value?: Subtask[];
+  /** …et callback à chaque changement (remplace la mutation). */
+  onChange?: (subtasks: Subtask[]) => void;
 }
 
-const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubtasks, hideLabel = false }) => {
+const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubtasks, hideLabel = false, value, onChange }) => {
+  const isControlled = value !== undefined && onChange !== undefined;
   // Le détail (getById) porte toujours subtasks ; le cache liste peut être
   // plus frais après une mutation — on privilégie le détail s'il existe.
-  const { data: detail } = useTask(taskId);
+  const { data: detail } = useTask(isControlled ? '' : taskId ?? '');
   const updateTaskMutation = useUpdateTask();
 
-  const [items, setItems] = useState<Subtask[]>(initialSubtasks ?? []);
+  const [localItems, setLocalItems] = useState<Subtask[]>(initialSubtasks ?? []);
   const [newName, setNewName] = useState('');
+  const items = isControlled ? value : localItems;
 
   useEffect(() => {
+    if (isControlled) return;
     const source = detail?.subtasks ?? initialSubtasks ?? [];
-    setItems(source);
+    setLocalItems(source);
     // Resynchronise uniquement quand on change de tâche ou que le détail
     // arrive (pas à chaque frappe).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, detail?.id]);
 
   const commit = (next: Subtask[]) => {
-    setItems(next);
-    updateTaskMutation.mutate({ id: taskId, updates: { subtasks: next } });
+    if (isControlled) { onChange(next); return; }
+    setLocalItems(next);
+    if (taskId) updateTaskMutation.mutate({ id: taskId, updates: { subtasks: next } });
   };
 
   const addItem = () => {

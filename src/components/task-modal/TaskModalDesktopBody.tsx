@@ -28,6 +28,8 @@ type TaskFormState = {
   completed: boolean;
   bookmarked: boolean;
   isFromOKR: boolean;
+  krId?: string;
+  subtasks?: import('@/modules/tasks').Subtask[];
 };
 
 export interface DesktopBodyProps {

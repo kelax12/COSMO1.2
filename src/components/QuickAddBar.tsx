@@ -65,7 +65,8 @@ const QuickAddBar = () => {
   }, [parsed.categoryToken, categories]);
 
   const handleSubmit = () => {
-    if (!parsed.name.trim()) return;
+    if (!parsed.name.trim() || createTaskMutation.isPending) return;
+    const submitted = value;
     createTaskMutation.mutate(
       {
         name: parsed.name,
@@ -79,6 +80,12 @@ const QuickAddBar = () => {
       {
         onSuccess: (task) => {
           toast.success(`Tâche « ${task.name} » créée`);
+        },
+        onError: () => {
+          // Restaure la saisie : l'utilisateur ne perd pas son texte si la
+          // création échoue (le hook affiche déjà le toast d'erreur détaillé).
+          setValue(submitted);
+          inputRef.current?.focus();
         },
       }
     );
@@ -108,15 +115,18 @@ const QuickAddBar = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden"
+            className="w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden ring-1 ring-blue-500/20"
             style={{
               backgroundColor: 'rgb(var(--color-surface))',
               borderColor: 'rgb(var(--color-border))',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 px-4 py-3">
-              <Zap size={18} className="text-blue-500 shrink-0" aria-hidden="true" />
+            {/* Champ de saisie */}
+            <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-600/10 dark:bg-blue-500/15 shrink-0" aria-hidden="true">
+                <Zap size={18} className="text-blue-500" />
+              </span>
               <input
                 ref={inputRef}
                 type="text"
@@ -126,60 +136,78 @@ const QuickAddBar = () => {
                   if (e.key === 'Enter') handleSubmit();
                   if (e.key === 'Escape') setIsOpen(false);
                 }}
-                placeholder="Nouvelle tâche… ex : Appeler le dentiste jeudi #santé !! ~30m"
+                placeholder="Nouvelle tâche…"
                 aria-label="Créer une tâche rapidement"
-                className="flex-1 bg-transparent outline-none text-base"
+                className="flex-1 min-w-0 bg-transparent outline-none text-lg font-medium placeholder:font-normal"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
+                enterKeyHint="done"
               />
-              <kbd
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md border text-xs shrink-0"
-                style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }}
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!parsed.name.trim() || createTaskMutation.isPending}
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <CornerDownLeft size={12} aria-hidden="true" /> créer
-              </kbd>
+                <CornerDownLeft size={14} aria-hidden="true" />
+                Créer
+              </button>
             </div>
 
-            {/* Aperçu des champs détectés */}
-            {(parsed.deadline || parsed.categoryToken || parsed.priority !== undefined || parsed.estimatedTime !== undefined) && (
-              <div
-                className="flex flex-wrap items-center gap-2 px-4 pb-3 pt-1 border-t"
-                style={{ borderColor: 'rgb(var(--color-border))' }}
-              >
-                {parsed.deadline && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">
-                    <CalendarDays size={12} aria-hidden="true" /> {formatDeadline(parsed.deadline)}
-                  </span>
-                )}
-                {parsed.categoryToken && (
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                    matchedCategory
-                      ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                      : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
-                  }`}>
-                    <Tag size={12} aria-hidden="true" />
-                    {matchedCategory ? matchedCategory.name : `${parsed.categoryToken} (inconnue)`}
-                  </span>
-                )}
-                {parsed.priority !== undefined && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300">
-                    <Flag size={12} aria-hidden="true" /> P{parsed.priority}
-                  </span>
-                )}
-                {parsed.estimatedTime !== undefined && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                    <Clock size={12} aria-hidden="true" /> {parsed.estimatedTime} min
-                  </span>
-                )}
-              </div>
-            )}
+            {/* Aperçu des champs détectés en temps réel */}
+            <div className="flex flex-wrap items-center gap-2 px-4 pb-3 min-h-[30px]">
+              {!parsed.deadline && !parsed.categoryToken && parsed.priority === undefined && parsed.estimatedTime === undefined ? (
+                <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  Les champs détectés (date, catégorie, priorité, durée) s'affichent ici.
+                </span>
+              ) : (
+                <>
+                  {parsed.deadline && (
+                    <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-500/20">
+                      <CalendarDays size={13} aria-hidden="true" /> {formatDeadline(parsed.deadline)}
+                    </span>
+                  )}
+                  {parsed.categoryToken && (
+                    <span className={`inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                      matchedCategory
+                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-500/20'
+                        : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600/40'
+                    }`}>
+                      <Tag size={13} aria-hidden="true" />
+                      {matchedCategory ? matchedCategory.name : `${parsed.categoryToken} (inconnue)`}
+                    </span>
+                  )}
+                  {parsed.priority !== undefined && (
+                    <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border border-red-200/60 dark:border-red-500/20">
+                      <Flag size={13} aria-hidden="true" /> Priorité {parsed.priority}
+                    </span>
+                  )}
+                  {parsed.estimatedTime !== undefined && (
+                    <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-500/20">
+                      <Clock size={13} aria-hidden="true" /> {parsed.estimatedTime} min
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
 
+            {/* Aide syntaxe */}
             <div
-              className="px-4 py-2 text-xs border-t"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 border-t text-xs"
               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }}
             >
-              Astuces : <span className="font-mono">demain</span>, <span className="font-mono">jeudi</span>,{' '}
-              <span className="font-mono">15/07</span> · <span className="font-mono">#catégorie</span> ·{' '}
-              <span className="font-mono">!!</span> priorité · <span className="font-mono">~30m</span> durée
+              <span className="inline-flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>demain 10h</kbd> date
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>#santé</kbd> catégorie
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>!!</kbd> priorité
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>~30m</kbd> durée
+              </span>
+              <span className="hidden sm:inline ml-auto opacity-80">Entrée = créer et enchaîner · Échap = fermer</span>
             </div>
           </motion.div>
         </motion.div>

@@ -13,6 +13,7 @@ import {
   useUpdateTask,
   useDeleteTask,
   Task,
+  Subtask,
 } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -142,7 +143,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     completed: false,
     bookmarked: false,
     isFromOKR: false,
-    krId: ''
+    krId: '',
+    // Sous-tâches saisies en création (#12) — en édition la checklist vit
+    // dans SubtaskChecklist (persistance immédiate), ce champ reste [].
+    subtasks: [] as Subtask[],
   });
 
   // Brouillon de création (#47) : la saisie survit à une fermeture accidentelle.
@@ -228,7 +232,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       // saisie (sans initialData — le flux OKR garde ses champs pré-remplis),
       // on restaure le brouillon au lieu de repartir de zéro.
       const draft = !initialData ? readDraft() : null;
-      setFormData(draft ?? {
+      // Les brouillons antérieurs n'ont pas de champ subtasks → fallback [].
+      setFormData(draft ? { ...draft, subtasks: draft.subtasks ?? [] } : {
         name: initialData?.name || '',
         description: initialData?.description || '',
         priority: initialData?.priority || 0,
@@ -238,7 +243,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         completed: initialData?.completed || false,
         bookmarked: initialData?.bookmarked || false,
         isFromOKR: initialData?.isFromOKR || false,
-        krId: initialData?.krId || ''
+        krId: initialData?.krId || '',
+        subtasks: [],
       });
 
       if (initialData?.isFromOKR) {
@@ -271,7 +277,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         completed: task.completed || false,
         bookmarked: task.bookmarked || false,
         isFromOKR: (task as Task & { isFromOKR?: boolean }).isFromOKR || false,
-        krId: task.krId || ''
+        krId: task.krId || '',
+        subtasks: [],
       });
 
       const isFromOKR = (task as Task & { isFromOKR?: boolean }).isFromOKR || false;
@@ -356,9 +363,14 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, task?.id, friends.length]);
 
-  // Track changes
+  // Track changes — la comparaison doit couvrir TOUS les champs éditables de
+  // l'étape 1 (y compris les listes) : le bouton « Sauvegarder » de l'étape 2
+  // en dépend, et un champ oublié ici rend la modification insauvegardable.
   useEffect(() => {
     if (!task) return;
+
+    const taskListIds = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id).sort();
+    const selectedSorted = [...selectedListIds].sort();
 
     const hasFormChanges =
       formData.name !== task.name ||
@@ -370,10 +382,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       formData.completed !== task.completed ||
       formData.bookmarked !== task.bookmarked ||
       formData.krId !== (task.krId ?? '') ||
+      JSON.stringify(selectedSorted) !== JSON.stringify(taskListIds) ||
       JSON.stringify(collaborators) !== JSON.stringify(seedCollaboratorIds);
 
     setHasChanges(hasFormChanges);
-  }, [formData, collaborators, task, seedCollaboratorIds]);
+  }, [formData, collaborators, task, seedCollaboratorIds, selectedListIds, lists]);
 
   // Validation rules — déléguées au module pur task-modal/validation.ts.
   const computeValidationErrors = (): { [key: string]: string } =>
