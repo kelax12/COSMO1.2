@@ -33,6 +33,21 @@ describe('mapTaskFromDb', () => {
   it('maps null deadline to empty string', () => {
     expect(mapTaskFromDb({ ...baseRow, deadline: null }).deadline).toBe('');
   });
+
+  it('coerces NULL string columns to undefined/empty (undo re-create passes zod)', () => {
+    // Postgres renvoie NULL pour description/completed_at/category vides ; le
+    // domaine ne doit jamais porter de null (sinon la recréation via l'undo
+    // échoue avec « Expected string, received null »).
+    const t = mapTaskFromDb({
+      ...baseRow,
+      description: null as unknown as string,
+      completed_at: null as unknown as string,
+      category: null as unknown as string,
+    });
+    expect(t.description).toBeUndefined();
+    expect(t.completedAt).toBeUndefined();
+    expect(t.category).toBe('');
+  });
 });
 
 describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {

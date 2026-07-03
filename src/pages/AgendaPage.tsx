@@ -492,8 +492,7 @@ const AgendaPage: React.FC = () => {
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
               scrollTime={getInitialScrollTime()}
-              allDaySlot={true}
-              allDayText="Tâches"
+              allDaySlot={false}
               nowIndicator={true}
               eventDisplay="block"
               eventLongPressDelay={250}
@@ -557,8 +556,7 @@ const AgendaPage: React.FC = () => {
                 slotMinTime="00:00:00"
                 slotMaxTime="24:00:00"
                 scrollTime={getInitialScrollTime()}
-                allDaySlot={true}
-                allDayText="Tâches"
+                allDaySlot={false}
                 nowIndicator={true}
                 eventDisplay="block"
                 eventLongPressDelay={250}
