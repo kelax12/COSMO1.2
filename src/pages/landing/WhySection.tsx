@@ -1,9 +1,66 @@
-// Section « Pourquoi » (bento grid) de la LandingPage — extraite verbatim.
-import React from 'react';
+// Section « Pourquoi » (bento grid) de la LandingPage.
+// Scroll-storytelling GSAP : reveal staggeré des tuiles, dépôt de la tâche
+// « Pitch deck » piloté par le scroll (scrub), ScrambleText sur le kicker.
+// Framer Motion garde les micro-interactions (whileHover) et les mini-viz.
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { gsap, useGSAP } from '@/lib/gsap';
 
-const WhySection: React.FC = () => (
-      <section id="why" className="py-24 bg-black/20 backdrop-blur-xl relative overflow-hidden">
+const WhySection: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        // Kicker mono « décodé » façon terminal.
+        const kicker = sectionRef.current?.querySelector('.why-kicker');
+        if (kicker?.textContent) {
+          gsap.from(kicker, {
+            duration: 1.1,
+            scrambleText: { text: kicker.textContent, chars: 'upperCase', speed: 0.5 },
+            scrollTrigger: { trigger: kicker, start: 'top 85%', once: true },
+          });
+        }
+
+        // Reveal staggeré des tuiles bento (clip + lift).
+        gsap.from('.bento-tile', {
+          y: 56,
+          opacity: 0,
+          clipPath: 'inset(12% 6% 12% 6% round 12px)',
+          duration: 0.9,
+          ease: 'power3.out',
+          stagger: 0.09,
+          clearProps: 'transform,opacity,clipPath',
+          scrollTrigger: { trigger: '.bento-grid', start: 'top 78%', once: true },
+        });
+
+        // La tâche « Pitch deck » se dépose dans l'agenda AU SCROLL (scrub) :
+        // le visiteur fait lui-même le drag-and-drop en scrollant.
+        if (dropRef.current) {
+          gsap.from(dropRef.current, {
+            x: -200,
+            y: -120,
+            scale: 1.15,
+            opacity: 0,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: '.bento-grid',
+              start: 'top 75%',
+              end: 'top 30%',
+              scrub: 0.6,
+            },
+          });
+        }
+      });
+    },
+    { scope: sectionRef },
+  );
+
+  return (
+      <section ref={sectionRef} id="why" className="py-24 bg-black/20 backdrop-blur-xl relative overflow-hidden">
         {/* Ambient blobs */}
         <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -11,7 +68,7 @@ const WhySection: React.FC = () => (
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto">
-            <span className="text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-5 block">
+            <span className="why-kicker text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-5 block">
               — Ce qui change tout —
             </span>
             <h2 className="text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
@@ -26,16 +83,12 @@ const WhySection: React.FC = () => (
           </div>
 
           {/* Bento grid */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 auto-rows-[minmax(220px,auto)]">
+          <div className="bento-grid grid grid-cols-1 md:grid-cols-6 gap-4 auto-rows-[minmax(220px,auto)]">
 
             {/* HERO 1 — Time blocking (col-span-4) */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6, delay: 0.05 }}
               whileHover={{ y: -3 }}
-              className="md:col-span-4 md:row-span-2 relative overflow-hidden p-8 lg:p-10 group"
+              className="bento-tile md:col-span-4 md:row-span-2 relative overflow-hidden p-8 lg:p-10 group"
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-blue-400/40 group-hover:h-[3px] transition-all duration-500" />
@@ -63,8 +116,10 @@ const WhySection: React.FC = () => (
                   >
                     Réunion
                   </motion.div>
-                  {/* Dropped task */}
-                  <motion.div
+                  {/* Dropped task — le dépôt est scrubbé par GSAP (le scroll
+                      « pose » la tâche dans l'agenda) */}
+                  <div
+                    ref={dropRef}
                     className="absolute rounded-md text-[9px] font-semibold text-white px-1.5 py-1 shadow-2xl"
                     style={{
                       backgroundColor: '#F97316',
@@ -73,13 +128,9 @@ const WhySection: React.FC = () => (
                       width: '20%',
                       height: '25%',
                     }}
-                    initial={{ opacity: 0, x: -200, y: -120, scale: 1.1 }}
-                    whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                    viewport={{ once: true, margin: '-100px' }}
-                    transition={{ type: 'spring', stiffness: 60, damping: 14, delay: 0.8 }}
                   >
                     Pitch deck
-                  </motion.div>
+                  </div>
                 </div>
               </div>
 
@@ -98,12 +149,8 @@ const WhySection: React.FC = () => (
 
             {/* TILE — Heatmap (col-span-2) */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6, delay: 0.15 }}
               whileHover={{ y: -3 }}
-              className="md:col-span-2 relative overflow-hidden p-7 group"
+              className="bento-tile md:col-span-2 relative overflow-hidden p-7 group"
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-amber-400/40 group-hover:h-[3px] transition-all duration-500" />
@@ -141,12 +188,8 @@ const WhySection: React.FC = () => (
 
             {/* TILE — OKR (col-span-2) */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6, delay: 0.25 }}
               whileHover={{ y: -3 }}
-              className="md:col-span-2 relative overflow-hidden p-7 group"
+              className="bento-tile md:col-span-2 relative overflow-hidden p-7 group"
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-emerald-400/40 group-hover:h-[3px] transition-all duration-500" />
@@ -184,12 +227,8 @@ const WhySection: React.FC = () => (
 
             {/* HERO 2 — Stats consolidées (col-span-3) */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6, delay: 0.35 }}
               whileHover={{ y: -3 }}
-              className="md:col-span-3 relative overflow-hidden p-8 group"
+              className="bento-tile md:col-span-3 relative overflow-hidden p-8 group"
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-violet-400/40 group-hover:h-[3px] transition-all duration-500" />
@@ -228,12 +267,8 @@ const WhySection: React.FC = () => (
 
             {/* TILE — Mode démo (col-span-3) */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6, delay: 0.45 }}
               whileHover={{ y: -3 }}
-              className="md:col-span-3 relative overflow-hidden p-8 group"
+              className="bento-tile md:col-span-3 relative overflow-hidden p-8 group"
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-cyan-400/40 group-hover:h-[3px] transition-all duration-500" />
@@ -256,6 +291,7 @@ const WhySection: React.FC = () => (
           </div>
         </div>
       </section>
-);
+  );
+};
 
 export default WhySection;
