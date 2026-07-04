@@ -281,33 +281,25 @@ const LandingPage: React.FC = () => {
             .to(mockupLayerRef.current, { y: -110 }, 0);
         }
       });
-
-      // Spotlight qui suit le curseur dans le hero (desktop, pointeur précis).
-      // Mouvement piloté en CSS pur (variables + transition) pour rester
-      // robuste au double-montage StrictMode (aucun tween GSAP à reverter).
-      mm.add('(prefers-reduced-motion: no-preference) and (pointer: fine)', () => {
-        const spot = heroRef.current?.querySelector<HTMLElement>('.hero-spotlight');
-        const host = heroRef.current;
-        if (!spot || !host) return;
-        const onMove = (e: PointerEvent) => {
-          const rect = host.getBoundingClientRect();
-          spot.style.setProperty('--sx', `${e.clientX - rect.left}px`);
-          spot.style.setProperty('--sy', `${e.clientY - rect.top}px`);
-          spot.style.opacity = '1';
-        };
-        const onLeave = () => {
-          spot.style.opacity = '0';
-        };
-        host.addEventListener('pointermove', onMove);
-        host.addEventListener('pointerleave', onLeave);
-        return () => {
-          host.removeEventListener('pointermove', onMove);
-          host.removeEventListener('pointerleave', onLeave);
-        };
-      });
     },
     { scope: heroRef },
   );
+
+  // Spotlight qui suit le curseur dans le hero — piloté par React (ref +
+  // variables CSS), sans GSAP : fiable, insensible au double-montage
+  // StrictMode. Désactivé si reduced-motion.
+  const spotlightRef = useRef<HTMLDivElement>(null);
+  const handleHeroPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const spot = spotlightRef.current;
+    if (!spot || reduceMotion) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    spot.style.setProperty('--sx', `${e.clientX - rect.left}px`);
+    spot.style.setProperty('--sy', `${e.clientY - rect.top}px`);
+    spot.style.opacity = '1';
+  };
+  const handleHeroPointerLeave = () => {
+    if (spotlightRef.current) spotlightRef.current.style.opacity = '0';
+  };
 
   // Tilt 3D du mockup suivant la souris (désactivé mobile / reduced-motion).
   const pointerX = useMotionValue(0);
@@ -484,19 +476,25 @@ const LandingPage: React.FC = () => {
       {/* A11y: wrap entire content in <main> landmark — axe-core flagged
           162 nodes "not contained by landmarks" on this page. */}
       <main>
-      <section ref={heroRef} className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
-        {/* Spotlight qui suit le curseur (GSAP quickTo, desktop only) */}
-        <div
-          className="hero-spotlight pointer-events-none absolute left-0 top-0 -z-[5] h-[36rem] w-[36rem] rounded-full opacity-0"
-          style={{
-            background: 'radial-gradient(circle, rgba(99,102,241,0.14) 0%, rgba(139,92,246,0.07) 35%, transparent 70%)',
-            transform: 'translate(calc(var(--sx, 50%) - 50%), calc(var(--sy, 50%) - 50%))',
-            transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
-          }}
-          aria-hidden="true"
-        />
+      <section
+        ref={heroRef}
+        onPointerMove={handleHeroPointerMove}
+        onPointerLeave={handleHeroPointerLeave}
+        className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden"
+      >
         {/* ── Fond ambiant : grille masquée + noise + aurores + halo conique ── */}
         <div className="absolute inset-0 -z-10" aria-hidden="true">
+          {/* Spotlight qui suit le curseur (React + variables CSS, desktop).
+              Placé dans la couche de fond, au-dessus de la grille/aurores. */}
+          <div
+            ref={spotlightRef}
+            className="pointer-events-none absolute left-0 top-0 z-[3] h-[36rem] w-[36rem] rounded-full opacity-0"
+            style={{
+              background: 'radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(139,92,246,0.12) 35%, transparent 70%)',
+              transform: 'translate(calc(var(--sx, 50%) - 50%), calc(var(--sy, 50%) - 50%))',
+              transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
+            }}
+          />
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
           <div
             ref={gridLayerRef}

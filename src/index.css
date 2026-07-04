@@ -1086,3 +1086,31 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     font-size: 16px !important;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────
+   Landing — reflet lumineux qui suit le curseur sur les tuiles bento.
+   Piloté par React (WhySection) : variables --gx/--gy + classe
+   .is-glaring. Pseudo-élément pour ne pas alourdir le JSX ni entrer
+   en conflit avec le whileHover Framer (background only, pas de transform).
+   ─────────────────────────────────────────────────────────────── */
+.bento-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    240px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.08),
+    transparent 60%
+  );
+}
+.bento-tile.is-glaring::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bento-tile::after {
+    display: none;
+  }
+}
