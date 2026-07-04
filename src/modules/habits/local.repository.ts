@@ -37,14 +37,27 @@ const h = (
   createdAt: getDateString(daysBack),
 });
 
-// 10 habitudes — 2 par catégorie, historique varié
+// Force une série récente avec UN trou couvert par le joker (#23), pour que
+// le flocon de gel s'affiche de façon fiable en démo. Coche les `streakLen`
+// derniers jours SAUF `gapDaysAgo` (le jour manqué absorbé par le joker).
+const withJokerStreak = (habit: Habit, streakLen: number, gapDaysAgo: number): Habit => {
+  const completions = { ...habit.completions };
+  for (let i = 0; i < streakLen; i++) {
+    completions[getDateString(-i)] = i !== gapDaysAgo;
+  }
+  return { ...habit, completions };
+};
+
+// 10 habitudes — 2 par catégorie, historique varié.
+// Certaines portent une série récente avec un jour joker (withJokerStreak)
+// pour illustrer le « streak freeze » (#23) : flocon de gel visible en démo.
 const DEMO_HABITS: Habit[] = [
   // ── BIEN-ÊTRE MENTAL ──────────────────────────────────────────────────
-  h('h001','Méditation',           '15 min de pleine conscience',           '#8B5CF6','🧘', 15, -120, 0.87, 42),
+  withJokerStreak(h('h001','Méditation',  '15 min de pleine conscience',      '#8B5CF6','🧘', 15, -120, 0.87, 42), 12, 3),
   h('h002','Journaling',           'Écrire mes pensées du jour',            '#6366F1','✏️', 10, -110, 0.74, 188),
 
   // ── SANTÉ PHYSIQUE ────────────────────────────────────────────────────
-  h('h003','Course à pied',        '30 min de running',                     '#EF4444','🏃', 30, -120, 0.71, 137),
+  withJokerStreak(h('h003','Course à pied','30 min de running',              '#EF4444','🏃', 30, -120, 0.71, 137), 8, 2),
   h('h004','Marche quotidienne',   '8000 pas minimum',                      '#F87171','👟', 45, -110, 0.84, 61),
 
   // ── ALIMENTATION ─────────────────────────────────────────────────────
@@ -56,7 +69,7 @@ const DEMO_HABITS: Habit[] = [
   h('h008','Revue agenda matin',   'Planifier la journée en 5 min',         '#6366F1','📅',   5, -110, 0.88, 67),
 
   // ── APPRENTISSAGE ─────────────────────────────────────────────────────
-  h('h009','Duolingo',             '15 min de pratique linguistique',       '#10B981','🌍',  15, -120, 0.84, 251),
+  withJokerStreak(h('h009','Duolingo','15 min de pratique linguistique',     '#10B981','🌍',  15, -120, 0.84, 251), 10, 4),
   h('h010','Veille technologique', 'Lire Hacker News + Reddit tech',        '#F97316','🔭',  15,  -80, 0.82, 287),
 ];
 
