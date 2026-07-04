@@ -1,30 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight, Snowflake } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { calculateStreakWithJoker } from '@/modules/habits/streak';
 import { Button } from '@/components/ui/button';
-
-const calculateStreak = (completions: Record<string, boolean>): number => {
-  const completed = Object.entries(completions)
-    .filter(([, v]) => v)
-    .map(([k]) => k)
-    .sort()
-    .reverse();
-  if (completed.length === 0) return 0;
-  const today = new Date().toLocaleDateString('en-CA');
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-  if (completed[0] !== today && completed[0] !== yesterdayStr) return 0;
-  let streak = 1;
-  for (let i = 1; i < completed.length; i++) {
-    const diff = Math.round(
-      (new Date(completed[i - 1]).getTime() - new Date(completed[i]).getTime()) / 86400000
-    );
-    if (diff === 1) streak++;
-    else break;
-  }
-  return streak;
-};
 
 const colorOptions = [
 { value: 'blue', color: '#3B82F6' },
@@ -325,7 +303,10 @@ const HabitTable: React.FC = () => {
               </tr>
             </thead>
           <tbody>
-            {habits.map((habit, index) =>
+            {habits.map((habit, index) => {
+              // Série + jours joker via la logique partagée (parité vue Liste #23).
+              const { streak, jokerDates } = calculateStreakWithJoker(habit.completions);
+              return (
               <tr key={habit.id} className="border-b transition-colors" style={{
                 borderColor: 'rgb(var(--table-border))',
                 backgroundColor: index % 2 === 0 ? 'rgb(var(--table-row-even))' : 'rgb(var(--table-row-odd))'
@@ -349,6 +330,9 @@ const HabitTable: React.FC = () => {
                     const isCompleted = habit.completions[day.date];
                     const createdDate = habit.createdAt ? habit.createdAt.split('T')[0] : '';
                     const isBeforeCreation = createdDate ? day.date < createdDate : false;
+                    // Jour manqué couvert par un joker (parité vue Liste) : flocon
+                    // de gel bleu glacé au lieu du cercle vide.
+                    const isJokerDay = !isCompleted && !isBeforeCreation && !day.isFuture && jokerDates.includes(day.date);
 
                     return (
                       <td key={day.date} className="p-1 md:p-2 text-center transition-colors">
@@ -356,13 +340,14 @@ const HabitTable: React.FC = () => {
                           type="button"
                           role="checkbox"
                           aria-checked={!!isCompleted}
-                          aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : ''}`}
+                          aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : isJokerDay ? ' (couvert par le joker)' : ''}`}
+                          title={isJokerDay ? 'Jour couvert par le joker (série maintenue)' : undefined}
                           onClick={() => handleDayClick(habit.id, day.date)}
                           disabled={day.isFuture || isBeforeCreation}
                           className="w-7 h-7 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
                           style={{
-                            backgroundColor: isCompleted ? '#2563EB' : day.isFuture || isBeforeCreation ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
-                            borderColor: isCompleted ? '#2563EB' : day.isToday ? '#2563EB' : day.isFuture || isBeforeCreation ? 'transparent' : 'rgb(var(--color-border))',
+                            backgroundColor: isCompleted ? '#2563EB' : isJokerDay ? 'rgba(34, 211, 238, 0.12)' : day.isFuture || isBeforeCreation ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
+                            borderColor: isCompleted ? '#2563EB' : isJokerDay ? '#22D3EE' : day.isToday ? '#2563EB' : day.isFuture || isBeforeCreation ? 'transparent' : 'rgb(var(--color-border))',
                             color: isCompleted ? 'white' : day.isFuture || isBeforeCreation ? 'rgb(var(--color-text-muted) / 0.2)' : 'rgb(var(--color-text-secondary))',
                             cursor: day.isFuture || isBeforeCreation ? 'not-allowed' : 'pointer',
                             opacity: isBeforeCreation ? 0.3 : 1
@@ -370,6 +355,8 @@ const HabitTable: React.FC = () => {
 
                               {isCompleted ?
                           <CheckCircle size={14} /> :
+                          isJokerDay ?
+                          <Snowflake size={14} className="text-cyan-600 dark:text-cyan-300" /> :
                           day.isFuture || isBeforeCreation ?
                           <Circle size={12} className="opacity-10" /> :
 
@@ -383,11 +370,15 @@ const HabitTable: React.FC = () => {
                     <td className="p-3 md:p-4 text-center transition-colors border-l" style={{ borderColor: 'rgb(var(--table-border))' }}>
                       <div className="flex items-center justify-center gap-1">
                         <Flame size={14} className="text-orange-500 md:w-4 md:h-4" />
-                        <span className="font-semibold text-xs md:text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{calculateStreak(habit.completions)}</span>
+                        <span className="font-semibold text-xs md:text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{streak}</span>
+                        {jokerDates.length > 0 && (
+                          <Snowflake size={12} className="text-cyan-500 md:w-3.5 md:h-3.5" aria-label="Joker utilisé" />
+                        )}
                       </div>
                     </td>
                 </tr>
-                )}
+                );
+                })}
             </tbody>
           </table>
           </div>
