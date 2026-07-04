@@ -73,38 +73,31 @@ const WhySection: React.FC = () => {
           });
         }
       });
-
-      // Reflet lumineux qui suit le curseur dans chaque tuile (desktop).
-      // Overlay créé en JS pour ne pas alourdir le JSX ni entrer en conflit
-      // avec le whileHover Framer (on n'anime que le background, pas de transform).
-      mm.add('(prefers-reduced-motion: no-preference) and (pointer: fine)', () => {
-        const cleanups: Array<() => void> = [];
-        gsap.utils.toArray<HTMLElement>('.bento-tile').forEach((tile) => {
-          const glare = document.createElement('div');
-          glare.className = 'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300';
-          glare.style.background =
-            'radial-gradient(240px circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,0.07), transparent 60%)';
-          tile.appendChild(glare);
-          const onMove = (e: PointerEvent) => {
-            const r = tile.getBoundingClientRect();
-            glare.style.setProperty('--gx', `${e.clientX - r.left}px`);
-            glare.style.setProperty('--gy', `${e.clientY - r.top}px`);
-            glare.style.opacity = '1';
-          };
-          const onLeave = () => (glare.style.opacity = '0');
-          tile.addEventListener('pointermove', onMove);
-          tile.addEventListener('pointerleave', onLeave);
-          cleanups.push(() => {
-            tile.removeEventListener('pointermove', onMove);
-            tile.removeEventListener('pointerleave', onLeave);
-            glare.remove();
-          });
-        });
-        return () => cleanups.forEach((fn) => fn());
-      });
     },
     { scope: sectionRef },
   );
+
+  // Reflet lumineux qui suit le curseur dans les tuiles bento — délégué sur
+  // la grille (React), variables CSS + pseudo-élément `.bento-tile::after`
+  // (voir index.css). Fiable, insensible au double-montage StrictMode, et
+  // sans conflit avec le whileHover Framer (on n'anime que le background).
+  const handleBentoPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Gating reduced-motion assuré en CSS (.bento-tile::after @media).
+    const tile = (e.target as HTMLElement).closest<HTMLElement>('.bento-tile');
+    e.currentTarget.querySelectorAll('.bento-tile.is-glaring').forEach((t) => {
+      if (t !== tile) t.classList.remove('is-glaring');
+    });
+    if (!tile) return;
+    const r = tile.getBoundingClientRect();
+    tile.style.setProperty('--gx', `${e.clientX - r.left}px`);
+    tile.style.setProperty('--gy', `${e.clientY - r.top}px`);
+    tile.classList.add('is-glaring');
+  };
+  const handleBentoPointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget
+      .querySelectorAll('.bento-tile.is-glaring')
+      .forEach((t) => t.classList.remove('is-glaring'));
+  };
 
   return (
       <section ref={sectionRef} id="why" className="py-24 bg-black/20 backdrop-blur-xl relative overflow-hidden">
@@ -130,7 +123,11 @@ const WhySection: React.FC = () => {
           </div>
 
           {/* Bento grid */}
-          <div className="bento-grid grid grid-cols-1 md:grid-cols-6 gap-4 auto-rows-[minmax(220px,auto)]">
+          <div
+            className="bento-grid grid grid-cols-1 md:grid-cols-6 gap-4 auto-rows-[minmax(220px,auto)]"
+            onPointerMove={handleBentoPointerMove}
+            onPointerLeave={handleBentoPointerLeave}
+          >
 
             {/* HERO 1 — Time blocking (col-span-4) */}
             <motion.div
