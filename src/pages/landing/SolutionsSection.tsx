@@ -5,7 +5,7 @@
 import React, { useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { gsap, useGSAP } from '@/lib/gsap';
+import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { USE_CASES, ENTRY_OFFSETS } from './data';
 
@@ -101,6 +101,34 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
 
   useGSAP(
     () => {
+      // Titre : reveal ligne par ligne (tous modes, gaté reduced-motion).
+      const titleMM = gsap.matchMedia();
+      titleMM.add('(prefers-reduced-motion: no-preference)', () => {
+        const title = sectionRef.current?.querySelector<HTMLElement>('.solutions-title');
+        if (!title) return;
+        SplitText.create(title, {
+          type: 'lines',
+          mask: 'lines',
+          autoSplit: true,
+          onSplit: (self) => {
+            // bg-clip-text ne survit pas aux transforms des enfants :
+            // on recopie le gradient du h2 sur chaque ligne.
+            self.lines.forEach((line) => {
+              (line as HTMLElement).classList.add(
+                'bg-gradient-to-r', 'from-white', 'to-slate-300', 'bg-clip-text', 'text-transparent',
+              );
+            });
+            return gsap.from(self.lines, {
+              yPercent: 110,
+              duration: 0.85,
+              ease: 'power3.out',
+              stagger: 0.12,
+              scrollTrigger: { trigger: title, start: 'top 85%', once: true },
+            });
+          },
+        });
+      });
+
       if (grid || !pinRef.current || !trackRef.current) return;
 
       const track = trackRef.current;
@@ -148,7 +176,7 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
       <div ref={pinRef} className={grid ? undefined : 'min-h-screen flex flex-col justify-center'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-20">
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+            <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
               Application productivité pour chaque profil
             </h2>
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">

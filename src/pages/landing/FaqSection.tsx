@@ -1,11 +1,35 @@
-// Section FAQ de la LandingPage — extraite verbatim.
-import React from 'react';
+// Section FAQ de la LandingPage.
+// GSAP : reveal staggeré des questions au scroll ; Framer garde le header
+// et l'accordéon (AnimatePresence dans FaqItem).
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { gsap, useGSAP } from '@/lib/gsap';
 import { FAQ_ITEMS } from './data';
 import FaqItem from './FaqItem';
 
-const FaqSection: React.FC = () => (
-      <section id="faq" className="py-24 bg-black/20 backdrop-blur-xl">
+const FaqSection: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        gsap.from('.faq-row', {
+          y: 26,
+          opacity: 0,
+          duration: 0.6,
+          ease: 'power3.out',
+          stagger: 0.07,
+          clearProps: 'transform,opacity',
+          scrollTrigger: { trigger: '.faq-card', start: 'top 82%', once: true },
+        });
+      });
+    },
+    { scope: sectionRef },
+  );
+
+  return (
+      <section ref={sectionRef} id="faq" className="py-24 bg-black/20 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <motion.span
@@ -44,10 +68,12 @@ const FaqSection: React.FC = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="bg-slate-900/60 border border-white/8 rounded-2xl px-6 sm:px-8"
+            className="faq-card bg-slate-900/60 border border-white/8 rounded-2xl px-6 sm:px-8"
           >
             {FAQ_ITEMS.map((item, i) => (
-              <FaqItem key={i} question={item.question} answer={item.answer} index={i} />
+              <div key={i} className="faq-row">
+                <FaqItem question={item.question} answer={item.answer} index={i} />
+              </div>
             ))}
           </motion.div>
 
@@ -62,6 +88,7 @@ const FaqSection: React.FC = () => (
           </p>
         </div>
       </section>
-);
+  );
+};
 
 export default FaqSection;

@@ -4,7 +4,7 @@
 // Framer Motion garde les micro-interactions (whileHover) et les mini-viz.
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { gsap, useGSAP } from '@/lib/gsap';
+import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 
 const WhySection: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -22,6 +22,24 @@ const WhySection: React.FC = () => {
             duration: 1.1,
             scrambleText: { text: kicker.textContent, chars: 'upperCase', speed: 0.5 },
             scrollTrigger: { trigger: kicker, start: 'top 85%', once: true },
+          });
+        }
+
+        // Titre : reveal ligne par ligne (masques SplitText).
+        const title = sectionRef.current?.querySelector<HTMLElement>('.why-title');
+        if (title) {
+          SplitText.create(title, {
+            type: 'lines',
+            mask: 'lines',
+            autoSplit: true,
+            onSplit: (self) =>
+              gsap.from(self.lines, {
+                yPercent: 110,
+                duration: 0.85,
+                ease: 'power3.out',
+                stagger: 0.12,
+                scrollTrigger: { trigger: title, start: 'top 85%', once: true },
+              }),
           });
         }
 
@@ -71,7 +89,7 @@ const WhySection: React.FC = () => {
             <span className="why-kicker text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-5 block">
               — Ce qui change tout —
             </span>
-            <h2 className="text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
+            <h2 className="why-title text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
               <span className="text-white">Pas une app de plus.</span>
               <br />
               <span className="text-slate-500">Un système connecté.</span>
