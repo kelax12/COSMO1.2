@@ -482,19 +482,23 @@ const LandingPage: React.FC = () => {
         onPointerLeave={handleHeroPointerLeave}
         className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden"
       >
+        {/* Spotlight qui suit le curseur — overlay AU-DESSUS du contenu avec
+            mix-blend screen (technique Linear/Vercel) : impossible à masquer
+            par l'empilement, éclaire joliment le contenu au passage. Piloté
+            par React (ref + variables CSS), désactivé si reduced-motion. */}
+        <div
+          ref={spotlightRef}
+          className="pointer-events-none absolute left-0 top-0 z-20 h-[40rem] w-[40rem] rounded-full opacity-0"
+          style={{
+            background: 'radial-gradient(circle, rgba(129,140,248,0.45) 0%, rgba(139,92,246,0.22) 35%, transparent 70%)',
+            mixBlendMode: 'screen',
+            transform: 'translate(calc(var(--sx, 50%) - 50%), calc(var(--sy, 50%) - 50%))',
+            transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
+          }}
+          aria-hidden="true"
+        />
         {/* ── Fond ambiant : grille masquée + noise + aurores + halo conique ── */}
         <div className="absolute inset-0 -z-10" aria-hidden="true">
-          {/* Spotlight qui suit le curseur (React + variables CSS, desktop).
-              Placé dans la couche de fond, au-dessus de la grille/aurores. */}
-          <div
-            ref={spotlightRef}
-            className="pointer-events-none absolute left-0 top-0 z-[3] h-[36rem] w-[36rem] rounded-full opacity-0"
-            style={{
-              background: 'radial-gradient(circle, rgba(99,102,241,0.22) 0%, rgba(139,92,246,0.12) 35%, transparent 70%)',
-              transform: 'translate(calc(var(--sx, 50%) - 50%), calc(var(--sy, 50%) - 50%))',
-              transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
-            }}
-          />
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
           <div
             ref={gridLayerRef}
