@@ -249,6 +249,21 @@ const LandingPage: React.FC = () => {
           );
         }
 
+        // Indicateur de scroll : le chevron rebondit en boucle, et tout
+        // l'indicateur s'efface dès que l'utilisateur commence à scroller.
+        gsap.to('.scroll-cue-arrow', {
+          y: 8,
+          repeat: -1,
+          yoyo: true,
+          duration: 0.9,
+          ease: 'sine.inOut',
+        });
+        gsap.to('.scroll-cue', {
+          autoAlpha: 0,
+          ease: 'none',
+          scrollTrigger: { trigger: heroRef.current, start: 'top top', end: '+=200', scrub: true },
+        });
+
         // W3 — Parallax multi-couches scrubbé : grille lente, aurores
         // moyennes, mockup rapide. ease none obligatoire (scrub).
         if (heroRef.current) {
@@ -265,6 +280,30 @@ const LandingPage: React.FC = () => {
             .to(auroraLayerRef.current, { yPercent: 18 }, 0)
             .to(mockupLayerRef.current, { y: -110 }, 0);
         }
+      });
+
+      // Spotlight qui suit le curseur dans le hero (desktop, pointeur précis).
+      // Mouvement piloté en CSS pur (variables + transition) pour rester
+      // robuste au double-montage StrictMode (aucun tween GSAP à reverter).
+      mm.add('(prefers-reduced-motion: no-preference) and (pointer: fine)', () => {
+        const spot = heroRef.current?.querySelector<HTMLElement>('.hero-spotlight');
+        const host = heroRef.current;
+        if (!spot || !host) return;
+        const onMove = (e: PointerEvent) => {
+          const rect = host.getBoundingClientRect();
+          spot.style.setProperty('--sx', `${e.clientX - rect.left}px`);
+          spot.style.setProperty('--sy', `${e.clientY - rect.top}px`);
+          spot.style.opacity = '1';
+        };
+        const onLeave = () => {
+          spot.style.opacity = '0';
+        };
+        host.addEventListener('pointermove', onMove);
+        host.addEventListener('pointerleave', onLeave);
+        return () => {
+          host.removeEventListener('pointermove', onMove);
+          host.removeEventListener('pointerleave', onLeave);
+        };
       });
     },
     { scope: heroRef },
@@ -446,6 +485,16 @@ const LandingPage: React.FC = () => {
           162 nodes "not contained by landmarks" on this page. */}
       <main>
       <section ref={heroRef} className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
+        {/* Spotlight qui suit le curseur (GSAP quickTo, desktop only) */}
+        <div
+          className="hero-spotlight pointer-events-none absolute left-0 top-0 -z-[5] h-[36rem] w-[36rem] rounded-full opacity-0"
+          style={{
+            background: 'radial-gradient(circle, rgba(99,102,241,0.14) 0%, rgba(139,92,246,0.07) 35%, transparent 70%)',
+            transform: 'translate(calc(var(--sx, 50%) - 50%), calc(var(--sy, 50%) - 50%))',
+            transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
+          }}
+          aria-hidden="true"
+        />
         {/* ── Fond ambiant : grille masquée + noise + aurores + halo conique ── */}
         <div className="absolute inset-0 -z-10" aria-hidden="true">
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
@@ -605,6 +654,18 @@ const LandingPage: React.FC = () => {
             </motion.div>
             </div>
 
+          </div>
+
+          {/* Indicateur de scroll : chevron qui rebondit + fond au scroll */}
+          <div
+            data-hero-fade
+            className="scroll-cue mt-14 hidden lg:flex flex-col items-center gap-2 text-slate-500"
+            aria-hidden="true"
+          >
+            <span className="text-[10px] font-mono uppercase tracking-[0.3em]">Découvrir</span>
+            <svg className="scroll-cue-arrow h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </div>
         </div>
       </section>
