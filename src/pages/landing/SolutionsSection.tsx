@@ -172,10 +172,10 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
   );
 
   return (
-    <section ref={sectionRef} id="solutions" className="py-24 bg-black/20 backdrop-blur-xl overflow-hidden">
+    <section ref={sectionRef} id="solutions" className="py-16 bg-black/20 backdrop-blur-xl overflow-hidden">
       <div ref={pinRef} className={grid ? undefined : 'min-h-screen flex flex-col justify-center'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center mb-20">
+          <div className="text-center mb-8">
             <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
               Application productivité pour chaque profil
             </h2>
