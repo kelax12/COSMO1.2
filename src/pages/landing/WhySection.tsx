@@ -73,6 +73,35 @@ const WhySection: React.FC = () => {
           });
         }
       });
+
+      // Reflet lumineux qui suit le curseur dans chaque tuile (desktop).
+      // Overlay créé en JS pour ne pas alourdir le JSX ni entrer en conflit
+      // avec le whileHover Framer (on n'anime que le background, pas de transform).
+      mm.add('(prefers-reduced-motion: no-preference) and (pointer: fine)', () => {
+        const cleanups: Array<() => void> = [];
+        gsap.utils.toArray<HTMLElement>('.bento-tile').forEach((tile) => {
+          const glare = document.createElement('div');
+          glare.className = 'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300';
+          glare.style.background =
+            'radial-gradient(240px circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,0.07), transparent 60%)';
+          tile.appendChild(glare);
+          const onMove = (e: PointerEvent) => {
+            const r = tile.getBoundingClientRect();
+            glare.style.setProperty('--gx', `${e.clientX - r.left}px`);
+            glare.style.setProperty('--gy', `${e.clientY - r.top}px`);
+            glare.style.opacity = '1';
+          };
+          const onLeave = () => (glare.style.opacity = '0');
+          tile.addEventListener('pointermove', onMove);
+          tile.addEventListener('pointerleave', onLeave);
+          cleanups.push(() => {
+            tile.removeEventListener('pointermove', onMove);
+            tile.removeEventListener('pointerleave', onLeave);
+            glare.remove();
+          });
+        });
+        return () => cleanups.forEach((fn) => fn());
+      });
     },
     { scope: sectionRef },
   );
