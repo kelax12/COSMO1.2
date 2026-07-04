@@ -1101,8 +1101,8 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   opacity: 0;
   transition: opacity 0.3s ease;
   background: radial-gradient(
-    240px circle at var(--gx, 50%) var(--gy, 50%),
-    rgba(255, 255, 255, 0.08),
+    260px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.16),
     transparent 60%
   );
 }
