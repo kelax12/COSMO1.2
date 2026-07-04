@@ -62,6 +62,13 @@ export default defineConfig({
           if (id.includes('node_modules/framer-motion')) {
             return 'vendor-animation';
           }
+          // GSAP réservé à la landing (importé uniquement via src/lib/gsap.ts
+          // depuis LandingPage, déjà React.lazy) → chunk chargé seulement
+          // sur /welcome, zéro impact sur le bundle de l'app connectée.
+          if (id.includes('node_modules/gsap') ||
+              id.includes('node_modules/@gsap')) {
+            return 'vendor-gsap';
+          }
           if (id.includes('node_modules/recharts') ||
               id.includes('node_modules/d3-') ||
               id.includes('node_modules/victory-vendor')) {
