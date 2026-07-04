@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, Pause, Sparkles } from 'lucide-react';
+import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, Pause, Snowflake } from 'lucide-react';
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -75,7 +75,8 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   }) => {
     const isCompleted = habit.completions[day.date];
     // Jour manqué mais couvert par un joker : la série a tenu grâce à lui —
-    // affiché en violet avec l'icône joker (pas le check bleu des jours cochés).
+    // affiché en bleu glacé avec un flocon de gel (style « streak freeze »
+    // Duolingo), distinct du check bleu plein des jours réellement cochés.
     const isJokerDay = !isCompleted && jokerDates.includes(day.date);
     const createdDate = habit.createdAt ? habit.createdAt.split('T')[0] : '';
     const isBeforeCreation = createdDate ? day.date < createdDate : false;
@@ -97,7 +98,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             isCompleted
               ? 'border-blue-500 text-white'
               : isJokerDay
-              ? 'border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-300'
+              ? 'border-cyan-400 dark:border-cyan-500 bg-cyan-50 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-300'
               : isBeforeCreation
               ? 'opacity-30 grayscale cursor-not-allowed bg-slate-100 dark:bg-slate-900 border-transparent'
               : 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
@@ -107,7 +108,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
           {isCompleted ? (
             <CheckCircle size={iconSize} className="md:w-5 md:h-5" />
           ) : isJokerDay ? (
-            <Sparkles size={iconSize} className="md:w-5 md:h-5" aria-label="Validé par joker" />
+            <Snowflake size={iconSize} className="md:w-5 md:h-5" aria-label="Validé par joker" />
           ) : isBeforeCreation ? (
             <Circle size={iconSize - 4} className="opacity-10" />
           ) : (
@@ -140,7 +141,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                   <Flame size={12} className="md:w-3.5 md:h-3.5 text-orange-500" />
                   <span>{streak} jours</span>
                   {jokerUsed && (
-                    <Sparkles size={12} className="md:w-3.5 md:h-3.5 text-violet-500" aria-label="Joker utilisé" />
+                    <Snowflake size={12} className="md:w-3.5 md:h-3.5 text-cyan-500" aria-label="Joker utilisé" />
                   )}
                 </div>
                 {paused && pausedUntil && (
