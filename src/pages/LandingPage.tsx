@@ -48,6 +48,63 @@ const LandingPage: React.FC = () => {
   const auroraLayerRef = useRef<HTMLDivElement>(null);
   const mockupLayerRef = useRef<HTMLDivElement>(null);
 
+  // Effets « page » : barre de progression de scroll, marquee infini,
+  // reveal du footer, halo rotatif + reveal de la CTA finale.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        // Barre de progression de lecture (scrub sur toute la page).
+        if (progressRef.current) {
+          gsap.to(progressRef.current, {
+            scaleX: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: document.documentElement,
+              start: 0,
+              end: 'max',
+              scrub: 0.4,
+            },
+          });
+        }
+
+        // Marquee infini : la piste contient 2 copies identiques,
+        // xPercent -50 = boucle parfaitement seamless.
+        gsap.to('.marquee-track', {
+          xPercent: -50,
+          ease: 'none',
+          duration: 30,
+          repeat: -1,
+        });
+
+        // Reveal des 2 lignes de la CTA finale (masquées, montée décalée).
+        gsap.from('.cta-line', {
+          yPercent: 110,
+          duration: 0.8,
+          ease: 'power3.out',
+          stagger: 0.14,
+          scrollTrigger: { trigger: '.cta-card', start: 'top 80%', once: true },
+        });
+
+        // Halo conique qui tourne en continu derrière le contenu de la CTA.
+        gsap.to('.cta-halo', { rotation: 360, ease: 'none', duration: 16, repeat: -1 });
+
+        // Footer : montée douce.
+        gsap.from('footer > div', {
+          y: 28,
+          opacity: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: 'footer', start: 'top 95%', once: true },
+        });
+      });
+    },
+    { scope: rootRef },
+  );
+
   // W6 — Count-ups de la CTA finale : les chiffres montent de 0 à leur
   // valeur (déjà présente dans le markup = fallback reduced-motion).
   const ctaRef = useRef<HTMLElement>(null);
@@ -255,7 +312,13 @@ const LandingPage: React.FC = () => {
   // ScrollTrigger et les ancres au milieu des sections pinnées. Chaque
   // section gère son propre overflow.
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div ref={rootRef} className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      {/* Barre de progression de lecture (GSAP scrub) */}
+      <div
+        ref={progressRef}
+        className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left scale-x-0 bg-gradient-to-r from-blue-500 via-violet-500 to-fuchsia-500"
+        aria-hidden="true"
+      />
       <LoginModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
@@ -546,6 +609,28 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* ── Marquee infini : les modules défilent en continu (GSAP) ── */}
+      <div
+        className="relative overflow-hidden border-y border-white/[0.06] bg-white/[0.02] py-3.5"
+        aria-hidden="true"
+      >
+        {/* Fondu latéral pour une entrée/sortie douce des mots */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-900 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-900 to-transparent z-10" />
+        <div className="marquee-track flex w-max whitespace-nowrap text-sm font-mono uppercase tracking-[0.25em] text-slate-500">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="flex items-center gap-10 pr-10">
+              {['Tâches', 'Agenda', 'Time-blocking', 'OKR', 'Habitudes', 'Statistiques', 'Mode démo gratuit'].map((word) => (
+                <span key={word} className="flex items-center gap-10">
+                  <span>{word}</span>
+                  <span className="text-blue-400/60">✦</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <FeaturesSection isMobile={isMobile} handleFeatureClick={handleFeatureClick} />
 
       <SolutionsSection handleFeatureClick={handleFeatureClick} />
@@ -561,18 +646,32 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-blue-500/30 rounded-3xl p-12 relative overflow-hidden"
+            className="cta-card bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-blue-500/30 rounded-3xl p-12 relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 z-0"></div>
-            
+            {/* Halo conique rotatif (GSAP) — mouvement ambiant permanent */}
+            <div
+              className="cta-halo absolute -inset-[45%] opacity-25 pointer-events-none"
+              style={{
+                background:
+                  'conic-gradient(from 0deg, rgba(59,130,246,0.35), transparent 30%, rgba(139,92,246,0.3) 50%, transparent 70%, rgba(59,130,246,0.35))',
+                filter: 'blur(60px)',
+              }}
+              aria-hidden="true"
+            />
+
             <div className="relative z-10">
+              {/* Lignes masquées : révélées par montée décalée (GSAP) */}
               <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                  Prêt à révolutionner
+                <span className="block overflow-hidden">
+                  <span className="cta-line block bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                    Prêt à révolutionner
+                  </span>
                 </span>
-                <br />
-                <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  votre productivité ?
+                <span className="block overflow-hidden">
+                  <span className="cta-line block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    votre productivité ?
+                  </span>
                 </span>
               </h2>
               <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
