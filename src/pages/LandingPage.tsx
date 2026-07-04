@@ -141,6 +141,57 @@ const LandingPage: React.FC = () => {
           delay: 0.5,
         });
 
+        // Vie permanente du fond : orbes qui dérivent (yoyo aléatoire
+        // re-tiré à chaque cycle) + traceurs lumineux qui balayent la
+        // grille à une hauteur/position aléatoire à chaque passage.
+        gsap.utils.toArray<HTMLElement>('.hero-orb').forEach((orb, i) => {
+          gsap.to(orb, {
+            x: () => gsap.utils.random(-70, 70),
+            y: () => gsap.utils.random(-50, 50),
+            duration: () => gsap.utils.random(4, 7),
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+            repeatRefresh: true,
+            delay: i * 0.9,
+          });
+        });
+        const beamH = heroRef.current?.querySelector<HTMLElement>('.hero-beam-h');
+        if (beamH) {
+          gsap.fromTo(
+            beamH,
+            { x: -220 },
+            {
+              x: () => (heroRef.current?.offsetWidth ?? window.innerWidth) + 220,
+              duration: 5.5,
+              ease: 'power1.inOut',
+              repeat: -1,
+              repeatDelay: 1.8,
+              onRepeat: () => {
+                beamH.style.top = `${gsap.utils.random(15, 72)}%`;
+              },
+            },
+          );
+        }
+        const beamV = heroRef.current?.querySelector<HTMLElement>('.hero-beam-v');
+        if (beamV) {
+          gsap.fromTo(
+            beamV,
+            { y: -220 },
+            {
+              y: () => (heroRef.current?.offsetHeight ?? window.innerHeight) + 220,
+              duration: 6.5,
+              ease: 'power1.inOut',
+              repeat: -1,
+              repeatDelay: 2.6,
+              delay: 2.2,
+              onRepeat: () => {
+                beamV.style.left = `${gsap.utils.random(20, 82)}%`;
+              },
+            },
+          );
+        }
+
         // W3 — Parallax multi-couches scrubbé : grille lente, aurores
         // moyennes, mockup rapide. ease none obligatoire (scrub).
         if (heroRef.current) {
@@ -346,6 +397,14 @@ const LandingPage: React.FC = () => {
               WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
             }}
           />
+          {/* Vie permanente : traceurs lumineux qui balayent la grille +
+              orbes qui dérivent en continu (GSAP, gaté reduced-motion) */}
+          <div className="hero-beam-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-blue-400/80 to-transparent" />
+          <div className="hero-beam-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-violet-400/70 to-transparent" />
+          <div className="hero-orb absolute top-[20%] left-[10%] h-3 w-3 rounded-full bg-blue-400/60 blur-[2px]" />
+          <div className="hero-orb absolute top-[64%] left-[80%] h-2 w-2 rounded-full bg-violet-400/60 blur-[1px]" />
+          <div className="hero-orb absolute top-[40%] left-[52%] h-2.5 w-2.5 rounded-full bg-cyan-300/50 blur-[2px]" />
+
           {/* Couche parallax moyenne (GSAP) : halo + aurores. Les loops
               d'opacité/scale restent en Framer sur les enfants ; GSAP ne
               translate que ce wrapper (pas de conflit de transform). */}
