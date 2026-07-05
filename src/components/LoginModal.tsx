@@ -42,7 +42,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
             data-scroll-area
-            className="bg-slate-900 border-t sm:border border-slate-700 rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
+            className="bg-[rgb(var(--color-surface))] border-t sm:border border-[rgb(var(--color-border))] rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -54,7 +54,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
               size="icon"
               onClick={onClose}
               aria-label="Fermer"
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
             >
               <X size={24} aria-hidden="true" />
             </Button>

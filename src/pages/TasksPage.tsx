@@ -5,7 +5,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListActionsSheet from '../components/ListActionsSheet';
-import { Plus, X, Zap } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -91,6 +91,20 @@ const TasksPage: React.FC = () => {
   // ═══════════════════════════════════════════════════════════════════
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Touche « / » : focus la recherche de la page (#20 — convention GitHub/Gmail).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const editable = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey && !editable) {
+        e.preventDefault();
+        document.getElementById('search-tasks-main')?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const location = useLocation();
   const [filter, setFilter] = useState('priority');
@@ -620,33 +634,12 @@ const TasksPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* FAB Nouvelle tâche — mobile only */}
-      {!showCompleted && !showAddTaskForm && (
-        <>
-          {/* Quick-add langage naturel (#1) — accès mobile : FAB éclair */}
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
-            aria-label="Création rapide en langage naturel"
-            className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px+64px)] z-30 w-11 h-11 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-blue-500 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <Zap size={20} />
-          </motion.button>
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setShowAddTaskForm(true)}
-            data-tutorial-id="tasks-fab"
-            aria-label="Nouvelle tâche"
-            className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <Plus size={28} />
-          </motion.button>
-        </>
-      )}
+      {/* Création mobile (#22) : point d'entrée unique = FAB quick-add global
+          monté dans Layout (data-tutorial-id="tasks-fab"). Les deux FABs
+          locaux (éclair + plus) ont été retirés : deux affordances pour une
+          même intention créaient une hésitation à chaque création. Le modal
+          complet reste accessible en tapant une tâche existante (enrichir
+          après capture). */}
 
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
       <ListActionsSheet

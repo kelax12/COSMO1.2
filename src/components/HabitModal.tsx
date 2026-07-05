@@ -9,6 +9,7 @@ import { useCategories } from '@/modules/categories';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
 import { Button } from '@/components/ui/button';
+import { confirmDiscard } from '@/lib/confirm-discard';
 
 interface HabitModalProps {
   isOpen: boolean;
@@ -35,19 +36,29 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   // mutations create avant que `isPending` ne passe à true (re-render async).
   const isSubmittingRef = useRef(false);
 
+  // #40 — snapshot des valeurs initiales : fermer avec des changements non
+  // sauvés demande confirmation (misclick d'overlay, Échap, drag du sheet).
+  const initialSnapshotRef = useRef<string>('');
+
   useEffect(() => {
     if (isOpen) {
-      if (habit) {
-        setFormData({ name: habit.name, estimatedTime: habit.estimatedTime, color: habit.color });
-      } else {
-        setFormData({
-          name: '',
-          estimatedTime: 30,
-          color: categories[0]?.color || favoriteColors[0] || '#3B82F6',
-        });
-      }
+      const initial = habit
+        ? { name: habit.name, estimatedTime: habit.estimatedTime, color: habit.color }
+        : {
+            name: '',
+            estimatedTime: 30,
+            color: categories[0]?.color || favoriteColors[0] || '#3B82F6',
+          };
+      setFormData(initial);
+      initialSnapshotRef.current = JSON.stringify(initial);
     }
   }, [isOpen, habit, categories, favoriteColors]);
+
+  const isDirty = initialSnapshotRef.current !== '' && JSON.stringify(formData) !== initialSnapshotRef.current;
+  const guardedClose = () => {
+    if (!confirmDiscard(isDirty)) return;
+    onClose();
+  };
 
   const doSave = () => {
     if (!formData.name.trim()) {
@@ -76,10 +87,10 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Escape') guardedClose();
   };
 
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(guardedClose);
 
   return (
     <>
@@ -90,7 +101,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-50 sm:p-4"
-            onClick={onClose}
+            onClick={guardedClose}
             onKeyDown={handleKeyDown}
           >
             <motion.div
@@ -119,7 +130,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
                     <button
                       type="button"
-                      onClick={onClose}
+                      onClick={guardedClose}
                       className="text-blue-500 text-[15px] min-w-16 min-h-11 flex items-center"
                     >
                       Annuler
@@ -302,7 +313,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                       {isEditing ? "Modifier l'habitude" : 'Nouvelle habitude'}
                     </h2>
-                    <Button variant="ghost" size="icon" onClick={onClose}>
+                    <Button variant="ghost" size="icon" onClick={guardedClose} aria-label="Fermer">
                       <X size={18} />
                     </Button>
                   </div>
@@ -410,7 +421,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     className="px-4 sm:px-6 pt-3 pb-3 border-t shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
-                    <Button type="button" variant="outline" size="lg" onClick={onClose} className="sm:w-auto">
+                    <Button type="button" variant="outline" size="lg" onClick={guardedClose} className="sm:w-auto">
                       Annuler
                     </Button>
                     <Button

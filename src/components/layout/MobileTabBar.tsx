@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePendingRequestCount } from '@/modules/friends';
+import { useTasks } from '@/modules/tasks';
 import MobileMoreSheet from './MobileMoreSheet';
 
 const NAV_COLORS = {
@@ -41,6 +42,12 @@ const tabBaseClasses =
 const MobileTabBar: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState(false);
   const pendingRequestCount = usePendingRequestCount();
+  // Badge neutre « tâches restantes aujourd'hui » sur l'onglet Tâches (#49).
+  const { data: allTasks = [] } = useTasks();
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const tasksDueTodayCount = allTasks.filter(
+    (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
+  ).length;
 
   return (
     <>
@@ -75,8 +82,19 @@ const MobileTabBar: React.FC = () => {
                         className={cn('transition-transform', isActive && 'scale-110')}
                       />
                       {end && pendingRequestCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center">
+                        <span
+                          aria-label={`${pendingRequestCount} demandes en attente`}
+                          className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
+                        >
                           {pendingRequestCount}
+                        </span>
+                      )}
+                      {to === '/tasks' && tasksDueTodayCount > 0 && (
+                        <span
+                          aria-label={`${tasksDueTodayCount} tâches pour aujourd'hui`}
+                          className="absolute -top-1.5 -right-1.5 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] text-[10px] leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
+                        >
+                          {tasksDueTodayCount}
                         </span>
                       )}
                     </span>

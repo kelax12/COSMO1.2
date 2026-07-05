@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeading } from '@/components/ui/typography';
@@ -34,7 +34,6 @@ import HabitsAdGate from '@/components/HabitsAdGate';
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
@@ -43,6 +42,16 @@ const HabitsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+
+  // Ouverture directe du modal de création depuis la palette ⌘K (#19).
+  const location = useLocation();
+  useEffect(() => {
+    const state = location.state as { openCreate?: boolean } | null;
+    if (state?.openCreate) {
+      setShowModal(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // ── Mur-pub quotidien ────────────────────────────────────────────────
   // Habitudes = gratuites mais ad-supported : un non-abonné regarde 1 pub/jour.
@@ -270,9 +279,11 @@ const HabitsPage: React.FC = () => {
         accentColor="#EAB308"
       />
 
-      {/* Mur-pub quotidien (non-abonnés uniquement) */}
+      {/* Bannière pub quotidienne NON bloquante (#50) — la page reste
+          pleinement utilisable ; fermer = masquer pour aujourd'hui (plus
+          d'éjection vers l'accueil : jamais de porte devant une streak). */}
       {showAdWall && (
-        <HabitsAdGate onUnlocked={markSeenToday} onDismiss={() => navigate('/')} />
+        <HabitsAdGate onUnlocked={markSeenToday} onDismiss={markSeenToday} />
       )}
     </div>
   );

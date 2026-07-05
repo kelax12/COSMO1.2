@@ -21,6 +21,7 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import { formatTime, formatTimeShort } from './statistics/format';
+import { buildInsights } from '@/lib/stats-insights';
 
 // Graphique multi-séries « Temps de travail » (déplacé du Dashboard).
 // Lazy : recharts ne charge que si l'utilisateur ouvre la vue détaillée (faille P-2).
@@ -60,6 +61,9 @@ export default function StatisticsPage() {
   const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   useVisibilityInterval(useCallback(() => setNow(new Date()), []), 60000, true);
+
+  // Insights en langage naturel (#34) — calculés client-side, max 3 phrases.
+  const insights = useMemo(() => buildInsights(tasks, habits, now), [tasks, habits, now]);
 
   const getPeriodDetails = (period: TimePeriod, periodDate: Date) => {
     let startDate: Date, endDate: Date;
@@ -252,6 +256,18 @@ export default function StatisticsPage() {
         <PageHeading variant="standard" className="mb-2">Statistiques</PageHeading>
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Analysez votre productivité et vos performances</p>
       </div>
+
+      {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}
+      {insights.length > 0 && (
+        <div className="card p-4 mb-8 space-y-1.5" role="status">
+          {insights.map((insight) => (
+            <p key={insight} className="text-sm flex items-start gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+              <span className="text-blue-500 shrink-0" aria-hidden="true">→</span>
+              {insight}
+            </p>
+          ))}
+        </div>
+      )}
 
       {/* Stat cards — sans icônes */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

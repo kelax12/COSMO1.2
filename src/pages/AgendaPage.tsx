@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -24,6 +25,7 @@ import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
 import QuickEventCard from './agenda/QuickEventCard';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
+import PageErrorState from '@/components/PageErrorState';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
@@ -34,7 +36,7 @@ const AgendaPage: React.FC = () => {
   // fenêtre visible (+ tous les récurrents, cf. window.ts). La fenêtre est
   // affinée par datesSet (desktop + mobile) ; init large pour un 1er paint sans flash.
   const [eventsWindow, setEventsWindow] = useState(() => defaultEventsWindow());
-  const { data: events = [] } = useEventsWindow(eventsWindow.start, eventsWindow.end);
+  const { data: events = [], isError: isEventsError, error: eventsError, refetch: refetchEvents } = useEventsWindow(eventsWindow.start, eventsWindow.end);
   const applyVisibleRange = useCallback((rangeStart: Date, rangeEnd: Date) => {
     const next = bufferedWindow(rangeStart, rangeEnd);
     setEventsWindow((prev) =>
@@ -54,6 +56,16 @@ const AgendaPage: React.FC = () => {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showRecurringManager, setShowRecurringManager] = useState(false);
+
+  // Ouverture directe du modal de création depuis la palette ⌘K (#19).
+  const location = useLocation();
+  useEffect(() => {
+    const state = location.state as { openCreate?: boolean } | null;
+    if (state?.openCreate) {
+      setShowAddEventModal(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ start: string; end: string } | null>(null);
   // Création rapide depuis une plage : petite popup ancrée au clic (remplace
   // l'ouverture d'EventModal, jugé trop lourd visuellement).
@@ -380,6 +392,12 @@ const AgendaPage: React.FC = () => {
     const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: fr });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   })();
+
+  // État d'erreur (#39) : sans lui, un échec réseau affichait un calendrier
+  // vide — indistinguable d'une semaine sans événement.
+  if (isEventsError && events.length === 0) {
+    return <PageErrorState subject="l'agenda" error={eventsError as Error | null} onRetry={() => refetchEvents()} />;
+  }
 
   return (
     <motion.div

@@ -10,6 +10,7 @@ import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/modules/categories';
+import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModalSheet from '../components/OKRModalSheet';
@@ -38,7 +39,7 @@ const OKRPage: React.FC = () => {
   // composant (en prod il s'auto-déclenche lundi/mardi depuis le Dashboard).
   const [showCheckin, setShowCheckin] = useState(false);
   // Use new OKR module hooks
-  const { data: objectives = [], isLoading: isLoadingOkrs } = useOkrs();
+  const { data: objectives = [], isLoading: isLoadingOkrs, isError: isOkrsError, error: okrsError, refetch: refetchOkrs } = useOkrs();
   const createOkrMutation = useCreateOkr();
   const updateOkrMutation = useUpdateOkr();
   const deleteOkrMutation = useDeleteOkr();
@@ -104,10 +105,19 @@ const OKRPage: React.FC = () => {
 
   const confirmDeleteCategory = () => {
     if (!categoryToDeleteId) return;
+    // Undo (#38) : filet de sécurité aligné sur les tâches/listes — la
+    // suppression d'une catégorie est plus lourde de conséquences qu'une tâche.
+    const snapshot = categories.find((c) => c.id === categoryToDeleteId);
     deleteCategoryMutation.mutate(categoryToDeleteId, {
       onSuccess: () => {
         if (selectedCategory === categoryToDeleteId) setSelectedCategory('all');
         setCategoryToDeleteId(null);
+        if (snapshot) {
+          showUndoToast('Catégorie supprimée', () => {
+            const { id: _id, ...rest } = snapshot;
+            createCategoryMutation.mutate(rest);
+          });
+        }
       },
     });
   };
@@ -196,9 +206,14 @@ const OKRPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const state = location.state as {selectedOKRId?: string;};
+    const state = location.state as {selectedOKRId?: string; openCreate?: boolean;};
     if (state?.selectedOKRId) {
       handleEditObjective(state.selectedOKRId);
+      window.history.replaceState({}, document.title);
+    }
+    // Ouverture directe du modal de création depuis la palette ⌘K (#19).
+    if (state?.openCreate) {
+      setShowAddObjective(true);
       window.history.replaceState({}, document.title);
     }
     // Déclenché par la navigation (location) ; handleEditObjective omis à dessein.
@@ -355,6 +370,12 @@ const OKRPage: React.FC = () => {
         setNewCategoryColor={setNewCategoryColor}
         createCategoryMutation={createCategoryMutation}
       />
+
+      {/* État d'erreur (#39) : sans lui, un échec réseau laissait la page
+          vide — indistinguable de « vous n'avez aucun OKR ». */}
+      {isOkrsError && objectives.length === 0 && (
+        <PageErrorState subject="les OKR" error={okrsError as Error | null} onRetry={() => refetchOkrs()} />
+      )}
 
       {isLoadingOkrs && objectives.length === 0 && <OKRListSkeleton count={4} />}
 

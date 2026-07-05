@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Zap, CalendarDays, Tag, Flag, Clock, CornerDownLeft } from 'lucide-react';
+import { Zap, CalendarDays, Tag, Flag, Clock, CornerDownLeft, Repeat } from 'lucide-react';
 import { parseQuickAdd } from '@/lib/quick-add-parser';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
@@ -16,9 +16,19 @@ import { useCategories } from '@/modules/categories';
  *
  * Exemple : « Appeler le dentiste jeudi 10h #santé !! ~30m »
  */
+// Placeholders-exemples rotatifs (#21) : enseignent la syntaxe par l'exemple,
+// un différent à chaque ouverture.
+const PLACEHOLDER_EXAMPLES = [
+  'Appeler le dentiste jeudi 10h #santé !! ~30m',
+  'Préparer la réunion demain 9h ~1h',
+  'Faire les courses samedi #maison',
+  'Relire le rapport !! ~45m',
+];
+
 const QuickAddBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState('');
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const createTaskMutation = useCreateTask();
   const { data: categories = [] } = useCategories();
@@ -47,12 +57,20 @@ const QuickAddBar = () => {
 
   useEffect(() => {
     if (isOpen) {
+      setPlaceholderIdx((i) => (i + 1) % PLACEHOLDER_EXAMPLES.length);
       // Laisse le temps au montage avant de focus (mobile Safari inclus).
       setTimeout(() => inputRef.current?.focus(), 30);
     } else {
       setValue('');
     }
   }, [isOpen]);
+
+  // Tokens cliquables de la ligne d'aide (#21) : insèrent l'exemple dans le
+  // champ pour apprendre la syntaxe en la manipulant.
+  const insertToken = (token: string) => {
+    setValue((prev) => (prev.length === 0 || prev.endsWith(' ') ? `${prev}${token}` : `${prev} ${token}`));
+    inputRef.current?.focus();
+  };
 
   const parsed = useMemo(() => parseQuickAdd(value), [value]);
 
@@ -74,6 +92,7 @@ const QuickAddBar = () => {
         category: matchedCategory?.id ?? '',
         deadline: parsed.deadline ?? '',
         estimatedTime: parsed.estimatedTime ?? 0,
+        recurrence: parsed.recurrence ?? 'none',
         bookmarked: false,
         completed: false,
       },
@@ -136,7 +155,7 @@ const QuickAddBar = () => {
                   if (e.key === 'Enter') handleSubmit();
                   if (e.key === 'Escape') setIsOpen(false);
                 }}
-                placeholder="Nouvelle tâche…"
+                placeholder={`Ex : ${PLACEHOLDER_EXAMPLES[placeholderIdx]}`}
                 aria-label="Créer une tâche rapidement"
                 className="flex-1 min-w-0 bg-transparent outline-none text-lg font-medium placeholder:font-normal"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
@@ -186,6 +205,12 @@ const QuickAddBar = () => {
                       <Clock size={13} aria-hidden="true" /> {parsed.estimatedTime} min
                     </span>
                   )}
+                  {parsed.recurrence && (
+                    <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-500/20">
+                      <Repeat size={13} aria-hidden="true" />
+                      {parsed.recurrence === 'daily' ? 'Quotidien' : parsed.recurrence === 'weekly' ? 'Hebdomadaire' : 'Mensuel'}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -195,18 +220,25 @@ const QuickAddBar = () => {
               className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 border-t text-xs"
               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }}
             >
-              <span className="inline-flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>demain 10h</kbd> date
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>#santé</kbd> catégorie
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>!!</kbd> priorité
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded border font-mono text-[11px]" style={{ borderColor: 'rgb(var(--color-border))' }}>~30m</kbd> durée
-              </span>
+              {([
+                ['demain 10h', 'date'],
+                ['#santé', 'catégorie'],
+                ['!!', 'priorité'],
+                ['~30m', 'durée'],
+              ] as const).map(([token, label]) => (
+                <span key={token} className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => insertToken(token)}
+                    aria-label={`Insérer l'exemple ${token} (${label})`}
+                    className="px-1.5 py-0.5 rounded border font-mono text-[11px] hover:bg-[rgb(var(--color-hover))] transition-colors cursor-pointer"
+                    style={{ borderColor: 'rgb(var(--color-border))' }}
+                  >
+                    {token}
+                  </button>
+                  {label}
+                </span>
+              ))}
               <span className="hidden sm:inline ml-auto opacity-80">Entrée = créer et enchaîner · Échap = fermer</span>
             </div>
           </motion.div>

@@ -10,7 +10,11 @@ const IS_MAC =
 
 const SHORTCUTS: { keys: string[]; label: string }[] = [
   { keys: ['N'], label: 'Nouvelle tâche (quick-add en langage naturel)' },
-  { keys: [IS_MAC ? '⌘' : 'Ctrl', 'K'], label: 'Palette de commandes (navigation, actions)' },
+  { keys: [IS_MAC ? '⌘' : 'Ctrl', 'K'], label: 'Palette de commandes (recherche globale, actions)' },
+  { keys: ['/'], label: 'Rechercher dans la page Tâches' },
+  { keys: ['G', 'puis T'], label: 'Aller aux Tâches (d = Accueil, a = Agenda, h = Habitudes, o = OKR, s = Stats)' },
+  { keys: ['['], label: 'Replier / déplier la barre latérale' },
+  { keys: ['↑', '↓'], label: 'Naviguer dans la liste de tâches (x = compléter, Entrée = ouvrir)' },
   { keys: ['?'], label: 'Afficher cette aide' },
   { keys: ['Échap'], label: 'Fermer le modal / la palette en cours' },
   { keys: ['Entrée'], label: 'Valider (dans le quick-add : créer et enchaîner)' },

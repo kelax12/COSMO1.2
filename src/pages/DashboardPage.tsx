@@ -1,6 +1,7 @@
 import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeading } from '@/components/ui/typography';
+import { Search } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -41,7 +42,7 @@ const formatBarDate = (raw: string): string => {
   return `${d} ${MONTHS_FR[parseInt(m, 10) - 1]}`;
 };
 
-const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string }> = ({ data, color = '#2563EB' }) => {
+const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string; ariaLabel?: string }> = ({ data, color = '#2563EB', ariaLabel }) => {
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
 
@@ -60,8 +61,17 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
     return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   };
 
+  // #35 — résumé textuel : les valeurs ne sont sinon exposées qu'au hover/touch,
+  // invisibles au clavier et aux lecteurs d'écran (WCAG/EAA).
+  const summary = ariaLabel
+    ? `${ariaLabel} : ${data.map(d => d.value).join(', ')}`
+    : undefined;
+
   return (
-    <div className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative">
+    <div
+      className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative"
+      role="img"
+      aria-label={summary}>
       {data.map((d, i) => {
         const tooltipLabel = d.label ? d.label : d.date ? formatBarDate(d.date) : '';
         return (
@@ -100,19 +110,29 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
 // Masqué pour l'instant — passer à true pour le réafficher.
 const SHOW_REPARTITION_CHART = false;
 
+// TextType 1×/jour (#33) : l'animation machine à écrire ne joue qu'à la
+// première visite du jour — le dashboard est la page la plus visitée, chaque
+// seconde avant lisibilité y est multipliée. Flag daté, pattern useDailyAdGate.
+const TYPING_SEEN_KEY = 'cosmo_dashboard_typing_seen';
+const shouldPlayTypingToday = (): boolean => {
+  const today = new Date().toLocaleDateString('en-CA');
+  try {
+    if (localStorage.getItem(TYPING_SEEN_KEY) === today) return false;
+    localStorage.setItem(TYPING_SEEN_KEY, today);
+    return true;
+  } catch {
+    return true;
+  }
+};
+
 const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('jour');
   const weeklyCheckin = useWeeklyCheckin();
   const [checkinOpen, setCheckinOpen] = useState(false);
-
-  // Auto-ouverture du check-in hebdo lundi/mardi (une seule fois par semaine).
-  React.useEffect(() => {
-    if (weeklyCheckin.shouldShow) {
-      // Léger délai pour laisser le dashboard se monter avant de superposer un modal
-      const t = setTimeout(() => setCheckinOpen(true), 800);
-      return () => clearTimeout(t);
-    }
-  }, [weeklyCheckin.shouldShow]);
+  // #31 — plus d'auto-ouverture du modal check-in : une carte inline
+  // dismissible invite à le faire volontairement (l'interstitiel d'entrée est
+  // l'anti-pattern rétention n°1 — le réflexe devient « fermer sans lire »).
+  const [playTyping] = useState(shouldPlayTypingToday);
 
   const { data: tasks = [] } = useTasks();
   const { data: krCompletions = [] } = useKRCompletions();
@@ -151,11 +171,18 @@ const DashboardPage: React.FC = () => {
         d.setDate(d.getDate() - i);
         days.push(d.toLocaleDateString('en-CA'));
       }
+      // #32 — format « objectif du jour » (x/N) plutôt que compteur brut :
+      // quatre zéros le matin sont du renforcement négatif ; « 0/5 » crée une
+      // tension de complétion (Zeigarnik) et guide la décision.
+      const dueToday = tasks.filter(t => t.deadline && localDay(t.deadline) === today);
+      const doneDueToday = dueToday.filter(t => t.completed).length;
+      const completedToday = tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === today).length;
+      const habitsDoneToday = habits.filter(h => h.completions[today]).length;
       return [
         {
-          label: 'Tâches complétées',
+          label: dueToday.length > 0 ? 'Tâches du jour' : 'Tâches complétées',
           color: '#3b82f6',
-          value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === today).length,
+          value: dueToday.length > 0 ? `${doneDueToday}/${dueToday.length}` : completedToday,
           chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === date).length })),
         },
         {
@@ -173,7 +200,7 @@ const DashboardPage: React.FC = () => {
         {
           label: 'Habitudes',
           color: '#eab308',
-          value: habits.filter(h => h.completions[today]).length,
+          value: habits.length > 0 ? `${habitsDoneToday}/${habits.length}` : 0,
           chartData: days.map(date => ({ date, value: habits.filter(h => h.completions[date]).length })),
         },
       ];
@@ -311,7 +338,8 @@ const DashboardPage: React.FC = () => {
             <div className="flex-1 min-w-0">
                 <PageHeading variant="hero" className="mb-1 sm:mb-2 lg:mb-3">
                   <span>Bonjour, </span>
-                <TextType
+                {playTyping ? (
+                  <TextType
                         text={displayUser.name}
                         typingSpeed={80}
                         pauseDuration={5000}
@@ -322,6 +350,11 @@ const DashboardPage: React.FC = () => {
                         cursorClassName="text-blue-500 monochrome:text-white"
                         textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
                       />
+                ) : (
+                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                    {displayUser.name}
+                  </span>
+                )}
                 </PageHeading>
               {/* Résumé contextuel cliquable (#38) + « Journée bouclée » (#39) */}
               <motion.p
@@ -367,11 +400,48 @@ const DashboardPage: React.FC = () => {
               </motion.p>
             </div>
             {/* Boîte de réception : demandes d'amis + tâches partagées à accepter */}
-            <div className="shrink-0 pt-1">
+            <div className="shrink-0 pt-1 flex items-center gap-2">
+              {/* Recherche globale (#41) — mobile uniquement (desktop : loupe sidebar) */}
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+                aria-label="Recherche globale"
+                className="md:hidden flex items-center justify-center rounded-xl min-w-11 min-h-11 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] shadow-sm"
+              >
+                <Search size={18} aria-hidden="true" />
+              </button>
               <InboxMenu />
             </div>
             </div>
           </motion.div>
+
+        {/* Carte check-in hebdo (#31) — invitation inline, jamais imposée */}
+        {weeklyCheckin.shouldShow && !checkinOpen && (
+          <motion.div variants={itemVariants}>
+            <div className="flex items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
+              <span className="text-xl" aria-hidden="true">📋</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Votre semaine vous attend</p>
+                <p className="text-xs text-[rgb(var(--color-text-muted))]">Faites le point sur vos objectifs — 2 minutes suffisent.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCheckinOpen(true)}
+                className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Faire le point
+              </button>
+              <button
+                type="button"
+                onClick={() => weeklyCheckin.dismiss()}
+                aria-label="Ignorer le check-in cette semaine"
+                className="shrink-0 p-2 rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Toggle vue + Statistiques rapides */}
         <motion.div variants={itemVariants}>
@@ -419,7 +489,7 @@ const DashboardPage: React.FC = () => {
                       {stat.value}
                     </motion.p>
                   </div>
-                  <MiniBarChart data={stat.chartData} color={stat.color} />
+                  <MiniBarChart data={stat.chartData} color={stat.color} ariaLabel={`${stat.label}, évolution récente`} />
                 </div>
               </motion.div>
             ))}

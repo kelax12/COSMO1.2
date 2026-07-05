@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
+import { confirmDiscard } from '@/lib/confirm-discard';
 import { useInvalidShake } from "@/hooks/use-invalid-shake";
 import ColorSettingsModal from "./ColorSettingsModal";
 
@@ -111,6 +112,17 @@ const EventModal: React.FC<EventModalProps> = ({
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
 
+  // #40 — snapshot des valeurs initiales (mode édition) : une fermeture avec
+  // des changements non sauvés demande confirmation. En création, le brouillon
+  // (useFormDraft) protège déjà la saisie.
+  const initialSnapshotRef = React.useRef<string>('');
+  const currentSnapshot = JSON.stringify([title, startDate, startTime, endDate, endTime, notes, color, recurrence, recurrenceDays]);
+  const isEditDirty = mode === 'edit' && initialSnapshotRef.current !== '' && currentSnapshot !== initialSnapshotRef.current;
+  const guardedClose = () => {
+    if (!confirmDiscard(isEditDirty)) return;
+    onClose();
+  };
+
   // Brouillon de création libre (#47) — titre/notes survivent à une fermeture.
   const { readDraft, saveDraft, clearDraft } = useFormDraft<{ title: string; notes: string }>('event-create');
   useEffect(() => {
@@ -136,10 +148,20 @@ const EventModal: React.FC<EventModalProps> = ({
       // Date LOCALE (en-CA) — l'heure vient de toTimeString() (locale) : mixer
       // avec une date UTC décalait l'événement d'un jour à la sauvegarde
       // quand date UTC ≠ date locale (ex. event à 00h30 en France).
-      setStartDate(start.toLocaleDateString("en-CA"));
-      setStartTime(start.toTimeString().slice(0, 5));
-      setEndDate(end.toLocaleDateString("en-CA"));
-      setEndTime(end.toTimeString().slice(0, 5));
+      const startD = start.toLocaleDateString("en-CA");
+      const startT = start.toTimeString().slice(0, 5);
+      const endD = end.toLocaleDateString("en-CA");
+      const endT = end.toTimeString().slice(0, 5);
+      setStartDate(startD);
+      setStartTime(startT);
+      setEndDate(endD);
+      setEndTime(endT);
+      // Snapshot initial (#40) : détecte la saisie non sauvée à la fermeture.
+      initialSnapshotRef.current = JSON.stringify([
+        event.title || "", startD, startT, endD, endT,
+        event.notes || "", event.color || "#3B82F6",
+        event.recurrence ?? 'none', event.recurrenceDays ?? [],
+      ]);
     } else if (mode === 'add' && task) {
       setRecurrence('none');
       setRecurrenceDays([]);
@@ -359,11 +381,11 @@ const EventModal: React.FC<EventModalProps> = ({
     <>
       <div
         className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
-        onClick={onClose}
+        onClick={guardedClose}
       >
         <EventModalForm
           mode={mode}
-          onClose={onClose}
+          onClose={guardedClose}
           title={title}
           setTitle={setTitle}
           startDate={startDate}

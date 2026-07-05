@@ -58,6 +58,8 @@ const lazyWithRetry = <T extends React.ComponentType<Record<string, never>>>(
 const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'));
 const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
 const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'));
+const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'));
 const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'));
 const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'));
 const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'));
@@ -173,6 +175,8 @@ const AppRoutes = () => (
     <Route path="welcome" element={<Navigate to="/" replace />} />
     <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
     <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
+    <Route path="forgot-password" element={<PageWithSuspense><ForgotPasswordPage /></PageWithSuspense>} />
+    <Route path="reset-password" element={<PageWithSuspense><ResetPasswordPage /></PageWithSuspense>} />
     <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
     <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
     <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />

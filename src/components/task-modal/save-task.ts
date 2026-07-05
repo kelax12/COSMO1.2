@@ -6,6 +6,7 @@ import type {
   UpdateTaskInput,
   Task,
   Subtask,
+  TaskRecurrence,
 } from '@/modules/tasks';
 import type { useAddTaskToList, useRemoveTaskFromList, useLists } from '@/modules/lists';
 import type { useFriends, useShareTask, useUnshareTask } from '@/modules/friends';
@@ -22,6 +23,8 @@ export interface TaskSaveFormData {
   isFromOKR: boolean;
   /** Lien vers un Key Result OKR (#28) — '' = aucun. */
   krId: string;
+  /** Récurrence (#26) — 'none' par défaut. */
+  recurrence: TaskRecurrence;
   /** Sous-tâches saisies pendant la création (#12) — [] en édition. */
   subtasks?: Subtask[];
 }
@@ -67,6 +70,7 @@ export function buildCreateTaskInput(
     completed: formData.completed,
     bookmarked: formData.bookmarked,
     krId: formData.krId || undefined,
+    recurrence: formData.recurrence ?? 'none',
     subtasks: formData.subtasks?.length ? formData.subtasks : undefined,
     isCollaborative: collaborators.length > 0,
     pendingInvites: pendingInvitesLocal,
@@ -150,6 +154,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       completed: formData.completed,
       bookmarked: formData.bookmarked,
       krId: formData.krId,
+      recurrence: formData.recurrence ?? 'none',
       isCollaborative: collaborators.length > 0,
       pendingInvites: pendingInvitesLocal,
     };
