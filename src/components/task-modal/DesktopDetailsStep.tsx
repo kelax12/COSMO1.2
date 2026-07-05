@@ -32,7 +32,7 @@ type TaskFormState = {
   bookmarked: boolean;
   isFromOKR: boolean;
   krId: string;
-  subtasks?: import('@/modules/tasks').Subtask[];
+  subtasks: import('@/modules/tasks').Subtask[];
 };
 
 export interface DesktopDetailsStepProps {
