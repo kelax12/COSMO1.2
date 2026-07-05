@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, TrendingUp, Trash2, Clock, ChevronRight, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -9,6 +9,7 @@ import { fr } from 'date-fns/locale';
 import { useCategories } from '@/modules/categories';
 import ColorSettingsModal from './ColorSettingsModal';
 import { calcOkrDuration, validKeyResults, type Objective, type Category, type KeyResultForm } from './okr-modal/logic';
+import { confirmDiscard } from '@/lib/confirm-discard';
 import OKRModalDesktopBody from './okr-modal/OKRModalDesktopBody';
 
 type OKRModalProps = {
@@ -39,6 +40,10 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
   ]);
 
+  // #40 — snapshot des valeurs initiales : fermer avec des changements non
+  // sauvés demande confirmation (overlay, Échap, drag du bottom-sheet).
+  const initialSnapshotRef = useRef<string>('');
+
   useEffect(() => {
     if (editingObjective) {
       setInfo({
@@ -62,6 +67,23 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     setStep(1);
     setStep1Error('');
     setEndDateError('');
+    // Snapshot posé au tick suivant : info/keyResults viennent d'être setState.
+    initialSnapshotRef.current = editingObjective
+      ? JSON.stringify({
+          info: {
+            title: editingObjective.title,
+            description: editingObjective.description,
+            category: editingObjective.category,
+            endDate: editingObjective.endDate ? editingObjective.endDate.split('T')[0] : '',
+          },
+          keyResults: editingObjective.keyResults.map((kr) => ({
+            title: kr.title ?? '',
+            targetValue: (kr.targetValue ?? 0).toString(),
+            currentValue: (kr.currentValue ?? 0).toString(),
+            estimatedTime: (kr.estimatedTime ?? 30).toString(),
+          })),
+        })
+      : '';
     // Init du form à l'ouverture / au changement d'OKR édité ; resetForm est
     // volontairement omis (réinitialiserait le form à chaque render).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,7 +100,17 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
     setShowDescMobile(false);
   };
 
-  const handleClose = () => { resetForm(); setStep(1); onClose(); };
+  // #40 — édition : comparaison au snapshot ; création : toute saisie non vide.
+  const isDirty = editingObjective
+    ? initialSnapshotRef.current !== '' && JSON.stringify({ info, keyResults }) !== initialSnapshotRef.current
+    : Boolean(info.title.trim() || info.description.trim() || keyResults.some((kr) => kr.title.trim()));
+
+  const handleClose = () => {
+    if (!confirmDiscard(isDirty)) return;
+    resetForm();
+    setStep(1);
+    onClose();
+  };
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);
 
   const validateStep1 = (): boolean => {

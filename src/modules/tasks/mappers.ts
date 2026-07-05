@@ -4,7 +4,7 @@
 // it must NEVER emit `user_id` (anti-mass-assignment, faille V1). The id is
 // added server-side in the repository from `auth.getUser()`.
 // ═══════════════════════════════════════════════════════════════════
-import { Task, Subtask } from './types';
+import { Task, Subtask, TaskRecurrence } from './types';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
@@ -22,6 +22,7 @@ export interface TaskRow {
   completed_at?: string;
   subtasks?: Subtask[];
   kr_id?: string | null;
+  recurrence?: string | null;
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -41,6 +42,7 @@ export interface TaskDbInput {
   completed_at?: string;
   subtasks?: Subtask[];
   kr_id?: string | null;
+  recurrence?: string;
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -67,6 +69,7 @@ export function mapTaskFromDb(row: TaskRow): Task {
     completedAt: row.completed_at ?? undefined,
     subtasks: row.subtasks || [],
     krId: row.kr_id ?? undefined,
+    recurrence: (row.recurrence as TaskRecurrence | null) ?? 'none',
     isCollaborative: row.is_collaborative ?? false,
     pendingInvites: row.pending_invites || [],
     collaboratorValidations: row.collaborator_validations || {},
@@ -90,6 +93,8 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.subtasks !== undefined) result.subtasks = input.subtasks;
   // Lien KR (#28) : chaîne vide = « délié » → NULL en base.
   if (input.krId !== undefined) result.kr_id = input.krId ? input.krId : null;
+  // Récurrence (#26).
+  if (input.recurrence !== undefined) result.recurrence = input.recurrence;
   if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
   if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
   if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;

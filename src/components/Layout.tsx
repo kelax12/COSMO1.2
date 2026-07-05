@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router-dom';
 import { useLastVisitedPage } from '@/modules/ui-states';
+import { useTasks } from '@/modules/tasks';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import {
@@ -14,7 +15,8 @@ import {
   Repeat,
   Search,
   ChevronLeft,
-  ChevronRight } from
+  ChevronRight,
+  Zap } from
   'lucide-react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
@@ -22,6 +24,10 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { usePendingRequestCount } from '@/modules/friends';
 import MobileTabBar from './layout/MobileTabBar';
+import DemoConversionBanner from './DemoConversionBanner';
+import GlobalNavShortcuts from './GlobalNavShortcuts';
+import DeadlineReminder from './DeadlineReminder';
+import SyncStatusIndicator from './SyncStatusIndicator';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
@@ -58,6 +64,9 @@ interface NavItemLinkProps {
   collapsed: boolean;
   onMouseEnterExtra?: () => void;
   badge?: number;
+  /** 'alert' = pastille rouge (notifications) ; 'neutral' = compteur sobre (#49). */
+  badgeVariant?: 'alert' | 'neutral';
+  badgeLabel?: string;
   end?: boolean;
 }
 
@@ -69,6 +78,8 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   collapsed,
   onMouseEnterExtra,
   badge,
+  badgeVariant = 'alert',
+  badgeLabel,
   end,
 }) => {
   const [iconHovered, setIconHovered] = useState(false);
@@ -95,14 +106,19 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         onMouseLeave={() => setIconHovered(false)}
         style={{
           transition: 'transform 0.2s ease, color 0.2s ease',
-          transform: (iconHovered || groupHovered) ? 'scale(1.32)' : 'scale(1)',
+          transform: (iconHovered || groupHovered) ? 'scale(1.2)' : 'scale(1)',
           color: isColored ? hoverColor : undefined,
         }}
       >
         {icon}
         {badge !== undefined && badge > 0 && (
           <span
-            className={`absolute ${collapsed ? '-top-1 -right-1' : '-top-2 -right-2'} bg-red-500 text-white text-[10px] rounded-full ${collapsed ? 'w-4 h-4' : 'w-5 h-5'} flex items-center justify-center`}
+            aria-label={badgeLabel ? `${badge} ${badgeLabel}` : undefined}
+            className={`absolute ${collapsed ? '-top-1 -right-1' : '-top-2 -right-2'} ${
+              badgeVariant === 'alert'
+                ? 'bg-red-500 text-white'
+                : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))]'
+            } text-[10px] rounded-full ${collapsed ? 'min-w-4 h-4' : 'min-w-5 h-5'} px-1 flex items-center justify-center`}
           >
             {badge}
           </span>
@@ -113,9 +129,30 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   );
 };
 
+// Titres d'onglet par route (#15) — « Tâches – Cosmo » plutôt qu'un titre
+// statique : retrouvable parmi les onglets du navigateur.
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Accueil',
+  '/tasks': 'Tâches',
+  '/agenda': 'Agenda',
+  '/habits': 'Habitudes',
+  '/okr': 'OKR',
+  '/statistics': 'Statistiques',
+  '/settings': 'Paramètres',
+  '/premium': 'Premium',
+  '/admin': 'Admin',
+};
+
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const pendingRequestCount = usePendingRequestCount();
+  // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
+  // Tâches. La disparition du badge (0 restant) est la récompense.
+  const { data: allTasks = [] } = useTasks();
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const tasksDueTodayCount = allTasks.filter(
+    (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
+  ).length;
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
@@ -123,6 +160,19 @@ const Layout: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
+
+  // Raccourci « [ » : replie/déplie la sidebar (#14) — convention Linear.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const editable = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+      if (e.key === '[' && !e.metaKey && !e.ctrlKey && !e.altKey && !editable) {
+        setIsCollapsed((prev: boolean) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // Mémorise la page courante : à la prochaine ouverture, l'app rouvre ici
   // (RootRoute lit cette valeur) au lieu de toujours retomber sur le dashboard.
@@ -132,13 +182,21 @@ const Layout: React.FC = () => {
     setLastVisitedPage(location.pathname);
   }, [location.pathname, setLastVisitedPage]);
 
+  // Titre d'onglet par page (#15).
+  useEffect(() => {
+    const pageTitle = PAGE_TITLES[location.pathname];
+    document.title = pageTitle ? `${pageTitle} – Cosmo` : 'Cosmo';
+  }, [location.pathname]);
+
 const NavItems = () =>
   <>
-      <NavItemLink to="/dashboard" label="Dashboard" icon={<LayoutDashboard size={20} aria-hidden="true" />}
-        hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount} end />
+      <NavItemLink to="/dashboard" label="Accueil" icon={<LayoutDashboard size={20} aria-hidden="true" />}
+        hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount}
+        badgeLabel="demandes en attente" end />
 
-      <NavItemLink to="/tasks" label="To do list" icon={<CheckSquare size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} />
+      <NavItemLink to="/tasks" label="Tâches" icon={<CheckSquare size={20} aria-hidden="true" />}
+        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed}
+        badge={tasksDueTodayCount} badgeVariant="neutral" badgeLabel="tâches pour aujourd'hui" />
 
       <NavItemLink to="/agenda" label="Agenda" icon={<Calendar size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
@@ -185,6 +243,10 @@ const NavItems = () =>
       <Suspense fallback={null}>
         <OnboardingExampleTasks />
       </Suspense>
+      {/* Raccourcis « g puis lettre » (#44) */}
+      <GlobalNavShortcuts />
+      {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}
+      <DeadlineReminder />
     </>
   );
 
@@ -194,6 +256,12 @@ const NavItems = () =>
         className="flex flex-col h-[100dvh] overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-background))' }}
       >
+        {/* Bannière conversion démo → compte (#9) */}
+        <DemoConversionBanner />
+        {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
+        <div className="fixed top-2 right-2 z-40 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-2.5 py-1 shadow-sm empty:hidden">
+          <SyncStatusIndicator hideWhenSynced />
+        </div>
         <main
           className="flex-1 overflow-auto pb-20"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
@@ -204,6 +272,18 @@ const NavItems = () =>
           </Suspense>
           <Outlet />
         </main>
+        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
+            toutes les pages protégées : une pensée doit se capturer en 1 tap. */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
+          data-tutorial-id="tasks-fab"
+          aria-label="Créer une tâche rapide"
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+          style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <Zap size={24} aria-hidden="true" />
+        </button>
         <MobileTabBar />
         {globalOverlays}
       </div>
@@ -220,8 +300,9 @@ const NavItems = () =>
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-0 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-blue-500"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-blue-500 transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
+          title="Réduire/agrandir ( [ )"
           aria-label={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}
         >
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -255,20 +336,28 @@ const NavItems = () =>
         <div className={`border-t ${isCollapsed ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
           {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>AUTRE</div>}
           {CompanyItems()}
+          {/* État de synchronisation (#37) */}
+          <div className={`mt-3 ${isCollapsed ? 'flex justify-center' : 'px-2'}`}>
+            <SyncStatusIndicator compact={isCollapsed} />
+          </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <main
-        className="flex-1 overflow-auto relative"
-        style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Bannière conversion démo → compte (#9) */}
+        <DemoConversionBanner />
+        <main
+          className="flex-1 overflow-auto relative"
+          style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
-        {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
-        <Suspense fallback={null}>
-          <HabitEveningReminder />
-        </Suspense>
-        <Outlet />
-      </main>
+          {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
+          <Suspense fallback={null}>
+            <HabitEveningReminder />
+          </Suspense>
+          <Outlet />
+        </main>
+      </div>
 
       {globalOverlays}
     </div>);

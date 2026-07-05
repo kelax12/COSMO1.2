@@ -22,6 +22,8 @@ export interface QuickAddParseResult {
   categoryToken?: string;
   priority?: number;
   estimatedTime?: number;
+  /** Récurrence (#26) : « tous les jours », « chaque semaine », « tous les lundis »… */
+  recurrence?: 'daily' | 'weekly' | 'monthly';
 }
 
 const WEEKDAYS: Record<string, number> = {
@@ -53,7 +55,31 @@ export function parseQuickAdd(input: string, now: Date = new Date()): QuickAddPa
   const nameParts: string[] = [];
   let sawTimeToken = false;
 
-  for (const rawToken of input.trim().split(/\s+/)) {
+  // ── Récurrence (#26) — expressions multi-mots, consommées avant la
+  // tokenisation. « tous les lundis » = hebdo + prochaine occurrence du lundi.
+  let working = input;
+  const weekdayRecurrence = /\b(?:tous les|chaque)\s+(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)s?\b/i.exec(working);
+  if (weekdayRecurrence) {
+    result.recurrence = 'weekly';
+    result.deadline = toLocalDateString(nextWeekday(now, WEEKDAYS[normalize(weekdayRecurrence[1])]));
+    working = working.replace(weekdayRecurrence[0], ' ');
+  } else if (/\b(?:tous les jours|chaque jour)\b/i.test(working)) {
+    result.recurrence = 'daily';
+    result.deadline = toLocalDateString(now);
+    working = working.replace(/\b(?:tous les jours|chaque jour)\b/i, ' ');
+  } else if (/\b(?:toutes les semaines|chaque semaine)\b/i.test(working)) {
+    result.recurrence = 'weekly';
+    result.deadline = toLocalDateString(addDays(now, 7));
+    working = working.replace(/\b(?:toutes les semaines|chaque semaine)\b/i, ' ');
+  } else if (/\b(?:tous les mois|chaque mois)\b/i.test(working)) {
+    result.recurrence = 'monthly';
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    result.deadline = toLocalDateString(nextMonth);
+    working = working.replace(/\b(?:tous les mois|chaque mois)\b/i, ' ');
+  }
+
+  for (const rawToken of working.trim().split(/\s+/)) {
     if (rawToken === '') continue;
     const token = normalize(rawToken);
 

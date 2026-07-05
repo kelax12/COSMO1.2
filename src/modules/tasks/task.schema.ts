@@ -21,6 +21,8 @@ export const createTaskSchema = z.object({
   })).max(50, 'Trop de sous-tâches (50 max)').optional(),
   // Lien vers un Key Result OKR (#28) — '' signifie « aucun lien ».
   krId: z.string().max(100).optional(),
+  // Récurrence (#26) — l'occurrence suivante est générée à la complétion.
+  recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).optional(),
   isCollaborative: z.boolean().optional(),
   pendingInvites: z.array(z.string()).optional(),
   collaboratorValidations: z.record(z.boolean()).optional(),

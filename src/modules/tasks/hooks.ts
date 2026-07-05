@@ -7,6 +7,7 @@ import { useIsDemo } from '@/lib/app-mode.store';
 import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { buildNextOccurrence } from './recurrence';
 import { taskKeys } from './constants';
 import { friendKeys } from '@/modules/friends/constants';
 import { PaginationParams } from '@/lib/pagination.types';
@@ -271,7 +272,34 @@ export const useToggleTaskComplete = () => {
     // l'état. On n'affiche rien quand on dé-valide une tâche.
     onSuccess: (updatedTask) => {
       if (!updatedTask?.completed) return;
+
+      // Récurrence (#26) : la complétion d'une tâche récurrente génère
+      // l'occurrence suivante. L'undo supprime aussi cette occurrence pour
+      // revenir exactement à l'état d'avant.
+      let spawnedNextId: string | null = null;
+      const nextInput = buildNextOccurrence(updatedTask);
+      if (nextInput) {
+        repository
+          .create(nextInput)
+          .then((created) => {
+            spawnedNextId = created.id;
+            queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+              old ? [created, ...old] : [created]
+            );
+          })
+          .catch(() => { /* best-effort : la complétion reste valide */ });
+      }
+
       showUndoToast('Tâche validée', () => {
+        if (spawnedNextId) {
+          const idToRemove = spawnedNextId;
+          queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+            old?.filter((t) => t.id !== idToRemove)
+          );
+          repository.delete(idToRemove).catch(() => {
+            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+          });
+        }
         // Mise à jour optimiste immédiate du cache : la tâche redevient
         // « non complétée » et réapparaît tout de suite dans la liste active
         // (sans attendre un refresh). On persiste ensuite le re-toggle.

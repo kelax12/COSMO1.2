@@ -38,7 +38,7 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
   {
     title: 'Créer une tâche',
     description:
-      "Ce bouton flottant est toujours accessible, même quand vous scrollez. Il ouvre le formulaire de création.",
+      "Ce bouton flottant est accessible depuis toutes les pages. Il ouvre la création rapide : tapez « Appeler le dentiste jeudi 10h » et la date est comprise automatiquement.",
     target: '[data-tutorial-id="tasks-fab"]',
     cardPlacement: 'top',
     action: 'pulse',

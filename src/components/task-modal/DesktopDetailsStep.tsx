@@ -32,6 +32,7 @@ type TaskFormState = {
   bookmarked: boolean;
   isFromOKR: boolean;
   krId: string;
+  recurrence: import('@/modules/tasks').TaskRecurrence;
   subtasks: import('@/modules/tasks').Subtask[];
 };
 
@@ -368,6 +369,29 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             {errors.deadline}
                           </div>
                         }
+
+                        {/* Récurrence (#26) — visible dès qu'une échéance est posée */}
+                        {formData.deadline && (
+                          <div className="mt-2">
+                            <label htmlFor="task-recurrence" className="sr-only">Récurrence</label>
+                            <select
+                              id="task-recurrence"
+                              value={formData.recurrence}
+                              onChange={(e) => handleInputChange('recurrence', e.target.value)}
+                              className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none hover:border-blue-500 focus:border-blue-600 transition-all"
+                              style={{
+                                backgroundColor: 'rgb(var(--color-surface))',
+                                color: 'rgb(var(--color-text-primary))',
+                                borderColor: 'rgb(var(--color-border))',
+                              }}
+                            >
+                              <option value="none">Ne se répète pas</option>
+                              <option value="daily">Tous les jours</option>
+                              <option value="weekly">Toutes les semaines</option>
+                              <option value="monthly">Tous les mois</option>
+                            </select>
+                          </div>
+                        )}
                       </div>
 
                       <div>

@@ -1,9 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Target, TrendingUp, Clock } from 'lucide-react';
 import { useOkrs, KeyResult } from '@/modules/okrs';
 import { DashboardCardSkeleton } from '@/components/skeletons';
+import EmptyState from '@/components/EmptyState';
 
 const ActiveOKRs: React.FC = () => {
+  const navigate = useNavigate();
   const { data: okrs = [], isLoading } = useOkrs();
 
   const activeOKRs = okrs.filter(okr => !okr.completed).slice(0, 3);
@@ -70,11 +73,17 @@ const ActiveOKRs: React.FC = () => {
             })}
   
             {activeOKRs.length === 0 && (
-              <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
-                <Target size={48} className="mx-auto mb-4 opacity-30" />
-                <p>Aucun OKR actif</p>
-                <p className="text-sm">Définissez vos objectifs dans la section OKR</p>
-              </div>
+              /* Empty state avec CTA (#16) : seul point de découverte des OKR
+                 sur mobile (absents de la tab bar). */
+              <EmptyState
+                icon={Target}
+                title="Prêt à viser plus haut ?"
+                description="Définissez un objectif et ses résultats clés pour suivre votre progression."
+                actionLabel="Créer votre premier objectif"
+                onAction={() => navigate('/okr', { state: { openCreate: true } })}
+                accentColor="#22c55e"
+                compact
+              />
             )}
         </div>
       </div>

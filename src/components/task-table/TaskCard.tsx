@@ -429,14 +429,16 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             >
               <Copy size={18} />
             </button>
-            {isOverdue && (
+            {/* Reporter à demain (#42) : disponible pour toute tâche non
+                complétée avec échéance, pas seulement celles en retard. */}
+            {!task.completed && task.deadline && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onSnooze(task.id, getSnoozeOptions()[0].deadline);
                   setActionsVisible(false);
                 }}
-                className="min-w-11 min-h-11 p-2 rounded-lg text-amber-500 flex items-center justify-center"
+                className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center ${isOverdue ? 'text-amber-500' : 'text-slate-500'}`}
                 aria-label="Reporter à demain"
               >
                 <Hourglass size={18} />

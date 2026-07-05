@@ -18,6 +18,7 @@ import { useCreateCategory } from '@/modules/categories';
 import AddToListModal from '../AddToListModal';
 import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
+import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
 
@@ -27,6 +28,7 @@ export interface MobileBodyProps {
     deadline: string; estimatedTime: number | string;
     completed: boolean; bookmarked: boolean; isFromOKR: boolean;
     krId: string;
+    recurrence: import('@/modules/tasks').TaskRecurrence;
     subtasks?: import('@/modules/tasks').Subtask[];
   };
   handleInputChange: (field: string, value: string | number | boolean) => void;
@@ -212,6 +214,19 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   className="overflow-hidden"
                 >
                   <div className="flex flex-col">
+                    {/* Presets (#25) : un tap au lieu de trois */}
+                    <div className="flex flex-wrap gap-1.5 px-4 pt-3">
+                      {buildDatePresets().map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => { handleInputChange('deadline', preset.value); setShowDeadlinePicker(false); }}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
                     <div className="overflow-hidden">
                       <Calendar
                         mode="single"
@@ -240,6 +255,26 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
+            {/* Récurrence (#26) — visible dès qu'une échéance est posée */}
+            {formData.deadline && (
+              <>
+                <CellSeparator />
+                <div className="flex items-center justify-between px-4 min-h-11 gap-3">
+                  <span className="text-[15px] text-gray-900 dark:text-gray-100">Répéter</span>
+                  <select
+                    value={formData.recurrence}
+                    onChange={(e) => handleInputChange('recurrence', e.target.value)}
+                    aria-label="Récurrence de la tâche"
+                    className="text-[15px] bg-transparent text-right text-blue-500 focus:outline-none"
+                  >
+                    <option value="none">Jamais</option>
+                    <option value="daily">Tous les jours</option>
+                    <option value="weekly">Toutes les semaines</option>
+                    <option value="monthly">Tous les mois</option>
+                  </select>
+                </div>
+              </>
+            )}
             <CellSeparator />
             {/* Durée */}
             <div className="flex items-center justify-between px-4 min-h-11">

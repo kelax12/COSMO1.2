@@ -3,7 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, Subtask, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus } from './types';
+export type { Task, Subtask, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskRecurrence } from './types';
+
+// Récurrence (#26) — helpers purs
+export { nextOccurrenceDeadline, buildNextOccurrence } from './recurrence';
 
 // Constants
 export { taskKeys, TASKS_STORAGE_KEY } from './constants';

@@ -14,7 +14,9 @@ export const formatDate = (dateString: string | undefined) => {
   }
 };
 
-// Échéance « intelligente » : Aujourd'hui / Demain / « 4 juin ».
+// Échéance « intelligente » (#28) : relative sous ±7 jours (« Aujourd'hui »,
+// « Demain », « mer. », « il y a 2 j »), absolue au-delà. « dans 3 j » demande
+// zéro calcul mental là où « 12 juil. » en demande un — sur chaque ligne.
 export const formatDeadlineSmart = (dateString: string | undefined): string => {
   if (!dateString) return '—';
   const d = new Date(dateString);
@@ -24,6 +26,12 @@ export const formatDeadlineSmart = (dateString: string | undefined): string => {
   const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
   if (diffDays === 0) return "Aujourd'hui";
   if (diffDays === 1) return 'Demain';
+  if (diffDays === -1) return 'Hier';
+  if (diffDays < 0 && diffDays > -7) return `il y a ${-diffDays} j`;
+  // 2–6 jours : jour de la semaine, sans ambiguïté dans cette fenêtre.
+  if (diffDays > 1 && diffDays < 7) {
+    return format(d, 'EEEE', { locale: fr });
+  }
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
 };
 

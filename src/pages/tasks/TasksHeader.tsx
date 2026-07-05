@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Search } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 
 interface TasksHeaderProps {
@@ -24,7 +24,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
             as="h1"
             variant="compact"
           >
-            To do list
+            Tâches
           </PageHeading>
           <motion.p
             initial={{ x: -20, opacity: 0 }}
@@ -42,6 +42,15 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
           transition={{ delay: 0.2 }}
           className="flex items-center gap-2 shrink-0"
         >
+          {/* Recherche globale (#41) — mobile : la loupe était enterrée sous « Plus » */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+            aria-label="Recherche globale"
+            className="md:hidden flex items-center justify-center rounded-lg min-w-11 min-h-11 border bg-white text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 shadow-sm"
+          >
+            <Search size={18} aria-hidden="true" />
+          </button>
           {/* Calendrier button */}
           <motion.button
             whileHover={{ scale: 1.05 }}

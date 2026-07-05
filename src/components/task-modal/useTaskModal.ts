@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
+import { confirmDiscard } from '@/lib/confirm-discard';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
 
@@ -14,6 +15,7 @@ import {
   useDeleteTask,
   Task,
   Subtask,
+  TaskRecurrence,
 } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -144,6 +146,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     bookmarked: false,
     isFromOKR: false,
     krId: '',
+    recurrence: 'none' as TaskRecurrence,
     // Sous-tâches saisies en création (#12) — en édition la checklist vit
     // dans SubtaskChecklist (persistance immédiate), ce champ reste [].
     subtasks: [] as Subtask[],
@@ -244,6 +247,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         bookmarked: initialData?.bookmarked || false,
         isFromOKR: initialData?.isFromOKR || false,
         krId: initialData?.krId || '',
+        recurrence: initialData?.recurrence || 'none',
         subtasks: [],
       });
 
@@ -278,6 +282,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         bookmarked: task.bookmarked || false,
         isFromOKR: (task as Task & { isFromOKR?: boolean }).isFromOKR || false,
         krId: task.krId || '',
+        recurrence: task.recurrence || 'none',
         subtasks: [],
       });
 
@@ -382,6 +387,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       formData.completed !== task.completed ||
       formData.bookmarked !== task.bookmarked ||
       formData.krId !== (task.krId ?? '') ||
+      formData.recurrence !== (task.recurrence ?? 'none') ||
       JSON.stringify(selectedSorted) !== JSON.stringify(taskListIds) ||
       JSON.stringify(collaborators) !== JSON.stringify(seedCollaboratorIds);
 
@@ -495,6 +501,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   };
 
   const handleClose = () => {
+    // #40 — en édition, une fermeture avec changements non sauvés demande
+    // confirmation. En création, le brouillon (useFormDraft) protège déjà la
+    // saisie : fermer est sans perte, pas de friction inutile.
+    if (!effectiveIsCreating && !confirmDiscard(hasChanges)) return;
     onClose();
   };
 

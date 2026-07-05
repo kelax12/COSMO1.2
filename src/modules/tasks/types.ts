@@ -1,3 +1,6 @@
+/** Récurrence d'une tâche (#26) : à la complétion, l'occurrence suivante est générée. */
+export type TaskRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+
 /** Élément de checklist d'une tâche (#12). */
 export interface Subtask {
   id: string;
@@ -22,6 +25,8 @@ export interface Task {
   subtasks?: Subtask[];
   /** Id du Key Result OKR auquel la tâche contribue (#28). */
   krId?: string;
+  /** Récurrence (#26) — défaut 'none'. */
+  recurrence?: TaskRecurrence;
   isCollaborative?: boolean;
   pendingInvites?: string[];
   collaboratorValidations?: Record<string, boolean>;

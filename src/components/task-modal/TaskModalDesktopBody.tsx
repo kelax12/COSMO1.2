@@ -29,6 +29,7 @@ type TaskFormState = {
   bookmarked: boolean;
   isFromOKR: boolean;
   krId: string;
+  recurrence: import('@/modules/tasks').TaskRecurrence;
   subtasks: import('@/modules/tasks').Subtask[];
 };
 
@@ -93,7 +94,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   step, setStep,
   dRegister, dTrigger, dClear, dInvalid,
   collaboratorRef,
-  validateForm, isStep1Valid, isFormValid, missingStep1Fields,
+  validateForm, isFormValid, missingStep1Fields,
   categories, createCategoryMutation,
   listColorOptions,
   lists, selectedListIds, setSelectedListIds, createListMutation,
@@ -126,10 +127,6 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
               <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
               </h2>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div className={`w-2 h-2 rounded-full transition-colors ${step === 1 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
-                <div className={`w-2 h-2 rounded-full transition-colors ${step === 2 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
-              </div>
               {hasChanges &&
                 <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
                   <AlertCircle size={12} aria-hidden="true" />
@@ -160,9 +157,10 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 
               <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
 
-                {/* ── Step 1 : champs principaux — extrait dans DesktopDetailsStep.tsx ── */}
-                {step === 1 && (
-                  <DesktopDetailsStep
+                {/* ── Vue unique (#29) : le wizard 2 étapes est remplacé par une
+                    seule vue — les collaborateurs (minorité des tâches) passent
+                    en progressive disclosure via la section « Partager ». ── */}
+                <DesktopDetailsStep
                     formData={formData}
                     setFormData={setFormData}
                     handleInputChange={handleInputChange}
@@ -186,33 +184,56 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     task={task}
                     isTaskOwner={isTaskOwner}
                   />
-                )} {/* end step 1 */}
 
-                {/* ── Step 2 : collaborateurs — extrait dans DesktopCollaboratorsStep.tsx (split #6) ── */}
-                {step === 2 && (
-                  <DesktopCollaboratorsStep
-                    collaboratorRef={collaboratorRef}
-                    isTaskOwner={isTaskOwner}
-                    task={task}
-                    onGenerateShareLink={onGenerateShareLink}
-                    collaborators={collaborators}
-                    displayInfo={displayInfo}
-                    pendingShareIds={pendingShareIds}
-                    handleRemoveCollaborator={handleRemoveCollaborator}
-                    emailInput={emailInput}
-                    setEmailInput={setEmailInput}
-                    inputError={inputError}
-                    setInputError={setInputError}
-                    handleAddEmail={handleAddEmail}
-                    filteredFriends={filteredFriends}
-                    collabIdOf={collabIdOf}
-                    toggleCollaborator={toggleCollaborator}
-                    sentRequests={sentRequests}
-                    pendingInvitesLocal={pendingInvitesLocal}
-                    friends={friends}
-                    cancelFriendRequestMutation={cancelFriendRequestMutation}
-                  />
-                )} {/* end step 2 */}
+                {/* ── Collaborateurs en disclosure (#29) — repliés par défaut,
+                    dépliés via « Partager » ou l'ouverture ciblée (step===2). ── */}
+                <div className="mt-6 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                  <button
+                    type="button"
+                    onClick={() => setStep(step === 2 ? 1 : 2)}
+                    aria-expanded={step === 2}
+                    className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
+                    style={{ color: 'rgb(var(--color-text-secondary))' }}
+                  >
+                    <ChevronRight
+                      size={16}
+                      aria-hidden="true"
+                      className={`transition-transform ${step === 2 ? 'rotate-90' : ''}`}
+                    />
+                    Partager la tâche
+                    {collaborators.length > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-500">
+                        {collaborators.length}
+                      </span>
+                    )}
+                  </button>
+                  {step === 2 && (
+                    <div className="mt-4">
+                      <DesktopCollaboratorsStep
+                        collaboratorRef={collaboratorRef}
+                        isTaskOwner={isTaskOwner}
+                        task={task}
+                        onGenerateShareLink={onGenerateShareLink}
+                        collaborators={collaborators}
+                        displayInfo={displayInfo}
+                        pendingShareIds={pendingShareIds}
+                        handleRemoveCollaborator={handleRemoveCollaborator}
+                        emailInput={emailInput}
+                        setEmailInput={setEmailInput}
+                        inputError={inputError}
+                        setInputError={setInputError}
+                        handleAddEmail={handleAddEmail}
+                        filteredFriends={filteredFriends}
+                        collabIdOf={collabIdOf}
+                        toggleCollaborator={toggleCollaborator}
+                        sentRequests={sentRequests}
+                        pendingInvitesLocal={pendingInvitesLocal}
+                        friends={friends}
+                        cancelFriendRequestMutation={cancelFriendRequestMutation}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {/* ── Action Buttons ── */}
                 <div
@@ -223,57 +244,39 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
                   }}
                 >
-                  {step === 1 ? (
-                    <>
-                      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
-                        <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                          Annuler
-                        </Button>
-                        <Button
-                          type="button"
-                          size="lg"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            const missing = missingStep1Fields();
-                            if (missing.length === 0) { setStep(2); return; }
-                            validateForm();
-                            dTrigger(missing);
-                          }}
-                          className={`min-h-11 w-full sm:w-auto ${!isStep1Valid() ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100' : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'}`}
-                        >
-                          Suivant
-                          <ChevronRight size={16} data-icon="inline-end" />
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                        ← Retour
-                      </Button>
-                      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                        <Button
-                          type="submit"
-                          size="lg"
-                          disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
-                          className={`min-h-11 w-full sm:w-auto ${
-                            isLoading || !isFormValid() || (!hasChanges && !isCreating)
-                              ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100 cursor-not-allowed'
-                              : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
-                          }`}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                              <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
-                            </>
-                          ) : (
-                            isCreating ? 'Créer la tâche' : 'Sauvegarder'
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
+                    <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
+                      Annuler
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      onClick={(e) => {
+                        // Champs manquants : shake + focus sur le premier champ invalide.
+                        const missing = missingStep1Fields();
+                        if (missing.length > 0) {
+                          e.preventDefault();
+                          validateForm();
+                          dTrigger(missing);
+                        }
+                      }}
+                      disabled={isLoading || (!hasChanges && !isCreating)}
+                      className={`min-h-11 w-full sm:w-auto ${
+                        isLoading || !isFormValid() || (!hasChanges && !isCreating)
+                          ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
+                          : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
+                          <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                        </>
+                      ) : (
+                        isCreating ? 'Créer la tâche' : 'Sauvegarder'
+                      )}
+                    </Button>
+                  </div>
               </div>
             </form>
           </div>

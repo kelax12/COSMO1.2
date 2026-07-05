@@ -183,9 +183,46 @@ export const TaskRow = React.memo(({
   const category = getCategoryById(task.category);
   const categoryColor = category?.color || '#94a3b8';
   const overdue = isTaskOverdue(task.deadline, task.completed);
+
+  // Micro-animation de complétion (#47) : check dessiné (draw 200 ms) +
+  // strikethrough, puis la mutation part après 300 ms — le moment de
+  // récompense est le seul instant émotionnel positif de l'app, il mérite
+  // mieux qu'une bascule sèche. Pas de confetti — de la précision.
+  const [isValidating, setIsValidating] = React.useState(false);
+  const showChecked = task.completed || isValidating;
+  const handleToggle = () => {
+    if (task.completed) { onToggleComplete(task.id); return; }
+    if (isValidating) return;
+    setIsValidating(true);
+    setTimeout(() => { onToggleComplete(task.id); setIsValidating(false); }, 300);
+  };
+  // Navigation clavier (#45) : ↑/↓ = ligne précédente/suivante, Entrée = ouvrir,
+  // x = compléter. Chaque <tr> est focusable ; le déplacement passe par les
+  // siblings DOM — zéro état partagé, fonctionne avec tri/filtres.
+  const handleRowKeyDown = (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+    if (addToListMode) return;
+    if (e.target !== e.currentTarget) return; // saisie dans un bouton enfant
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      (e.currentTarget.previousElementSibling as HTMLElement | null)?.focus();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      onSelectTask(task.id);
+    } else if (e.key.toLowerCase() === 'x') {
+      e.preventDefault();
+      onToggleComplete(task.id);
+    }
+  };
+
   return (
     <tr
-      className={`animate-fade-in transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
+      tabIndex={addToListMode ? -1 : 0}
+      onKeyDown={handleRowKeyDown}
+      aria-label={task.name}
+      className={`animate-fade-in transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 focus-visible:ring-inset ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-75' : ''}`}
       onClick={() => { if (!addToListMode) onSelectTask(task.id); }}
       style={{
         backgroundColor: addToListMode
@@ -239,25 +276,34 @@ export const TaskRow = React.memo(({
               </motion.div>
             )}
           </AnimatePresence>
-          <button
-            onClick={() => onToggleComplete(task.id)}
+          <motion.button
+            onClick={handleToggle}
             role="checkbox"
-            aria-checked={task.completed}
+            aria-checked={showChecked}
             aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+            animate={isValidating ? { scale: [1, 1.25, 1] } : {}}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-              task.completed
+              showChecked
                 ? 'bg-blue-500 border-blue-500'
                 : addToListMode
                   ? 'border-gray-600 dark:border-gray-500 hover:border-blue-500'
                   : 'border-gray-400 hover:border-blue-500'
             }`}
           >
-            {task.completed && (
+            {showChecked && (
               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                <motion.path
+                  initial={isValidating ? { pathLength: 0 } : false}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             )}
-          </button>
+          </motion.button>
         </div>
       </td>
       <td className="px-2 py-4">
@@ -265,8 +311,8 @@ export const TaskRow = React.memo(({
           <TaskCategoryIndicator category={task.category} />
         </div>
       </td>
-      <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base ${task.completed ? 'line-through' : ''}`}
-          style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
+      <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base transition-all duration-200 ${showChecked ? 'line-through' : ''}`}
+          style={{ color: showChecked ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
           <span className="truncate" title={task.name}>{task.name}</span>
           {/* Compteur sous-tâches (#12) : « 2/5 » quand la checklist existe */}
