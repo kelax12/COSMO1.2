@@ -12,6 +12,41 @@ export interface AdminTotals {
   activeToday: number;
   active7d: number;
   inactive7dPlus: number;
+  inactive30dPlus: number;
+}
+
+export interface AdminAdoption {
+  tasksUsers: number;
+  habitsUsers: number;
+  eventsUsers: number;
+  okrsUsers: number;
+}
+
+export interface AdminActivation {
+  activated: number;
+  total: number;
+}
+
+export interface AdminTasksCompletion {
+  completed: number;
+  total: number;
+}
+
+export interface AdminCollaboration {
+  sharers: number;
+  usersWithFriends: number;
+  acceptedRequests: number;
+}
+
+export interface RetentionCohort {
+  week: string; // lundi de la semaine d'inscription, 'YYYY-MM-DD'
+  signups: number;
+  retained: number;
+}
+
+export interface AdminStickiness {
+  dau: number;
+  mau: number;
 }
 
 export interface AdminDemoStats {
@@ -35,4 +70,11 @@ export interface AdminStats {
   dau: DailyPoint[];
   demo: AdminDemoStats;
   usage: AdminUsageStats;
+  signupsByProvider: Record<string, number>;
+  adoption: AdminAdoption;
+  activation24h: AdminActivation;
+  tasksCompletion: AdminTasksCompletion;
+  collaboration: AdminCollaboration;
+  retentionJ7: RetentionCohort[];
+  stickiness: AdminStickiness;
 }

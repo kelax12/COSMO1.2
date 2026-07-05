@@ -1,4 +1,4 @@
-export { useAdminStats } from './hooks';
+export { useAdminStats, useIsAdmin } from './hooks';
 export { adminKeys } from './constants';
 export { AdminForbiddenError } from './repository';
 export {
@@ -14,5 +14,11 @@ export type {
   AdminTotals,
   AdminDemoStats,
   AdminUsageStats,
+  AdminAdoption,
+  AdminActivation,
+  AdminTasksCompletion,
+  AdminCollaboration,
+  AdminStickiness,
+  RetentionCohort,
   DailyPoint,
 } from './types';

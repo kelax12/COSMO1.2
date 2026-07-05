@@ -27,6 +27,7 @@ interface RawAdminStats {
     active_today?: number;
     active_7d?: number;
     inactive_7d_plus?: number;
+    inactive_30d_plus?: number;
   };
   signups_by_day?: RawDailyPoint[];
   dau?: RawDailyPoint[];
@@ -38,6 +39,22 @@ interface RawAdminStats {
     okrs?: number;
     shared_tasks?: number;
   };
+  signups_by_provider?: Record<string, number>;
+  adoption?: {
+    tasks_users?: number;
+    habits_users?: number;
+    events_users?: number;
+    okrs_users?: number;
+  };
+  activation_24h?: { activated?: number; total?: number };
+  tasks_completion?: { completed?: number; total?: number };
+  collaboration?: {
+    sharers?: number;
+    users_with_friends?: number;
+    accepted_requests?: number;
+  };
+  retention_j7?: Array<{ week?: string; signups?: number; retained?: number }>;
+  stickiness?: { dau?: number; mau?: number };
 }
 
 function mapDailyPoints(raw: RawDailyPoint[] | undefined): DailyPoint[] {
@@ -58,6 +75,7 @@ export async function fetchAdminStats(): Promise<AdminStats> {
       activeToday: raw.totals?.active_today ?? 0,
       active7d: raw.totals?.active_7d ?? 0,
       inactive7dPlus: raw.totals?.inactive_7d_plus ?? 0,
+      inactive30dPlus: raw.totals?.inactive_30d_plus ?? 0,
     },
     signupsByDay: mapDailyPoints(raw.signups_by_day),
     dau: mapDailyPoints(raw.dau),
@@ -73,5 +91,48 @@ export async function fetchAdminStats(): Promise<AdminStats> {
       okrs: raw.usage?.okrs ?? 0,
       sharedTasks: raw.usage?.shared_tasks ?? 0,
     },
+    signupsByProvider: raw.signups_by_provider ?? {},
+    adoption: {
+      tasksUsers: raw.adoption?.tasks_users ?? 0,
+      habitsUsers: raw.adoption?.habits_users ?? 0,
+      eventsUsers: raw.adoption?.events_users ?? 0,
+      okrsUsers: raw.adoption?.okrs_users ?? 0,
+    },
+    activation24h: {
+      activated: raw.activation_24h?.activated ?? 0,
+      total: raw.activation_24h?.total ?? 0,
+    },
+    tasksCompletion: {
+      completed: raw.tasks_completion?.completed ?? 0,
+      total: raw.tasks_completion?.total ?? 0,
+    },
+    collaboration: {
+      sharers: raw.collaboration?.sharers ?? 0,
+      usersWithFriends: raw.collaboration?.users_with_friends ?? 0,
+      acceptedRequests: raw.collaboration?.accepted_requests ?? 0,
+    },
+    retentionJ7: (raw.retention_j7 ?? []).map((c) => ({
+      week: c.week ?? '',
+      signups: c.signups ?? 0,
+      retained: c.retained ?? 0,
+    })),
+    stickiness: {
+      dau: raw.stickiness?.dau ?? 0,
+      mau: raw.stickiness?.mau ?? 0,
+    },
   };
+}
+
+/**
+ * Statut admin de l'utilisateur courant (RPC is_admin, mig. 056).
+ * Ne doit JAMAIS bloquer l'UI : toute erreur ⇒ false silencieux.
+ */
+export async function fetchIsAdmin(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('is_admin');
+    if (error) return false;
+    return data === true;
+  } catch {
+    return false;
+  }
 }
