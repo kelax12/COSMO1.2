@@ -75,6 +75,19 @@ if (new URLSearchParams(window.location.search).has('debug')) {
 // `performance.timeOrigin` is the most precise reference available in browsers.
 performance.mark('cosmo:boot');
 
+// Thème appliqué AVANT le premier paint, pour toutes les pages — publiques
+// incluses. Sans ça, /login /signup /forgot-password /reset-password rendaient
+// toujours en mode clair : la classe .dark n'était posée que par useDarkMode,
+// monté uniquement dans l'app authentifiée (même logique de résolution :
+// localStorage 'theme' puis prefers-color-scheme).
+try {
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark)) {
+    document.documentElement.classList.add('dark');
+  }
+} catch { /* localStorage inaccessible (navigation privée stricte) — thème clair */ }
+
 // iOS Safari has a well-known WebKit bug where the *very first* cross-origin
 // fetch made during page load can fail silently with "Load failed" / DOMException
 // after ~10 s. The browser refuses to commit to the new HTTP/2 socket while the

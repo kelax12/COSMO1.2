@@ -8,9 +8,6 @@ import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '../../lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '../../lib/demo-metrics';
-import { snapshotDemoData, runPendingDemoMigration, hasPendingDemoMigration } from '../../lib/demo-migration';
-import { eventsKeys } from '../../modules/events/constants';
-import { toast } from 'sonner';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 
@@ -117,25 +114,6 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Migration démo → compte (amélioration UX n°9) : rejoue le snapshot posé par
-// register() une fois la session réelle ouverte. Garde in-flight au niveau
-// module : INITIAL_SESSION et SIGNED_IN peuvent tous deux passer ici.
-let demoMigrationStarted = false;
-function migrateDemoDataIfPending(queryClient: ReturnType<typeof useQueryClient>): void {
-  if (demoMigrationStarted || !hasPendingDemoMigration()) return;
-  demoMigrationStarted = true;
-  void runPendingDemoMigration()
-    .then((migrated) => {
-      if (migrated > 0) {
-        queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-        queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
-        queryClient.invalidateQueries({ queryKey: eventsKeys.all });
-        toast.success(`${migrated} éléments de votre démo ont été importés dans votre compte`);
-      }
-    })
-    .catch(() => { /* best-effort */ });
-}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
@@ -246,7 +224,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
-          migrateDemoDataIfPending(queryClient);
           dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
           dlog('initializeAuth: restoreAndRefresh() returned');
@@ -291,7 +268,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
-          migrateDemoDataIfPending(queryClient);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
         setIsLoading(false);
@@ -312,7 +288,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         setUser(mapSupabaseUserToAppUser(session.user));
         touchLastSeen(session.user.id);
-        migrateDemoDataIfPending(queryClient);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         // Un re-login dans le même chargement de page doit re-pinger last_seen_at.
@@ -376,9 +351,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (cleanEmail.toLowerCase() === DEMO_SENTINEL_EMAIL) {
       return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
     }
-    // Snapshot des données démo AVANT le reset : elles seront rejouées dans le
-    // compte réel à l'ouverture de session (amélioration UX n°9).
-    if (appModeStore.isDemo) await snapshotDemoData();
     exitDemoIfActive();
     try {
       const { error } = await supabase.auth.signUp({

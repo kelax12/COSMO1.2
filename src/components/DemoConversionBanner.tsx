@@ -8,11 +8,11 @@ const DISMISS_KEY = 'cosmo_demo_banner_dismissed';
 /**
  * Bannière de conversion démo → compte (amélioration UX n°9).
  *
- * Visible uniquement en mode démo : rappelle que les données sont locales à
- * l'appareil et propose de créer un compte (avec migration automatique des
- * données, cf. lib/demo-migration.ts). Dismissible — le flag localStorage est
- * balayé par clearDemoStorage(), donc la bannière revient à chaque nouvelle
- * session démo, pas à chaque page.
+ * Visible uniquement en mode démo : rappelle que les données démo sont locales
+ * à l'appareil (elles ne sont PAS transférées vers le compte) et propose de
+ * créer un compte. Dismissible — le flag localStorage est balayé par
+ * clearDemoStorage(), donc la bannière revient à chaque nouvelle session démo,
+ * pas à chaque page.
  */
 const DemoConversionBanner: React.FC = () => {
   const { isDemo } = useAuth();
@@ -37,7 +37,7 @@ const DemoConversionBanner: React.FC = () => {
       <CloudUpload size={16} className="shrink-0 text-blue-400" aria-hidden="true" />
       <p className="flex-1 text-[rgb(var(--color-text-secondary))] leading-snug">
         <span className="font-medium text-[rgb(var(--color-text-primary))]">Mode démo</span>
-        {' '}— vos données sont locales à cet appareil.{' '}
+        {' '}— données d'exemple, locales à cet appareil.{' '}
         <button
           type="button"
           onClick={() => navigate('/signup')}
@@ -45,7 +45,7 @@ const DemoConversionBanner: React.FC = () => {
         >
           Créez un compte
         </button>
-        {' '}pour les conserver.
+        {' '}pour démarrer avec vos vraies données, synchronisées partout.
       </p>
       <button
         type="button"
