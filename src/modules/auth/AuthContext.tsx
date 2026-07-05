@@ -63,6 +63,19 @@ function purgeAllLocalCache(): void {
   } catch { /* ignore */ }
 }
 
+// Dernière connexion — ping fire-and-forget de la RPC touch_last_seen()
+// (migration 054, timestamp pris côté serveur). Dédupliqué par utilisateur et
+// par chargement de page : Supabase refire SIGNED_IN à chaque refresh de token,
+// on ne veut écrire qu'à l'ouverture de session, pas toutes les heures.
+const lastSeenTouched = new Set<string>();
+function touchLastSeen(userId: string): void {
+  if (!isSupabaseConfigured || appModeStore.isDemo || lastSeenTouched.has(userId)) return;
+  lastSeenTouched.add(userId);
+  supabase.rpc('touch_last_seen').then(({ error }) => {
+    if (error) dlog(`touchLastSeen: ${error.message}`);
+  });
+}
+
 // User type — identity fields only.
 // Premium/financial state (premiumTokens, subscriptionEndDate, win_streak, …) lives
 // exclusively in the Supabase `subscriptions` table and is consumed via useBilling().
@@ -206,6 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dlog(`initializeAuth: getSession() resolved — session=${!!session?.user}`);
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
+          touchLastSeen(session.user.id);
           dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
           dlog('initializeAuth: restoreAndRefresh() returned');
@@ -249,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastUserId = currentUserId;
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
+          touchLastSeen(session.user.id);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
         setIsLoading(false);
@@ -268,8 +283,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (session?.user) {
         setUser(mapSupabaseUserToAppUser(session.user));
+        touchLastSeen(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        // Un re-login dans le même chargement de page doit re-pinger last_seen_at.
+        lastSeenTouched.clear();
         // L-11 — purge every cached cosmo:qcache:* entry, not only the user
         // we just signed out. Defense for shared devices.
         purgeAllLocalCache();
