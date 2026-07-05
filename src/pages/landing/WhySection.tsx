@@ -99,8 +99,11 @@ const WhySection: React.FC = () => {
       .forEach((t) => t.classList.remove('is-glaring'));
   };
 
+  // bg plein sans backdrop-blur : le fond de page est un gradient statique,
+  // le blur ne changeait rien visuellement mais coûtait un repaint GPU
+  // plein écran à chaque frame de scroll.
   return (
-      <section ref={sectionRef} id="why" className="py-24 bg-black/20 backdrop-blur-xl relative overflow-hidden">
+      <section ref={sectionRef} id="why" className="py-24 bg-black/20 relative overflow-hidden">
         {/* Ambient blobs */}
         <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />

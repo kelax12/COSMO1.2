@@ -171,8 +171,11 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
     { scope: sectionRef, dependencies: [grid], revertOnUpdate: true },
   );
 
+  // ⚠️ Pas de backdrop-blur/filter/transform sur cette section : elle
+  // contient un PIN ScrollTrigger (position:fixed) — un filter sur un
+  // ancêtre casse le fixed → pin mort + sections qui se chevauchent.
   return (
-    <section ref={sectionRef} id="solutions" className="py-16 bg-black/20 backdrop-blur-xl overflow-hidden">
+    <section ref={sectionRef} id="solutions" className="py-16 bg-black/20 overflow-hidden">
       <div ref={pinRef} className={grid ? undefined : 'min-h-screen flex flex-col justify-center'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-8">

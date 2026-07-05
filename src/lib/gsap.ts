@@ -14,4 +14,10 @@ import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin, useGSAP);
 
+// Debug dev uniquement : inspection des triggers depuis la console.
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__ST = ScrollTrigger;
+  (window as unknown as Record<string, unknown>).__gsap = gsap;
+}
+
 export { gsap, ScrollTrigger, SplitText, useGSAP };

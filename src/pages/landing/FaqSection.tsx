@@ -29,7 +29,7 @@ const FaqSection: React.FC = () => {
   );
 
   return (
-      <section ref={sectionRef} id="faq" className="py-24 bg-black/20 backdrop-blur-xl">
+      <section ref={sectionRef} id="faq" className="py-24 bg-black/20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <motion.span

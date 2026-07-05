@@ -370,12 +370,15 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             </div>
 
             <div className="grid w-full">
-              {FEATURES.map((feature) => {
+              {FEATURES.map((feature, i) => {
                 const Showcase = feature.Desktop;
                 return (
                   <div
                     key={feature.id}
-                    className="feature-panel col-start-1 row-start-1 flex flex-row items-center gap-16 pl-10"
+                    // Panneaux 2-5 masqués dès le rendu (les 5 partagent la
+                    // même cellule de grid) : sans ça, ils se chevauchent
+                    // visiblement pendant la frame avant le gsap.set.
+                    className={`feature-panel col-start-1 row-start-1 flex flex-row items-center gap-16 pl-10 ${i > 0 ? 'opacity-0' : ''}`}
                   >
                     <div className="flex-1">
                       <FeatureCopy feature={feature} onCta={() => handleFeatureClick(feature.path)} />
