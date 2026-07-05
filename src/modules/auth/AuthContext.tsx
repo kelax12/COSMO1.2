@@ -7,6 +7,7 @@ import { taskKeys } from '../../modules/tasks/constants';
 import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '../../lib/email';
+import { recordDemoVisit, recordDemoConversionIfAny } from '../../lib/demo-metrics';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 
@@ -74,6 +75,9 @@ function touchLastSeen(userId: string): void {
   supabase.rpc('touch_last_seen').then(({ error }) => {
     if (error) dlog(`touchLastSeen: ${error.message}`);
   });
+  // Même moment « session réelle ouverte » : si cet appareil a testé la démo,
+  // on marque la conversion démo → compte (no-op sinon, cf. demo-metrics.ts).
+  recordDemoConversionIfAny();
 }
 
 // User type — identity fields only.
@@ -372,6 +376,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     appModeStore.setDemo(true);
     resetRepositories();
     queryClient.clear();
+    // Compteur d'appareils distincts ayant testé la démo (fire-and-forget).
+    recordDemoVisit();
     setUser({
       id: 'demo-user',
       name: 'Utilisateur Démo',

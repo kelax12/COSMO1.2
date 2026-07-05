@@ -27,6 +27,18 @@ describe('clearDemoStorage (B21 prefix sweep)', () => {
     expect(localStorage.getItem('cosmo_user')).toBeNull();
   });
 
+  it('préserve les clés PRESERVE_KEYS (consentement cookies, device id démo)', () => {
+    localStorage.setItem('cosmo_cookie_consent', 'accepted');
+    localStorage.setItem('cosmo_demo_device_id', 'f47ac10b-58cc-4372-a567-0e02b2c3d479');
+    localStorage.setItem('cosmo_demo_tasks', '[]');
+
+    clearDemoStorage();
+
+    expect(localStorage.getItem('cosmo_cookie_consent')).toBe('accepted');
+    expect(localStorage.getItem('cosmo_demo_device_id')).toBe('f47ac10b-58cc-4372-a567-0e02b2c3d479');
+    expect(localStorage.getItem('cosmo_demo_tasks')).toBeNull();
+  });
+
   // Trade-off UX documenté : les clés cosmo_tutorial_seen_* sont dans le
   // namespace cosmo_* → sweepées à chaque loginDemo() (règle B21).
   // Conséquence : le tutoriel se ré-affiche à chaque session démo — c'est
