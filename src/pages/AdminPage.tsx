@@ -17,7 +17,7 @@ import {
   type DailyPoint,
   type Granularity,
 } from '@/modules/admin';
-import type { AdminChartPoint } from './admin/AdminCharts';
+import type { AdminChartPoint, LabeledValue } from './admin/AdminCharts';
 
 // Règle P-2 : recharts (vendor-charts) chargé uniquement quand un admin
 // ouvre effectivement la page.
@@ -26,6 +26,15 @@ const SignupsChart = React.lazy(() =>
 );
 const DauChart = React.lazy(() =>
   import('./admin/AdminCharts').then((m) => ({ default: m.DauChart }))
+);
+const PercentBars = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.PercentBars }))
+);
+const CountBars = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.CountBars }))
+);
+const Donut = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.Donut }))
 );
 
 // 'YYYY-MM-DD' → Date locale (jamais new Date('YYYY-MM-DD') : parse UTC).
@@ -52,6 +61,9 @@ const bucketize = (points: DailyPoint[], today: string) => {
 const pct = (part: number, total: number): string =>
   total > 0 ? `${Math.round((100 * part) / total)}%` : '—';
 
+const pctNum = (part: number, total: number): number =>
+  total > 0 ? Math.round((100 * part) / total) : 0;
+
 const KpiCard: React.FC<{ label: string; value: string; hint?: string }> = ({ label, value, hint }) => (
   <div className="card p-5">
     <p className="text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{label}</p>
@@ -59,6 +71,15 @@ const KpiCard: React.FC<{ label: string; value: string; hint?: string }> = ({ la
     {hint && (
       <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{hint}</p>
     )}
+  </div>
+);
+
+const EmptyChart: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div
+    className="h-[260px] flex items-center justify-center rounded-xl text-sm"
+    style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-muted))' }}
+  >
+    {children}
   </div>
 );
 
@@ -122,8 +143,61 @@ const AdminPage: React.FC = () => {
   }
 
   const { totals, demo, usage, adoption, activation24h, tasksCompletion, collaboration, stickiness } = data;
-  // Cohortes rétention : plus récentes en premier, on n'affiche que les 12 dernières.
-  const retentionRows = [...data.retentionJ7].reverse().slice(0, 12);
+
+  // ── Données des graphiques (dérivées, pas de useMemo : calculs triviaux) ──
+  // Répartition de l'activité : segments exclusifs qui somment au total.
+  const activityData: LabeledValue[] = [
+    { label: "Actifs aujourd'hui", value: totals.activeToday },
+    { label: 'Actifs 7 j', value: Math.max(0, totals.active7d - totals.activeToday) },
+    { label: 'Inactifs 7-30 j', value: Math.max(0, totals.inactive7dPlus - totals.inactive30dPlus) },
+    { label: 'Inactifs 30 j+', value: totals.inactive30dPlus },
+  ].filter((d) => d.value > 0);
+
+  const providerData: LabeledValue[] = Object.entries(data.signupsByProvider).map(([provider, count]) => ({
+    label: provider.charAt(0).toUpperCase() + provider.slice(1),
+    value: count,
+    hint: `${count} comptes (${pct(count, totals.users)})`,
+  }));
+
+  const adoptionData: LabeledValue[] = [
+    { label: '≥1 tâche', value: pctNum(adoption.tasksUsers, totals.users), hint: `${adoption.tasksUsers}/${totals.users} utilisateurs` },
+    { label: '≥1 habitude', value: pctNum(adoption.habitsUsers, totals.users), hint: `${adoption.habitsUsers}/${totals.users} utilisateurs` },
+    { label: '≥1 événement', value: pctNum(adoption.eventsUsers, totals.users), hint: `${adoption.eventsUsers}/${totals.users} utilisateurs` },
+    { label: '≥1 OKR', value: pctNum(adoption.okrsUsers, totals.users), hint: `${adoption.okrsUsers}/${totals.users} utilisateurs` },
+  ];
+
+  const engagementData: LabeledValue[] = [
+    { label: 'Activation 24 h', value: pctNum(activation24h.activated, activation24h.total), hint: `${activation24h.activated}/${activation24h.total} ont créé ≥1 objet le 1er jour` },
+    { label: 'Complétion tâches', value: pctNum(tasksCompletion.completed, tasksCompletion.total), hint: `${tasksCompletion.completed}/${tasksCompletion.total} tâches complétées` },
+    { label: 'Stickiness DAU/MAU', value: pctNum(stickiness.dau, stickiness.mau), hint: `${stickiness.dau} actifs aujourd'hui / ${stickiness.mau} sur 30 j` },
+    { label: 'Churn 30 j+', value: pctNum(totals.inactive30dPlus, totals.users), hint: `${totals.inactive30dPlus}/${totals.users} comptes inactifs depuis 30 j+` },
+  ];
+
+  const usageData: LabeledValue[] = [
+    { label: 'Tâches', value: usage.tasks },
+    { label: 'Habitudes', value: usage.habits },
+    { label: 'Événements', value: usage.events },
+    { label: 'OKRs', value: usage.okrs },
+    { label: 'Partages', value: usage.sharedTasks },
+  ];
+
+  const collabData: LabeledValue[] = [
+    { label: 'Ont partagé', value: collaboration.sharers, hint: `${collaboration.sharers} users (${pct(collaboration.sharers, totals.users)})` },
+    { label: 'Ont ≥1 ami', value: collaboration.usersWithFriends, hint: `${collaboration.usersWithFriends} users (${pct(collaboration.usersWithFriends, totals.users)})` },
+    { label: 'Demandes acceptées', value: collaboration.acceptedRequests },
+  ];
+
+  const demoData: LabeledValue[] = [
+    { label: 'Visiteurs démo', value: demo.visitors },
+    { label: 'Comptes créés', value: demo.converted, hint: `${demo.converted} convertis (${demo.visitors > 0 ? `${demo.conversionPct}%` : '—'})` },
+  ];
+
+  // Cohortes rétention : les 12 dernières semaines, ordre chronologique.
+  const retentionData: LabeledValue[] = data.retentionJ7.slice(-12).map((c) => ({
+    label: format(toLocalDate(c.week), 'd MMM', { locale: fr }),
+    value: pctNum(c.retained, c.signups),
+    hint: `${c.retained}/${c.signups} inscrits encore actifs J+7`,
+  }));
 
   return (
     <div
@@ -157,7 +231,7 @@ const AdminPage: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Inscriptions"
           note={signups?.granularity === 'week' ? 'Par semaine, depuis le lancement' : 'Par jour, depuis le lancement'}
@@ -171,122 +245,44 @@ const AdminPage: React.FC = () => {
           {dau ? (
             <DauChart data={dau.points} />
           ) : (
-            <div
-              className="h-[260px] flex items-center justify-center rounded-xl text-sm"
-              style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-muted))' }}
-            >
-              Pas encore de données d'activité
-            </div>
+            <EmptyChart>Pas encore de données d'activité</EmptyChart>
           )}
         </ChartCard>
-      </div>
 
-      {/* Conversion démo */}
-      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Conversion démo</h2>
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <KpiCard label="Visiteurs démo" value={String(demo.visitors)} />
-        <KpiCard label="Comptes créés après démo" value={String(demo.converted)} />
-        <KpiCard label="Taux de conversion" value={demo.visitors > 0 ? `${demo.conversionPct}%` : '—'} />
-      </div>
+        <ChartCard title="Répartition de l'activité" note="Segments exclusifs — chaque compte est dans une seule tranche">
+          {activityData.length > 0 ? <Donut data={activityData} /> : <EmptyChart>Aucun compte</EmptyChart>}
+        </ChartCard>
+        <ChartCard title="Acquisition" note="Inscriptions par méthode de connexion">
+          {providerData.length > 0 ? <Donut data={providerData} /> : <EmptyChart>Aucune inscription</EmptyChart>}
+        </ChartCard>
 
-      {/* Usage produit */}
-      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Usage produit</h2>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <KpiCard label="Tâches" value={String(usage.tasks)} />
-        <KpiCard label="Habitudes" value={String(usage.habits)} />
-        <KpiCard label="Événements" value={String(usage.events)} />
-        <KpiCard label="OKRs" value={String(usage.okrs)} />
-        <KpiCard label="Tâches partagées" value={String(usage.sharedTasks)} />
-      </div>
+        <ChartCard title="Adoption par fonctionnalité" note="% des comptes ayant créé au moins 1 élément">
+          <PercentBars data={adoptionData} />
+        </ChartCard>
+        <ChartCard title="Engagement" note="Activation = ≥1 objet créé dans les 24 h après inscription">
+          <PercentBars data={engagementData} color="#8b5cf6" />
+        </ChartCard>
 
-      {/* Adoption par fonctionnalité */}
-      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Adoption par fonctionnalité</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <KpiCard label="Ont ≥1 tâche" value={pct(adoption.tasksUsers, totals.users)} hint={`${adoption.tasksUsers} utilisateurs`} />
-        <KpiCard label="Ont ≥1 habitude" value={pct(adoption.habitsUsers, totals.users)} hint={`${adoption.habitsUsers} utilisateurs`} />
-        <KpiCard label="Ont ≥1 événement" value={pct(adoption.eventsUsers, totals.users)} hint={`${adoption.eventsUsers} utilisateurs`} />
-        <KpiCard label="Ont ≥1 OKR" value={pct(adoption.okrsUsers, totals.users)} hint={`${adoption.okrsUsers} utilisateurs`} />
-      </div>
+        <ChartCard title="Usage produit" note="Volumes totaux créés">
+          <CountBars data={usageData} />
+        </ChartCard>
+        <ChartCard title="Collaboration" note="Le partage de tâches est le levier d'acquisition virale">
+          <CountBars data={collabData} />
+        </ChartCard>
 
-      {/* Engagement */}
-      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Engagement</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <KpiCard
-          label="Activation 24 h"
-          value={pct(activation24h.activated, activation24h.total)}
-          hint={`${activation24h.activated}/${activation24h.total} ont créé ≥1 objet le 1er jour`}
-        />
-        <KpiCard
-          label="Complétion des tâches"
-          value={pct(tasksCompletion.completed, tasksCompletion.total)}
-          hint={`${tasksCompletion.completed}/${tasksCompletion.total} tâches complétées`}
-        />
-        <KpiCard
-          label="Stickiness (DAU/MAU)"
-          value={pct(stickiness.dau, stickiness.mau)}
-          hint={`${stickiness.dau} actifs aujourd'hui / ${stickiness.mau} sur 30 j`}
-        />
-        <KpiCard
-          label="Churn (inactifs 30 j+)"
-          value={String(totals.inactive30dPlus)}
-          hint={`${pct(totals.inactive30dPlus, totals.users)} des comptes`}
-        />
-      </div>
-
-      {/* Acquisition */}
-      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Acquisition</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {Object.entries(data.signupsByProvider).map(([provider, count]) => (
-          <KpiCard
-            key={provider}
-            label={`Inscriptions ${provider.charAt(0).toUpperCase()}${provider.slice(1)}`}
-            value={String(count)}
-            hint={`${pct(count, totals.users)} des comptes`}
-          />
-        ))}
-      </div>
-
-      {/* Collaboration */}
-      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Collaboration</h2>
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <KpiCard label="Ont partagé ≥1 tâche" value={String(collaboration.sharers)} hint={`${pct(collaboration.sharers, totals.users)} des comptes`} />
-        <KpiCard label="Ont ≥1 ami" value={String(collaboration.usersWithFriends)} hint={`${pct(collaboration.usersWithFriends, totals.users)} des comptes`} />
-        <KpiCard label="Demandes d'ami acceptées" value={String(collaboration.acceptedRequests)} />
-      </div>
-
-      {/* Rétention J7 */}
-      <h2 className="font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>Rétention J7 par cohorte</h2>
-      <p className="text-xs mb-3" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        Inscrits de la semaine encore actifs entre J+7 et J+13 — mesurable ~2 semaines après le déploiement du journal d'activité (mig. 056).
-      </p>
-      <div className="card p-4 overflow-x-auto">
-        <table className="w-full text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          <thead>
-            <tr className="text-left text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              <th className="py-2 pr-4 font-medium">Semaine d'inscription</th>
-              <th className="py-2 pr-4 font-medium">Inscrits</th>
-              <th className="py-2 pr-4 font-medium">Retenus J7</th>
-              <th className="py-2 font-medium">Taux</th>
-            </tr>
-          </thead>
-          <tbody>
-            {retentionRows.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-4 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  Pas encore de cohortes
-                </td>
-              </tr>
-            )}
-            {retentionRows.map((c) => (
-              <tr key={c.week} style={{ borderTop: '1px solid rgb(var(--color-border-muted))' }}>
-                <td className="py-2 pr-4">{format(toLocalDate(c.week), 'd MMM yyyy', { locale: fr })}</td>
-                <td className="py-2 pr-4">{c.signups}</td>
-                <td className="py-2 pr-4">{c.retained}</td>
-                <td className="py-2 font-semibold">{pct(c.retained, c.signups)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ChartCard title="Conversion démo" note={`Taux de conversion : ${demo.visitors > 0 ? `${demo.conversionPct}%` : '—'}`}>
+          <CountBars data={demoData} />
+        </ChartCard>
+        <ChartCard
+          title="Rétention J7 par cohorte"
+          note="Inscrits de la semaine encore actifs entre J+7 et J+13 — mesurable ~2 semaines après la mig. 056"
+        >
+          {retentionData.length > 0 ? (
+            <PercentBars data={retentionData} color="#22c55e" />
+          ) : (
+            <EmptyChart>Pas encore de cohortes</EmptyChart>
+          )}
+        </ChartCard>
       </div>
     </div>
   );
