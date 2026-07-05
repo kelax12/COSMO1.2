@@ -71,6 +71,7 @@ const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesP
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'));
+const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -190,6 +191,9 @@ const AppRoutes = () => (
         <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
         <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
+        {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
+            côté serveur : la RPC get_admin_stats rejette les non-admins. */}
+        <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />
         {/* Premium masqué tant que PREMIUM_ENFORCED=false : la route redirige
             vers le dashboard. Page + import conservés (réactivation via le flag). */}
         <Route path="premium" element={PREMIUM_ENFORCED ? <PageWithSuspense><PremiumPage /></PageWithSuspense> : <Navigate to="/" replace />} />
