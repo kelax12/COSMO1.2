@@ -216,7 +216,10 @@ export function clearDemoStorage(): void {
   // Préférences à préserver à travers les resets démo : le consentement cookies
   // est une décision légale/RGPD de l'utilisateur, il ne doit PAS réapparaître à
   // chaque loginDemo() (bug B05 — sinon la bannière revient à chaque entrée démo).
-  const PRESERVE_KEYS = new Set(['cosmo_cookie_consent']);
+  // cosmo_demo_device_id : identifiant anonyme du compteur de visiteurs démo
+  // (migration 055, src/lib/demo-metrics.ts) — doit survivre aux resets pour
+  // compter chaque appareil une seule fois.
+  const PRESERVE_KEYS = new Set(['cosmo_cookie_consent', 'cosmo_demo_device_id']);
   LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
   // Sweep every cosmo-namespaced key so newly-added demo modules are covered
   // without having to remember to update this list.
