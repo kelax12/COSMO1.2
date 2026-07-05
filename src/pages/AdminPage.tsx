@@ -121,7 +121,9 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  const { totals, demo, usage } = data;
+  const { totals, demo, usage, adoption, activation24h, tasksCompletion, collaboration, stickiness } = data;
+  // Cohortes rétention : plus récentes en premier, on n'affiche que les 12 dernières.
+  const retentionRows = [...data.retentionJ7].reverse().slice(0, 12);
 
   return (
     <div
@@ -189,12 +191,102 @@ const AdminPage: React.FC = () => {
 
       {/* Usage produit */}
       <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Usage produit</h2>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <KpiCard label="Tâches" value={String(usage.tasks)} />
         <KpiCard label="Habitudes" value={String(usage.habits)} />
         <KpiCard label="Événements" value={String(usage.events)} />
         <KpiCard label="OKRs" value={String(usage.okrs)} />
         <KpiCard label="Tâches partagées" value={String(usage.sharedTasks)} />
+      </div>
+
+      {/* Adoption par fonctionnalité */}
+      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Adoption par fonctionnalité</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <KpiCard label="Ont ≥1 tâche" value={pct(adoption.tasksUsers, totals.users)} hint={`${adoption.tasksUsers} utilisateurs`} />
+        <KpiCard label="Ont ≥1 habitude" value={pct(adoption.habitsUsers, totals.users)} hint={`${adoption.habitsUsers} utilisateurs`} />
+        <KpiCard label="Ont ≥1 événement" value={pct(adoption.eventsUsers, totals.users)} hint={`${adoption.eventsUsers} utilisateurs`} />
+        <KpiCard label="Ont ≥1 OKR" value={pct(adoption.okrsUsers, totals.users)} hint={`${adoption.okrsUsers} utilisateurs`} />
+      </div>
+
+      {/* Engagement */}
+      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Engagement</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <KpiCard
+          label="Activation 24 h"
+          value={pct(activation24h.activated, activation24h.total)}
+          hint={`${activation24h.activated}/${activation24h.total} ont créé ≥1 objet le 1er jour`}
+        />
+        <KpiCard
+          label="Complétion des tâches"
+          value={pct(tasksCompletion.completed, tasksCompletion.total)}
+          hint={`${tasksCompletion.completed}/${tasksCompletion.total} tâches complétées`}
+        />
+        <KpiCard
+          label="Stickiness (DAU/MAU)"
+          value={pct(stickiness.dau, stickiness.mau)}
+          hint={`${stickiness.dau} actifs aujourd'hui / ${stickiness.mau} sur 30 j`}
+        />
+        <KpiCard
+          label="Churn (inactifs 30 j+)"
+          value={String(totals.inactive30dPlus)}
+          hint={`${pct(totals.inactive30dPlus, totals.users)} des comptes`}
+        />
+      </div>
+
+      {/* Acquisition */}
+      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Acquisition</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {Object.entries(data.signupsByProvider).map(([provider, count]) => (
+          <KpiCard
+            key={provider}
+            label={`Inscriptions ${provider.charAt(0).toUpperCase()}${provider.slice(1)}`}
+            value={String(count)}
+            hint={`${pct(count, totals.users)} des comptes`}
+          />
+        ))}
+      </div>
+
+      {/* Collaboration */}
+      <h2 className="font-bold mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>Collaboration</h2>
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <KpiCard label="Ont partagé ≥1 tâche" value={String(collaboration.sharers)} hint={`${pct(collaboration.sharers, totals.users)} des comptes`} />
+        <KpiCard label="Ont ≥1 ami" value={String(collaboration.usersWithFriends)} hint={`${pct(collaboration.usersWithFriends, totals.users)} des comptes`} />
+        <KpiCard label="Demandes d'ami acceptées" value={String(collaboration.acceptedRequests)} />
+      </div>
+
+      {/* Rétention J7 */}
+      <h2 className="font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>Rétention J7 par cohorte</h2>
+      <p className="text-xs mb-3" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        Inscrits de la semaine encore actifs entre J+7 et J+13 — mesurable ~2 semaines après le déploiement du journal d'activité (mig. 056).
+      </p>
+      <div className="card p-4 overflow-x-auto">
+        <table className="w-full text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          <thead>
+            <tr className="text-left text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+              <th className="py-2 pr-4 font-medium">Semaine d'inscription</th>
+              <th className="py-2 pr-4 font-medium">Inscrits</th>
+              <th className="py-2 pr-4 font-medium">Retenus J7</th>
+              <th className="py-2 font-medium">Taux</th>
+            </tr>
+          </thead>
+          <tbody>
+            {retentionRows.length === 0 && (
+              <tr>
+                <td colSpan={4} className="py-4 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  Pas encore de cohortes
+                </td>
+              </tr>
+            )}
+            {retentionRows.map((c) => (
+              <tr key={c.week} style={{ borderTop: '1px solid rgb(var(--color-border-muted))' }}>
+                <td className="py-2 pr-4">{format(toLocalDate(c.week), 'd MMM yyyy', { locale: fr })}</td>
+                <td className="py-2 pr-4">{c.signups}</td>
+                <td className="py-2 pr-4">{c.retained}</td>
+                <td className="py-2 font-semibold">{pct(c.retained, c.signups)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

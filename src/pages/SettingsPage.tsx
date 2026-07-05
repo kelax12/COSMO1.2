@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat,
+  Mail, ChevronRight, Repeat, BarChart3,
 } from 'lucide-react';
+import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
@@ -43,6 +44,7 @@ const SettingsPage: React.FC = () => {
   const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
 
   const { user, logout, isDemo } = useAuth();
+  const isAdmin = useIsAdmin();
   const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -575,6 +577,26 @@ const SettingsPage: React.FC = () => {
                   Contacter le support <ChevronRight size={12} />
                 </button>
               </div>
+
+              {/* admin card — visible uniquement pour l'allowlist admin_users
+                  (useIsAdmin). Le vrai gate reste la RPC get_admin_stats. */}
+              {isAdmin && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+                      <BarChart3 size={15} className="text-white" />
+                    </div>
+                    <div>
+                      <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Stats COSMO</p>
+                      <p className="text-xs text-[rgb(var(--color-text-muted))]">Croissance, activité et conversion — réservé admin.</p>
+                    </div>
+                  </div>
+                  <button onClick={() => navigate('/admin')} style={{ minHeight: '40px', fontFamily: "'DM Sans', sans-serif" }}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
+                    Ouvrir le dashboard <ChevronRight size={12} />
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { adminKeys } from './constants';
-import { fetchAdminStats } from './repository';
+import { fetchAdminStats, fetchIsAdmin } from './repository';
 import type { AdminStats } from './types';
 
 /**
@@ -19,4 +19,21 @@ export function useAdminStats() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+}
+
+/**
+ * true si le compte courant est dans l'allowlist admin_users. Sert
+ * uniquement à afficher/masquer le lien « Stats COSMO » dans Settings —
+ * la vraie frontière reste la RPC get_admin_stats côté serveur.
+ */
+export function useIsAdmin(): boolean {
+  const { isAuthenticated, isDemo } = useAuth();
+  const { data } = useQuery<boolean>({
+    queryKey: adminKeys.isAdmin(),
+    queryFn: fetchIsAdmin,
+    enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
+    staleTime: Infinity, // le statut admin ne change pas en cours de session
+    retry: false,
+  });
+  return data === true;
 }
