@@ -273,8 +273,14 @@ body {
   .pr-safe { padding-right: env(safe-area-inset-right); }
   .h-safe-bottom { height: env(safe-area-inset-bottom); }
 
-  /* Prevent horizontal scroll on mobile */
+  /* Prevent horizontal scroll on mobile.
+     `clip` plutôt que `hidden` : hidden transforme html/body en conteneur
+     de scroll, ce qui casse les mesures/pins ScrollTrigger de la landing
+     (piège documenté GSAP). `clip` coupe sans créer de scroll container. */
   html, body { overflow-x: hidden; max-width: 100vw; }
+  @supports (overflow-x: clip) {
+    html, body { overflow-x: clip; max-width: none; }
+  }
   /* Touch action defaults for mobile interactions */
   button, a, [role="button"] { touch-action: manipulation; }
 

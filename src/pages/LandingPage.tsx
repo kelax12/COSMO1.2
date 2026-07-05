@@ -11,7 +11,19 @@ import {
   useSpring,
   useMotionValueEvent,
 } from 'framer-motion';
-import { gsap, SplitText, useGSAP } from '@/lib/gsap';
+import { gsap, ScrollTrigger, SplitText, useGSAP } from '@/lib/gsap';
+
+/** Pause/play un lot de tweens infinis selon la visibilité d'un élément —
+ *  les boucles décoratives ne consomment rien tant qu'elles sont hors écran. */
+const pauseWhenOffscreen = (trigger: Element, loops: gsap.core.Tween[]) => {
+  const st = ScrollTrigger.create({
+    trigger,
+    start: 'top bottom',
+    end: 'bottom top',
+    onToggle: (self) => loops.forEach((t) => (self.isActive ? t.play() : t.pause())),
+  });
+  if (!st.isActive) loops.forEach((t) => t.pause());
+};
 import { ArrowRight } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
 import AppWindowShowcase from '../components/showcase/AppWindowShowcase';
@@ -56,6 +68,17 @@ const LandingPage: React.FC = () => {
     () => {
       const mm = gsap.matchMedia();
 
+      // Refresh de sécurité une fois la page complètement chargée (fonts,
+      // images, chunk Recharts) : si un refresh précoce a mesuré la page
+      // avant sa mise en page finale, les pins restent figés en état
+      // « reverted » (sections qui défilent les unes sur les autres).
+      const healRefresh = () => ScrollTrigger.refresh();
+      if (document.readyState === 'complete') {
+        gsap.delayedCall(0.2, healRefresh);
+      } else {
+        window.addEventListener('load', () => gsap.delayedCall(0.2, healRefresh), { once: true });
+      }
+
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         // Barre de progression de lecture (scrub sur toute la page).
         if (progressRef.current) {
@@ -72,13 +95,17 @@ const LandingPage: React.FC = () => {
         }
 
         // Marquee infini : la piste contient 2 copies identiques,
-        // xPercent -50 = boucle parfaitement seamless.
-        gsap.to('.marquee-track', {
-          xPercent: -50,
-          ease: 'none',
-          duration: 30,
-          repeat: -1,
-        });
+        // xPercent -50 = boucle parfaitement seamless. En pause hors écran.
+        const marqueeTrack = rootRef.current?.querySelector('.marquee-track');
+        if (marqueeTrack) {
+          const marqueeLoop = gsap.to(marqueeTrack, {
+            xPercent: -50,
+            ease: 'none',
+            duration: 30,
+            repeat: -1,
+          });
+          pauseWhenOffscreen(marqueeTrack.parentElement ?? marqueeTrack, [marqueeLoop]);
+        }
 
         // Reveal des 2 lignes de la CTA finale (masquées, montée décalée).
         gsap.from('.cta-line', {
@@ -90,7 +117,12 @@ const LandingPage: React.FC = () => {
         });
 
         // Halo conique qui tourne en continu derrière le contenu de la CTA.
-        gsap.to('.cta-halo', { rotation: 360, ease: 'none', duration: 16, repeat: -1 });
+        // En pause hors écran (blur 60px qui tourne = cher en GPU).
+        const ctaHalo = rootRef.current?.querySelector('.cta-halo');
+        if (ctaHalo) {
+          const haloLoop = gsap.to(ctaHalo, { rotation: 360, ease: 'none', duration: 16, repeat: -1 });
+          pauseWhenOffscreen(ctaHalo, [haloLoop]);
+        }
 
         // Footer : montée douce.
         gsap.from('footer > div', {
@@ -141,6 +173,13 @@ const LandingPage: React.FC = () => {
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
+        // Boucles infinies du hero, mises en pause dès que le hero sort de
+        // l'écran (perf : zéro tick offscreen).
+        const heroLoops: gsap.core.Tween[] = [];
+        // Tween du gradient accent : recréé à chaque re-split (fonts),
+        // il faut tuer l'ancien pour ne pas accumuler de tweens fantômes.
+        let accentTween: gsap.core.Tween | null = null;
+
         // W1 — Reveal du H1 : split lignes/mots, chaque ligne masquée,
         // les mots montent avec un léger stagger (autoSplit = re-split
         // propre quand les fontes finissent de charger).
@@ -168,13 +207,18 @@ const LandingPage: React.FC = () => {
                 }
               });
               // Gradient animé de la 2e ligne (ex-Framer backgroundPosition).
-              gsap.to('.hero-word-accent', {
+              if (accentTween) {
+                heroLoops.splice(heroLoops.indexOf(accentTween), 1);
+                accentTween.kill();
+              }
+              accentTween = gsap.to('.hero-word-accent', {
                 backgroundPosition: '100% 50%',
                 duration: 4,
                 repeat: -1,
                 yoyo: true,
                 ease: 'sine.inOut',
               });
+              heroLoops.push(accentTween);
               return gsap.from(self.words, {
                 yPercent: 115,
                 rotation: 4,
@@ -202,62 +246,72 @@ const LandingPage: React.FC = () => {
         // re-tiré à chaque cycle) + traceurs lumineux qui balayent la
         // grille à une hauteur/position aléatoire à chaque passage.
         gsap.utils.toArray<HTMLElement>('.hero-orb').forEach((orb, i) => {
-          gsap.to(orb, {
-            x: () => gsap.utils.random(-70, 70),
-            y: () => gsap.utils.random(-50, 50),
-            duration: () => gsap.utils.random(4, 7),
-            ease: 'sine.inOut',
-            repeat: -1,
-            yoyo: true,
-            repeatRefresh: true,
-            delay: i * 0.9,
-          });
+          heroLoops.push(
+            gsap.to(orb, {
+              x: () => gsap.utils.random(-70, 70),
+              y: () => gsap.utils.random(-50, 50),
+              duration: () => gsap.utils.random(4, 7),
+              ease: 'sine.inOut',
+              repeat: -1,
+              yoyo: true,
+              repeatRefresh: true,
+              delay: i * 0.9,
+            }),
+          );
         });
         const beamH = heroRef.current?.querySelector<HTMLElement>('.hero-beam-h');
         if (beamH) {
-          gsap.fromTo(
-            beamH,
-            { x: -220 },
-            {
-              x: () => (heroRef.current?.offsetWidth ?? window.innerWidth) + 220,
-              duration: 5.5,
-              ease: 'power1.inOut',
-              repeat: -1,
-              repeatDelay: 1.8,
-              onRepeat: () => {
-                beamH.style.top = `${gsap.utils.random(15, 72)}%`;
+          heroLoops.push(
+            gsap.fromTo(
+              beamH,
+              { x: -220 },
+              {
+                x: () => (heroRef.current?.offsetWidth ?? window.innerWidth) + 220,
+                duration: 5.5,
+                ease: 'power1.inOut',
+                repeat: -1,
+                repeatDelay: 1.8,
+                onRepeat: () => {
+                  beamH.style.top = `${gsap.utils.random(15, 72)}%`;
+                },
               },
-            },
+            ),
           );
         }
         const beamV = heroRef.current?.querySelector<HTMLElement>('.hero-beam-v');
         if (beamV) {
-          gsap.fromTo(
-            beamV,
-            { y: -220 },
-            {
-              y: () => (heroRef.current?.offsetHeight ?? window.innerHeight) + 220,
-              duration: 6.5,
-              ease: 'power1.inOut',
-              repeat: -1,
-              repeatDelay: 2.6,
-              delay: 2.2,
-              onRepeat: () => {
-                beamV.style.left = `${gsap.utils.random(20, 82)}%`;
+          heroLoops.push(
+            gsap.fromTo(
+              beamV,
+              { y: -220 },
+              {
+                y: () => (heroRef.current?.offsetHeight ?? window.innerHeight) + 220,
+                duration: 6.5,
+                ease: 'power1.inOut',
+                repeat: -1,
+                repeatDelay: 2.6,
+                delay: 2.2,
+                onRepeat: () => {
+                  beamV.style.left = `${gsap.utils.random(20, 82)}%`;
+                },
               },
-            },
+            ),
           );
         }
 
         // Indicateur de scroll : le chevron rebondit en boucle, et tout
         // l'indicateur s'efface dès que l'utilisateur commence à scroller.
-        gsap.to('.scroll-cue-arrow', {
-          y: 8,
-          repeat: -1,
-          yoyo: true,
-          duration: 0.9,
-          ease: 'sine.inOut',
-        });
+        heroLoops.push(
+          gsap.to('.scroll-cue-arrow', {
+            y: 8,
+            repeat: -1,
+            yoyo: true,
+            duration: 0.9,
+            ease: 'sine.inOut',
+          }),
+        );
+
+        if (heroRef.current) pauseWhenOffscreen(heroRef.current, heroLoops);
         gsap.to('.scroll-cue', {
           autoAlpha: 0,
           ease: 'none',
@@ -284,22 +338,6 @@ const LandingPage: React.FC = () => {
     },
     { scope: heroRef },
   );
-
-  // Spotlight qui suit le curseur dans le hero — piloté par React (ref +
-  // variables CSS), sans GSAP : fiable, insensible au double-montage
-  // StrictMode. Désactivé si reduced-motion.
-  const spotlightRef = useRef<HTMLDivElement>(null);
-  const handleHeroPointerMove = (e: React.PointerEvent<HTMLElement>) => {
-    const spot = spotlightRef.current;
-    if (!spot || reduceMotion) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    spot.style.setProperty('--sx', `${e.clientX - rect.left}px`);
-    spot.style.setProperty('--sy', `${e.clientY - rect.top}px`);
-    spot.style.opacity = '1';
-  };
-  const handleHeroPointerLeave = () => {
-    if (spotlightRef.current) spotlightRef.current.style.opacity = '0';
-  };
 
   // Tilt 3D du mockup suivant la souris (désactivé mobile / reduced-motion).
   const pointerX = useMotionValue(0);
@@ -478,25 +516,8 @@ const LandingPage: React.FC = () => {
       <main>
       <section
         ref={heroRef}
-        onPointerMove={handleHeroPointerMove}
-        onPointerLeave={handleHeroPointerLeave}
         className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden"
       >
-        {/* Spotlight qui suit le curseur — overlay AU-DESSUS du contenu avec
-            mix-blend screen (technique Linear/Vercel) : impossible à masquer
-            par l'empilement, éclaire joliment le contenu au passage. Piloté
-            par React (ref + variables CSS), désactivé si reduced-motion. */}
-        <div
-          ref={spotlightRef}
-          className="pointer-events-none absolute left-0 top-0 z-20 h-[40rem] w-[40rem] rounded-full opacity-0"
-          style={{
-            background: 'radial-gradient(circle, rgba(129,140,248,0.45) 0%, rgba(139,92,246,0.22) 35%, transparent 70%)',
-            mixBlendMode: 'screen',
-            transform: 'translate(calc(var(--sx, 50%) - 50%), calc(var(--sy, 50%) - 50%))',
-            transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
-          }}
-          aria-hidden="true"
-        />
         {/* ── Fond ambiant : grille masquée + noise + aurores + halo conique ── */}
         <div className="absolute inset-0 -z-10" aria-hidden="true">
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
@@ -531,23 +552,23 @@ const LandingPage: React.FC = () => {
                 'conic-gradient(from 0deg, rgba(59,130,246,0.18), rgba(139,92,246,0.16), rgba(217,70,239,0.14), rgba(34,211,238,0.16), rgba(59,130,246,0.18))',
               filter: 'blur(90px)',
             }}
-            animate={reduceMotion ? undefined : { rotate: 360 }}
+            whileInView={reduceMotion ? undefined : { rotate: 360 }}
             transition={reduceMotion ? undefined : { duration: 40, repeat: Infinity, ease: 'linear' }}
           />
           {/* Aurores */}
           <motion.div
             className="absolute -top-24 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-600/25 via-violet-600/20 to-fuchsia-600/20 blur-[110px]"
-            animate={reduceMotion ? undefined : { opacity: [0.55, 0.8, 0.55], scale: [1, 1.06, 1] }}
+            whileInView={reduceMotion ? undefined : { opacity: [0.55, 0.8, 0.55], scale: [1, 1.06, 1] }}
             transition={reduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.div
             className="absolute top-10 -left-20 h-80 w-80 rounded-full bg-cyan-500/15 blur-[100px]"
-            animate={reduceMotion ? undefined : { opacity: [0.4, 0.65, 0.4] }}
+            whileInView={reduceMotion ? undefined : { opacity: [0.4, 0.65, 0.4] }}
             transition={reduceMotion ? undefined : { duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
           />
           <motion.div
             className="absolute top-24 -right-16 h-80 w-80 rounded-full bg-fuchsia-500/15 blur-[100px]"
-            animate={reduceMotion ? undefined : { opacity: [0.4, 0.7, 0.4] }}
+            whileInView={reduceMotion ? undefined : { opacity: [0.4, 0.7, 0.4] }}
             transition={reduceMotion ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
           />
           </div>
@@ -647,7 +668,7 @@ const LandingPage: React.FC = () => {
                 onPointerMove={isMobile || reduceMotion ? undefined : handleMockupPointer}
                 onPointerLeave={isMobile || reduceMotion ? undefined : resetMockupPointer}
                 style={isMobile || reduceMotion ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
-                animate={isMobile || reduceMotion ? undefined : { y: [0, -10, 0] }}
+                whileInView={isMobile || reduceMotion ? undefined : { y: [0, -10, 0] }}
                 transition={isMobile || reduceMotion ? undefined : { duration: 6, repeat: Infinity, ease: 'easeInOut' }}
                 className="relative max-w-[34rem] mx-auto lg:max-w-none lg:ml-auto"
               >
