@@ -491,7 +491,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Mode d'affichage</p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Test' : 'Clair · Sombre'}</p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
                     </div>
                   </div>
                   <ThemeToggle showLabel />

@@ -83,8 +83,11 @@ performance.mark('cosmo:boot');
 try {
   const savedTheme = localStorage.getItem('theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark)) {
+  if (savedTheme === 'dark' || savedTheme === 'black' || (savedTheme !== 'light' && prefersDark)) {
     document.documentElement.classList.add('dark');
+  }
+  if (savedTheme === 'black') {
+    document.documentElement.classList.add('black');
   }
 } catch { /* localStorage inaccessible (navigation privée stricte) — thème clair */ }
 
