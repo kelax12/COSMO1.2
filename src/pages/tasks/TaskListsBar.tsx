@@ -2,7 +2,7 @@
 // inline + smart lists + sélection de tâches) — extraite verbatim, prop-driven.
 import React from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-react';
 import SmartListMenu from '../../components/SmartListMenu';
 import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
@@ -53,6 +53,8 @@ interface TaskListsBarProps {
   handleCreateSmartList: (presetKey: SmartRulePreset) => void;
   startChipLongPress: (listId: string) => void;
   cancelChipLongPress: () => void;
+  /** Ouvre le partage de la liste (bottom-sheet ShareListSheet). */
+  onShareList: (list: TaskList) => void;
 }
 
 const TaskListsBar: React.FC<TaskListsBarProps> = ({
@@ -67,6 +69,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   clearListFilter, handleListSelect, startSelectingTasks, confirmAddTasksToList, cancelSelectingTasks,
   startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists,
   handleCreateSmartList, startChipLongPress, cancelChipLongPress,
+  onShareList,
 }) => (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -242,6 +245,17 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                       aria-label="Modifier la liste"
                                     >
                                       <Pencil size={15} />
+                                    </button>
+                                  )}
+                                  {/* Partager — listes manuelles uniquement (les smart sont des filtres) */}
+                                  {list.type !== 'smart' && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); onShareList(list); }}
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
+                                      title="Partager la liste"
+                                      aria-label="Partager la liste"
+                                    >
+                                      <Share2 size={15} />
                                     </button>
                                   )}
                                   <button

@@ -67,6 +67,68 @@ export interface RelatedTaskShare {
   accepted?: boolean;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// LIST SHARING (partage de listes — copy-on-accept)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Snapshot d'une tâche figé au moment du partage d'une liste. On ne copie que
+ * les champs métier reproductibles chez le destinataire (pas d'id, pas de
+ * userId/sharedBy/collaborateurs — le destinataire recrée des tâches qui lui
+ * appartiennent).
+ */
+export interface TaskSnapshot {
+  name: string;
+  description?: string;
+  priority: number;
+  category: string;
+  deadline: string;
+  estimatedTime: number;
+  bookmarked: boolean;
+  completed: boolean;
+  subtasks?: import('@/modules/tasks').Subtask[];
+  recurrence?: import('@/modules/tasks').TaskRecurrence;
+}
+
+/**
+ * Input pour partager une liste avec un ami. Embarque un snapshot de la liste
+ * (nom, couleur) et de ses tâches.
+ */
+export interface ShareListInput {
+  /** Id de la liste source côté partageur (traçabilité / dédup). */
+  listId: string;
+  name: string;
+  color: string;
+  tasks: TaskSnapshot[];
+  /**
+   * auth.users.id du destinataire. Comme `ShareTaskInput`, si l'appelant n'a que
+   * l'id de ligne friends, passer `friendEmail` pour résoudre l'auth.uid canonique.
+   */
+  friendId: string;
+  friendEmail?: string;
+}
+
+/**
+ * Une grant de partage de liste, telle que stockée dans `shared_lists`
+ * (Supabase) ou la clé `cosmo_shared_lists` (démo). Vue destinataire.
+ */
+export interface SharedListGrant {
+  id: string;
+  /** Id de la liste source côté partageur (démo). */
+  listId?: string;
+  name: string;
+  color: string;
+  tasks: TaskSnapshot[];
+  /** auth.users.id du partageur (démo : id fictif). */
+  sharedBy: string;
+  /** Nom affichable du partageur (résolu à la lecture). */
+  sharedByName?: string;
+  /** auth.users.id du destinataire. */
+  friendId: string;
+  /** Le destinataire a-t-il accepté (matérialisé) la liste ? */
+  accepted: boolean;
+}
+
 /**
  * Friend request status
  */

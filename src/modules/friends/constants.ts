@@ -5,6 +5,7 @@
 export const FRIENDS_STORAGE_KEY = 'cosmo_friends';
 export const FRIEND_REQUESTS_STORAGE_KEY = 'cosmo_friend_requests';
 export const SHARED_TASKS_STORAGE_KEY = 'cosmo_shared_tasks';
+export const SHARED_LISTS_STORAGE_KEY = 'cosmo_shared_lists';
 
 /**
  * React Query keys for friends
@@ -19,5 +20,6 @@ export const friendKeys = {
   taskShares: (taskId: string) => [...friendKeys.all, 'sharedTasks', 'task', taskId] as const,
   myTaskShares: () => [...friendKeys.all, 'sharedTasks', 'mine'] as const,
   relatedTaskShares: () => [...friendKeys.all, 'sharedTasks', 'related'] as const,
+  incomingSharedLists: () => [...friendKeys.all, 'sharedLists', 'incoming'] as const,
 };
 
