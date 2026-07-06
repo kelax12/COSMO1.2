@@ -3,22 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Keyboard, X } from 'lucide-react';
-
-const IS_MAC =
-  typeof navigator !== 'undefined' &&
-  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
-
-const SHORTCUTS: { keys: string[]; label: string }[] = [
-  { keys: ['N'], label: 'Nouvelle tâche (quick-add en langage naturel)' },
-  { keys: [IS_MAC ? '⌘' : 'Ctrl', 'K'], label: 'Palette de commandes (recherche globale, actions)' },
-  { keys: ['/'], label: 'Rechercher dans la page Tâches' },
-  { keys: ['G', 'puis T'], label: 'Aller aux Tâches (d = Accueil, a = Agenda, h = Habitudes, o = OKR, s = Stats)' },
-  { keys: ['['], label: 'Replier / déplier la barre latérale' },
-  { keys: ['↑', '↓'], label: 'Naviguer dans la liste de tâches (x = compléter, Entrée = ouvrir)' },
-  { keys: ['?'], label: 'Afficher cette aide' },
-  { keys: ['Échap'], label: 'Fermer le modal / la palette en cours' },
-  { keys: ['Entrée'], label: 'Valider (dans le quick-add : créer et enchaîner)' },
-];
+import { ShortcutsList } from './keyboard-shortcuts';
 
 const ShortcutsHelp = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -83,28 +68,9 @@ const ShortcutsHelp = () => {
                 <X size={16} />
               </button>
             </div>
-            <ul className="px-5 py-4 space-y-3">
-              {SHORTCUTS.map((s) => (
-                <li key={s.label} className="flex items-center justify-between gap-4">
-                  <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{s.label}</span>
-                  <span className="flex items-center gap-1 shrink-0">
-                    {s.keys.map((k) => (
-                      <kbd
-                        key={k}
-                        className="px-2 py-1 rounded-md border text-xs font-semibold"
-                        style={{
-                          borderColor: 'rgb(var(--color-border))',
-                          backgroundColor: 'rgb(var(--color-hover))',
-                          color: 'rgb(var(--color-text-primary))',
-                        }}
-                      >
-                        {k}
-                      </kbd>
-                    ))}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+              <ShortcutsList />
+            </div>
             <p className="px-5 pb-4 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               Les raccourcis sont inactifs pendant la saisie dans un champ.
             </p>

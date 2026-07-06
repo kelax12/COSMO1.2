@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat, BarChart3,
+  Mail, ChevronRight, Repeat, BarChart3, Keyboard,
 } from 'lucide-react';
+import { ShortcutsList } from '../components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router-dom';
@@ -524,6 +525,20 @@ const SettingsPage: React.FC = () => {
                     />
                   </button>
                 </div>
+              </SectionCard>
+
+              {/* Raccourcis clavier — copie du contenu du popup « ? »,
+                  consultable sans avoir à ouvrir la palette. Source partagée
+                  (components/keyboard-shortcuts) pour ne jamais diverger. */}
+              <SectionCard className="mt-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Keyboard size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                  <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h3>
+                </div>
+                <p className="text-xs text-[rgb(var(--color-text-muted))] -mt-2 mb-3">
+                  Aussi accessibles à tout moment avec la touche <kbd className="px-1.5 py-0.5 rounded border text-[11px]" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
+                </p>
+                <ShortcutsList compact />
               </SectionCard>
             </motion.div>
           )}
