@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
+import BulkAddToListModal from './add-to-list/BulkAddToListModal';
 import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList, TaskRow } from './task-table/list';
@@ -114,10 +115,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // d'actions groupées (compléter / ajouter à une liste / supprimer).
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Modal d'ajout groupé à une liste (#23) — remplace l'ancien DropdownMenu
+  // (désactivé quand aucune liste manuelle → bouton « Liste » sans réaction).
+  const [showBulkListModal, setShowBulkListModal] = useState(false);
+  // Nombre de tâches figé à l'ouverture du modal : bulkAddToList vide la
+  // sélection, on évite un « 0 tâche » qui clignoterait pendant la fermeture.
+  const [bulkModalCount, setBulkModalCount] = useState(0);
   const { data: allLists = [] } = useLists();
-  // Listes manuelles uniquement pour l'ajout groupé (#10) — les smart lists
-  // sont pilotées par règle et ignorent taskIds.
-  const manualLists = useMemo(() => allLists.filter(l => l.type !== 'smart'), [allLists]);
   const addTaskToListMutation = useAddTaskToList();
 
   const toggleSelected = useCallback((id: string) => {
@@ -628,23 +632,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <CheckCircle2 size={16} data-icon="inline-start" />
               <span className="hidden sm:inline">Compléter</span>
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                {/* Smart lists exclues : leur contenu est calculé par règle,
-                    y « ajouter » une tâche n'aurait aucun effet visible. */}
-                <Button size="sm" variant="outline" disabled={selectedIds.length === 0 || manualLists.length === 0}>
-                  <ListPlus size={16} data-icon="inline-start" />
-                  <span className="hidden sm:inline">Liste</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center">
-                {manualLists.map(list => (
-                  <DropdownMenuItem key={list.id} onClick={() => bulkAddToList(list.id)}>
-                    {list.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Ouvre le modal d'ajout à une liste (#23) — toujours cliquable,
+                même sans liste manuelle (le modal permet d'en créer une). */}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={selectedIds.length === 0}
+              onClick={() => { setBulkModalCount(selectedIds.length); setShowBulkListModal(true); }}
+            >
+              <ListPlus size={16} data-icon="inline-start" />
+              <span className="hidden sm:inline">Liste</span>
+            </Button>
             <Button size="sm" variant="outline" onClick={bulkDelete} disabled={selectedIds.length === 0} className="!text-red-500 hover:!bg-red-500/10">
               <Trash2 size={16} data-icon="inline-start" />
               <span className="hidden sm:inline">Supprimer</span>
@@ -661,6 +659,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal d'ajout groupé à une liste (#23) */}
+      <BulkAddToListModal
+        isOpen={showBulkListModal}
+        onClose={() => setShowBulkListModal(false)}
+        count={bulkModalCount}
+        onAddToList={bulkAddToList}
+      />
 
       {/* Création directe depuis l'état vide (#45) */}
       <TaskModal
