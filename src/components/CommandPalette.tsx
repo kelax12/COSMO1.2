@@ -11,6 +11,7 @@ import {
   Crown,
   Repeat,
   Moon,
+  MoonStar,
   Sun,
   LogOut,
   Plus,
@@ -163,6 +164,7 @@ export function CommandPalette() {
         : []),
       { id: 'pref-theme-light', label: 'Thème clair', group: 'Préférences', icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
       { id: 'pref-theme-dark', label: 'Thème sombre', group: 'Préférences', icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
+      { id: 'pref-theme-black', label: 'Thème noir', group: 'Préférences', icon: <MoonStar size={16} />, run: () => { setTheme('black'); setIsOpen(false); }, keywords: ['theme', 'black', 'noir', 'oled', 'amoled'] },
     ];
     if (isAuthenticated) {
       base.push(
@@ -339,7 +341,7 @@ export function CommandPalette() {
                   </span>
                 </div>
                 <span className="hidden sm:inline">
-                  {theme === 'dark' ? 'Sombre' : 'Clair'}
+                  {theme === 'dark' ? 'Sombre' : theme === 'black' ? 'Noir' : 'Clair'}
                 </span>
               </div>
             </Command>

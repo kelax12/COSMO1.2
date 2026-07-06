@@ -180,6 +180,88 @@
 --chart-5: 340 75% 55%;
 }
 
+  /* ── Black (vrai noir / OLED) — appliqué AVEC .dark, override uniquement les couleurs ── */
+  .black {
+    /* Base palette (RGB format) — fond quasi noir, surfaces anthracite neutres */
+    --color-primary: 161 161 170;
+    --color-secondary: 113 113 122;
+    --color-accent: 59 130 246;
+    --color-success: 52 211 153;
+    --color-warning: 251 191 36;
+    --color-error: 239 68 68;
+    --color-surface: 15 15 18;
+    --color-background: 5 5 7;
+
+    /* Semantic colors */
+    --color-text-primary: 245 245 247;
+    --color-text-secondary: 190 192 198;
+    --color-text-muted: 122 124 132;
+    --color-border: 39 39 45;
+    --color-border-muted: 28 28 33;
+    --color-hover: 28 28 33;
+    --color-active: 44 44 51;
+    --color-chip-bg: 26 26 31;
+    --color-chip-border: 48 48 55;
+
+    /* Navigation specific colors */
+    --nav-bg: 12 12 15;
+    --nav-border: 34 34 40;
+    --nav-item-text: 132 134 142;
+    --nav-item-hover-bg: 28 28 33;
+    --nav-item-hover-text: 212 214 220;
+    --nav-item-active-bg: 44 44 51;
+    --nav-item-active-text: 255 255 255;
+
+    /* Calendar specific colors */
+    --calendar-bg: 15 15 18;
+    --calendar-border: 42 42 48;
+    --calendar-header-bg: 5 5 7;
+    --calendar-header-text: 190 192 198;
+    --calendar-day-bg: 5 5 7;
+    --calendar-day-hover: 15 15 18;
+    --calendar-today-bg: 34 34 40;
+
+    /* Table specific colors */
+    --table-bg: 15 15 18;
+    --table-border: 42 42 48;
+    --table-header-bg: 5 5 7;
+    --table-header-text: 190 192 198;
+    --table-row-hover: 28 28 33;
+    --table-row-even: 15 15 18;
+    --table-row-odd: 5 5 7;
+
+    /* shadcn/ui variables (HSL format) — Black mode */
+    --background: 240 12% 2%;
+    --foreground: 220 14% 96%;
+    --card: 240 6% 6%;
+    --card-foreground: 220 14% 96%;
+    --popover: 240 6% 7%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 240 4% 65%;
+    --primary-foreground: 240 12% 4%;
+    --secondary: 240 5% 16%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 240 5% 10%;
+    --muted-foreground: 227 5% 60%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 220 14% 96%;
+    --border: 240 6% 16%;
+    --input: 240 6% 16%;
+    --ring: 217 91% 60%;
+
+    /* shadcn/ui sidebar variables — Black mode */
+    --sidebar-background: 240 6% 6%;
+    --sidebar-foreground: 227 5% 60%;
+    --sidebar-primary: 220 14% 96%;
+    --sidebar-primary-foreground: 240 12% 4%;
+    --sidebar-accent: 240 5% 12%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 240 6% 16%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
   /* ── Monochrome (Noir & Blanc) — overrides .dark variables ── */
   .monochrome {
     /* Base palette — pure grays, no hue */
