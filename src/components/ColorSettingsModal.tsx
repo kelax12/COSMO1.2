@@ -153,7 +153,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             ref={scrollRef}
             data-scroll-area
             className="px-4 sm:px-6 py-4 sm:py-6 overflow-y-auto flex-1 custom-scrollbar scroll-smooth"
-            style={{ backgroundColor: 'rgb(var(--color-background))' }}
+            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex justify-end mb-4">
               <button 
@@ -193,7 +193,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                         type="text"
                         value={category.name}
                         onChange={(e) => handleUpdateLocal(category.id, { name: e.target.value })}
-                        className="w-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-blue-500 dark:focus:border-slate-500 monochrome:focus:border-white transition-all"
+                        className="w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-blue-500 dark:focus:border-slate-500 monochrome:focus:border-white transition-all"
                         placeholder="Nom de la catégorie"
                       />
                     </div>
