@@ -6,11 +6,12 @@
 import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Share2, UserPlus } from 'lucide-react';
+import { Search, Share2, UserPlus, User } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
 import type { Task } from '@/modules/tasks';
 import { useFriends, useShareList, type TaskSnapshot } from '@/modules/friends';
 import { collabIdOf, filterFriendsForCollab } from './task-modal/collaborators';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 
 interface ShareListSheetProps {
   /** Liste à partager (null = fermé). */
@@ -146,8 +147,14 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
                     disabled={shareListMutation.isPending}
                     className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors text-left"
                   >
-                    <span className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0 bg-teal-100 dark:bg-teal-900/40">
-                      {friend.avatar || '🙂'}
+                    <span className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0 overflow-hidden bg-teal-100 dark:bg-teal-900/40">
+                      {isImageAvatar(friend.avatar) ? (
+                        <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : isEmojiAvatar(friend.avatar) ? (
+                        <span aria-hidden="true">{friend.avatar}</span>
+                      ) : (
+                        <User size={16} className="text-teal-700 dark:text-teal-300" aria-hidden="true" />
+                      )}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
