@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getFriendsRepository } from '@/lib/repository.factory';
+import { getFriendsRepository, getListsRepository, getTasksRepository } from '@/lib/repository.factory';
+import { listKeys } from '@/modules/lists';
+import { taskKeys, type CreateTaskInput } from '@/modules/tasks';
 import type {
   Friend,
   FriendRequestInput,
   ShareTaskInput,
   PendingFriendRequest,
   TaskShare,
+  ShareListInput,
+  SharedListGrant,
 } from './types';
 import { friendKeys } from './constants';
 
@@ -205,6 +209,100 @@ export const useUnshareTask = () => {
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'annuler le partage de la tâche : ${error.message}`);
+    },
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// LIST SHARING HOOKS (copy-on-accept)
+// ═══════════════════════════════════════════════════════════════════
+
+export const useShareList = () => {
+  const queryClient = useQueryClient();
+  const repository = useFriendsRepository();
+
+  return useMutation({
+    mutationFn: (input: ShareListInput) => repository.shareList(input),
+    onSuccess: () => {
+      toast.success('Liste partagée');
+      queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de partager la liste : ${error.message}`);
+    },
+  });
+};
+
+export const useIncomingSharedLists = () => {
+  const repository = useFriendsRepository();
+  return useQuery({
+    queryKey: friendKeys.incomingSharedLists(),
+    queryFn: () => repository.getIncomingSharedLists(),
+    // Même cadence que useRelatedTaskShares : collaboration sans realtime.
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useAcceptSharedList = () => {
+  const queryClient = useQueryClient();
+  const repository = useFriendsRepository();
+
+  return useMutation({
+    // Matérialisation : on recrée la liste + ses tâches dans les données du
+    // destinataire (via les repos lists/tasks), puis on marque la grant acceptée.
+    mutationFn: async (grant: SharedListGrant) => {
+      const listsRepo = getListsRepository();
+      const tasksRepo = getTasksRepository();
+
+      const newList = await listsRepo.create({
+        name: grant.name,
+        color: grant.color,
+        type: 'manual',
+      });
+
+      for (const snap of grant.tasks) {
+        const input: CreateTaskInput = {
+          name: snap.name,
+          description: snap.description,
+          priority: snap.priority,
+          category: snap.category,
+          deadline: snap.deadline,
+          estimatedTime: snap.estimatedTime,
+          bookmarked: snap.bookmarked,
+          completed: snap.completed,
+          subtasks: snap.subtasks,
+          recurrence: snap.recurrence,
+        };
+        const created = await tasksRepo.create(input);
+        await listsRepo.addTaskToList(created.id, newList.id);
+      }
+
+      await repository.acceptSharedList(grant.id);
+    },
+    onSuccess: () => {
+      toast.success('Liste acceptée');
+      queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
+      queryClient.invalidateQueries({ queryKey: listKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible d'accepter la liste : ${error.message}`);
+    },
+  });
+};
+
+export const useRefuseSharedList = () => {
+  const queryClient = useQueryClient();
+  const repository = useFriendsRepository();
+
+  return useMutation({
+    mutationFn: (grantId: string) => repository.refuseSharedList(grantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de refuser la liste : ${error.message}`);
     },
   });
 };

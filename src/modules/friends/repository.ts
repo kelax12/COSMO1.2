@@ -2,8 +2,11 @@
 // FRIENDS MODULE - Repository Pattern Implementation
 // ═══════════════════════════════════════════════════════════════════
 
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskShare, RelatedTaskShare } from './types';
-import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY } from './constants';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant } from './types';
+import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY, SHARED_LISTS_STORAGE_KEY } from './constants';
+
+/** Id de l'utilisateur démo — utilisé pour distinguer partages entrants/sortants. */
+const DEMO_USER_ID = 'demo-user';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -38,6 +41,26 @@ const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
   },
 ];
 
+// Listes partagées entrantes seedées pour la démo — le destinataire est
+// l'utilisateur démo (friendId = DEMO_USER_ID), non encore acceptées.
+const DEMO_INCOMING_SHARED_LISTS: SharedListGrant[] = [
+  {
+    id: 'shared-list-demo-1',
+    listId: 'list-marie-courses',
+    name: 'Courses du week-end',
+    color: 'green',
+    sharedBy: 'friend-1',
+    sharedByName: 'Marie Dupont',
+    friendId: DEMO_USER_ID,
+    accepted: false,
+    tasks: [
+      { name: 'Fruits & légumes', priority: 3, category: 'Personnel', deadline: '', estimatedTime: 15, bookmarked: false, completed: false },
+      { name: 'Pain & viennoiseries', priority: 3, category: 'Personnel', deadline: '', estimatedTime: 10, bookmarked: false, completed: false },
+      { name: 'Produits ménagers', priority: 4, category: 'Personnel', deadline: '', estimatedTime: 10, bookmarked: false, completed: false },
+    ],
+  },
+];
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
 // ═══════════════════════════════════════════════════════════════════
@@ -69,6 +92,17 @@ export interface IFriendsRepository {
    *  destinataire) — pour afficher les avatars des collaborateurs des deux
    *  côtés. */
   getRelatedTaskShares(): Promise<RelatedTaskShare[]>;
+
+  // List sharing operations (copy-on-accept)
+  /** Partage une liste (snapshot nom + couleur + tâches) avec un ami. */
+  shareList(input: ShareListInput): Promise<void>;
+  /** Listes partagées REÇUES par l'utilisateur courant, non encore acceptées. */
+  getIncomingSharedLists(): Promise<SharedListGrant[]>;
+  /** Marque une grant de liste comme acceptée (la matérialisation liste+tâches
+   *  est orchestrée côté hook via les repos lists/tasks). */
+  acceptSharedList(grantId: string): Promise<void>;
+  /** Refuse (supprime) une grant de liste reçue. */
+  refuseSharedList(grantId: string): Promise<void>;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -316,5 +350,72 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       }
     }
     return out;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LIST SHARING OPERATIONS
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Lecture défensive du tableau des grants de listes partagées. Seed les
+   * listes entrantes de démo au premier accès (clone défensif — faille B12 ;
+   * JSON.parse protégé — faille B14).
+   */
+  private getSharedListsArray(): SharedListGrant[] {
+    const data = localStorage.getItem(SHARED_LISTS_STORAGE_KEY);
+    if (!data) {
+      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[];
+      localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
+      return seed;
+    }
+    try {
+      return JSON.parse(data) as SharedListGrant[];
+    } catch {
+      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[];
+      localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
+      return seed;
+    }
+  }
+
+  private saveSharedListsArray(grants: SharedListGrant[]): void {
+    localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(grants));
+  }
+
+  async shareList(input: ShareListInput): Promise<void> {
+    const grants = this.getSharedListsArray();
+    // Dédup : même liste déjà partagée au même ami et pas encore acceptée.
+    const already = grants.some(
+      (g) => g.listId === input.listId && g.friendId === input.friendId && !g.accepted
+    );
+    if (already) return;
+    grants.push({
+      id: crypto.randomUUID(),
+      listId: input.listId,
+      name: input.name,
+      color: input.color,
+      tasks: input.tasks,
+      sharedBy: DEMO_USER_ID,
+      friendId: input.friendId,
+      accepted: false,
+    });
+    this.saveSharedListsArray(grants);
+  }
+
+  async getIncomingSharedLists(): Promise<SharedListGrant[]> {
+    // Entrantes = destinées à l'utilisateur démo et non acceptées.
+    return this.getSharedListsArray().filter(
+      (g) => g.friendId === DEMO_USER_ID && !g.accepted
+    );
+  }
+
+  async acceptSharedList(grantId: string): Promise<void> {
+    const grants = this.getSharedListsArray();
+    const next = grants.map((g) => (g.id === grantId ? { ...g, accepted: true } : g));
+    this.saveSharedListsArray(next);
+  }
+
+  async refuseSharedList(grantId: string): Promise<void> {
+    const grants = this.getSharedListsArray();
+    this.saveSharedListsArray(grants.filter((g) => g.id !== grantId));
   }
 }

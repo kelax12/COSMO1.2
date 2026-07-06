@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare, RelatedTaskShare } from './types';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant, TaskSnapshot } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -439,6 +439,99 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       role: ((r.role as string) === 'editor' ? 'editor' : 'viewer'),
       accepted: r.accepted_at != null,
     }));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LIST SHARING OPERATIONS (copy-on-accept)
+  // ═══════════════════════════════════════════════════════════════════
+
+  async shareList(input: ShareListInput): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+
+    // Résolution de l'auth.uid canonique du destinataire (même logique que
+    // shareTask) via la RPC SECURITY DEFINER, par email.
+    let friendUserId = input.friendId;
+    if (input.friendEmail) {
+      const { data: resolvedId } = await supabase.rpc('resolve_profile_by_email', {
+        p_email: input.friendEmail.toLowerCase(),
+      });
+      if (resolvedId) friendUserId = resolvedId as string;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('shared_lists')
+      .insert([{
+        shared_by: user.id,
+        friend_id: friendUserId,
+        name: input.name,
+        color: input.color,
+        tasks: input.tasks,
+      }]);
+
+    if (error) {
+      const code = (error as { code?: string }).code;
+      if (code === '23503') {
+        throw new Error(
+          "Le destinataire n'est pas (encore) inscrit sur Cosmo. " +
+          "Demande-lui de se connecter au moins une fois, puis réessaie."
+        );
+      }
+      if (code === '42501') {
+        throw new Error(
+          "Envoie d'abord une demande d'ami à cette personne pour pouvoir lui partager une liste."
+        );
+      }
+      throw normalizeApiError(error);
+    }
+  }
+
+  async getIncomingSharedLists(): Promise<SharedListGrant[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    // RLS `shared_lists_select` : friend_id = auth.uid(). Non acceptées seulement.
+    const { data, error } = await supabase
+      .from('shared_lists')
+      .select('id, shared_by, name, color, tasks, accepted_at')
+      .eq('friend_id', user.id)
+      .is('accepted_at', null)
+      .limit(200);
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((r) => ({
+      id: r.id as string,
+      name: r.name as string,
+      color: (r.color as string) || 'blue',
+      tasks: (r.tasks as TaskSnapshot[]) || [],
+      sharedBy: r.shared_by as string,
+      friendId: user.id,
+      accepted: false,
+    }));
+  }
+
+  async acceptSharedList(grantId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    // RLS `shared_lists_update` : le destinataire (friend_id) pose accepted_at.
+    const { error } = await supabase
+      .from('shared_lists')
+      .update({ accepted_at: new Date().toISOString() })
+      .eq('id', grantId)
+      .eq('friend_id', user.id);
+    if (error) throw normalizeApiError(error);
+  }
+
+  async refuseSharedList(grantId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RLS `shared_lists_delete` : shared_by OR friend_id.
+    const { error } = await supabase
+      .from('shared_lists')
+      .delete()
+      .eq('id', grantId);
+    if (error) throw normalizeApiError(error);
   }
 
   // ═══════════════════════════════════════════════════════════════════

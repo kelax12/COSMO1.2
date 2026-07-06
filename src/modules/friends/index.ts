@@ -14,17 +14,21 @@ export type {
   FriendRequestStatus,
   TaskShare,
   RelatedTaskShare,
+  ShareListInput,
+  SharedListGrant,
+  TaskSnapshot,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS & QUERY KEYS
 // ═══════════════════════════════════════════════════════════════════
 
-export { 
-  friendKeys, 
+export {
+  friendKeys,
   FRIENDS_STORAGE_KEY,
   FRIEND_REQUESTS_STORAGE_KEY,
   SHARED_TASKS_STORAGE_KEY,
+  SHARED_LISTS_STORAGE_KEY,
 } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -51,6 +55,7 @@ export {
   useRelatedTaskShares,
   useFriendCount,
   usePendingRequestCount,
+  useIncomingSharedLists,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -65,6 +70,9 @@ export {
   useShareTask,
   useUnshareTask,
   useAcceptSharedTask,
+  useShareList,
+  useAcceptSharedList,
+  useRefuseSharedList,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════

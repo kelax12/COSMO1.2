@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
+import { Pencil, Pin, PinOff, Trash2, Share2 } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
 
 export interface ListColorOption {
@@ -19,6 +19,8 @@ interface ListActionsSheetProps {
   onToggleDefault: (list: TaskList) => void;
   onDelete: (list: TaskList) => void;
   onPickColor: (list: TaskList, colorValue: string) => void;
+  /** Partage la liste (listes manuelles uniquement). */
+  onShare: (list: TaskList) => void;
 }
 
 const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
@@ -30,6 +32,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
   onToggleDefault,
   onDelete,
   onPickColor,
+  onShare,
 }) => {
   const isOpen = !!list;
   const isSmart = list?.type === 'smart';
@@ -149,6 +152,29 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
                     />
                     <span className="text-[16px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
                       Renommer
+                    </span>
+                  </button>
+                  <div className="h-px ml-[60px]" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                </>
+              )}
+
+              {/* Partager — listes manuelles uniquement */}
+              {!isSmart && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { onShare(list); onClose(); }}
+                    className="w-full flex items-center gap-4 px-5 min-h-[54px] text-left active:opacity-50 transition-opacity"
+                  >
+                    <Share2
+                      size={17}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      className="text-teal-600 dark:text-teal-400"
+                      style={{ flexShrink: 0 }}
+                    />
+                    <span className="text-[16px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                      Partager
                     </span>
                   </button>
                   <div className="h-px ml-[60px]" style={{ backgroundColor: 'rgb(var(--color-border))' }} />

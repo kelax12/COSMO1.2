@@ -5,6 +5,7 @@ import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListActionsSheet from '../components/ListActionsSheet';
+import ShareListSheet from '../components/ShareListSheet';
 import { Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -75,6 +76,8 @@ const TasksPage: React.FC = () => {
   const [newListColor, setNewListColor] = useState('blue');
   const addTaskToListMutation = useAddTaskToList();
   const [hoveredListId, setHoveredListId] = useState<string | null>(null);
+  // Liste en cours de partage (ouvre ShareListSheet). null = fermé.
+  const [shareListTarget, setShareListTarget] = useState<TaskList | null>(null);
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editListName, setEditListName] = useState('');
   const [editListColor, setEditListColor] = useState('blue');
@@ -464,6 +467,7 @@ const TasksPage: React.FC = () => {
                 submitEditList={submitEditList}
                 handleToggleDefault={handleToggleDefault}
                 handleReorderLists={handleReorderLists}
+                onShareList={(list) => setShareListTarget(list)}
                 handleCreateSmartList={handleCreateSmartList}
                 startChipLongPress={startChipLongPress}
                 cancelChipLongPress={cancelChipLongPress}
@@ -651,6 +655,14 @@ const TasksPage: React.FC = () => {
         onToggleDefault={handleToggleDefault}
         onDelete={(list) => deleteListById(list.id)}
         onPickColor={(list, colorValue) => updateListMutation.mutate({ id: list.id, updates: { color: colorValue } })}
+        onShare={(list) => setShareListTarget(list)}
+      />
+
+      {/* Partage de liste — bottom-sheet avec sélecteur d'ami */}
+      <ShareListSheet
+        list={shareListTarget}
+        tasks={tasks}
+        onClose={() => setShareListTarget(null)}
       />
 
       {/* Tutoriel page Tâches — variante adaptée au viewport */}
