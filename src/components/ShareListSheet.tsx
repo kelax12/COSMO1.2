@@ -100,9 +100,6 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
 
             {/* Header teal — identité « listes partagées » */}
             <div className="flex items-center gap-3 px-5 py-4 shrink-0">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300">
-                <Share2 size={18} aria-hidden="true" />
-              </div>
               <div className="min-w-0">
                 <h2 className="text-base font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
                   Partager « {list.name} »
