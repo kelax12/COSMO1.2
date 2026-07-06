@@ -269,19 +269,36 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      {/* Stat cards — sans icônes */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Aujourd'hui", val: fixedStats.today },
-          { label: 'Cette semaine', val: fixedStats.week },
-          { label: 'Ce mois', val: fixedStats.month },
-          { label: 'Cette année', val: fixedStats.year },
-        ].map((s, idx) => (
-          <div key={idx} className="card p-5">
-            <p className="text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{s.label}</p>
-            <p className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTimeShort(s.val)}</p>
-          </div>
-        ))}
+      {/* Synthèse temps par période — tableau à barres (barre = part relative au max) */}
+      <div className="card p-4 md:p-6 mb-8">
+        {(() => {
+          const rows = [
+            { label: "Aujourd'hui", val: fixedStats.today },
+            { label: '7 derniers jours', val: fixedStats.week },
+            { label: '30 derniers jours', val: fixedStats.month },
+            { label: '365 derniers jours', val: fixedStats.year },
+          ];
+          const max = Math.max(rows[0].val, rows[1].val, rows[2].val, rows[3].val);
+          return rows.map((r, idx) => {
+            const pct = max > 0 ? (r.val / max) * 100 : 0;
+            const width = r.val > 0 ? Math.max(pct, 2) : 0;
+            return (
+              <div
+                key={idx}
+                className="grid grid-cols-[minmax(84px,120px)_1fr_auto] items-center gap-3 md:gap-4 py-3"
+                style={idx < rows.length - 1 ? { borderBottom: '1px solid rgb(var(--color-border-muted))' } : undefined}
+              >
+                <span className="text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>{r.label}</span>
+                <span aria-hidden="true" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                  <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${width}%`, backgroundColor: sectionColor }} />
+                </span>
+                <span className="text-sm font-semibold tabular-nums text-right tracking-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  {formatTimeShort(r.val)}
+                </span>
+              </div>
+            );
+          });
+        })()}
       </div>
 
       {/* Gate premium — graphiques et détails */}
