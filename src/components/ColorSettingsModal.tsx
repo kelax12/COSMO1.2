@@ -128,7 +128,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
           transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-            className={`relative w-full overflow-hidden rounded-t-[28px] sm:rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all flex flex-col max-h-[88vh] sm:max-h-[85vh] ${
+            className={`relative w-full overflow-hidden rounded-t-[28px] sm:rounded-[20px] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl border-t sm:border border-[rgb(var(--color-border))] transition-all flex flex-col max-h-[88vh] sm:max-h-[85vh] ${
               isNested ? 'sm:max-w-[510px]' : 'sm:max-w-[572px]'
             }`}
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -138,12 +138,12 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
           </div>
 
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0">
-            <h2 className="text-base sm:text-xl font-medium text-slate-800 dark:text-white">Modifier les catégories</h2>
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0">
+            <h2 className="text-base sm:text-xl font-medium text-[rgb(var(--color-text-primary))]">Modifier les catégories</h2>
             <button
               onClick={onClose}
               aria-label="Fermer"
-              className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 monochrome:hover:text-white transition-colors"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-blue-600 hover:bg-[rgb(var(--color-hover))] monochrome:hover:text-white transition-colors"
             >
               <X size={22} strokeWidth={2.5} />
             </button>
@@ -175,7 +175,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                       exit={{ opacity: 0, scale: 0.95 }}
                       className="flex items-center gap-3"
                     >
-                      <div className="relative group bg-white dark:bg-slate-800 monochrome:bg-neutral-800 rounded-[15px]">
+                      <div className="relative group bg-[rgb(var(--color-surface))] rounded-[15px]">
                         <div 
                           className="h-10 w-10 rounded-[15px] flex-shrink-0 cursor-pointer shadow-sm hover:brightness-110 transition-all"
                           style={{ backgroundColor: category.color }}
@@ -193,7 +193,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                         type="text"
                         value={category.name}
                         onChange={(e) => handleUpdateLocal(category.id, { name: e.target.value })}
-                        className="w-full bg-[rgb(var(--color-surface))] border border-slate-300 dark:border-slate-700 monochrome:border-neutral-600 rounded-xl px-4 py-2 text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 dark:focus:border-slate-500 monochrome:focus:border-white transition-all"
+                        className="w-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-blue-500 dark:focus:border-slate-500 monochrome:focus:border-white transition-all"
                         placeholder="Nom de la catégorie"
                       />
                     </div>
@@ -210,7 +210,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             </div>
           </div>
 
-            <div className="px-4 sm:px-6 pt-3 pb-3 sm:pb-6 border-t border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700 shrink-0 flex justify-center">
+            <div className="px-4 sm:px-6 pt-3 pb-3 sm:pb-6 border-t border-[rgb(var(--color-border))] shrink-0 flex justify-center">
               <button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -262,7 +262,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                   <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                     <button
                       onClick={() => setCategoryToDelete(null)}
-                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 monochrome:border-neutral-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all"
                     >
                       Annuler
                     </button>
