@@ -9,6 +9,7 @@ import {
 } from '@/modules/organizations';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
+import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
 
 type OrgTab = 'overview' | 'projects' | 'okr' | 'members';
 
@@ -53,6 +54,7 @@ const OrganizationPage = () => {
   if (!myOrg) return <Navigate to="/dashboard" replace />;
 
   const isAdmin = myOrg.myRole === 'admin';
+  const isManager = myOrg.myRole === 'admin' || myOrg.myRole === 'manager';
 
   const handleLeave = () => {
     if (!window.confirm(`Quitter ${myOrg.name} ? Vous perdrez l'accès aux projets et OKR de l'équipe.`)) return;
@@ -95,7 +97,9 @@ const OrganizationPage = () => {
 
       {/* Contenu */}
       {tab === 'overview' && <Placeholder label="Tableau de bord de l'équipe" />}
-      {tab === 'projects' && <Placeholder label="Projets d'équipe" />}
+      {tab === 'projects' && (
+        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
+      )}
       {tab === 'okr' && <Placeholder label="OKR d'équipe" />}
 
       {tab === 'members' && (
