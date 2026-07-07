@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks } from 'lucide-react';
+import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +24,11 @@ import {
   useRefuseSharedList,
   type SharedListGrant,
 } from '@/modules/friends';
+import {
+  useMyOrganization,
+  useOrgJoinRequests,
+  useRespondJoinRequest,
+} from '@/modules/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -62,6 +67,12 @@ const InboxMenu: React.FC = () => {
   const { data: incomingLists = [] } = useIncomingSharedLists();
   const acceptSharedListMutation = useAcceptSharedList();
   const refuseSharedListMutation = useRefuseSharedList();
+
+  // Mode entreprise : demandes d'adhésion à valider (admins uniquement).
+  const { data: myOrg } = useMyOrganization();
+  const isOrgAdmin = myOrg?.myRole === 'admin';
+  const { data: joinRequests = [] } = useOrgJoinRequests(isOrgAdmin ? myOrg?.id : undefined);
+  const respondJoinRequestMutation = useRespondJoinRequest();
 
   // Acquittements locaux des tâches partagées en mode démo (cf.
   // lib/acknowledged-shares). En Supabase, l'état d'acceptation est porté par
@@ -114,7 +125,8 @@ const InboxMenu: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
-  const total = incomingRequests.length + tasksToAccept.length + incomingLists.length;
+  const pendingJoinRequests = isOrgAdmin ? joinRequests : [];
+  const total = incomingRequests.length + tasksToAccept.length + incomingLists.length + pendingJoinRequests.length;
 
   // Aperçu de l'impact d'une suppression d'ami : tâches dont je suis
   // propriétaire et que j'ai partagées avec lui (il perdra l'accès) + tâches
@@ -264,6 +276,10 @@ const InboxMenu: React.FC = () => {
     refuseSharedListMutation.mutate(grant.id, {
       onSuccess: () => toast.success('Liste refusée'),
     });
+  };
+
+  const handleRespondJoin = (requestId: string, accept: boolean) => {
+    respondJoinRequestMutation.mutate({ requestId, accept });
   };
 
   const confirmRemoveFriend = () => {
@@ -572,6 +588,66 @@ const InboxMenu: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Demandes d'adhésion entreprise (admin) — identité indigo ── */}
+        {!showManageFriends && pendingJoinRequests.length > 0 && (
+          <div className="px-3 pt-3 pb-1">
+            <p className="px-1 text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 mb-2 text-indigo-600 dark:text-indigo-400">
+              <Building2 size={12} aria-hidden="true" /> Demandes d'adhésion ({pendingJoinRequests.length})
+            </p>
+            <div className="space-y-2">
+              {pendingJoinRequests.map((req) => {
+                const timeAgo = req.requestedAt
+                  ? formatDistanceToNow(new Date(req.requestedAt), { locale: fr, addSuffix: true })
+                  : '';
+                return (
+                  <div
+                    key={req.id}
+                    className="p-3 rounded-xl border border-indigo-300 dark:border-indigo-700/60 bg-indigo-50 dark:bg-indigo-900/20"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 overflow-hidden">
+                        {isImageAvatar(req.requesterAvatar) ? (
+                          <img src={req.requesterAvatar} alt="" className="w-full h-full object-cover" />
+                        ) : isEmojiAvatar(req.requesterAvatar) ? (
+                          <span className="text-lg leading-none" aria-hidden="true">{req.requesterAvatar}</span>
+                        ) : (
+                          <User size={15} className="text-indigo-600 dark:text-indigo-300" aria-hidden="true" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
+                          {req.requesterName || 'Utilisateur'}
+                        </p>
+                        <p className="text-xs truncate inline-flex items-center gap-1 text-indigo-700 dark:text-indigo-300">
+                          <Building2 size={11} aria-hidden="true" /> Souhaite rejoindre{timeAgo ? ` · ${timeAgo}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleRespondJoin(req.id, true)}
+                          disabled={respondJoinRequestMutation.isPending}
+                          className="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 monochrome:bg-white monochrome:text-zinc-900"
+                          aria-label={`Accepter la demande d'adhésion de ${req.requesterName || 'cet utilisateur'}`}
+                        >
+                          <Check size={15} aria-hidden="true" />
+                        </button>
+                        <button
+                          onClick={() => handleRespondJoin(req.id, false)}
+                          disabled={respondJoinRequestMutation.isPending}
+                          className="w-9 h-9 rounded-lg border border-indigo-300 dark:border-indigo-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                          aria-label={`Refuser la demande d'adhésion de ${req.requesterName || 'cet utilisateur'}`}
+                        >
+                          <X size={15} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>

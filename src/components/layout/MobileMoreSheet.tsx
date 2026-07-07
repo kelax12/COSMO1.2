@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
+import { useMyOrganization } from '@/modules/organizations';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 interface MobileMoreSheetProps {
@@ -22,11 +23,18 @@ const links = [
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
   const { user, logout } = useAuth();
   const { isPremium } = useBilling();
+  const { data: myOrg } = useMyOrganization();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
-  const visibleLinks = PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium');
+  // Entrée « Entreprise » ajoutée uniquement pour les membres d'une org.
+  const visibleLinks = [
+    ...(PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium')),
+    ...(myOrg
+      ? [{ to: '/entreprise', label: 'Entreprise', icon: Building2, iconBg: 'bg-indigo-500', description: 'Équipe & collaboration' }]
+      : []),
+  ];
 
   const handleClose = () => onOpenChange(false);
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);

@@ -24,7 +24,9 @@ const SignupPage = () => {
           mode="register"
           headingAs="h1"
           onSwitchMode={(m) => navigate(m === 'register' ? '/signup' : '/login')}
-          onSuccess={() => navigate('/dashboard')}
+          onSuccess={(accountType) =>
+            navigate(accountType === 'business' ? '/entreprise/onboarding' : '/dashboard')
+          }
         />
       </div>
     </main>

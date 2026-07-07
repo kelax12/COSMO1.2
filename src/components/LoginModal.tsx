@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import AuthForm from '@/components/AuthForm';
+import type { AccountType } from '@/modules/auth/AuthContext';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -17,11 +18,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const navigate = useNavigate();
 
-  const handleSuccess = () => {
+  const handleSuccess = (accountType?: AccountType) => {
     onClose();
+    const dest = accountType === 'business' ? '/entreprise/onboarding' : '/dashboard';
     // setTimeout 0 : laisse React commiter setUser() (loginDemo) avant que
     // ProtectedRoute vérifie isAuthenticated.
-    setTimeout(() => navigate('/dashboard'), 0);
+    setTimeout(() => navigate(dest), 0);
   };
 
   return (

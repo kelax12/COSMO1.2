@@ -97,6 +97,11 @@ export type User = {
   autoValidation?: boolean;
 };
 
+// Type de compte choisi à l'inscription (mode entreprise). Simple flag UX —
+// la frontière de sécurité reste organization_members + RLS. Le trigger DB
+// handle_new_user_profile re-valide la valeur (jamais de confiance brute).
+export type AccountType = 'personal' | 'business';
+
 // Sentinel email reserved for the local demo session. We block it at signup so an
 // attacker can't register a real Supabase account using this address (faille B0).
 const DEMO_SENTINEL_EMAIL = 'demo@cosmo.app';
@@ -108,7 +113,7 @@ type AuthContextType = {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => void;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 };
@@ -333,7 +338,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, accountType: AccountType = 'personal') => {
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
@@ -359,6 +364,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name: name,
+            // Lu par le trigger handle_new_user_profile (mig. 060) avec garde
+            // stricte : toute valeur ≠ 'business' retombe en 'personal'.
+            account_type: accountType === 'business' ? 'business' : 'personal',
           },
         },
       });

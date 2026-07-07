@@ -74,6 +74,8 @@ const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/Politiq
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'));
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
+const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'));
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -151,7 +153,7 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 );
 
 // Pages protégées éligibles à la réouverture « dernière page visitée » (#34).
-const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings'];
+const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings', '/entreprise'];
 
 const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -187,6 +189,8 @@ const AppRoutes = () => (
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
+      {/* Onboarding entreprise — plein écran, hors Layout (pas de nav) */}
+      <Route path="entreprise/onboarding" element={<PageWithSuspense><OrganizationOnboardingPage /></PageWithSuspense>} />
       <Route element={<LayoutWithSuspense />}>
         <Route path="dashboard" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
         <Route path="tasks" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
@@ -195,6 +199,8 @@ const AppRoutes = () => (
         <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
         <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
+        {/* Espace entreprise — visible pour les membres d'une organisation */}
+        <Route path="entreprise" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
         {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
             côté serveur : la RPC get_admin_stats rejette les non-admins. */}
         <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />

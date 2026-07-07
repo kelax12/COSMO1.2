@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { useAuth } from '@/modules/auth/AuthContext';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, UserRound, Building2 } from 'lucide-react';
+import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 const GoogleIcon = () => (
@@ -17,8 +17,10 @@ export interface AuthFormProps {
   mode: 'login' | 'register';
   /** Bascule entre login/register (modal: change l'état ; page: navigue vers l'autre route). */
   onSwitchMode: (mode: 'login' | 'register') => void;
-  /** Appelé après une authentification réussie (modal: ferme + navigue ; page: navigue). */
-  onSuccess: () => void;
+  /** Appelé après une authentification réussie (modal: ferme + navigue ; page: navigue).
+   *  En inscription, reçoit le type de compte choisi pour router vers l'onboarding
+   *  entreprise le cas échéant. */
+  onSuccess: (accountType?: AccountType) => void;
   /** Balise du titre : `h1` pour les pages standalone (SEO), `h2` dans le modal. */
   headingAs?: 'h1' | 'h2';
   /** Affiche le bouton « Mode Démo » (login uniquement). Défaut: true. */
@@ -56,6 +58,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  // Type de compte (inscription uniquement) : particulier par défaut.
+  const [accountType, setAccountType] = useState<AccountType>('personal');
   // Erreur globale du formulaire — inline, persistante (pas un toast fugace).
   const [formError, setFormError] = useState<string | null>(null);
   // Erreur du champ mot de passe (validation client au blur / submit, signup).
@@ -112,9 +116,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
           setFormError(result.error || 'Erreur de connexion. Réessayez.');
         }
       } else {
-        const result = await withTimeout(register(formData.name, formData.email, formData.password));
+        const result = await withTimeout(register(formData.name, formData.email, formData.password, accountType));
         if (result.success) {
-          onSuccess();
+          onSuccess(accountType);
         } else {
           setFormError(result.error || 'Erreur lors de la création du compte. Réessayez.');
         }
@@ -189,6 +193,39 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             <span className="px-3 bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-muted))]">ou continuer avec un email</span>
           </div>
         </div>
+
+        {mode === 'register' && (
+          <fieldset>
+            <legend className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
+              Type de compte
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: 'personal' as const, label: 'Particulier', desc: 'Usage personnel', Icon: UserRound },
+                { value: 'business' as const, label: 'Entreprise', desc: 'Équipe & collaboration', Icon: Building2 },
+              ]).map(({ value, label, desc, Icon }) => {
+                const selected = accountType === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setAccountType(value)}
+                    aria-pressed={selected}
+                    className={`flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-all ${
+                      selected
+                        ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/40'
+                        : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-text-muted))]'
+                    }`}
+                  >
+                    <Icon size={18} className={selected ? 'text-blue-400' : 'text-[rgb(var(--color-text-muted))]'} aria-hidden="true" />
+                    <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{label}</span>
+                    <span className="text-[11px] text-[rgb(var(--color-text-muted))]">{desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        )}
 
         {mode === 'register' && (
           <div>
