@@ -16,6 +16,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Building2,
   Zap } from
   'lucide-react';
 import Logo from './Logo';
@@ -23,6 +24,7 @@ import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { usePendingRequestCount } from '@/modules/friends';
+import { useMyOrganization } from '@/modules/organizations';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
@@ -141,11 +143,14 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings': 'Paramètres',
   '/premium': 'Premium',
   '/admin': 'Admin',
+  '/entreprise': 'Entreprise',
 };
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const pendingRequestCount = usePendingRequestCount();
+  // Entrée « Entreprise » visible uniquement pour les membres d'une organisation.
+  const { data: myOrg } = useMyOrganization();
   // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
   // Tâches. La disparition du badge (0 restant) est la récompense.
   const { data: allTasks = [] } = useTasks();
@@ -209,6 +214,11 @@ const NavItems = () =>
 
       <NavItemLink to="/statistics" label="Statistiques" icon={<BarChart2 size={20} aria-hidden="true" />}
         hoverColor="#8b5cf6" collapsed={isCollapsed} />
+
+      {myOrg && (
+        <NavItemLink to="/entreprise" label="Entreprise" icon={<Building2 size={20} aria-hidden="true" />}
+          hoverColor="#6366f1" collapsed={isCollapsed} />
+      )}
     </>;
 
 

@@ -38,6 +38,7 @@ import {
   SectionCard,
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
+import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
@@ -441,6 +442,10 @@ const SettingsPage: React.FC = () => {
                 <div className="flex justify-end mt-5">
                   <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
                 </div>
+              </SectionCard>
+              {/* Mode entreprise : carte info (membre) ou conversion (particulier). */}
+              <SectionCard>
+                <OrganizationSettingsCard />
               </SectionCard>
             </motion.div>
           )}

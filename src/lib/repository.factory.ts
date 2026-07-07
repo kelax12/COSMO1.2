@@ -44,6 +44,11 @@ import { IKRCompletionsRepository } from '@/modules/kr-completions/repository';
 import { LocalStorageKRCompletionsRepository } from '@/modules/kr-completions/repository';
 import { SupabaseKRCompletionsRepository } from '@/modules/kr-completions/supabase.repository';
 
+// Organizations (mode entreprise)
+import { IOrganizationsRepository } from '@/modules/organizations/repository';
+import { LocalStorageOrganizationsRepository } from '@/modules/organizations/local.repository';
+import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -56,6 +61,7 @@ let listsRepository: IListsRepository | null = null;
 let friendsRepository: IFriendsRepository | null = null;
 let okrsRepository: IOKRsRepository | null = null;
 let krCompletionsRepository: IKRCompletionsRepository | null = null;
+let organizationsRepository: IOrganizationsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
 // code path that calls `appModeStore.setDemo(...)` outside `loginDemo()`
@@ -69,6 +75,7 @@ appModeStore.subscribe(() => {
   friendsRepository = null;
   okrsRepository = null;
   krCompletionsRepository = null;
+  organizationsRepository = null;
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -176,6 +183,18 @@ export function getKRCompletionsRepository(): IKRCompletionsRepository {
 // ═══════════════════════════════════════════════════════════════════
 
 /**
+ * Get the Organizations repository based on current mode
+ */
+export function getOrganizationsRepository(): IOrganizationsRepository {
+  if (!organizationsRepository) {
+    organizationsRepository = appModeStore.isDemo
+      ? new LocalStorageOrganizationsRepository()
+      : new SupabaseOrganizationsRepository();
+  }
+  return organizationsRepository;
+}
+
+/**
  * Check if app is running in demo mode
  */
 export function isInDemoMode(): boolean {
@@ -194,6 +213,7 @@ export function resetRepositories(): void {
   friendsRepository = null;
   okrsRepository = null;
   krCompletionsRepository = null;
+  organizationsRepository = null;
 }
 
 /**

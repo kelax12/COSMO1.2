@@ -1,0 +1,247 @@
+// ═══════════════════════════════════════════════════════════════════
+// ORGANIZATIONS MODULE - Supabase Repository
+// ═══════════════════════════════════════════════════════════════════
+//
+// Toutes les écritures passent par des RPC SECURITY DEFINER (migration 060) :
+//   • create_organization        — code généré serveur, membership admin
+//   • request_join_organization  — lookup par code, erreur générique
+//   • respond_join_request       — admin accepte/refuse (atomique)
+// Aucune écriture directe client sur organizations / organization_members
+// (pas d'auto-promotion admin, pas d'accepted_at forgé).
+
+import { supabase } from '@/lib/supabase';
+import { normalizeApiError } from '@/lib/normalizeApiError';
+import { IOrganizationsRepository } from './repository';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole } from './types';
+
+interface OrgRow {
+  id: string;
+  name: string;
+  join_code: string;
+  owner_id: string;
+  created_at: string;
+}
+
+interface MemberRow {
+  org_id: string;
+  user_id: string;
+  role: OrgRole;
+  joined_at: string;
+}
+
+interface ProfileRow {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+export class SupabaseOrganizationsRepository implements IOrganizationsRepository {
+  private mapOrg(row: OrgRow): Organization {
+    return {
+      id: row.id,
+      name: row.name,
+      joinCode: row.join_code,
+      ownerId: row.owner_id,
+      createdAt: row.created_at,
+    };
+  }
+
+  // ─── Read ──────────────────────────────────────────────────────────
+
+  async getMyOrganization(): Promise<MyOrganization | null> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) return null;
+
+    // Le membership de l'appelant donne l'org + son rôle (RLS : il ne voit
+    // que les orgs dont il est membre).
+    const { data: membership, error: mErr } = await supabase
+      .from('organization_members')
+      .select('org_id, role')
+      .eq('user_id', uid)
+      .maybeSingle();
+    if (mErr) throw normalizeApiError(mErr);
+    if (!membership) return null;
+
+    const { data: orgRow, error: oErr } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', membership.org_id as string)
+      .maybeSingle();
+    if (oErr) throw normalizeApiError(oErr);
+    if (!orgRow) return null;
+
+    return { ...this.mapOrg(orgRow as OrgRow), myRole: membership.role as OrgRole };
+  }
+
+  async getMembers(orgId: string): Promise<OrgMember[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: rows, error } = await supabase
+      .from('organization_members')
+      .select('*')
+      .eq('org_id', orgId)
+      .order('joined_at', { ascending: true })
+      .limit(500);
+    if (error) throw normalizeApiError(error);
+    const members = (rows ?? []) as MemberRow[];
+    if (members.length === 0) return [];
+
+    // Enrichir depuis profiles (nom/avatar sanitizés — jamais raw metadata).
+    const ids = members.map((m) => m.user_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email, display_name, avatar_url')
+      .in('id', ids);
+    const byId = new Map(
+      ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+    );
+
+    return members.map((m) => {
+      const p = byId.get(m.user_id);
+      return {
+        orgId: m.org_id,
+        userId: m.user_id,
+        role: m.role,
+        joinedAt: m.joined_at,
+        displayName: p?.display_name ?? p?.email?.split('@')[0] ?? 'Membre',
+        email: p?.email ?? undefined,
+        avatar: p?.avatar_url ?? undefined,
+      };
+    });
+  }
+
+  async getPendingJoinRequests(orgId: string): Promise<OrgJoinRequest[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: rows, error } = await supabase
+      .from('organization_join_requests')
+      .select('*')
+      .eq('org_id', orgId)
+      .is('accepted_at', null)
+      .is('rejected_at', null)
+      .order('requested_at', { ascending: true })
+      .limit(200);
+    if (error) throw normalizeApiError(error);
+    const requests = (rows ?? []) as { id: string; org_id: string; user_id: string; requested_at: string }[];
+    if (requests.length === 0) return [];
+
+    const ids = requests.map((r) => r.user_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email, display_name, avatar_url')
+      .in('id', ids);
+    const byId = new Map(
+      ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+    );
+
+    return requests.map((r) => {
+      const p = byId.get(r.user_id);
+      return {
+        id: r.id,
+        orgId: r.org_id,
+        userId: r.user_id,
+        requestedAt: r.requested_at,
+        status: 'pending' as const,
+        requesterName: p?.display_name ?? p?.email?.split('@')[0] ?? 'Utilisateur',
+        requesterEmail: p?.email ?? undefined,
+        requesterAvatar: p?.avatar_url ?? undefined,
+      };
+    });
+  }
+
+  async getMySentJoinRequest(): Promise<OrgJoinRequest | null> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) return null;
+
+    const { data: row, error } = await supabase
+      .from('organization_join_requests')
+      .select('*')
+      .eq('user_id', uid)
+      .is('accepted_at', null)
+      .is('rejected_at', null)
+      .order('requested_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw normalizeApiError(error);
+    if (!row) return null;
+
+    const r = row as { id: string; org_id: string; user_id: string; requested_at: string };
+    return {
+      id: r.id,
+      orgId: r.org_id,
+      userId: r.user_id,
+      requestedAt: r.requested_at,
+      status: 'pending',
+    };
+  }
+
+  // ─── Write (RPC only) ──────────────────────────────────────────────
+
+  async createOrganization(name: string): Promise<Organization> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('create_organization', { p_name: name });
+    if (error) throw normalizeApiError(error);
+    // La RPC renvoie la ligne organizations (RETURNS organizations).
+    const row = (Array.isArray(data) ? data[0] : data) as OrgRow;
+    return this.mapOrg(row);
+  }
+
+  async requestJoin(code: string): Promise<{ orgName: string }> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('request_join_organization', { p_code: code });
+    if (error) throw normalizeApiError(error);
+    const row = (Array.isArray(data) ? data[0] : data) as { org_name: string } | null;
+    return { orgName: row?.org_name ?? '' };
+  }
+
+  async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('respond_join_request', {
+      p_request_id: requestId,
+      p_accept: accept,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async cancelJoinRequest(requestId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    const { error } = await supabase
+      .from('organization_join_requests')
+      .delete()
+      .eq('id', requestId)
+      .eq('user_id', uid ?? ''); // defense-in-depth (RLS scope déjà, faille V15)
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Administration (RPC only, mig. 061) ───────────────────────────
+
+  async setMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('set_member_role', {
+      p_org: orgId,
+      p_user: userId,
+      p_role: role,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async removeMember(orgId: string, userId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('remove_member', {
+      p_org: orgId,
+      p_user: userId,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async leaveOrganization(orgId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('leave_organization', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+  }
+}
