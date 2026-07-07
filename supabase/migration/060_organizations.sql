@@ -155,10 +155,17 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 BEGIN
+  -- join_code et created_at sont toujours immuables.
   IF NEW.join_code IS DISTINCT FROM OLD.join_code
-     OR NEW.owner_id IS DISTINCT FROM OLD.owner_id
      OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
-    RAISE EXCEPTION 'join_code, owner_id and created_at are immutable';
+    RAISE EXCEPTION 'join_code and created_at are immutable';
+  END IF;
+  -- owner_id : immuable côté client (un admin ne peut pas s'arroger la
+  -- propriété). Le transfert de propriété n'est autorisé que hors contexte
+  -- authentifié (service_role — ex. delete-account qui réattribue l'org à un
+  -- autre membre avant de purger le compte du propriétaire).
+  IF NEW.owner_id IS DISTINCT FROM OLD.owner_id AND auth.uid() IS NOT NULL THEN
+    RAISE EXCEPTION 'owner_id is immutable';
   END IF;
   RETURN NEW;
 END;

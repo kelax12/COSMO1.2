@@ -157,6 +157,53 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mode entreprise — un compte peut OWNER une organisation. owner_id est
+    // ON DELETE CASCADE : sans intervention, supprimer le compte détruirait
+    // toute l'org (membres, projets, tâches, OKR). Si d'autres membres
+    // existent, on transfère la propriété (au plus ancien admin, sinon au plus
+    // ancien membre, promu admin) pour préserver le travail de l'équipe. Sinon
+    // (propriétaire = seul membre), on laisse la cascade nettoyer.
+    {
+      const { data: ownedOrgs, error: ownedErr } = await supabaseAdmin
+        .from('organizations')
+        .select('id')
+        .eq('owner_id', user.id)
+      if (ownedErr) {
+        console.error('delete-account: failed to read owned organizations:', ownedErr.message)
+        failedTables.push('organizations')
+      } else {
+        for (const org of ownedOrgs ?? []) {
+          const orgId = org.id as string
+          // Candidats = autres membres, admins d'abord, puis ancienneté.
+          const { data: others } = await supabaseAdmin
+            .from('organization_members')
+            .select('user_id, role, joined_at')
+            .eq('org_id', orgId)
+            .neq('user_id', user.id)
+            .order('joined_at', { ascending: true })
+          const successor =
+            (others ?? []).find((m) => m.role === 'admin') ?? (others ?? [])[0]
+          if (!successor) continue // seul membre → cascade s'en charge
+          const successorId = successor.user_id as string
+          const { error: transferErr } = await supabaseAdmin
+            .from('organizations')
+            .update({ owner_id: successorId })
+            .eq('id', orgId)
+          if (transferErr) {
+            console.error('delete-account: failed to transfer org ownership:', transferErr.message)
+            failedTables.push('organizations')
+            continue
+          }
+          // S'assurer que le successeur est admin.
+          await supabaseAdmin
+            .from('organization_members')
+            .update({ role: 'admin' })
+            .eq('org_id', orgId)
+            .eq('user_id', successorId)
+        }
+      }
+    }
+
     for (const table of USER_OWNED_TABLES) {
       if (table === 'friend_requests') continue
       const { error } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
