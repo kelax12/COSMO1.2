@@ -10,6 +10,8 @@ import {
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
+import TeamOKRTab from '@/components/organization/TeamOKRTab';
+import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 
 type OrgTab = 'overview' | 'projects' | 'okr' | 'members';
 
@@ -19,16 +21,6 @@ const TABS: { id: OrgTab; label: string; Icon: typeof Users }[] = [
   { id: 'okr', label: 'OKR', Icon: Target },
   { id: 'members', label: 'Membres', Icon: Users },
 ];
-
-const Placeholder = ({ label }: { label: string }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
-      <Building2 size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-    </div>
-    <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{label}</p>
-    <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">Bientôt disponible.</p>
-  </div>
-);
 
 /**
  * Espace entreprise — onglets Aperçu / Projets / OKR / Membres (state local,
@@ -96,11 +88,11 @@ const OrganizationPage = () => {
       </div>
 
       {/* Contenu */}
-      {tab === 'overview' && <Placeholder label="Tableau de bord de l'équipe" />}
+      {tab === 'overview' && <TeamOverviewTab orgId={myOrg.id} members={members} />}
       {tab === 'projects' && (
         <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
       )}
-      {tab === 'okr' && <Placeholder label="OKR d'équipe" />}
+      {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} members={members} isManager={isManager} />}
 
       {tab === 'members' && (
         <div className="space-y-6">

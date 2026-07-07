@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS public.team_projects (
   org_id      UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   name        TEXT NOT NULL CHECK (char_length(name) BETWEEN 1 AND 120),
   color       TEXT NOT NULL DEFAULT 'blue',
-  created_by  UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id),
+  -- ON DELETE SET NULL : la suppression du créateur (RGPD) ne doit pas être
+  -- bloquée (RESTRICT) ni détruire le projet de l'équipe — on nullifie le lien.
+  created_by  UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE SET NULL,
   archived_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -34,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.team_tasks (
   deadline       DATE,
   estimated_time INT,
   assignee_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_by     UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id),
+  created_by     UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE SET NULL,
   completed      BOOLEAN NOT NULL DEFAULT false,
   completed_at   TIMESTAMPTZ,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -138,9 +140,14 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 BEGIN
-  IF NEW.org_id IS DISTINCT FROM OLD.org_id
-     OR NEW.created_by IS DISTINCT FROM OLD.created_by THEN
-    RAISE EXCEPTION 'org_id and created_by are immutable';
+  -- org_id immuable. created_by immuable SAUF passage à NULL (cascade
+  -- ON DELETE SET NULL lors d'une suppression de compte RGPD) — on interdit
+  -- seulement la réaffectation vers un AUTRE utilisateur.
+  IF NEW.org_id IS DISTINCT FROM OLD.org_id THEN
+    RAISE EXCEPTION 'org_id is immutable';
+  END IF;
+  IF NEW.created_by IS NOT NULL AND NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+    RAISE EXCEPTION 'created_by is immutable';
   END IF;
   NEW.updated_at := NOW();
   RETURN NEW;

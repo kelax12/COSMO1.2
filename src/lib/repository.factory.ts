@@ -54,6 +54,11 @@ import { ITeamProjectsRepository } from '@/modules/team-projects/repository';
 import { LocalStorageTeamProjectsRepository } from '@/modules/team-projects/local.repository';
 import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase.repository';
 
+// Team OKRs (mode entreprise)
+import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
+import { LocalStorageTeamOKRsRepository } from '@/modules/team-okrs/local.repository';
+import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -68,6 +73,7 @@ let okrsRepository: IOKRsRepository | null = null;
 let krCompletionsRepository: IKRCompletionsRepository | null = null;
 let organizationsRepository: IOrganizationsRepository | null = null;
 let teamProjectsRepository: ITeamProjectsRepository | null = null;
+let teamOKRsRepository: ITeamOKRsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
 // code path that calls `appModeStore.setDemo(...)` outside `loginDemo()`
@@ -83,6 +89,7 @@ appModeStore.subscribe(() => {
   krCompletionsRepository = null;
   organizationsRepository = null;
   teamProjectsRepository = null;
+  teamOKRsRepository = null;
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -214,6 +221,18 @@ export function getTeamProjectsRepository(): ITeamProjectsRepository {
 }
 
 /**
+ * Get the Team OKRs repository based on current mode
+ */
+export function getTeamOKRsRepository(): ITeamOKRsRepository {
+  if (!teamOKRsRepository) {
+    teamOKRsRepository = appModeStore.isDemo
+      ? new LocalStorageTeamOKRsRepository()
+      : new SupabaseTeamOKRsRepository();
+  }
+  return teamOKRsRepository;
+}
+
+/**
  * Check if app is running in demo mode
  */
 export function isInDemoMode(): boolean {
@@ -234,6 +253,7 @@ export function resetRepositories(): void {
   krCompletionsRepository = null;
   organizationsRepository = null;
   teamProjectsRepository = null;
+  teamOKRsRepository = null;
 }
 
 /**
