@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft } from 'lucide-react';
+import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -13,7 +13,17 @@ import {
   type PendingFriendRequest,
 } from '@/modules/friends';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
-import { useFriends, useUnshareTask, useAcceptSharedTask, useRelatedTaskShares, useRemoveFriend } from '@/modules/friends';
+import {
+  useFriends,
+  useUnshareTask,
+  useAcceptSharedTask,
+  useRelatedTaskShares,
+  useRemoveFriend,
+  useIncomingSharedLists,
+  useAcceptSharedList,
+  useRefuseSharedList,
+  type SharedListGrant,
+} from '@/modules/friends';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -49,6 +59,9 @@ const InboxMenu: React.FC = () => {
   const unshareTaskMutation = useUnshareTask();
   const acceptSharedTaskMutation = useAcceptSharedTask();
   const removeFriendMutation = useRemoveFriend();
+  const { data: incomingLists = [] } = useIncomingSharedLists();
+  const acceptSharedListMutation = useAcceptSharedList();
+  const refuseSharedListMutation = useRefuseSharedList();
 
   // Acquittements locaux des tâches partagées en mode démo (cf.
   // lib/acknowledged-shares). En Supabase, l'état d'acceptation est porté par
@@ -101,7 +114,7 @@ const InboxMenu: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
-  const total = incomingRequests.length + tasksToAccept.length;
+  const total = incomingRequests.length + tasksToAccept.length + incomingLists.length;
 
   // Aperçu de l'impact d'une suppression d'ami : tâches dont je suis
   // propriétaire et que j'ai partagées avec lui (il perdra l'accès) + tâches
@@ -137,6 +150,11 @@ const InboxMenu: React.FC = () => {
   const sharerOf = (task: Task): { name: string; avatar?: string } | undefined =>
     (task.userId ? friends.find((f) => f.userId === task.userId) : undefined) ??
     (task.sharedBy ? friends.find((f) => f.name === task.sharedBy) : undefined);
+
+  // Résout l'ami partageur d'une LISTE reçue. Prod : grant.sharedBy = auth.uid
+  // du partageur (match friend.userId) ; démo : id de ligne friends.
+  const listSharerOf = (grant: SharedListGrant): { name: string; avatar?: string } | undefined =>
+    friends.find((f) => f.userId === grant.sharedBy || f.id === grant.sharedBy);
 
   // Mesure la position viewport du trigger → popover en position:fixed.
   useLayoutEffect(() => {
@@ -236,6 +254,18 @@ const InboxMenu: React.FC = () => {
     );
   };
 
+  // Accepter une liste : la mutation matérialise la liste + ses tâches chez le
+  // destinataire (copy-on-accept) puis marque la grant acceptée. Refuser :
+  // supprime la grant.
+  const handleAcceptList = (grant: SharedListGrant) => {
+    acceptSharedListMutation.mutate(grant);
+  };
+  const handleRejectList = (grant: SharedListGrant) => {
+    refuseSharedListMutation.mutate(grant.id, {
+      onSuccess: () => toast.success('Liste refusée'),
+    });
+  };
+
   const confirmRemoveFriend = () => {
     if (!friendToRemove) return;
     const { id, name } = friendToRemove;
@@ -267,20 +297,20 @@ const InboxMenu: React.FC = () => {
   // ── Popover ────────────────────────────────────────────────────────────
   const popoverInner = (
     <>
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center gap-2">
         {showManageFriends ? (
           <>
             <button
               onClick={() => setShowManageFriends(false)}
-              className="-ml-1 w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="-ml-1 w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label="Retour à la boîte de réception"
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
             <Users size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-sm text-slate-900 dark:text-white">Mes amis</span>
+            <span className="font-bold text-sm text-[rgb(var(--color-text-primary))]">Mes amis</span>
             {friends.length > 0 && (
-              <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))]">
                 {friends.length}
               </span>
             )}
@@ -288,7 +318,7 @@ const InboxMenu: React.FC = () => {
         ) : (
           <>
             <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-sm text-slate-900 dark:text-white">Boîte de réception</span>
+            <span className="font-bold text-sm text-[rgb(var(--color-text-primary))]">Boîte de réception</span>
             <div className="ml-auto flex items-center gap-2">
               {total > 0 && (
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
@@ -297,7 +327,7 @@ const InboxMenu: React.FC = () => {
               )}
               <button
                 onClick={() => setShowManageFriends(true)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 aria-label="Gérer mes amis"
                 title="Gérer mes amis"
               >
@@ -313,7 +343,7 @@ const InboxMenu: React.FC = () => {
         {showManageFriends && (
           friends.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2.5">
+              <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
                 <Users size={18} className="text-slate-400" aria-hidden="true" />
               </div>
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Aucun ami</p>
@@ -326,10 +356,10 @@ const InboxMenu: React.FC = () => {
               {friends.map((friend) => (
                 <div
                   key={friend.id}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  className="p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
                       {isImageAvatar(friend.avatar) ? (
                         <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
                       ) : isEmojiAvatar(friend.avatar) ? (
@@ -339,13 +369,13 @@ const InboxMenu: React.FC = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{friend.name}</p>
+                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{friend.name}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{friend.email}</p>
                     </div>
                     <button
                       onClick={() => setFriendToRemove({ id: friend.id, name: friend.name })}
                       disabled={removeFriendMutation.isPending}
-                      className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
+                      className="w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
                       aria-label={`Retirer ${friend.name} de vos amis`}
                     >
                       <Trash2 size={15} aria-hidden="true" />
@@ -359,12 +389,12 @@ const InboxMenu: React.FC = () => {
 
         {!showManageFriends && total === 0 && (
           <div className="px-4 py-8 text-center">
-            <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2.5">
+            <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
               <Bell size={18} className="text-slate-400" aria-hidden="true" />
             </div>
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Tout est à jour</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Aucune demande ni tâche en attente.
+              Aucune demande, tâche ou liste en attente.
             </p>
           </div>
         )}
@@ -383,10 +413,10 @@ const InboxMenu: React.FC = () => {
                 return (
                   <div
                     key={req.id}
-                    className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                    className="p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
                         {isImageAvatar(req.senderAvatar) ? (
                           <img src={req.senderAvatar} alt="" className="w-full h-full object-cover" />
                         ) : isEmojiAvatar(req.senderAvatar) ? (
@@ -396,7 +426,7 @@ const InboxMenu: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
                           {req.senderName || prettyName(req.senderEmail)}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -415,7 +445,7 @@ const InboxMenu: React.FC = () => {
                         <button
                           onClick={() => handleRejectFriend(req.id)}
                           disabled={rejectFriendMutation.isPending}
-                          className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                          className="w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                           aria-label={`Refuser la demande d'ami de ${prettyName(req.senderEmail)}`}
                         >
                           <X size={15} aria-hidden="true" />
@@ -443,10 +473,10 @@ const InboxMenu: React.FC = () => {
                 return (
                 <div
                   key={task.id}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  className="p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
                       {isImageAvatar(sharerAvatar) ? (
                         <img src={sharerAvatar} alt="" className="w-full h-full object-cover" />
                       ) : isEmojiAvatar(sharerAvatar) ? (
@@ -456,7 +486,7 @@ const InboxMenu: React.FC = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
                         {task.name}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate inline-flex items-center gap-1">
@@ -474,8 +504,68 @@ const InboxMenu: React.FC = () => {
                       <button
                         onClick={() => handleRejectTask(task)}
                         disabled={unshareTaskMutation.isPending}
-                        className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        className="w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                         aria-label={`Refuser la tâche partagée ${task.name}`}
+                      >
+                        <X size={15} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Listes partagées à accepter — identité teal (vs ambre tâches) ── */}
+        {!showManageFriends && incomingLists.length > 0 && (
+          <div className="px-3 pt-3 pb-1">
+            <p className="px-1 text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 mb-2 text-teal-600 dark:text-teal-400">
+              <ListChecks size={12} aria-hidden="true" /> Listes partagées ({incomingLists.length})
+            </p>
+            <div className="space-y-2">
+              {incomingLists.map((grant) => {
+                const sharer = listSharerOf(grant);
+                const sharerAvatar = sharer?.avatar;
+                const sharerName = sharer?.name ?? grant.sharedByName ?? 'un collaborateur';
+                return (
+                <div
+                  key={grant.id}
+                  className="p-3 rounded-xl border border-teal-300 dark:border-teal-700/60 bg-teal-50 dark:bg-teal-900/20"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0 overflow-hidden">
+                      {isImageAvatar(sharerAvatar) ? (
+                        <img src={sharerAvatar} alt="" className="w-full h-full object-cover" />
+                      ) : isEmojiAvatar(sharerAvatar) ? (
+                        <span className="text-lg leading-none" aria-hidden="true">{sharerAvatar}</span>
+                      ) : (
+                        <ListChecks size={15} className="text-teal-600 dark:text-teal-300" aria-hidden="true" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
+                        {grant.name}
+                      </p>
+                      <p className="text-xs truncate inline-flex items-center gap-1 text-teal-700 dark:text-teal-300">
+                        <ListChecks size={11} aria-hidden="true" /> Reçu de {sharerName} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <button
+                        onClick={() => handleAcceptList(grant)}
+                        disabled={acceptSharedListMutation.isPending}
+                        className="w-9 h-9 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 monochrome:bg-white monochrome:text-zinc-900"
+                        aria-label={`Accepter la liste partagée ${grant.name}`}
+                      >
+                        <Check size={15} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() => handleRejectList(grant)}
+                        disabled={refuseSharedListMutation.isPending}
+                        className="w-9 h-9 rounded-lg border border-teal-300 dark:border-teal-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        aria-label={`Refuser la liste partagée ${grant.name}`}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -490,7 +580,7 @@ const InboxMenu: React.FC = () => {
       </div>
 
       {/* ── Footer : ajouter un ami ── */}
-      <div className="px-3 py-2.5 border-t border-slate-200 dark:border-slate-700">
+      <div className="px-3 py-2.5 border-t border-[rgb(var(--color-border))]">
         {showAddFriend ? (
           <div className="flex gap-2">
             <input
@@ -501,7 +591,7 @@ const InboxMenu: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && handleSendFriendRequest()}
               placeholder="email@exemple.com"
               aria-label="Email de l'ami à inviter"
-              className="flex-1 h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+              className="flex-1 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
             />
             <button
               onClick={handleSendFriendRequest}
@@ -514,7 +604,7 @@ const InboxMenu: React.FC = () => {
         ) : (
           <button
             onClick={() => setShowAddFriend(true)}
-            className="w-full h-9 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             <UserPlus size={14} aria-hidden="true" /> Ajouter un ami
           </button>
@@ -533,7 +623,7 @@ const InboxMenu: React.FC = () => {
           exit={{ opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
           style={{ position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9999 }}
-          className="w-[22rem] max-w-[calc(100vw-24px)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+          className="w-[22rem] max-w-[calc(100vw-24px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-2xl border border-[rgb(var(--color-border))] overflow-hidden"
           role="dialog"
           aria-label="Boîte de réception"
         >
