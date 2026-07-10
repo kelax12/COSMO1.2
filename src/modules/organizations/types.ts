@@ -102,6 +102,21 @@ export function isManagerOf(members: OrgMember[], userId: string): boolean {
   return members.some((m) => m.managerId === userId);
 }
 
+/**
+ * Lien d'invitation placé (v2) : token secret single-use, expire à 7 jours,
+ * fait entrer directement le destinataire sous `managerId` (null = non placé).
+ */
+export interface OrgInviteLink {
+  /** Le token (UUID) — sert à construire l'URL /org-invite/:token. */
+  id: string;
+  orgId: string;
+  managerId: string | null;
+  createdBy: string;
+  createdAt: string;
+  expiresAt: string;
+  claimedAt?: string | null;
+}
+
 export type OrgJoinRequestStatus = 'pending' | 'accepted' | 'rejected';
 
 /**

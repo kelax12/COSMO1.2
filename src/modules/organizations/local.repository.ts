@@ -10,11 +10,12 @@
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
 import {
   ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
+  ORG_INVITE_LINKS_STORAGE_KEY,
 } from './constants';
 
 const DEMO_USER_ID = 'demo-user';
@@ -329,5 +330,72 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
     target.managerId = managerId;
     this.saveMembers(members);
+  }
+
+  // ─── Invitations placées (v2, lot 1c) ──────────────────────────────
+
+  private getInviteLinksArray(): OrgInviteLink[] {
+    return readOrSeed<OrgInviteLink[]>(ORG_INVITE_LINKS_STORAGE_KEY, []);
+  }
+
+  private saveInviteLinks(links: OrgInviteLink[]): void {
+    localStorage.setItem(ORG_INVITE_LINKS_STORAGE_KEY, JSON.stringify(links));
+  }
+
+  async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
+    const members = this.getMembersArray();
+    const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
+    if (!me) throw new Error('Vous ne faites pas partie de cette entreprise');
+    const isAdmin = me.role === 'admin';
+    if (!isAdmin) {
+      // Manager : lien uniquement sous soi ou son sous-arbre.
+      const mySubtree = this.subtreeOf(members, orgId, DEMO_USER_ID);
+      if (managerId === null || (managerId !== DEMO_USER_ID && !mySubtree.has(managerId))) {
+        throw new Error('Vous ne pouvez inviter que sous votre équipe');
+      }
+    }
+    const link: OrgInviteLink = {
+      id: crypto.randomUUID(),
+      orgId,
+      managerId,
+      createdBy: DEMO_USER_ID,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      claimedAt: null,
+    };
+    this.saveInviteLinks([link, ...this.getInviteLinksArray()]);
+    return link;
+  }
+
+  async getInviteLinks(orgId: string): Promise<OrgInviteLink[]> {
+    const now = Date.now();
+    return this.getInviteLinksArray().filter(
+      (l) => l.orgId === orgId && !l.claimedAt && new Date(l.expiresAt).getTime() > now,
+    );
+  }
+
+  async revokeInviteLink(linkId: string): Promise<void> {
+    this.saveInviteLinks(this.getInviteLinksArray().filter((l) => l.id !== linkId));
+  }
+
+  async claimInviteLink(_token: string): Promise<{ orgId: string; orgName: string }> {
+    // Démo mono-utilisateur : un lien s'adresse à quelqu'un d'autre.
+    throw new Error('Les liens d\'invitation se testent avec un vrai compte');
+  }
+
+  async regenerateJoinCode(orgId: string): Promise<string> {
+    const orgs = this.getOrgsArray();
+    const org = orgs.find((o) => o.id === orgId);
+    if (!org) throw new Error('Entreprise introuvable');
+    const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
+    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut régénérer le code');
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let code = 'COSMO-';
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    for (const b of bytes) code += alphabet[b % 31];
+    org.joinCode = code;
+    this.saveOrgs(orgs);
+    return code;
   }
 }

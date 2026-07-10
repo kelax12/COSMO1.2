@@ -12,6 +12,7 @@ export type {
   OrgJoinRequestStatus,
   OrgJoinRequest,
   UpdateOrganizationInput,
+  OrgInviteLink,
 } from './types';
 export { buildOrgTree, isManagerOf } from './types';
 
@@ -54,4 +55,7 @@ export {
   useLeaveOrganization,
   useUpdateOrganization,
   useSetMemberManager,
+  useCreateInviteLink,
+  useClaimOrgInvite,
+  useRegenerateJoinCode,
 } from './hooks';

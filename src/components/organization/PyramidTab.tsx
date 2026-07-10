@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserPlus, ChevronDown, ChevronRight, Move, Users } from 'lucide-react';
+import { UserPlus, ChevronDown, ChevronRight, Move, Users, Plus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import {
   buildOrgTree,
@@ -9,6 +9,7 @@ import {
 } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
+import AddUnderSheet from './AddUnderSheet';
 
 interface PyramidTabProps {
   orgId: string;
@@ -43,16 +44,21 @@ interface NodeCardProps {
   currentUserId?: string;
   isAdmin: boolean;
   onMove: (m: OrgMember) => void;
+  onAddUnder: (m: OrgMember) => void;
   /** Profondeur (mobile : indentation ; desktop : sans objet). */
   depth: number;
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onMove, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onMove, onAddUnder, depth, mobile }: NodeCardProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const m = node.member;
   const manager = isManagerOf(members, m.userId);
   const movable = canManage(m, members, currentUserId, isAdmin);
+  // « + » (inviter/déplacer sous X) : admin partout ; sinon sous soi-même ou
+  // son sous-arbre (miroir de la policy INSERT org_invite_links).
+  const canAddUnder =
+    isAdmin || m.userId === currentUserId || canManage(m, members, currentUserId, isAdmin);
 
   const card = (
     <div
@@ -96,6 +102,17 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onMove, depth, mobile
           <Move size={13} aria-hidden="true" />
         </button>
       )}
+      {canAddUnder && (
+        <button
+          type="button"
+          onClick={() => onAddUnder(m)}
+          aria-label={`Ajouter quelqu'un sous ${m.displayName}`}
+          title="Inviter / déplacer ici"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-green-500 hover:bg-[rgb(var(--color-hover))] shrink-0"
+        >
+          <Plus size={14} aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 
@@ -104,7 +121,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onMove, depth, mobile
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onMove={onMove} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onMove={onMove} onAddUnder={onAddUnder} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -121,7 +138,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onMove, depth, mobile
             {node.children.map((c) => (
               <div key={c.member.userId} className="flex flex-col items-center relative">
                 <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onMove={onMove} depth={depth + 1} mobile={false} />
+                <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onMove={onMove} onAddUnder={onAddUnder} depth={depth + 1} mobile={false} />
               </div>
             ))}
           </div>
@@ -139,6 +156,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onMove, depth, mobile
 const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin }: PyramidTabProps) => {
   const isMobile = useIsMobile();
   const [moving, setMoving] = useState<OrgMember | null>(null);
+  const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
 
   const { roots, unplaced } = buildOrgTree(members, ownerId);
 
@@ -192,6 +210,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin }: Pyramid
                 currentUserId={currentUserId}
                 isAdmin={isAdmin}
                 onMove={setMoving}
+                onAddUnder={setAddingUnder}
                 depth={0}
                 mobile={isMobile}
               />
@@ -208,6 +227,17 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin }: Pyramid
           currentUserId={currentUserId}
           isAdmin={isAdmin}
           onClose={() => setMoving(null)}
+        />
+      )}
+
+      {addingUnder && (
+        <AddUnderSheet
+          orgId={orgId}
+          under={addingUnder}
+          members={members}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onClose={() => setAddingUnder(null)}
         />
       )}
     </div>

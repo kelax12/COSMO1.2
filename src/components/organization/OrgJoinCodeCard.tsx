@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { Copy, Check, KeyRound } from 'lucide-react';
+import { Copy, Check, KeyRound, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRegenerateJoinCode } from '@/modules/organizations';
 
 interface OrgJoinCodeCardProps {
   code: string;
+  orgId: string;
+  /** Admin : peut régénérer le code (invalide l'ancien). */
+  isAdmin?: boolean;
 }
 
 /**
  * Carte « Code d'invitation » — visible par tous les membres, copiable.
  * Le code circule pour inviter ; l'admin valide chaque demande (pattern inbox).
  */
-const OrgJoinCodeCard = ({ code }: OrgJoinCodeCardProps) => {
+const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps) => {
   const [copied, setCopied] = useState(false);
+  const regenerateMutation = useRegenerateJoinCode();
 
   const copy = async () => {
     try {
@@ -22,6 +27,11 @@ const OrgJoinCodeCard = ({ code }: OrgJoinCodeCardProps) => {
     } catch {
       toast.error('Impossible de copier le code');
     }
+  };
+
+  const regenerate = () => {
+    if (!window.confirm('Régénérer le code ? L\'ancien code ne fonctionnera plus pour rejoindre l\'entreprise.')) return;
+    regenerateMutation.mutate(orgId);
   };
 
   return (
@@ -46,6 +56,18 @@ const OrgJoinCodeCard = ({ code }: OrgJoinCodeCardProps) => {
         >
           {copied ? <Check size={18} className="text-green-500" aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
         </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={regenerate}
+            disabled={regenerateMutation.isPending}
+            className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] hover:text-amber-500 flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors disabled:opacity-50"
+            aria-label="Régénérer le code (invalide l'ancien)"
+            title="Régénérer le code"
+          >
+            <RefreshCw size={18} className={regenerateMutation.isPending ? 'animate-spin' : ''} aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ export const ORG_JOIN_REQUESTS_STORAGE_KEY = 'cosmo_org_join_requests';
 // Org active (multi-org v2) — préférence par appareil ET par utilisateur
 // ({ userId, orgId } en JSON). Clé cosmo_ : reset au loginDemo (voulu).
 export const ACTIVE_ORG_STORAGE_KEY = 'cosmo_active_org';
+export const ORG_INVITE_LINKS_STORAGE_KEY = 'cosmo_org_invite_links';
 
 /**
  * React Query keys for organizations

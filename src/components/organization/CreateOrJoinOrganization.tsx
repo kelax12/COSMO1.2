@@ -8,6 +8,7 @@ import {
   useCancelJoinRequest,
   type Organization,
 } from '@/modules/organizations';
+import OrgConsentNotice from './OrgConsentNotice';
 
 interface CreateOrJoinOrganizationProps {
   /** Appelé quand l'utilisateur vient de créer une entreprise (nav vers /entreprise). */
@@ -36,6 +37,8 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  // Consentement RGPD requis avant toute demande d'adhésion.
+  const [consent, setConsent] = useState(false);
   const [createdOrg, setCreatedOrg] = useState<Organization | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -209,16 +212,17 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && code.trim() && handleJoin()}
+            onKeyDown={(e) => e.key === 'Enter' && code.trim() && consent && handleJoin()}
             placeholder="COSMO-XXXXXX"
             className={`${inputClasses} tracking-widest font-mono`}
             maxLength={12}
             autoFocus
           />
+          <OrgConsentNotice checked={consent} onChange={setConsent} />
           <button
             type="button"
             onClick={handleJoin}
-            disabled={!code.trim() || requestJoinMutation.isPending}
+            disabled={!code.trim() || !consent || requestJoinMutation.isPending}
             className={primaryBtn}
           >
             {requestJoinMutation.isPending ? 'Envoi…' : 'Envoyer la demande'}

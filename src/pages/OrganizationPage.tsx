@@ -8,6 +8,7 @@ import {
   useLeaveOrganization,
   isManagerOf,
 } from '@/modules/organizations';
+import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
@@ -92,6 +93,19 @@ const OrganizationPage = () => {
 
       {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
 
+      {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
+          est false (gate dormant ; le vrai blocage sera côté serveur). */}
+      {members.length >= ORG_FREE_SEATS && (
+        <div className="mb-5 rounded-2xl border border-indigo-300/60 dark:border-indigo-700/40 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3">
+          <p className="text-xs text-indigo-700 dark:text-indigo-300">
+            <span className="font-semibold">{members.length} membres.</span>{' '}
+            {ENTERPRISE_BILLING_ENFORCED
+              ? 'Au-delà de 5 collaborateurs, un abonnement entreprise est requis pour accepter de nouveaux membres.'
+              : 'COSMO Entreprise restera gratuit jusqu\'à 5 collaborateurs — une offre payante arrivera au-delà (20 €/mois jusqu\'à 50, 100 €/mois ensuite). Rien ne change pour vous aujourd\'hui.'}
+          </p>
+        </div>
+      )}
+
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto">
         {TABS.map(({ id, label, Icon }) => (
@@ -129,7 +143,7 @@ const OrganizationPage = () => {
 
       {tab === 'members' && (
         <div className="space-y-6">
-          <OrgJoinCodeCard code={myOrg.joinCode ?? ''} />
+          <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
 
           <div>
             <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
