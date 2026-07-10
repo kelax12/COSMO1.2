@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { useSetMemberRole, useRemoveMember, type OrgMember, type OrgRole } from '@/modules/organizations';
+import { useSetMemberRole, useRemoveMember, isManagerOf, type OrgMember, type OrgRole } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 
 interface MemberDirectoryProps {
@@ -19,14 +19,16 @@ interface MemberDirectoryProps {
   isAdmin: boolean;
 }
 
-const ROLE_META: Record<OrgRole, { label: string; Icon: typeof Shield; className: string }> = {
+// Depuis la v2, « Manager » n'est plus un rôle stocké : il est dérivé de la
+// pyramide (a ≥ 1 subordonné). Le badge le reflète.
+const BADGE_META = {
   admin: { label: 'Admin', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
   manager: { label: 'Manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-blue-500/10' },
   member: { label: 'Membre', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
-};
+} as const;
 
-const RoleBadge = ({ role }: { role: OrgRole }) => {
-  const { label, Icon, className } = ROLE_META[role];
+const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
+  const { label, Icon, className } = BADGE_META[kind];
   return (
     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`}>
       <Icon size={11} aria-hidden="true" /> {label}
@@ -43,7 +45,7 @@ const MemberDirectory = ({ orgId, members, currentUserId, isAdmin }: MemberDirec
   const setRoleMutation = useSetMemberRole();
   const removeMutation = useRemoveMember();
 
-  const roles: OrgRole[] = ['admin', 'manager', 'member'];
+  const roles: OrgRole[] = ['admin', 'member'];
 
   return (
     <ul className="space-y-2">
@@ -73,7 +75,9 @@ const MemberDirectory = ({ orgId, members, currentUserId, isAdmin }: MemberDirec
               )}
             </div>
 
-            <RoleBadge role={m.role} />
+            <RoleBadge
+              kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
+            />
 
             {showAdminMenu && (
               <DropdownMenu>
@@ -91,7 +95,7 @@ const MemberDirectory = ({ orgId, members, currentUserId, isAdmin }: MemberDirec
                       disabled={role === m.role || setRoleMutation.isPending}
                       onClick={() => setRoleMutation.mutate({ orgId, userId: m.userId, role })}
                     >
-                      {ROLE_META[role].label}
+                      {BADGE_META[role].label}
                       {role === m.role && <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]">actuel</span>}
                     </DropdownMenuItem>
                   ))}

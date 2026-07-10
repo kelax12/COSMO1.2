@@ -45,18 +45,25 @@ const DEMO_ORGS: Organization[] = [
   },
 ];
 
+// Pyramide Nova Studio (v2) — arbre N+1 :
+//   demo-user (racine, admin)
+//   ├── Marie Dupont (manager dérivé)
+//   │   ├── Jean Martin
+//   │   └── Sophie Bernard
+//   └── Lucas Moreau
+//   Camille Richard = NON PLACÉE (montre le flux de placement).
 const DEMO_MEMBERS: OrgMember[] = [
   // ── Nova Studio (demo-user admin) ──
-  { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
-  { orgId: DEMO_ORG_ID, userId: 'friend-1', role: 'manager', joinedAt: new Date(Date.now() - 80 * DAY).toISOString(), displayName: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
-  { orgId: DEMO_ORG_ID, userId: 'friend-2', role: 'member', joinedAt: new Date(Date.now() - 75 * DAY).toISOString(), displayName: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
-  { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
-  { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com', avatar: '🧑' },
-  { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com', avatar: '👩' },
-  // ── Atelier Lune (demo-user membre simple) ──
-  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com', avatar: '👩‍🎨' },
-  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
-  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com', avatar: '🧔‍♂️' },
+  { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
+  { orgId: DEMO_ORG_ID, userId: 'friend-1', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 80 * DAY).toISOString(), displayName: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
+  { orgId: DEMO_ORG_ID, userId: 'friend-2', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 75 * DAY).toISOString(), displayName: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
+  { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
+  { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com', avatar: '🧑' },
+  { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', managerId: null, joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com', avatar: '👩' },
+  // ── Atelier Lune (demo-user membre simple, sous Nina) ──
+  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com', avatar: '👩‍🎨' },
+  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
+  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com', avatar: '🧔‍♂️' },
 ];
 
 const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
@@ -245,7 +252,13 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     if (member.role === 'admin' && this.adminCount(members, orgId) <= 1) {
       throw new Error('Impossible de retirer le dernier administrateur');
     }
-    this.saveMembers(members.filter((m) => !(m.orgId === orgId && m.userId === userId)));
+    // Re-parentage des subordonnés vers le grand-parent (miroir de la RPC).
+    const next = members
+      .map((m) =>
+        m.orgId === orgId && m.managerId === userId ? { ...m, managerId: member.managerId ?? null } : m,
+      )
+      .filter((m) => !(m.orgId === orgId && m.userId === userId));
+    this.saveMembers(next);
   }
 
   async leaveOrganization(orgId: string): Promise<void> {
@@ -255,6 +268,66 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     if (me.role === 'admin' && this.adminCount(members, orgId) <= 1) {
       throw new Error('Transférez le rôle admin avant de quitter');
     }
-    this.saveMembers(members.filter((m) => !(m.orgId === orgId && m.userId === DEMO_USER_ID)));
+    // Re-parentage des subordonnés vers le grand-parent (miroir de la RPC).
+    const next = members
+      .map((m) =>
+        m.orgId === orgId && m.managerId === DEMO_USER_ID ? { ...m, managerId: me.managerId ?? null } : m,
+      )
+      .filter((m) => !(m.orgId === orgId && m.userId === DEMO_USER_ID));
+    this.saveMembers(next);
+  }
+
+  // ─── Pyramide (v2) ────────────────────────────────────────────────
+
+  /** Sous-arbre strict de `root` (ids), cap 50 niveaux (miroir SQL). */
+  private subtreeOf(members: OrgMember[], orgId: string, root: string): Set<string> {
+    const out = new Set<string>();
+    let frontier = [root];
+    for (let depth = 0; depth < 50 && frontier.length > 0; depth++) {
+      const next: string[] = [];
+      for (const m of members) {
+        if (m.orgId === orgId && m.managerId && frontier.includes(m.managerId) && !out.has(m.userId)) {
+          out.add(m.userId);
+          next.push(m.userId);
+        }
+      }
+      frontier = next;
+    }
+    return out;
+  }
+
+  async setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void> {
+    const members = this.getMembersArray();
+    const target = members.find((m) => m.orgId === orgId && m.userId === userId);
+    if (!target) throw new Error('Membre introuvable');
+
+    const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
+    const isAdmin = me?.role === 'admin';
+    if (!isAdmin) {
+      const mySubtree = this.subtreeOf(members, orgId, DEMO_USER_ID);
+      if (!mySubtree.has(userId)) {
+        throw new Error('Vous ne pouvez déplacer que les membres sous vous');
+      }
+      if (managerId === null) {
+        throw new Error('Seul un administrateur peut détacher un membre');
+      }
+      if (managerId !== DEMO_USER_ID && !mySubtree.has(managerId)) {
+        throw new Error('La destination doit être dans votre équipe');
+      }
+    }
+
+    if (managerId !== null) {
+      if (managerId === userId) throw new Error('Un membre ne peut pas être son propre responsable');
+      if (!members.some((m) => m.orgId === orgId && m.userId === managerId)) {
+        throw new Error('Le responsable doit être membre de l\'entreprise');
+      }
+      // Anti-cycle : la destination ne peut pas être un descendant de la cible.
+      if (this.subtreeOf(members, orgId, userId).has(managerId)) {
+        throw new Error('Ce déplacement créerait un cycle dans la hiérarchie');
+      }
+    }
+
+    target.managerId = managerId;
+    this.saveMembers(members);
   }
 }

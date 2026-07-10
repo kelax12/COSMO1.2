@@ -29,6 +29,7 @@ interface MemberRow {
   user_id: string;
   role: OrgRole;
   joined_at: string;
+  manager_id: string | null;
 }
 
 interface ProfileRow {
@@ -112,6 +113,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
         userId: m.user_id,
         role: m.role,
         joinedAt: m.joined_at,
+        managerId: m.manager_id,
         displayName: p?.display_name ?? p?.email?.split('@')[0] ?? 'Membre',
         email: p?.email ?? undefined,
         avatar: p?.avatar_url ?? undefined,
@@ -267,6 +269,16 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
   async leaveOrganization(orgId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.rpc('leave_organization', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('set_member_manager', {
+      p_org: orgId,
+      p_user: userId,
+      p_manager: managerId,
+    });
     if (error) throw normalizeApiError(error);
   }
 }

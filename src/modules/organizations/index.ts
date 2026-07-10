@@ -8,10 +8,12 @@ export type {
   Organization,
   MyOrganization,
   OrgMember,
+  OrgTreeNode,
   OrgJoinRequestStatus,
   OrgJoinRequest,
   UpdateOrganizationInput,
 } from './types';
+export { buildOrgTree, isManagerOf } from './types';
 
 // ─── Constants & query keys ──────────────────────────────────────────
 export {
@@ -51,4 +53,5 @@ export {
   useRemoveMember,
   useLeaveOrganization,
   useUpdateOrganization,
+  useSetMemberManager,
 } from './hooks';

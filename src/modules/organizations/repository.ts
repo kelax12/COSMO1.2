@@ -35,6 +35,11 @@ export interface IOrganizationsRepository {
   setMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void>;
   /** Retire un membre de l'entreprise (admin uniquement). */
   removeMember(orgId: string, userId: string): Promise<void>;
+  /**
+   * Place/déplace un membre dans la pyramide (managerId = supérieur direct,
+   * null = détacher — admin only). Admin : tout ; manager : son sous-arbre.
+   */
+  setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void>;
   /** L'utilisateur courant quitte l'entreprise. */
   leaveOrganization(orgId: string): Promise<void>;
 }
