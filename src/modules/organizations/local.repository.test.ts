@@ -136,6 +136,30 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
     expect(members.find((m) => m.userId === 'friend-3')?.managerId).toBe('demo-user');
   });
 
+  // ─── Invitations placées + code (v2, lot 1c) ────────────────────────
+
+  it('createInviteLink : lien placé sous Marie, expire à J+7, révocable', async () => {
+    const link = await repo.createInviteLink(DEMO_ORG_ID, 'friend-1');
+    expect(link.managerId).toBe('friend-1');
+    expect(new Date(link.expiresAt).getTime()).toBeGreaterThan(Date.now() + 6 * 24 * 60 * 60 * 1000);
+    expect((await repo.getInviteLinks(DEMO_ORG_ID)).length).toBe(1);
+    await repo.revokeInviteLink(link.id);
+    expect((await repo.getInviteLinks(DEMO_ORG_ID)).length).toBe(0);
+  });
+
+  it('createInviteLink : refuse pour un non-admin hors de son sous-arbre (Atelier Lune)', async () => {
+    await expect(repo.createInviteLink(DEMO_ORG_2_ID, 'user-nina')).rejects.toThrow();
+  });
+
+  it('regenerateJoinCode : nouveau code valide, admin only', async () => {
+    const code = await repo.regenerateJoinCode(DEMO_ORG_ID);
+    expect(code).toMatch(/^COSMO-[A-HJ-KM-NP-Z2-9]{6}$/);
+    const orgs = await repo.getMyOrganizations();
+    expect(orgs.find((o) => o.id === DEMO_ORG_ID)?.joinCode).toBe(code);
+    // Membre simple sur Atelier Lune → refus.
+    await expect(repo.regenerateJoinCode(DEMO_ORG_2_ID)).rejects.toThrow();
+  });
+
   it('survit à un localStorage corrompu et reseede (B12/B14)', async () => {
     localStorage.setItem(ORGS_STORAGE_KEY, '{invalid json');
     expect((await repo.getMyOrganizations()).length).toBe(2);

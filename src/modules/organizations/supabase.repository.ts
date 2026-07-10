@@ -12,7 +12,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
 
 interface OrgRow {
   id: string;
@@ -280,5 +280,72 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       p_manager: managerId,
     });
     if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Invitations placées (v2, lot 1c) ──────────────────────────────
+
+  private mapInviteLink(row: {
+    id: string; org_id: string; manager_id: string | null; created_by: string;
+    created_at: string; expires_at: string; claimed_at: string | null;
+  }): OrgInviteLink {
+    return {
+      id: row.id,
+      orgId: row.org_id,
+      managerId: row.manager_id,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+      expiresAt: row.expires_at,
+      claimedAt: row.claimed_at,
+    };
+  }
+
+  async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) throw new Error('Not authenticated');
+    const { data, error } = await supabase
+      .from('org_invite_links')
+      .insert({ org_id: orgId, manager_id: managerId, created_by: uid })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return this.mapInviteLink(data);
+  }
+
+  async getInviteLinks(orgId: string): Promise<OrgInviteLink[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('org_invite_links')
+      .select('*')
+      .eq('org_id', orgId)
+      .is('claimed_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw normalizeApiError(error);
+    return (data ?? []).map((r) => this.mapInviteLink(r));
+  }
+
+  async revokeInviteLink(linkId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.from('org_invite_links').delete().eq('id', linkId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  async claimInviteLink(token: string): Promise<{ orgId: string; orgName: string }> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('claim_org_invite', { p_token: token });
+    if (error) throw normalizeApiError(error);
+    const row = (Array.isArray(data) ? data[0] : data) as { org_id: string; org_name: string } | null;
+    if (!row) throw new Error('invalid_link');
+    return { orgId: row.org_id, orgName: row.org_name };
+  }
+
+  async regenerateJoinCode(orgId: string): Promise<string> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('regenerate_join_code', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+    return data as string;
   }
 }

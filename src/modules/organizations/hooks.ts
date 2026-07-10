@@ -189,6 +189,48 @@ export const useSetMemberManager = () => {
   });
 };
 
+// ─── Invitations placées (v2, lot 1c) ────────────────────────────────
+
+export const useCreateInviteLink = () => {
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ orgId, managerId }: { orgId: string; managerId: string | null }) =>
+      repository.createInviteLink(orgId, managerId),
+    onError: (error: Error) => {
+      toast.error(`Impossible de créer le lien : ${error.message}`);
+    },
+  });
+};
+
+export const useClaimOrgInvite = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: (token: string) => repository.claimInviteLink(token),
+    onSuccess: (result) => {
+      toast.success(`Bienvenue chez ${result.orgName} !`);
+      queryClient.invalidateQueries({ queryKey: orgKeys.all });
+    },
+    // Pas de toast d'erreur ici : la page de claim affiche un état dédié
+    // (message générique — le lien peut être expiré/consommé/invalide).
+  });
+};
+
+export const useRegenerateJoinCode = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: (orgId: string) => repository.regenerateJoinCode(orgId),
+    onSuccess: () => {
+      toast.success('Nouveau code généré — l\'ancien ne fonctionne plus');
+      queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de régénérer le code : ${error.message}`);
+    },
+  });
+};
+
 export const useUpdateOrganization = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();

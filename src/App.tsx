@@ -77,6 +77,7 @@ const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'));
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'));
 const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'));
+const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -187,6 +188,9 @@ const AppRoutes = () => (
     {/* Lien d'invitation de partage — public : pose le token puis redirige
         (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
     <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
+    {/* Lien d'invitation entreprise placé (v2) — public : la page gère
+        elle-même l'état connecté/déconnecté + consentement RGPD. */}
+    <Route path="org-invite/:token" element={<PageWithSuspense><ClaimOrgInvitePage /></PageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
