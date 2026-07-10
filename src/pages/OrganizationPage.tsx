@@ -14,6 +14,7 @@ import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
 import PyramidTab from '@/components/organization/PyramidTab';
 import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
+import TeamsSection from '@/components/organization/TeamsSection';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 
@@ -144,6 +145,14 @@ const OrganizationPage = () => {
       {tab === 'members' && (
         <div className="space-y-6">
           <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
+
+          <TeamsSection
+            orgId={myOrg.id}
+            members={members}
+            currentUserId={user?.id}
+            isAdmin={isAdmin}
+            isManager={isManager}
+          />
 
           <div>
             <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">

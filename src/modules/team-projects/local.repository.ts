@@ -28,10 +28,12 @@ const iso = (offset: number): string => new Date(Date.now() + offset * DAY).toIS
 
 const MEMBERS = ['demo-user', 'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille'];
 
+// Cloisonnement (v2, 1d) : Refonte → équipe Dev, Lancement → équipe Design,
+// Interne → projet d'ORG (team_id null, visible par toute l'entreprise).
 const DEMO_PROJECTS: TeamProject[] = [
-  { id: 'tproj-1', orgId: DEMO_ORG_ID, name: 'Refonte du site', color: 'blue', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-40) },
-  { id: 'tproj-2', orgId: DEMO_ORG_ID, name: 'Lancement produit', color: 'purple', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-25) },
-  { id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15) },
+  { id: 'tproj-1', orgId: DEMO_ORG_ID, name: 'Refonte du site', color: 'blue', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-40), teamId: 'team-dev' },
+  { id: 'tproj-2', orgId: DEMO_ORG_ID, name: 'Lancement produit', color: 'purple', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-25), teamId: 'team-design' },
+  { id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15), teamId: null },
 ];
 
 // Fabrique une tâche seed déterministe.
@@ -132,6 +134,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       createdBy: DEMO_USER_ID,
       archivedAt: null,
       createdAt: new Date().toISOString(),
+      teamId: input.teamId ?? null,
     };
     this.saveProjects([...projects, project]);
     return project;
