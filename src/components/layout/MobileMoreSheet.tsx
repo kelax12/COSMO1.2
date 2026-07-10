@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
-import { useMyOrganization } from '@/modules/organizations';
+import { useActiveOrganization } from '@/modules/organizations';
+import OrgSwitcher from '@/components/organization/OrgSwitcher';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 interface MobileMoreSheetProps {
@@ -23,7 +24,7 @@ const links = [
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
   const { user, logout } = useAuth();
   const { isPremium } = useBilling();
-  const { data: myOrg } = useMyOrganization();
+  const { activeOrg: myOrg, organizations } = useActiveOrganization();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -125,6 +126,13 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                   </div>
                 </button>
               </div>
+
+              {/* — Switcher multi-org (si plusieurs entreprises) — */}
+              {organizations.length > 1 && (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-3">
+                  <OrgSwitcher />
+                </div>
+              )}
 
               {/* — Navigation links — */}
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">

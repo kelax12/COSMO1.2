@@ -10,15 +10,20 @@ export type {
   OrgMember,
   OrgJoinRequestStatus,
   OrgJoinRequest,
+  UpdateOrganizationInput,
 } from './types';
 
 // ─── Constants & query keys ──────────────────────────────────────────
 export {
   orgKeys,
-  ORG_STORAGE_KEY,
+  ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
+  ACTIVE_ORG_STORAGE_KEY,
 } from './constants';
+
+// ─── Contexte org active (multi-org) ─────────────────────────────────
+export { ActiveOrgProvider, useActiveOrganization } from './ActiveOrgContext';
 
 // ─── Validation ──────────────────────────────────────────────────────
 export {
@@ -34,7 +39,7 @@ export { SupabaseOrganizationsRepository } from './supabase.repository';
 
 // ─── Hooks ───────────────────────────────────────────────────────────
 export {
-  useMyOrganization,
+  useMyOrganizations,
   useOrgMembers,
   useOrgJoinRequests,
   useMySentJoinRequest,
@@ -45,4 +50,5 @@ export {
   useSetMemberRole,
   useRemoveMember,
   useLeaveOrganization,
+  useUpdateOrganization,
 } from './hooks';

@@ -14,11 +14,12 @@ const useOrgRepository = () => getOrganizationsRepository();
 
 // ─── Read hooks ──────────────────────────────────────────────────────
 
-export const useMyOrganization = () => {
+export const useMyOrganizations = (enabled: boolean = true) => {
   const repository = useOrgRepository();
   return useQuery({
     queryKey: orgKeys.mine(),
-    queryFn: () => repository.getMyOrganization(),
+    queryFn: () => repository.getMyOrganizations(),
+    enabled,
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -168,6 +169,22 @@ export const useLeaveOrganization = () => {
     },
     onError: (error: Error) => {
       toast.error(`Impossible de quitter l'entreprise : ${error.message}`);
+    },
+  });
+};
+
+export const useUpdateOrganization = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ orgId, input }: { orgId: string; input: import('./types').UpdateOrganizationInput }) =>
+      repository.updateOrganization(orgId, input),
+    onSuccess: () => {
+      toast.success('Profil de l\'entreprise mis à jour');
+      queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de mettre à jour le profil : ${error.message}`);
     },
   });
 };

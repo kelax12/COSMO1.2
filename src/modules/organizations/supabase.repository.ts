@@ -12,7 +12,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput } from './types';
 
 interface OrgRow {
   id: string;
@@ -20,6 +20,8 @@ interface OrgRow {
   join_code: string;
   owner_id: string;
   created_at: string;
+  description: string | null;
+  industry: string | null;
 }
 
 interface MemberRow {
@@ -44,36 +46,41 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       joinCode: row.join_code,
       ownerId: row.owner_id,
       createdAt: row.created_at,
+      description: row.description ?? undefined,
+      industry: row.industry ?? undefined,
     };
   }
 
   // ─── Read ──────────────────────────────────────────────────────────
 
-  async getMyOrganization(): Promise<MyOrganization | null> {
+  async getMyOrganizations(): Promise<MyOrganization[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: userData } = await supabase.auth.getUser();
     const uid = userData.user?.id;
-    if (!uid) return null;
+    if (!uid) return [];
 
-    // Le membership de l'appelant donne l'org + son rôle (RLS : il ne voit
-    // que les orgs dont il est membre).
-    const { data: membership, error: mErr } = await supabase
+    // Mes memberships donnent orgs + rôles (RLS : je ne vois que mes orgs).
+    const { data: memberships, error: mErr } = await supabase
       .from('organization_members')
       .select('org_id, role')
       .eq('user_id', uid)
-      .maybeSingle();
+      .limit(50);
     if (mErr) throw normalizeApiError(mErr);
-    if (!membership) return null;
+    const rows = (memberships ?? []) as { org_id: string; role: OrgRole }[];
+    if (rows.length === 0) return [];
 
-    const { data: orgRow, error: oErr } = await supabase
+    const { data: orgRows, error: oErr } = await supabase
       .from('organizations')
       .select('*')
-      .eq('id', membership.org_id as string)
-      .maybeSingle();
+      .in('id', rows.map((r) => r.org_id))
+      .order('created_at', { ascending: true });
     if (oErr) throw normalizeApiError(oErr);
-    if (!orgRow) return null;
 
-    return { ...this.mapOrg(orgRow as OrgRow), myRole: membership.role as OrgRole };
+    const roleByOrg = new Map(rows.map((r) => [r.org_id, r.role]));
+    return ((orgRows ?? []) as OrgRow[]).map((row) => ({
+      ...this.mapOrg(row),
+      myRole: roleByOrg.get(row.id) ?? 'member',
+    }));
   }
 
   async getMembers(orgId: string): Promise<OrgMember[]> {
@@ -216,6 +223,24 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .eq('id', requestId)
       .eq('user_id', uid ?? ''); // defense-in-depth (RLS scope déjà, faille V15)
     if (error) throw normalizeApiError(error);
+  }
+
+  async updateOrganization(orgId: string, input: UpdateOrganizationInput): Promise<Organization> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist explicite — jamais joinCode/ownerId (trigger d'immutabilité
+    // en défense-en-profondeur côté DB).
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.description !== undefined) patch.description = input.description || null;
+    if (input.industry !== undefined) patch.industry = input.industry || null;
+    const { data, error } = await supabase
+      .from('organizations')
+      .update(patch)
+      .eq('id', orgId)
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return this.mapOrg(data as OrgRow);
   }
 
   // ─── Administration (RPC only, mig. 061) ───────────────────────────

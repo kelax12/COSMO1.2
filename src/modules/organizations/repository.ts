@@ -2,12 +2,14 @@
 // ORGANIZATIONS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput } from './types';
 
 export interface IOrganizationsRepository {
   // Read operations
-  /** L'organisation de l'utilisateur courant (V1 : une seule max), avec son rôle. */
-  getMyOrganization(): Promise<MyOrganization | null>;
+  /** Toutes les organisations dont l'utilisateur courant est membre, avec son
+   *  rôle dans chacune (multi-org v2). L'« org active » est un état client
+   *  (ActiveOrgContext) — le repository renvoie la liste complète. */
+  getMyOrganizations(): Promise<MyOrganization[]>;
   /** Annuaire des membres (enrichi profiles : nom/avatar). */
   getMembers(orgId: string): Promise<OrgMember[]>;
   /** Demandes d'adhésion en attente (vue admin). */
@@ -24,6 +26,9 @@ export interface IOrganizationsRepository {
   respondJoinRequest(requestId: string, accept: boolean): Promise<void>;
   /** Demandeur : annule sa demande en attente. */
   cancelJoinRequest(requestId: string): Promise<void>;
+
+  /** Met à jour le profil de l'entreprise (admin) : nom, description, secteur. */
+  updateOrganization(orgId: string, input: UpdateOrganizationInput): Promise<Organization>;
 
   // Administration des membres (admin) — garde « dernier admin » côté serveur.
   /** Change le rôle d'un membre (admin uniquement). */
