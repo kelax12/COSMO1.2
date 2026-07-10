@@ -22,6 +22,7 @@ interface ProjectRow {
   created_by: string;
   archived_at: string | null;
   created_at: string;
+  team_id: string | null;
 }
 
 interface TaskRow {
@@ -49,6 +50,7 @@ const mapProject = (r: ProjectRow): TeamProject => ({
   createdBy: r.created_by,
   archivedAt: r.archived_at,
   createdAt: r.created_at,
+  teamId: r.team_id,
 });
 
 const mapTask = (r: TaskRow): TeamTask => ({
@@ -92,7 +94,13 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // Whitelist explicite — org_id/created_by injectés serveur-side, jamais input.
     const { data, error } = await supabase
       .from('team_projects')
-      .insert({ org_id: orgId, created_by: uid, name: input.name, color: input.color ?? 'blue' })
+      .insert({
+        org_id: orgId,
+        created_by: uid,
+        name: input.name,
+        color: input.color ?? 'blue',
+        team_id: input.teamId ?? null,
+      })
       .select('*')
       .single();
     if (error) throw normalizeApiError(error);

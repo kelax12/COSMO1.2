@@ -10,11 +10,15 @@ export interface TeamProject {
   createdBy: string;
   archivedAt?: string | null;
   createdAt: string;
+  /** Équipe propriétaire (cloisonnement) — null = projet d'org, visible par tous. */
+  teamId?: string | null;
 }
 
 export interface CreateTeamProjectInput {
   name: string;
   color?: string;
+  /** null/absent = projet d'org visible par toute l'entreprise. */
+  teamId?: string | null;
 }
 
 /** Tâche d'équipe — champs canoniques `name` / `completed` / `deadline` (B6). */

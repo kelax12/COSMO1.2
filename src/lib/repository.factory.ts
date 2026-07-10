@@ -59,6 +59,11 @@ import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
 import { LocalStorageTeamOKRsRepository } from '@/modules/team-okrs/local.repository';
 import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.repository';
 
+// Org teams (équipes transverses, v2)
+import { IOrgTeamsRepository } from '@/modules/org-teams/repository';
+import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.repository';
+import { SupabaseOrgTeamsRepository } from '@/modules/org-teams/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -74,6 +79,7 @@ let krCompletionsRepository: IKRCompletionsRepository | null = null;
 let organizationsRepository: IOrganizationsRepository | null = null;
 let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
+let orgTeamsRepository: IOrgTeamsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
 // code path that calls `appModeStore.setDemo(...)` outside `loginDemo()`
@@ -90,6 +96,7 @@ appModeStore.subscribe(() => {
   organizationsRepository = null;
   teamProjectsRepository = null;
   teamOKRsRepository = null;
+  orgTeamsRepository = null;
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -233,6 +240,18 @@ export function getTeamOKRsRepository(): ITeamOKRsRepository {
 }
 
 /**
+ * Get the Org Teams repository based on current mode
+ */
+export function getOrgTeamsRepository(): IOrgTeamsRepository {
+  if (!orgTeamsRepository) {
+    orgTeamsRepository = appModeStore.isDemo
+      ? new LocalStorageOrgTeamsRepository()
+      : new SupabaseOrgTeamsRepository();
+  }
+  return orgTeamsRepository;
+}
+
+/**
  * Check if app is running in demo mode
  */
 export function isInDemoMode(): boolean {
@@ -254,6 +273,7 @@ export function resetRepositories(): void {
   organizationsRepository = null;
   teamProjectsRepository = null;
   teamOKRsRepository = null;
+  orgTeamsRepository = null;
 }
 
 /**

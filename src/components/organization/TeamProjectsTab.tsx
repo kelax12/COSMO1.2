@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, FolderKanban, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, FolderKanban, ChevronDown, ChevronRight, UsersRound } from 'lucide-react';
 import {
   useTeamProjects,
   useTeamTasks,
@@ -9,6 +9,7 @@ import {
   useDeleteTeamTask,
   type TeamTask,
 } from '@/modules/team-projects';
+import { useOrgTeams } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import TeamTaskRow from './TeamTaskRow';
 
@@ -25,12 +26,22 @@ type Scope = 'all' | 'mine';
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
   const [scope, setScope] = useState<Scope>('all');
   const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectTeamId, setNewProjectTeamId] = useState<string>('');
+  const [teamFilter, setTeamFilter] = useState<string>('');
   const [showNewProject, setShowNewProject] = useState(false);
   const [composerFor, setComposerFor] = useState<string | null>(null);
   const [composerName, setComposerName] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: teams = [] } = useOrgTeams(orgId);
+  // Filtre équipe : '' = tous, 'org' = projets d'entreprise, sinon teamId.
+  const projects = allProjects.filter((p) => {
+    if (!teamFilter) return true;
+    if (teamFilter === 'org') return !p.teamId;
+    return p.teamId === teamFilter;
+  });
+  const teamName = (teamId?: string | null) => teams.find((t) => t.id === teamId)?.name;
   const { data: tasks = [] } = useTeamTasks(
     orgId,
     scope === 'mine' && currentUserId ? { assigneeId: currentUserId } : undefined,
@@ -45,8 +56,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const handleCreateProject = () => {
     const name = newProjectName.trim();
     if (name.length < 1) return;
-    createProject.mutate({ name }, {
-      onSuccess: () => { setNewProjectName(''); setShowNewProject(false); },
+    createProject.mutate({ name, teamId: newProjectTeamId || null }, {
+      onSuccess: () => { setNewProjectName(''); setNewProjectTeamId(''); setShowNewProject(false); },
     });
   };
 
@@ -73,26 +84,42 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     <div className="space-y-4">
       {/* Barre d'actions */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
-          {(['all', 'mine'] as Scope[]).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setScope(s)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                scope === s
-                  ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                  : 'text-[rgb(var(--color-text-muted))]'
-              }`}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
+            {(['all', 'mine'] as Scope[]).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setScope(s)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  scope === s
+                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                    : 'text-[rgb(var(--color-text-muted))]'
+                }`}
+              >
+                {s === 'all' ? 'Toutes les tâches' : 'Mes tâches'}
+              </button>
+            ))}
+          </div>
+          {teams.length > 0 && (
+            <select
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              aria-label="Filtrer par équipe"
+              className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
             >
-              {s === 'all' ? 'Toutes les tâches' : 'Mes tâches'}
-            </button>
-          ))}
+              <option value="">Toutes les équipes</option>
+              <option value="org">Entreprise (sans équipe)</option>
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {isManager && (
           showNewProject ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <input
                 type="text"
                 value={newProjectName}
@@ -103,6 +130,17 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
                 maxLength={120}
                 className="h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
               />
+              <select
+                value={newProjectTeamId}
+                onChange={(e) => setNewProjectTeamId(e.target.value)}
+                aria-label="Équipe du projet"
+                className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+              >
+                <option value="">Toute l'entreprise</option>
+                {teams.map((t) => (
+                  <option key={t.id} value={t.id}>Équipe {t.name}</option>
+                ))}
+              </select>
               <button
                 type="button"
                 onClick={handleCreateProject}
@@ -148,6 +186,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
               >
                 {isCollapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
                 <span className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{project.name}</span>
+                {project.teamId && teamName(project.teamId) && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    <UsersRound size={10} aria-hidden="true" /> {teamName(project.teamId)}
+                  </span>
+                )}
                 <span className="text-xs text-[rgb(var(--color-text-muted))] ml-auto">
                   {done}/{projectTasks.length}
                 </span>
