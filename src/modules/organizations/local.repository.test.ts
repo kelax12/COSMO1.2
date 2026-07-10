@@ -94,6 +94,48 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
     await expect(repo.requestJoin('COSMO-DEMO42')).rejects.toThrow(/déjà membre/);
   });
 
+  // ─── Pyramide (v2, lot 1b) ──────────────────────────────────────────
+
+  it('seede la pyramide Nova Studio : arbre N+1 + Camille non placée', async () => {
+    const { buildOrgTree } = await import('./types');
+    const members = await repo.getMembers(DEMO_ORG_ID);
+    const { roots, unplaced } = buildOrgTree(members, 'demo-user');
+    expect(roots.length).toBe(1);
+    expect(roots[0].member.userId).toBe('demo-user');
+    expect(roots[0].children.map((c) => c.member.userId).sort()).toEqual(['friend-1', 'user-lucas']);
+    const marie = roots[0].children.find((c) => c.member.userId === 'friend-1')!;
+    expect(marie.children.map((c) => c.member.userId).sort()).toEqual(['friend-2', 'friend-3']);
+    expect(unplaced.map((m) => m.userId)).toEqual(['user-camille']);
+  });
+
+  it('setMemberManager : place Camille sous Lucas', async () => {
+    await repo.setMemberManager(DEMO_ORG_ID, 'user-camille', 'user-lucas');
+    const members = await repo.getMembers(DEMO_ORG_ID);
+    expect(members.find((m) => m.userId === 'user-camille')?.managerId).toBe('user-lucas');
+  });
+
+  it('setMemberManager : refuse les cycles (Marie sous Jean, son subordonné)', async () => {
+    await expect(repo.setMemberManager(DEMO_ORG_ID, 'friend-1', 'friend-2')).rejects.toThrow(/cycle/i);
+  });
+
+  it('setMemberManager : refuse un responsable hors org et soi-même', async () => {
+    await expect(repo.setMemberManager(DEMO_ORG_ID, 'friend-2', 'user-nina')).rejects.toThrow();
+    await expect(repo.setMemberManager(DEMO_ORG_ID, 'friend-2', 'friend-2')).rejects.toThrow();
+  });
+
+  it('setMemberManager : non-admin limité à son sous-arbre (Atelier Lune)', async () => {
+    // Dans Atelier Lune, demo-user est membre sans subordonnés → aucun droit.
+    await expect(repo.setMemberManager(DEMO_ORG_2_ID, 'user-theo', 'demo-user')).rejects.toThrow(/sous vous/);
+  });
+
+  it('removeMember re-parente les subordonnés au grand-parent', async () => {
+    // Retirer Marie : Jean et Sophie remontent sous demo-user.
+    await repo.removeMember(DEMO_ORG_ID, 'friend-1');
+    const members = await repo.getMembers(DEMO_ORG_ID);
+    expect(members.find((m) => m.userId === 'friend-2')?.managerId).toBe('demo-user');
+    expect(members.find((m) => m.userId === 'friend-3')?.managerId).toBe('demo-user');
+  });
+
   it('survit à un localStorage corrompu et reseede (B12/B14)', async () => {
     localStorage.setItem(ORGS_STORAGE_KEY, '{invalid json');
     expect((await repo.getMyOrganizations()).length).toBe(2);

@@ -2,7 +2,11 @@
 // ORGANIZATIONS MODULE - Type Definitions (mode entreprise)
 // ═══════════════════════════════════════════════════════════════════
 
-export type OrgRole = 'admin' | 'manager' | 'member';
+/**
+ * Rôle STOCKÉ d'un membre. Depuis la v2 (pyramide), « manager » n'est plus
+ * un rôle : il est DÉRIVÉ de l'arbre hiérarchique (a ≥ 1 subordonné).
+ */
+export type OrgRole = 'admin' | 'member';
 
 export interface Organization {
   id: string;
@@ -43,6 +47,59 @@ export interface OrgMember {
   email?: string;
   /** URL/data URL/emoji — même convention que Friend.avatar. */
   avatar?: string;
+  /** Supérieur direct dans la pyramide (auth.users.id) — null = non placé. */
+  managerId?: string | null;
+}
+
+/** Nœud de l'arbre hiérarchique (construit côté client depuis managerId). */
+export interface OrgTreeNode {
+  member: OrgMember;
+  children: OrgTreeNode[];
+}
+
+/**
+ * Construit la pyramide depuis la liste plate des membres. Racines = membres
+ * sans manager qui ONT des subordonnés (ou l'owner) ; les membres sans
+ * manager NI subordonnés (hors racines) sont « non placés ».
+ */
+export function buildOrgTree(members: OrgMember[], ownerId: string): {
+  roots: OrgTreeNode[];
+  unplaced: OrgMember[];
+} {
+  const byId = new Map(members.map((m) => [m.userId, m]));
+  const childrenOf = new Map<string, OrgMember[]>();
+  for (const m of members) {
+    if (m.managerId && byId.has(m.managerId)) {
+      const arr = childrenOf.get(m.managerId) ?? [];
+      arr.push(m);
+      childrenOf.set(m.managerId, arr);
+    }
+  }
+  // Garde anti-cycle côté client : profondeur max 50 (miroir du cap SQL).
+  const toNode = (m: OrgMember, depth: number): OrgTreeNode => ({
+    member: m,
+    children:
+      depth >= 50
+        ? []
+        : (childrenOf.get(m.userId) ?? []).map((c) => toNode(c, depth + 1)),
+  });
+
+  const topLevel = members.filter((m) => !m.managerId || !byId.has(m.managerId ?? ''));
+  const roots = topLevel
+    .filter((m) => m.userId === ownerId || (childrenOf.get(m.userId)?.length ?? 0) > 0)
+    .map((m) => toNode(m, 0));
+  const rootIds = new Set(
+    topLevel
+      .filter((m) => m.userId === ownerId || (childrenOf.get(m.userId)?.length ?? 0) > 0)
+      .map((m) => m.userId),
+  );
+  const unplaced = topLevel.filter((m) => !rootIds.has(m.userId));
+  return { roots, unplaced };
+}
+
+/** Un membre est « manager » s'il a au moins un subordonné direct (dérivé). */
+export function isManagerOf(members: OrgMember[], userId: string): boolean {
+  return members.some((m) => m.managerId === userId);
 }
 
 export type OrgJoinRequestStatus = 'pending' | 'accepted' | 'rejected';

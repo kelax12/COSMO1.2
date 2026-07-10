@@ -1,23 +1,26 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
   useOrgMembers,
   useLeaveOrganization,
+  isManagerOf,
 } from '@/modules/organizations';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
+import PyramidTab from '@/components/organization/PyramidTab';
 import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 
-type OrgTab = 'overview' | 'projects' | 'okr' | 'members';
+type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'members';
 
 const TABS: { id: OrgTab; label: string; Icon: typeof Users }[] = [
   { id: 'overview', label: 'Aperçu', Icon: LayoutDashboard },
+  { id: 'pyramid', label: 'Pyramide', Icon: Network },
   { id: 'projects', label: 'Projets', Icon: FolderKanban },
   { id: 'okr', label: 'OKR', Icon: Target },
   { id: 'members', label: 'Membres', Icon: Users },
@@ -48,7 +51,8 @@ const OrganizationPage = () => {
   if (!myOrg) return <Navigate to="/dashboard" replace />;
 
   const isAdmin = myOrg.myRole === 'admin';
-  const isManager = myOrg.myRole === 'admin' || myOrg.myRole === 'manager';
+  // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
+  const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
 
   const handleLeave = () => {
     if (!window.confirm(`Quitter ${myOrg.name} ? Vous perdrez l'accès aux projets et OKR de l'équipe.`)) return;
@@ -109,6 +113,15 @@ const OrganizationPage = () => {
 
       {/* Contenu */}
       {tab === 'overview' && <TeamOverviewTab orgId={myOrg.id} members={members} />}
+      {tab === 'pyramid' && (
+        <PyramidTab
+          orgId={myOrg.id}
+          ownerId={myOrg.ownerId}
+          members={members}
+          currentUserId={user?.id}
+          isAdmin={isAdmin}
+        />
+      )}
       {tab === 'projects' && (
         <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
       )}

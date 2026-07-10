@@ -173,6 +173,22 @@ export const useLeaveOrganization = () => {
   });
 };
 
+export const useSetMemberManager = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ orgId, userId, managerId }: { orgId: string; userId: string; managerId: string | null }) =>
+      repository.setMemberManager(orgId, userId, managerId),
+    onSuccess: (_d, variables) => {
+      toast.success('Position mise à jour');
+      queryClient.invalidateQueries({ queryKey: orgKeys.members(variables.orgId) });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de déplacer le membre : ${error.message}`);
+    },
+  });
+};
+
 export const useUpdateOrganization = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();
