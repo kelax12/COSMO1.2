@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
-  useMyOrganization,
+  useActiveOrganization,
   useOrgMembers,
   useLeaveOrganization,
 } from '@/modules/organizations';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
+import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
 import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
@@ -30,7 +31,8 @@ const TABS: { id: OrgTab; label: string; Icon: typeof Users }[] = [
 const OrganizationPage = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState<OrgTab>('overview');
-  const { data: myOrg, isLoading } = useMyOrganization();
+  const [editProfile, setEditProfile] = useState(false);
+  const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const { data: members = [] } = useOrgMembers(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
 
@@ -60,13 +62,31 @@ const OrganizationPage = () => {
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
           <Building2 size={24} aria-hidden="true" />
         </div>
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))] truncate">{myOrg.name}</h1>
-          <p className="text-sm text-[rgb(var(--color-text-muted))]">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))] truncate">{myOrg.name}</h1>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setEditProfile(true)}
+                aria-label="Modifier le profil de l'entreprise"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
+              >
+                <Pencil size={14} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">
             {members.length} membre{members.length > 1 ? 's' : ''}
+            {myOrg.industry ? ` · ${myOrg.industry}` : ''}
           </p>
+          {myOrg.description && (
+            <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5 line-clamp-1">{myOrg.description}</p>
+          )}
         </div>
       </header>
+
+      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto">

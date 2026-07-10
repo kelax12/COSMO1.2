@@ -2,40 +2,61 @@
 // ORGANIZATIONS MODULE - LocalStorage Repository (mode démo)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Entreprise fictive « Nova Studio » seedée au premier accès : l'utilisateur
-// démo est admin, 5 membres fictifs (mêmes personas que les seeds friends),
-// 1 demande d'adhésion en attente pour tester l'acceptation via l'inbox.
+// Multi-org (v2) : deux entreprises fictives seedées au premier accès —
+//   • « Nova Studio »  : l'utilisateur démo est ADMIN (6 membres, 1 demande
+//     d'adhésion en attente pour tester l'inbox).
+//   • « Atelier Lune » : l'utilisateur démo est MEMBRE simple (vue non-admin
+//     + démonstration du switcher d'organisation).
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput } from './types';
 import {
-  ORG_STORAGE_KEY,
+  ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
 } from './constants';
 
 const DEMO_USER_ID = 'demo-user';
-const DEMO_ORG_ID = 'org-demo-1';
+export const DEMO_ORG_ID = 'org-demo-1';
+export const DEMO_ORG_2_ID = 'org-demo-2';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-const DEMO_ORG: Organization = {
-  id: DEMO_ORG_ID,
-  name: 'Nova Studio',
-  joinCode: 'COSMO-DEMO42',
-  ownerId: DEMO_USER_ID,
-  createdAt: new Date(Date.now() - 90 * DAY).toISOString(),
-};
+const DEMO_ORGS: Organization[] = [
+  {
+    id: DEMO_ORG_ID,
+    name: 'Nova Studio',
+    joinCode: 'COSMO-DEMO42',
+    ownerId: DEMO_USER_ID,
+    createdAt: new Date(Date.now() - 90 * DAY).toISOString(),
+    description: 'Studio de création digitale — sites, apps et identités de marque.',
+    industry: 'Design & Tech',
+  },
+  {
+    id: DEMO_ORG_2_ID,
+    name: 'Atelier Lune',
+    joinCode: 'COSMO-LUNE77',
+    ownerId: 'user-nina',
+    createdAt: new Date(Date.now() - 45 * DAY).toISOString(),
+    description: 'Collectif d\'artisans céramistes.',
+    industry: 'Artisanat',
+  },
+];
 
 const DEMO_MEMBERS: OrgMember[] = [
+  // ── Nova Studio (demo-user admin) ──
   { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
   { orgId: DEMO_ORG_ID, userId: 'friend-1', role: 'manager', joinedAt: new Date(Date.now() - 80 * DAY).toISOString(), displayName: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
   { orgId: DEMO_ORG_ID, userId: 'friend-2', role: 'member', joinedAt: new Date(Date.now() - 75 * DAY).toISOString(), displayName: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
   { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
   { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com', avatar: '🧑' },
   { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com', avatar: '👩' },
+  // ── Atelier Lune (demo-user membre simple) ──
+  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com', avatar: '👩‍🎨' },
+  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
+  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com', avatar: '🧔‍♂️' },
 ];
 
 const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
@@ -70,8 +91,12 @@ function readOrSeed<T>(key: string, seed: T): T {
 }
 
 export class LocalStorageOrganizationsRepository implements IOrganizationsRepository {
-  private getOrg(): Organization | null {
-    return readOrSeed<Organization | null>(ORG_STORAGE_KEY, DEMO_ORG);
+  private getOrgsArray(): Organization[] {
+    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, DEMO_ORGS);
+  }
+
+  private saveOrgs(orgs: Organization[]): void {
+    localStorage.setItem(ORGS_STORAGE_KEY, JSON.stringify(orgs));
   }
 
   private getMembersArray(): OrgMember[] {
@@ -88,12 +113,15 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   // ─── Read ──────────────────────────────────────────────────────────
 
-  async getMyOrganization(): Promise<MyOrganization | null> {
-    const org = this.getOrg();
-    if (!org) return null;
-    const me = this.getMembersArray().find((m) => m.userId === DEMO_USER_ID);
-    if (!me) return null;
-    return { ...org, myRole: me.role };
+  async getMyOrganizations(): Promise<MyOrganization[]> {
+    const orgs = this.getOrgsArray();
+    const members = this.getMembersArray();
+    return orgs
+      .map((org) => {
+        const me = members.find((m) => m.orgId === org.id && m.userId === DEMO_USER_ID);
+        return me ? { ...org, myRole: me.role } : null;
+      })
+      .filter((o): o is MyOrganization => o !== null);
   }
 
   async getMembers(orgId: string): Promise<OrgMember[]> {
@@ -105,19 +133,45 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   async getMySentJoinRequest(): Promise<OrgJoinRequest | null> {
-    // L'utilisateur démo est déjà membre : jamais de demande sortante.
     return this.getRequestsArray().find((r) => r.userId === DEMO_USER_ID && r.status === 'pending') ?? null;
   }
 
   // ─── Write ─────────────────────────────────────────────────────────
 
-  async createOrganization(_name: string): Promise<Organization> {
-    // V1 : une organisation max par utilisateur (même règle que la RPC prod).
-    throw new Error('Vous appartenez déjà à une entreprise');
+  async createOrganization(name: string): Promise<Organization> {
+    // Multi-org : créer une nouvelle org est désormais possible en démo.
+    const orgs = this.getOrgsArray();
+    const org: Organization = {
+      id: crypto.randomUUID(),
+      name,
+      joinCode: `COSMO-${crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`,
+      ownerId: DEMO_USER_ID,
+      createdAt: new Date().toISOString(),
+    };
+    this.saveOrgs([...orgs, org]);
+    const members = this.getMembersArray();
+    members.push({
+      orgId: org.id,
+      userId: DEMO_USER_ID,
+      role: 'admin',
+      joinedAt: new Date().toISOString(),
+      displayName: 'Vous',
+      email: 'demo@cosmo.app',
+      avatar: '🚀',
+    });
+    localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+    return org;
   }
 
-  async requestJoin(_code: string): Promise<{ orgName: string }> {
-    throw new Error('Vous appartenez déjà à une entreprise');
+  async requestJoin(code: string): Promise<{ orgName: string }> {
+    const org = this.getOrgsArray().find((o) => o.joinCode === code.toUpperCase().trim());
+    // Erreur générique (même comportement que la prod : pas de leak).
+    if (!org) throw new Error('Code invalide');
+    const isMember = this.getMembersArray().some(
+      (m) => m.orgId === org.id && m.userId === DEMO_USER_ID,
+    );
+    if (isMember) throw new Error('Vous êtes déjà membre de cette entreprise');
+    throw new Error('Demande envoyée — en mode démo, utilisez les entreprises fournies');
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {
@@ -148,6 +202,19 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async cancelJoinRequest(requestId: string): Promise<void> {
     this.saveRequests(this.getRequestsArray().filter((r) => r.id !== requestId));
+  }
+
+  async updateOrganization(orgId: string, input: UpdateOrganizationInput): Promise<Organization> {
+    const orgs = this.getOrgsArray();
+    const org = orgs.find((o) => o.id === orgId);
+    if (!org) throw new Error('Entreprise introuvable');
+    const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
+    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut modifier le profil');
+    if (input.name !== undefined) org.name = input.name;
+    if (input.description !== undefined) org.description = input.description;
+    if (input.industry !== undefined) org.industry = input.industry;
+    this.saveOrgs(orgs);
+    return org;
   }
 
   // ─── Administration ────────────────────────────────────────────────
@@ -189,7 +256,5 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       throw new Error('Transférez le rôle admin avant de quitter');
     }
     this.saveMembers(members.filter((m) => !(m.orgId === orgId && m.userId === DEMO_USER_ID)));
-    // Démo : quitter réinitialise l'org (le compte redevient particulier).
-    localStorage.removeItem(ORG_STORAGE_KEY);
   }
 }

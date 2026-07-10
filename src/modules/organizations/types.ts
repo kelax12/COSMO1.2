@@ -15,6 +15,16 @@ export interface Organization {
   joinCode?: string;
   ownerId: string;
   createdAt: string;
+  /** Profil d'entreprise (v2) — éditable par les admins. */
+  description?: string;
+  industry?: string;
+}
+
+/** Champs de profil modifiables par un admin (jamais joinCode/ownerId). */
+export interface UpdateOrganizationInput {
+  name?: string;
+  description?: string;
+  industry?: string;
 }
 
 /** L'organisation de l'utilisateur courant, enrichie de son propre rôle. */

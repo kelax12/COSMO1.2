@@ -25,7 +25,7 @@ import {
   type SharedListGrant,
 } from '@/modules/friends';
 import {
-  useMyOrganization,
+  useActiveOrganization,
   useOrgJoinRequests,
   useRespondJoinRequest,
 } from '@/modules/organizations';
@@ -68,8 +68,9 @@ const InboxMenu: React.FC = () => {
   const acceptSharedListMutation = useAcceptSharedList();
   const refuseSharedListMutation = useRefuseSharedList();
 
-  // Mode entreprise : demandes d'adhésion à valider (admins uniquement).
-  const { data: myOrg } = useMyOrganization();
+  // Mode entreprise : demandes d'adhésion à valider (admins uniquement,
+  // sur l'organisation ACTIVE — multi-org v2).
+  const { activeOrg: myOrg } = useActiveOrganization();
   const isOrgAdmin = myOrg?.myRole === 'admin';
   const { data: joinRequests = [] } = useOrgJoinRequests(isOrgAdmin ? myOrg?.id : undefined);
   const respondJoinRequestMutation = useRespondJoinRequest();

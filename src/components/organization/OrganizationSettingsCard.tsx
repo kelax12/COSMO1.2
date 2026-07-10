@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Building2, ArrowRight } from 'lucide-react';
-import { useMyOrganization } from '@/modules/organizations';
+import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -18,7 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
  */
 const OrganizationSettingsCard = () => {
   const navigate = useNavigate();
-  const { data: myOrg, isLoading } = useMyOrganization();
+  const { activeOrg: myOrg, isLoading } = useActiveOrganization();
 
   return (
     <>

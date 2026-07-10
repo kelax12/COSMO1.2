@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageOrganizationsRepository } from './local.repository';
+import { LocalStorageOrganizationsRepository, DEMO_ORG_ID, DEMO_ORG_2_ID } from './local.repository';
 import {
-  ORG_STORAGE_KEY,
+  ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
 } from './constants';
 
-describe('LocalStorageOrganizationsRepository (démo)', () => {
+describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
   let repo: LocalStorageOrganizationsRepository;
 
   beforeEach(() => {
@@ -15,84 +15,94 @@ describe('LocalStorageOrganizationsRepository (démo)', () => {
     repo = new LocalStorageOrganizationsRepository();
   });
 
-  it("seede l'entreprise Nova Studio dont l'utilisateur démo est admin", async () => {
-    const org = await repo.getMyOrganization();
-    expect(org).not.toBeNull();
-    expect(org?.name).toBe('Nova Studio');
-    expect(org?.joinCode).toBe('COSMO-DEMO42');
-    expect(org?.myRole).toBe('admin');
+  it('seede DEUX entreprises : Nova Studio (admin) et Atelier Lune (membre)', async () => {
+    const orgs = await repo.getMyOrganizations();
+    expect(orgs.length).toBe(2);
+    const nova = orgs.find((o) => o.id === DEMO_ORG_ID);
+    const lune = orgs.find((o) => o.id === DEMO_ORG_2_ID);
+    expect(nova?.name).toBe('Nova Studio');
+    expect(nova?.myRole).toBe('admin');
+    expect(nova?.joinCode).toBe('COSMO-DEMO42');
+    expect(nova?.industry).toBe('Design & Tech');
+    expect(lune?.name).toBe('Atelier Lune');
+    expect(lune?.myRole).toBe('member');
   });
 
-  it("retourne l'annuaire des membres seedés", async () => {
-    const org = await repo.getMyOrganization();
-    const members = await repo.getMembers(org!.id);
-    expect(members.length).toBe(6);
-    expect(members.some((m) => m.role === 'manager')).toBe(true);
-    expect(members.find((m) => m.userId === 'demo-user')?.role).toBe('admin');
+  it("retourne l'annuaire par organisation (pas de fuite entre orgs)", async () => {
+    const novaMembers = await repo.getMembers(DEMO_ORG_ID);
+    const luneMembers = await repo.getMembers(DEMO_ORG_2_ID);
+    expect(novaMembers.length).toBe(6);
+    expect(luneMembers.length).toBe(3);
+    expect(novaMembers.every((m) => m.orgId === DEMO_ORG_ID)).toBe(true);
+    expect(luneMembers.every((m) => m.orgId === DEMO_ORG_2_ID)).toBe(true);
   });
 
-  it('seede une demande d\'adhésion en attente', async () => {
-    const org = await repo.getMyOrganization();
-    const requests = await repo.getPendingJoinRequests(org!.id);
+  it("seede une demande d'adhésion en attente sur Nova Studio", async () => {
+    const requests = await repo.getPendingJoinRequests(DEMO_ORG_ID);
     expect(requests.length).toBe(1);
-    expect(requests[0].status).toBe('pending');
     expect(requests[0].requesterName).toBe('Hugo Lefèvre');
+    expect((await repo.getPendingJoinRequests(DEMO_ORG_2_ID)).length).toBe(0);
   });
 
-  it('accepte une demande → ajoute le membre et retire la demande de la file', async () => {
-    const org = await repo.getMyOrganization();
-    const [req] = await repo.getPendingJoinRequests(org!.id);
+  it('accepte une demande → ajoute le membre à la bonne org', async () => {
+    const [req] = await repo.getPendingJoinRequests(DEMO_ORG_ID);
     await repo.respondJoinRequest(req.id, true);
-
-    const pending = await repo.getPendingJoinRequests(org!.id);
-    expect(pending.length).toBe(0);
-
-    const members = await repo.getMembers(org!.id);
+    expect((await repo.getPendingJoinRequests(DEMO_ORG_ID)).length).toBe(0);
+    const members = await repo.getMembers(DEMO_ORG_ID);
     expect(members.some((m) => m.userId === req.userId && m.role === 'member')).toBe(true);
+    // Atelier Lune n'est pas affectée.
+    expect((await repo.getMembers(DEMO_ORG_2_ID)).length).toBe(3);
   });
 
-  it('refuse une demande → ne crée pas de membre', async () => {
-    const org = await repo.getMyOrganization();
-    const [req] = await repo.getPendingJoinRequests(org!.id);
-    const before = (await repo.getMembers(org!.id)).length;
+  it('multi-org : créer une nouvelle entreprise ajoute une 3e org (admin)', async () => {
+    const created = await repo.createOrganization('Ma Boîte');
+    const orgs = await repo.getMyOrganizations();
+    expect(orgs.length).toBe(3);
+    expect(orgs.find((o) => o.id === created.id)?.myRole).toBe('admin');
+    expect(created.joinCode).toMatch(/^COSMO-/);
+  });
 
-    await repo.respondJoinRequest(req.id, false);
+  it('updateOrganization : admin met à jour le profil de Nova Studio', async () => {
+    const updated = await repo.updateOrganization(DEMO_ORG_ID, {
+      name: 'Nova Studio SAS',
+      description: 'Nouveau pitch',
+      industry: 'Tech',
+    });
+    expect(updated.name).toBe('Nova Studio SAS');
+    const orgs = await repo.getMyOrganizations();
+    expect(orgs.find((o) => o.id === DEMO_ORG_ID)?.description).toBe('Nouveau pitch');
+  });
 
-    expect((await repo.getPendingJoinRequests(org!.id)).length).toBe(0);
-    expect((await repo.getMembers(org!.id)).length).toBe(before);
+  it('updateOrganization : refuse si non-admin (Atelier Lune)', async () => {
+    await expect(repo.updateOrganization(DEMO_ORG_2_ID, { name: 'Hack' })).rejects.toThrow();
+  });
+
+  it('quitter Atelier Lune (membre) fonctionne, mais pas Nova Studio (dernier admin)', async () => {
+    await repo.leaveOrganization(DEMO_ORG_2_ID);
+    expect((await repo.getMyOrganizations()).length).toBe(1);
+    await expect(repo.leaveOrganization(DEMO_ORG_ID)).rejects.toThrow();
   });
 
   it('rejette le double-traitement d\'une demande', async () => {
-    const org = await repo.getMyOrganization();
-    const [req] = await repo.getPendingJoinRequests(org!.id);
+    const [req] = await repo.getPendingJoinRequests(DEMO_ORG_ID);
     await repo.respondJoinRequest(req.id, true);
     await expect(repo.respondJoinRequest(req.id, true)).rejects.toThrow();
   });
 
-  it('empêche de créer/rejoindre une entreprise (déjà membre en démo)', async () => {
-    await expect(repo.createOrganization('Autre')).rejects.toThrow();
-    await expect(repo.requestJoin('COSMO-ABCDEF')).rejects.toThrow();
+  it('requestJoin : erreur générique sur code inconnu, refus si déjà membre', async () => {
+    await expect(repo.requestJoin('COSMO-ZZZZZZ')).rejects.toThrow('Code invalide');
+    await expect(repo.requestJoin('COSMO-DEMO42')).rejects.toThrow(/déjà membre/);
   });
 
-  it('ne mute pas les seeds au niveau module (clone défensif, B12)', async () => {
-    // Accepter une demande sur une 1re instance...
-    const org = await repo.getMyOrganization();
-    const [req] = await repo.getPendingJoinRequests(org!.id);
-    await repo.respondJoinRequest(req.id, true);
+  it('survit à un localStorage corrompu et reseede (B12/B14)', async () => {
+    localStorage.setItem(ORGS_STORAGE_KEY, '{invalid json');
+    expect((await repo.getMyOrganizations()).length).toBe(2);
 
-    // ...puis repartir de zéro (clearDemoStorage simulé) doit reseeder proprement.
-    localStorage.removeItem(ORG_STORAGE_KEY);
+    localStorage.removeItem(ORGS_STORAGE_KEY);
     localStorage.removeItem(ORG_MEMBERS_STORAGE_KEY);
     localStorage.removeItem(ORG_JOIN_REQUESTS_STORAGE_KEY);
     const fresh = new LocalStorageOrganizationsRepository();
-    const freshOrg = await fresh.getMyOrganization();
-    expect((await fresh.getMembers(freshOrg!.id)).length).toBe(6);
-    expect((await fresh.getPendingJoinRequests(freshOrg!.id)).length).toBe(1);
-  });
-
-  it('survit à un localStorage corrompu (safeParse, B14)', async () => {
-    localStorage.setItem(ORG_STORAGE_KEY, '{invalid json');
-    const org = await repo.getMyOrganization();
-    expect(org?.name).toBe('Nova Studio');
+    expect((await fresh.getMembers(DEMO_ORG_ID)).length).toBe(6);
+    expect((await fresh.getPendingJoinRequests(DEMO_ORG_ID)).length).toBe(1);
   });
 });

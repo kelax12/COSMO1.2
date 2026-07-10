@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import CreateOrJoinOrganization from '@/components/organization/CreateOrJoinOrganization';
-import { useMyOrganization } from '@/modules/organizations';
+import { useActiveOrganization } from '@/modules/organizations';
 
 /**
  * Onboarding entreprise — affiché juste après une inscription « Entreprise »
@@ -14,7 +14,7 @@ import { useMyOrganization } from '@/modules/organizations';
  */
 const OrganizationOnboardingPage = () => {
   const navigate = useNavigate();
-  const { data: myOrg, isLoading } = useMyOrganization();
+  const { activeOrg, organizations, isLoading } = useActiveOrganization();
 
   return (
     <main
@@ -32,11 +32,14 @@ const OrganizationOnboardingPage = () => {
           </p>
         </div>
 
-        {/* Déjà membre (org créée dans une session précédente) → accès direct. */}
-        {!isLoading && myOrg ? (
-          <div className="space-y-4 text-center">
+        {/* Multi-org : déjà membre → raccourci vers l'org active, MAIS on
+            peut toujours en créer/rejoindre une autre en dessous. */}
+        {!isLoading && activeOrg && (
+          <div className="mb-6 space-y-3 text-center">
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Vous faites partie de <span className="font-semibold text-[rgb(var(--color-text-primary))]">{myOrg.name}</span>.
+              Vous faites {organizations.length > 1 ? `partie de ${organizations.length} entreprises` : (
+                <>partie de <span className="font-semibold text-[rgb(var(--color-text-primary))]">{activeOrg.name}</span></>
+              )}.
             </p>
             <button
               type="button"
@@ -45,10 +48,10 @@ const OrganizationOnboardingPage = () => {
             >
               Accéder à mon entreprise <ArrowRight size={16} aria-hidden="true" />
             </button>
+            <p className="text-xs text-[rgb(var(--color-text-muted))]">— ou en créer/rejoindre une autre —</p>
           </div>
-        ) : (
-          <CreateOrJoinOrganization onCreated={() => { /* le code s'affiche dans le composant */ }} />
         )}
+        <CreateOrJoinOrganization onCreated={() => { /* le code s'affiche dans le composant */ }} />
 
         <div className="mt-6 pt-6 border-t border-[rgb(var(--color-border))] text-center">
           <button

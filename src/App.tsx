@@ -11,6 +11,7 @@ import { getLastVisitedPage } from '@/modules/ui-states';
 // Providers
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
+import { ActiveOrgProvider } from '@/modules/organizations';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -219,6 +220,7 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ActiveOrgProvider>
         <BillingProvider>
           <TooltipProvider>
             {/* reducedMotion="user" : respecte `prefers-reduced-motion` du système
@@ -245,6 +247,7 @@ const App: React.FC = () => {
             </MotionConfig>
           </TooltipProvider>
         </BillingProvider>
+        </ActiveOrgProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
