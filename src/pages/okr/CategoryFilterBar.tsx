@@ -122,42 +122,64 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   </AnimatePresence>
 
                   {isEditing ? (
-                    /* Mode édition inline : pastille couleur cyclique + input nom + OK/Annuler */
+                    /* Mode édition inline — même pattern que l'édition des listes
+                       (TaskListsBar) : pastille couleur cyclique (Shift+clic = palette
+                       hex), input auto-dimensionné, OK, ✕. Pas de pilule englobante. */
                     <form
                       onSubmit={(e) => { e.preventDefault(); submitEditCategory(); }}
-                      className="flex items-center gap-2 px-3 py-1 rounded-full border bg-white dark:bg-slate-800"
-                      style={{ borderColor: resolveColor(editCategoryColor) + '60' }}
+                      className="flex items-center gap-2"
                     >
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          if (e.shiftKey) {
+                            e.currentTarget.nextElementSibling?.dispatchEvent(new MouseEvent('click'));
+                            return;
+                          }
                           const idx = colorOptions.findIndex(c => c.value === editCategoryColor);
                           setEditCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
                         }}
-                        className="w-4 h-4 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                        className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                         style={{ backgroundColor: resolveColor(editCategoryColor) }}
-                        title="Changer la couleur"
+                        title="Clic : cycle couleurs · Shift+clic : palette hex"
+                      />
+                      {/* Color picker hex caché — déclenché par Shift+clic sur la pastille */}
+                      <input
+                        type="color"
+                        value={resolveColor(editCategoryColor)}
+                        onChange={(e) => setEditCategoryColor(e.target.value)}
+                        className="sr-only"
+                        aria-label="Choisir une couleur personnalisée"
+                        tabIndex={-1}
                       />
                       <input
                         autoFocus
                         type="text"
                         value={editCategoryName}
                         onChange={(e) => setEditCategoryName(e.target.value)}
+                        /* size adapte la largeur au contenu (fallback universel) ;
+                           field-sizing:content (Chrome 123+) le fait nativement. */
+                        size={Math.max(editCategoryName.length + 2, 6)}
+                        className="px-2 py-1 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+                        style={{
+                          backgroundColor: 'rgb(var(--color-surface))',
+                          borderColor: 'rgb(var(--color-border))',
+                          color: 'rgb(var(--color-text-primary))',
+                          fieldSizing: 'content',
+                        } as React.CSSProperties}
                         onKeyDown={(e) => { if (e.key === 'Escape') cancelEditCategory(); }}
-                        className="bg-transparent text-sm font-medium focus:outline-none w-24"
-                        style={{ color: 'rgb(var(--color-text-primary))' }}
                       />
                       <button
                         type="submit"
                         disabled={editCategoryName.trim().length < 2}
-                        className="px-2 py-0.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-40 transition-all"
+                        className="px-2 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
                       >
                         OK
                       </button>
                       <button
                         type="button"
                         onClick={cancelEditCategory}
-                        className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                         title="Annuler"
                       >
                         <X size={12} />
