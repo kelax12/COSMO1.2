@@ -38,7 +38,7 @@ const OrganizationPage = () => {
   const [tab, setTab] = useState<OrgTab>('overview');
   const [editProfile, setEditProfile] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
-  const { data: members = [] } = useOrgMembers(myOrg?.id);
+  const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
 
   if (isLoading) {
@@ -135,6 +135,7 @@ const OrganizationPage = () => {
           members={members}
           currentUserId={user?.id}
           isAdmin={isAdmin}
+          loading={membersLoading}
         />
       )}
       {tab === 'projects' && (
