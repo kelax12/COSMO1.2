@@ -102,6 +102,23 @@ export function isManagerOf(members: OrgMember[], userId: string): boolean {
   return members.some((m) => m.managerId === userId);
 }
 
+/** Sous-arbre strict (ids des descendants) de `root`. Profondeur max 50 (miroir du cap SQL). */
+export function subtreeOf(members: OrgMember[], root: string): Set<string> {
+  const out = new Set<string>();
+  let frontier = [root];
+  for (let depth = 0; depth < 50 && frontier.length > 0; depth++) {
+    const next: string[] = [];
+    for (const m of members) {
+      if (m.managerId && frontier.includes(m.managerId) && !out.has(m.userId)) {
+        out.add(m.userId);
+        next.push(m.userId);
+      }
+    }
+    frontier = next;
+  }
+  return out;
+}
+
 /**
  * Lien d'invitation placé (v2) : token secret single-use, expire à 7 jours,
  * fait entrer directement le destinataire sous `managerId` (null = non placé).

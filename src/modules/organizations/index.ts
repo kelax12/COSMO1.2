@@ -14,7 +14,7 @@ export type {
   UpdateOrganizationInput,
   OrgInviteLink,
 } from './types';
-export { buildOrgTree, isManagerOf } from './types';
+export { buildOrgTree, isManagerOf, subtreeOf } from './types';
 
 // ─── Constants & query keys ──────────────────────────────────────────
 export {
