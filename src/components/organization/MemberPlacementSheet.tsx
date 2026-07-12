@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { X, ArrowUpFromLine } from 'lucide-react';
-import { useSetMemberManager, isManagerOf, type OrgMember } from '@/modules/organizations';
+import { useSetMemberManager, isManagerOf, subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 
 interface MemberPlacementSheetProps {
@@ -11,23 +11,6 @@ interface MemberPlacementSheetProps {
   currentUserId?: string;
   isAdmin: boolean;
   onClose: () => void;
-}
-
-/** Sous-arbre strict (ids) de `root` — pour filtrer les destinations valides. */
-function subtreeOf(members: OrgMember[], root: string): Set<string> {
-  const out = new Set<string>();
-  let frontier = [root];
-  for (let depth = 0; depth < 50 && frontier.length > 0; depth++) {
-    const next: string[] = [];
-    for (const m of members) {
-      if (m.managerId && frontier.includes(m.managerId) && !out.has(m.userId)) {
-        out.add(m.userId);
-        next.push(m.userId);
-      }
-    }
-    frontier = next;
-  }
-  return out;
 }
 
 /**
