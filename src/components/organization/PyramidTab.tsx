@@ -8,18 +8,9 @@ import {
   MoreHorizontal,
   UserRoundPlus,
   ArrowUpFromLine,
-  LocateFixed,
   GripVertical,
   Search,
   X,
-  ChevronsDownUp,
-  ChevronsUpDown,
-  Minimize2,
-  Maximize2,
-  ZoomIn,
-  ZoomOut,
-  Scan,
-  Printer,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -115,14 +106,12 @@ interface NodeCardProps {
   teamsByUser: Map<string, OrgTeam[]>;
   /** Ouvre la fiche membre (clic ou Entrée sur une carte hors mode déplacement). */
   onOpenProfile: (m: OrgMember) => void;
-  /** Mode compact : avatars seuls, nom au survol. */
-  compact: boolean;
   /** Profondeur (mobile : indentation ; desktop : sans objet). */
   depth: number;
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, compact, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, depth, mobile }: NodeCardProps) => {
   const collapsed = collapsedIds.has(node.member.userId);
   // Long-press mobile : timer + position initiale (annulé si le doigt bouge).
   const longPressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
@@ -248,14 +237,13 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             }`
       }
       style={isDragSource ? { touchAction: 'none' } : undefined}
-      title={compact ? `${isMe ? 'Vous' : m.displayName} — ${m.role === 'admin' ? 'Admin' : manager ? 'Manager' : 'Membre'}` : undefined}
       className={`inline-flex items-center rounded-2xl border bg-[rgb(var(--color-surface))] transition-colors ${
-        compact ? 'gap-1 px-1.5 py-1.5' : isDropTarget && mobile ? 'gap-2.5 px-3 py-3.5' : 'gap-2.5 px-3 py-2'
+        isDropTarget && mobile ? 'gap-2.5 px-3 py-3.5' : 'gap-2.5 px-3 py-2'
       } ${borderClass} ${
         isDragSource ? `cursor-grab select-none ${drag.pointerActive ? 'opacity-40' : ''}` : ''
-      } ${isDropTarget ? 'cursor-pointer' : ''}`}
+      } ${isDropTarget ? 'cursor-pointer animate-wiggle' : ''}`}
     >
-      {!compact && !mobile && movable && !drag && (
+      {!mobile && movable && !drag && (
         <span
           onPointerDown={(e) => {
             if (e.button !== 0) return;
@@ -285,9 +273,8 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
         </button>
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={compact ? 28 : 34} />
-      {!compact && (
-        <div className="min-w-0">
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={34} />
+      <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
             {isMe ? 'Vous' : m.displayName}
           </p>
@@ -318,8 +305,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             )}
           </p>
         </div>
-      )}
-      {!compact && !drag && (movable || canAddUnder) && (
+      {!drag && (movable || canAddUnder) && (
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Actions pour ${m.displayName}`}
@@ -351,7 +337,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} compact={compact} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -380,7 +366,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} compact={compact} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -422,8 +408,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [placing, setPlacing] = useState<OrgMember | null>(null);
   const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
   const [profile, setProfile] = useState<OrgMember | null>(null);
-  // Zoom desktop (propriété CSS `zoom` : le layout suit, le scroll reste juste).
-  const [zoomLevel, setZoomLevel] = useState(1);
   // Annonce lecteur d'écran après un déplacement (aria-live).
   const [announcement, setAnnouncement] = useState('');
   // Carte brièvement surlignée après un déplacement réussi (l'œil la retrouve).
@@ -438,14 +422,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   }));
   // Fades de scroll horizontal (desktop) : y a-t-il du contenu hors-champ ?
   const [scrollShadow, setScrollShadow] = useState({ left: false, right: false });
-  // Mode compact (avatars seuls) — persisté globalement.
-  const [compact, setCompact] = useState(() => {
-    try {
-      return localStorage.getItem('cosmo_pyramid_compact') === '1';
-    } catch {
-      return false;
-    }
-  });
   const setManager = useSetMemberManager();
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
@@ -464,16 +440,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     return map;
   }, [orgTeams, orgTeamMembers]);
 
-  const toggleCompact = () => {
-    setCompact((c) => {
-      try {
-        localStorage.setItem('cosmo_pyramid_compact', c ? '0' : '1');
-      } catch {
-        // Persistance best-effort.
-      }
-      return !c;
-    });
-  };
 
   // Refs pour les listeners window (évite les closures périmées).
   const draggingRef = useRef<OrgMember | null>(null);
@@ -487,25 +453,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
 
   const { roots, unplaced } = buildOrgTree(members, ownerId);
   const selfMember = members.find((m) => m.userId === currentUserId) ?? null;
-
-  const locateMe = () => {
-    document
-      .querySelector('[data-me]')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-  };
-
-  // ── Zoom & fit (desktop) ───────────────────────────────────────────
-  const ZOOM_MIN = 0.4;
-  const ZOOM_MAX = 1.5;
-  const zoomBy = (delta: number) =>
-    setZoomLevel((z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round((z + delta) * 10) / 10)));
-
-  const zoomFit = () => {
-    const c = scrollContainerRef.current;
-    if (!c) return;
-    const naturalWidth = c.scrollWidth / zoomLevel;
-    setZoomLevel(Math.min(1, Math.max(ZOOM_MIN, Math.floor((c.clientWidth / naturalWidth) * 100) / 100)));
-  };
 
   // Pan : glisser le fond de la pyramide pour se déplacer (desktop).
   const onBackgroundPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -529,38 +476,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     window.addEventListener('pointerup', onUp);
   };
 
-  // ── Export : fenêtre imprimable (l'utilisateur peut « Enregistrer en PDF ») ──
-  const exportChart = () => {
-    const esc = (s: string) =>
-      s.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] as string);
-    const roleOf = (m: OrgMember) =>
-      m.role === 'admin' ? 'Admin' : isManagerOf(members, m.userId) ? 'Manager' : 'Membre';
-    const rows: string[] = [];
-    const walk = (n: OrgTreeNode, d: number) => {
-      rows.push(
-        `<div class="row" style="margin-left:${d * 28}px"><span class="name">${esc(n.member.displayName)}</span><span class="role">${roleOf(n.member)}</span></div>`,
-      );
-      n.children.forEach((c) => walk(c, d + 1));
-    };
-    roots.forEach((r) => walk(r, 0));
-    const unplacedHtml =
-      unplaced.length > 0
-        ? `<h2>Non placés</h2>${unplaced.map((m) => `<div class="row"><span class="name">${esc(m.displayName)}</span></div>`).join('')}`
-        : '';
-    const w = window.open('', '_blank', 'width=800,height=900');
-    if (!w) return;
-    w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Organigramme</title><style>
-      body{font-family:system-ui,sans-serif;padding:32px;color:#111}
-      h1{font-size:20px;margin:0 0 4px}p.date{color:#666;font-size:12px;margin:0 0 24px}
-      .row{display:flex;align-items:baseline;gap:10px;padding:5px 0;border-bottom:1px solid #eee}
-      .name{font-weight:600;font-size:14px}.role{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em}
-      h2{font-size:14px;margin:24px 0 8px;color:#b45309}
-    </style></head><body><h1>Organigramme</h1><p class="date">${new Date().toLocaleDateString('fr-FR')} · ${members.length} membre${members.length > 1 ? 's' : ''}</p>${rows.join('')}${unplacedHtml}</body></html>`);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
-  };
-
   // ── Replier/déplier (persisté par org) ─────────────────────────────
   useEffect(() => {
     if (collapsed.org !== orgId) setCollapsed({ org: orgId, ids: readCollapsedIds(orgId) });
@@ -582,14 +497,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
       else ids.add(id);
       return { org: prev.org, ids };
     });
-
-  const collapseAll = () =>
-    setCollapsed((prev) => ({
-      org: prev.org,
-      ids: new Set(members.filter((m) => isManagerOf(members, m.userId)).map((m) => m.userId)),
-    }));
-
-  const expandAll = () => setCollapsed((prev) => ({ org: prev.org, ids: new Set() }));
 
   // ── Recherche ──────────────────────────────────────────────────────
   const matchIds = useMemo(() => {
@@ -627,7 +534,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     updateScrollShadow();
     window.addEventListener('resize', updateScrollShadow);
     return () => window.removeEventListener('resize', updateScrollShadow);
-  }, [members, isMobile, loading, zoomLevel]);
+  }, [members, isMobile, loading]);
 
   // Destinations valides : pas soi-même, pas son sous-arbre (cycle), pas son
   // manager actuel ; un non-admin ne dépose que sur lui-même ou son sous-arbre.
@@ -838,8 +745,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         </button>
       )}
 
-      {/* Non placés — à rattacher par un admin */}
-      {unplaced.length > 0 && (
+      {/* Non placés — mobile (et pyramide vide) : section en haut. Desktop : barre latérale droite. */}
+      {unplaced.length > 0 && (isMobile || roots.length === 0) && (
         <section className="rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
           <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
             <UserPlus size={15} aria-hidden="true" /> Non placés ({unplaced.length})
@@ -891,8 +798,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           )}
         </div>
       ) : (
-        <div>
-          {/* Barre d'outils pyramide : recherche, replier/déplier, me situer */}
+        <div className="flex items-start gap-4">
+        <div className="flex-1 min-w-0">
+          {/* Recherche */}
           {!dragging && (
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <div className="relative flex-1 min-w-[160px] max-w-xs">
@@ -925,97 +833,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                   {matchIds.size} résultat{matchIds.size > 1 ? 's' : ''}
                 </span>
               )}
-              <div className="ml-auto flex items-center gap-1">
-                {!isMobile && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => zoomBy(-0.1)}
-                      disabled={zoomLevel <= ZOOM_MIN}
-                      title="Zoom arrière"
-                      aria-label="Zoom arrière"
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 transition-colors"
-                    >
-                      <ZoomOut size={15} aria-hidden="true" />
-                    </button>
-                    <span className="text-[11px] font-semibold text-[rgb(var(--color-text-muted))] w-9 text-center tabular-nums">
-                      {Math.round(zoomLevel * 100)} %
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => zoomBy(0.1)}
-                      disabled={zoomLevel >= ZOOM_MAX}
-                      title="Zoom avant"
-                      aria-label="Zoom avant"
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 transition-colors"
-                    >
-                      <ZoomIn size={15} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={zoomFit}
-                      title="Ajuster à l'écran"
-                      aria-label="Ajuster la pyramide à l'écran"
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] transition-colors"
-                    >
-                      <Scan size={14} aria-hidden="true" />
-                    </button>
-                    <span className="w-px h-4 bg-[rgb(var(--color-border))] mx-0.5" aria-hidden="true" />
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={exportChart}
-                  title="Exporter / imprimer l'organigramme"
-                  aria-label="Exporter ou imprimer l'organigramme"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] transition-colors"
-                >
-                  <Printer size={14} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleCompact}
-                  title={compact ? 'Mode détaillé' : 'Mode compact'}
-                  aria-label={compact ? 'Passer en mode détaillé' : 'Passer en mode compact'}
-                  aria-pressed={compact}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[rgb(var(--color-hover))] ${
-                    compact ? 'text-indigo-500' : 'text-[rgb(var(--color-text-muted))] hover:text-indigo-500'
-                  }`}
-                >
-                  {compact ? <Maximize2 size={14} aria-hidden="true" /> : <Minimize2 size={14} aria-hidden="true" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={collapseAll}
-                  title="Tout replier"
-                  aria-label="Replier toutes les équipes"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] transition-colors"
-                >
-                  <ChevronsDownUp size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={expandAll}
-                  title="Tout déplier"
-                  aria-label="Déplier toutes les équipes"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] transition-colors"
-                >
-                  <ChevronsUpDown size={15} aria-hidden="true" />
-                </button>
-                {selfMember && (
-                  <button
-                    type="button"
-                    onClick={locateMe}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-indigo-500 px-2.5 py-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                  >
-                    <LocateFixed size={13} aria-hidden="true" /> Me situer
-                  </button>
-                )}
-              </div>
             </div>
           )}
           {/* Légende des équipes transverses */}
-          {orgTeams.length > 0 && !dragging && !compact && (
+          {orgTeams.length > 0 && !dragging && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
               {orgTeams.map((t) => (
                 <span key={t.id} className="inline-flex items-center gap-1.5 text-[11px] text-[rgb(var(--color-text-muted))]">
@@ -1039,10 +860,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               onPointerDown={onBackgroundPointerDown}
               className={isMobile ? 'space-y-3' : 'overflow-x-auto pb-4'}
             >
-          <div
-            className={isMobile ? 'space-y-3' : 'flex flex-col items-center gap-8 min-w-fit mx-auto'}
-            style={!isMobile && zoomLevel !== 1 ? ({ zoom: zoomLevel } as React.CSSProperties) : undefined}
-          >
+          <div className={isMobile ? 'space-y-3' : 'flex flex-col items-center gap-8 min-w-fit mx-auto'}>
             {roots.map((root) => (
               <NodeCard
                 key={root.member.userId}
@@ -1060,7 +878,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
                 onOpenProfile={setProfile}
-                compact={compact}
                 depth={0}
                 mobile={isMobile}
               />
@@ -1068,6 +885,69 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             </div>
           </div>
           </div>
+        </div>
+
+        {/* Barre latérale droite : personnes à placer (desktop) */}
+        {!isMobile && unplaced.length > 0 && (
+          <aside
+            className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
+            aria-label="Membres à placer dans la pyramide"
+          >
+            <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
+              <UserPlus size={15} aria-hidden="true" /> À placer ({unplaced.length})
+            </h3>
+            <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
+              {isAdmin
+                ? 'Glissez chaque personne sur son responsable dans la pyramide.'
+                : 'Un administrateur doit les placer.'}
+            </p>
+            <ul className="space-y-2">
+              {unplaced.map((m) => {
+                const isBeingDragged = dragging?.userId === m.userId;
+                return (
+                  <li key={m.userId}>
+                    <div
+                      onPointerDown={
+                        isAdmin
+                          ? (e) => {
+                              if (e.pointerType === 'mouse' && e.button !== 0) return;
+                              if ((e.target as HTMLElement).closest('button')) return;
+                              e.preventDefault();
+                              grabMember(m, e);
+                            }
+                          : undefined
+                      }
+                      style={isAdmin ? { touchAction: 'none' } : undefined}
+                      title={isAdmin ? `Glisser ${m.displayName} dans la pyramide` : undefined}
+                      className={`flex items-center gap-2 rounded-xl border bg-[rgb(var(--color-surface))] px-2.5 py-2 transition-colors ${
+                        isBeingDragged
+                          ? 'border-indigo-400 ring-2 ring-indigo-400/30 opacity-40'
+                          : 'border-[rgb(var(--color-border))]'
+                      } ${isAdmin ? 'cursor-grab select-none' : ''} ${isAdmin && !dragging ? 'animate-wiggle' : ''}`}
+                    >
+                      {isAdmin && (
+                        <GripVertical size={12} className="text-[rgb(var(--color-text-muted))]/50 shrink-0" aria-hidden="true" />
+                      )}
+                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
+                      <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate flex-1">
+                        {m.displayName}
+                      </span>
+                      {isAdmin && !dragging && (
+                        <button
+                          type="button"
+                          onClick={() => setPlacing(m)}
+                          className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 transition-colors shrink-0"
+                        >
+                          Placer
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+        )}
         </div>
       )}
 
