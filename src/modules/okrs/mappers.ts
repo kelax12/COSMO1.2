@@ -4,6 +4,7 @@
 // ne doit JAMAIS émettre `user_id` (ajouté explicitement dans create()).
 // ═══════════════════════════════════════════════════════════════════
 import { OKR, KeyResult } from './types';
+import { krWeight } from './progress';
 
 // ─── DB row types ────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ export interface KRRow {
   estimated_time: number;
   completed: boolean;
   completed_at: string | null;
+  weight?: number;
 }
 
 export interface OKRDbInput {
@@ -57,6 +59,7 @@ export const mapKRFromDb = (row: KRRow): KeyResult => ({
   estimatedTime: row.estimated_time,
   completed: row.completed,
   completedAt: row.completed_at ?? null,
+  weight: krWeight(row),
 });
 
 export const mapKRToDb = (kr: KeyResult, okrId: string, userId: string) => ({
@@ -69,6 +72,7 @@ export const mapKRToDb = (kr: KeyResult, okrId: string, userId: string) => ({
   target_value: kr.targetValue,
   estimated_time: kr.estimatedTime,
   completed: kr.completed,
+  weight: krWeight(kr),
 });
 
 export const mapOkrFromDb = (row: OKRRow, keyResults: KeyResult[]): OKR => ({

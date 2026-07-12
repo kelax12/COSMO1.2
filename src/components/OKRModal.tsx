@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, TrendingUp, Trash2, Clock, ChevronRight, Check } from 'lucide-react';
+import { Plus, TrendingUp, Trash2, Clock, ChevronRight, Check, Scale } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
@@ -36,8 +36,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
 
   const [info, setInfo] = useState({ title: '', description: '', category: '', endDate: '' });
   const [keyResults, setKeyResults] = useState<KeyResultForm[]>([
-    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
-    { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+    { title: '', targetValue: '', currentValue: '', estimatedTime: '', weight: '1' },
+    { title: '', targetValue: '', currentValue: '', estimatedTime: '', weight: '1' },
   ]);
 
   // #40 — snapshot des valeurs initiales : fermer avec des changements non
@@ -58,6 +58,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
           targetValue: (kr.targetValue ?? 0).toString(),
           currentValue: (kr.currentValue ?? 0).toString(),
           estimatedTime: (kr.estimatedTime ?? 30).toString(),
+          weight: (kr.weight ?? 1).toString(),
         }))
       );
       setShowDescMobile(Boolean(editingObjective.description));
@@ -92,8 +93,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
   const resetForm = () => {
     setInfo({ title: '', description: '', category: allCategories[0]?.id ?? '', endDate: '' });
     setKeyResults([
-      { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
-      { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
+      { title: '', targetValue: '', currentValue: '', estimatedTime: '', weight: '1' },
+      { title: '', targetValue: '', currentValue: '', estimatedTime: '', weight: '1' },
     ]);
     setStep1Error('');
     setEndDateError('');
@@ -133,7 +134,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
 
   const addKR = () => {
     if (keyResults.length < 10)
-      setKeyResults([...keyResults, { title: '', targetValue: '', currentValue: '', estimatedTime: '' }]);
+      setKeyResults([...keyResults, { title: '', targetValue: '', currentValue: '', estimatedTime: '', weight: '1' }]);
   };
 
   const removeKR = (i: number) => {
@@ -173,6 +174,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
           unit: '',
           completed: Number(kr.currentValue) >= Number(kr.targetValue),
           estimatedTime: Number(kr.estimatedTime) || 30,
+          weight: Math.min(10, Math.max(1, Math.round(Number(kr.weight) || 1))),
           history: editingObjective ? editingObjective.keyResults[i]?.history || [] : [],
         })),
       },
@@ -466,6 +468,27 @@ const OKRModal: React.FC<OKRModalProps> = ({ isOpen, onClose, categories, editin
                             value={kr.estimatedTime}
                             onChange={(e) => updateKR(idx, 'estimatedTime', e.target.value)}
                             placeholder="30"
+                            className="w-24 text-right text-[15px] text-blue-500 bg-transparent focus:outline-none focus:ring-0"
+                            style={{ border: 'none' }}
+                          />
+                        </div>
+
+                        <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
+
+                        {/* Coefficient (importance dans la progression globale) */}
+                        <div className="flex items-center px-4 min-h-11">
+                          <span className="flex-1 text-[15px] text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                            <Scale size={14} className="text-gray-400" />
+                            Coefficient (1–10)
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={10}
+                            step={1}
+                            value={kr.weight}
+                            onChange={(e) => updateKR(idx, 'weight', e.target.value)}
+                            placeholder="1"
                             className="w-24 text-right text-[15px] text-blue-500 bg-transparent focus:outline-none focus:ring-0"
                             style={{ border: 'none' }}
                           />

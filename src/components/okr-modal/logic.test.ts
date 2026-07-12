@@ -22,7 +22,7 @@ describe('calcOkrDuration', () => {
 
 describe('validKeyResults', () => {
   const kr = (over: Partial<KeyResultForm> = {}): KeyResultForm =>
-    ({ title: 'KR', targetValue: '10', currentValue: '0', estimatedTime: '30', ...over });
+    ({ title: 'KR', targetValue: '10', currentValue: '0', estimatedTime: '30', weight: '1', ...over });
 
   it('keeps KRs with a title and positive numeric target', () => {
     expect(validKeyResults([kr(), kr({ title: 'B', targetValue: '5' })])).toHaveLength(2);

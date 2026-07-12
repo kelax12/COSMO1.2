@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
+import { recalcProgress } from './progress';
 import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
@@ -444,19 +445,11 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     }
     okr.keyResults[krIndex] = merged;
 
-    // Recalculate OKR progress — guard divide-by-zero on KRs with no target.
-    // Without this, `0/0 = NaN` propagates to localStorage as `null` and the
-    // entire OKR's progress becomes unreadable. Faille B17.
-    const totalProgress = okr.keyResults.reduce((sum, kr) => {
-      if (!kr.targetValue || kr.targetValue <= 0) return sum;
-      return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);
-    }, 0);
-    okr.progress = okr.keyResults.length > 0
-      ? Math.round(totalProgress / okr.keyResults.length)
-      : 0;
-
-    // Check if all key results are completed
-    okr.completed = okr.keyResults.every(kr => kr.targetValue > 0 && kr.currentValue >= kr.targetValue);
+    // Recalcule la progression via la source unique pondérée (recalcProgress) :
+    // moyenne pondérée par le coefficient des KR + garde divide-by-zero (B17).
+    const { progress, completed } = recalcProgress(okr.keyResults);
+    okr.progress = progress;
+    okr.completed = completed;
 
     okrs[okrIndex] = okr;
     this.saveOKRs(okrs);

@@ -24,6 +24,13 @@ const krProgress = (kr: TeamKeyResult): number => {
   return Math.max(0, Math.min(1, kr.currentValue / kr.targetValue));
 };
 
+// Coefficient d'importance effectif : entier borné [1, 10], défaut 1.
+const krWeight = (kr: TeamKeyResult): number => {
+  const w = Math.round(Number(kr.weight));
+  if (!Number.isFinite(w) || w < 1) return 1;
+  return Math.min(w, 10);
+};
+
 const StatCard = ({ Icon, label, value, tone }: { Icon: typeof ListTodo; label: string; value: string; tone: string }) => (
   <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
     <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${tone}`}>
@@ -51,8 +58,10 @@ const TeamOverviewTab = ({ orgId, members }: TeamOverviewTabProps) => {
       return isPast(d) && !isToday(d);
     });
     const allKRs = okrs.flatMap((o) => o.keyResults);
-    const okrProgress = allKRs.length
-      ? Math.round((allKRs.reduce((s, kr) => s + krProgress(kr), 0) / allKRs.length) * 100)
+    // Moyenne pondérée par le coefficient d'importance de chaque KR.
+    const totalWeight = allKRs.reduce((s, kr) => s + krWeight(kr), 0);
+    const okrProgress = totalWeight > 0
+      ? Math.round((allKRs.reduce((s, kr) => s + krProgress(kr) * krWeight(kr), 0) / totalWeight) * 100)
       : 0;
     return {
       total,

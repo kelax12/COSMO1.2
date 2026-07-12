@@ -7,6 +7,7 @@ export const createTeamKRSchema = z.object({
   targetValue: z.coerce.number().gt(0, 'La cible doit être supérieure à 0'),
   unit: z.string().max(30).optional(),
   assigneeId: z.string().nullable().optional(),
+  weight: z.coerce.number().int().min(1, 'Le coefficient doit être au moins 1').max(10, 'Le coefficient ne peut pas dépasser 10').optional(),
 });
 
 export const createTeamOKRSchema = z.object({
@@ -25,4 +26,5 @@ export const updateTeamKRSchema = z.object({
   unit: z.string().max(30).optional(),
   assigneeId: z.string().nullable().optional(),
   completed: z.boolean().optional(),
+  weight: z.coerce.number().int().min(1).max(10).optional(),
 });

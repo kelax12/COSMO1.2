@@ -13,6 +13,9 @@ export const keyResultSchema = z.object({
   completed: z.boolean(),
   estimatedTime: z.coerce.number().min(0, 'La durée ne peut pas être négative'),
   completedAt: z.string().nullable().optional(),
+  // Coefficient d'importance 1–10 (défaut 1). Optionnel : les KR antérieurs
+  // sans poids restent valides et sont traités comme 1 par recalcProgress.
+  weight: z.coerce.number().int().min(1, 'Le coefficient doit être au moins 1').max(10, 'Le coefficient ne peut pas dépasser 10').optional(),
 });
 
 export const createOKRSchema = z.object({

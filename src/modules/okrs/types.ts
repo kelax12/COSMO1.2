@@ -14,6 +14,12 @@ export interface KeyResult {
   completed: boolean;
   estimatedTime: number;
   completedAt?: string | null;
+  /**
+   * Coefficient d'importance du KR dans la progression globale de l'OKR.
+   * Entier 1–10, défaut 1. Absent/invalide → traité comme 1 (rétrocompat).
+   * La progression OKR est une moyenne pondérée par ce poids.
+   */
+  weight?: number;
 }
 
 /**

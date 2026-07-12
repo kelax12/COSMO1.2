@@ -1,7 +1,7 @@
 // Corps desktop (wizard 2 étapes) de OKRModal — extrait verbatim, prop-driven.
 import React from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Plus, TrendingUp, Trash2, X, Clock, ArrowRight, ArrowLeft, ChevronDown, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -260,7 +260,7 @@ const OKRModalDesktopBody: React.FC<OKRModalDesktopBodyProps> = ({
                                   placeholder={ph.title}
                                 />
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
                                   <div className="relative">
                                     <input
                                       type="number"
@@ -283,7 +283,27 @@ const OKRModalDesktopBody: React.FC<OKRModalDesktopBodyProps> = ({
                                     />
                                     <Clock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
                                   </div>
+                                  {/* Coefficient d'importance (1–10) — pondère la progression globale */}
+                                  <div className="relative w-20">
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={10}
+                                      step={1}
+                                      value={kr.weight}
+                                      onChange={(e) => updateKR(idx, 'weight', e.target.value)}
+                                      title="Coefficient d'importance (1 à 10)"
+                                      aria-label={`Coefficient du résultat clé ${idx + 1}`}
+                                      className="w-full px-3 py-2 pr-7 rounded-lg border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                      style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
+                                      placeholder="1"
+                                    />
+                                    <Scale size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                                  </div>
                                 </div>
+                                <p className="mt-1.5 text-[10px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                  Cible · Durée/unité (min) · Coef. d'importance
+                                </p>
                               </motion.div>
                             );
                           })}
