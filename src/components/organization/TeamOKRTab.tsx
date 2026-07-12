@@ -23,6 +23,25 @@ const krProgress = (kr: TeamKeyResult): number => {
   return Math.max(0, Math.min(1, kr.currentValue / kr.targetValue));
 };
 
+// Coefficient d'importance effectif : entier borné [1, 10], défaut 1.
+const krWeight = (kr: TeamKeyResult): number => {
+  const w = Math.round(Number(kr.weight));
+  if (!Number.isFinite(w) || w < 1) return 1;
+  return Math.min(w, 10);
+};
+
+// Progression globale (%) d'un OKR d'équipe : moyenne pondérée par le coefficient.
+const okrProgress = (keyResults: TeamKeyResult[]): number => {
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const kr of keyResults) {
+    const w = krWeight(kr);
+    totalWeight += w;
+    weightedSum += krProgress(kr) * w;
+  }
+  return totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 100) : 0;
+};
+
 const TeamOKRTab = ({ orgId, members, isManager }: TeamOKRTabProps) => {
   const [showCreate, setShowCreate] = useState(false);
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId);
@@ -66,9 +85,7 @@ const TeamOKRTab = ({ orgId, members, isManager }: TeamOKRTabProps) => {
         </div>
       ) : (
         okrs.map((okr) => {
-          const avg = okr.keyResults.length
-            ? Math.round((okr.keyResults.reduce((s, kr) => s + krProgress(kr), 0) / okr.keyResults.length) * 100)
-            : 0;
+          const avg = okrProgress(okr.keyResults);
           return (
             <section key={okr.id} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
               <div className="flex items-start gap-3 mb-3">
@@ -118,6 +135,14 @@ const TeamOKRTab = ({ orgId, members, isManager }: TeamOKRTabProps) => {
                           <p className={`text-sm truncate ${kr.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
                             {kr.title}
                           </p>
+                          {krWeight(kr) !== 1 && (
+                            <span
+                              className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              title={`Coefficient d'importance ×${krWeight(kr)}`}
+                            >
+                              ×{krWeight(kr)}
+                            </span>
+                          )}
                           <span className="ml-auto text-xs font-mono text-[rgb(var(--color-text-muted))] shrink-0">
                             {kr.currentValue}/{kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}
                           </span>

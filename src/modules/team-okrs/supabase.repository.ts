@@ -36,7 +36,15 @@ interface KrRow {
   assignee_id: string | null;
   completed: boolean;
   completed_at: string | null;
+  weight: number | null;
 }
+
+// Coefficient effectif : entier borné [1, 10], défaut 1 (rétrocompat).
+const clampWeight = (w: unknown): number => {
+  const n = Math.round(Number(w));
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(n, 10);
+};
 
 const mapKr = (r: KrRow): TeamKeyResult => ({
   id: r.id,
@@ -50,6 +58,7 @@ const mapKr = (r: KrRow): TeamKeyResult => ({
   assigneeId: r.assignee_id,
   completed: r.completed,
   completedAt: r.completed_at,
+  weight: clampWeight(r.weight),
 });
 
 export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
@@ -127,6 +136,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
             target_value: kr.targetValue > 0 ? kr.targetValue : 1,
             unit: kr.unit ?? null,
             assignee_id: kr.assigneeId ?? null,
+            weight: clampWeight(kr.weight),
           })),
         )
         .select('*');
@@ -174,6 +184,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.targetValue !== undefined && input.targetValue > 0) patch.target_value = input.targetValue;
     if (input.unit !== undefined) patch.unit = input.unit || null;
     if (input.assigneeId !== undefined) patch.assignee_id = input.assigneeId;
+    if (input.weight !== undefined) patch.weight = clampWeight(input.weight);
     if (input.completed !== undefined) {
       patch.completed = input.completed;
       patch.completed_at = input.completed ? new Date().toISOString() : null;

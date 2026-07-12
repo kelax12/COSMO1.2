@@ -3,6 +3,7 @@
 // transparent dans OKRPage. Réutilise getProgress ; aucune logique métier nouvelle.
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import ColorSettingsModal from './ColorSettingsModal';
 import {
   Sheet,
   SheetContent,
@@ -46,6 +47,7 @@ interface KRDraft {
   estimatedTime: number;
   completed: boolean;
   completedAt?: string | null;
+  weight: number;
 }
 
 const newKR = (): KRDraft => ({
@@ -56,6 +58,7 @@ const newKR = (): KRDraft => ({
   unit: '%',
   estimatedTime: 0,
   completed: false,
+  weight: 1,
 });
 
 const todayIso = () => new Date().toISOString();
@@ -71,6 +74,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [keyResults, setKeyResults] = useState<KRDraft[]>([newKR()]);
+  const [showColorSettings, setShowColorSettings] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,7 +86,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
       setEndDate(toDateInput(editingObjective.endDate));
       setKeyResults(
         editingObjective.keyResults.length
-          ? editingObjective.keyResults.map((k) => ({ ...k, completedAt: k.completedAt ?? undefined }))
+          ? editingObjective.keyResults.map((k) => ({ ...k, weight: k.weight ?? 1, completedAt: k.completedAt ?? undefined }))
           : [newKR()]
       );
     } else {
@@ -101,7 +105,10 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   // Un objectif sans résultat clé n'est pas mesurable : au moins 1 KR nommé requis.
   const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
-  const canSave = title.trim().length > 0 && hasKeyResult;
+  // Cohérence temporelle : la date de début ne peut pas dépasser l'échéance.
+  // (comparaison lexicographique valide sur YYYY-MM-DD)
+  const datesInvalid = Boolean(startDate && endDate && startDate > endDate);
+  const canSave = title.trim().length > 0 && hasKeyResult && !datesInvalid;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -116,6 +123,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         completed: (Number(k.currentValue) || 0) >= (Number(k.targetValue) || 0) && (Number(k.targetValue) || 0) > 0,
         estimatedTime: Number(k.estimatedTime) || 0,
         completedAt: k.completedAt ?? null,
+        weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
       }));
     onSubmit(
       {
@@ -141,7 +149,9 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           <SheetDescription>Définis un objectif et ses résultats clés mesurables.</SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="flex-1">
+        {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
+            viewport Radix ne scrolle jamais (flexbox min-height:auto). */}
+        <ScrollArea className="flex-1 min-h-0">
           <div className="grid gap-4 px-4 pb-4">
             <div className="grid gap-2">
               <Label htmlFor="okr-title">Objectif</Label>
@@ -150,7 +160,18 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="okr-cat">Catégorie</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="okr-cat">Catégorie</Label>
+                  {/* Créer une catégorie sans quitter le modal (parité OKRModal). */}
+                  <button
+                    type="button"
+                    onClick={() => setShowColorSettings(true)}
+                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                  >
+                    <Plus size={12} aria-hidden="true" />
+                    Ajouter
+                  </button>
+                </div>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger id="okr-cat" className="w-full">
                     <SelectValue placeholder="Choisir…" />
@@ -169,10 +190,23 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="okr-end">Échéance</Label>
-                  <Input id="okr-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  <Input
+                    id="okr-end"
+                    type="date"
+                    value={endDate}
+                    aria-invalid={datesInvalid}
+                    className={datesInvalid ? 'border-red-500 focus-visible:ring-red-500/30' : undefined}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
+
+            {datesInvalid && (
+              <p className="text-xs text-red-500" role="alert">
+                La date de début doit être antérieure à l'échéance.
+              </p>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="okr-desc">Description</Label>
@@ -218,7 +252,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">Cible</Label>
                       <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
@@ -230,6 +264,18 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">Durée (min)</Label>
                       <Input type="number" className="h-8" value={kr.estimatedTime} onChange={(e) => setKR(kr.id, { estimatedTime: Number(e.target.value) })} />
+                    </div>
+                    <div className="grid gap-1">
+                      <Label className="text-muted-foreground text-xs" title="Importance du KR dans la progression globale">Coef. (1–10)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        step={1}
+                        className="h-8"
+                        value={kr.weight}
+                        onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
+                      />
                     </div>
                   </div>
                 </div>
@@ -258,6 +304,16 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             {isEdit ? 'Enregistrer' : 'Créer'}
           </Button>
         </SheetFooter>
+
+        {/* Création de catégorie sans quitter le sheet (parité avec l'ancien
+            OKRModal). Rendu DANS SheetContent : le focus-trap du Dialog Radix
+            englobe ainsi le modal imbriqué (sinon impossible de taper dedans)
+            et le clic n'est pas traité comme « interaction extérieure ». */}
+        <ColorSettingsModal
+          isOpen={showColorSettings}
+          onClose={() => setShowColorSettings(false)}
+          isNested
+        />
       </SheetContent>
     </Sheet>
   );

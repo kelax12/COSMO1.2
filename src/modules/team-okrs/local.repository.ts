@@ -109,6 +109,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
         assigneeId: kr.assigneeId ?? null,
         completed: false,
         completedAt: null,
+        weight: kr.weight && kr.weight >= 1 ? Math.min(10, Math.round(kr.weight)) : 1,
       })),
     };
     this.save([okr, ...okrs]);
@@ -141,6 +142,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       if (input.targetValue !== undefined && input.targetValue > 0) kr.targetValue = input.targetValue;
       if (input.unit !== undefined) kr.unit = input.unit;
       if (input.assigneeId !== undefined) kr.assigneeId = input.assigneeId;
+      if (input.weight !== undefined) kr.weight = input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1;
       if (input.completed !== undefined) {
         kr.completed = input.completed;
         kr.completedAt = input.completed ? new Date().toISOString() : null;

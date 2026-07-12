@@ -6,6 +6,7 @@ export type KeyResultForm = {
   targetValue: string;
   currentValue: string;
   estimatedTime: string;
+  weight: string;
 };
 
 export type KeyResult = {
@@ -16,6 +17,7 @@ export type KeyResult = {
   unit: string;
   completed: boolean;
   estimatedTime: number;
+  weight?: number;
   history?: { date: string; increment: number }[];
 };
 

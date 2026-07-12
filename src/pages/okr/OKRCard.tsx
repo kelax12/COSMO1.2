@@ -168,7 +168,17 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     return (
                       <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                         <div className="flex justify-between items-center mb-3 gap-2">
-                          <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                            {(keyResult.weight ?? 1) !== 1 && (
+                              <span
+                                className="shrink-0 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                title={`Coefficient d'importance ×${keyResult.weight}`}
+                              >
+                                ×{keyResult.weight}
+                              </span>
+                            )}
+                          </span>
                           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                             <button
                               onClick={() => {

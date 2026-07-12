@@ -30,6 +30,13 @@ export type { IOKRsRepository } from './repository';
 export { LocalStorageOKRsRepository } from './repository';
 
 // ═══════════════════════════════════════════════════════════════════
+// PROGRESS (fonction pure — source unique du calcul pondéré)
+// ═══════════════════════════════════════════════════════════════════
+
+export { recalcProgress, krWeight } from './progress';
+export type { OKRProgress } from './progress';
+
+// ═══════════════════════════════════════════════════════════════════
 // READ HOOKS
 // ═══════════════════════════════════════════════════════════════════
 

@@ -14,6 +14,8 @@ export interface TeamKeyResult {
   assigneeId?: string | null;
   completed: boolean;
   completedAt?: string | null;
+  /** Coefficient d'importance 1–10 (défaut 1). Pondère la progression de l'OKR. */
+  weight?: number;
 }
 
 export interface TeamOKR {
@@ -34,6 +36,7 @@ export interface CreateTeamKRInput {
   targetValue: number;
   unit?: string;
   assigneeId?: string | null;
+  weight?: number;
 }
 
 export interface CreateTeamOKRInput {
@@ -60,4 +63,5 @@ export interface UpdateTeamKRInput {
   unit?: string;
   assigneeId?: string | null;
   completed?: boolean;
+  weight?: number;
 }

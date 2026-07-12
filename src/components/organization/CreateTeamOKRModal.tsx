@@ -13,8 +13,8 @@ interface CreateTeamOKRModalProps {
 const inputClasses =
   'w-full h-10 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
 
-type KRDraft = { title: string; targetValue: string; unit: string; assigneeId: string };
-const emptyKR = (): KRDraft => ({ title: '', targetValue: '', unit: '', assigneeId: '' });
+type KRDraft = { title: string; targetValue: string; unit: string; assigneeId: string; weight: string };
+const emptyKR = (): KRDraft => ({ title: '', targetValue: '', unit: '', assigneeId: '', weight: '1' });
 
 /** Modale de création d'un OKR d'équipe (titre + KR assignés). */
 const CreateTeamOKRModal = ({ orgId, members, onClose }: CreateTeamOKRModalProps) => {
@@ -39,6 +39,7 @@ const CreateTeamOKRModal = ({ orgId, members, onClose }: CreateTeamOKRModalProps
         targetValue: Number(k.targetValue),
         unit: k.unit.trim() || undefined,
         assigneeId: k.assigneeId || null,
+        weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
       }));
     createOKR.mutate(
       { title: title.trim(), category: category.trim() || undefined, description: description.trim() || undefined, keyResults },
@@ -88,6 +89,23 @@ const CreateTeamOKRModal = ({ orgId, members, onClose }: CreateTeamOKRModalProps
                         <option key={m.userId} value={m.userId}>{m.displayName}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-[rgb(var(--color-text-muted))] whitespace-nowrap" htmlFor={`team-kr-weight-${i}`}>
+                      Coefficient (1–10)
+                    </label>
+                    <input
+                      id={`team-kr-weight-${i}`}
+                      type="number"
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={kr.weight}
+                      onChange={(e) => updateKR(i, { weight: e.target.value })}
+                      placeholder="1"
+                      className={`${inputClasses} w-20`}
+                      title="Coefficient d'importance dans la progression globale"
+                    />
                   </div>
                 </div>
               ))}
