@@ -11,7 +11,10 @@ import {
   GripVertical,
   Search,
   X,
+  Pencil,
+  Check,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -74,6 +77,26 @@ function canManage(target: OrgMember, members: OrgMember[], currentUserId: strin
   return subtreeOf(members, currentUserId).has(target.userId);
 }
 
+/**
+ * `destId` est-il une destination valide pour `target` ? Version pure (données),
+ * utilisée en secours au relâcher quand les attributs data-drop-id ne sont pas
+ * encore rendus (drag très rapide : saisir + relâcher avant le re-render).
+ */
+function isValidDestination(
+  target: OrgMember,
+  destId: string,
+  members: OrgMember[],
+  currentUserId: string | undefined,
+  isAdmin: boolean,
+): boolean {
+  if (destId === target.userId) return false;
+  if (destId === (target.managerId ?? null)) return false;
+  if (!members.some((m) => m.userId === destId)) return false;
+  if (subtreeOf(members, target.userId).has(destId)) return false;
+  if (!isAdmin && destId !== currentUserId && !(currentUserId && subtreeOf(members, currentUserId).has(destId))) return false;
+  return true;
+}
+
 /** État du déplacement en cours, distribué aux cartes de l'arbre. */
 interface DragState {
   member: OrgMember;
@@ -106,12 +129,14 @@ interface NodeCardProps {
   teamsByUser: Map<string, OrgTeam[]>;
   /** Ouvre la fiche membre (clic ou Entrée sur une carte hors mode déplacement). */
   onOpenProfile: (m: OrgMember) => void;
+  /** Mode réorganisation : toutes les cartes déplaçables sont draggables. */
+  editMode: boolean;
   /** Profondeur (mobile : indentation ; desktop : sans objet). */
   depth: number;
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, editMode, depth, mobile }: NodeCardProps) => {
   const collapsed = collapsedIds.has(node.member.userId);
   // Long-press mobile : timer + position initiale (annulé si le doigt bouge).
   const longPressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
@@ -136,6 +161,8 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
   const isDropTarget = !!drag && drag.validDropIds.has(m.userId);
   const isDropHover = isDropTarget && drag.hoverDropId === m.userId;
   const isMatch = matchIds.has(m.userId);
+  // Mode réorganisation : la carte se saisit directement (et gigote).
+  const editDraggable = editMode && movable && !drag;
 
   const borderClass = flashId === m.userId
     ? 'border-emerald-500 ring-2 ring-emerald-500/50'
@@ -169,6 +196,14 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           drag.onSourcePointerDown(e);
           return;
         }
+        // Mode réorganisation : saisie directe de n'importe quelle carte déplaçable.
+        if (editDraggable) {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          if ((e.target as HTMLElement).closest('button,[data-grip]')) return;
+          e.preventDefault();
+          onGrab(m, e);
+          return;
+        }
         // Long-press (mobile) : saisir la carte sans passer par le menu.
         if (!mobile || drag || !movable) return;
         if ((e.target as HTMLElement).closest('button')) return;
@@ -195,7 +230,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           drag.onDrop(m.userId);
           return;
         }
-        if (drag) return; // en mode déplacement, seules les cibles réagissent
+        if (drag || editMode) return; // en mode déplacement/réorganisation, pas de fiche
         const t = e.target as HTMLElement;
         if (t.closest('button') || t.closest('[data-grip]')) return;
         onOpenProfile(m);
@@ -236,12 +271,14 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
               node.children.length > 0 ? `, ${node.children.length} subordonné${node.children.length > 1 ? 's' : ''} direct${node.children.length > 1 ? 's' : ''}` : ''
             }`
       }
-      style={isDragSource ? { touchAction: 'none' } : undefined}
+      style={isDragSource || editDraggable ? { touchAction: 'none' } : undefined}
       className={`inline-flex items-center rounded-2xl border bg-[rgb(var(--color-surface))] transition-colors ${
         isDropTarget && mobile ? 'gap-2.5 px-3 py-3.5' : 'gap-2.5 px-3 py-2'
       } ${borderClass} ${
         isDragSource ? `cursor-grab select-none ${drag.pointerActive ? 'opacity-40' : ''}` : ''
-      } ${isDropTarget ? 'cursor-pointer animate-wiggle' : ''}`}
+      } ${isDropTarget ? 'cursor-pointer animate-wiggle' : ''} ${
+        editDraggable ? 'cursor-grab select-none animate-wiggle' : ''
+      }`}
     >
       {!mobile && movable && !drag && (
         <span
@@ -337,7 +374,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -366,7 +403,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -410,6 +447,13 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [profile, setProfile] = useState<OrgMember | null>(null);
   // Annonce lecteur d'écran après un déplacement (aria-live).
   const [announcement, setAnnouncement] = useState('');
+  // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
+  // les déplacements de la session sont journalisés pour pouvoir tout annuler.
+  const [editMode, setEditMode] = useState(false);
+  const [moveCount, setMoveCount] = useState(0);
+  const sessionMovesRef = useRef<{ userId: string; prevManagerId: string | null }[]>([]);
+  const editModeRef = useRef(false);
+  editModeRef.current = editMode;
   // Carte brièvement surlignée après un déplacement réussi (l'œil la retrouve).
   const [flashId, setFlashId] = useState<string | null>(null);
   // Recherche de membre (surligne + déplie + scrolle jusqu'au premier résultat).
@@ -601,10 +645,16 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               ? `${target.displayName} est maintenant rattaché(e) à ${destName}`
               : `${target.displayName} est détaché(e) de la pyramide`,
           );
-          showUndoToast(`${target.displayName} déplacé(e)`, () => {
-            setManager.mutate({ orgId, userId: target.userId, managerId: previousManagerId });
-            flashCard(target.userId);
-          });
+          if (editModeRef.current) {
+            // Mode réorganisation : on journalise pour « Annuler », pas de toast.
+            sessionMovesRef.current.push({ userId: target.userId, prevManagerId: previousManagerId });
+            setMoveCount(sessionMovesRef.current.length);
+          } else {
+            showUndoToast(`${target.displayName} déplacé(e)`, () => {
+              setManager.mutate({ orgId, userId: target.userId, managerId: previousManagerId });
+              flashCard(target.userId);
+            });
+          }
         },
       },
     );
@@ -670,7 +720,17 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
       setHoverDropId(null);
     };
     const onUp = (ev: PointerEvent) => {
-      const id = findDropId(ev.clientX, ev.clientY);
+      let id = findDropId(ev.clientX, ev.clientY);
+      if (!id) {
+        // Secours : drag plus rapide que le re-render (data-drop-id pas encore
+        // posé) — on valide la destination par les données, pas par le DOM.
+        const el = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-node-id]');
+        const nodeId = el instanceof HTMLElement ? el.dataset.nodeId : undefined;
+        const target = draggingRef.current;
+        if (nodeId && target && isValidDestination(target, nodeId, members, currentUserId, isAdmin)) {
+          id = nodeId;
+        }
+      }
       endDrag();
       if (id) drop(id);
     };
@@ -686,12 +746,55 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     startPointerTracking(e);
   };
 
-  /** Saisie directe (poignée grip / long-press) : active le mode ET démarre le glisser. */
+  /** Saisie directe (poignée grip / long-press / mode réorganisation). */
   const grabMember = (m: OrgMember, e: { clientX: number; clientY: number }) => {
     draggingRef.current = m;
     setDragging(m);
     navigator.vibrate?.(20);
     startPointerTracking(e);
+  };
+
+  // ── Mode réorganisation (Modifier / Annuler) ───────────────────────
+  const canEdit = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
+
+  const startEdit = () => {
+    sessionMovesRef.current = [];
+    setMoveCount(0);
+    setEditMode(true);
+  };
+
+  const resetEditState = () => {
+    sessionMovesRef.current = [];
+    setMoveCount(0);
+    setEditMode(false);
+    setDragging(null);
+  };
+
+  const finishEdit = () => {
+    if (sessionMovesRef.current.length > 0) toast.success('Réorganisation enregistrée');
+    resetEditState();
+  };
+
+  const cancelEdit = async () => {
+    const moves = sessionMovesRef.current;
+    if (moves.length > 0) {
+      const ok = window.confirm(
+        moves.length > 1
+          ? `Annuler la réorganisation ? Les ${moves.length} déplacements effectués seront rétablis.`
+          : 'Annuler la réorganisation ? Le déplacement effectué sera rétabli.',
+      );
+      if (!ok) return;
+      // Rétablissement dans l'ordre inverse (évite les faux cycles serveur).
+      for (const mv of [...moves].reverse()) {
+        try {
+          await setManager.mutateAsync({ orgId, userId: mv.userId, managerId: mv.prevManagerId, silent: true });
+        } catch {
+          break; // l'erreur est déjà remontée par le toast du hook
+        }
+      }
+      toast.success('Modifications annulées');
+    }
+    resetEditState();
   };
 
   const drag: DragState | null = dragging
@@ -800,9 +903,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
       ) : (
         <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          {/* Recherche */}
-          {!dragging && (
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {/* Recherche + bouton Modifier/Annuler (toujours visible) */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
               <div className="relative flex-1 min-w-[160px] max-w-xs">
                 <Search
                   size={14}
@@ -833,6 +935,52 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                   {matchIds.size} résultat{matchIds.size > 1 ? 's' : ''}
                 </span>
               )}
+              {canEdit && (
+                <div className="ml-auto flex items-center gap-2">
+                  {editMode && moveCount > 0 && (
+                    <span className="text-xs font-semibold text-indigo-500 tabular-nums">
+                      {moveCount} modification{moveCount > 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {editMode && (
+                    <button
+                      type="button"
+                      onClick={finishEdit}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                    >
+                      <Check size={15} aria-hidden="true" /> Terminé
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={editMode ? cancelEdit : startEdit}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                      editMode
+                        ? 'border border-red-400/60 text-red-500 hover:bg-red-500/10'
+                        : 'text-white bg-indigo-600 hover:bg-indigo-700'
+                    }`}
+                  >
+                    {editMode ? (
+                      <>
+                        <X size={15} aria-hidden="true" /> Annuler
+                      </>
+                    ) : (
+                      <>
+                        <Pencil size={14} aria-hidden="true" /> Modifier
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+
+          {/* Bandeau mode réorganisation */}
+          {editMode && !dragging && (
+            <div className="flex items-center gap-2 rounded-2xl border border-indigo-400/60 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3 mb-3">
+              <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
+              <p className="text-sm text-[rgb(var(--color-text-primary))]">
+                Mode réorganisation : glissez n'importe quelle carte sur son nouveau responsable.
+              </p>
             </div>
           )}
           {/* Légende des équipes transverses */}
@@ -878,6 +1026,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
                 onOpenProfile={setProfile}
+                editMode={editMode}
                 depth={0}
                 mobile={isMobile}
               />
