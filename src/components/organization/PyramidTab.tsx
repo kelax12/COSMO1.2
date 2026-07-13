@@ -38,6 +38,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
@@ -523,10 +524,40 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   }));
   // Fades de scroll horizontal (desktop) : y a-t-il du contenu hors-champ ?
   const [scrollShadow, setScrollShadow] = useState({ left: false, right: false });
+  // Vue : null = toute l'entreprise ; sinon id d'équipe (membres de l'équipe +
+  // leur chaîne hiérarchique jusqu'à l'admin).
+  const [viewTeamId, setViewTeamId] = useState<string | null>(null);
   const setManager = useSetMemberManager();
   const removeMember = useRemoveMember();
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
+
+  // Membres visibles selon la vue. Vue équipe : chaque membre de l'équipe + ses
+  // ancêtres jusqu'à la racine (les liens managerId restent donc intacts).
+  const visibleMembers = useMemo(() => {
+    if (!viewTeamId) return members;
+    const teamIds = new Set(
+      orgTeamMembers.filter((tm) => tm.teamId === viewTeamId).map((tm) => tm.userId),
+    );
+    const byId = new Map(members.map((m) => [m.userId, m]));
+    const keep = new Set<string>();
+    for (const uid of teamIds) {
+      let cur: string | null | undefined = uid;
+      for (let i = 0; i < 50 && cur && !keep.has(cur); i++) {
+        keep.add(cur);
+        cur = byId.get(cur)?.managerId ?? null;
+      }
+    }
+    return members.filter((m) => keep.has(m.userId));
+  }, [viewTeamId, orgTeamMembers, members]);
+
+  // L'équipe sélectionnée n'existe plus (supprimée) → retour à la vue globale.
+  const activeTeam = viewTeamId ? orgTeams.find((t) => t.id === viewTeamId) ?? null : null;
+  useEffect(() => {
+    if (viewTeamId && orgTeams.length > 0 && !orgTeams.some((t) => t.id === viewTeamId)) {
+      setViewTeamId(null);
+    }
+  }, [viewTeamId, orgTeams]);
 
   // Retrait d'un membre (admin) : confirmation, puis re-parentage automatique
   // de ses subordonnés vers son responsable (RPC remove_member, mig. 066).
@@ -565,7 +596,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const scrollRafRef = useRef<number | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { roots, unplaced } = buildOrgTree(members, ownerId);
+  const { roots, unplaced } = buildOrgTree(visibleMembers, ownerId);
   const selfMember = members.find((m) => m.userId === currentUserId) ?? null;
 
   // Pan : glisser le fond de la pyramide pour se déplacer (desktop).
@@ -616,8 +647,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const matchIds = useMemo(() => {
     const q = normalize(query.trim());
     if (!q) return EMPTY_SET;
-    return new Set(members.filter((m) => normalize(m.displayName).includes(q)).map((m) => m.userId));
-  }, [query, members]);
+    return new Set(visibleMembers.filter((m) => normalize(m.displayName).includes(q)).map((m) => m.userId));
+  }, [query, visibleMembers]);
 
   // Pendant une recherche, tout est déplié pour que les résultats soient visibles.
   const effectiveCollapsedIds = matchIds.size > 0 || query.trim() ? EMPTY_SET : collapsed.ids;
@@ -948,7 +979,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
       )}
 
       {/* Pyramide */}
-      {roots.length === 0 ? (
+      {roots.length === 0 && !viewTeamId ? (
         <div className="flex flex-col items-center justify-center py-16 text-center px-6">
           <div className="w-14 h-14 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-4">
             <Users size={26} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
@@ -1004,6 +1035,48 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 <span className="text-xs text-[rgb(var(--color-text-muted))]" aria-live="polite">
                   {matchIds.size} résultat{matchIds.size > 1 ? 's' : ''}
                 </span>
+              )}
+              {orgTeams.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label="Choisir la vue de la pyramide"
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                      activeTeam
+                        ? 'border-transparent text-white'
+                        : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                    }`}
+                    style={activeTeam ? { backgroundColor: activeTeam.color } : undefined}
+                  >
+                    {activeTeam ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-white/80 shrink-0" aria-hidden="true" />
+                        {activeTeam.name}
+                      </>
+                    ) : (
+                      <>
+                        <Users size={14} aria-hidden="true" /> Toute l'entreprise
+                      </>
+                    )}
+                    <ChevronDown size={13} aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
+                    <DropdownMenuLabel>Afficher</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => setViewTeamId(null)}>
+                      <Users size={14} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                      Toute l'entreprise
+                      {!viewTeamId && <Check size={14} className="ml-auto text-indigo-500" aria-hidden="true" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Par équipe</DropdownMenuLabel>
+                    {orgTeams.map((t) => (
+                      <DropdownMenuItem key={t.id} onClick={() => setViewTeamId(t.id)}>
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} aria-hidden="true" />
+                        <span className="truncate">{t.name}</span>
+                        {viewTeamId === t.id && <Check size={14} className="ml-auto text-indigo-500 shrink-0" aria-hidden="true" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               {canEdit && (
                 <div className="ml-auto flex items-center gap-2">
@@ -1087,6 +1160,16 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               onPointerDown={onBackgroundPointerDown}
               className={isMobile ? 'space-y-3' : 'overflow-x-auto pb-4'}
             >
+          {roots.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                Aucun membre placé dans cette équipe
+              </p>
+              <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
+                Ajoutez des membres à l'équipe depuis l'onglet Membres.
+              </p>
+            </div>
+          ) : (
           <div className={isMobile ? 'space-y-3' : 'flex flex-col items-center gap-8 min-w-fit mx-auto'}>
             {roots.map((root) => (
               <NodeCard
@@ -1113,6 +1196,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               />
             ))}
             </div>
+          )}
           </div>
           </div>
         </div>
