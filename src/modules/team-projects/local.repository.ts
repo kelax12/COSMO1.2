@@ -121,7 +121,16 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     localStorage.setItem(TEAM_PROJECTS_STORAGE_KEY, JSON.stringify(p));
   }
   private getTasksArray(): TeamTask[] {
-    return readOrSeed<TeamTask[]>(TEAM_TASKS_STORAGE_KEY, DEMO_TASKS);
+    // Migration douce du localStorage antérieur à la multi-assignation
+    // (mig. 072) : les tâches seedées/écrites avant portaient `assigneeId`
+    // (singulier) et pas `assigneeIds`. Sans ce coercion, tout consommateur
+    // qui itère `assigneeIds` (kanban, contributeurs, to-do) planterait sur
+    // `undefined`. On dérive le tableau du champ legacy s'il existe.
+    return readOrSeed<TeamTask[]>(TEAM_TASKS_STORAGE_KEY, DEMO_TASKS).map((t) => {
+      if (Array.isArray(t.assigneeIds)) return t;
+      const legacy = (t as TeamTask & { assigneeId?: string | null }).assigneeId;
+      return { ...t, assigneeIds: legacy ? [legacy] : [] };
+    });
   }
   private saveTasks(tks: TeamTask[]): void {
     localStorage.setItem(TEAM_TASKS_STORAGE_KEY, JSON.stringify(tks));
