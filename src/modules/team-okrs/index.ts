@@ -9,6 +9,7 @@ export type {
   CreateTeamKRInput,
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
+  SyncTeamKRInput,
 } from './types';
 
 export { teamOkrKeys, TEAM_OKRS_STORAGE_KEY } from './constants';
@@ -16,6 +17,7 @@ export { teamOkrKeys, TEAM_OKRS_STORAGE_KEY } from './constants';
 export {
   createTeamOKRSchema,
   createTeamKRSchema,
+  updateTeamOKRSchema,
   updateTeamKRSchema,
 } from './team-okr.schema';
 
@@ -27,6 +29,7 @@ export {
   useTeamOKRs,
   useCreateTeamOKR,
   useUpdateTeamOKR,
+  useEditTeamOKR,
   useDeleteTeamOKR,
   useUpdateTeamKR,
 } from './hooks';

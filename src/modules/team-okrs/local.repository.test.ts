@@ -64,4 +64,41 @@ describe('LocalStorageTeamOKRsRepository (démo)', () => {
     await repo.remove(okrs[0].id);
     expect((await repo.getAll(ORG)).length).toBe(2);
   });
+
+  it('garantit teamIds tableau sur tous les OKR (coercition legacy)', async () => {
+    const okrs = await repo.getAll(ORG);
+    expect(okrs.every((o) => Array.isArray(o.teamIds))).toBe(true);
+    // Un OKR d'entreprise ([]), au moins un rattaché à une équipe.
+    expect(okrs.some((o) => o.teamIds.length === 0)).toBe(true);
+    expect(okrs.some((o) => o.teamIds.length > 0)).toBe(true);
+  });
+
+  it('crée un OKR rattaché à des équipes + avance/durée initiales', async () => {
+    const created = await repo.create(ORG, {
+      title: 'OKR équipe',
+      teamIds: ['team-dev', 'team-dev'], // doublon toléré côté repo
+      keyResults: [{ title: 'KR', targetValue: 10, currentValue: 4, estimatedTime: 45 }],
+    });
+    expect(created.teamIds).toEqual(['team-dev', 'team-dev']);
+    expect(created.keyResults[0].currentValue).toBe(4);
+    expect(created.keyResults[0].estimatedTime).toBe(45);
+    expect(created.keyResults[0].completed).toBe(false);
+  });
+
+  it('clampe la valeur initiale à la cible et complète le KR', async () => {
+    const created = await repo.create(ORG, {
+      title: 'OKR plein',
+      keyResults: [{ title: 'KR', targetValue: 5, currentValue: 999 }],
+    });
+    expect(created.keyResults[0].currentValue).toBe(5);
+    expect(created.keyResults[0].completed).toBe(true);
+    expect(created.keyResults[0].estimatedTime).toBe(30); // défaut
+  });
+
+  it('met à jour le rattachement d\'équipes', async () => {
+    const okrs = await repo.getAll(ORG);
+    await repo.update(okrs[0].id, { teamIds: ['team-design'] });
+    const after = (await repo.getAll(ORG)).find((o) => o.id === okrs[0].id)!;
+    expect(after.teamIds).toEqual(['team-design']);
+  });
 });

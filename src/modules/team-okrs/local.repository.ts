@@ -8,9 +8,11 @@
 import { ITeamOKRsRepository } from './repository';
 import {
   TeamOKR,
+  TeamKeyResult,
   CreateTeamOKRInput,
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
+  SyncTeamKRInput,
 } from './types';
 import { TEAM_OKRS_STORAGE_KEY } from './constants';
 
@@ -24,12 +26,15 @@ const DEMO_OKRS: TeamOKR[] = [
     title: 'Réussir le lancement produit',
     description: 'Faire du lancement un succès mesurable sur le trimestre.',
     category: 'Croissance',
+    startDate: new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 40 * 86400000).toISOString().slice(0, 10),
     createdBy: DEMO_USER_ID,
     createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+    teamIds: [],
     keyResults: [
-      { id: 'tkr-1', okrId: 'tokr-1', orgId: DEMO_ORG_ID, title: 'Atteindre 1000 inscrits', currentValue: 640, targetValue: 1000, unit: 'inscrits', assigneeId: 'friend-1', completed: false },
-      { id: 'tkr-2', okrId: 'tokr-1', orgId: DEMO_ORG_ID, title: 'Obtenir 15 retombées presse', currentValue: 15, targetValue: 15, unit: 'articles', assigneeId: 'user-camille', completed: true, completedAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-      { id: 'tkr-3', okrId: 'tokr-1', orgId: DEMO_ORG_ID, title: 'Taux de conversion 5 %', currentValue: 3.2, targetValue: 5, unit: '%', assigneeId: 'friend-2', completed: false },
+      { id: 'tkr-1', okrId: 'tokr-1', orgId: DEMO_ORG_ID, title: 'Atteindre 1000 inscrits', currentValue: 640, targetValue: 1000, unit: 'inscrits', assigneeId: 'friend-1', completed: false, estimatedTime: 5 },
+      { id: 'tkr-2', okrId: 'tokr-1', orgId: DEMO_ORG_ID, title: 'Obtenir 15 retombées presse', currentValue: 15, targetValue: 15, unit: 'articles', assigneeId: 'user-camille', completed: true, completedAt: new Date(Date.now() - 3 * 86400000).toISOString(), estimatedTime: 120 },
+      { id: 'tkr-3', okrId: 'tokr-1', orgId: DEMO_ORG_ID, title: 'Taux de conversion 5 %', currentValue: 3.2, targetValue: 5, unit: '%', assigneeId: 'friend-2', completed: false, estimatedTime: 60 },
     ],
   },
   {
@@ -38,11 +43,14 @@ const DEMO_OKRS: TeamOKR[] = [
     title: 'Livrer la refonte du site',
     description: 'Mettre en ligne le nouveau site, rapide et accessible.',
     category: 'Produit',
+    startDate: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10),
     createdBy: 'friend-1',
     createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    teamIds: ['team-dev'],
     keyResults: [
-      { id: 'tkr-4', okrId: 'tokr-2', orgId: DEMO_ORG_ID, title: 'Score Lighthouse ≥ 95', currentValue: 88, targetValue: 95, unit: 'pts', assigneeId: 'friend-2', completed: false },
-      { id: 'tkr-5', okrId: 'tokr-2', orgId: DEMO_ORG_ID, title: '100 % des pages migrées', currentValue: 70, targetValue: 100, unit: '%', assigneeId: 'friend-3', completed: false },
+      { id: 'tkr-4', okrId: 'tokr-2', orgId: DEMO_ORG_ID, title: 'Score Lighthouse ≥ 95', currentValue: 88, targetValue: 95, unit: 'pts', assigneeId: 'friend-2', completed: false, estimatedTime: 90 },
+      { id: 'tkr-5', okrId: 'tokr-2', orgId: DEMO_ORG_ID, title: '100 % des pages migrées', currentValue: 70, targetValue: 100, unit: '%', assigneeId: 'friend-3', completed: false, estimatedTime: 45 },
     ],
   },
   {
@@ -51,11 +59,14 @@ const DEMO_OKRS: TeamOKR[] = [
     title: 'Renforcer la culture d\'équipe',
     description: 'Améliorer l\'engagement et l\'onboarding interne.',
     category: 'Interne',
+    startDate: new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 50 * 86400000).toISOString().slice(0, 10),
     createdBy: DEMO_USER_ID,
     createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+    teamIds: ['team-design'],
     keyResults: [
-      { id: 'tkr-6', okrId: 'tokr-3', orgId: DEMO_ORG_ID, title: 'Onboarder 3 recrues', currentValue: 2, targetValue: 3, unit: 'personnes', assigneeId: 'demo-user', completed: false },
-      { id: 'tkr-7', okrId: 'tokr-3', orgId: DEMO_ORG_ID, title: 'Score eNPS ≥ 40', currentValue: 34, targetValue: 40, unit: 'pts', assigneeId: 'user-lucas', completed: false },
+      { id: 'tkr-6', okrId: 'tokr-3', orgId: DEMO_ORG_ID, title: 'Onboarder 3 recrues', currentValue: 2, targetValue: 3, unit: 'personnes', assigneeId: 'demo-user', completed: false, estimatedTime: 240 },
+      { id: 'tkr-7', okrId: 'tokr-3', orgId: DEMO_ORG_ID, title: 'Score eNPS ≥ 40', currentValue: 34, targetValue: 40, unit: 'pts', assigneeId: 'user-lucas', completed: false, estimatedTime: 30 },
     ],
   },
 ];
@@ -82,7 +93,11 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
   }
 
   async getAll(orgId: string): Promise<TeamOKR[]> {
-    return readOrSeed().filter((o) => o.orgId === orgId);
+    // Coercition legacy : les OKR d'équipe créés avant le rattachement d'équipes
+    // n'ont pas `teamIds` — on garantit un tableau ([] = objectif d'entreprise).
+    return readOrSeed()
+      .filter((o) => o.orgId === orgId)
+      .map((o) => ({ ...o, teamIds: Array.isArray(o.teamIds) ? o.teamIds : [] }));
   }
 
   async create(orgId: string, input: CreateTeamOKRInput): Promise<TeamOKR> {
@@ -98,19 +113,25 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       endDate: input.endDate,
       createdBy: DEMO_USER_ID,
       createdAt: new Date().toISOString(),
-      keyResults: input.keyResults.map((kr) => ({
-        id: crypto.randomUUID(),
-        okrId,
-        orgId,
-        title: kr.title,
-        currentValue: 0,
-        targetValue: kr.targetValue > 0 ? kr.targetValue : 1,
-        unit: kr.unit,
-        assigneeId: kr.assigneeId ?? null,
-        completed: false,
-        completedAt: null,
-        weight: kr.weight && kr.weight >= 1 ? Math.min(10, Math.round(kr.weight)) : 1,
-      })),
+      teamIds: input.teamIds ?? [],
+      keyResults: input.keyResults.map((kr) => {
+        const target = kr.targetValue > 0 ? kr.targetValue : 1;
+        const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
+        return {
+          id: crypto.randomUUID(),
+          okrId,
+          orgId,
+          title: kr.title,
+          currentValue: current,
+          targetValue: target,
+          unit: kr.unit,
+          assigneeId: kr.assigneeId ?? null,
+          completed: current >= target,
+          completedAt: current >= target ? new Date().toISOString() : null,
+          weight: kr.weight && kr.weight >= 1 ? Math.min(10, Math.round(kr.weight)) : 1,
+          estimatedTime: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
+        };
+      }),
     };
     this.save([okr, ...okrs]);
     return okr;
@@ -125,6 +146,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.category !== undefined) okr.category = input.category;
     if (input.startDate !== undefined) okr.startDate = input.startDate;
     if (input.endDate !== undefined) okr.endDate = input.endDate;
+    if (input.teamIds !== undefined) okr.teamIds = input.teamIds;
     this.save(okrs);
   }
 
@@ -143,6 +165,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       if (input.unit !== undefined) kr.unit = input.unit;
       if (input.assigneeId !== undefined) kr.assigneeId = input.assigneeId;
       if (input.weight !== undefined) kr.weight = input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1;
+      if (input.estimatedTime !== undefined) kr.estimatedTime = input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30;
       if (input.completed !== undefined) {
         kr.completed = input.completed;
         kr.completedAt = input.completed ? new Date().toISOString() : null;
@@ -151,5 +174,34 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       return;
     }
     throw new Error('Key result introuvable');
+  }
+
+  async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void> {
+    const okrs = readOrSeed();
+    const okr = okrs.find((o) => o.id === okrId);
+    if (!okr) throw new Error('OKR introuvable');
+    const existing = new Map(okr.keyResults.map((k) => [k.id, k]));
+    const next: TeamKeyResult[] = krs.slice(0, 10).map((input) => {
+      const target = input.targetValue > 0 ? input.targetValue : 1;
+      const current = Math.max(0, Math.min(input.currentValue ?? 0, target));
+      const prev = input.id ? existing.get(input.id) : undefined;
+      const completed = current >= target;
+      return {
+        id: prev?.id ?? crypto.randomUUID(),
+        okrId,
+        orgId,
+        title: input.title,
+        currentValue: current,
+        targetValue: target,
+        unit: input.unit ?? prev?.unit,
+        assigneeId: input.assigneeId ?? null,
+        completed,
+        completedAt: completed ? (prev?.completed ? prev.completedAt : new Date().toISOString()) : null,
+        weight: input.weight && input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1,
+        estimatedTime: input.estimatedTime && input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30,
+      };
+    });
+    okr.keyResults = next;
+    this.save(okrs);
   }
 }
