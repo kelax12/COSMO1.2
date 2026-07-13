@@ -32,6 +32,23 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     expect(mine.every((t) => t.assigneeIds.includes('demo-user'))).toBe(true);
   });
 
+  it('coerce le localStorage legacy (assigneeId → assigneeIds) — pas de crash', async () => {
+    // Simule un localStorage antérieur à la multi-assignation (mig. 072).
+    const legacy = [
+      { id: 'lg-1', orgId: ORG, projectId: 'p', name: 'Avec assigné legacy', priority: 3, deadline: '', assigneeId: 'friend-1', createdBy: 'demo-user', completed: false, completedAt: null, createdAt: '', updatedAt: '' },
+      { id: 'lg-2', orgId: ORG, projectId: 'p', name: 'Sans aucun assigné', priority: 3, deadline: '', createdBy: 'demo-user', completed: false, completedAt: null, createdAt: '', updatedAt: '' },
+    ];
+    localStorage.setItem('cosmo_team_tasks', JSON.stringify(legacy));
+    const tasks = await repo.getTasks(ORG);
+    // Chaque tâche a un assigneeIds itérable (jamais undefined).
+    expect(tasks.every((t) => Array.isArray(t.assigneeIds))).toBe(true);
+    expect(tasks.find((t) => t.id === 'lg-1')?.assigneeIds).toEqual(['friend-1']);
+    expect(tasks.find((t) => t.id === 'lg-2')?.assigneeIds).toEqual([]);
+    // Le filtre « mes tâches » fonctionne sur les données migrées.
+    const mine = await repo.getTasks(ORG, { assigneeId: 'friend-1' });
+    expect(mine.map((t) => t.id)).toContain('lg-1');
+  });
+
   it('filtre par projet et par statut', async () => {
     const projects = await repo.getProjects(ORG);
     const byProject = await repo.getTasks(ORG, { projectId: projects[0].id });
