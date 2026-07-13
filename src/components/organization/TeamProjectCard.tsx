@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette, Flag, CalendarClock,
+  Pencil, Archive, ArchiveRestore, Palette,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -15,13 +15,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
-import type { TeamProject, TeamTask, UpdateTeamProjectInput, CreateTeamTaskInput } from '@/modules/team-projects';
+import type { TeamProject, TeamTask, UpdateTeamProjectInput } from '@/modules/team-projects';
 import {
-  projectColor, PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META,
+  projectColor, PROJECT_COLOR_NAMES, PROJECT_COLORS,
   sortOpenTasks, sortCompletedTasks, isTaskOverdue,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
-import AssigneePicker from './AssigneePicker';
 import TeamTaskRow from './TeamTaskRow';
 
 interface TeamProjectCardProps {
@@ -30,33 +29,27 @@ interface TeamProjectCardProps {
   tasks: TeamTask[];
   members: OrgMember[];
   teams: OrgTeam[];
-  currentUserId?: string;
   isManager: boolean;
   collapsed: boolean;
   onToggleCollapse: () => void;
   /** True quand un filtre assigné est actif (adapte l'empty state). */
   assigneeFiltered: boolean;
-  onCreateTask: (input: CreateTeamTaskInput) => void;
-  createPending: boolean;
+  /** Ouvre le modal de création (projet présélectionné). */
+  onAddTask: (projectId: string) => void;
   onToggleComplete: (task: TeamTask) => void;
-  onReassign: (task: TeamTask, assigneeId: string | null) => void;
+  onReassign: (task: TeamTask, assigneeIds: string[]) => void;
   onDelete: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
   onUpdateProject: (input: UpdateTeamProjectInput) => void;
 }
 
-/** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu), tâches triées, composer. */
+/** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
 const TeamProjectCard = ({
-  project, tasks, members, teams, currentUserId, isManager,
+  project, tasks, members, teams, isManager,
   collapsed, onToggleCollapse, assigneeFiltered,
-  onCreateTask, createPending, onToggleComplete, onReassign, onDelete, onOpenTask,
+  onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject,
 }: TeamProjectCardProps) => {
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [composerName, setComposerName] = useState('');
-  const [composerPriority, setComposerPriority] = useState(3);
-  const [composerDeadline, setComposerDeadline] = useState('');
-  const [composerAssignee, setComposerAssignee] = useState<string | null>(currentUserId ?? null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -76,31 +69,19 @@ const TeamProjectCard = ({
   const contributors = useMemo(() => {
     const byId = new Map<string, { member: OrgMember; open: number; overdue: number }>();
     for (const task of tasks) {
-      if (!task.assigneeId) continue;
-      const m = members.find((x) => x.userId === task.assigneeId);
-      if (!m) continue;
-      const entry = byId.get(m.userId) ?? { member: m, open: 0, overdue: 0 };
-      if (!task.completed) {
-        entry.open += 1;
-        if (isTaskOverdue(task)) entry.overdue += 1;
+      for (const uid of task.assigneeIds) {
+        const m = members.find((x) => x.userId === uid);
+        if (!m) continue;
+        const entry = byId.get(m.userId) ?? { member: m, open: 0, overdue: 0 };
+        if (!task.completed) {
+          entry.open += 1;
+          if (isTaskOverdue(task)) entry.overdue += 1;
+        }
+        byId.set(m.userId, entry);
       }
-      byId.set(m.userId, entry);
     }
     return [...byId.values()].sort((a, b) => b.open - a.open);
   }, [tasks, members]);
-
-  const handleAddTask = () => {
-    const name = composerName.trim();
-    if (!name) return;
-    onCreateTask({
-      projectId: project.id,
-      name,
-      priority: composerPriority,
-      deadline: composerDeadline,
-      assigneeId: composerAssignee,
-    });
-    setComposerName('');
-  };
 
   const commitRename = () => {
     const name = renameValue.trim();
@@ -276,7 +257,7 @@ const TeamProjectCard = ({
               {!assigneeFiltered && !archived && (
                 <button
                   type="button"
-                  onClick={() => setComposerOpen(true)}
+                  onClick={() => onAddTask(project.id)}
                   className="text-xs font-semibold text-indigo-500 hover:text-indigo-600"
                 >
                   Créer la première tâche
@@ -311,77 +292,16 @@ const TeamProjectCard = ({
             </div>
           )}
 
-          {/* Composer d'ajout de tâche */}
-          {!archived && (composerOpen ? (
-            <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
-              <input
-                type="text"
-                value={composerName}
-                onChange={(e) => setComposerName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddTask();
-                  if (e.key === 'Escape') { setComposerOpen(false); setComposerName(''); }
-                }}
-                placeholder="Nouvelle tâche…"
-                autoFocus
-                maxLength={500}
-                className="flex-1 min-w-[160px] h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-              />
-              {/* Priorité */}
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  aria-label={`Priorité : ${PRIORITY_META[composerPriority].label}`}
-                  title={PRIORITY_META[composerPriority].label}
-                  className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] inline-flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-text-secondary))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                >
-                  <Flag size={13} aria-hidden="true" />
-                  <span className={`w-2 h-2 rounded-full ${PRIORITY_META[composerPriority].dot}`} aria-hidden="true" />
-                  P{composerPriority}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {[1, 2, 3, 4, 5].map((p) => (
-                    <DropdownMenuItem key={p} onClick={() => setComposerPriority(p)}>
-                      <span className={`w-2 h-2 rounded-full ${PRIORITY_META[p].dot}`} aria-hidden="true" />
-                      {PRIORITY_META[p].label}
-                      {composerPriority === p && <span className="ml-auto text-xs">✓</span>}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {/* Deadline */}
-              <label
-                className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] inline-flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-text-secondary))] cursor-pointer focus-within:ring-2 focus-within:ring-indigo-500/40"
-                title="Deadline"
-              >
-                <CalendarClock size={13} aria-hidden="true" />
-                <input
-                  type="date"
-                  value={composerDeadline}
-                  onChange={(e) => setComposerDeadline(e.target.value)}
-                  aria-label="Deadline de la nouvelle tâche"
-                  className="bg-transparent text-xs focus:outline-none w-[105px] text-[rgb(var(--color-text-secondary))]"
-                />
-              </label>
-              {/* Assigné */}
-              <AssigneePicker members={members} value={composerAssignee} onChange={setComposerAssignee} />
-              <button
-                type="button"
-                onClick={handleAddTask}
-                disabled={!composerName.trim() || createPending}
-                className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold"
-              >
-                Ajouter
-              </button>
-            </div>
-          ) : (
+          {/* Ajout de tâche — ouvre le modal complet (projet présélectionné) */}
+          {!archived && tasks.length > 0 && (
             <button
               type="button"
-              onClick={() => setComposerOpen(true)}
+              onClick={() => onAddTask(project.id)}
               className="w-full flex items-center gap-1.5 px-3 py-2 text-sm text-[rgb(var(--color-text-muted))] hover:text-indigo-500 transition-colors"
             >
               <Plus size={15} aria-hidden="true" /> Ajouter une tâche
             </button>
-          ))}
+          )}
         </div>
       )}
     </section>

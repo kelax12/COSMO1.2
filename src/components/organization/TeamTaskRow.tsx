@@ -4,15 +4,15 @@ import { fr } from 'date-fns/locale';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
-import AssigneePicker from './AssigneePicker';
+import AssigneesPicker from './AssigneesPicker';
 
 interface TeamTaskRowProps {
   task: TeamTask;
   members: OrgMember[];
   onToggleComplete: (task: TeamTask) => void;
-  onReassign: (task: TeamTask, assigneeId: string | null) => void;
+  onReassign: (task: TeamTask, assigneeIds: string[]) => void;
   onDelete: (task: TeamTask) => void;
-  /** Ouvre le sheet d'édition complète. */
+  /** Ouvre le modal d'édition complète. */
   onOpen: (task: TeamTask) => void;
 }
 
@@ -72,11 +72,11 @@ const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, on
         )}
       </button>
 
-      {/* Assigné */}
-      <AssigneePicker
+      {/* Assignés (multi) */}
+      <AssigneesPicker
         members={members}
-        value={task.assigneeId}
-        onChange={(id) => onReassign(task, id)}
+        value={task.assigneeIds}
+        onChange={(ids) => onReassign(task, ids)}
       />
 
       {/* Supprimer */}

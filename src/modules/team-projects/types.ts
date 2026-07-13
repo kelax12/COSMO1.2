@@ -42,8 +42,8 @@ export interface TeamTask {
   /** Date locale 'YYYY-MM-DD' ou '' si aucune. */
   deadline?: string;
   estimatedTime?: number;
-  /** auth.users.id de l'assigné, ou null si non assignée. */
-  assigneeId?: string | null;
+  /** auth.users.id des assignés — [] si non assignée (multi-assignation, mig. 072). */
+  assigneeIds: string[];
   createdBy: string;
   completed: boolean;
   completedAt?: string | null;
@@ -58,7 +58,7 @@ export interface CreateTeamTaskInput {
   priority?: number;
   deadline?: string;
   estimatedTime?: number;
-  assigneeId?: string | null;
+  assigneeIds?: string[];
 }
 
 /** Champs modifiables — jamais orgId/createdBy (whitelist mapToDb). */
@@ -68,13 +68,14 @@ export interface UpdateTeamTaskInput {
   priority?: number;
   deadline?: string;
   estimatedTime?: number;
-  assigneeId?: string | null;
+  assigneeIds?: string[];
   projectId?: string;
   completed?: boolean;
 }
 
 export interface TeamTaskFilters {
   projectId?: string;
+  /** Filtre « assignée à » — matche si l'uid figure dans assigneeIds. */
   assigneeId?: string;
   completed?: boolean;
 }
