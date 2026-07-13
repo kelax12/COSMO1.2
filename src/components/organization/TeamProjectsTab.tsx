@@ -22,6 +22,7 @@ import {
   useDeleteTeamTask,
   type TeamTask,
   type TeamProject,
+  type CreateTeamProjectInput,
   type CreateTeamTaskInput,
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
@@ -29,12 +30,12 @@ import { useOrgTeams } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
-  PROJECT_COLOR_NAMES, PROJECT_COLORS,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamProjectCard from './TeamProjectCard';
 import TeamProjectsKanban from './TeamProjectsKanban';
 import TeamTaskModal from './TeamTaskModal';
+import NewTeamProjectModal from './NewTeamProjectModal';
 import AssignTaskSheet from './AssignTaskSheet';
 
 interface TeamProjectsTabProps {
@@ -73,9 +74,6 @@ const ProjectsSkeleton = () => (
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   const [showNewProject, setShowNewProject] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectTeamId, setNewProjectTeamId] = useState<string>('');
-  const [newProjectColor, setNewProjectColor] = useState('blue');
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
   // Colonne kanban ciblée par le « + » (null fermé, 'unassigned' possible).
   const [assignSheetFor, setAssignSheetFor] = useState<string | null | 'closed'>('closed');
@@ -122,14 +120,16 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     : null;
 
   // ─── Actions ────────────────────────────────────────────────────────
-  const handleCreateProject = () => {
-    const name = newProjectName.trim();
-    if (name.length < 1) return;
-    createProject.mutate({ name, teamId: newProjectTeamId || null, color: newProjectColor }, {
-      onSuccess: () => {
-        setNewProjectName(''); setNewProjectTeamId(''); setNewProjectColor('blue'); setShowNewProject(false);
-      },
-    });
+  // Crée le projet PUIS ses tâches initiales sous son id (séquentiel pour
+  // récupérer l'id du projet avant d'y rattacher les tâches).
+  const handleCreateProjectFull = async (
+    input: CreateTeamProjectInput,
+    draftTasks: { name: string; assigneeIds: string[] }[],
+  ) => {
+    const project = await createProject.mutateAsync(input);
+    for (const t of draftTasks) {
+      await createTask.mutateAsync({ projectId: project.id, name: t.name, assigneeIds: t.assigneeIds });
+    }
   };
 
   const toggleComplete = (task: TeamTask) =>
@@ -343,66 +343,15 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         </div>
       </div>
 
-      {/* Formulaire nouveau projet */}
+      {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
       {isManager && showNewProject && (
-        <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3">
-          <input
-            type="text"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreateProject();
-              if (e.key === 'Escape') setShowNewProject(false);
-            }}
-            placeholder="Nom du projet"
-            autoFocus
-            maxLength={120}
-            className="h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 flex-1 min-w-[160px]"
-          />
-          <div className="flex items-center gap-1" role="radiogroup" aria-label="Couleur du projet">
-            {PROJECT_COLOR_NAMES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                role="radio"
-                aria-checked={newProjectColor === c}
-                aria-label={`Couleur ${c}`}
-                onClick={() => setNewProjectColor(c)}
-                className={`w-6 h-6 rounded-full flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${newProjectColor === c ? 'ring-2 ring-indigo-500' : ''}`}
-              >
-                <span className={`w-3.5 h-3.5 rounded-full ${PROJECT_COLORS[c].dot}`} />
-              </button>
-            ))}
-          </div>
-          {teams.length > 0 && (
-            <select
-              value={newProjectTeamId}
-              onChange={(e) => setNewProjectTeamId(e.target.value)}
-              aria-label="Équipe du projet"
-              className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-            >
-              <option value="">Toute l'entreprise</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>Équipe {t.name}</option>
-              ))}
-            </select>
-          )}
-          <button
-            type="button"
-            onClick={handleCreateProject}
-            disabled={!newProjectName.trim() || createProject.isPending}
-            className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold"
-          >
-            Créer
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowNewProject(false)}
-            className="h-9 px-3 rounded-lg text-sm font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-          >
-            Annuler
-          </button>
-        </div>
+        <NewTeamProjectModal
+          teams={teams}
+          members={members}
+          defaultTeamId={teamFilter && teamFilter !== 'org' ? teamFilter : ''}
+          onSubmit={handleCreateProjectFull}
+          onClose={() => setShowNewProject(false)}
+        />
       )}
 
       {/* Contenu */}
