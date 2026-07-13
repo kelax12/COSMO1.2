@@ -25,8 +25,10 @@ interface TeamTaskModalProps {
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
+// Tailles/traitement alignés sur le TaskModal personnel (DesktopDetailsStep) :
+// px-4 h-12, text-base, bordure hover/focus au lieu d'un ring.
 const inputClass =
-  'w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-colors';
+  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
