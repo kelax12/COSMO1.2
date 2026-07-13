@@ -45,6 +45,7 @@ import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
 import MemberProfileSheet from './MemberProfileSheet';
 import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
+import ReassignManagerSheet from './ReassignManagerSheet';
 
 interface PyramidTabProps {
   orgId: string;
@@ -503,6 +504,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [profile, setProfile] = useState<OrgMember | null>(null);
   // Infos d'un subordonné (tâches / agenda / contribution), ouvert sur un onglet.
   const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
+  // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
+  const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   // Annonce lecteur d'écran après un déplacement (aria-live).
   const [announcement, setAnnouncement] = useState('');
   // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
@@ -559,16 +562,28 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     }
   }, [viewTeamId, orgTeams]);
 
-  // Retrait d'un membre (admin) : confirmation, puis re-parentage automatique
-  // de ses subordonnés vers son responsable (RPC remove_member, mig. 066).
+  // Retrait d'un membre (admin). Sans subordonné direct : confirmation simple.
+  // Avec subordonnés : on ouvre d'abord le choix de leur nouveau responsable.
   const handleRemove = (m: OrgMember) => {
-    const subCount = subtreeOf(members, m.userId).size;
-    const message =
-      subCount > 0
-        ? `Retirer ${m.displayName} de l'entreprise ? Ses ${subCount} subordonné${subCount > 1 ? 's' : ''} ser${subCount > 1 ? 'ont' : 'a'} rattaché${subCount > 1 ? 's' : ''} à son responsable.`
-        : `Retirer ${m.displayName} de l'entreprise ? Cette personne perdra l'accès aux projets et OKR de l'équipe.`;
-    if (!window.confirm(message)) return;
+    const hasReports = members.some((x) => x.managerId === m.userId);
+    if (hasReports) {
+      setReassigning(m);
+      return;
+    }
+    if (!window.confirm(`Retirer ${m.displayName} de l'entreprise ? Cette personne perdra l'accès aux projets et OKR de l'équipe.`)) return;
     removeMember.mutate({ orgId, userId: m.userId });
+  };
+
+  // Réassigne les subordonnés directs de `member` à `newManagerId` (null =
+  // détacher), puis retire `member`. La hiérarchie SOUS ces subordonnés est
+  // préservée (on ne touche qu'à leur rattachement de premier niveau).
+  const performRemoveWithReassign = async (member: OrgMember, newManagerId: string | null) => {
+    const directs = members.filter((x) => x.managerId === member.userId);
+    for (const c of directs) {
+      await setManager.mutateAsync({ orgId, userId: c.userId, managerId: newManagerId, silent: true });
+    }
+    await removeMember.mutateAsync({ orgId, userId: member.userId });
+    setReassigning(null);
   };
 
   // Équipes transverses par membre (pastilles couleur sur les cartes).
@@ -1315,6 +1330,17 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           member={insights.member}
           initialTab={insights.tab}
           onClose={() => setInsights(null)}
+        />
+      )}
+
+      {reassigning && (
+        <ReassignManagerSheet
+          member={reassigning}
+          members={members}
+          ownerId={ownerId}
+          currentUserId={currentUserId}
+          onConfirm={(newManagerId) => performRemoveWithReassign(reassigning, newManagerId)}
+          onCancel={() => setReassigning(null)}
         />
       )}
 
