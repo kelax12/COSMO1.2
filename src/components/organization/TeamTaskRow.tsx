@@ -72,11 +72,12 @@ const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, on
         )}
       </button>
 
-      {/* Assignés (multi) */}
+      {/* Assignés (multi) — « + » d'ajout révélé au survol de la ligne */}
       <AssigneesPicker
         members={members}
         value={task.assigneeIds}
         onChange={(ids) => onReassign(task, ids)}
+        revealAddOnHover
       />
 
       {/* Supprimer */}

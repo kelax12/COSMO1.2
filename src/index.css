@@ -898,6 +898,18 @@ body.fc-quick-preview .fc-event.fc-event-mirror {
   background: rgb(var(--color-accent) / 0.5);
 }
 
+/* Masque la scrollbar tout en gardant le défilement (bandes horizontales :
+   onglets, chips, tables). Firefox + IE + WebKit/Blink. */
+.hide-scrollbar {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge legacy */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;                /* WebKit/Blink */
+}
+
 /* Pinned conversation style */
 .conversation-pinned {
   @apply bg-amber-50 border-l-4 border-amber-400;

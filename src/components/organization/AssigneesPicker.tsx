@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Plus } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 
@@ -17,13 +17,19 @@ interface AssigneesPickerProps {
   value: string[];
   onChange: (assigneeIds: string[]) => void;
   disabled?: boolean;
+  /**
+   * Affiche, quand il y a déjà des assignés, une pastille « + » à côté des
+   * avatars, révélée au survol de la ligne parente (`.group`). Rend l'ajout
+   * d'un collaborateur découvrable sans deviner que les avatars sont cliquables.
+   */
+  revealAddOnHover?: boolean;
 }
 
 /**
  * Sélecteur MULTI-assignés (avatars empilés + menu à cases). Le déclencheur
  * montre jusqu'à 3 avatars (+N), ou une icône « assigner » si personne.
  */
-const AssigneesPicker = ({ members, value, onChange, disabled }: AssigneesPickerProps) => {
+const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover }: AssigneesPickerProps) => {
   const assigned = value
     .map((id) => members.find((m) => m.userId === id))
     .filter((m): m is OrgMember => !!m);
@@ -48,15 +54,25 @@ const AssigneesPicker = ({ members, value, onChange, disabled }: AssigneesPicker
             <UserPlus size={13} aria-hidden="true" />
           </span>
         ) : (
-          <span className="flex -space-x-1.5">
-            {assigned.slice(0, 3).map((m) => (
-              <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
-              </span>
-            ))}
-            {assigned.length > 3 && (
-              <span className="w-[26px] h-[26px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[10px] font-bold text-[rgb(var(--color-text-muted))]">
-                +{assigned.length - 3}
+          <span className="flex items-center">
+            <span className="flex -space-x-1.5">
+              {assigned.slice(0, 3).map((m) => (
+                <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
+                </span>
+              ))}
+              {assigned.length > 3 && (
+                <span className="w-[26px] h-[26px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[10px] font-bold text-[rgb(var(--color-text-muted))]">
+                  +{assigned.length - 3}
+                </span>
+              )}
+            </span>
+            {revealAddOnHover && (
+              <span
+                className="ml-1 w-[26px] h-[26px] rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-muted))] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                aria-hidden="true"
+              >
+                <Plus size={13} />
               </span>
             )}
           </span>
