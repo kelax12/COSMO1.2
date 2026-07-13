@@ -942,6 +942,15 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       {moveCount} modification{moveCount > 1 ? 's' : ''}
                     </span>
                   )}
+                  {!editMode && selfMember && (
+                    <button
+                      type="button"
+                      onClick={() => setAddingUnder(selfMember)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                    >
+                      <UserPlus size={14} aria-hidden="true" /> Ajouter
+                    </button>
+                  )}
                   {editMode && (
                     <button
                       type="button"
