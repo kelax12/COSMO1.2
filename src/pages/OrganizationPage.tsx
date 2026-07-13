@@ -108,7 +108,7 @@ const OrganizationPage = () => {
       )}
 
       {/* Onglets */}
-      <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto">
+      <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto overflow-y-hidden hide-scrollbar">
         {TABS.map(({ id, label, Icon }) => (
           <button
             key={id}
