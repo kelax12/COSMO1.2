@@ -35,7 +35,7 @@ interface TaskRow {
   priority: number;
   deadline: string | null;
   estimated_time: number | null;
-  assignee_id: string | null;
+  assignee_ids: string[] | null;
   created_by: string;
   completed: boolean;
   completed_at: string | null;
@@ -63,7 +63,7 @@ const mapTask = (r: TaskRow): TeamTask => ({
   priority: r.priority,
   deadline: r.deadline ?? '',
   estimatedTime: r.estimated_time ?? undefined,
-  assigneeId: r.assignee_id,
+  assigneeIds: r.assignee_ids ?? [],
   createdBy: r.created_by,
   completed: r.completed,
   completedAt: r.completed_at,
@@ -140,7 +140,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     let query = supabase.from('team_tasks').select('*').eq('org_id', orgId);
     if (filters?.projectId) query = query.eq('project_id', filters.projectId);
-    if (filters?.assigneeId) query = query.eq('assignee_id', filters.assigneeId);
+    if (filters?.assigneeId) query = query.contains('assignee_ids', [filters.assigneeId]);
     if (filters?.completed !== undefined) query = query.eq('completed', filters.completed);
     const { data, error } = await query.order('created_at', { ascending: false }).limit(1000);
     if (error) throw normalizeApiError(error);
@@ -163,7 +163,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         priority: input.priority ?? 3,
         deadline: input.deadline || null,
         estimated_time: input.estimatedTime ?? null,
-        assignee_id: input.assigneeId ?? null,
+        assignee_ids: input.assigneeIds ?? [],
       })
       .select('*')
       .single();
@@ -180,7 +180,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.priority !== undefined) patch.priority = input.priority;
     if (input.deadline !== undefined) patch.deadline = input.deadline || null;
     if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime;
-    if (input.assigneeId !== undefined) patch.assignee_id = input.assigneeId;
+    if (input.assigneeIds !== undefined) patch.assignee_ids = input.assigneeIds;
     if (input.projectId !== undefined) patch.project_id = input.projectId;
     if (input.completed !== undefined) {
       patch.completed = input.completed;

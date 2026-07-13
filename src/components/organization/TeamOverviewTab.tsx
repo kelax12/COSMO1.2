@@ -73,11 +73,14 @@ const TeamOverviewTab = ({ orgId, members }: TeamOverviewTabProps) => {
   }, [tasks, okrs]);
 
   // Charge par membre : tâches ouvertes assignées (barres triées desc).
+  // Une tâche multi-assignée compte pour chacun de ses assignés.
   const loadByMember = useMemo(() => {
     const openByAssignee = new Map<string, number>();
     for (const t of tasks) {
-      if (t.completed || !t.assigneeId) continue;
-      openByAssignee.set(t.assigneeId, (openByAssignee.get(t.assigneeId) ?? 0) + 1);
+      if (t.completed) continue;
+      for (const uid of t.assigneeIds) {
+        openByAssignee.set(uid, (openByAssignee.get(uid) ?? 0) + 1);
+      }
     }
     return members
       .map((m) => ({ name: firstName(m.displayName), open: openByAssignee.get(m.userId) ?? 0 }))
@@ -120,11 +123,18 @@ const TeamOverviewTab = ({ orgId, members }: TeamOverviewTabProps) => {
           </h3>
           <ul className="space-y-1.5">
             {stats.overdue.slice(0, 6).map((t) => {
-              const assignee = members.find((m) => m.userId === t.assigneeId);
+              const names = t.assigneeIds
+                .map((id) => members.find((m) => m.userId === id))
+                .filter((m): m is OrgMember => !!m)
+                .map((m) => firstName(m.displayName));
               return (
                 <li key={t.id} className="flex items-center justify-between text-sm">
                   <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
-                  {assignee && <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 ml-3">{firstName(assignee.displayName)}</span>}
+                  {names.length > 0 && (
+                    <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 ml-3">
+                      {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
+                    </span>
+                  )}
                 </li>
               );
             })}

@@ -18,16 +18,18 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     expect(projects.map((p) => p.name)).toContain('Refonte du site');
   });
 
-  it('seede ~20 tâches réparties sur les projets et assignées', async () => {
+  it('seede ~20 tâches réparties sur les projets et assignées (certaines multi)', async () => {
     const tasks = await repo.getTasks(ORG);
     expect(tasks.length).toBe(20);
-    expect(tasks.every((t) => t.assigneeId)).toBe(true);
+    expect(tasks.every((t) => t.assigneeIds.length > 0)).toBe(true);
+    // La multi-assignation est représentée dans les seeds (1 tâche sur 4).
+    expect(tasks.some((t) => t.assigneeIds.length > 1)).toBe(true);
   });
 
-  it('filtre par assigné (mes tâches)', async () => {
+  it('filtre par assigné (mes tâches) — matche dans le tableau', async () => {
     const mine = await repo.getTasks(ORG, { assigneeId: 'demo-user' });
     expect(mine.length).toBeGreaterThan(0);
-    expect(mine.every((t) => t.assigneeId === 'demo-user')).toBe(true);
+    expect(mine.every((t) => t.assigneeIds.includes('demo-user'))).toBe(true);
   });
 
   it('filtre par projet et par statut', async () => {
@@ -39,13 +41,20 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     expect(done.every((t) => t.completed)).toBe(true);
   });
 
-  it('crée une tâche et la réassigne', async () => {
+  it('crée une tâche multi-assignée et modifie ses assignés', async () => {
     const projects = await repo.getProjects(ORG);
-    const created = await repo.createTask(ORG, { projectId: projects[0].id, name: 'Nouvelle tâche', assigneeId: 'friend-2' });
-    expect(created.assigneeId).toBe('friend-2');
+    const created = await repo.createTask(ORG, {
+      projectId: projects[0].id,
+      name: 'Nouvelle tâche',
+      assigneeIds: ['friend-2', 'friend-3'],
+    });
+    expect(created.assigneeIds).toEqual(['friend-2', 'friend-3']);
 
-    const updated = await repo.updateTask(created.id, { assigneeId: 'friend-3' });
-    expect(updated.assigneeId).toBe('friend-3');
+    const updated = await repo.updateTask(created.id, { assigneeIds: ['friend-3'] });
+    expect(updated.assigneeIds).toEqual(['friend-3']);
+
+    const unassigned = await repo.updateTask(created.id, { assigneeIds: [] });
+    expect(unassigned.assigneeIds).toEqual([]);
   });
 
   it('complète une tâche (completedAt renseigné) puis la déscoche', async () => {

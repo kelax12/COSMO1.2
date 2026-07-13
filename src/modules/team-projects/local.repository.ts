@@ -37,7 +37,8 @@ const DEMO_PROJECTS: TeamProject[] = [
   { id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15), teamId: null },
 ];
 
-// Fabrique une tâche seed déterministe.
+// Fabrique une tâche seed déterministe. Une tâche sur quatre reçoit un
+// second assigné (démonstration de la multi-assignation).
 let seq = 0;
 const t = (
   projectId: string,
@@ -48,6 +49,11 @@ const t = (
   completed: boolean,
 ): TeamTask => {
   seq += 1;
+  const assigneeIds = [MEMBERS[assigneeIdx % MEMBERS.length]];
+  if (seq % 4 === 0) {
+    const second = MEMBERS[(assigneeIdx + 1) % MEMBERS.length];
+    if (!assigneeIds.includes(second)) assigneeIds.push(second);
+  }
   return {
     id: `ttask-${seq}`,
     orgId: DEMO_ORG_ID,
@@ -56,7 +62,7 @@ const t = (
     priority,
     deadline: deadlineOffset === null ? '' : dateStr(deadlineOffset),
     estimatedTime: 30 + (seq % 4) * 15,
-    assigneeId: MEMBERS[assigneeIdx % MEMBERS.length],
+    assigneeIds,
     createdBy: DEMO_USER_ID,
     completed,
     completedAt: completed ? iso(-2) : null,
@@ -167,7 +173,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return this.getTasksArray().filter((tk) => {
       if (tk.orgId !== orgId) return false;
       if (filters?.projectId && tk.projectId !== filters.projectId) return false;
-      if (filters?.assigneeId && tk.assigneeId !== filters.assigneeId) return false;
+      if (filters?.assigneeId && !tk.assigneeIds.includes(filters.assigneeId)) return false;
       if (filters?.completed !== undefined && tk.completed !== filters.completed) return false;
       return true;
     });
@@ -185,7 +191,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       priority: input.priority ?? 3,
       deadline: input.deadline ?? '',
       estimatedTime: input.estimatedTime,
-      assigneeId: input.assigneeId ?? null,
+      assigneeIds: input.assigneeIds ?? [],
       createdBy: DEMO_USER_ID,
       completed: false,
       completedAt: null,
@@ -205,7 +211,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.priority !== undefined) task.priority = input.priority;
     if (input.deadline !== undefined) task.deadline = input.deadline;
     if (input.estimatedTime !== undefined) task.estimatedTime = input.estimatedTime;
-    if (input.assigneeId !== undefined) task.assigneeId = input.assigneeId;
+    if (input.assigneeIds !== undefined) task.assigneeIds = input.assigneeIds;
     if (input.projectId !== undefined) task.projectId = input.projectId;
     if (input.completed !== undefined) {
       task.completed = input.completed;

@@ -38,7 +38,7 @@ export const useTeamTasks = (orgId: string | undefined, filters?: TeamTaskFilter
       ? (tasks) =>
           tasks.filter((tk) => {
             if (filters.projectId && tk.projectId !== filters.projectId) return false;
-            if (filters.assigneeId && tk.assigneeId !== filters.assigneeId) return false;
+            if (filters.assigneeId && !tk.assigneeIds.includes(filters.assigneeId)) return false;
             if (filters.completed !== undefined && tk.completed !== filters.completed) return false;
             return true;
           })

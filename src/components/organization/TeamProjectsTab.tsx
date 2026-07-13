@@ -22,6 +22,8 @@ import {
   useDeleteTeamTask,
   type TeamTask,
   type TeamProject,
+  type CreateTeamTaskInput,
+  type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useOrgTeams } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
@@ -32,7 +34,8 @@ import {
 import MemberAvatar from './MemberAvatar';
 import TeamProjectCard from './TeamProjectCard';
 import TeamProjectsKanban from './TeamProjectsKanban';
-import TeamTaskEditSheet from './TeamTaskEditSheet';
+import TeamTaskModal from './TeamTaskModal';
+import AssignTaskSheet from './AssignTaskSheet';
 
 interface TeamProjectsTabProps {
   orgId: string;
@@ -41,6 +44,12 @@ interface TeamProjectsTabProps {
   /** Manager/admin : peut créer des projets. */
   isManager: boolean;
 }
+
+/** État du modal de tâche : création (préréglages) ou édition. */
+type TaskModalState =
+  | { mode: 'create'; projectId?: string; assigneeIds?: string[] }
+  | { mode: 'edit'; task: TeamTask }
+  | null;
 
 /** Skeleton de chargement au format carte projet. */
 const ProjectsSkeleton = () => (
@@ -67,7 +76,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectTeamId, setNewProjectTeamId] = useState<string>('');
   const [newProjectColor, setNewProjectColor] = useState('blue');
-  const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
+  const [taskModal, setTaskModal] = useState<TaskModalState>(null);
+  // Colonne kanban ciblée par le « + » (null fermé, 'unassigned' possible).
+  const [assignSheetFor, setAssignSheetFor] = useState<string | null | 'closed'>('closed');
 
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   const { data: allTasks = [] } = useTeamTasks(orgId);
@@ -100,12 +111,15 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const doneThisWeek = completedThisWeek(statsTasks);
 
   const visibleTasks = useMemo(
-    () => (assigneeFilter ? allTasks.filter((t) => t.assigneeId === assigneeFilter) : allTasks),
+    () => (assigneeFilter ? allTasks.filter((t) => t.assigneeIds.includes(assigneeFilter)) : allTasks),
     [allTasks, assigneeFilter],
   );
   const tasksByProject = (projectId: string) => visibleTasks.filter((t) => t.projectId === projectId);
 
   const filteredMember = members.find((m) => m.userId === assigneeFilter);
+  const assignSheetMember = assignSheetFor !== 'closed' && assignSheetFor !== null
+    ? members.find((m) => m.userId === assignSheetFor) ?? null
+    : null;
 
   // ─── Actions ────────────────────────────────────────────────────────
   const handleCreateProject = () => {
@@ -120,8 +134,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
-  const reassign = (task: TeamTask, assigneeId: string | null) =>
-    updateTask.mutate({ taskId: task.id, input: { assigneeId } });
+  const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
+    updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
 
   // Suppression avec « Annuler » : la tâche est recréée à l'identique.
   const removeWithUndo = (task: TeamTask) =>
@@ -135,16 +149,15 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             priority: task.priority,
             deadline: task.deadline,
             estimatedTime: task.estimatedTime,
-            assigneeId: task.assigneeId ?? null,
+            assigneeIds: task.assigneeIds,
           }),
         );
       },
     });
 
-  const saveTaskEdit = async (input: Parameters<typeof updateTask.mutateAsync>[0]['input']) => {
-    if (!editingTask) return;
-    await updateTask.mutateAsync({ taskId: editingTask.id, input });
-  };
+  const modalCreate = (input: CreateTeamTaskInput) => createTask.mutateAsync(input);
+  const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
+    updateTask.mutateAsync({ taskId, input });
 
   const toggleCollapse = (projectId: string) =>
     updatePrefs((prev) => ({ collapsed: { ...prev.collapsed, [projectId]: !prev.collapsed[projectId] } }));
@@ -171,17 +184,17 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       tasks={tasksByProject(project.id)}
       members={members}
       teams={teams}
-      currentUserId={currentUserId}
       isManager={isManager}
       collapsed={!!collapsed[project.id]}
       onToggleCollapse={() => toggleCollapse(project.id)}
       assigneeFiltered={!!assigneeFilter}
-      onCreateTask={(input) => createTask.mutate(input)}
-      createPending={createTask.isPending}
+      onAddTask={(projectId) =>
+        setTaskModal({ mode: 'create', projectId, assigneeIds: currentUserId ? [currentUserId] : [] })
+      }
       onToggleComplete={toggleComplete}
-      onReassign={reassign}
+      onReassign={setAssignees}
       onDelete={removeWithUndo}
-      onOpenTask={setEditingTask}
+      onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
       onUpdateProject={(input) => updateProject.mutate({ projectId: project.id, input })}
     />
   );
@@ -416,8 +429,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           projects={activeProjects}
           tasks={statsTasks}
           members={members}
-          onReassign={reassign}
-          onOpenTask={setEditingTask}
+          onSetAssignees={setAssignees}
+          onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+          onAddToColumn={(memberId) => setAssignSheetFor(memberId)}
         />
       ) : (
         <>
@@ -456,14 +470,44 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         </>
       )}
 
-      {/* Sheet d'édition de tâche */}
-      {editingTask && (
-        <TeamTaskEditSheet
-          task={editingTask}
+      {/* Sheet « attribuer / créer » du kanban */}
+      {assignSheetFor !== 'closed' && (
+        <AssignTaskSheet
+          member={assignSheetMember}
+          projects={activeProjects}
+          tasks={statsTasks}
+          onAssign={(task) => {
+            const target = assignSheetFor as string | null;
+            if (target && !task.assigneeIds.includes(target)) {
+              setAssignees(task, [...task.assigneeIds, target]);
+            }
+          }}
+          onCreateNew={() => {
+            const target = assignSheetFor as string | null;
+            setAssignSheetFor('closed');
+            setTaskModal({
+              mode: 'create',
+              projectId: activeProjects[0]?.id,
+              assigneeIds: target ? [target] : [],
+            });
+          }}
+          onClose={() => setAssignSheetFor('closed')}
+        />
+      )}
+
+      {/* Modal de tâche (création / édition) */}
+      {taskModal && (
+        <TeamTaskModal
+          task={taskModal.mode === 'edit' ? taskModal.task : undefined}
+          isCreating={taskModal.mode === 'create'}
+          projects={activeProjects.length > 0 ? activeProjects : allProjects}
           members={members}
-          onSave={saveTaskEdit}
+          defaultProjectId={taskModal.mode === 'create' ? taskModal.projectId : undefined}
+          defaultAssigneeIds={taskModal.mode === 'create' ? taskModal.assigneeIds : undefined}
+          onCreate={modalCreate}
+          onUpdate={modalUpdate}
           onDelete={removeWithUndo}
-          onClose={() => setEditingTask(null)}
+          onClose={() => setTaskModal(null)}
         />
       )}
     </div>

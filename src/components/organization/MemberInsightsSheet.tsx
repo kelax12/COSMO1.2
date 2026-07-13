@@ -49,7 +49,7 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
   const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
 
   const myTasks = useMemo(
-    () => allTasks.filter((t) => t.assigneeId === member.userId),
+    () => allTasks.filter((t) => t.assigneeIds.includes(member.userId)),
     [allTasks, member.userId],
   );
 

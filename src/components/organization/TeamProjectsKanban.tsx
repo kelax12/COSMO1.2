@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, UserRound } from 'lucide-react';
+import { CalendarClock, UserRound, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { OrgMember } from '@/modules/organizations';
@@ -12,17 +12,27 @@ interface TeamProjectsKanbanProps {
   /** Tâches ouvertes des projets visibles (les terminées sont exclues). */
   tasks: TeamTask[];
   members: OrgMember[];
-  onReassign: (task: TeamTask, assigneeId: string | null) => void;
+  /** Remplace la liste des assignés d'une tâche. */
+  onSetAssignees: (task: TeamTask, assigneeIds: string[]) => void;
   onOpenTask: (task: TeamTask) => void;
+  /** Ouvre le sheet « attribuer / créer » pour une colonne (null = non assignées). */
+  onAddToColumn: (memberId: string | null) => void;
 }
 
-const UNASSIGNED = '__unassigned__';
+export const KANBAN_UNASSIGNED = '__unassigned__';
+
+/** Payload drag : id de la tâche + colonne d'origine (pour déplacer l'assignation). */
+interface DragPayload {
+  taskId: string;
+  from: string;
+}
 
 /**
  * Vue Kanban « charge par personne » : une colonne par membre (+ non
- * assignées). Glisser une carte sur une colonne réassigne la tâche.
+ * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
+ * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onReassign, onOpenTask }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn }: TeamProjectsKanbanProps) => {
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
@@ -31,27 +41,37 @@ const TeamProjectsKanban = ({ projects, tasks, members, onReassign, onOpenTask }
   // Colonnes : non assignées + tous les membres (les plus chargés d'abord).
   const columns = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const t of openTasks) counts.set(t.assigneeId ?? UNASSIGNED, (counts.get(t.assigneeId ?? UNASSIGNED) ?? 0) + 1);
+    for (const t of openTasks) {
+      if (t.assigneeIds.length === 0) counts.set(KANBAN_UNASSIGNED, (counts.get(KANBAN_UNASSIGNED) ?? 0) + 1);
+      for (const uid of t.assigneeIds) counts.set(uid, (counts.get(uid) ?? 0) + 1);
+    }
     const memberCols = [...members].sort(
       (a, b) => (counts.get(b.userId) ?? 0) - (counts.get(a.userId) ?? 0),
     );
     return [
-      { id: UNASSIGNED, label: 'Non assignées', member: null as OrgMember | null },
+      { id: KANBAN_UNASSIGNED, label: 'Non assignées', member: null as OrgMember | null },
       ...memberCols.map((m) => ({ id: m.userId, label: m.displayName, member: m as OrgMember | null })),
     ];
   }, [members, openTasks]);
 
   const tasksOf = (colId: string) =>
-    openTasks.filter((t) => (t.assigneeId ?? UNASSIGNED) === colId);
+    colId === KANBAN_UNASSIGNED
+      ? openTasks.filter((t) => t.assigneeIds.length === 0)
+      : openTasks.filter((t) => t.assigneeIds.includes(colId));
 
   const handleDrop = (colId: string, e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(null);
-    const taskId = e.dataTransfer.getData('text/plain');
-    const task = openTasks.find((t) => t.id === taskId);
-    if (!task) return;
-    const target = colId === UNASSIGNED ? null : colId;
-    if ((task.assigneeId ?? null) !== target) onReassign(task, target);
+    let payload: DragPayload | null = null;
+    try { payload = JSON.parse(e.dataTransfer.getData('text/plain')) as DragPayload; } catch { /* drag externe */ }
+    if (!payload) return;
+    const task = openTasks.find((t) => t.id === payload!.taskId);
+    if (!task || colId === payload.from) return;
+
+    // Déplace l'assignation : retire la colonne d'origine, ajoute la cible.
+    let next = task.assigneeIds.filter((id) => id !== payload!.from);
+    if (colId !== KANBAN_UNASSIGNED && !next.includes(colId)) next = [...next, colId];
+    onSetAssignees(task, next);
   };
 
   return (
@@ -79,9 +99,20 @@ const TeamProjectsKanban = ({ projects, tasks, members, onReassign, onOpenTask }
                 </span>
               )}
               <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">{col.label}</span>
-              <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))] tabular-nums shrink-0">
-                {colTasks.length}
-                {overdue > 0 && <span className="text-red-500 font-semibold"> · {overdue} ⏰</span>}
+              <span className="ml-auto flex items-center gap-1 shrink-0">
+                <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
+                  {colTasks.length}
+                  {overdue > 0 && <span className="text-red-500 font-semibold"> · {overdue} ⏰</span>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onAddToColumn(col.member ? col.id : null)}
+                  aria-label={col.member ? `Attribuer une tâche à ${col.label}` : 'Ajouter une tâche non assignée'}
+                  title="Attribuer ou créer une tâche"
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                >
+                  <Plus size={14} aria-hidden="true" />
+                </button>
               </span>
             </div>
 
@@ -96,15 +127,24 @@ const TeamProjectsKanban = ({ projects, tasks, members, onReassign, onOpenTask }
                 const pColor = project ? projectColor(project.color) : null;
                 const overdueTask = isTaskOverdue(task);
                 const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
+                const coAssignees = col.member
+                  ? task.assigneeIds.filter((id) => id !== col.id)
+                  : [];
                 return (
                   <button
                     key={task.id}
                     type="button"
                     draggable
-                    onDragStart={(e) => e.dataTransfer.setData('text/plain', task.id)}
+                    onDragStart={(e) =>
+                      e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, from: col.id } satisfies DragPayload))
+                    }
                     onClick={() => onOpenTask(task)}
-                    aria-label={`Modifier la tâche ${task.name}`}
-                    className="w-full text-left rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] px-3 py-2 hover:border-indigo-400 transition-colors cursor-grab active:cursor-grabbing"
+                    aria-label={`Modifier la tâche ${task.name}${overdueTask ? ' (en retard)' : ''}`}
+                    className={`w-full text-left rounded-xl border px-3 py-2 transition-colors cursor-grab active:cursor-grabbing ${
+                      overdueTask
+                        ? 'border-red-400/60 dark:border-red-700/60 bg-red-50 dark:bg-red-900/25 hover:border-red-500'
+                        : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] hover:border-indigo-400'
+                    }`}
                   >
                     <p className="text-sm text-[rgb(var(--color-text-primary))] line-clamp-2">{task.name}</p>
                     <div className="flex items-center gap-2 mt-1.5">
@@ -114,8 +154,27 @@ const TeamProjectsKanban = ({ projects, tasks, members, onReassign, onOpenTask }
                           {project.name}
                         </span>
                       )}
+                      {/* Co-assignés (tâche partagée entre plusieurs personnes) */}
+                      {coAssignees.length > 0 && (
+                        <span className="flex -space-x-1 shrink-0" title={`Aussi assignée à ${coAssignees
+                          .map((id) => members.find((m) => m.userId === id)?.displayName)
+                          .filter(Boolean)
+                          .join(', ')}`}>
+                          {coAssignees.slice(0, 2).map((id) => {
+                            const m = members.find((x) => x.userId === id);
+                            return m ? (
+                              <span key={id} className="rounded-full ring-1 ring-[rgb(var(--color-surface))]">
+                                <MemberAvatar avatar={m.avatar} name={m.displayName} size={16} />
+                              </span>
+                            ) : null;
+                          })}
+                          {coAssignees.length > 2 && (
+                            <span className="text-[9px] font-bold text-[rgb(var(--color-text-muted))] pl-1.5">+{coAssignees.length - 2}</span>
+                          )}
+                        </span>
+                      )}
                       {task.deadline && (
-                        <span className={`ml-auto text-[10px] inline-flex items-center gap-0.5 shrink-0 ${overdueTask ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                        <span className={`ml-auto text-[10px] inline-flex items-center gap-0.5 shrink-0 ${overdueTask ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
                           <CalendarClock size={10} aria-hidden="true" />
                           {format(parseISO(task.deadline), 'd MMM', { locale: fr })}
                         </span>

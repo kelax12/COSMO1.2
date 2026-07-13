@@ -21,7 +21,7 @@ export const createTeamTaskSchema = z.object({
   priority: z.coerce.number().int().min(1).max(5, 'Priorité invalide (1 à 5)').optional(),
   deadline: z.string().optional(),
   estimatedTime: z.coerce.number().min(0, 'Durée négative').max(100000).optional(),
-  assigneeId: z.string().nullable().optional(),
+  assigneeIds: z.array(z.string()).max(20, '20 assignés maximum').optional(),
 });
 
 export const updateTeamTaskSchema = createTeamTaskSchema.partial().extend({
