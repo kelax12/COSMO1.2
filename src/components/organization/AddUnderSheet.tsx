@@ -1,61 +1,36 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Link2, Copy, Check, UserRoundPlus, KeyRound } from 'lucide-react';
+import { X, Link2, Copy, Check, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  subtreeOf,
   useActiveOrganization,
   useCreateInviteLink,
-  useSetMemberManager,
   type OrgMember,
 } from '@/modules/organizations';
-import MemberAvatar from './MemberAvatar';
 
 interface AddUnderSheetProps {
   orgId: string;
   /** Le futur responsable direct (l'échelon où on ajoute). */
   under: OrgMember;
-  members: OrgMember[];
   currentUserId?: string;
-  isAdmin: boolean;
   onClose: () => void;
 }
 
 /**
- * « Ajouter quelqu'un sous X » (bouton + de la pyramide) :
+ * « Ajouter quelqu'un sous X » (bouton de la pyramide) : deux moyens d'inviter.
  *   1. Lien d'invitation placé — URL single-use (7 j) qui fait entrer un
  *      NOUVEAU directement à cette place (le lien est l'approbation).
- *   2. Déplacer un membre EXISTANT de l'entreprise vers cette place.
+ *   2. Code d'invitation permanent de l'entreprise (validation admin, arrivée
+ *      non placée).
  */
-const AddUnderSheet = ({ orgId, under, members, currentUserId, isAdmin, onClose }: AddUnderSheetProps) => {
+const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetProps) => {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const createLink = useCreateInviteLink();
-  const setManager = useSetMemberManager();
   const { activeOrg } = useActiveOrganization();
   // Code d'invitation permanent de l'entreprise (flux avec validation admin).
   const joinCode = activeOrg?.id === orgId ? activeOrg.joinCode : null;
-
-  // Membres déplaçables ici : pas X lui-même, pas déjà sous X, pas un
-  // ancêtre de X (cycle) ; un non-admin ne déplace que son sous-arbre.
-  const underAncestors = new Set<string>();
-  {
-    let cur = under.managerId ?? null;
-    for (let i = 0; i < 50 && cur; i++) {
-      underAncestors.add(cur);
-      cur = members.find((m) => m.userId === cur)?.managerId ?? null;
-    }
-  }
-  const mySubtree = currentUserId ? subtreeOf(members, currentUserId) : new Set<string>();
-  const candidates = members.filter((m) => {
-    if (m.userId === under.userId) return false;
-    if (m.managerId === under.userId) return false;
-    if (underAncestors.has(m.userId)) return false;
-    if (subtreeOf(members, m.userId).has(under.userId)) return false; // cycle
-    if (!isAdmin && !mySubtree.has(m.userId)) return false;
-    return true;
-  });
 
   const generateLink = () => {
     createLink.mutate(
@@ -92,13 +67,6 @@ const AddUnderSheet = ({ orgId, under, members, currentUserId, isAdmin, onClose 
     }
   };
 
-  const moveHere = (userId: string) => {
-    setManager.mutate(
-      { orgId, userId, managerId: under.userId },
-      { onSuccess: () => onClose() },
-    );
-  };
-
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -124,7 +92,7 @@ const AddUnderSheet = ({ orgId, under, members, currentUserId, isAdmin, onClose 
           </button>
         </div>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">
-          Invitez une nouvelle personne à cette place, ou déplacez-y un membre existant.
+          Invitez une nouvelle personne à rejoindre l'entreprise à cette place.
         </p>
 
         {/* ── Lien d'invitation placé ── */}
@@ -164,7 +132,7 @@ const AddUnderSheet = ({ orgId, under, members, currentUserId, isAdmin, onClose 
 
         {/* ── Code d'invitation de l'entreprise ── */}
         {joinCode && (
-          <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4 mb-4">
+          <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5 mb-1">
               <KeyRound size={14} className="text-indigo-500" aria-hidden="true" /> Code d'invitation de l'entreprise
             </h3>
@@ -187,34 +155,6 @@ const AddUnderSheet = ({ orgId, under, members, currentUserId, isAdmin, onClose 
             </div>
           </section>
         )}
-
-        {/* ── Déplacer un membre existant ── */}
-        <section>
-          <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5 mb-2">
-            <UserRoundPlus size={14} className="text-blue-500" aria-hidden="true" /> Déplacer un membre ici
-          </h3>
-          {candidates.length === 0 ? (
-            <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">Aucun membre déplaçable à cette place.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {candidates.map((m) => (
-                <li key={m.userId}>
-                  <button
-                    type="button"
-                    onClick={() => moveHere(m.userId)}
-                    disabled={setManager.isPending}
-                    className="w-full flex items-center gap-3 p-2.5 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left disabled:opacity-50"
-                  >
-                    <MemberAvatar avatar={m.avatar} size={32} />
-                    <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
-                      {m.userId === currentUserId ? 'Vous' : m.displayName}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
     </div>,
     document.body,

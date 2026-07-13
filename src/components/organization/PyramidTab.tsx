@@ -13,6 +13,7 @@ import {
   X,
   Pencil,
   Check,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -24,6 +25,7 @@ import {
   isManagerOf,
   subtreeOf,
   useSetMemberManager,
+  useRemoveMember,
   type OrgMember,
   type OrgTreeNode,
 } from '@/modules/organizations';
@@ -32,6 +34,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
@@ -115,6 +118,8 @@ interface NodeCardProps {
   isAdmin: boolean;
   onStartDrag: (m: OrgMember) => void;
   onAddUnder: (m: OrgMember) => void;
+  /** Retire un membre de l'entreprise (admin — avec confirmation dans le parent). */
+  onRemove: (m: OrgMember) => void;
   /** Saisie directe (poignée grip / long-press) : active le mode et démarre le glisser. */
   onGrab: (m: OrgMember, pos: { clientX: number; clientY: number }) => void;
   drag: DragState | null;
@@ -136,7 +141,7 @@ interface NodeCardProps {
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, editMode, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, editMode, depth, mobile }: NodeCardProps) => {
   const collapsed = collapsedIds.has(node.member.userId);
   // Long-press mobile : timer + position initiale (annulé si le doigt bouge).
   const longPressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
@@ -156,6 +161,9 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
   // son sous-arbre (miroir de la policy INSERT org_invite_links).
   const canAddUnder =
     isAdmin || m.userId === currentUserId || canManage(m, members, currentUserId, isAdmin);
+  // « Retirer de l'entreprise » : réservé aux admins (RPC remove_member exige
+  // is_org_admin), sur une autre personne que soi (sous soi dans la pyramide).
+  const canRemove = isAdmin && !isMe;
 
   const isDragSource = drag?.member.userId === m.userId;
   const isDropTarget = !!drag && drag.validDropIds.has(m.userId);
@@ -342,7 +350,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             )}
           </p>
         </div>
-      {!drag && (movable || canAddUnder) && (
+      {!drag && (movable || canAddUnder || canRemove) && (
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Actions pour ${m.displayName}`}
@@ -363,6 +371,15 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 Déplacer
               </DropdownMenuItem>
             )}
+            {canRemove && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onClick={() => onRemove(m)}>
+                  <Trash2 size={14} aria-hidden="true" />
+                  Retirer de l'entreprise
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -374,7 +391,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -403,7 +420,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -467,8 +484,21 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // Fades de scroll horizontal (desktop) : y a-t-il du contenu hors-champ ?
   const [scrollShadow, setScrollShadow] = useState({ left: false, right: false });
   const setManager = useSetMemberManager();
+  const removeMember = useRemoveMember();
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
+
+  // Retrait d'un membre (admin) : confirmation, puis re-parentage automatique
+  // de ses subordonnés vers son responsable (RPC remove_member, mig. 066).
+  const handleRemove = (m: OrgMember) => {
+    const subCount = subtreeOf(members, m.userId).size;
+    const message =
+      subCount > 0
+        ? `Retirer ${m.displayName} de l'entreprise ? Ses ${subCount} subordonné${subCount > 1 ? 's' : ''} ser${subCount > 1 ? 'ont' : 'a'} rattaché${subCount > 1 ? 's' : ''} à son responsable.`
+        : `Retirer ${m.displayName} de l'entreprise ? Cette personne perdra l'accès aux projets et OKR de l'équipe.`;
+    if (!window.confirm(message)) return;
+    removeMember.mutate({ orgId, userId: m.userId });
+  };
 
   // Équipes transverses par membre (pastilles couleur sur les cartes).
   const teamsByUser = useMemo(() => {
@@ -1027,6 +1057,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 isAdmin={isAdmin}
                 onStartDrag={setDragging}
                 onAddUnder={setAddingUnder}
+                onRemove={handleRemove}
                 onGrab={grabMember}
                 drag={drag}
                 flashId={flashId}
@@ -1157,9 +1188,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         <AddUnderSheet
           orgId={orgId}
           under={addingUnder}
-          members={members}
           currentUserId={currentUserId}
-          isAdmin={isAdmin}
           onClose={() => setAddingUnder(null)}
         />
       )}
