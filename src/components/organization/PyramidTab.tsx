@@ -14,6 +14,9 @@ import {
   Pencil,
   Check,
   Trash2,
+  ListTodo,
+  CalendarDays,
+  TrendingUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -40,6 +43,7 @@ import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
 import MemberProfileSheet from './MemberProfileSheet';
+import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
 
 interface PyramidTabProps {
   orgId: string;
@@ -134,6 +138,8 @@ interface NodeCardProps {
   teamsByUser: Map<string, OrgTeam[]>;
   /** Ouvre la fiche membre (clic ou Entrée sur une carte hors mode déplacement). */
   onOpenProfile: (m: OrgMember) => void;
+  /** Ouvre les infos d'un subordonné (tâches / agenda / contribution). */
+  onOpenInsights: (m: OrgMember, tab: InsightsTab) => void;
   /** Mode réorganisation : toutes les cartes déplaçables sont draggables. */
   editMode: boolean;
   /** Profondeur (mobile : indentation ; desktop : sans objet). */
@@ -141,8 +147,12 @@ interface NodeCardProps {
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, editMode, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile }: NodeCardProps) => {
   const collapsed = collapsedIds.has(node.member.userId);
+  // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
+  // l'élément sous le pointeur (la carte) → sinon la fiche s'ouvrait en plus de
+  // l'action choisie. On horodate l'action du menu pour ignorer ce click fantôme.
+  const menuActionAtRef = useRef(0);
   // Long-press mobile : timer + position initiale (annulé si le doigt bouge).
   const longPressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
   const cancelLongPress = () => {
@@ -164,6 +174,9 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
   // « Retirer de l'entreprise » : réservé aux admins (RPC remove_member exige
   // is_org_admin), sur une autre personne que soi (sous soi dans la pyramide).
   const canRemove = isAdmin && !isMe;
+  // Infos membre (tâches / agenda / contribution) : réservées aux supérieurs
+  // hiérarchiques (admin partout ; manager sur son sous-arbre) — jamais soi.
+  const canSeeInsights = movable;
 
   const isDragSource = drag?.member.userId === m.userId;
   const isDropTarget = !!drag && drag.validDropIds.has(m.userId);
@@ -239,6 +252,8 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           return;
         }
         if (drag || editMode) return; // en mode déplacement/réorganisation, pas de fiche
+        // Ignore le click fantôme émis juste après la fermeture du menu (Radix).
+        if (Date.now() - menuActionAtRef.current < 500) return;
         const t = e.target as HTMLElement;
         if (t.closest('button') || t.closest('[data-grip]')) return;
         onOpenProfile(m);
@@ -358,7 +373,13 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           >
             <MoreHorizontal size={15} aria-hidden="true" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent
+            align="end"
+            className="w-56"
+            onClick={() => {
+              menuActionAtRef.current = Date.now();
+            }}
+          >
             {canAddUnder && (
               <DropdownMenuItem onClick={() => onAddUnder(m)}>
                 <UserRoundPlus size={14} className="text-green-500" aria-hidden="true" />
@@ -370,6 +391,23 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 <Move size={14} className="text-indigo-500" aria-hidden="true" />
                 Déplacer
               </DropdownMenuItem>
+            )}
+            {canSeeInsights && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onOpenInsights(m, 'tasks')}>
+                  <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
+                  Voir ses tâches
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onOpenInsights(m, 'agenda')}>
+                  <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
+                  Voir son agenda
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onOpenInsights(m, 'contribution')}>
+                  <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
+                  Voir sa contribution
+                </DropdownMenuItem>
+              </>
             )}
             {canRemove && (
               <>
@@ -391,7 +429,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -420,7 +458,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} editMode={editMode} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -462,6 +500,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [placing, setPlacing] = useState<OrgMember | null>(null);
   const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
   const [profile, setProfile] = useState<OrgMember | null>(null);
+  // Infos d'un subordonné (tâches / agenda / contribution), ouvert sur un onglet.
+  const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
   // Annonce lecteur d'écran après un déplacement (aria-live).
   const [announcement, setAnnouncement] = useState('');
   // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
@@ -1066,6 +1106,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
                 onOpenProfile={setProfile}
+                onOpenInsights={(mem, tab) => setInsights({ member: mem, tab })}
                 editMode={editMode}
                 depth={0}
                 mobile={isMobile}
@@ -1181,6 +1222,15 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           onClose={() => setProfile(null)}
           onMove={setDragging}
           onAddUnder={setAddingUnder}
+        />
+      )}
+
+      {insights && (
+        <MemberInsightsSheet
+          orgId={orgId}
+          member={insights.member}
+          initialTab={insights.tab}
+          onClose={() => setInsights(null)}
         />
       )}
 
