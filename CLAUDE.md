@@ -13,6 +13,8 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) | a11y WCAG/EAA, aria, contraste |
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y scan, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
+| [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) | Montée en charge, limites Supabase/localStorage |
+| [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
 | [`faille.md`](./faille.md) | Failles de sécurité (archive + roadmap, **source de vérité**) |
 | [`a-faire.md`](./a-faire.md) | Bugs/régressions mobile non résolus |
 
@@ -27,13 +29,14 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | Couche | Technologie |
 |---|---|
 | Framework | React 18 + TypeScript 5.5 (strict) |
-| Build | Vite 5 |
+| Build | Vite 7 (+ prérendu `prerender.mjs` dans `npm run build`) |
 | Routing | React Router DOM 6 |
 | State serveur | TanStack React Query 5 |
 | Backend / Auth | Supabase 2 |
 | UI Components | shadcn/ui (Radix UI + Tailwind CSS 3) |
 | Toasts | Sonner |
-| Animations | Framer Motion (GSAP retiré 2026-05-30) |
+| Animations | Framer Motion (app) + GSAP 3 (**landing page uniquement** — voir règle GSAP ci-dessous) |
+| Graphiques | recharts (`DashboardChart`, `DashboardBarChart`, `StatisticsPage`) |
 | Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé**, voir `faille.md` |
 | Icônes | lucide-react (imports nominaux uniquement) |
 | Dates | date-fns 3 (locale `fr` toujours importé nominalement) |
@@ -52,14 +55,16 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 ```bash
 npm run dev        # Serveur dev local (port 5173)
 npm start          # Serveur dev réseau (port 3000)
-npm run build      # Build production → dist/
+npm run build      # Build production → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
+npm run typecheck  # tsc -b (doit retourner 0 erreur)
 npm test           # Vitest — tests unitaires (run once)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # Vitest + couverture v8 (seuils par fichier — bloquant CI)
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
-npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts
+npm run test:rls   # Tests d'intégration RLS (vitest.integration.config.ts — nécessite pg)
+npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (+ :ui, :report)
 ```
 
 > Le build prod **drope automatiquement** `console.*` et `debugger` (via `vite.config.ts → esbuild.pure/drop`). Les erreurs sont remontées via Sentry (`VITE_SENTRY_DSN`).
@@ -312,6 +317,15 @@ Quand un KR transitionne `completed: false → true`, **les deux repositories OK
 import { supabase } from '@/lib/supabase';      // ✅
 import { supabase } from '../../lib/supabase';   // ❌
 ```
+
+### GSAP — landing page uniquement (réintroduit 2026-07)
+```typescript
+import { gsap, ScrollTrigger, SplitText, useGSAP } from '@/lib/gsap';  // ✅
+import { gsap } from 'gsap';                                            // ❌ jamais
+```
+- **Point d'entrée unique** : `src/lib/gsap.ts` (registration des plugins + isolation du chunk `vendor-gsap`, chargé seulement par la LandingPage lazy).
+- **Périmètre** : `src/pages/LandingPage.tsx` + `src/pages/landing/*` + `src/lib/hooks/use-magnetic.ts`. Le reste de l'app reste sur **Framer Motion** — ne pas étendre GSAP hors landing.
+- Toute animation doit respecter `prefers-reduced-motion` (via `gsap.matchMedia()` ou guard équivalent).
 
 ### Toasts
 ```typescript
