@@ -8,6 +8,7 @@ import { ITeamProjectsRepository } from './repository';
 import {
   TeamProject,
   CreateTeamProjectInput,
+  UpdateTeamProjectInput,
   TeamTask,
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
@@ -79,7 +80,6 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .from('team_projects')
       .select('*')
       .eq('org_id', orgId)
-      .is('archived_at', null)
       .order('created_at', { ascending: true })
       .limit(200);
     if (error) throw normalizeApiError(error);
@@ -101,6 +101,24 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         color: input.color ?? 'blue',
         team_id: input.teamId ?? null,
       })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapProject(data as ProjectRow);
+  }
+
+  async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist explicite — jamais org_id/created_by (mass-assignment V1).
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.color !== undefined) patch.color = input.color;
+    if (input.teamId !== undefined) patch.team_id = input.teamId;
+    if (input.archived !== undefined) patch.archived_at = input.archived ? new Date().toISOString() : null;
+    const { data, error } = await supabase
+      .from('team_projects')
+      .update(patch)
+      .eq('id', projectId)
       .select('*')
       .single();
     if (error) throw normalizeApiError(error);

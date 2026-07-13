@@ -10,6 +10,7 @@ import { ITeamProjectsRepository } from './repository';
 import {
   TeamProject,
   CreateTeamProjectInput,
+  UpdateTeamProjectInput,
   TeamTask,
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
@@ -121,7 +122,8 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   }
 
   async getProjects(orgId: string): Promise<TeamProject[]> {
-    return this.getProjectsArray().filter((p) => p.orgId === orgId && !p.archivedAt);
+    // Archivés inclus — le filtrage actif/archivé se fait côté UI.
+    return this.getProjectsArray().filter((p) => p.orgId === orgId);
   }
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
@@ -138,6 +140,18 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     };
     this.saveProjects([...projects, project]);
     return project;
+  }
+
+  async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
+    const projects = this.getProjectsArray();
+    const p = projects.find((x) => x.id === projectId);
+    if (!p) throw new Error('Projet introuvable');
+    if (input.name !== undefined) p.name = input.name;
+    if (input.color !== undefined) p.color = input.color;
+    if (input.teamId !== undefined) p.teamId = input.teamId;
+    if (input.archived !== undefined) p.archivedAt = input.archived ? new Date().toISOString() : null;
+    this.saveProjects(projects);
+    return p;
   }
 
   async archiveProject(projectId: string): Promise<void> {

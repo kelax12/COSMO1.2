@@ -66,10 +66,24 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     expect(after.length).toBe(before.length - 1);
   });
 
-  it('crée puis archive un projet (retiré de la liste active)', async () => {
+  it('crée puis archive un projet (archivedAt renseigné, toujours listé)', async () => {
     const created = await repo.createProject(ORG, { name: 'Projet éphémère' });
     expect((await repo.getProjects(ORG)).some((p) => p.id === created.id)).toBe(true);
     await repo.archiveProject(created.id);
-    expect((await repo.getProjects(ORG)).some((p) => p.id === created.id)).toBe(false);
+    const archived = (await repo.getProjects(ORG)).find((p) => p.id === created.id);
+    expect(archived?.archivedAt).toBeTruthy();
+  });
+
+  it('met à jour un projet (nom, couleur, équipe, désarchivage)', async () => {
+    const created = await repo.createProject(ORG, { name: 'À renommer', color: 'blue' });
+    const renamed = await repo.updateProject(created.id, { name: 'Renommé', color: 'teal', teamId: 'team-dev' });
+    expect(renamed.name).toBe('Renommé');
+    expect(renamed.color).toBe('teal');
+    expect(renamed.teamId).toBe('team-dev');
+
+    const archived = await repo.updateProject(created.id, { archived: true });
+    expect(archived.archivedAt).toBeTruthy();
+    const restored = await repo.updateProject(created.id, { archived: false });
+    expect(restored.archivedAt).toBeNull();
   });
 });

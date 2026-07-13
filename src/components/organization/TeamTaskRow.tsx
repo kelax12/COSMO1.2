@@ -1,8 +1,9 @@
-import { Check, Trash2, CalendarClock } from 'lucide-react';
-import { format, isPast, isToday, parseISO } from 'date-fns';
+import { Check, Trash2, CalendarClock, AlignLeft } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
+import { PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
 import AssigneePicker from './AssigneePicker';
 
 interface TeamTaskRowProps {
@@ -11,20 +12,15 @@ interface TeamTaskRowProps {
   onToggleComplete: (task: TeamTask) => void;
   onReassign: (task: TeamTask, assigneeId: string | null) => void;
   onDelete: (task: TeamTask) => void;
+  /** Ouvre le sheet d'édition complète. */
+  onOpen: (task: TeamTask) => void;
 }
 
-const PRIORITY_COLORS: Record<number, string> = {
-  1: 'bg-slate-400',
-  2: 'bg-sky-400',
-  3: 'bg-blue-500',
-  4: 'bg-amber-500',
-  5: 'bg-red-500',
-};
-
 /** Ligne de tâche d'équipe : complétion, nom, priorité, deadline, assigné, suppression. */
-const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete }: TeamTaskRowProps) => {
+const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, onOpen }: TeamTaskRowProps) => {
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
-  const overdue = !!deadlineDate && !task.completed && isPast(deadlineDate) && !isToday(deadlineDate);
+  const overdue = isTaskOverdue(task);
+  const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
 
   return (
     <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors group">
@@ -45,23 +41,36 @@ const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete }: 
 
       {/* Priorité */}
       <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_COLORS[task.priority] ?? 'bg-slate-400'}`}
-        aria-label={`Priorité ${task.priority}`}
+        className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`}
+        aria-label={priority.label}
+        title={priority.label}
       />
 
-      {/* Nom + deadline */}
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm truncate ${task.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
+      {/* Nom + deadline — clic = édition complète */}
+      <button
+        type="button"
+        onClick={() => onOpen(task)}
+        className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
+        aria-label={`Modifier la tâche ${task.name}`}
+      >
+        <span className={`block text-sm truncate ${task.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
           {task.name}
-        </p>
+          {task.description?.trim() && (
+            <AlignLeft
+              size={12}
+              className="inline-block ml-1.5 align-[-1px] text-[rgb(var(--color-text-muted))]"
+              aria-label="Contient une description"
+            />
+          )}
+        </span>
         {deadlineDate && (
-          <p className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
+          <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
             <CalendarClock size={11} aria-hidden="true" />
             {format(deadlineDate, 'd MMM', { locale: fr })}
             {overdue && ' · en retard'}
-          </p>
+          </span>
         )}
-      </div>
+      </button>
 
       {/* Assigné */}
       <AssigneePicker
