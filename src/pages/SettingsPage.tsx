@@ -303,11 +303,11 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-      className="min-h-[100dvh] bg-[rgb(var(--color-background))] transition-colors duration-300 flex pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-0">
+      className="min-h-[100dvh] lg:h-full lg:min-h-0 bg-[rgb(var(--color-background))] transition-colors duration-300 flex pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-0">
 
       {/* ──────── SIDEBAR ──────── */}
       <motion.aside
-        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0 h-screen overflow-y-auto"
+        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0 h-full overflow-y-auto"
         style={{ background: 'rgb(var(--color-surface))' }}
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
