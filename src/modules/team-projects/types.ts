@@ -21,6 +21,15 @@ export interface CreateTeamProjectInput {
   teamId?: string | null;
 }
 
+/** Patch projet (managers only — RLS team_projects_update, mig. 068). */
+export interface UpdateTeamProjectInput {
+  name?: string;
+  color?: string;
+  teamId?: string | null;
+  /** true = archiver (archived_at → now), false = désarchiver (→ null). */
+  archived?: boolean;
+}
+
 /** Tâche d'équipe — champs canoniques `name` / `completed` / `deadline` (B6). */
 export interface TeamTask {
   id: string;

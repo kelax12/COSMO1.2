@@ -7,6 +7,13 @@ export const createTeamProjectSchema = z.object({
   color: z.string().optional(),
 });
 
+export const updateTeamProjectSchema = z.object({
+  name: z.string().trim().min(1, 'Le nom du projet est requis').max(120, 'Nom trop long (120 max)').optional(),
+  color: z.string().max(30).optional(),
+  teamId: z.string().nullable().optional(),
+  archived: z.boolean().optional(),
+});
+
 export const createTeamTaskSchema = z.object({
   projectId: z.string().min(1, 'Projet requis'),
   name: z.string().trim().min(1, 'Le nom de la tâche est requis').max(500, 'Nom trop long (500 max)'),

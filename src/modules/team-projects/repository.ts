@@ -5,6 +5,7 @@
 import {
   TeamProject,
   CreateTeamProjectInput,
+  UpdateTeamProjectInput,
   TeamTask,
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
@@ -12,9 +13,10 @@ import {
 } from './types';
 
 export interface ITeamProjectsRepository {
-  // Projets
+  // Projets — getProjects retourne AUSSI les archivés (filtrage côté UI).
   getProjects(orgId: string): Promise<TeamProject[]>;
   createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject>;
+  updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject>;
   archiveProject(projectId: string): Promise<void>;
 
   // Tâches d'équipe

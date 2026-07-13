@@ -1,17 +1,38 @@
-import { useState } from 'react';
-import { Plus, FolderKanban, ChevronDown, ChevronRight, UsersRound } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { showUndoToast } from '@/lib/undo-toast';
+import {
+  Plus, FolderKanban, LayoutList, SquareKanban, AlarmClock,
+  CircleDashed, CheckCircle2, ChevronDown, ChevronRight, UserRound,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import {
   useTeamProjects,
   useTeamTasks,
   useCreateTeamProject,
+  useUpdateTeamProject,
   useCreateTeamTask,
   useUpdateTeamTask,
   useDeleteTeamTask,
   type TeamTask,
+  type TeamProject,
 } from '@/modules/team-projects';
 import { useOrgTeams } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
-import TeamTaskRow from './TeamTaskRow';
+import {
+  useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
+  PROJECT_COLOR_NAMES, PROJECT_COLORS,
+} from './team-projects.helpers';
+import MemberAvatar from './MemberAvatar';
+import TeamProjectCard from './TeamProjectCard';
+import TeamProjectsKanban from './TeamProjectsKanban';
+import TeamTaskEditSheet from './TeamTaskEditSheet';
 
 interface TeamProjectsTabProps {
   orgId: string;
@@ -21,90 +42,241 @@ interface TeamProjectsTabProps {
   isManager: boolean;
 }
 
-type Scope = 'all' | 'mine';
+/** Skeleton de chargement au format carte projet. */
+const ProjectsSkeleton = () => (
+  <div className="space-y-4" aria-hidden="true">
+    {[0, 1, 2].map((i) => (
+      <div key={i} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-hover))]" />
+          <div className="h-4 w-40 rounded bg-[rgb(var(--color-hover))]" />
+          <div className="ml-auto h-3 w-16 rounded bg-[rgb(var(--color-hover))]" />
+        </div>
+        <div className="mt-4 space-y-2.5">
+          <div className="h-3 w-3/4 rounded bg-[rgb(var(--color-hover))]" />
+          <div className="h-3 w-2/3 rounded bg-[rgb(var(--color-hover))]" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
-  const [scope, setScope] = useState<Scope>('all');
+  const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
+  const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectTeamId, setNewProjectTeamId] = useState<string>('');
-  const [teamFilter, setTeamFilter] = useState<string>('');
-  const [showNewProject, setShowNewProject] = useState(false);
-  const [composerFor, setComposerFor] = useState<string | null>(null);
-  const [composerName, setComposerName] = useState('');
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [newProjectColor, setNewProjectColor] = useState('blue');
+  const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
 
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
-  // Filtre équipe : '' = tous, 'org' = projets d'entreprise, sinon teamId.
-  const projects = allProjects.filter((p) => {
-    if (!teamFilter) return true;
-    if (teamFilter === 'org') return !p.teamId;
-    return p.teamId === teamFilter;
-  });
-  const teamName = (teamId?: string | null) => teams.find((t) => t.id === teamId)?.name;
-  const { data: tasks = [] } = useTeamTasks(
-    orgId,
-    scope === 'mine' && currentUserId ? { assigneeId: currentUserId } : undefined,
-  );
   const createProject = useCreateTeamProject(orgId);
+  const updateProject = useUpdateTeamProject(orgId);
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
 
-  const tasksByProject = (projectId: string) => tasks.filter((t) => t.projectId === projectId);
+  const { teamFilter, assigneeFilter, view, collapsed, showArchived } = prefs;
 
+  // ─── Projets visibles (filtre équipe + actifs/archivés) ────────────
+  const matchesTeam = (p: TeamProject) => {
+    if (!teamFilter) return true;
+    if (teamFilter === 'org') return !p.teamId;
+    return p.teamId === teamFilter;
+  };
+  const activeProjects = allProjects.filter((p) => !p.archivedAt && matchesTeam(p));
+  const archivedProjects = allProjects.filter((p) => !!p.archivedAt && matchesTeam(p));
+
+  // ─── Tâches : stats globales (non filtrées) + vue filtrée par assigné ──
+  const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
+  const statsTasks = useMemo(
+    () => allTasks.filter((t) => activeProjectIds.has(t.projectId)),
+    [allTasks, activeProjectIds],
+  );
+  const openCount = statsTasks.filter((t) => !t.completed).length;
+  const overdueCount = statsTasks.filter(isTaskOverdue).length;
+  const doneThisWeek = completedThisWeek(statsTasks);
+
+  const visibleTasks = useMemo(
+    () => (assigneeFilter ? allTasks.filter((t) => t.assigneeId === assigneeFilter) : allTasks),
+    [allTasks, assigneeFilter],
+  );
+  const tasksByProject = (projectId: string) => visibleTasks.filter((t) => t.projectId === projectId);
+
+  const filteredMember = members.find((m) => m.userId === assigneeFilter);
+
+  // ─── Actions ────────────────────────────────────────────────────────
   const handleCreateProject = () => {
     const name = newProjectName.trim();
     if (name.length < 1) return;
-    createProject.mutate({ name, teamId: newProjectTeamId || null }, {
-      onSuccess: () => { setNewProjectName(''); setNewProjectTeamId(''); setShowNewProject(false); },
+    createProject.mutate({ name, teamId: newProjectTeamId || null, color: newProjectColor }, {
+      onSuccess: () => {
+        setNewProjectName(''); setNewProjectTeamId(''); setNewProjectColor('blue'); setShowNewProject(false);
+      },
     });
-  };
-
-  const handleAddTask = (projectId: string) => {
-    const name = composerName.trim();
-    if (!name) return;
-    createTask.mutate(
-      { projectId, name, assigneeId: currentUserId ?? null },
-      { onSuccess: () => setComposerName('') },
-    );
   };
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
   const reassign = (task: TeamTask, assigneeId: string | null) =>
     updateTask.mutate({ taskId: task.id, input: { assigneeId } });
-  const remove = (task: TeamTask) => deleteTask.mutate(task.id);
 
-  if (loadingProjects) {
-    return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">Chargement…</div>;
-  }
+  // Suppression avec « Annuler » : la tâche est recréée à l'identique.
+  const removeWithUndo = (task: TeamTask) =>
+    deleteTask.mutate(task.id, {
+      onSuccess: () => {
+        showUndoToast('Tâche supprimée', () =>
+          createTask.mutate({
+            projectId: task.projectId,
+            name: task.name,
+            description: task.description,
+            priority: task.priority,
+            deadline: task.deadline,
+            estimatedTime: task.estimatedTime,
+            assigneeId: task.assigneeId ?? null,
+          }),
+        );
+      },
+    });
+
+  const saveTaskEdit = async (input: Parameters<typeof updateTask.mutateAsync>[0]['input']) => {
+    if (!editingTask) return;
+    await updateTask.mutateAsync({ taskId: editingTask.id, input });
+  };
+
+  const toggleCollapse = (projectId: string) =>
+    updatePrefs((prev) => ({ collapsed: { ...prev.collapsed, [projectId]: !prev.collapsed[projectId] } }));
+
+  // ─── Groupement par équipe (vue liste, sans filtre équipe) ──────────
+  const groupedSections = useMemo(() => {
+    if (teamFilter || teams.length === 0) return null;
+    const sections: { key: string; label: string | null; projects: TeamProject[] }[] = [];
+    for (const team of teams) {
+      const ps = activeProjects.filter((p) => p.teamId === team.id);
+      if (ps.length > 0) sections.push({ key: team.id, label: `Équipe ${team.name}`, projects: ps });
+    }
+    const orgProjects = activeProjects.filter((p) => !p.teamId || !teams.some((t) => t.id === p.teamId));
+    if (orgProjects.length > 0) sections.push({ key: 'org', label: sections.length > 0 ? 'Entreprise' : null, projects: orgProjects });
+    return sections;
+  }, [teamFilter, teams, activeProjects]);
+
+  if (loadingProjects) return <ProjectsSkeleton />;
+
+  const renderProjectCard = (project: TeamProject) => (
+    <TeamProjectCard
+      key={project.id}
+      project={project}
+      tasks={tasksByProject(project.id)}
+      members={members}
+      teams={teams}
+      currentUserId={currentUserId}
+      isManager={isManager}
+      collapsed={!!collapsed[project.id]}
+      onToggleCollapse={() => toggleCollapse(project.id)}
+      assigneeFiltered={!!assigneeFilter}
+      onCreateTask={(input) => createTask.mutate(input)}
+      createPending={createTask.isPending}
+      onToggleComplete={toggleComplete}
+      onReassign={reassign}
+      onDelete={removeWithUndo}
+      onOpenTask={setEditingTask}
+      onUpdateProject={(input) => updateProject.mutate({ projectId: project.id, input })}
+    />
+  );
 
   return (
     <div className="space-y-4">
+      {/* Pouls : stats de l'espace projets */}
+      {activeProjects.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
+            <FolderKanban size={12} aria-hidden="true" /> {activeProjects.length} projet{activeProjects.length > 1 ? 's' : ''}
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
+            <CircleDashed size={12} aria-hidden="true" /> {openCount} ouverte{openCount > 1 ? 's' : ''}
+          </span>
+          {overdueCount > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-500 font-semibold">
+              <AlarmClock size={12} aria-hidden="true" /> {overdueCount} en retard
+            </span>
+          )}
+          {doneThisWeek > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <CheckCircle2 size={12} aria-hidden="true" /> {doneThisWeek} terminée{doneThisWeek > 1 ? 's' : ''} cette semaine
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Barre d'actions */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Toutes / Mes tâches */}
           <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
-            {(['all', 'mine'] as Scope[]).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setScope(s)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  scope === s
-                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                    : 'text-[rgb(var(--color-text-muted))]'
-                }`}
-              >
-                {s === 'all' ? 'Toutes les tâches' : 'Mes tâches'}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => updatePrefs({ assigneeFilter: null })}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                !assigneeFilter ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+            >
+              Toutes les tâches
+            </button>
+            <button
+              type="button"
+              onClick={() => currentUserId && updatePrefs({ assigneeFilter: currentUserId })}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                assigneeFilter === currentUserId ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+            >
+              Mes tâches
+            </button>
           </div>
+
+          {/* Tâches d'un membre */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Filtrer par assigné"
+              className={`h-9 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                filteredMember && assigneeFilter !== currentUserId
+                  ? 'border-indigo-500 text-[rgb(var(--color-text-primary))]'
+                  : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              {filteredMember && assigneeFilter !== currentUserId ? (
+                <>
+                  <MemberAvatar avatar={filteredMember.avatar} name={filteredMember.displayName} size={20} />
+                  <span className="max-w-[110px] truncate">{filteredMember.displayName}</span>
+                </>
+              ) : (
+                <>
+                  <UserRound size={14} aria-hidden="true" /> Tâches de…
+                </>
+              )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
+              <DropdownMenuLabel>Voir les tâches de</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null })}>
+                <span className="text-[rgb(var(--color-text-muted))]">Tout le monde</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {members.map((m) => (
+                <DropdownMenuItem key={m.userId} onClick={() => updatePrefs({ assigneeFilter: m.userId })}>
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                  <span className="truncate">{m.userId === currentUserId ? 'Vous' : m.displayName}</span>
+                  {m.userId === assigneeFilter && <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]">✓</span>}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Filtre équipe */}
           {teams.length > 0 && (
             <select
               value={teamFilter}
-              onChange={(e) => setTeamFilter(e.target.value)}
+              onChange={(e) => updatePrefs({ teamFilter: e.target.value })}
               aria-label="Filtrer par équipe"
               className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
             >
@@ -117,40 +289,36 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           )}
         </div>
 
-        {isManager && (
-          showNewProject ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <input
-                type="text"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
-                placeholder="Nom du projet"
-                autoFocus
-                maxLength={120}
-                className="h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-              />
-              <select
-                value={newProjectTeamId}
-                onChange={(e) => setNewProjectTeamId(e.target.value)}
-                aria-label="Équipe du projet"
-                className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-              >
-                <option value="">Toute l'entreprise</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>Équipe {t.name}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleCreateProject}
-                disabled={!newProjectName.trim() || createProject.isPending}
-                className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold"
-              >
-                Créer
-              </button>
-            </div>
-          ) : (
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Liste / Kanban */}
+          <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
+            <button
+              type="button"
+              onClick={() => updatePrefs({ view: 'list' })}
+              aria-label="Vue liste"
+              aria-pressed={view === 'list'}
+              title="Vue liste"
+              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
+                view === 'list' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+            >
+              <LayoutList size={15} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => updatePrefs({ view: 'kanban' })}
+              aria-label="Vue kanban par assigné"
+              aria-pressed={view === 'kanban'}
+              title="Vue kanban par assigné"
+              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
+                view === 'kanban' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+            >
+              <SquareKanban size={15} aria-hidden="true" />
+            </button>
+          </div>
+
+          {isManager && !showNewProject && (
             <button
               type="button"
               onClick={() => setShowNewProject(true)}
@@ -158,101 +326,145 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             >
               <Plus size={15} aria-hidden="true" /> Nouveau projet
             </button>
-          )
-        )}
+          )}
+        </div>
       </div>
 
-      {projects.length === 0 ? (
+      {/* Formulaire nouveau projet */}
+      {isManager && showNewProject && (
+        <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3">
+          <input
+            type="text"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateProject();
+              if (e.key === 'Escape') setShowNewProject(false);
+            }}
+            placeholder="Nom du projet"
+            autoFocus
+            maxLength={120}
+            className="h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 flex-1 min-w-[160px]"
+          />
+          <div className="flex items-center gap-1" role="radiogroup" aria-label="Couleur du projet">
+            {PROJECT_COLOR_NAMES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={newProjectColor === c}
+                aria-label={`Couleur ${c}`}
+                onClick={() => setNewProjectColor(c)}
+                className={`w-6 h-6 rounded-full flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${newProjectColor === c ? 'ring-2 ring-indigo-500' : ''}`}
+              >
+                <span className={`w-3.5 h-3.5 rounded-full ${PROJECT_COLORS[c].dot}`} />
+              </button>
+            ))}
+          </div>
+          {teams.length > 0 && (
+            <select
+              value={newProjectTeamId}
+              onChange={(e) => setNewProjectTeamId(e.target.value)}
+              aria-label="Équipe du projet"
+              className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+            >
+              <option value="">Toute l'entreprise</option>
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>Équipe {t.name}</option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={handleCreateProject}
+            disabled={!newProjectName.trim() || createProject.isPending}
+            className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold"
+          >
+            Créer
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowNewProject(false)}
+            className="h-9 px-3 rounded-lg text-sm font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
+
+      {/* Contenu */}
+      {activeProjects.length === 0 && archivedProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
             <FolderKanban size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Aucun projet</p>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-            {isManager ? 'Créez un projet pour organiser les tâches de l\'équipe.' : 'Un manager doit créer un projet.'}
-          </p>
+          {isManager ? (
+            <button
+              type="button"
+              onClick={() => setShowNewProject(true)}
+              className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
+            >
+              <Plus size={15} aria-hidden="true" /> Créer un projet
+            </button>
+          ) : (
+            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">Un manager doit créer un projet.</p>
+          )}
         </div>
+      ) : view === 'kanban' ? (
+        <TeamProjectsKanban
+          projects={activeProjects}
+          tasks={statsTasks}
+          members={members}
+          onReassign={reassign}
+          onOpenTask={setEditingTask}
+        />
       ) : (
-        projects.map((project) => {
-          const projectTasks = tasksByProject(project.id);
-          const done = projectTasks.filter((t) => t.completed).length;
-          const isCollapsed = collapsed[project.id];
-          return (
-            <section key={project.id} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-hidden">
+        <>
+          {groupedSections ? (
+            groupedSections.map((section) => (
+              <div key={section.key} className="space-y-3">
+                {section.label && (
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+                    {section.label}
+                  </h3>
+                )}
+                {section.projects.map(renderProjectCard)}
+              </div>
+            ))
+          ) : (
+            activeProjects.map(renderProjectCard)
+          )}
+
+          {/* Archivés */}
+          {archivedProjects.length > 0 && (
+            <div className="pt-1">
               <button
                 type="button"
-                onClick={() => setCollapsed((c) => ({ ...c, [project.id]: !c[project.id] }))}
-                className="w-full flex items-center gap-2 px-4 py-3 hover:bg-[rgb(var(--color-hover))] transition-colors"
+                onClick={() => updatePrefs({ showArchived: !showArchived })}
+                aria-expanded={showArchived}
+                className="inline-flex items-center gap-1.5 px-1 py-1 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
               >
-                {isCollapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
-                <span className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{project.name}</span>
-                {project.teamId && teamName(project.teamId) && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    <UsersRound size={10} aria-hidden="true" /> {teamName(project.teamId)}
-                  </span>
-                )}
-                <span className="text-xs text-[rgb(var(--color-text-muted))] ml-auto">
-                  {done}/{projectTasks.length}
-                </span>
+                {showArchived ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
+                Projets archivés ({archivedProjects.length})
               </button>
-
-              {!isCollapsed && (
-                <div className="px-2 pb-2">
-                  {projectTasks.length === 0 && (
-                    <p className="px-3 py-3 text-xs text-[rgb(var(--color-text-muted))]">
-                      {scope === 'mine' ? 'Aucune tâche qui vous est assignée ici.' : 'Aucune tâche.'}
-                    </p>
-                  )}
-                  {projectTasks.map((task) => (
-                    <TeamTaskRow
-                      key={task.id}
-                      task={task}
-                      members={members}
-                      onToggleComplete={toggleComplete}
-                      onReassign={reassign}
-                      onDelete={remove}
-                    />
-                  ))}
-
-                  {/* Composer d'ajout de tâche */}
-                  {composerFor === project.id ? (
-                    <div className="flex items-center gap-2 px-3 py-2">
-                      <input
-                        type="text"
-                        value={composerName}
-                        onChange={(e) => setComposerName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleAddTask(project.id);
-                          if (e.key === 'Escape') { setComposerFor(null); setComposerName(''); }
-                        }}
-                        placeholder="Nouvelle tâche…"
-                        autoFocus
-                        maxLength={500}
-                        className="flex-1 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleAddTask(project.id)}
-                        disabled={!composerName.trim() || createTask.isPending}
-                        className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold"
-                      >
-                        Ajouter
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => { setComposerFor(project.id); setComposerName(''); }}
-                      className="w-full flex items-center gap-1.5 px-3 py-2 text-sm text-[rgb(var(--color-text-muted))] hover:text-indigo-500 transition-colors"
-                    >
-                      <Plus size={15} aria-hidden="true" /> Ajouter une tâche
-                    </button>
-                  )}
-                </div>
+              {showArchived && (
+                <div className="space-y-3 mt-2">{archivedProjects.map(renderProjectCard)}</div>
               )}
-            </section>
-          );
-        })
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Sheet d'édition de tâche */}
+      {editingTask && (
+        <TeamTaskEditSheet
+          task={editingTask}
+          members={members}
+          onSave={saveTaskEdit}
+          onDelete={removeWithUndo}
+          onClose={() => setEditingTask(null)}
+        />
       )}
     </div>
   );

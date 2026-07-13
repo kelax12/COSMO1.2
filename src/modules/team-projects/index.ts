@@ -5,6 +5,7 @@
 export type {
   TeamProject,
   CreateTeamProjectInput,
+  UpdateTeamProjectInput,
   TeamTask,
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
@@ -19,6 +20,7 @@ export {
 
 export {
   createTeamProjectSchema,
+  updateTeamProjectSchema,
   createTeamTaskSchema,
   updateTeamTaskSchema,
 } from './team-task.schema';
@@ -31,6 +33,7 @@ export {
   useTeamProjects,
   useTeamTasks,
   useCreateTeamProject,
+  useUpdateTeamProject,
   useArchiveTeamProject,
   useCreateTeamTask,
   useUpdateTeamTask,

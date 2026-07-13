@@ -6,9 +6,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateOrThrow } from '@/lib/validation/validate';
-import { createTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
+import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
 import { teamProjectKeys } from './constants';
-import type { CreateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
+import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
 
 const useRepo = () => getTeamProjectsRepository();
 
@@ -61,6 +61,23 @@ export const useCreateTeamProject = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
     },
     onError: (error: Error) => toast.error(`Impossible de créer le projet : ${error.message}`),
+  });
+};
+
+export const useUpdateTeamProject = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ projectId, input }: { projectId: string; input: UpdateTeamProjectInput }) => {
+      const valid = validateOrThrow(updateTeamProjectSchema, input);
+      return repository.updateProject(projectId, valid as UpdateTeamProjectInput);
+    },
+    onSuccess: (_project, { input }) => {
+      if (input.archived === true) toast.success('Projet archivé');
+      else if (input.archived === false) toast.success('Projet restauré');
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier le projet : ${error.message}`),
   });
 };
 
