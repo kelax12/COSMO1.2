@@ -7,6 +7,7 @@ import {
   CreateTeamOKRInput,
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
+  SyncTeamKRInput,
 } from './types';
 
 export interface ITeamOKRsRepository {
@@ -15,4 +16,9 @@ export interface ITeamOKRsRepository {
   update(okrId: string, input: UpdateTeamOKRInput): Promise<void>;
   remove(okrId: string): Promise<void>;
   updateKeyResult(krId: string, input: UpdateTeamKRInput): Promise<void>;
+  /**
+   * Synchronise l'ensemble des KR d'un OKR (édition) : met à jour les KR
+   * existants (id présent), insère les nouveaux, supprime les absents.
+   */
+  syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void>;
 }
