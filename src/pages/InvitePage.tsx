@@ -48,7 +48,7 @@ const InvitePage: React.FC = () => {
     <main className="min-h-[100dvh] flex items-center justify-center" aria-busy="true">
       <div className="flex flex-col items-center gap-3">
         <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
-        <h1 className="text-sm text-slate-500">Ouverture de l'invitation…</h1>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ouverture de l'invitation…</p>
       </div>
     </main>
   );

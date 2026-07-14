@@ -39,7 +39,7 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
     title: 'Créer une tâche',
     description:
       "Ce bouton flottant est accessible depuis toutes les pages. Il ouvre la création rapide : tapez « Appeler le dentiste jeudi 10h » et la date est comprise automatiquement.",
-    target: '[data-tutorial-id="tasks-fab"]',
+    target: '[data-tutorial-id="global-quick-add-fab"]',
     cardPlacement: 'top',
     action: 'pulse',
   },

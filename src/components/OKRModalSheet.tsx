@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import ColorSettingsModal from './ColorSettingsModal';
+import AddCategoryButton from './AddCategoryButton';
 import {
   Sheet,
   SheetContent,
@@ -157,15 +158,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="okr-cat">Catégorie</Label>
-                  {/* Créer une catégorie sans quitter le modal (parité OKRModal). */}
-                  <button
-                    type="button"
-                    onClick={() => setShowColorSettings(true)}
-                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
-                  >
-                    <Plus size={12} aria-hidden="true" />
-                    Ajouter
-                  </button>
+                  {/* Créer une catégorie sans quitter le modal (pattern unifié). */}
+                  <AddCategoryButton onClick={() => setShowColorSettings(true)} />
                 </div>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger id="okr-cat" className="w-full">

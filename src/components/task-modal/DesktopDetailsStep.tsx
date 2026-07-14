@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DatePicker } from '@/components/ui/date-picker';
+import AddCategoryButton from '@/components/AddCategoryButton';
 import SubtaskChecklist from './SubtaskChecklist';
 import CopyShareLinkButton from './CopyShareLinkButton';
 import type { useCreateCategory } from '@/modules/categories';
@@ -176,14 +177,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         </label>
                         {/* Créer une catégorie sans quitter le modal — bouton au-dessus
                             de l'input (pattern unifié avec les modals OKR). */}
-                        <button
-                          type="button"
-                          onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }}
-                          className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
-                        >
-                          <Plus size={12} aria-hidden="true" />
-                          Ajouter
-                        </button>
+                        <AddCategoryButton onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }} />
                       </div>
                       {/* Mobile : select natif système */}
                       <div className="sm:hidden relative">

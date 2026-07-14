@@ -292,7 +292,7 @@ const NavItems = () =>
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
-          data-tutorial-id="tasks-fab"
+          data-tutorial-id="global-quick-add-fab"
           aria-label="Créer une tâche rapide"
           className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
           style={{ marginBottom: 'env(safe-area-inset-bottom)' }}

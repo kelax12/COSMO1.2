@@ -378,7 +378,7 @@ const DashboardPage: React.FC = () => {
                   const parts: React.ReactNode[] = [];
                   parts.push(
                     <Link key="tasks" to="/tasks" className="hover:underline underline-offset-2">
-                      {remainingTasks === 0 ? 'aucune tâche restante' : `${remainingTasks} tâche${remainingTasks > 1 ? 's' : ''} aujourd'hui`}
+                      {remainingTasks === 0 ? "aucune tâche restante aujourd'hui" : `${remainingTasks} tâche${remainingTasks > 1 ? 's' : ''} aujourd'hui`}
                     </Link>
                   );
                   if (nextEvent) {

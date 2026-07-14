@@ -4,12 +4,13 @@
 // Extrait verbatim de EventModalForm (branche desktop), piloté par props.
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Clock, Plus, CalendarIcon } from 'lucide-react';
+import { X, Clock, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import AddCategoryButton from '@/components/AddCategoryButton';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_LABELS, formatEventDuration } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
@@ -64,7 +65,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
           <div className="md:col-span-7 space-y-3">
             <div ref={register('title')}>
               <label
-                className="block text-xs font-semibold uppercase tracking-wider mb-1.5 !whitespace-pre-line"
+                className="block text-xs font-semibold uppercase tracking-wider mb-2 !whitespace-pre-line"
                 style={{ color: "rgb(var(--color-text-secondary))" }}
               >
                 Titre de l'événement
@@ -105,7 +106,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               {/* Sélecteur de date */}
               <div ref={register('date')}>
                 <label
-                  className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
                   style={{ color: "rgb(var(--color-text-secondary))" }}
                 >
                   Date
@@ -194,7 +195,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div ref={register('startTime')}>
                   <label
-                    className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
                     Début
@@ -229,7 +230,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
 
                 <div ref={register('endTime')}>
                   <label
-                    className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                    className="block text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
                     Fin
@@ -350,7 +351,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
             {showDescription ? (
               <div>
                 <label
-                  className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
                   style={{ color: "rgb(var(--color-text-secondary))" }}
                 >
                   Description
@@ -394,16 +395,17 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
 
           <div className="md:col-span-5 space-y-3 md:flex md:flex-col">
             <div>
-              <label
-                className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider mb-2"
-                style={{ color: "rgb(var(--color-text-secondary))" }}
-              >
-                <span>Couleur de l'événement</span>
-                <Plus
-                  className="w-6 h-6 text-blue-500 cursor-pointer hover:scale-125 transition-transform"
-                  onClick={() => setIsColorSettingsOpen(true)}
-                />
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label
+                  className="block text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: "rgb(var(--color-text-secondary))" }}
+                >
+                  Couleur de l'événement
+                </label>
+                {/* Pattern unifié (audit UI §5) — remplace l'icône Plus nue
+                    non focusable qui vivait dans le <label>. */}
+                <AddCategoryButton onClick={() => setIsColorSettingsOpen(true)} />
+              </div>
 
               <div className="grid grid-cols-4 gap-1.5 mb-6 pb-1 pr-1">
                 {categories.map((cat) => (

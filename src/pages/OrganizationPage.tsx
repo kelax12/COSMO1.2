@@ -9,6 +9,7 @@ import {
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
+import { PageHeading } from '@/components/ui/typography';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
@@ -70,7 +71,7 @@ const OrganizationPage = () => {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))] truncate">{myOrg.name}</h1>
+            <PageHeading variant="compact" className="truncate">{myOrg.name}</PageHeading>
             {isAdmin && (
               <button
                 type="button"

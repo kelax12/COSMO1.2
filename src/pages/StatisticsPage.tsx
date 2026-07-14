@@ -272,11 +272,13 @@ export default function StatisticsPage() {
       {/* Synthèse temps par période — tableau à barres (barre = part relative au max) */}
       <div className="card p-4 md:p-6 mb-8">
         {(() => {
+          // Libellés courts : la colonne fait 84-120px — « 365 derniers jours »
+          // était tronqué en « 365 derniers jo… » sur mobile.
           const rows = [
             { label: "Aujourd'hui", val: fixedStats.today },
-            { label: '7 derniers jours', val: fixedStats.week },
-            { label: '30 derniers jours', val: fixedStats.month },
-            { label: '365 derniers jours', val: fixedStats.year },
+            { label: '7 jours', val: fixedStats.week },
+            { label: '30 jours', val: fixedStats.month },
+            { label: '365 jours', val: fixedStats.year },
           ];
           const max = Math.max(rows[0].val, rows[1].val, rows[2].val, rows[3].val);
           return rows.map((r, idx) => {
