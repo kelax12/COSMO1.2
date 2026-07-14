@@ -643,7 +643,7 @@ const TasksPage: React.FC = () => {
       </div>
 
       {/* Création mobile (#22) : point d'entrée unique = FAB quick-add global
-          monté dans Layout (data-tutorial-id="tasks-fab"). Les deux FABs
+          monté dans Layout (data-tutorial-id="global-quick-add-fab"). Les deux FABs
           locaux (éclair + plus) ont été retirés : deux affordances pour une
           même intention créaient une hésitation à chaque création. Le modal
           complet reste accessible en tapant une tâche existante (enrichir

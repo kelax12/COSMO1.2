@@ -420,7 +420,7 @@ async function runAudit(browser, vpName, theme){
     // AddTaskForm (bouton créer ou FAB)
     await dismiss(); await wait(400);
     const createBtn = isMobile
-      ? page.locator('[data-tutorial-id="tasks-fab"]').first()
+      ? page.locator('[data-tutorial-id="global-quick-add-fab"]').first()
       : page.locator('[data-tutorial-id="tasks-create-button"]').first();
     if(await createBtn.isVisible({timeout:2000}).catch(()=>false)){
       await createBtn.click({force:true}); await wait(700);

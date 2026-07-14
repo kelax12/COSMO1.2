@@ -160,6 +160,20 @@ Patterns standards :
 
 Référence : `TaskTable.tsx` (pills de catégorie), `MobileTabBar.tsx` (nav active).
 
+## Échelle z-index (audit 2026-07)
+
+Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle valeur :
+
+| Palier | Usage | Exemples |
+|---|---|---|
+| `z-10` – `z-30` | Éléments locaux (sticky headers, badges, overlays de carte) | headers de modals, chips |
+| `z-40` | UI flottante de page : FAB quick-add, indicateur sync | `Layout.tsx` |
+| `z-50` | Modals/sheets standards + MobileTabBar | TaskModal, EventModal, HabitModal |
+| `z-[60]` – `z-[80]` | Couches au-dessus d'un modal ouvert (modal imbriqué, QuickAddBar `z-[70]`) | ColorSettingsModal nested |
+| `z-[100]` | Popovers Radix au-dessus des modals (date-picker, CategoryManager) | `date-picker.tsx` |
+| `z-[200]` | Surfaces système toujours au-dessus : CommandPalette, CookieBanner, PremiumGateModal | — |
+| `z-[9999]` | Popovers `createPortal` + `position: fixed` (SmartListMenu, HabitActionsMenu) | — |
+
 ## Shadcn UI — exceptions documentées
 
 Les composants dans `src/components/ui/` sont normalement **non modifiés** (gérés par la CLI shadcn). Si une modif est nécessaire, **la documenter ici** :

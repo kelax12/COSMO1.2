@@ -5,6 +5,7 @@ import { Zap, CalendarDays, Tag, Flag, Clock, CornerDownLeft, Repeat } from 'luc
 import { parseQuickAdd } from '@/lib/quick-add-parser';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 /**
  * Quick-add global (#1) — capture une tâche en langage naturel depuis
@@ -17,18 +18,26 @@ import { useCategories } from '@/modules/categories';
  * Exemple : « Appeler le dentiste jeudi 10h #santé !! ~30m »
  */
 // Placeholders-exemples rotatifs (#21) : enseignent la syntaxe par l'exemple,
-// un différent à chaque ouverture.
+// un différent à chaque ouverture. Variante courte sur mobile : le champ fait
+// ~180px à côté du bouton « Créer », un exemple long serait tronqué.
 const PLACEHOLDER_EXAMPLES = [
   'Appeler le dentiste jeudi 10h #santé !! ~30m',
   'Préparer la réunion demain 9h ~1h',
   'Faire les courses samedi #maison',
   'Relire le rapport !! ~45m',
 ];
+const PLACEHOLDER_EXAMPLES_MOBILE = [
+  'Dentiste jeudi 10h',
+  'Réunion demain 9h',
+  'Courses samedi',
+  'Rapport !! ~45m',
+];
 
 const QuickAddBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState('');
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
   const createTaskMutation = useCreateTask();
   const { data: categories = [] } = useCategories();
@@ -155,9 +164,9 @@ const QuickAddBar = () => {
                   if (e.key === 'Enter') handleSubmit();
                   if (e.key === 'Escape') setIsOpen(false);
                 }}
-                placeholder={`Ex : ${PLACEHOLDER_EXAMPLES[placeholderIdx]}`}
+                placeholder={`Ex : ${(isMobile ? PLACEHOLDER_EXAMPLES_MOBILE : PLACEHOLDER_EXAMPLES)[placeholderIdx]}`}
                 aria-label="Créer une tâche rapidement"
-                className="flex-1 min-w-0 bg-transparent outline-none text-lg font-medium placeholder:font-normal"
+                className="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-lg font-medium placeholder:font-normal"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
                 enterKeyHint="done"
               />

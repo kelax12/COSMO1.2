@@ -527,7 +527,7 @@ const OKRPage: React.FC = () => {
 
       {/* Liste des OKR terminés — ouverte par le bouton du header. Chaque
           item a un bouton "Modifier" qui referme cette modal et ouvre
-          OKRModal en mode édition. */}
+          OKRModalSheet en mode édition. */}
       <CompletedOKRsModal
         isOpen={showCompletedModal}
         onClose={() => setShowCompletedModal(false)}

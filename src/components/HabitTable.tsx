@@ -266,7 +266,11 @@ const HabitTable: React.FC = () => {
         </div>
       </div>
       
-      <div className="overflow-x-auto hide-scrollbar" ref={scrollContainerRef}>
+      {/* snap-x : après un scroll tactile, la vue s'aligne sur une frontière de
+          colonne de jour (scroll-pl = largeur de la colonne sticky) — évite les
+          colonnes coupées en deux (audit UI §4). proximity et non mandatory :
+          l'auto-scroll initial vers aujourd'hui + série reste possible. */}
+      <div className="overflow-x-auto hide-scrollbar snap-x snap-proximity scroll-pl-[140px] md:scroll-pl-[250px]" ref={scrollContainerRef}>
         <table className="w-full border-collapse">
           <thead className="border-b transition-colors" style={{
               backgroundColor: 'rgb(var(--table-header-bg))',
@@ -281,7 +285,7 @@ const HabitTable: React.FC = () => {
                   Habitude
                 </th>
                   {days.map((day) =>
-                  <th key={day.date} className="text-center p-2 font-medium min-w-[40px] md:min-w-[50px] transition-colors" style={{ color: 'rgb(var(--table-header-text))' }}>
+                  <th key={day.date} className="text-center p-2 font-medium min-w-[40px] md:min-w-[50px] snap-start transition-colors" style={{ color: 'rgb(var(--table-header-text))' }}>
                     <div className="text-[10px] md:text-xs mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{day.dayName}</div>
                     <div className={`text-xs md:text-sm ${day.isToday ? 'font-bold' : ''}`} style={{
                       color: day.isToday ? 'rgb(var(--color-accent))' : 'rgb(var(--table-header-text))'
