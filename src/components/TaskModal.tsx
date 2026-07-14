@@ -113,6 +113,7 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
             createListMutation={createListMutation}
             isLoading={isLoading}
             isCreating={isCreating}
+            collaboratorsOnly={showCollaborators}
             handleClose={handleClose}
             handleSave={handleSave}
             handleDelete={handleDelete}

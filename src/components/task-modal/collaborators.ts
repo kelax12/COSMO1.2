@@ -71,9 +71,14 @@ export function resolveCollaboratorDisplay(
     friends?: FriendLike[];
     sentRequests: SentRequestLike[];
     pendingInvitesLocal: string[];
+    /** auth.uid du propriétaire de la tâche (vue destinataire). */
+    ownerId?: string;
+    /** Nom du propriétaire (task.sharedBy) — affiché à la place du libellé
+     *  générique pour une tâche qu'on nous a partagée. */
+    ownerName?: string;
   }
 ): CollaboratorDisplay {
-  const { friends, sentRequests, pendingInvitesLocal } = deps;
+  const { friends, sentRequests, pendingInvitesLocal, ownerId, ownerName } = deps;
   const friend = friends?.find((f) => collabIdOf(f) === id || f.id === id || f.name === id);
   if (friend) {
     return { name: friend.name ?? id, email: friend.email, avatar: friend.avatar, isPending: false };
@@ -83,6 +88,11 @@ export function resolveCollaboratorDisplay(
   const sent = sentRequests.find((r) => r.receiverId === id);
   if (sent) {
     return { name: sent.email, email: sent.email, avatar: undefined, isPending: true };
+  }
+  // Tâche reçue : le propriétaire n'est pas dans nos amis → afficher son nom
+  // (task.sharedBy) plutôt que le libellé générique « Collaborateur ».
+  if (ownerId && id === ownerId && ownerName) {
+    return { name: ownerName, email: undefined, avatar: undefined, isPending: false };
   }
   const isPending = pendingInvitesLocal.includes(id);
   if (EMAIL_REGEX.test(id)) {

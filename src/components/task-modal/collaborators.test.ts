@@ -93,4 +93,16 @@ describe('resolveCollaboratorDisplay', () => {
       name: 'Carol', email: undefined, avatar: undefined, isPending: false,
     });
   });
+  it('shows the owner name (task.sharedBy) for a received task instead of the generic label', () => {
+    const ownerUuid = '123e4567-e89b-12d3-a456-426614174000';
+    expect(
+      resolveCollaboratorDisplay(ownerUuid, { ...deps, ownerId: ownerUuid, ownerName: 'Marie Dupont' })
+    ).toEqual({ name: 'Marie Dupont', email: undefined, avatar: undefined, isPending: false });
+  });
+  it('does not override a non-owner id even when owner info is provided', () => {
+    const uuid = '123e4567-e89b-12d3-a456-426614174000';
+    expect(
+      resolveCollaboratorDisplay(uuid, { ...deps, ownerId: 'someone-else', ownerName: 'Marie Dupont' })
+    ).toEqual({ name: 'Collaborateur', email: undefined, avatar: undefined, isPending: false });
+  });
 });

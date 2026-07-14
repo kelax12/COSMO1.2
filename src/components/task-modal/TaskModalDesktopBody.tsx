@@ -62,6 +62,9 @@ export interface DesktopBodyProps {
   createListMutation: ReturnType<typeof useCreateList>;
   isLoading: boolean;
   isCreating: boolean;
+  /** Ouverture ciblée « Partager » (menu ⋯ → Collaborateur) : n'affiche QUE la
+   *  section collaboration, sans les champs de la tâche. */
+  collaboratorsOnly?: boolean;
   handleClose: () => void;
   handleSave: () => void;
   handleDelete: () => void;
@@ -98,7 +101,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   categories, createCategoryMutation,
   listColorOptions,
   lists, selectedListIds, setSelectedListIds, createListMutation,
-  isLoading, isCreating,
+  isLoading, isCreating, collaboratorsOnly = false,
   handleClose, handleSave, handleDelete,
   isTaskOwner, task, onGenerateShareLink,
   collaborators, displayInfo, pendingShareIds, handleRemoveCollaborator,
@@ -125,9 +128,9 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                {isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
+                {collaboratorsOnly ? 'Partager la tâche' : isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
               </h2>
-              {hasChanges &&
+              {hasChanges && !collaboratorsOnly &&
                 <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
                   <AlertCircle size={12} aria-hidden="true" />
                   <span className="hidden sm:inline">Non sauvegardé</span>
@@ -157,6 +160,33 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 
               <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
 
+                {collaboratorsOnly ? (
+                  /* Ouverture ciblée « Partager » (menu ⋯ → Collaborateur) :
+                     UNIQUEMENT la section collaboration, sans les champs tâche. */
+                  <DesktopCollaboratorsStep
+                    collaboratorRef={collaboratorRef}
+                    isTaskOwner={isTaskOwner}
+                    task={task}
+                    onGenerateShareLink={onGenerateShareLink}
+                    collaborators={collaborators}
+                    displayInfo={displayInfo}
+                    pendingShareIds={pendingShareIds}
+                    handleRemoveCollaborator={handleRemoveCollaborator}
+                    emailInput={emailInput}
+                    setEmailInput={setEmailInput}
+                    inputError={inputError}
+                    setInputError={setInputError}
+                    handleAddEmail={handleAddEmail}
+                    filteredFriends={filteredFriends}
+                    collabIdOf={collabIdOf}
+                    toggleCollaborator={toggleCollaborator}
+                    sentRequests={sentRequests}
+                    pendingInvitesLocal={pendingInvitesLocal}
+                    friends={friends}
+                    cancelFriendRequestMutation={cancelFriendRequestMutation}
+                  />
+                ) : (
+                  <>
                 {/* ── Vue unique (#29) : le wizard 2 étapes est remplacé par une
                     seule vue — les collaborateurs (minorité des tâches) passent
                     en progressive disclosure via la section « Partager ». ── */}
@@ -234,6 +264,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     </div>
                   )}
                 </div>
+                  </>
+                )}
 
                 {/* ── Action Buttons ── */}
                 <div
@@ -245,6 +277,41 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                   }}
                 >
                   <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
+                    {collaboratorsOnly ? (
+                      /* Vue « Partager » : destinataire → simple « Fermer » ;
+                         propriétaire → « Enregistrer » les partages modifiés. */
+                      !isTaskOwner ? (
+                        <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 !text-white !border-0">
+                          Fermer
+                        </Button>
+                      ) : (
+                        <>
+                          <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
+                            Annuler
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="lg"
+                            disabled={isLoading || !hasChanges}
+                            className={`min-h-11 w-full sm:w-auto ${
+                              isLoading || !hasChanges
+                                ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
+                                : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                            }`}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
+                                <span>Enregistrement...</span>
+                              </>
+                            ) : (
+                              'Enregistrer'
+                            )}
+                          </Button>
+                        </>
+                      )
+                    ) : (
+                      <>
                     <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                       Annuler
                     </Button>
@@ -276,6 +343,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                         isCreating ? 'Créer la tâche' : 'Sauvegarder'
                       )}
                     </Button>
+                      </>
+                    )}
                   </div>
               </div>
             </form>

@@ -512,7 +512,13 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   // dans task-modal/collaborators.ts (testée). On lie ici les dépendances d'état.
   const filteredFriends = filterFriendsForCollab(friends, collaborators, emailInput);
   const displayInfo = (id: string) =>
-    resolveCollaboratorDisplay(id, { friends, sentRequests, pendingInvitesLocal });
+    resolveCollaboratorDisplay(id, {
+      friends, sentRequests, pendingInvitesLocal,
+      // Vue destinataire : afficher le nom du propriétaire (task.sharedBy) au
+      // lieu du libellé générique « Collaborateur ».
+      ownerId: effectiveTask?.userId,
+      ownerName: effectiveTask?.sharedBy,
+    });
 
   const handleAddEmail = () => {
     const value = emailInput.trim().toLowerCase();
