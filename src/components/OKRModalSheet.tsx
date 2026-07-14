@@ -71,7 +71,6 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [keyResults, setKeyResults] = useState<KRDraft[]>([newKR()]);
   const [showColorSettings, setShowColorSettings] = useState(false);
@@ -82,7 +81,6 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
       setTitle(editingObjective.title);
       setDescription(editingObjective.description ?? '');
       setCategory(editingObjective.category ?? '');
-      setStartDate(toDateInput(editingObjective.startDate));
       setEndDate(toDateInput(editingObjective.endDate));
       setKeyResults(
         editingObjective.keyResults.length
@@ -93,7 +91,6 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
       setTitle('');
       setDescription('');
       setCategory(categories[0]?.id ?? '');
-      setStartDate(toDateInput(todayIso()));
       setEndDate(toDateInput(plusDaysIso(90)));
       setKeyResults([newKR()]);
     }
@@ -105,10 +102,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   // Un objectif sans résultat clé n'est pas mesurable : au moins 1 KR nommé requis.
   const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
-  // Cohérence temporelle : la date de début ne peut pas dépasser l'échéance.
-  // (comparaison lexicographique valide sur YYYY-MM-DD)
-  const datesInvalid = Boolean(startDate && endDate && startDate > endDate);
-  const canSave = title.trim().length > 0 && hasKeyResult && !datesInvalid;
+  const canSave = title.trim().length > 0 && hasKeyResult;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -133,7 +127,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         progress: getProgress(krs),
         completed: editingObjective?.completed ?? false,
         keyResults: krs,
-        startDate: fromDateInput(startDate) || todayIso(),
+        // Date de début non éditable : aujourd'hui à la création, préservée en édition.
+        startDate: editingObjective?.startDate || todayIso(),
         endDate: fromDateInput(endDate) || plusDaysIso(90),
       },
       isEdit
@@ -183,30 +178,16 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="okr-start">Début</Label>
-                  <Input id="okr-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="okr-end">Échéance</Label>
-                  <Input
-                    id="okr-end"
-                    type="date"
-                    value={endDate}
-                    aria-invalid={datesInvalid}
-                    className={datesInvalid ? 'border-red-500 focus-visible:ring-red-500/30' : undefined}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="okr-end">Échéance</Label>
+                <Input
+                  id="okr-end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
               </div>
             </div>
-
-            {datesInvalid && (
-              <p className="text-xs text-red-500" role="alert">
-                La date de début doit être antérieure à l'échéance.
-              </p>
-            )}
 
             <div className="grid gap-2">
               <Label htmlFor="okr-desc">Description</Label>
