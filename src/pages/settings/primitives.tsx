@@ -1,25 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// settings/primitives — atomes présentationnels + nav + font loader de
-// SettingsPage. Extraits verbatim (god-component refactor).
+// settings/primitives — atomes présentationnels + nav de SettingsPage.
+// Extraits verbatim (god-component refactor).
+// Typographie : Inter global — pas de font dédiée à cette page.
 // ═══════════════════════════════════════════════════════════════════
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export type SettingsTab = 'profile' | 'appearance' | 'security' | 'data' | 'guide';
-
-/* ─── font loader ──────────────────────────────────────────────── */
-export function useFonts() {
-  useEffect(() => {
-    const id = 'settings-fonts';
-    if (document.getElementById(id)) return;
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href =
-      'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@300;400;500;600&display=swap';
-    document.head.appendChild(link);
-  }, []);
-}
 
 /* ─── nav config ───────────────────────────────────────────────── */
 export const NAV_GROUPS = [
@@ -64,7 +51,7 @@ export function LabeledInput({
         )}
         <input
           type={inputType} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
-          style={{ fontFamily: "'DM Sans', sans-serif", minHeight: '48px' }}
+          style={{ minHeight: '48px' }}
           className={`w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] outline-none transition-all duration-150 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgb(var(--color-accent))]/15 ${Icon ? 'pl-10' : 'pl-4'} ${showToggle ? 'pr-11' : 'pr-4'} py-3 ${disabled ? 'opacity-60 cursor-not-allowed bg-[rgb(var(--color-hover))]' : ''}`}
         />
         {showToggle && (
@@ -88,7 +75,7 @@ export function PrimaryButton({ onClick, type = 'button', loading = false, child
 }) {
   return (
     <button onClick={onClick} type={type} disabled={loading}
-      style={{ minHeight: '44px', fontFamily: "'DM Sans', sans-serif" }}
+      style={{ minHeight: '44px' }}
       className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] rounded-xl text-sm font-semibold hover:opacity-85 active:scale-[0.97] transition-all duration-150 disabled:opacity-50">
       {loading && <Loader2 size={14} className="animate-spin" />}
       {children}

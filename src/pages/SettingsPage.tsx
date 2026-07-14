@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
@@ -27,11 +27,10 @@ import {
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 
-// Atomes présentationnels + nav + font loader extraits dans ./settings/primitives.
+// Atomes présentationnels + nav extraits dans ./settings/primitives.
 // Onglet « Mes données » extrait dans ./settings/DataTab.
 import {
   type SettingsTab,
-  useFonts,
   NAV_GROUPS,
   LabeledInput,
   PrimaryButton,
@@ -39,10 +38,10 @@ import {
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
+import { PageHeading } from '@/components/ui/typography';
 
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
-  useFonts();
   const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
 
   const { user, logout, isDemo } = useAuth();
@@ -302,8 +301,10 @@ const SettingsPage: React.FC = () => {
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-      className="min-h-[100dvh] lg:h-full lg:min-h-0 bg-[rgb(var(--color-background))] transition-colors duration-300 flex pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-0">
+    // pb mobile : 64px tab bar + 88px pour que le FAB quick-add ne masque
+    // jamais le bouton « Sauvegarder » en bas de page (parité HabitsPage).
+    <div
+      className="min-h-[100dvh] lg:h-full lg:min-h-0 bg-[rgb(var(--color-background))] transition-colors duration-300 flex pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-0">
 
       {/* ──────── SIDEBAR ──────── */}
       <motion.aside
@@ -318,7 +319,7 @@ const SettingsPage: React.FC = () => {
             <div className="relative shrink-0 group/av cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-sm font-bold select-none">
                 {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                  : <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>{initials}</span>}
+                  : <span>{initials}</span>}
               </div>
               <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera size={12} className="text-white" />
@@ -372,10 +373,9 @@ const SettingsPage: React.FC = () => {
       {/* ──────── MAIN CONTENT ──────── */}
       <main className="flex-1 min-w-0 py-10 px-5 sm:px-8 lg:px-12">
         <div className="mb-8 max-w-3xl">
-          <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}
-            className="text-3xl font-extrabold text-[rgb(var(--color-text-primary))] tracking-tight">
+          <PageHeading variant="standard" className="tracking-tight">
             Paramètres
-          </h1>
+          </PageHeading>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
             Gérez votre compte, sécurité et préférences.
           </p>
@@ -408,7 +408,7 @@ const SettingsPage: React.FC = () => {
                   <div className="relative group/av shrink-0">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-2xl font-bold shadow-sm select-none">
                       {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                        : <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>{initials}</span>}
+                        : <span>{initials}</span>}
                     </div>
                     <button onClick={() => fileInputRef.current?.click()}
                       className="absolute inset-0 rounded-2xl bg-black/45 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
@@ -416,10 +416,10 @@ const SettingsPage: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h3>
+                    <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h3>
                     <p className="text-sm text-[rgb(var(--color-text-muted))] mt-0.5">{user.email}</p>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
-                      <button onClick={() => fileInputRef.current?.click()} style={{ minHeight: '36px', fontFamily: "'DM Sans', sans-serif" }}
+                      <button onClick={() => fileInputRef.current?.click()} style={{ minHeight: '36px' }}
                         className="inline-flex items-center gap-1.5 px-4 py-1.5 border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
                         <Camera size={12} /> Changer la photo
                       </button>
@@ -434,7 +434,7 @@ const SettingsPage: React.FC = () => {
                 </div>
               </SectionCard>
               <SectionCard>
-                <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h3>
+                <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
                   <LabeledInput label="Adresse email" type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" disabled={isThirdParty} hint={isThirdParty ? 'Email géré par votre connexion externe — non modifiable ici.' : undefined} />
@@ -454,7 +454,7 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
               <SectionCard>
-                <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Changer le mot de passe</h3>
+                <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Changer le mot de passe</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mb-5">Minimum 8 caractères. Utilisez un mélange de lettres, chiffres et symboles.</p>
                 <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
                   <LabeledInput label="Mot de passe actuel" showToggle value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
@@ -470,10 +470,10 @@ const SettingsPage: React.FC = () => {
               <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-sm font-bold text-red-600 dark:text-red-500">Zone de danger</h3>
+                    <h3 className="text-sm font-bold text-red-600 dark:text-red-500">Zone de danger</h3>
                     <p className="text-xs text-red-500/70 mt-1">Supprimer définitivement votre compte et toutes vos données.</p>
                   </div>
-                  <button onClick={handleDeleteAccount} style={{ minHeight: '44px', fontFamily: "'DM Sans', sans-serif" }}
+                  <button onClick={handleDeleteAccount} style={{ minHeight: '44px' }}
                     className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 active:scale-[0.97] transition-all duration-150">
                     Supprimer le compte
                   </button>
@@ -486,7 +486,7 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'appearance' && (
             <motion.div key="appearance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
               <SectionCard>
-                <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Thème de l'interface</h3>
+                <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Thème de l'interface</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mb-5">Choisissez l'apparence qui vous convient le mieux.</p>
                 <div style={{ minHeight: '72px' }}
                   className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
@@ -538,7 +538,7 @@ const SettingsPage: React.FC = () => {
               <SectionCard className="mt-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Keyboard size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h3>
+                  <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h3>
                 </div>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] -mt-2 mb-3">
                   Aussi accessibles à tout moment avec la touche <kbd className="px-1.5 py-0.5 rounded border text-[11px]" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
@@ -556,7 +556,7 @@ const SettingsPage: React.FC = () => {
             <motion.div key="guide" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
 
               <div>
-                <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
+                <h2 className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
                   Guide d'utilisation
                 </h2>
                 <p className="text-sm text-[rgb(var(--color-text-secondary))]">
@@ -569,12 +569,12 @@ const SettingsPage: React.FC = () => {
                 style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 60%)' }}
               >
                 <div>
-                  <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))]">Guide complet</p>
+                  <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">Guide complet</p>
                   <p className="text-sm text-[rgb(var(--color-text-muted))] mt-0.5">Tâches, Agenda, Habitudes, OKR, Statistiques, Premium — tout y est.</p>
                 </div>
                 <button
                   onClick={() => navigate('/guide')}
-                  style={{ minHeight: '48px', fontFamily: "'DM Sans', sans-serif" }}
+                  style={{ minHeight: '48px' }}
                   className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150"
                 >
                   Ouvrir le guide <ChevronRight size={15} />
@@ -588,11 +588,11 @@ const SettingsPage: React.FC = () => {
                     <HelpCircle size={15} className="text-white" />
                   </div>
                   <div>
-                    <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Besoin d'aide ?</p>
+                    <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Besoin d'aide ?</p>
                     <p className="text-xs text-[rgb(var(--color-text-muted))]">Notre équipe répond sous 24h.</p>
                   </div>
                 </div>
-                <button onClick={handleOpenSupport} style={{ minHeight: '40px', fontFamily: "'DM Sans', sans-serif" }}
+                <button onClick={handleOpenSupport} style={{ minHeight: '40px' }}
                   className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
                   Contacter le support <ChevronRight size={12} />
                 </button>
@@ -607,11 +607,11 @@ const SettingsPage: React.FC = () => {
                       <BarChart3 size={15} className="text-white" />
                     </div>
                     <div>
-                      <p style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Stats COSMO</p>
+                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Stats COSMO</p>
                       <p className="text-xs text-[rgb(var(--color-text-muted))]">Croissance, activité et conversion — réservé admin.</p>
                     </div>
                   </div>
-                  <button onClick={() => navigate('/admin')} style={{ minHeight: '40px', fontFamily: "'DM Sans', sans-serif" }}
+                  <button onClick={() => navigate('/admin')} style={{ minHeight: '40px' }}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
                     Ouvrir le dashboard <ChevronRight size={12} />
                   </button>
@@ -624,17 +624,17 @@ const SettingsPage: React.FC = () => {
 
       {/* ── confirm dialog ── */}
       <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, isOpen: open }))}>
-        <AlertDialogContent style={{ fontFamily: "'DM Sans', sans-serif" }}
+        <AlertDialogContent
           className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-xl font-bold">{confirmConfig.title}</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-bold">{confirmConfig.title}</AlertDialogTitle>
             <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">{confirmConfig.description}</AlertDialogDescription>
           </AlertDialogHeader>
           {confirmConfig.showInput && (
             <div className="py-2">
               <input type="text" value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)}
                 placeholder={`Tapez "${confirmConfig.confirmationText}"`}
-                style={{ minHeight: '48px', fontFamily: "'DM Sans', sans-serif" }}
+                style={{ minHeight: '48px' }}
                 className="w-full px-4 py-3 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl font-semibold text-[rgb(var(--color-text-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 outline-none" />
             </div>
           )}

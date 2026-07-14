@@ -323,7 +323,7 @@ const DashboardPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-[100dvh] bg-[rgb(var(--color-background))] p-3 sm:p-6 lg:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8 transition-colors duration-300">
+    <div className="min-h-[100dvh] bg-[rgb(var(--color-background))] p-3 sm:p-6 lg:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 transition-colors duration-300">
       <motion.div
         className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
         variants={containerVariants}

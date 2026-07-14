@@ -201,7 +201,7 @@ const AdminPage: React.FC = () => {
 
   return (
     <div
-      className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8"
+      className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
       <div className="mb-8">

@@ -49,7 +49,7 @@ export function DataTab() {
     >
       <div>
         <h2
-          style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}
+         
           className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1"
         >
           Mes données

@@ -98,17 +98,9 @@ Props : `icon: LucideIcon, title, description?, actionLabel?, onAction?, accentC
 
 ## Onboarding & Tutoriels
 
-### OnboardingOverlay — premier login démo
+### OnboardingOverlay — supprimé (2026-07, commit c170e37)
 
-`src/components/OnboardingOverlay.tsx` — bottom-sheet 3 étapes affichées **après loginDemo()**. Monté au niveau **App** (`src/App.tsx`, après `<Toaster>`), pas au niveau d'une page.
-
-Déclenchement :
-1. `AuthContext.loginDemo()` pose `localStorage.cosmo_onboarding_pending = '1'`
-2. `OnboardingOverlay` lit ce flag dans `useEffect([isDemo, location.pathname])` (pas `[]`)
-3. Affichage 500ms après
-4. Dismiss = retire le flag
-
-Ré-afficher en debug : `localStorage.removeItem('cosmo_onboarding_pending')` puis reload.
+Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). L'onboarding démo repose désormais sur `OnboardingExampleTasks` (tâches d'exemple au premier login) et les `PageTutorial` par page. Ne pas recréer d'overlay bloquant à l'entrée en démo.
 
 ### PageTutorial — tutoriel par page
 
@@ -200,7 +192,7 @@ Toute nouvelle modif doit s'ajouter dans cette table.
 - ❌ Recréer un 2ème composant qui valide les tâches assignées — **SocialRequests est le point unique**
 
 ### 🧭 Tutoriels & onboarding
-- ❌ Monter `OnboardingOverlay` au niveau d'une page — doit être au niveau **App**
+- ❌ Recréer un overlay d'onboarding bloquant à l'entrée en mode démo (supprimé par c170e37)
 - ❌ `useEffect([], ...)` pour détecter `cosmo_onboarding_pending` — dépendre de `[isDemo, location.pathname]`
 - ❌ Fusionner les configs tutoriel desktop/mobile en un seul fichier
 - ❌ Manipuler le DOM réel (FullCalendar drag) depuis une action de tutoriel — animation pure
