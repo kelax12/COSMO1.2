@@ -24,7 +24,7 @@ const OrganizationSettingsCard = () => {
     <>
       <div className="flex items-center gap-2 mb-1">
         <Building2 size={18} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-        <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))]">
+        <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">
           Entreprise
         </h3>
       </div>

@@ -37,7 +37,7 @@ npm run test:e2e:report  # rapport HTML
 **Avant le premier run** : `npx playwright install chromium` (~150 MB).
 
 **Architecture** :
-- `e2e/fixtures.ts` : fixture `demoPage`. Clean localStorage/cookies → goto / → clic CTA « Essayer maintenant — sans inscription » → attend `/dashboard` → skip OnboardingOverlay. Neutralise les 8 flags `cosmo_tutorial_seen_*_(desktop|mobile)`.
+- `e2e/fixtures.ts` : fixture `demoPage`. Clean localStorage/cookies → goto / → clic CTA « Essayer maintenant — sans inscription » → attend `/dashboard` → neutralise les 8 flags `cosmo_tutorial_seen_*_(desktop|mobile)`.
 - Tests smoke : `demo-create-task.spec.ts`, `demo-toggle-habit.spec.ts`, `demo-create-okr.spec.ts` + `demo-journeys.spec.ts` (mutation + persistance SPA).
 
 **Règles** :

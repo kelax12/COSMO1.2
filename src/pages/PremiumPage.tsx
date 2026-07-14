@@ -88,7 +88,7 @@ export function PremiumPage() {
   };
 
   return (
-    <div className="p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8 h-fit font-sans">
+    <div className="p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 h-fit font-sans">
       <motion.div
         className="relative z-10 max-w-5xl mx-auto"
         variants={containerVariants}
