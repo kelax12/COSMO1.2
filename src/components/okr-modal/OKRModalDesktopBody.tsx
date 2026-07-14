@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DatePicker } from '../ui/date-picker';
@@ -131,9 +130,21 @@ const OKRModalDesktopBody: React.FC<OKRModalDesktopBodyProps> = ({
                         {/* Catégorie + Date */}
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                              Catégorie
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                                Catégorie
+                              </label>
+                              {/* Créer une catégorie sans quitter le modal — bouton
+                                  au-dessus de l'input (pattern unifié). */}
+                              <button
+                                type="button"
+                                onClick={() => setShowColorSettings(true)}
+                                className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                              >
+                                <Plus size={12} aria-hidden="true" />
+                                Ajouter
+                              </button>
+                            </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <button
@@ -166,14 +177,6 @@ const OKRModalDesktopBody: React.FC<OKRModalDesktopBodyProps> = ({
                                     {c.name}
                                   </DropdownMenuItem>
                                 ))}
-                                {categories.length > 0 && <DropdownMenuSeparator />}
-                                <DropdownMenuItem
-                                  onSelect={(e) => { e.preventDefault(); setShowColorSettings(true); }}
-                                  className="flex items-center gap-2 cursor-pointer text-blue-600 dark:text-blue-400 font-medium"
-                                >
-                                  <Plus size={14} />
-                                  Ajouter une catégorie
-                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>

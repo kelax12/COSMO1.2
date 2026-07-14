@@ -170,9 +170,21 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     </div>
 
                     <div ref={dRegister('category')}>
-                      <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Catégorie
-                      </label>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          Catégorie
+                        </label>
+                        {/* Créer une catégorie sans quitter le modal — bouton au-dessus
+                            de l'input (pattern unifié avec les modals OKR). */}
+                        <button
+                          type="button"
+                          onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }}
+                          className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                        >
+                          <Plus size={12} aria-hidden="true" />
+                          Ajouter
+                        </button>
+                      </div>
                       {/* Mobile : select natif système */}
                       <div className="sm:hidden relative">
                         <select
@@ -244,17 +256,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               </button>
                             </DropdownMenuItem>
                           ))}
-                          {categories.length > 0 && <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700 my-1" />}
-                          <DropdownMenuItem asChild>
-                            <button
-                              type="button"
-                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
-                              onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }}
-                            >
-                              <Plus size={15} />
-                              Créer une catégorie
-                            </button>
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       </div>

@@ -392,7 +392,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
             )}
           </div>
 
-          <div className="md:col-span-5 space-y-3">
+          <div className="md:col-span-5 space-y-3 md:flex md:flex-col">
             <div>
               <label
                 className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider mb-2"
@@ -488,7 +488,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                 ailleurs si besoin. */}
 
             <div
-              className={`sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 md:mt-6 border-t flex ${mode === 'edit' ? 'flex-col-reverse sm:flex-row gap-2 sm:gap-3' : ''}`}
+              className={`sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 md:mt-auto border-t flex ${mode === 'edit' ? 'flex-col-reverse sm:flex-row gap-2 sm:gap-3' : ''}`}
               style={{
                 borderColor: 'rgb(var(--color-border))',
                 backgroundColor: 'rgb(var(--color-surface))',
