@@ -20,6 +20,7 @@ const ROUTE_IMPORTS: Record<string, () => Promise<unknown>> = {
   '/statistics': () => import('@/pages/StatisticsPage'),
   '/premium': () => import('@/pages/PremiumPage'),
   '/settings': () => import('@/pages/SettingsPage'),
+  '/entreprise': () => import('@/pages/OrganizationPage'),
 };
 
 const prefetched = new Set<string>();

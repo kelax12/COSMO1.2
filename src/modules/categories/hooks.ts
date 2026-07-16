@@ -20,7 +20,7 @@ export const useCategories = () => {
   return useQuery({
     queryKey: categoryKeys.lists(),
     queryFn: () => repository.getAll(),
-    staleTime: 1000 * 60 * 15, // 15 minutes — quasi statiques, mutations invalident le cache
+    staleTime: 1000 * 60 * 30, // 30 minutes — quasi statiques, mutations invalident le cache
   });
 };
 
@@ -30,7 +30,7 @@ export const useCategory = (id: string) => {
     queryKey: categoryKeys.detail(id),
     queryFn: () => repository.getById(id),
     enabled: !!id,
-    staleTime: 1000 * 60 * 15, // 15 minutes — quasi statiques, mutations invalident le cache
+    staleTime: 1000 * 60 * 30, // 30 minutes — quasi statiques, mutations invalident le cache
   });
 };
 

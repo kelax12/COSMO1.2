@@ -64,6 +64,10 @@ import { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.repository';
 import { SupabaseOrgTeamsRepository } from '@/modules/org-teams/supabase.repository';
 
+// Stats (agrégats « temps investi » — RPC SQL en prod, calcul local en démo)
+import { IStatsRepository, LocalStatsRepository } from '@/modules/stats/repository';
+import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -80,6 +84,7 @@ let organizationsRepository: IOrganizationsRepository | null = null;
 let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
 let orgTeamsRepository: IOrgTeamsRepository | null = null;
+let statsRepository: IStatsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
 // code path that calls `appModeStore.setDemo(...)` outside `loginDemo()`
@@ -97,6 +102,7 @@ appModeStore.subscribe(() => {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
+  statsRepository = null;
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -252,6 +258,25 @@ export function getOrgTeamsRepository(): IOrgTeamsRepository {
 }
 
 /**
+ * Get the Stats repository based on current mode.
+ * En démo, l'implémentation locale agrège via les repositories des 4 modules
+ * sources (injectés ici pour éviter tout import circulaire avec la factory).
+ */
+export function getStatsRepository(): IStatsRepository {
+  if (!statsRepository) {
+    statsRepository = appModeStore.isDemo
+      ? new LocalStatsRepository(
+          getTasksRepository(),
+          getEventsRepository(),
+          getHabitsRepository(),
+          getOKRsRepository()
+        )
+      : new SupabaseStatsRepository();
+  }
+  return statsRepository;
+}
+
+/**
  * Check if app is running in demo mode
  */
 export function isInDemoMode(): boolean {
@@ -274,6 +299,7 @@ export function resetRepositories(): void {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
+  statsRepository = null;
 }
 
 /**

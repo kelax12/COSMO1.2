@@ -15,7 +15,9 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs, KeyResult } from '@/modules/okrs';
-import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+import { parseLocalDate, getLocalDateString } from '../lib/workTimeCalculator';
+import { useWorkTimeStats } from '@/modules/stats';
+import type { WorkTimeBucket, WorkTimeRange } from '@/modules/stats';
 import { useVisibilityInterval } from '../lib/hooks/usePerformance';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -65,34 +67,18 @@ export default function StatisticsPage() {
   // Insights en langage naturel (#34) — calculés client-side, max 3 phrases.
   const insights = useMemo(() => buildInsights(tasks, habits, now), [tasks, habits, now]);
 
-  const getPeriodDetails = (period: TimePeriod, periodDate: Date) => {
-    let startDate: Date, endDate: Date;
-
-    if (period === 'day') {
-      startDate = new Date(periodDate); startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(periodDate); endDate.setHours(23, 59, 59, 999);
-    } else if (period === 'week') {
-      startDate = new Date(periodDate); startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(periodDate); endDate.setDate(endDate.getDate() + 6); endDate.setHours(23, 59, 59, 999);
-    } else if (period === 'month') {
-      startDate = new Date(periodDate.getFullYear(), periodDate.getMonth(), 1);
-      endDate = new Date(periodDate.getFullYear(), periodDate.getMonth() + 1, 0); endDate.setHours(23, 59, 59, 999);
-    } else {
-      startDate = new Date(periodDate.getFullYear(), 0, 1);
-      endDate = new Date(periodDate.getFullYear(), 11, 31); endDate.setHours(23, 59, 59, 999);
-    }
-
-    return calculateWorkTimeForPeriod(startDate, endDate, { tasks, events, habits, okrs });
-  };
-
-  const calculateWorkTime = (period: TimePeriod) => {
-    const periodList: { label: string; date: string; fullDate: Date; weekNumber?: number }[] = [];
-
-    switch (period) {
+  // ── Agrégats « temps investi » (module stats) ──────────────────────
+  // Le client ne construit que les plages de dates + labels ; les totaux
+  // viennent de la RPC SQL get_work_time_stats en prod (payload ~1 kB au
+  // lieu de toutes les entités), et du même calcul historique en démo.
+  const chartRangeDefs = useMemo(() => {
+    const defs: { label: string; range: WorkTimeRange }[] = [];
+    switch (selectedPeriod) {
       case 'day':
         for (let i = 9; i >= 0; i--) {
           const date = new Date(now); date.setDate(date.getDate() - i);
-          periodList.push({ label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), date: getLocalDateString(date), fullDate: date });
+          const day = getLocalDateString(date);
+          defs.push({ label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), range: { start: day, end: day } });
         }
         break;
       case 'week':
@@ -100,43 +86,67 @@ export default function StatisticsPage() {
           const date = new Date(now); date.setDate(date.getDate() - (i * 7));
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
+          const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
           const startOfYear = new Date(weekStart.getFullYear(), 0, 1);
           const weekNumber = Math.ceil(((weekStart.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-          periodList.push({ label: `S${weekNumber}`, date: getLocalDateString(weekStart), fullDate: weekStart, weekNumber });
+          defs.push({ label: `S${weekNumber}`, range: { start: getLocalDateString(weekStart), end: getLocalDateString(weekEnd) } });
         }
         break;
       case 'month':
         for (let i = 11; i >= 0; i--) {
           const date = new Date(now); date.setMonth(date.getMonth() - i);
-          periodList.push({ label: date.toLocaleDateString('fr-FR', { month: 'short' }), date: getLocalDateString(date), fullDate: date });
+          const first = new Date(date.getFullYear(), date.getMonth(), 1);
+          const last = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+          defs.push({ label: date.toLocaleDateString('fr-FR', { month: 'short' }), range: { start: getLocalDateString(first), end: getLocalDateString(last) } });
         }
         break;
       case 'year':
         for (let i = 4; i >= 0; i--) {
-          const date = new Date(now); date.setFullYear(date.getFullYear() - i);
-          periodList.push({ label: date.getFullYear().toString(), date: getLocalDateString(date), fullDate: date });
+          const year = now.getFullYear() - i;
+          defs.push({ label: String(year), range: { start: `${year}-01-01`, end: `${year}-12-31` } });
         }
         break;
     }
+    return defs;
+  }, [selectedPeriod, now]);
 
-    return periodList.map((p, index) => {
-      const details = getPeriodDetails(period, p.fullDate);
-      let relevantTime = 0;
-      if (selectedSection === 'tasks') relevantTime = details.tasksTime;
-      else if (selectedSection === 'agenda') relevantTime = details.eventsTime;
-      else if (selectedSection === 'habits') relevantTime = details.habitsTime;
-      else if (selectedSection === 'okr') relevantTime = details.okrTime;
-      else relevantTime = details.totalTime;
+  // Plages fixes de la synthèse (Aujourd'hui / 7 j / 30 j / 365 j).
+  const fixedRanges = useMemo<WorkTimeRange[]>(() => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const daysAgo = (offset: number) => {
+      const dd = new Date(d); dd.setDate(d.getDate() - offset);
+      return getLocalDateString(dd);
+    };
+    const today = getLocalDateString(d);
+    return [
+      { start: today, end: today },
+      { start: daysAgo(6), end: today },
+      { start: daysAgo(29), end: today },
+      { start: daysAgo(364), end: today },
+    ];
+  }, [now]);
 
-      const finalTime = Math.round(relevantTime);
-      return { ...p, totalTime: finalTime, hours: Math.floor(finalTime / 60), minutes: Math.round(finalTime % 60), details, index };
-    });
-  };
+  // Un seul appel pour tout : 4 plages fixes + 5 à 12 buckets de graphique.
+  const allRanges = useMemo(
+    () => [...fixedRanges, ...chartRangeDefs.map(d => d.range)],
+    [fixedRanges, chartRangeDefs]
+  );
+  const { data: workTimeBuckets } = useWorkTimeStats(allRanges);
+  const fixedBuckets = workTimeBuckets?.slice(0, fixedRanges.length);
+  const chartBuckets = workTimeBuckets?.slice(fixedRanges.length);
+
+  const pickBucketTime = useCallback((bucket?: WorkTimeBucket) => {
+    if (!bucket) return 0;
+    if (selectedSection === 'tasks') return bucket.tasksTime;
+    if (selectedSection === 'agenda') return bucket.eventsTime;
+    if (selectedSection === 'habits') return bucket.habitsTime;
+    if (selectedSection === 'okr') return bucket.okrTime;
+    return bucket.totalTime;
+  }, [selectedSection]);
 
   const workTimeData = useMemo(
-    () => calculateWorkTime(selectedPeriod),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedPeriod, selectedSection, tasks, events, habits, okrs, now]
+    () => chartRangeDefs.map((def, index) => ({ label: def.label, totalTime: pickBucketTime(chartBuckets?.[index]) })),
+    [chartRangeDefs, chartBuckets, pickBucketTime]
   );
 
   const rollingRange = useMemo(() => {
@@ -198,23 +208,12 @@ export default function StatisticsPage() {
   const totalWorkTime = workTimeData.reduce((sum, d) => sum + d.totalTime, 0);
   const avgWorkTime = workTimeData.length > 0 ? Math.round(totalWorkTime / workTimeData.length) : 0;
 
-  const fixedStats = useMemo(() => {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const eod = new Date(d); eod.setHours(23, 59, 59, 999);
-    const pick = (data: ReturnType<typeof calculateWorkTimeForPeriod>) => {
-      if (selectedSection === 'tasks')  return data.tasksTime;
-      if (selectedSection === 'agenda') return data.eventsTime;
-      if (selectedSection === 'habits') return data.habitsTime;
-      if (selectedSection === 'okr')    return data.okrTime;
-      return data.totalTime;
-    };
-    return {
-      today: pick(calculateWorkTimeForPeriod(d, eod, { tasks, events, habits, okrs })),
-      week:  pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 6),   eod, { tasks, events, habits, okrs })),
-      month: pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 29),  eod, { tasks, events, habits, okrs })),
-      year:  pick(calculateWorkTimeForPeriod(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 364), eod, { tasks, events, habits, okrs })),
-    };
-  }, [tasks, events, habits, okrs, now, selectedSection]);
+  const fixedStats = useMemo(() => ({
+    today: pickBucketTime(fixedBuckets?.[0]),
+    week:  pickBucketTime(fixedBuckets?.[1]),
+    month: pickBucketTime(fixedBuckets?.[2]),
+    year:  pickBucketTime(fixedBuckets?.[3]),
+  }), [fixedBuckets, pickBucketTime]);
 
   const periodDescriptiveText: Record<TimePeriod, string> = {
     day: "aujourd'hui",
