@@ -114,7 +114,7 @@ Les repositories sont sélectionnés dynamiquement via `src/lib/repository.facto
 ```typescript
 getTasksRepository() / getHabitsRepository() / getEventsRepository()
 getCategoriesRepository() / getListsRepository() / getFriendsRepository()
-getOKRsRepository() / getKRCompletionsRepository()
+getOKRsRepository() / getKRCompletionsRepository() / getStatsRepository()
 resetRepositories()     // nullifie les singletons (changement de mode)
 clearDemoStorage()      // efface les clés localStorage démo (sweep par prefix cosmo_*)
 ```
@@ -178,6 +178,7 @@ src/modules/{module}/
 | friends | `src/modules/friends/` | Collaboration sociale |
 | okrs | `src/modules/okrs/` | OKR |
 | kr-completions | `src/modules/kr-completions/` | Journal append-only des complétions de KR |
+| stats | `src/modules/stats/` | Agrégats « temps investi » (RPC SQL `get_work_time_stats` en prod, calcul local en démo) |
 | ui-states | `src/modules/ui-states/` | État UI persistant (couleurs, priorités) |
 | user | `src/modules/user/` | Profil utilisateur, messages inbox |
 
