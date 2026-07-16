@@ -6,7 +6,7 @@ import { test, expect, navTo } from './fixtures';
 test.describe('collaboration (demo)', () => {
   test.describe.configure({ timeout: 60_000 });
 
-  test('ouvre TaskModal et navigue vers l'étape Collaborateurs', async ({ demoPage }) => {
+  test("ouvre TaskModal et navigue vers l'étape Collaborateurs", async ({ demoPage }) => {
     // Naviguer vers la page Tâches via la sidebar (SPA — pas de goto)
     await navTo(demoPage, /to ?do|tâches|tasks/i, /\/tasks/);
     await demoPage.waitForLoadState('networkidle');
