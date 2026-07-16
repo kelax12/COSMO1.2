@@ -11,6 +11,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // Uniquement les *.spec.ts : e2e/rls/*.test.ts sont des tests Vitest
+  // (vitest.integration.config.ts) que Playwright ne doit pas collecter.
+  testMatch: '**/*.spec.ts',
   // 60 s : le tout premier `page.goto('/')` déclenche la compilation Vite à
   // froid de l'app (≈46k LOC) qui peut dépasser 30 s sur un dev server neuf
   // (cold start). Les navigations suivantes (serveur chaud) sont rapides.

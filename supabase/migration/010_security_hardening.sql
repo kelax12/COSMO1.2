@@ -48,6 +48,12 @@ CREATE VIEW tasks_pending_invites WITH (security_invoker = true) AS
   WHERE auth.uid() = user_id;
 
 -- ─── 3. friends : restreindre l'INSERT à une demande acceptée ────────
+
+-- Pré-requis rejeu sur base vierge : la prod utilise sender_id/receiver_id
+-- (schéma détaillé en 012_friend_requests_align.sql), mais 007 crée la table
+-- avec user_id seul. Idempotent — no-op en prod où les colonnes existent.
+ALTER TABLE friend_requests ADD COLUMN IF NOT EXISTS sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE friend_requests ADD COLUMN IF NOT EXISTS receiver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
 DROP POLICY IF EXISTS "Users can insert own friends" ON friends;
 DROP POLICY IF EXISTS "Users can insert own friends via accepted request" ON friends;
 
