@@ -27,6 +27,7 @@ import {
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
+import OKRCategoryPicker from './OKRCategoryPicker';
 
 interface TeamOKRModalProps {
   orgId: string;
@@ -41,7 +42,6 @@ interface KRDraft {
   currentValue: number;
   targetValue: number;
   unit: string;
-  estimatedTime: number;
   weight: number;
 }
 
@@ -50,7 +50,6 @@ const newKR = (): KRDraft => ({
   currentValue: 0,
   targetValue: 100,
   unit: '%',
-  estimatedTime: 30,
   weight: 1,
 });
 
@@ -78,7 +77,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
           currentValue: k.currentValue,
           targetValue: k.targetValue,
           unit: k.unit ?? '',
-          estimatedTime: k.estimatedTime ?? 30,
           weight: k.weight ?? 1,
         }))
       : [newKR()],
@@ -114,7 +112,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         currentValue: Number(k.currentValue) || 0,
         unit: k.unit.trim() || undefined,
         weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
-        estimatedTime: Math.max(0, Math.round(Number(k.estimatedTime) || 30)),
       }));
       editOKR.mutate(
         {
@@ -139,7 +136,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
       currentValue: Number(k.currentValue) || 0,
       unit: k.unit.trim() || undefined,
       weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
-      estimatedTime: Math.max(0, Math.round(Number(k.estimatedTime) || 30)),
     }));
     createOKR.mutate(
       {
@@ -171,15 +167,15 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               <Input id="tokr-title" value={title} autoFocus placeholder="Ex. Réussir le lancement produit" onChange={(e) => setTitle(e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="tokr-cat">Catégorie</Label>
-                <Input id="tokr-cat" value={category} placeholder="Ex. Croissance" onChange={(e) => setCategory(e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="tokr-end">Échéance</Label>
-                <Input id="tokr-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tokr-end">Échéance</Label>
+              <Input id="tokr-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+
+            {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
+            <div className="grid gap-2">
+              <Label>Catégorie</Label>
+              <OKRCategoryPicker orgId={orgId} value={category} onChange={setCategory} />
             </div>
 
             <div className="grid gap-2">
@@ -267,7 +263,9 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {/* Durée retirée : un OKR d'équipe est à l'échelle équipe /
+                      entreprise, la notion de temps de réalisation n'a pas de sens. */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">Cible</Label>
                       <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
@@ -275,10 +273,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">Unité</Label>
                       <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
-                    </div>
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Durée (min)</Label>
-                      <Input type="number" className="h-8" value={kr.estimatedTime} onChange={(e) => setKR(idx, { estimatedTime: Number(e.target.value) })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs" title="Importance du KR dans la progression globale">Coef. (1–10)</Label>
