@@ -16,3 +16,8 @@ export interface CreateOrgOKRCategoryInput {
   name: string;
   color?: string;
 }
+
+export interface UpdateOrgOKRCategoryInput {
+  name?: string;
+  color?: string;
+}

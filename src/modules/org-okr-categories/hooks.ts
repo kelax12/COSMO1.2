@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getOrgOKRCategoriesRepository } from '@/lib/repository.factory';
 import { orgOKRCategoryKeys } from './constants';
-import type { CreateOrgOKRCategoryInput } from './types';
+import type { CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
 
 const useRepo = () => getOrgOKRCategoriesRepository();
 
@@ -29,6 +29,19 @@ export const useCreateOrgOKRCategory = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: orgOKRCategoryKeys.list(orgId) });
     },
     onError: (error: Error) => toast.error(`Impossible de créer la catégorie : ${error.message}`),
+  });
+};
+
+export const useUpdateOrgOKRCategory = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ categoryId, input }: { categoryId: string; input: UpdateOrgOKRCategoryInput }) =>
+      repository.updateCategory(categoryId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orgOKRCategoryKeys.list(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier la catégorie : ${error.message}`),
   });
 };
 

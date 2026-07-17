@@ -2,12 +2,13 @@
 // ORG-OKR-CATEGORIES MODULE - Repository Interface + LocalStorage (démo)
 // ═══════════════════════════════════════════════════════════════════
 
-import { OrgOKRCategory, CreateOrgOKRCategoryInput } from './types';
+import { OrgOKRCategory, CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
 import { ORG_OKR_CATEGORIES_STORAGE_KEY } from './constants';
 
 export interface IOrgOKRCategoriesRepository {
   getCategories(orgId: string): Promise<OrgOKRCategory[]>;
   createCategory(orgId: string, input: CreateOrgOKRCategoryInput): Promise<OrgOKRCategory>;
+  updateCategory(categoryId: string, input: UpdateOrgOKRCategoryInput): Promise<OrgOKRCategory>;
   deleteCategory(categoryId: string): Promise<void>;
 }
 
@@ -62,6 +63,20 @@ export class LocalStorageOrgOKRCategoriesRepository implements IOrgOKRCategories
     };
     this.save([...all, cat]);
     return cat;
+  }
+
+  async updateCategory(categoryId: string, input: UpdateOrgOKRCategoryInput): Promise<OrgOKRCategory> {
+    const all = this.getAll();
+    const idx = all.findIndex((c) => c.id === categoryId);
+    if (idx === -1) throw new Error('Catégorie introuvable');
+    const updated: OrgOKRCategory = {
+      ...all[idx],
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.color !== undefined ? { color: input.color } : {}),
+    };
+    all[idx] = updated;
+    this.save(all);
+    return updated;
   }
 
   async deleteCategory(categoryId: string): Promise<void> {
