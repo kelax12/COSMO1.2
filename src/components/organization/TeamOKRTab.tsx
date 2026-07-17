@@ -222,9 +222,11 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
     <div className="space-y-4">
       {/* Filtre par catégorie — UI identique à la page OKR perso.
           Les actions de gestion (créer/éditer/supprimer) sont réservées aux
-          managers ; un simple membre ne voit que « Tous » + les chips. */}
+          managers ; un simple membre ne voit que « Tous » + les chips.
+          Toujours rendu (même sans catégorie) pour que la barre occupe sa place
+          normale : sinon les boutons/cartes en dessous remontaient (#4). */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        {(categories.length > 0 || isManager) ? (
+        {(
           <CategoryFilterBar
             categories={categories.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
             selectedCategory={selectedCategory}
@@ -251,7 +253,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
             createCategoryMutation={createCategory}
             canManage={isManager}
           />
-        ) : <span />}
+        )}
         {isManager && (
           <button
             type="button"

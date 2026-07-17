@@ -56,7 +56,7 @@ export interface FullCalendarEvent {
   borderColor?: string;
   textColor: string;
   editable: boolean;
-  extendedProps: { notes?: string; taskId?: string; isRecurringInstance: boolean };
+  extendedProps: { notes?: string; taskId?: string; isRecurringInstance: boolean; createdBy?: string };
 }
 
 // Étend les événements récurrents sur ±13 mois autour de `now`, puis les mappe
@@ -78,6 +78,6 @@ export function buildCalendarEvents(events: CalendarEvent[], now: Date = new Dat
     borderColor: event.color,
     textColor: '#ffffff',
     editable: !event.id.includes('::'),
-    extendedProps: { notes: event.notes, taskId: event.taskId, isRecurringInstance: event.id.includes('::') },
+    extendedProps: { notes: event.notes, taskId: event.taskId, isRecurringInstance: event.id.includes('::'), createdBy: event.createdBy },
   }));
 }

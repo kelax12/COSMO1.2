@@ -10,8 +10,9 @@ import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, Create
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useActiveOrganization } from '@/modules/organizations';
+import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import { useTeamTasks } from '@/modules/team-projects';
+import MemberAvatar from '@/components/organization/MemberAvatar';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,6 +55,29 @@ const AgendaPage: React.FC = () => {
   // Tâches d'équipe (mode entreprise) — [] si aucune org active.
   const { activeOrg } = useActiveOrganization();
   const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
+  // Membres de l'org active : sert à résoudre l'avatar de l'AUTEUR d'un
+  // événement (créé par un manager) pour distinguer perso / pro dans l'agenda.
+  const { data: orgMembers = [] } = useOrgMembers(activeOrg?.id);
+  const memberById = React.useMemo(() => {
+    const m = new Map<string, (typeof orgMembers)[number]>();
+    for (const om of orgMembers) m.set(om.userId, om);
+    return m;
+  }, [orgMembers]);
+  // Rendu du contenu d'un événement : titre + avatar de l'auteur si l'événement
+  // a été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise).
+  const renderEventInner = (title: string, createdBy: string | undefined, centered: boolean) => {
+    const author = createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
+    return (
+      <div className={`h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
+        {author && (
+          <span className="shrink-0 rounded-full ring-1 ring-white/70" title={`Ajouté par ${author.displayName}`}>
+            <MemberAvatar avatar={author.avatar} name={author.displayName} size={16} />
+          </span>
+        )}
+        <span className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''}`}>{title}</span>
+      </div>
+    );
+  };
 
   const isMobile = useIsMobile();
 
@@ -555,13 +579,9 @@ const AgendaPage: React.FC = () => {
               unselectAuto={true}
               unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
               datesSet={handleMobileDatesSet}
-              eventContent={(eventInfo) => (
-                <div className="h-full w-full flex items-center p-1 text-xs cursor-pointer">
-                  <div className="font-medium text-white truncate leading-tight">
-                    {eventInfo.event.title}
-                  </div>
-                </div>
-              )}
+              eventContent={(eventInfo) =>
+                renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, false)
+              }
               eventClassNames={(arg) => [
                 'rounded-lg shadow-sm border-0 cursor-pointer',
                 conflictIds.has(arg.event.id) ? 'event-conflict' : '',
@@ -621,13 +641,9 @@ const AgendaPage: React.FC = () => {
                 datesSet={handleDesktopDatesSet}
                 unselectAuto={true}
                 unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
-                eventContent={(eventInfo) => (
-                  <div className="h-full w-full flex items-center justify-center p-1 text-xs cursor-pointer">
-                    <div className="font-medium text-white truncate text-center leading-tight">
-                      {eventInfo.event.title}
-                    </div>
-                  </div>
-                )}
+                eventContent={(eventInfo) =>
+                  renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, true)
+                }
                 eventClassNames={(arg) => [
                   'rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105',
                   conflictIds.has(arg.event.id) ? 'event-conflict' : '',

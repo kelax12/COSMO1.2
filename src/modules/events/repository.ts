@@ -66,15 +66,17 @@ const biweekly1on1 = (): CalendarEvent[] =>
     };
   });
 
-// Événements ponctuels notables
+// Événements ponctuels notables. `createdBy` renseigné (≠ propriétaire) sur
+// quelques-uns pour démontrer la distinction perso / pro : un événement ajouté
+// par un manager affiche son avatar dans l'agenda perso.
 const ONE_TIME_EVENTS: CalendarEvent[] = [
-  // Aujourd'hui
-  { id: 'event-1', title: "Réunion d'équipe",    start: eventDate(0, 10, 0),  end: eventDate(0, 11, 0),  color: '#3B82F6', description: "Point hebdomadaire" },
+  // Aujourd'hui — « Réunion d'équipe » ajoutée par un collaborateur (avatar visible).
+  { id: 'event-1', title: "Réunion d'équipe",    start: eventDate(0, 10, 0),  end: eventDate(0, 11, 0),  color: '#3B82F6', description: "Point hebdomadaire", createdBy: 'friend-1' },
   { id: 'event-2', title: 'Déjeuner client',      start: eventDate(0, 12, 30), end: eventDate(0, 14, 0),  color: '#10B981', description: 'Restaurant Le Petit Bistrot' },
   { id: 'event-3', title: 'Formation React',      start: eventDate(0, 15, 0),  end: eventDate(0, 17, 0),  color: '#8B5CF6', description: 'Module avancé sur les hooks' },
   { id: 'event-4', title: 'Sport',                start: eventDate(0, 18, 30), end: eventDate(0, 19, 30), color: '#EF4444', description: 'Séance de running' },
   // À venir
-  { id: 'event-fut-1', title: 'Sprint Review Q2',     start: eventDate(5, 14, 0),  end: eventDate(5, 16, 0),  color: '#8B5CF6', description: 'Démo des fonctionnalités du sprint' },
+  { id: 'event-fut-1', title: 'Sprint Review Q2',     start: eventDate(5, 14, 0),  end: eventDate(5, 16, 0),  color: '#8B5CF6', description: 'Démo des fonctionnalités du sprint', createdBy: 'user-lucas' },
   { id: 'event-fut-2', title: 'Entretien candidat',   start: eventDate(8, 10, 0),  end: eventDate(8, 11, 0),  color: '#F97316', description: 'Poste développeur front-end' },
   { id: 'event-fut-3', title: 'DevFest 2026',          start: eventDate(18, 9, 0),  end: eventDate(19, 18, 0), color: '#EF4444', description: 'Conférence tech — talk React' },
   // Conférences passées
@@ -244,7 +246,9 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   async createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent> {
     const store = this.getMemberStore();
     const list = store[userId] ?? this.getMemberEvents(userId);
-    const newEvent: CalendarEvent = { ...input, id: crypto.randomUUID() };
+    // createdBy = le manager (utilisateur démo courant) : dans l'agenda perso
+    // du subordonné, l'avatar du manager distinguera cet événement pro.
+    const newEvent: CalendarEvent = { ...input, id: crypto.randomUUID(), createdBy: 'demo-user' };
     store[userId] = [...list, newEvent];
     this.saveMemberStore(store);
     return newEvent;

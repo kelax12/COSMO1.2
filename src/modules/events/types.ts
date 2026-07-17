@@ -30,6 +30,13 @@ export interface CalendarEvent {
   recurrenceDays?: number[];
   // Dates YYYY-MM-DD des occurrences supprimées individuellement (ne supprime pas le master)
   exceptions?: string[];
+  /**
+   * auth.users.id de l'AUTEUR. Diffère du propriétaire (user_id, implicite)
+   * uniquement quand un manager a créé l'événement dans l'agenda d'un
+   * subordonné (mode entreprise, mig. 079). Sert à afficher l'avatar du
+   * créateur pour distinguer perso / pro. Absent en création (posé serveur).
+   */
+  createdBy?: string;
 }
 
 /**
