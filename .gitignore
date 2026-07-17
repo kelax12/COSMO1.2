@@ -109,3 +109,6 @@ visual-audit*.log
 .agents/
 .claude/skills/
 skills-lock.json
+
+# Captures d audit visuel locales (jamais versionnees)
+visual-audit-*/
