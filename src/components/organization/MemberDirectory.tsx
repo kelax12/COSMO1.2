@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Shield, UserCog, UserRound, MoreVertical, LogOut,
-  ListTodo, CalendarDays, TrendingUp, ClipboardList,
+  ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -54,6 +54,9 @@ const BADGE_META = {
   member: { label: 'Membre', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
 } as const;
 
+/** Normalisation pour la recherche : minuscules, sans accents (diacritiques combinants). */
+const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
 const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
   const { label, Icon, className } = BADGE_META[kind];
   return (
@@ -80,6 +83,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
 
+  const [query, setQuery] = useState('');
   const [profile, setProfile] = useState<OrgMember | null>(null);
   const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
   const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
@@ -106,6 +110,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
     }
     return map;
   }, [orgTeams, orgTeamMembers]);
+
+  // Recherche par nom ou email (insensible aux accents/casse).
+  const filteredMembers = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return members;
+    return members.filter(
+      (m) => normalize(m.displayName).includes(q) || (m.email ? normalize(m.email).includes(q) : false),
+    );
+  }, [members, query]);
 
   const activeProjects = projects.filter((p) => !p.archivedAt);
 
@@ -134,8 +147,42 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
 
   return (
     <>
+      {/* Recherche (visible dès que l'annuaire compte quelques membres) */}
+      {members.length > 3 && (
+        <div className="relative mb-3">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher un membre (nom, email)…"
+            aria-label="Rechercher un membre dans l'annuaire"
+            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Effacer la recherche"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {filteredMembers.length === 0 ? (
+        <p className="text-sm text-[rgb(var(--color-text-muted))] py-8 text-center">
+          Aucun membre ne correspond à « {query.trim()} ».
+        </p>
+      ) : (
       <ul className="space-y-2">
-        {members.map((m) => {
+        {filteredMembers.map((m) => {
           const isSelf = m.userId === currentUserId;
           // Supérieur hiérarchique de m ? (admin partout ; manager : son sous-arbre)
           const isAbove = !isSelf && (isAdmin || mySubtree.has(m.userId));
@@ -220,6 +267,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           );
         })}
       </ul>
+      )}
 
       {profile && (
         <MemberProfileSheet
