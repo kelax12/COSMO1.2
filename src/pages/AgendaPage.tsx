@@ -9,6 +9,9 @@ import { findNextFreeSlot } from './agenda/free-slot';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useActiveOrganization } from '@/modules/organizations';
+import { useTeamTasks } from '@/modules/team-projects';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -47,6 +50,10 @@ const AgendaPage: React.FC = () => {
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
   const { data: categories = [] } = useCategories();
+  const { user } = useAuth();
+  // Tâches d'équipe (mode entreprise) — [] si aucune org active.
+  const { activeOrg } = useActiveOrganization();
+  const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
 
   const isMobile = useIsMobile();
 
@@ -276,8 +283,26 @@ const AgendaPage: React.FC = () => {
 
   const calendarEvents = buildCalendarEvents(events);
   // (#20 retiré à la demande utilisateur : plus de rangée all-day des tâches
-  // à deadline — le calendrier n'affiche que les événements.)
-  const allCalendarEvents: EventInput[] = calendarEvents as EventInput[];
+  // PERSO à deadline — le calendrier n'affiche que les événements.)
+  // #14 entreprise : MES tâches d'équipe datées apparaissent en all-day avec
+  // une couleur dédiée (indigo, préfixe équipe) pour les distinguer du perso.
+  // Non éditables ici — elles se gèrent dans l'espace entreprise / To-Do.
+  const teamTaskEvents: EventInput[] = React.useMemo(() => {
+    if (!user?.id) return [];
+    return teamTasks
+      .filter((t) => !t.completed && !!t.deadline && t.assigneeIds.includes(user.id))
+      .map((t) => ({
+        id: `teamtask-${t.id}`,
+        title: `Équipe · ${t.name}`,
+        start: t.deadline,
+        allDay: true,
+        editable: false,
+        backgroundColor: '#6366f1',
+        borderColor: '#4f46e5',
+        extendedProps: { isTeamTask: true },
+      }));
+  }, [teamTasks, user?.id]);
+  const allCalendarEvents: EventInput[] = [...(calendarEvents as EventInput[]), ...teamTaskEvents];
 
   // Conflits (#21) : ids des événements horaires qui se chevauchent.
   const conflictIds = React.useMemo(() => {
