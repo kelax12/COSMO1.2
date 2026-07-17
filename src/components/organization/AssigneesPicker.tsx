@@ -78,7 +78,9 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
           </span>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 max-h-72 overflow-y-auto">
+      {/* z-[10000] : le menu doit passer AU-DESSUS des modals (z-[9999]) —
+          sans ça il s'ouvrait derrière le modal et paraissait « ne rien faire ». */}
+      <DropdownMenuContent align="end" className="w-56 max-h-72 overflow-y-auto z-[10000]">
         <DropdownMenuLabel>Assigner à</DropdownMenuLabel>
         {value.length > 0 && (
           <>

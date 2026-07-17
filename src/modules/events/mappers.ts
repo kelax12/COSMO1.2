@@ -19,6 +19,7 @@ export interface EventRow {
   recurrence_days?: number[];
   exceptions?: string[];
   user_id?: string;
+  created_by?: string;
   created_at?: string;
 }
 
@@ -50,6 +51,7 @@ export function mapEventFromDb(row: EventRow): CalendarEvent {
     recurrence: row.recurrence ?? 'none',
     recurrenceDays: row.recurrence_days ?? [],
     exceptions: row.exceptions ?? [],
+    createdBy: row.created_by,
   };
 }
 
