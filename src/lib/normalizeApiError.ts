@@ -8,6 +8,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   '23505': 'Cette ressource existe déjà.',
   '23503': 'Action impossible en raison de dépendances existantes.',
   '42P01': 'Erreur de configuration de la base de données.',
+  // RLS : insert/update rejeté par une policy (droits insuffisants).
+  '42501': "Vous n'avez pas les droits nécessaires pour cette action.",
   'PGRST116': 'La ressource demandée est introuvable.',
   'insufficient_quota': 'Quota AI épuisé. Veuillez vérifier votre abonnement.',
   'rate_limit_exceeded': 'Trop de requêtes. Veuillez patienter un instant.',

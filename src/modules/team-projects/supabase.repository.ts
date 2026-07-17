@@ -92,19 +92,32 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     const uid = userData.user?.id;
     if (!uid) throw new Error('Not authenticated');
     // Whitelist explicite — org_id/created_by injectés serveur-side, jamais input.
-    const { data, error } = await supabase
+    // Id généré client : pas de `.select()` de représentation après l'insert —
+    // un manager non-admin rattachant le projet à une équipe hors de son
+    // périmètre ne peut pas RELIRE la ligne (can_access_team_project) et
+    // PostgREST remontait « new row violates row-level security » (bug #9).
+    const id = crypto.randomUUID();
+    const { error } = await supabase
       .from('team_projects')
       .insert({
+        id,
         org_id: orgId,
         created_by: uid,
         name: input.name,
         color: input.color ?? 'blue',
         team_id: input.teamId ?? null,
-      })
-      .select('*')
-      .single();
+      });
     if (error) throw normalizeApiError(error);
-    return mapProject(data as ProjectRow);
+    return {
+      id,
+      orgId,
+      name: input.name,
+      color: input.color ?? 'blue',
+      createdBy: uid,
+      archivedAt: null,
+      createdAt: new Date().toISOString(),
+      teamId: input.teamId ?? null,
+    };
   }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {

@@ -111,19 +111,22 @@ describe('SupabaseTeamOKRsRepository — create', () => {
     });
 
     const okrInsert = supabaseMock.argsOf('team_okrs', 'insert')?.[0] as Record<string, unknown>;
+    // L'id est généré côté client (plus de SELECT de représentation — bug #9).
+    expect(typeof okrInsert.id).toBe('string');
     expect(okrInsert).toEqual({
+      id: okrInsert.id,
       org_id: 'org1', created_by: supabaseMock.user?.id, title: 'Croissance',
       description: 'desc', category: 'business', start_date: '2026-07-01', end_date: '2026-09-30',
     });
 
     const links = supabaseMock.argsOf('team_okr_teams', 'insert')?.[0] as Record<string, unknown>[];
     expect(links).toEqual([
-      { okr_id: 'o1', org_id: 'org1', team_id: 't1' },
-      { okr_id: 'o1', org_id: 'org1', team_id: 't2' },
+      { okr_id: okrInsert.id, org_id: 'org1', team_id: 't1' },
+      { okr_id: okrInsert.id, org_id: 'org1', team_id: 't2' },
     ]);
 
     const [krInsert] = supabaseMock.argsOf('team_key_results', 'insert')?.[0] as Record<string, unknown>[];
-    expect(krInsert.okr_id).toBe('o1');
+    expect(krInsert.okr_id).toBe(okrInsert.id);
     expect(krInsert.org_id).toBe('org1');
     expect(krInsert.current_value).toBe(10); // clampé sur target (25 → 10)
     expect(krInsert.target_value).toBe(10);

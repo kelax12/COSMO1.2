@@ -52,7 +52,11 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
     await repo.createProject('org1', { name: 'Site web', color: 'green', teamId: 't1' });
 
     const inserted = supabaseMock.argsOf('team_projects', 'insert')?.[0] as Record<string, unknown>;
+    // L'id est désormais généré côté client (pas de SELECT de représentation
+    // après l'insert — bug #9), le reste est whitelisté.
+    expect(typeof inserted.id).toBe('string');
     expect(inserted).toEqual({
+      id: inserted.id,
       org_id: 'org1', created_by: supabaseMock.user?.id,
       name: 'Site web', color: 'green', team_id: 't1',
     });
