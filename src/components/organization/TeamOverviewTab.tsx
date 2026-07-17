@@ -5,11 +5,14 @@ import { isPast, isToday, parseISO } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { useTeamTasks } from '@/modules/team-projects';
 import { useTeamOKRs, type TeamKeyResult } from '@/modules/team-okrs';
-import type { OrgMember } from '@/modules/organizations';
+import { subtreeOf, type OrgMember } from '@/modules/organizations';
 
 interface TeamOverviewTabProps {
   orgId: string;
   members: OrgMember[];
+  /** Admin : stats de toute l'entreprise ; manager : son sous-arbre (#13). */
+  isAdmin: boolean;
+  currentUserId?: string;
 }
 
 const chartConfig = {
@@ -42,12 +45,28 @@ const StatCard = ({ Icon, label, value, tone }: { Icon: typeof ListTodo; label: 
 );
 
 /**
- * Tableau de bord de l'équipe — dérivé côté client des tâches et OKR de l'org :
+ * Onglet Statistiques (#13) — dérivé côté client des tâches et OKR de l'org :
  * charge par membre, retards, taux de complétion, progression OKR moyenne.
+ * Admin : toute l'entreprise. Manager : uniquement les personnes qu'il gère
+ * (soi + son sous-arbre) — les tâches comptées sont celles assignées à ce
+ * périmètre.
  */
-const TeamOverviewTab = ({ orgId, members }: TeamOverviewTabProps) => {
-  const { data: tasks = [] } = useTeamTasks(orgId);
+const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
+  const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: okrs = [] } = useTeamOKRs(orgId);
+
+  // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
+  const scopedMembers = useMemo(() => {
+    if (isAdmin || !currentUserId) return members;
+    const mine = subtreeOf(members, currentUserId);
+    return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
+  }, [members, isAdmin, currentUserId]);
+
+  const tasks = useMemo(() => {
+    if (isAdmin) return allTasks;
+    const scope = new Set(scopedMembers.map((m) => m.userId));
+    return allTasks.filter((t) => t.assigneeIds.some((id) => scope.has(id)));
+  }, [allTasks, scopedMembers, isAdmin]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -82,10 +101,10 @@ const TeamOverviewTab = ({ orgId, members }: TeamOverviewTabProps) => {
         openByAssignee.set(uid, (openByAssignee.get(uid) ?? 0) + 1);
       }
     }
-    return members
+    return scopedMembers
       .map((m) => ({ name: firstName(m.displayName), open: openByAssignee.get(m.userId) ?? 0 }))
       .sort((a, b) => b.open - a.open);
-  }, [tasks, members]);
+  }, [tasks, scopedMembers]);
 
   return (
     <div className="space-y-5">
@@ -124,7 +143,7 @@ const TeamOverviewTab = ({ orgId, members }: TeamOverviewTabProps) => {
           <ul className="space-y-1.5">
             {stats.overdue.slice(0, 6).map((t) => {
               const names = t.assigneeIds
-                .map((id) => members.find((m) => m.userId === id))
+                .map((id) => scopedMembers.find((m) => m.userId === id))
                 .filter((m): m is OrgMember => !!m)
                 .map((m) => firstName(m.displayName));
               return (
