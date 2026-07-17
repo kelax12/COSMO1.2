@@ -535,7 +535,8 @@ const AgendaPage: React.FC = () => {
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
               scrollTime={getInitialScrollTime()}
-              allDaySlot={false}
+              allDaySlot={teamTaskEvents.length > 0} /* #14 : rangée all-day réservée aux tâches d'équipe */
+              allDayText="Équipe"
               nowIndicator={true}
               eventDisplay="block"
               eventLongPressDelay={250}
@@ -599,7 +600,8 @@ const AgendaPage: React.FC = () => {
                 slotMinTime="00:00:00"
                 slotMaxTime="24:00:00"
                 scrollTime={getInitialScrollTime()}
-                allDaySlot={false}
+                allDaySlot={teamTaskEvents.length > 0} /* #14 : rangée all-day réservée aux tâches d'équipe */
+              allDayText="Équipe"
                 nowIndicator={true}
                 eventDisplay="block"
                 eventLongPressDelay={250}
