@@ -64,6 +64,13 @@ import { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.repository';
 import { SupabaseOrgTeamsRepository } from '@/modules/org-teams/supabase.repository';
 
+// Org OKR categories (catégories d'OKR d'entreprise, partagées)
+import {
+  IOrgOKRCategoriesRepository,
+  LocalStorageOrgOKRCategoriesRepository,
+} from '@/modules/org-okr-categories/repository';
+import { SupabaseOrgOKRCategoriesRepository } from '@/modules/org-okr-categories/supabase.repository';
+
 // Stats (agrégats « temps investi » — RPC SQL en prod, calcul local en démo)
 import { IStatsRepository, LocalStatsRepository } from '@/modules/stats/repository';
 import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
@@ -84,6 +91,7 @@ let organizationsRepository: IOrganizationsRepository | null = null;
 let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
 let orgTeamsRepository: IOrgTeamsRepository | null = null;
+let orgOKRCategoriesRepository: IOrgOKRCategoriesRepository | null = null;
 let statsRepository: IStatsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
@@ -102,6 +110,7 @@ appModeStore.subscribe(() => {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
+  orgOKRCategoriesRepository = null;
   statsRepository = null;
 });
 
@@ -258,6 +267,18 @@ export function getOrgTeamsRepository(): IOrgTeamsRepository {
 }
 
 /**
+ * Get the Org OKR categories repository based on current mode.
+ */
+export function getOrgOKRCategoriesRepository(): IOrgOKRCategoriesRepository {
+  if (!orgOKRCategoriesRepository) {
+    orgOKRCategoriesRepository = appModeStore.isDemo
+      ? new LocalStorageOrgOKRCategoriesRepository()
+      : new SupabaseOrgOKRCategoriesRepository();
+  }
+  return orgOKRCategoriesRepository;
+}
+
+/**
  * Get the Stats repository based on current mode.
  * En démo, l'implémentation locale agrège via les repositories des 4 modules
  * sources (injectés ici pour éviter tout import circulaire avec la factory).
@@ -299,6 +320,7 @@ export function resetRepositories(): void {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
+  orgOKRCategoriesRepository = null;
   statsRepository = null;
 }
 
