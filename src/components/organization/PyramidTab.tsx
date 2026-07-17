@@ -45,6 +45,7 @@ import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
 import MemberProfileSheet from './MemberProfileSheet';
 import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
+import MemberAgendaSheet from './MemberAgendaSheet';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
 
@@ -503,8 +504,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [placing, setPlacing] = useState<OrgMember | null>(null);
   const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
   const [profile, setProfile] = useState<OrgMember | null>(null);
-  // Infos d'un subordonné (tâches / agenda / contribution), ouvert sur un onglet.
+  // Infos d'un subordonné (tâches / contribution), ouvert sur un onglet.
   const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
+  // Agenda complet d'un subordonné (manager) — plein écran, éditable.
+  const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
   // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   // Retrait d'un membre SANS subordonné : modal de confirmation (#3).
@@ -1204,7 +1207,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
                 onOpenProfile={setProfile}
-                onOpenInsights={(mem, tab) => setInsights({ member: mem, tab })}
+                onOpenInsights={(mem, tab) =>
+                  tab === 'agenda' ? setAgendaMember(mem) : setInsights({ member: mem, tab })
+                }
                 editMode={editMode}
                 depth={0}
                 mobile={isMobile}
@@ -1331,6 +1336,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           initialTab={insights.tab}
           onClose={() => setInsights(null)}
         />
+      )}
+
+      {agendaMember && (
+        <MemberAgendaSheet member={agendaMember} onClose={() => setAgendaMember(null)} />
       )}
 
       {removing && (

@@ -13,6 +13,18 @@ import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 import { buildWindowOrFilter } from './window';
 
 export class SupabaseEventsRepository implements IEventsRepository {
+  // Id de l'utilisateur courant, lu depuis la session (pas de round-trip).
+  // Depuis la mig. 077, la RLS `events` renvoie aussi l'agenda des membres
+  // gérés (manager/admin) : toute lecture PERSONNELLE doit donc filtrer
+  // explicitement `user_id = self`, sinon l'agenda perso mélangerait les deux.
+  private async currentUserId(): Promise<string> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data } = await supabase.auth.getSession();
+    const uid = data.session?.user?.id;
+    if (!uid) throw new Error('Not authenticated');
+    return uid;
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
@@ -20,11 +32,13 @@ export class SupabaseEventsRepository implements IEventsRepository {
   async getAll(): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const db = supabase;
+    const uid = await this.currentUserId();
     // Auto-pagination : plus de troncature silencieuse au-delà de 500 items.
     const rows = await fetchAllPages(async (from, to) => {
       const { data, error } = await db
         .from('events')
         .select('*')
+        .eq('user_id', uid)
         .order('start_time', { ascending: true })
         .order('id', { ascending: true })
         .range(from, to);
@@ -38,10 +52,12 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (!supabase) throw new Error('Supabase not configured');
 
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
+    const uid = await this.currentUserId();
 
     let query = supabase
       .from('events')
       .select('*')
+      .eq('user_id', uid)
       .order('start_time', { ascending: false })
       .order('id', { ascending: false })
       .limit(limit + 1);
@@ -72,6 +88,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
   async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const db = supabase;
+    const uid = await this.currentUserId();
     const orFilter = buildWindowOrFilter(startISO, endISO);
     // Récurrents (toujours) + non-récurrents chevauchant la fenêtre. Auto-paginé
     // (une fenêtre chargée reste petite, mais on garde la garantie anti-troncature).
@@ -79,6 +96,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
       const { data, error } = await db
         .from('events')
         .select('*')
+        .eq('user_id', uid)
         .or(orFilter)
         .order('start_time', { ascending: true })
         .order('id', { ascending: true })
@@ -87,6 +105,27 @@ export class SupabaseEventsRepository implements IEventsRepository {
       return data || [];
     });
     return warnIfTruncated(rows, MAX_ROWS, 'events:window').map(mapEventFromDb);
+  }
+
+  async getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const db = supabase;
+    const orFilter = buildWindowOrFilter(startISO, endISO);
+    // Agenda d'un subordonné : la RLS `events_manager_select` (mig. 077)
+    // n'autorise que les membres gérés — le filtre user_id le cible.
+    const rows = await fetchAllPages(async (from, to) => {
+      const { data, error } = await db
+        .from('events')
+        .select('*')
+        .eq('user_id', userId)
+        .or(orFilter)
+        .order('start_time', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return data || [];
+    });
+    return warnIfTruncated(rows, MAX_ROWS, 'events:window:member').map(mapEventFromDb);
   }
 
   async getById(id: string): Promise<CalendarEvent | null> {
@@ -118,7 +157,8 @@ export class SupabaseEventsRepository implements IEventsRepository {
 
   async getFiltered(filters: EventFilters): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    let query = supabase.from('events').select('*');
+    const uid = await this.currentUserId();
+    let query = supabase.from('events').select('*').eq('user_id', uid);
 
     if (filters.taskId) {
       query = query.eq('task_id', filters.taskId);
@@ -156,6 +196,22 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (!user) throw new Error('Not authenticated');
     const dbInput = { ...mapEventToDb(input), user_id: user.id };
 
+    const { data, error } = await supabase
+      .from('events')
+      .insert([dbInput])
+      .select()
+      .single();
+
+    if (error) throw normalizeApiError(error);
+    return mapEventFromDb(data);
+  }
+
+  async createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // user_id = le subordonné ciblé ; la RLS `events_manager_insert` (mig. 077)
+    // valide que l'appelant gère bien cette personne. mapEventToDb n'émet
+    // jamais user_id (frontière anti-mass-assignment) — on le pose ici.
+    const dbInput = { ...mapEventToDb(input), user_id: userId };
     const { data, error } = await supabase
       .from('events')
       .insert([dbInput])

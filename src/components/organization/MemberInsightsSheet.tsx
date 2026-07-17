@@ -5,7 +5,6 @@ import { fr } from 'date-fns/locale';
 import {
   X,
   ListTodo,
-  CalendarDays,
   TrendingUp,
   CheckCircle2,
   Circle,
@@ -24,9 +23,10 @@ interface MemberInsightsSheetProps {
   onClose: () => void;
 }
 
+// L'agenda complet d'un membre a son propre écran plein page (MemberAgendaSheet,
+// éditable) — ici on ne garde que tâches + contribution.
 const TABS: { id: InsightsTab; label: string; Icon: typeof ListTodo }[] = [
   { id: 'tasks', label: 'Tâches', Icon: ListTodo },
-  { id: 'agenda', label: 'Agenda', Icon: CalendarDays },
   { id: 'contribution', label: 'Contribution', Icon: TrendingUp },
 ];
 
@@ -45,7 +45,8 @@ const isOverdue = (t: TeamTask): boolean => {
  *  - Contribution : synthèse de son activité (complétées, taux, retards).
  */
 const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsightsSheetProps) => {
-  const [tab, setTab] = useState<InsightsTab>(initialTab);
+  // 'agenda' a désormais son propre écran plein page — on retombe sur 'tasks'.
+  const [tab, setTab] = useState<InsightsTab>(initialTab === 'agenda' ? 'tasks' : initialTab);
   const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
 
   const myTasks = useMemo(

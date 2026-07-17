@@ -110,6 +110,35 @@ const DEMO_EVENTS: CalendarEvent[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
+// DEMO — AGENDAS DES MEMBRES (mode entreprise)
+// ═══════════════════════════════════════════════════════════════════
+// Agenda propre à chaque subordonné, consultable par sa hiérarchie. Seed
+// déterministe (pas de Math.random) pour que la démo du manager montre un
+// vrai planning. Clé localStorage séparée de l'agenda personnel.
+const MEMBER_EVENTS_STORAGE_KEY = 'cosmo_demo_member_events';
+
+const memberEvent = (uid: string, n: number, day: number, h: number, dur: number, title: string, color: string): CalendarEvent => {
+  const s = new Date(); s.setDate(s.getDate() + day); s.setHours(h, 0, 0, 0);
+  const e = new Date(s); e.setMinutes(e.getMinutes() + dur);
+  return { id: `member-${uid}-${n}`, title, start: s.toISOString(), end: e.toISOString(), color };
+};
+
+// Planning type par membre (ids = DEMO_MEMBERS du module organizations).
+const seedMemberEvents = (uid: string): CalendarEvent[] => [
+  memberEvent(uid, 1, 0, 9, 30, 'Point équipe', '#3B82F6'),
+  memberEvent(uid, 2, 0, 14, 90, 'Session de travail', '#8B5CF6'),
+  memberEvent(uid, 3, 1, 11, 60, 'Revue de code', '#10B981'),
+  memberEvent(uid, 4, 2, 10, 60, 'Atelier design', '#EC4899'),
+  memberEvent(uid, 5, 3, 15, 45, '1:1 manager', '#F97316'),
+  memberEvent(uid, 6, -2, 10, 60, 'Rétro sprint', '#EF4444'),
+];
+
+const KNOWN_DEMO_MEMBER_IDS = [
+  'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille',
+  'user-nina', 'user-theo', 'user-hugo',
+];
+
+// ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
 // ═══════════════════════════════════════════════════════════════════
 
@@ -122,9 +151,16 @@ export interface IEventsRepository {
   getPage(params?: PaginationParams): Promise<PaginatedResult<CalendarEvent>>;
   /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */
   getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]>;
+  /**
+   * Agenda d'un AUTRE membre (mode entreprise) : réservé à sa hiérarchie
+   * (RLS `events_manager_select`, mig. 077). Même sémantique que getWindow.
+   */
+  getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]>;
 
   // Write operations
   create(input: CreateEventInput): Promise<CalendarEvent>;
+  /** Crée un événement DANS l'agenda d'un subordonné (manager — RLS mig. 077). */
+  createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent>;
   update(id: string, updates: UpdateEventInput): Promise<CalendarEvent>;
   delete(id: string): Promise<void>;
 }
@@ -175,6 +211,45 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     return selectEventsInWindow(this.getEvents(), startISO, endISO);
   }
 
+  // ── Agendas des membres (mode entreprise démo) ─────────────────────
+  private getMemberStore(): Record<string, CalendarEvent[]> {
+    const raw = localStorage.getItem(MEMBER_EVENTS_STORAGE_KEY);
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private saveMemberStore(store: Record<string, CalendarEvent[]>): void {
+    localStorage.setItem(MEMBER_EVENTS_STORAGE_KEY, JSON.stringify(store));
+  }
+
+  /** Agenda d'un membre (seedé à la première lecture pour les subordonnés démo connus). */
+  private getMemberEvents(userId: string): CalendarEvent[] {
+    const store = this.getMemberStore();
+    if (store[userId]) return store[userId];
+    const seeded = KNOWN_DEMO_MEMBER_IDS.includes(userId) ? seedMemberEvents(userId) : [];
+    store[userId] = seeded;
+    this.saveMemberStore(store);
+    return seeded;
+  }
+
+  async getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]> {
+    return selectEventsInWindow(this.getMemberEvents(userId), startISO, endISO);
+  }
+
+  async createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent> {
+    const store = this.getMemberStore();
+    const list = store[userId] ?? this.getMemberEvents(userId);
+    const newEvent: CalendarEvent = { ...input, id: crypto.randomUUID() };
+    store[userId] = [...list, newEvent];
+    this.saveMemberStore(store);
+    return newEvent;
+  }
+
   async getFiltered(filters: EventFilters): Promise<CalendarEvent[]> {
     let events = this.getEvents();
 
@@ -220,7 +295,8 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     const index = events.findIndex(e => e.id === id);
 
     if (index === -1) {
-      throw new Error(`Event with id ${id} not found`);
+      // Peut-être un événement d'un membre géré (mode entreprise démo).
+      return this.updateMemberEvent(id, updates);
     }
 
     const updatedEvent: CalendarEvent = { ...events[index], ...updates };
@@ -229,11 +305,35 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     return updatedEvent;
   }
 
+  private updateMemberEvent(id: string, updates: UpdateEventInput): CalendarEvent {
+    const store = this.getMemberStore();
+    for (const uid of Object.keys(store)) {
+      const idx = store[uid].findIndex(e => e.id === id);
+      if (idx !== -1) {
+        const updated: CalendarEvent = { ...store[uid][idx], ...updates };
+        store[uid][idx] = updated;
+        this.saveMemberStore(store);
+        return updated;
+      }
+    }
+    throw new Error(`Event with id ${id} not found`);
+  }
+
   async delete(id: string): Promise<void> {
     const events = this.getEvents();
     const filtered = events.filter(e => e.id !== id);
 
     if (filtered.length === events.length) {
+      // Peut-être un événement d'un membre géré (mode entreprise démo).
+      const store = this.getMemberStore();
+      for (const uid of Object.keys(store)) {
+        const next = store[uid].filter(e => e.id !== id);
+        if (next.length !== store[uid].length) {
+          store[uid] = next;
+          this.saveMemberStore(store);
+          return;
+        }
+      }
       throw new Error(`Event with id ${id} not found`);
     }
 

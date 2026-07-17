@@ -171,6 +171,95 @@ export const useDeleteEvent = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
+// MEMBER AGENDA HOOKS (mode entreprise — manager voit/gère un subordonné)
+// ═══════════════════════════════════════════════════════════════════
+
+/** Fenêtre d'agenda d'un membre géré (RLS mig. 077). Désactivé si pas d'userId. */
+export const useMemberEventsWindow = (
+  userId: string | null,
+  startISO: string | null,
+  endISO: string | null,
+) => {
+  const repository = useEventsRepository();
+  return useQuery({
+    queryKey: eventsKeys.memberWindow(userId ?? '', startISO ?? '', endISO ?? ''),
+    queryFn: () => repository.getWindowForUser(userId!, startISO!, endISO!),
+    enabled: !!userId && !!startISO && !!endISO,
+    placeholderData: keepPreviousData,
+  });
+};
+
+/** Met à jour de façon optimiste toutes les fenêtres d'agenda de `userId`. */
+const patchMemberWindows = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  userId: string,
+  updater: (events: CalendarEvent[]) => CalendarEvent[],
+) => {
+  queryClient.setQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.member(userId) }, (old) =>
+    old ? updater(old) : old,
+  );
+};
+
+export const useCreateMemberEvent = (userId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+  return useMutation({
+    mutationFn: (input: CreateEventInput) => repository.createForUser(userId, input),
+    onSuccess: (newEvent) => {
+      patchMemberWindows(queryClient, userId, (old) => [...old, newEvent]);
+      queryClient.invalidateQueries({ queryKey: eventsKeys.member(userId), refetchType: 'none' });
+      toast.success('Événement ajouté à l\'agenda');
+    },
+    onError: (error: Error) => toast.error(`Impossible d'ajouter l'événement : ${error.message}`),
+  });
+};
+
+export const useUpdateMemberEvent = (userId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateEventInput }) =>
+      repository.update(id, updates),
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: eventsKeys.member(userId) });
+      const previous = queryClient.getQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.member(userId) });
+      patchMemberWindows(queryClient, userId, (old) =>
+        old.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+      );
+      return { previous };
+    },
+    onError: (error: Error, _v, context) => {
+      context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      toast.error(`Impossible de modifier l'événement : ${error.message}`);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: eventsKeys.member(userId), refetchType: 'none' });
+    },
+  });
+};
+
+export const useDeleteMemberEvent = (userId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+  return useMutation({
+    mutationFn: (id: string) => repository.delete(id),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: eventsKeys.member(userId) });
+      const previous = queryClient.getQueriesData<CalendarEvent[]>({ queryKey: eventsKeys.member(userId) });
+      patchMemberWindows(queryClient, userId, (old) => old.filter((e) => e.id !== id));
+      return { previous };
+    },
+    onError: (error: Error, _id, context) => {
+      context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      toast.error(`Impossible de supprimer l'événement : ${error.message}`);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: eventsKeys.member(userId), refetchType: 'none' });
+    },
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════════
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 

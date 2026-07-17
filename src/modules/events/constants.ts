@@ -28,6 +28,11 @@ export const eventsKeys = {
   details: () => [...eventsKeys.all, 'detail'] as const,
   detail: (id: string) => [...eventsKeys.details(), id] as const,
   byTask: (taskId: string) => [...eventsKeys.all, 'task', taskId] as const,
+  // Agenda d'un membre géré (mode entreprise) — namespace séparé des caches
+  // personnels pour ne jamais mélanger les deux agendas.
+  member: (userId: string) => [...eventsKeys.all, 'member', userId] as const,
+  memberWindow: (userId: string, startISO: string, endISO: string) =>
+    [...eventsKeys.all, 'member', userId, 'window', startISO, endISO] as const,
 };
 
 /**

@@ -29,6 +29,7 @@ import {
 import MemberAvatar from './MemberAvatar';
 import MemberProfileSheet from './MemberProfileSheet';
 import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
+import MemberAgendaSheet from './MemberAgendaSheet';
 import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
 import ReassignManagerSheet from './ReassignManagerSheet';
@@ -81,6 +82,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
 
   const [profile, setProfile] = useState<OrgMember | null>(null);
   const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
+  const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
   const [assigning, setAssigning] = useState<OrgMember | null>(null);
   const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
   const [removing, setRemoving] = useState<OrgMember | null>(null);
@@ -194,7 +196,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                         <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
                         Voir ses tâches
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setInsights({ member: m, tab: 'agenda' })}>
+                      <DropdownMenuItem onClick={() => setAgendaMember(m)}>
                         <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
                         Voir son agenda
                       </DropdownMenuItem>
@@ -240,6 +242,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           initialTab={insights.tab}
           onClose={() => setInsights(null)}
         />
+      )}
+
+      {agendaMember && (
+        <MemberAgendaSheet member={agendaMember} onClose={() => setAgendaMember(null)} />
       )}
 
       {assigning && (
