@@ -221,8 +221,17 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     if (input.name !== undefined) org.name = input.name;
     if (input.description !== undefined) org.description = input.description;
     if (input.industry !== undefined) org.industry = input.industry;
+    if (input.avatarUrl !== undefined) org.avatarUrl = input.avatarUrl ?? undefined;
     this.saveOrgs(orgs);
     return org;
+  }
+
+  async deleteOrganization(orgId: string): Promise<void> {
+    const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
+    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut supprimer l\'entreprise');
+    this.saveOrgs(this.getOrgsArray().filter((o) => o.id !== orgId));
+    this.saveMembers(this.getMembersArray().filter((m) => m.orgId !== orgId));
+    this.saveRequests(this.getRequestsArray().filter((r) => r.orgId !== orgId));
   }
 
   // ─── Administration ────────────────────────────────────────────────

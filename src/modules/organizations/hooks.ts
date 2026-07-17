@@ -173,6 +173,21 @@ export const useLeaveOrganization = () => {
   });
 };
 
+export const useDeleteOrganization = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: (orgId: string) => repository.deleteOrganization(orgId),
+    onSuccess: () => {
+      toast.success('Entreprise supprimée définitivement');
+      queryClient.invalidateQueries({ queryKey: orgKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de supprimer l'entreprise : ${error.message}`);
+    },
+  });
+};
+
 export const useSetMemberManager = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();

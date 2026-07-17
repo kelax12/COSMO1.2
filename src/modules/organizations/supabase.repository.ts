@@ -22,6 +22,7 @@ interface OrgRow {
   created_at: string;
   description: string | null;
   industry: string | null;
+  avatar_url: string | null;
 }
 
 interface MemberRow {
@@ -49,6 +50,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       createdAt: row.created_at,
       description: row.description ?? undefined,
       industry: row.industry ?? undefined,
+      avatarUrl: row.avatar_url ?? undefined,
     };
   }
 
@@ -235,6 +237,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (input.name !== undefined) patch.name = input.name;
     if (input.description !== undefined) patch.description = input.description || null;
     if (input.industry !== undefined) patch.industry = input.industry || null;
+    if (input.avatarUrl !== undefined) patch.avatar_url = input.avatarUrl || null;
     const { data, error } = await supabase
       .from('organizations')
       .update(patch)
@@ -269,6 +272,13 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
   async leaveOrganization(orgId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.rpc('leave_organization', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async deleteOrganization(orgId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RPC SECURITY DEFINER (mig. 075) — admin only, cascade totale.
+    const { error } = await supabase.rpc('delete_organization', { p_org: orgId });
     if (error) throw normalizeApiError(error);
   }
 

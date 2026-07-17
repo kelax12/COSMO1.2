@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2 } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
   useOrgMembers,
   useLeaveOrganization,
+  useDeleteOrganization,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
@@ -13,6 +14,7 @@ import { PageHeading } from '@/components/ui/typography';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
+import DeleteOrganizationDialog from '@/components/organization/DeleteOrganizationDialog';
 import PyramidTab from '@/components/organization/PyramidTab';
 import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
 import TeamsSection from '@/components/organization/TeamsSection';
@@ -38,9 +40,11 @@ const OrganizationPage = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState<OrgTab>('overview');
   const [editProfile, setEditProfile] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
+  const deleteMutation = useDeleteOrganization();
 
   if (isLoading) {
     return (
@@ -66,8 +70,12 @@ const OrganizationPage = () => {
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
       {/* En-tête */}
       <header className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
-          <Building2 size={24} aria-hidden="true" />
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shrink-0 overflow-hidden">
+          {myOrg.avatarUrl ? (
+            <img src={myOrg.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <Building2 size={24} aria-hidden="true" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -169,17 +177,50 @@ const OrganizationPage = () => {
             />
           </div>
 
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={handleLeave}
-              disabled={leaveMutation.isPending}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
-            >
-              <LogOut size={15} aria-hidden="true" /> Quitter l'entreprise
-            </button>
-          </div>
+          {/* #5 : un admin ne « quitte » pas — il peut supprimer l'entreprise
+              (confirmation extrême, façon GitHub). Les autres membres quittent. */}
+          {isAdmin ? (
+            <div className="mt-2 rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-red-600 dark:text-red-400">Zone de danger</h3>
+                <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
+                  Supprime définitivement l'entreprise, ses projets, OKR et équipes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                disabled={deleteMutation.isPending}
+                className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
+              >
+                <Trash2 size={15} aria-hidden="true" /> Supprimer l'entreprise
+              </button>
+            </div>
+          ) : (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={leaveMutation.isPending}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
+              >
+                <LogOut size={15} aria-hidden="true" /> Quitter l'entreprise
+              </button>
+            </div>
+          )}
         </div>
+      )}
+
+      {confirmingDelete && (
+        <DeleteOrganizationDialog
+          org={myOrg}
+          memberCount={members.length}
+          pending={deleteMutation.isPending}
+          onConfirm={() =>
+            deleteMutation.mutate(myOrg.id, { onSuccess: () => setConfirmingDelete(false) })
+          }
+          onCancel={() => setConfirmingDelete(false)}
+        />
       )}
     </div>
   );
