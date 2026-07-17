@@ -138,7 +138,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
       targetValue: Number(k.targetValue),
       currentValue: Number(k.currentValue) || 0,
       unit: k.unit.trim() || undefined,
-      assigneeId: k.assigneeId || null,
       weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
       estimatedTime: Math.max(0, Math.round(Number(k.estimatedTime) || 30)),
     }));
