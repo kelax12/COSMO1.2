@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -20,14 +20,17 @@ import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
 import TeamsSection from '@/components/organization/TeamsSection';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
+import MyWorkTab from '@/components/organization/MyWorkTab';
 
-type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'members';
+type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members';
 
-const TABS: { id: OrgTab; label: string; Icon: typeof Users }[] = [
+const TABS: { id: OrgTab; label: string; Icon: typeof Users; managerOnly?: boolean }[] = [
   { id: 'overview', label: 'Aperçu', Icon: LayoutDashboard },
   { id: 'pyramid', label: 'Pyramide', Icon: Network },
   { id: 'projects', label: 'Projets', Icon: FolderKanban },
   { id: 'okr', label: 'OKR', Icon: Target },
+  // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
+  { id: 'stats', label: 'Statistiques', Icon: BarChart3, managerOnly: true },
   { id: 'members', label: 'Membres', Icon: Users },
 ];
 
@@ -118,7 +121,7 @@ const OrganizationPage = () => {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto overflow-y-hidden hide-scrollbar">
-        {TABS.map(({ id, label, Icon }) => (
+        {TABS.filter((t) => !t.managerOnly || isManager).map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
@@ -136,7 +139,10 @@ const OrganizationPage = () => {
       </div>
 
       {/* Contenu */}
-      {tab === 'overview' && <TeamOverviewTab orgId={myOrg.id} members={members} />}
+      {tab === 'overview' && <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} />}
+      {tab === 'stats' && isManager && (
+        <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
+      )}
       {tab === 'pyramid' && (
         <PyramidTab
           orgId={myOrg.id}
