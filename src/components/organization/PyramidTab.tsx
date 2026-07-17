@@ -46,6 +46,7 @@ import AddUnderSheet from './AddUnderSheet';
 import MemberProfileSheet from './MemberProfileSheet';
 import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
 import ReassignManagerSheet from './ReassignManagerSheet';
+import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
 
 interface PyramidTabProps {
   orgId: string;
@@ -506,6 +507,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
   // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
+  // Retrait d'un membre SANS subordonné : modal de confirmation (#3).
+  const [removing, setRemoving] = useState<OrgMember | null>(null);
   // Annonce lecteur d'écran après un déplacement (aria-live).
   const [announcement, setAnnouncement] = useState('');
   // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
@@ -562,16 +565,13 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     }
   }, [viewTeamId, orgTeams]);
 
-  // Retrait d'un membre (admin). Sans subordonné direct : confirmation simple.
-  // Avec subordonnés : on ouvre d'abord le choix de leur nouveau responsable.
+  // Retrait d'un membre (admin). Sans subordonné direct : modal de
+  // confirmation (#3). Avec subordonnés : d'abord le choix de leur nouveau
+  // responsable (ReassignManagerSheet).
   const handleRemove = (m: OrgMember) => {
     const hasReports = members.some((x) => x.managerId === m.userId);
-    if (hasReports) {
-      setReassigning(m);
-      return;
-    }
-    if (!window.confirm(`Retirer ${m.displayName} de l'entreprise ? Cette personne perdra l'accès aux projets et OKR de l'équipe.`)) return;
-    removeMember.mutate({ orgId, userId: m.userId });
+    if (hasReports) setReassigning(m);
+    else setRemoving(m);
   };
 
   // Réassigne les subordonnés directs de `member` à `newManagerId` (null =
@@ -1330,6 +1330,20 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           member={insights.member}
           initialTab={insights.tab}
           onClose={() => setInsights(null)}
+        />
+      )}
+
+      {removing && (
+        <ConfirmRemoveMemberDialog
+          member={removing}
+          pending={removeMember.isPending}
+          onConfirm={() =>
+            removeMember.mutate(
+              { orgId, userId: removing.userId },
+              { onSettled: () => setRemoving(null) },
+            )
+          }
+          onCancel={() => setRemoving(null)}
         />
       )}
 
