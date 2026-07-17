@@ -1,6 +1,7 @@
 // Créer / Modifier un OKR d'équipe — Sheet latéral droit (calqué sur
-// OKRModalSheet de la page OKR perso), enrichi des spécificités équipe :
-// assignation d'un KR à un membre + rattachement à des équipes (cloisonnement).
+// OKRModalSheet de la page OKR perso), enrichi du rattachement à des équipes
+// (cloisonnement). Un OKR ne s'assigne PAS à une personne (#10) : le travail
+// individuel passe par les tâches de projet.
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Users, Building2 } from 'lucide-react';
 import {
@@ -19,13 +20,6 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   useCreateTeamOKR,
   useEditTeamOKR,
   type TeamOKR,
@@ -33,11 +27,9 @@ import {
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
-import type { OrgMember } from '@/modules/organizations';
 
 interface TeamOKRModalProps {
   orgId: string;
-  members: OrgMember[];
   /** OKR à modifier — absent = création. */
   editingOKR?: TeamOKR | null;
   onClose: () => void;
@@ -51,7 +43,6 @@ interface KRDraft {
   unit: string;
   estimatedTime: number;
   weight: number;
-  assigneeId: string; // '' = non assigné
 }
 
 const newKR = (): KRDraft => ({
@@ -61,12 +52,9 @@ const newKR = (): KRDraft => ({
   unit: '%',
   estimatedTime: 30,
   weight: 1,
-  assigneeId: '',
 });
 
-const NONE = '__none__';
-
-export default function TeamOKRModal({ orgId, members, editingOKR, onClose }: TeamOKRModalProps) {
+export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
   const isEdit = !!editingOKR;
   const { data: teams = [] } = useOrgTeams(orgId);
   const createOKR = useCreateTeamOKR(orgId);
@@ -92,7 +80,6 @@ export default function TeamOKRModal({ orgId, members, editingOKR, onClose }: Te
           unit: k.unit ?? '',
           estimatedTime: k.estimatedTime ?? 30,
           weight: k.weight ?? 1,
-          assigneeId: k.assigneeId ?? '',
         }))
       : [newKR()],
   );
@@ -126,7 +113,6 @@ export default function TeamOKRModal({ orgId, members, editingOKR, onClose }: Te
         targetValue: Number(k.targetValue),
         currentValue: Number(k.currentValue) || 0,
         unit: k.unit.trim() || undefined,
-        assigneeId: k.assigneeId || null,
         weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
         estimatedTime: Math.max(0, Math.round(Number(k.estimatedTime) || 30)),
       }));
@@ -308,23 +294,9 @@ export default function TeamOKRModal({ orgId, members, editingOKR, onClose }: Te
                       />
                     </div>
                   </div>
-                  <div className="grid gap-1">
-                    <Label className="text-muted-foreground text-xs">Assigné</Label>
-                    <Select
-                      value={kr.assigneeId || NONE}
-                      onValueChange={(v) => setKR(idx, { assigneeId: v === NONE ? '' : v })}
-                    >
-                      <SelectTrigger className="h-8 w-full">
-                        <SelectValue placeholder="Non assigné" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE}>Non assigné</SelectItem>
-                        {members.map((m) => (
-                          <SelectItem key={m.userId} value={m.userId}>{m.displayName}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* #10 : un OKR ne s'assigne pas à une personne — il se
+                      rattache à des équipes ; le travail individuel passe par
+                      les tâches de projet. */}
                 </div>
               ))}
             </div>

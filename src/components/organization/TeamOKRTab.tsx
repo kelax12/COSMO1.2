@@ -8,12 +8,10 @@ import {
   type TeamKeyResult,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
-import type { OrgMember } from '@/modules/organizations';
 import TeamOKRModal from './TeamOKRModal';
 
 interface TeamOKRTabProps {
   orgId: string;
-  members: OrgMember[];
   isManager: boolean;
 }
 
@@ -107,7 +105,7 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
   );
 };
 
-const TeamOKRTab = ({ orgId, members, isManager }: TeamOKRTabProps) => {
+const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId);
@@ -232,10 +230,10 @@ const TeamOKRTab = ({ orgId, members, isManager }: TeamOKRTabProps) => {
       )}
 
       {showCreate && (
-        <TeamOKRModal orgId={orgId} members={members} onClose={() => setShowCreate(false)} />
+        <TeamOKRModal orgId={orgId} onClose={() => setShowCreate(false)} />
       )}
       {editingOKR && (
-        <TeamOKRModal orgId={orgId} members={members} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
+        <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
       )}
     </div>
   );
