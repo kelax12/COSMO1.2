@@ -162,6 +162,7 @@ const OrganizationPage = () => {
             </h2>
             <MemberDirectory
               orgId={myOrg.id}
+              ownerId={myOrg.ownerId}
               members={members}
               currentUserId={user?.id}
               isAdmin={isAdmin}
