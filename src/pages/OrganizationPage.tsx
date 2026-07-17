@@ -13,6 +13,7 @@ import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/p
 import { PageHeading } from '@/components/ui/typography';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
+import OrgInviteLinkCard from '@/components/organization/OrgInviteLinkCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
 import DeleteOrganizationDialog from '@/components/organization/DeleteOrganizationDialog';
 import PyramidTab from '@/components/organization/PyramidTab';
@@ -160,7 +161,12 @@ const OrganizationPage = () => {
 
       {tab === 'members' && (
         <div className="space-y-6">
-          <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
+          {/* Inviter : par code (validation admin) ou par lien direct — deux
+              moyens côte à côte pour ne plus occuper toute la largeur. */}
+          <div className="grid gap-4 md:grid-cols-2 items-start">
+            <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
+            <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} />
+          </div>
 
           <TeamsSection
             orgId={myOrg.id}
