@@ -125,9 +125,16 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     const uid = userData.user?.id;
     if (!uid) throw new Error('Not authenticated');
 
-    const { data: okrRow, error } = await supabase
+    // Ids générés client + inserts SANS `.select()` de représentation : une
+    // fois l'OKR rattaché à des équipes hors du périmètre du créateur, la
+    // relecture (can_access_team_okr) échoue et PostgREST remontait
+    // « new row violates row-level security » alors que l'écriture est légale
+    // (bug #9 — même correctif que team_projects.createProject).
+    const okrId = crypto.randomUUID();
+    const { error } = await supabase
       .from('team_okrs')
       .insert({
+        id: okrId,
         org_id: orgId,
         created_by: uid,
         title: input.title,
@@ -135,59 +142,53 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         category: input.category ?? null,
         start_date: input.startDate || null,
         end_date: input.endDate || null,
-      })
-      .select('*')
-      .single();
+      });
     if (error) throw normalizeApiError(error);
-    const okr = okrRow as OkrRow;
 
     // Rattachements d'équipes (dédupliqués, cap 20).
     const teamIds = Array.from(new Set(input.teamIds ?? [])).slice(0, 20);
     if (teamIds.length > 0) {
       const { error: linkErr } = await supabase
         .from('team_okr_teams')
-        .insert(teamIds.map((teamId) => ({ okr_id: okr.id, org_id: orgId, team_id: teamId })));
+        .insert(teamIds.map((teamId) => ({ okr_id: okrId, org_id: orgId, team_id: teamId })));
       if (linkErr) throw normalizeApiError(linkErr);
     }
 
-    let keyResults: TeamKeyResult[] = [];
+    const keyResults: TeamKeyResult[] = [];
     if (input.keyResults.length > 0) {
-      const { data: krRows, error: krErr } = await supabase
-        .from('team_key_results')
-        .insert(
-          input.keyResults.map((kr) => {
-            const target = kr.targetValue > 0 ? kr.targetValue : 1;
-            const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
-            return {
-              okr_id: okr.id,
-              org_id: orgId,
-              title: kr.title,
-              current_value: current,
-              target_value: target,
-              unit: kr.unit ?? null,
-              assignee_id: kr.assigneeId ?? null,
-              weight: clampWeight(kr.weight),
-              estimated_time: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
-              completed: current >= target,
-              completed_at: current >= target ? new Date().toISOString() : null,
-            };
-          }),
-        )
-        .select('*');
+      const rows = input.keyResults.map((kr) => {
+        const target = kr.targetValue > 0 ? kr.targetValue : 1;
+        const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
+        return {
+          id: crypto.randomUUID(),
+          okr_id: okrId,
+          org_id: orgId,
+          title: kr.title,
+          current_value: current,
+          target_value: target,
+          unit: kr.unit ?? null,
+          assignee_id: kr.assigneeId ?? null,
+          weight: clampWeight(kr.weight),
+          estimated_time: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
+          completed: current >= target,
+          completed_at: current >= target ? new Date().toISOString() : null,
+        };
+      });
+      const { error: krErr } = await supabase.from('team_key_results').insert(rows);
       if (krErr) throw normalizeApiError(krErr);
-      keyResults = ((krRows ?? []) as KrRow[]).map(mapKr);
+      keyResults.push(...rows.map((r) => mapKr(r as KrRow)));
     }
 
     return {
-      id: okr.id,
-      orgId: okr.org_id,
-      title: okr.title,
-      description: okr.description ?? undefined,
-      category: okr.category ?? undefined,
-      startDate: okr.start_date ?? undefined,
-      endDate: okr.end_date ?? undefined,
-      createdBy: okr.created_by,
-      createdAt: okr.created_at,
+      id: okrId,
+      orgId,
+      title: input.title,
+      description: input.description || undefined,
+      category: input.category || undefined,
+      startDate: input.startDate || undefined,
+      endDate: input.endDate || undefined,
+      createdBy: uid,
+      createdAt: new Date().toISOString(),
       teamIds,
       keyResults,
     };

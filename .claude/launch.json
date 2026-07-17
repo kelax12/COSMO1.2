@@ -6,6 +6,24 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "marketing-dashboard",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/Axel/Documents/cosmo-marketing/dashboard/server.mjs"],
+      "port": 4317
+    },
+    {
+      "name": "dev-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5199", "--strictPort"],
+      "port": 5199
+    },
+    {
+      "name": "dev-verify",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5287", "--strictPort"],
+      "port": 5287
     }
   ]
 }

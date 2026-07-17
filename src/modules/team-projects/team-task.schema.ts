@@ -5,6 +5,8 @@ import { z } from 'zod';
 export const createTeamProjectSchema = z.object({
   name: z.string().trim().min(1, 'Le nom du projet est requis').max(120, 'Nom trop long (120 max)'),
   color: z.string().optional(),
+  // Sans ce champ, zod STRIPPAIT teamId → projet toujours créé sans équipe (bug #9).
+  teamId: z.string().nullable().optional(),
 });
 
 export const updateTeamProjectSchema = z.object({
