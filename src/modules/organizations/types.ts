@@ -22,6 +22,8 @@ export interface Organization {
   /** Profil d'entreprise (v2) — éditable par les admins. */
   description?: string;
   industry?: string;
+  /** Image de profil de l'entreprise (data URL/URL) — admins (#12). */
+  avatarUrl?: string;
 }
 
 /** Champs de profil modifiables par un admin (jamais joinCode/ownerId). */
@@ -29,6 +31,8 @@ export interface UpdateOrganizationInput {
   name?: string;
   description?: string;
   industry?: string;
+  /** null = supprimer l'image. */
+  avatarUrl?: string | null;
 }
 
 /** L'organisation de l'utilisateur courant, enrichie de son propre rôle. */

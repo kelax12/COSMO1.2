@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Camera, Building2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { validateAvatarFile, computeAvatarDimensions } from '@/lib/avatar-upload';
 import { useUpdateOrganization, type MyOrganization } from '@/modules/organizations';
 
 interface OrgProfileSheetProps {
@@ -11,12 +13,51 @@ interface OrgProfileSheetProps {
 const inputClasses =
   'w-full px-3 py-2.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
 
-/** Édition du profil d'entreprise (admin) : nom, description, secteur. */
+/** Édition du profil d'entreprise (admin) : image (#12), nom, description, secteur. */
 const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
   const [name, setName] = useState(org.name);
   const [description, setDescription] = useState(org.description ?? '');
   const [industry, setIndustry] = useState(org.industry ?? '');
+  // undefined = inchangé ; string = nouvelle image ; null = suppression.
+  const [avatarDraft, setAvatarDraft] = useState<string | null | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const updateMutation = useUpdateOrganization();
+
+  const shownAvatar = avatarDraft === undefined ? org.avatarUrl : avatarDraft ?? undefined;
+
+  // Même pipeline que l'avatar utilisateur : validation type/taille puis
+  // redimensionnement canvas → data URL jpeg compacte.
+  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const verdict = validateAvatarFile(file);
+    if (!verdict.ok) {
+      toast.error(verdict.reason === 'type' ? 'Format non supporté (JPEG, PNG, WebP, GIF)' : 'Image trop grande (500 Ko max)');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result.startsWith('data:image/')) { toast.error('Fichier invalide'); return; }
+      const img = new Image();
+      img.onload = () => {
+        const dims = computeAvatarDimensions(img.width, img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = dims.width;
+        canvas.height = dims.height;
+        const ctx = canvas.getContext('2d');
+        setAvatarDraft(
+          ctx
+            ? (ctx.drawImage(img, 0, 0, canvas.width, canvas.height), canvas.toDataURL('image/jpeg', 0.85))
+            : result,
+        );
+      };
+      img.onerror = () => toast.error('Image illisible');
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = () => {
     updateMutation.mutate(
@@ -26,6 +67,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           name: name.trim(),
           description: description.trim(),
           industry: industry.trim(),
+          ...(avatarDraft !== undefined ? { avatarUrl: avatarDraft } : {}),
         },
       },
       { onSuccess: () => onClose() },
@@ -56,6 +98,43 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
         </div>
 
         <div className="space-y-3">
+          {/* Image de profil (#12) */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Changer l'image de l'entreprise"
+              className="relative group/av w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shrink-0"
+            >
+              {shownAvatar ? (
+                <img src={shownAvatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Building2 size={24} aria-hidden="true" />
+              )}
+              <span className="absolute inset-0 bg-black/40 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera size={16} className="text-white" aria-hidden="true" />
+              </span>
+            </button>
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
+              >
+                <Camera size={12} aria-hidden="true" /> Changer l'image
+              </button>
+              {shownAvatar && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarDraft(null)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={12} aria-hidden="true" /> Supprimer
+                </button>
+              )}
+            </div>
+            <input type="file" ref={fileInputRef} onChange={handleAvatarFile} className="hidden" accept="image/*" />
+          </div>
           <div>
             <label htmlFor="org-profile-name" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
               Nom

@@ -53,6 +53,7 @@ export {
   useSetMemberRole,
   useRemoveMember,
   useLeaveOrganization,
+  useDeleteOrganization,
   useUpdateOrganization,
   useSetMemberManager,
   useCreateInviteLink,

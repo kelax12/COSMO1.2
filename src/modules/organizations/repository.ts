@@ -42,6 +42,8 @@ export interface IOrganizationsRepository {
   setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void>;
   /** L'utilisateur courant quitte l'entreprise. */
   leaveOrganization(orgId: string): Promise<void>;
+  /** Supprime DÉFINITIVEMENT l'entreprise (admin — RPC, cascade totale). */
+  deleteOrganization(orgId: string): Promise<void>;
 
   // Invitations placées (v2, lot 1c) — entrée directe, single-use, 7 jours.
   /** Crée un lien d'invitation vers une place de la pyramide (managerId null = non placé, admin only). */

@@ -32,8 +32,12 @@ const OrgSwitcher = ({ collapsed = false }: OrgSwitcherProps) => {
         className={`w-full flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors px-2.5 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${collapsed ? 'justify-center px-0' : ''}`}
         aria-label={`Organisation active : ${activeOrg?.name ?? 'aucune'}. Changer d'organisation`}
       >
-        <span className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-          <Building2 size={13} className="text-indigo-500" aria-hidden="true" />
+        <span className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 overflow-hidden">
+          {activeOrg?.avatarUrl ? (
+            <img src={activeOrg.avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <Building2 size={13} className="text-indigo-500" aria-hidden="true" />
+          )}
         </span>
         {!collapsed && (
           <>
