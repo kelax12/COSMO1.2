@@ -17,6 +17,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import MemberAvatar from './MemberAvatar';
+import CreateTeamModal from './CreateTeamModal';
 
 interface TeamsSectionProps {
   orgId: string;
@@ -50,7 +51,6 @@ function subtreeOf(members: OrgMember[], root: string): Set<string> {
  * rattachés à une équipe sont cloisonnés à ses membres + leur hiérarchie.
  */
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: TeamsSectionProps) => {
-  const [newTeamName, setNewTeamName] = useState('');
   const [showNewTeam, setShowNewTeam] = useState(false);
 
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -63,10 +63,12 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
   const mySubtree = currentUserId ? subtreeOf(members, currentUserId) : new Set<string>();
   const memberOf = (userId: string) => members.find((m) => m.userId === userId);
 
-  const handleCreate = () => {
-    const name = newTeamName.trim();
-    if (!name) return;
-    createTeam.mutate({ name }, { onSuccess: () => { setNewTeamName(''); setShowNewTeam(false); } });
+  // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis (#2).
+  const handleCreateFull = async (input: { name: string; color: string }, memberIds: string[]) => {
+    const team = await createTeam.mutateAsync(input);
+    for (const userId of memberIds) {
+      await addMember.mutateAsync({ teamId: team.id, userId });
+    }
   };
 
   return (
@@ -76,38 +78,25 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
           <UsersRound size={15} className="text-blue-500" aria-hidden="true" /> Équipes ({teams.length})
         </h2>
         {isManager && (
-          showNewTeam ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowNewTeam(false); }}
-                placeholder="Nom de l'équipe"
-                autoFocus
-                maxLength={80}
-                className="h-8 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              />
-              <button
-                type="button"
-                onClick={handleCreate}
-                disabled={!newTeamName.trim() || createTeam.isPending}
-                className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold"
-              >
-                Créer
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowNewTeam(true)}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-            >
-              <Plus size={13} aria-hidden="true" /> Nouvelle équipe
-            </button>
-          )
+          <button
+            type="button"
+            onClick={() => setShowNewTeam(true)}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+          >
+            <Plus size={13} aria-hidden="true" /> Ajouter une équipe
+          </button>
         )}
       </div>
+
+      {showNewTeam && (
+        <CreateTeamModal
+          members={members}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onSubmit={handleCreateFull}
+          onClose={() => setShowNewTeam(false)}
+        />
+      )}
 
       {teams.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">
