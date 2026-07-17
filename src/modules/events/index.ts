@@ -38,6 +38,7 @@ export {
   useEventsWindow,
   useEvent,
   useEventsByTask,
+  useMemberEventsWindow,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -48,4 +49,7 @@ export {
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
+  useCreateMemberEvent,
+  useUpdateMemberEvent,
+  useDeleteMemberEvent,
 } from './hooks';

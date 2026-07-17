@@ -60,7 +60,10 @@ describe('SupabaseEventsRepository', () => {
       taskId: 't1', startAfter: 'A', startBefore: 'B', endAfter: 'C', endBefore: 'D',
     });
     const calls = supabaseMock.callsFor('events');
-    expect(calls.find((c) => c.method === 'eq')?.args).toEqual(['task_id', 't1']);
+    const eqArgs = calls.filter((c) => c.method === 'eq').map((c) => c.args);
+    // Lecture personnelle : filtre user_id = self (mig. 077) + task_id du filtre.
+    expect(eqArgs).toContainEqual(['user_id', supabaseMock.user?.id]);
+    expect(eqArgs).toContainEqual(['task_id', 't1']);
     expect(calls.filter((c) => c.method === 'gte').map((c) => c.args)).toEqual([
       ['start_time', 'A'], ['end_time', 'C'],
     ]);
