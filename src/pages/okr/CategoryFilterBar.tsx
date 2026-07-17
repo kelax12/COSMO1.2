@@ -2,12 +2,20 @@ import React from 'react';
 import { Plus, Edit2, X, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import type { useCreateCategory } from '@/modules/categories';
 
 interface CategoryLite {
   id: string;
   name: string;
   color: string;
+}
+
+// Minimal structural type — satisfait par useCreateCategory (perso) ET par
+// useCreateOrgOKRCategory (entreprise). Le composant n'utilise que .mutate.
+interface CreateCategoryMutationLike {
+  mutate: (
+    variables: { name: string; color: string },
+    options?: { onSuccess?: () => void },
+  ) => void;
 }
 
 interface CategoryFilterBarProps {
@@ -33,7 +41,9 @@ interface CategoryFilterBarProps {
   setNewCategoryName: (name: string) => void;
   newCategoryColor: string;
   setNewCategoryColor: (color: string) => void;
-  createCategoryMutation: ReturnType<typeof useCreateCategory>;
+  createCategoryMutation: CreateCategoryMutationLike;
+  /** false = lecture seule : masque édition/suppression/ajout (défaut true). */
+  canManage?: boolean;
 }
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
@@ -60,6 +70,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   newCategoryColor,
   setNewCategoryColor,
   createCategoryMutation,
+  canManage = true,
 }) => {
   return (
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6" data-tutorial-id="okr-category-filter">
@@ -89,7 +100,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   {/* Barre flottante d'actions au-dessus de la chip — visible au hover,
                       cachée pendant l'édition (les boutons d'action passent dans le form). */}
                   <AnimatePresence>
-                    {isHovered && !isEditing && (
+                    {canManage && isHovered && !isEditing && (
                       <motion.div
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -202,6 +213,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               );
             })}
 
+          {canManage && (
           <AnimatePresence mode="wait">
             {!showCreateCategory ? (
               <motion.button
@@ -279,6 +291,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               </motion.form>
             )}
           </AnimatePresence>
+          )}
         </div>
       </div>
   );

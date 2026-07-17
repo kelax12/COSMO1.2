@@ -1,14 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Target, Trash2, Pencil, Users, Building2, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { Plus, Target, Trash2, Pencil, Users, Building2 } from 'lucide-react';
 import {
   useTeamOKRs,
   useUpdateTeamKR,
   useDeleteTeamOKR,
+  useReassignTeamOKRCategory,
   type TeamOKR,
   type TeamKeyResult,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
-import { useOrgOKRCategories, useDeleteOrgOKRCategory } from '@/modules/org-okr-categories';
+import {
+  useOrgOKRCategories,
+  useCreateOrgOKRCategory,
+  useUpdateOrgOKRCategory,
+  useDeleteOrgOKRCategory,
+  OKR_CATEGORY_COLORS,
+} from '@/modules/org-okr-categories';
+import { getColorHex } from '@/components/CategoryManager';
+import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
+import DeleteCategoryConfirm from '@/pages/okr/DeleteCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';
 
 interface TeamOKRTabProps {
@@ -16,8 +27,10 @@ interface TeamOKRTabProps {
   isManager: boolean;
 }
 
-// Valeur du filtre catégorie : null = toutes ; '' = sans catégorie ; sinon le nom.
-type CategoryFilter = string | null;
+// Palette hex (value === color) — les catégories d'entreprise stockent l'hex.
+const OKR_COLOR_OPTIONS = OKR_CATEGORY_COLORS.map((hex) => ({ value: hex, color: hex }));
+// Résout une couleur : hex tel quel, sinon nom → hex (parité mode perso).
+const resolveColor = (color: string) => (color.startsWith('#') ? color : getColorHex(color));
 
 // Progression d'un KR, clampée [0,1] (garde B17 : targetValue > 0 garanti).
 const krProgress = (kr: TeamKeyResult): number => {
@@ -112,34 +125,94 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
 const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
-  // Filtre catégorie : undefined = toutes ; null = sans catégorie ; sinon nom.
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter | undefined>(undefined);
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: categories = [] } = useOrgOKRCategories(orgId);
+  const createCategory = useCreateOrgOKRCategory(orgId);
+  const updateCategory = useUpdateOrgOKRCategory(orgId);
   const deleteCategory = useDeleteOrgOKRCategory(orgId);
+  const reassignCategory = useReassignTeamOKRCategory(orgId);
   const updateKR = useUpdateTeamKR(orgId);
   const deleteOKR = useDeleteTeamOKR(orgId);
+
+  // ── Filtre + gestion des catégories (UI identique au mode perso) ────
+  // Sélection = id de catégorie ('all' = toutes). Le filtrage des OKR se fait
+  // ensuite par NOM (team_okrs.category stocke le nom).
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
+  const [editCategoryColor, setEditCategoryColor] = useState<string>(OKR_CATEGORY_COLORS[0]);
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState<string>(OKR_CATEGORY_COLORS[0]);
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
 
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name ?? 'Équipe';
   // Couleur d'une catégorie par son nom (badge coloré, parité mode perso).
   const colorByName = useMemo(() => {
     const m = new Map<string, string>();
-    for (const c of categories) m.set(c.name, c.color);
+    for (const c of categories) m.set(c.name, resolveColor(c.color));
     return m;
   }, [categories]);
 
   const setCurrent = (kr: TeamKeyResult, value: number) =>
     updateKR.mutate({ krId: kr.id, input: { currentValue: value } });
 
-  // Filtrage par catégorie sélectionnée.
-  const visibleOKRs = useMemo(() => {
-    if (categoryFilter === undefined) return okrs;
-    if (categoryFilter === null) return okrs.filter((o) => !o.category);
-    return okrs.filter((o) => o.category === categoryFilter);
-  }, [okrs, categoryFilter]);
+  // Filtrage par catégorie sélectionnée (id → nom).
+  const selectedName = selectedCategory === 'all'
+    ? null
+    : categories.find((c) => c.id === selectedCategory)?.name ?? null;
+  const visibleOKRs = useMemo(
+    () => (selectedCategory === 'all' ? okrs : okrs.filter((o) => o.category === selectedName)),
+    [okrs, selectedCategory, selectedName],
+  );
 
-  const hasUncategorized = okrs.some((o) => !o.category);
+  // ── Handlers catégories (mêmes noms/comportements que OKRPage) ──────
+  const startEditCategory = (cat: { id: string; name: string; color: string }) => {
+    setEditingCategoryId(cat.id);
+    setEditCategoryName(cat.name);
+    setEditCategoryColor(cat.color);
+    setHoveredCategoryId(null);
+  };
+  const cancelEditCategory = () => {
+    setEditingCategoryId(null);
+    setEditCategoryName('');
+    setEditCategoryColor(OKR_CATEGORY_COLORS[0]);
+  };
+  const submitEditCategory = () => {
+    if (!editingCategoryId) return;
+    const name = editCategoryName.trim();
+    if (name.length < 2) {
+      toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+      return;
+    }
+    const oldName = categories.find((c) => c.id === editingCategoryId)?.name;
+    updateCategory.mutate(
+      { categoryId: editingCategoryId, input: { name, color: editCategoryColor } },
+      {
+        onSuccess: () => {
+          // Cascade : réétiqueter les OKR portant l'ancien nom (le champ
+          // team_okrs.category stocke le nom, pas un id).
+          if (oldName && oldName !== name) {
+            const ids = okrs.filter((o) => o.category === oldName).map((o) => o.id);
+            if (ids.length > 0) reassignCategory.mutate({ okrIds: ids, category: name });
+          }
+          cancelEditCategory();
+          toast.success('Catégorie mise à jour');
+        },
+      },
+    );
+  };
+  const confirmDeleteCategory = () => {
+    if (!categoryToDeleteId) return;
+    deleteCategory.mutate(categoryToDeleteId, {
+      onSuccess: () => {
+        if (selectedCategory === categoryToDeleteId) setSelectedCategory('all');
+        setCategoryToDeleteId(null);
+      },
+    });
+  };
 
   if (isLoading) {
     return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">Chargement…</div>;
@@ -147,74 +220,43 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* Filtre par catégorie */}
-        {(categories.length > 0 || hasUncategorized) && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setCategoryFilter(undefined)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                categoryFilter === undefined
-                  ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent'
-                  : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              Toutes
-            </button>
-            {categories.map((c) => {
-              const active = categoryFilter === c.name;
-              return (
-                <span key={c.id} className="inline-flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter(active ? undefined : c.name)}
-                    className={`inline-flex items-center gap-1.5 py-1 rounded-full text-xs font-medium border transition-colors ${active ? 'text-white border-transparent pl-2.5 pr-2' : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] px-2.5'}`}
-                    style={active ? { backgroundColor: c.color } : undefined}
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: active ? 'rgba(255,255,255,0.9)' : c.color }} aria-hidden="true" />
-                    {c.name}
-                    {isManager && active && (
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Supprimer la catégorie « ${c.name} » ? Les objectifs concernés ne seront pas supprimés.`)) {
-                            deleteCategory.mutate(c.id);
-                            setCategoryFilter(undefined);
-                          }
-                        }}
-                        aria-label={`Supprimer la catégorie ${c.name}`}
-                        className="ml-0.5 rounded-full hover:bg-white/25 p-0.5"
-                      >
-                        <X size={11} aria-hidden="true" />
-                      </span>
-                    )}
-                  </button>
-                </span>
-              );
-            })}
-            {hasUncategorized && (
-              <button
-                type="button"
-                onClick={() => setCategoryFilter(categoryFilter === null ? undefined : null)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  categoryFilter === null
-                    ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent'
-                    : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
-                }`}
-              >
-                Sans catégorie
-              </button>
-            )}
-          </div>
-        )}
+      {/* Filtre par catégorie — UI identique à la page OKR perso.
+          Les actions de gestion (créer/éditer/supprimer) sont réservées aux
+          managers ; un simple membre ne voit que « Tous » + les chips. */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        {(categories.length > 0 || isManager) ? (
+          <CategoryFilterBar
+            categories={categories.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            hoveredCategoryId={hoveredCategoryId}
+            setHoveredCategoryId={setHoveredCategoryId}
+            editingCategoryId={editingCategoryId}
+            editCategoryName={editCategoryName}
+            setEditCategoryName={setEditCategoryName}
+            editCategoryColor={editCategoryColor}
+            setEditCategoryColor={setEditCategoryColor}
+            startEditCategory={startEditCategory}
+            cancelEditCategory={cancelEditCategory}
+            submitEditCategory={submitEditCategory}
+            setCategoryToDeleteId={setCategoryToDeleteId}
+            colorOptions={OKR_COLOR_OPTIONS}
+            resolveColor={resolveColor}
+            showCreateCategory={showCreateCategory}
+            setShowCreateCategory={setShowCreateCategory}
+            newCategoryName={newCategoryName}
+            setNewCategoryName={setNewCategoryName}
+            newCategoryColor={newCategoryColor}
+            setNewCategoryColor={setNewCategoryColor}
+            createCategoryMutation={createCategory}
+            canManage={isManager}
+          />
+        ) : <span />}
         {isManager && (
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="ml-auto inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white shadow-sm transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white shadow-sm transition-colors"
           >
             <Plus size={15} aria-hidden="true" /> Nouvel objectif
           </button>
@@ -236,7 +278,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Aucun objectif dans cette catégorie</p>
           <button
             type="button"
-            onClick={() => setCategoryFilter(undefined)}
+            onClick={() => setSelectedCategory('all')}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
           >
             Voir tous les objectifs
@@ -316,6 +358,14 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
           );
         })
       )}
+
+      {/* Dialog suppression catégorie (même composant que la page OKR perso) */}
+      <DeleteCategoryConfirm
+        open={!!categoryToDeleteId}
+        categoryName={categories.find((c) => c.id === categoryToDeleteId)?.name}
+        onCancel={() => setCategoryToDeleteId(null)}
+        onConfirm={confirmDeleteCategory}
+      />
 
       {showCreate && (
         <TeamOKRModal orgId={orgId} onClose={() => setShowCreate(false)} />

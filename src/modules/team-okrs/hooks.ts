@@ -89,6 +89,27 @@ export const useEditTeamOKR = (orgId: string) => {
   });
 };
 
+/**
+ * Réétiquette la catégorie d'un lot d'OKR (cascade au renommage d'une catégorie
+ * d'entreprise — team_okrs.category stocke le NOM). Silencieux (pas de toast par
+ * OKR), une seule invalidation en fin.
+ */
+export const useReassignTeamOKRCategory = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: async ({ okrIds, category }: { okrIds: string[]; category: string }) => {
+      for (const okrId of okrIds) {
+        await repository.update(okrId, { category });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de réétiqueter les objectifs : ${error.message}`),
+  });
+};
+
 export const useDeleteTeamOKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();

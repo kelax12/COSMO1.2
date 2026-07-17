@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgOKRCategoriesRepository } from './repository';
-import { OrgOKRCategory, CreateOrgOKRCategoryInput } from './types';
+import { OrgOKRCategory, CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
 
 interface CategoryRow {
   id: string;
@@ -47,6 +47,22 @@ export class SupabaseOrgOKRCategoriesRepository implements IOrgOKRCategoriesRepo
     const { data, error } = await supabase
       .from('org_okr_categories')
       .insert({ org_id: orgId, created_by: uid, name: input.name, color: input.color ?? '#6366f1' })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapCategory(data as CategoryRow);
+  }
+
+  async updateCategory(categoryId: string, input: UpdateOrgOKRCategoryInput): Promise<OrgOKRCategory> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist explicite — jamais org_id/created_by.
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.color !== undefined) patch.color = input.color;
+    const { data, error } = await supabase
+      .from('org_okr_categories')
+      .update(patch)
+      .eq('id', categoryId)
       .select('*')
       .single();
     if (error) throw normalizeApiError(error);
