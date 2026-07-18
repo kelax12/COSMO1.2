@@ -22,8 +22,12 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
 const BASE = 'https://thecosmo.app';
+// Date de build (YYYY-MM-DD) — injectée dans les JSON-LD (dateModified) et le
+// sitemap (lastmod) pour ne plus figer une date stale codée en dur.
+const TODAY = new Date().toISOString().slice(0, 10);
 
-const html = readFileSync(join(DIST, 'index.html'), 'utf8');
+let html = readFileSync(join(DIST, 'index.html'), 'utf8');
+html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${TODAY}"`);
 
 // ── FAQ (miroir de FAQ_ITEMS dans src/pages/LandingPage.tsx — garder synchro) ──
 const FAQ_ITEMS = [
@@ -137,6 +141,39 @@ const ROUTES = [
 // ── Helpers de réécriture ────────────────────────────────────────────────
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
+// Contenu statique de la home (miroir de l'ancien <noscript> d'index.html).
+const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1>
+        <p>Cosmo est une application de productivité gratuite qui centralise la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results).</p>
+        <h2>Fonctionnalités principales</h2>
+        <ul>
+          <li><strong>Gestionnaire de tâches</strong> — priorités, catégories colorées, deadlines, listes et filtres avancés</li>
+          <li><strong>Suivi d'habitudes</strong> — heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
+          <li><strong>Agenda avec time-blocking</strong> — glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
+          <li><strong>OKR (Objectives &amp; Key Results)</strong> — méthode utilisée par Google, Intel et Netflix</li>
+          <li><strong>Statistiques multi-modules</strong> — analysez votre temps sur tâches, habitudes, agenda et OKR</li>
+          <li><strong>Mode démo instantané</strong> — aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
+        </ul>
+        <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`;
+
+// Injecte le contenu indexable en HTML VISIBLE dans <div id="root"> : lu par
+// tous les crawlers (Googlebot, Bing, GPTBot/ClaudeBot/PerplexityBot qui
+// n'exécutent pas le JS), puis remplacé par React au premier render —
+// createRoot().render() écrase les enfants existants du container.
+// Le <noscript> devient redondant et est retiré (évite le contenu dupliqué).
+function injectStaticContent(out, content) {
+  const marker = '<div id="root"></div>';
+  if (!out.includes(marker)) {
+    console.warn('  ⚠ marqueur <div id="root"></div> introuvable — contenu statique non injecté');
+    return out;
+  }
+  out = out.replace(
+    marker,
+    `<div id="root">\n      <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b">\n        ${content}\n      </div>\n    </div>`
+  );
+  out = out.replace(/<noscript>[\s\S]*?<\/noscript>\s*/, '');
+  return out;
+}
+
 function buildPage(route) {
   let out = html;
   const url = `${BASE}${route.path}`;
@@ -156,11 +193,8 @@ function buildPage(route) {
     out = out.replace('</head>', `    ${route.extraLd.map(({ obj, id }) => ld(obj, id)).join('\n    ')}\n  </head>`);
   }
 
-  // Remplace le bloc <noscript> du body par le contenu indexable de la route
-  out = out.replace(
-    /<noscript>\s*<div style="font-family:sans-serif[\s\S]*?<\/noscript>/,
-    `<noscript>\n      <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b">\n        ${route.noscript}\n      </div>\n    </noscript>`
-  );
+  // Contenu indexable visible de la route, injecté dans #root
+  out = injectStaticContent(out, route.noscript);
 
   return out;
 }
@@ -175,12 +209,23 @@ for (const route of ROUTES) {
   console.log(`  prerendered ${route.path}/index.html`);
 }
 
-// ── Home : injecte le FAQPage JSON-LD en statique (rich result bulletproof) ──
+// ── Home : FAQPage JSON-LD statique + contenu visible dans #root ──────────
 let home = html;
 if (!home.includes('"FAQPage"')) {
   home = home.replace('</head>', `    ${ld(faqSchema, 'faq-schema')}\n  </head>`);
-  writeFileSync(join(DIST, 'index.html'), home, 'utf8');
   console.log('  injected FAQPage JSON-LD into index.html');
 }
+home = injectStaticContent(home, HOME_STATIC);
+writeFileSync(join(DIST, 'index.html'), home, 'utf8');
 
-console.log(`✓ prerender done — ${count} routes + home FAQ schema`);
+// ── Sitemap : lastmod = date de build ─────────────────────────────────────
+const sitemapPath = join(DIST, 'sitemap.xml');
+try {
+  const sitemap = readFileSync(sitemapPath, 'utf8');
+  writeFileSync(sitemapPath, sitemap.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${TODAY}</lastmod>`), 'utf8');
+  console.log(`  sitemap lastmod → ${TODAY}`);
+} catch {
+  console.warn('  ⚠ dist/sitemap.xml introuvable — lastmod non mis à jour');
+}
+
+console.log(`✓ prerender done — ${count} routes + home (FAQ schema + contenu statique)`);

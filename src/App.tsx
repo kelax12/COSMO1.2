@@ -78,6 +78,7 @@ const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'));
 const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'));
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'));
+const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -216,7 +217,7 @@ const AppRoutes = () => (
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/" replace />} />
+    <Route path="*" element={<PageWithSuspense><NotFoundPage /></PageWithSuspense>} />
   </Routes>
 );
 

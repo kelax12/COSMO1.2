@@ -8,8 +8,8 @@ interface SeoMeta {
   ogDescription?: string;
 }
 
-const ROOT_TITLE = 'Cosmo – Gestionnaire de tâches, habitudes et OKR | App productivité gratuite';
-const ROOT_DESC = 'Cosmo centralise tâches, habitudes, agenda et OKR dans une seule application gratuite. Méthode OKR, heatmap habitudes, time-blocking, statistiques multi-modules. Essayez sans inscription.';
+const ROOT_TITLE = 'Cosmo — Tâches, habitudes et OKR dans une seule app gratuite';
+const ROOT_DESC = 'Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription, avec 12 mois de données pré-remplies.';
 const ROOT_CANONICAL = 'https://thecosmo.app/';
 
 function setMeta(name: string, content: string) {
