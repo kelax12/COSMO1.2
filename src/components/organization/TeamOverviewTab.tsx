@@ -1,11 +1,16 @@
-import { useMemo } from 'react';
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { ListTodo, CheckCircle2, AlertTriangle, Target } from 'lucide-react';
-import { isPast, isToday, parseISO } from 'date-fns';
+import { useMemo, useState } from 'react';
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
+import { ListTodo, CheckCircle2, AlertTriangle, Target, Activity, TrendingUp, FolderKanban, Users } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { useTeamTasks } from '@/modules/team-projects';
-import { useTeamOKRs, type TeamKeyResult } from '@/modules/team-okrs';
+import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { useTeamOKRs } from '@/modules/team-okrs';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
+import { projectColor } from './team-projects.helpers';
+import {
+  STATS_PERIODS, type StatsPeriod, periodStart, filterByPeriod,
+  summarize, overallOkrProgress, memberLoad, overdueByMember,
+  projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
+} from './team-stats.helpers';
 
 interface TeamOverviewTabProps {
   orgId: string;
@@ -15,45 +20,62 @@ interface TeamOverviewTabProps {
   currentUserId?: string;
 }
 
-const chartConfig = {
-  open: { label: 'Tâches ouvertes', color: '#6366f1' },
-} satisfies ChartConfig;
-
 const firstName = (name: string) => name.split(' ')[0];
 
-const krProgress = (kr: TeamKeyResult): number => {
-  if (kr.completed) return 1;
-  if (kr.targetValue <= 0) return 0;
-  return Math.max(0, Math.min(1, kr.currentValue / kr.targetValue));
-};
+const velocityConfig = { completed: { label: 'Terminées', color: '#10b981' } } satisfies ChartConfig;
+const trendConfig = { rate: { label: 'Taux de complétion', color: '#6366f1' } } satisfies ChartConfig;
 
-// Coefficient d'importance effectif : entier borné [1, 10], défaut 1.
-const krWeight = (kr: TeamKeyResult): number => {
-  const w = Math.round(Number(kr.weight));
-  if (!Number.isFinite(w) || w < 1) return 1;
-  return Math.min(w, 10);
-};
-
-const StatCard = ({ Icon, label, value, tone }: { Icon: typeof ListTodo; label: string; value: string; tone: string }) => (
+const StatCard = ({ Icon, label, value, tone, hint }: { Icon: typeof ListTodo; label: string; value: string; tone: string; hint?: string }) => (
   <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
     <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${tone}`}>
       <Icon size={18} aria-hidden="true" />
     </div>
     <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{value}</p>
     <p className="text-xs text-[rgb(var(--color-text-muted))]">{label}</p>
+    {hint && <p className="text-[10px] text-[rgb(var(--color-text-muted))]/70 mt-0.5">{hint}</p>}
   </div>
 );
 
+const SectionCard = ({ title, Icon, iconClass, children, aside }: {
+  title: string; Icon: typeof ListTodo; iconClass: string; children: React.ReactNode; aside?: React.ReactNode;
+}) => (
+  <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 sm:p-5">
+    <div className="flex items-center justify-between gap-2 mb-4">
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5">
+        <Icon size={15} className={iconClass} aria-hidden="true" /> {title}
+      </h3>
+      {aside}
+    </div>
+    {children}
+  </div>
+);
+
+const EmptyRow = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-xs text-[rgb(var(--color-text-muted))] py-6 text-center">{children}</p>
+);
+
+/** Barre horizontale (div) : ratio 0..1 → largeur, couleur Tailwind. */
+const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) => (
+  <span className="flex-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden min-w-[40px]">
+    <span className={`block h-full rounded-full ${colorClass}`} style={{ width: `${Math.max(0, Math.min(1, ratio)) * 100}%` }} />
+  </span>
+);
+
 /**
- * Onglet Statistiques (#13) — dérivé côté client des tâches et OKR de l'org :
- * charge par membre, retards, taux de complétion, progression OKR moyenne.
- * Admin : toute l'entreprise. Manager : uniquement les personnes qu'il gère
- * (soi + son sous-arbre) — les tâches comptées sont celles assignées à ce
- * périmètre.
+ * Onglet Statistiques (#13, point 5) — dérivé côté client des tâches et OKR :
+ * sélecteur de période, cartes de synthèse, charge & complétion par membre,
+ * répartition par projet, vélocité hebdo, tendance du taux de complétion,
+ * avancement OKR détaillé, retards par membre.
+ *
+ * Périmètre : admin → toute l'entreprise ; manager → soi + son sous-arbre.
+ * La période filtre les tâches par date de création ; les OKR restent « en
+ * direct » (jauge de l'état courant, pas une activité datée).
  */
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
   const { data: allTasks = [] } = useTeamTasks(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
   const { data: okrs = [] } = useTeamOKRs(orgId);
+  const [period, setPeriod] = useState<StatsPeriod>('30');
 
   // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
   const scopedMembers = useMemo(() => {
@@ -62,102 +84,221 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
   }, [members, isAdmin, currentUserId]);
 
-  const tasks = useMemo(() => {
+  // Tâches du périmètre (tous horizons) — base des séries temporelles.
+  const scopedTasks = useMemo(() => {
     if (isAdmin) return allTasks;
     const scope = new Set(scopedMembers.map((m) => m.userId));
     return allTasks.filter((t) => t.assigneeIds.some((id) => scope.has(id)));
   }, [allTasks, scopedMembers, isAdmin]);
 
-  const stats = useMemo(() => {
-    const total = tasks.length;
-    const completed = tasks.filter((t) => t.completed).length;
-    const overdue = tasks.filter((t) => {
-      if (t.completed || !t.deadline) return false;
-      const d = parseISO(t.deadline);
-      return isPast(d) && !isToday(d);
-    });
-    const allKRs = okrs.flatMap((o) => o.keyResults);
-    // Moyenne pondérée par le coefficient d'importance de chaque KR.
-    const totalWeight = allKRs.reduce((s, kr) => s + krWeight(kr), 0);
-    const okrProgress = totalWeight > 0
-      ? Math.round((allKRs.reduce((s, kr) => s + krProgress(kr) * krWeight(kr), 0) / totalWeight) * 100)
-      : 0;
-    return {
-      total,
-      completed,
-      completionRate: total ? Math.round((completed / total) * 100) : 0,
-      overdue,
-      okrProgress,
-    };
-  }, [tasks, okrs]);
+  const start = useMemo(() => periodStart(period), [period]);
+  // Tâches créées dans la fenêtre — base des cartes et répartitions.
+  const periodTasks = useMemo(() => filterByPeriod(scopedTasks, start), [scopedTasks, start]);
 
-  // Charge par membre : tâches ouvertes assignées (barres triées desc).
-  // Une tâche multi-assignée compte pour chacun de ses assignés.
-  const loadByMember = useMemo(() => {
-    const openByAssignee = new Map<string, number>();
-    for (const t of tasks) {
-      if (t.completed) continue;
-      for (const uid of t.assigneeIds) {
-        openByAssignee.set(uid, (openByAssignee.get(uid) ?? 0) + 1);
-      }
-    }
-    return scopedMembers
-      .map((m) => ({ name: firstName(m.displayName), open: openByAssignee.get(m.userId) ?? 0 }))
-      .sort((a, b) => b.open - a.open);
-  }, [tasks, scopedMembers]);
+  const summary = useMemo(() => summarize(periodTasks), [periodTasks]);
+  const okrProgress = useMemo(() => overallOkrProgress(okrs), [okrs]);
+  const load = useMemo(() => memberLoad(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
+  const overdueMembers = useMemo(() => overdueByMember(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
+  const byProject = useMemo(() => projectBreakdown(periodTasks, projects), [periodTasks, projects]);
+  const velocity = useMemo(() => velocityByWeek(scopedTasks, start), [scopedTasks, start]);
+  const trend = useMemo(() => completionTrend(scopedTasks, start), [scopedTasks, start]);
+  const okrStats = useMemo(() => okrBreakdown(okrs), [okrs]);
+
+  const overdueTasks = useMemo(() => periodTasks.filter(isOverdue), [periodTasks]);
+  const maxOpen = Math.max(1, ...load.map((m) => m.open));
+  const maxProjectOpen = Math.max(1, ...byProject.map((p) => p.open));
+  const maxOverdue = Math.max(1, ...overdueMembers.map((m) => m.count));
+  const hasVelocity = velocity.some((v) => v.completed > 0);
+  const hasTrend = trend.some((t) => t.rate > 0);
+
+  const periodLabel = STATS_PERIODS.find((p) => p.id === period)?.label ?? '';
+  const periodHint = period === 'all' ? 'depuis le début' : `créées sur ${periodLabel}`;
 
   return (
     <div className="space-y-5">
+      {/* En-tête : sélecteur de période */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">
+          {isAdmin ? "Statistiques de toute l'entreprise." : 'Statistiques de votre périmètre (vous et vos équipes).'}
+        </p>
+        <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label="Période">
+          {STATS_PERIODS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              aria-selected={period === p.id}
+              onClick={() => setPeriod(p.id)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                period === p.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Cartes de synthèse */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard Icon={ListTodo} label="Tâches au total" value={String(stats.total)} tone="bg-blue-500/10 text-blue-500" />
-        <StatCard Icon={CheckCircle2} label="Complétées" value={`${stats.completionRate}%`} tone="bg-green-500/10 text-green-500" />
-        <StatCard Icon={AlertTriangle} label="En retard" value={String(stats.overdue.length)} tone="bg-red-500/10 text-red-500" />
-        <StatCard Icon={Target} label="Progression OKR" value={`${stats.okrProgress}%`} tone="bg-indigo-500/10 text-indigo-500" />
+        <StatCard Icon={ListTodo} label="Tâches" value={String(summary.total)} hint={periodHint} tone="bg-blue-500/10 text-blue-500" />
+        <StatCard Icon={CheckCircle2} label="Complétées" value={`${summary.completionRate}%`} hint={`${summary.completed} terminée${summary.completed > 1 ? 's' : ''}`} tone="bg-green-500/10 text-green-500" />
+        <StatCard Icon={AlertTriangle} label="En retard" value={String(summary.overdueCount)} hint="à ce jour" tone="bg-red-500/10 text-red-500" />
+        <StatCard Icon={Target} label="Progression OKR" value={`${okrProgress}%`} hint="en direct" tone="bg-indigo-500/10 text-indigo-500" />
       </div>
 
-      {/* Charge par membre */}
-      <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 sm:p-6">
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-4">Charge par membre (tâches ouvertes)</h3>
-        {loadByMember.every((d) => d.open === 0) ? (
-          <p className="text-xs text-[rgb(var(--color-text-muted))] py-6 text-center">Aucune tâche ouverte assignée.</p>
-        ) : (
-          <ChartContainer config={chartConfig} className="h-[220px] w-full">
-            <BarChart data={loadByMember} layout="vertical" margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid horizontal={false} strokeOpacity={0.4} />
-              <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} tick={{ fontSize: 11 }} />
-              <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={70} tick={{ fontSize: 11, fontWeight: 600 }} />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Bar dataKey="open" fill="var(--color-open)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ChartContainer>
-        )}
-      </div>
+      {/* Par membre + Par projet */}
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        <SectionCard title="Par membre" Icon={Users} iconClass="text-blue-500">
+          {load.every((m) => m.total === 0) ? (
+            <EmptyRow>Aucune tâche assignée sur la période.</EmptyRow>
+          ) : (
+            <ul className="space-y-2.5">
+              {load.filter((m) => m.total > 0).map((m) => (
+                <li key={m.userId} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
+                  <MiniBar ratio={m.open / maxOpen} colorClass="bg-blue-500" />
+                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Tâches ouvertes">
+                    {m.open}
+                  </span>
+                  <span
+                    className={`w-11 shrink-0 text-right text-xs font-semibold tabular-nums ${
+                      m.completionRate >= 66 ? 'text-emerald-500' : m.completionRate >= 33 ? 'text-amber-500' : 'text-[rgb(var(--color-text-muted))]'
+                    }`}
+                    title={`${m.done}/${m.total} terminées`}
+                  >
+                    {m.completionRate}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
 
-      {/* Retards */}
-      {stats.overdue.length > 0 && (
-        <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/50 dark:bg-red-900/10 p-4">
-          <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3 inline-flex items-center gap-1.5">
-            <AlertTriangle size={15} aria-hidden="true" /> Tâches en retard ({stats.overdue.length})
-          </h3>
-          <ul className="space-y-1.5">
-            {stats.overdue.slice(0, 6).map((t) => {
-              const names = t.assigneeIds
-                .map((id) => scopedMembers.find((m) => m.userId === id))
-                .filter((m): m is OrgMember => !!m)
-                .map((m) => firstName(m.displayName));
-              return (
-                <li key={t.id} className="flex items-center justify-between text-sm">
-                  <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
-                  {names.length > 0 && (
-                    <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 ml-3">
-                      {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
-                    </span>
+        <SectionCard title="Répartition par projet" Icon={FolderKanban} iconClass="text-indigo-500">
+          {byProject.length === 0 ? (
+            <EmptyRow>Aucune tâche par projet sur la période.</EmptyRow>
+          ) : (
+            <ul className="space-y-2.5">
+              {byProject.map((p) => (
+                <li key={p.id} className="flex items-center gap-3">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
+                  <span className="w-24 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{p.name}</span>
+                  <MiniBar ratio={p.open / maxProjectOpen} colorClass={projectColor(p.color).dot} />
+                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Ouvertes">{p.open}</span>
+                  {p.overdue > 0 ? (
+                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title="En retard">{p.overdue} retard</span>
+                  ) : (
+                    <span className="w-14 shrink-0" />
                   )}
                 </li>
-              );
-            })}
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+      </div>
+
+      {/* Vélocité + Tendance */}
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        <SectionCard title="Vélocité (tâches terminées / semaine)" Icon={Activity} iconClass="text-emerald-500">
+          {!hasVelocity ? (
+            <EmptyRow>Aucune complétion sur la période.</EmptyRow>
+          ) : (
+            <ChartContainer config={velocityConfig} className="h-[200px] w-full">
+              <BarChart data={velocity} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid vertical={false} strokeOpacity={0.4} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Bar dataKey="completed" fill="var(--color-completed)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Tendance du taux de complétion" Icon={TrendingUp} iconClass="text-indigo-500">
+          {!hasTrend ? (
+            <EmptyRow>Pas assez de données sur la période.</EmptyRow>
+          ) : (
+            <ChartContainer config={trendConfig} className="h-[200px] w-full">
+              <LineChart data={trend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid vertical={false} strokeOpacity={0.4} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tick={{ fontSize: 11 }} width={28} unit="%" />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Line dataKey="rate" type="monotone" stroke="var(--color-rate)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          )}
+        </SectionCard>
+      </div>
+
+      {/* Avancement OKR détaillé */}
+      <SectionCard title="Avancement des OKR" Icon={Target} iconClass="text-indigo-500">
+        {okrStats.length === 0 ? (
+          <EmptyRow>Aucun OKR d'équipe pour l'instant.</EmptyRow>
+        ) : (
+          <ul className="space-y-3">
+            {okrStats.map((o) => (
+              <li key={o.id}>
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{o.title}</span>
+                  <span className={`text-xs font-bold tabular-nums shrink-0 ${
+                    o.progress >= 66 ? 'text-emerald-500' : o.progress >= 33 ? 'text-amber-500' : 'text-red-500'
+                  }`}>
+                    {o.progress}%
+                  </span>
+                </div>
+                <MiniBar
+                  ratio={o.progress / 100}
+                  colorClass={o.progress >= 66 ? 'bg-emerald-500' : o.progress >= 33 ? 'bg-amber-500' : 'bg-red-500'}
+                />
+              </li>
+            ))}
           </ul>
+        )}
+      </SectionCard>
+
+      {/* Retards par membre + liste des tâches en retard */}
+      {summary.overdueCount > 0 && (
+        <div className="grid lg:grid-cols-2 gap-5 items-start">
+          <SectionCard title="Retards par membre" Icon={AlertTriangle} iconClass="text-red-500">
+            <ul className="space-y-2.5">
+              {overdueMembers.map((m) => (
+                <li key={m.userId} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
+                  <MiniBar ratio={m.count / maxOverdue} colorClass="bg-red-500" />
+                  <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums text-red-500">{m.count}</span>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+
+          <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/50 dark:bg-red-900/10 p-4 sm:p-5">
+            <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3 inline-flex items-center gap-1.5">
+              <AlertTriangle size={15} aria-hidden="true" /> Tâches en retard ({overdueTasks.length})
+            </h3>
+            <ul className="space-y-1.5">
+              {overdueTasks.slice(0, 6).map((t) => {
+                const names = t.assigneeIds
+                  .map((id) => scopedMembers.find((m) => m.userId === id))
+                  .filter((m): m is OrgMember => !!m)
+                  .map((m) => firstName(m.displayName));
+                return (
+                  <li key={t.id} className="flex items-center justify-between text-sm gap-3">
+                    <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
+                    {names.length > 0 && (
+                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
+                        {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       )}
     </div>
