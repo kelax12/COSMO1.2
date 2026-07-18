@@ -19,6 +19,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES } from './src/content/blog/index.mjs';
+import { USE_CASES } from './src/content/use-cases.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
@@ -196,6 +197,17 @@ const ROUTES = [
         ${a.html}
         <p><a href="/blog">← Tous les articles</a> · <a href="/signup">Essayer Cosmo gratuitement</a></p>`,
   })),
+  // Pages use-case commerciales — contenu complet visible (src/content/use-cases.mjs)
+  ...USE_CASES.map((u) => ({
+    path: `/${u.slug}`,
+    title: `${u.metaTitle} | Cosmo`,
+    description: u.description,
+    extraLd: [{ obj: breadcrumb(u.title, `/${u.slug}`), id: `usecase-${u.slug}-breadcrumb` }],
+    noscript: `<h1>${u.title}</h1>
+        <p>${u.lead}</p>
+        ${u.html}
+        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`,
+  })),
   {
     path: '/cgu',
     title: "Conditions Générales d'Utilisation – Cosmo App",
@@ -309,10 +321,11 @@ try {
   const generated =
     sitemapEntry(`${BASE}/a-propos`, TODAY, 'yearly', '0.5') +
     sitemapEntry(`${BASE}/blog`, TODAY, 'weekly', '0.8') +
-    ARTICLES.map((a) => sitemapEntry(`${BASE}/blog/${a.slug}`, a.dateModified, 'monthly', '0.7')).join('');
+    ARTICLES.map((a) => sitemapEntry(`${BASE}/blog/${a.slug}`, a.dateModified, 'monthly', '0.7')).join('') +
+    USE_CASES.map((u) => sitemapEntry(`${BASE}/${u.slug}`, TODAY, 'monthly', '0.7')).join('');
   sitemap = sitemap.replace('</urlset>', `${generated}</urlset>`);
   writeFileSync(sitemapPath, sitemap, 'utf8');
-  console.log(`  sitemap → lastmod ${TODAY} + ${2 + ARTICLES.length} URLs générées (blog, à-propos)`);
+  console.log(`  sitemap → lastmod ${TODAY} + ${2 + ARTICLES.length + USE_CASES.length} URLs générées (blog, à-propos, use-cases)`);
 } catch {
   console.warn('  ⚠ dist/sitemap.xml introuvable — sitemap non enrichi');
 }

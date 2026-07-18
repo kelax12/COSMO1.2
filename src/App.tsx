@@ -82,6 +82,7 @@ const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'));
 const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'));
 const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'));
 const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'));
+const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -189,6 +190,9 @@ const AppRoutes = () => (
     <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
     <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
     <Route path="a-propos" element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
+    <Route path="pour-freelances" element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
+    <Route path="pour-etudiants" element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
+    <Route path="pour-managers" element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
     <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
     <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
     <Route path="cgu" element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
