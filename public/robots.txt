@@ -3,6 +3,9 @@ Allow: /
 Allow: /guide
 Allow: /blog
 Allow: /a-propos
+Allow: /pour-freelances
+Allow: /pour-etudiants
+Allow: /pour-managers
 Allow: /login
 Allow: /signup
 Allow: /cgu
