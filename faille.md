@@ -66,6 +66,180 @@ Légende :
 | N13 | 🟠 Medium    | `removeFriend` reciprocal silently no-op       | ✅ Corrigé   | `022_security_n12_n13.sql` + RPC `remove_friendship` |
 | N14 | 🟠 High      | `subscriptions.INSERT` sans contrainte de valeurs → self-premium à la 1ʳᵉ ligne | ✅ Corrigé   | `041_subscriptions_insert_lockdown.sql` (appliquée en prod 2026-06-10, policy vérifiée live) |
 | N15 | 🟠 Medium    | Régression M-2 : la 034 a redéfini `accept_friend_request_v2` SANS `sanitize_display_name` (et la 026 n'avait jamais été appliquée en prod) | ✅ Corrigé   | `042_restore_sanitize_accept_v2.sql` (fusion 026+034, appliquée + vérifiée live `pg_get_functiondef`). Détectée par `scripts/check-prod-drift.mjs` |
+| F-1 | 🟠 Medium | Agenda manager (mig. 077) : `events_manager_*` donne aux admins/managers un accès **lecture+écriture+suppression sur TOUT l'agenda personnel** des membres gérés, sans distinction perso/pro | 🟡 À traiter | Vérifié live (`pg_policies`). Décision produit à prendre : flag `is_private` + divulgation. Voir [F-1](#f-1--agenda-manager--porte-trop-large-sur-lagenda-personnel) |
+| F-2 | 🟠 Medium | RGPD : `delete-account` ne purge pas `team_tasks.assignee_ids` (UUID[], pas de FK) → l'UUID d'un compte supprimé survit dans les tâches d'équipe | 🔴 À corriger | TODO auto-signalé dans la mig. 072. Vérifié (colonne `ARRAY`, absente de `USER_OWNED_TABLES`). Voir [F-2](#f-2--rgpd--assignee_ids-non-purgé-à-la-suppression-de-compte) |
+| F-3 | 🟡 Low/Med | `resolve_profiles_by_emails` = oracle d'existence de compte en batch (1000 emails/appel, tout authentifié, sans lien d'amitié ni rate-limit) | 🟡 À planifier | anon bloqué par garde interne `auth.uid()` (vérifié). Élargit le risque accepté N12. Voir [F-3](#f-3--oracle-dénumération-de-comptes-en-batch) |
+| F-4 | 🟡 Low | `can_access_team_okr` (mig. 073) + 6 fonctions trigger `validate_*` exécutables par `anon` — non couvertes par le REVOKE anon des mig. 064/069 (fonction née après) | 🟡 À planifier | Même classe que 064/069. Inoffensif (gardes internes `auth.uid()`) mais casse la convention. Voir [F-4](#f-4--hardening-anon-résiduel-régression-de-064069) |
+| F-5 | 🟡 Low | `events.created_by` forgeable via insert direct (le mapper `mapEventToDb` est propre, mais aucune contrainte serveur) → usurpation d'auteur d'événement | 🟡 À planifier | Cosmétique (attribution d'affichage). Voir [F-5](#f-5--divers-hardening) |
+
+---
+
+## 🔎 Audit Fable 2026-07-18 — mode entreprise (mig. 051→079)
+
+Audit ciblé sur la zone la moins couverte depuis le dernier passage (juin) :
+les 29 migrations 051-079, essentiellement le **mode entreprise** (orgs,
+hiérarchie, équipes, invitations, agenda manager), + Edge Functions, billing
+dormant, repos. **Aucune faille critique/haute.** Le socle multi-tenant est
+solide : anti-récursion RLS via helpers SECURITY DEFINER, écritures membres
+RPC-only, gardes « dernier admin », anti-cycle hiérarchie, erreurs génériques
+(pas de leak d'existence sur codes/liens), sanitize cross-user. Findings ci-
+dessous = durcissements + 1 point RGPD à corriger avant monétisation entreprise.
+
+Méthode : lecture exhaustive des migrations + vérification **live prod**
+(`ykeugqfgklejcdbrmawy`) via MCP — `pg_policies`, `pg_get_functiondef`,
+`get_advisors`. Tous les findings 🟠 sont confirmés contre la prod réelle.
+
+### F-1 — Agenda manager : porte trop large sur l'agenda personnel
+
+**Sévérité** : 🟠 Medium (confidentialité / minimisation RGPD). **Statut** : à arbitrer (produit).
+
+La mig. 077 ajoute 4 policies PERMISSIVES sur `events` gatées par
+`manages_user(user_id)`. Vérifié live :
+
+```
+events_manager_select | SELECT | manages_user(user_id)
+events_manager_insert | INSERT | WITH CHECK manages_user(user_id)
+events_manager_update | UPDATE | manages_user + WITH CHECK manages_user
+events_manager_delete | DELETE | manages_user(user_id)
+```
+
+`manages_user` renvoie true si l'appelant est **admin de l'org** (n'importe
+quel membre) OU **manager** (le membre est dans son sous-arbre). Conséquence :
+
+- Un **admin** peut lire, créer, modifier et **supprimer** *tous* les
+  événements personnels de *tous* les membres de l'org.
+- Un **manager** idem sur tout son sous-arbre.
+- **Aucune distinction perso/pro** : l'agenda COSMO est un calendrier
+  personnel (RDV médicaux, perso…). Un employé n'a aucun moyen de garder un
+  événement privé hors de la vue de sa hiérarchie.
+
+Le repo client filtre bien `user_id = self` pour l'agenda perso
+(`events/supabase.repository.ts`, defense-in-depth OK) — mais c'est la RLS,
+pas le client, la frontière : un membre technique peut lire l'agenda complet
+de ses collègues via l'API REST.
+
+**Ce n'est pas un bug** (feature « agenda d'équipe » assumée) mais la portée
+est maximale. **Recommandation** avant d'ouvrir le mode entreprise en payant :
+1. Colonne `events.is_private BOOLEAN DEFAULT false` ; exclure les events
+   privés des 4 policies manager (`manages_user(user_id) AND NOT is_private`).
+2. Restreindre la suppression : un manager qui *supprime* l'agenda d'autrui
+   est agressif — envisager SELECT/INSERT/UPDATE seulement, pas DELETE.
+3. Divulgation explicite à l'onboarding entreprise (les membres doivent
+   savoir que leur hiérarchie voit leur agenda).
+
+### F-2 — RGPD : `assignee_ids` non purgé à la suppression de compte
+
+**Sévérité** : 🟠 Medium (RGPD art. 17). **Statut** : à corriger.
+
+La mig. 072 a migré `team_tasks.assignee_id UUID` (FK `ON DELETE SET NULL`)
+vers `team_tasks.assignee_ids UUID[]` — **un tableau UUID n'a pas de FK**, donc
+`auth.admin.deleteUser` ne peut pas cascader. La mig. 072 le signale
+elle-même en commentaire (« ⚠️ RGPD … à intégrer à delete-account »), mais
+`supabase/functions/delete-account/index.ts` n'a **pas** été mis à jour :
+`USER_OWNED_TABLES` ne contient aucune table entreprise et il n'y a pas de
+traitement dédié à `assignee_ids`.
+
+Vérifié : colonne `assignee_ids` de type `ARRAY`, absente de la fonction.
+Après suppression d'un compte, son UUID **survit** dans les tâches d'équipe
+où il était assigné — identifiant personnel persistant après effacement.
+
+**Fix** (à ajouter dans delete-account, avant le drop auth) :
+```ts
+// team_tasks.assignee_ids : UUID[] sans FK → retrait manuel (RGPD)
+await supabaseAdmin.rpc('remove_assignee_everywhere', { p_user: user.id })
+// ou UPDATE ciblé : SET assignee_ids = array_remove(assignee_ids, uid)
+//                   WHERE assignee_ids @> ARRAY[uid]
+```
+Le reste des tables entreprise cascade correctement (vérifié) :
+`organization_members`/`org_team_members` (FK CASCADE), `team_*.created_by`
+et `*.added_by` (SET NULL). Seul `assignee_ids` fait exception.
+
+> Note connexe (non bloquante) : la suppression via `auth.admin.deleteUser`
+> **court-circuite** la logique de re-parentage `remove_member` (mig. 066) —
+> les subordonnés du compte supprimé passent `manager_id = NULL` via le FK
+> `ON DELETE SET NULL` (dé-placés proprement, pas d'orphelin pendant). Le
+> transfert de propriété d'org est bien géré séparément. Pas d'action requise,
+> juste à connaître.
+
+### F-3 — Oracle d'énumération de comptes en batch
+
+**Sévérité** : 🟡 Low/Medium. **Statut** : à planifier.
+
+`resolve_profiles_by_emails(text[])` (SECURITY DEFINER) mappe jusqu'à **1000
+emails → UUID par appel**, pour **tout utilisateur authentifié**, sans exiger
+de lien d'amitié ni de rate-limit. Vérifié `pg_get_functiondef` : garde
+`auth.uid() IS NULL → RAISE` (donc **anon est bien bloqué** malgré le GRANT
+anon résiduel — cf. advisor), mais aucun contrôle relationnel.
+
+Impact : un compte authentifié peut tester en masse « cet email a-t-il un
+compte COSMO ? » et récupérer les UUID. La version *singulière*
+`resolve_profile_by_email` faisait déjà ça (design N12 : nécessaire pour
+envoyer une invitation par email) mais 1 par 1 ; la version batch amplifie
+×1000. Ne fuit que l'existence + l'UUID (pas nom/avatar).
+
+**Reco** : borner plus agressivement (ex. 50/appel), et/ou logguer + rate-
+limiter côté RPC (compteur par `auth.uid()` sur fenêtre glissante, pattern
+`credit_premium_token_from_ad`). Faible priorité (auth requis, données
+limitées) mais à traiter si l'énumération d'utilisateurs devient un vecteur.
+
+### F-4 — Hardening anon résiduel (régression de 064/069)
+
+**Sévérité** : 🟡 Low. **Statut** : à planifier (1 micro-migration).
+
+`get_advisors` (security) signale, en plus des cas déjà documentés, des
+fonctions **nées après** les migrations de durcissement anon (064/069) et donc
+non révoquées :
+
+- `can_access_team_okr(uuid)` — mig. 073 (helper de cloisonnement OKR).
+- `validate_org_manager`, `validate_project_team`, `validate_team_membership`,
+  `validate_team_kr`, `validate_team_task`, `validate_team_okr_team` — fonctions
+  trigger (non exploitables hors trigger, mais listées par l'advisor).
+
+Toutes vérifient `auth.uid()` en interne → **inoffensives réellement**, mais
+c'est exactement la classe des failles 064/069 : une nouvelle fonction qui
+passe entre les mailles du REVOKE anon. À corriger par cohérence :
+```sql
+REVOKE EXECUTE ON FUNCTION public.can_access_team_okr(UUID) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.validate_org_manager() FROM anon;
+-- …idem validate_project_team / validate_team_membership / validate_team_kr /
+--   validate_team_task / validate_team_okr_team
+```
+> **Leçon process** : ce trou se reproduit à chaque nouvelle migration entreprise.
+> Ajouter au `validate:migrations` (CI) une garde : toute fonction du mode
+> entreprise doit terminer par `REVOKE EXECUTE … FROM anon`.
+
+### F-5 — Divers hardening
+
+**Sévérité** : 🟡 Low. **Statut** : à planifier.
+
+- **`events.created_by` forgeable** : le mapper `mapEventToDb` est un whitelist
+  propre (n'émet ni `user_id` ni `created_by`, vérifié), mais aucune contrainte
+  serveur n'empêche un client qui bypasse le mapper d'insérer un `created_by`
+  arbitraire. Impact cosmétique (attribution d'auteur affichée). Fix optionnel :
+  trigger figeant `created_by = auth.uid()` à l'INSERT (ou `SET DEFAULT` + retrait
+  du champ de tout input client).
+- **`SET search_path` non vide** sur `credit_premium_token_from_ad` (`= public`)
+  et `get_work_time_stats` (`= public`) — la convention projet est `= ''`
+  (docs/SECURITY.md). Schéma épinglé donc risque d'injection nul, mais à aligner.
+- **HaveIBeenPwned désactivé** (advisor `auth_leaked_password_protection`) —
+  réglage Auth Supabase, activable en 1 clic (déjà noté juin, toujours off).
+
+### ✅ Points sains confirmés (mode entreprise)
+
+- Anti-récursion RLS : tous les checks d'appartenance/hiérarchie passent par des
+  helpers SECURITY DEFINER (`is_org_member/admin/manager`, `get_subtree`,
+  `can_access_team_*`) — aucune policy ne lit directement la table qu'elle protège.
+- Écritures membres/rôles/hiérarchie **RPC-only** : pas d'auto-promotion admin,
+  pas d'`accepted_at` forgé, gardes « dernier admin » atomiques (`FOR UPDATE`).
+- Codes de join & liens d'invitation : générés serveur (CSPRNG), erreurs
+  génériques (`Invalid code` / `invalid_link`), single-use `FOR UPDATE`,
+  re-validation des droits du créateur au moment du claim, pas d'auto-claim.
+- Anti-cycle hiérarchie (trigger + cap 50 niveaux), cohérence org_id sur
+  triggers `validate_team_*`, immutabilité `org_id`/`created_by`/`join_code`.
+- `delete-account` : transfert de propriété d'org avant purge, abort si cleanup
+  échoue (RGPD), CORS allowlist, id résolu du JWT (jamais du body).
+- `stripe-webhook` : signature vérifiée, `Invalid signature` générique, non-POST
+  rejeté en premier. `credit_premium_token_from_ad` : cap 20/24h serveur.
 
 ---
 
