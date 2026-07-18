@@ -5,7 +5,7 @@
 // tâches chez le destinataire ; Refuser → supprime la grant.
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
-import { Check, X, ListChecks } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import {
   useIncomingSharedLists,
   useAcceptSharedList,
@@ -25,8 +25,7 @@ const PendingSharedLists: React.FC = () => {
 
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 text-teal-600 dark:text-teal-400">
-        <ListChecks size={13} aria-hidden="true" />
+      <p className="text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400">
         Listes partagées en attente ({grants.length})
       </p>
       {grants.map((grant) => (
@@ -38,8 +37,7 @@ const PendingSharedLists: React.FC = () => {
             <p className="text-sm font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }} title={grant.name}>
               {grant.name}
             </p>
-            <p className="text-xs truncate inline-flex items-center gap-1 text-teal-700 dark:text-teal-300">
-              <ListChecks size={11} aria-hidden="true" />
+            <p className="text-xs truncate text-teal-700 dark:text-teal-300">
               Partagé par {grant.sharedByName ?? 'un collaborateur'} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
             </p>
           </div>

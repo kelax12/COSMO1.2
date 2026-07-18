@@ -16,6 +16,7 @@ import {
   type CalendarEvent,
 } from '@/modules/events';
 import { useTeamTasks, useTeamProjects, type TeamTask } from '@/modules/team-projects';
+import { useOrgTeamMembers } from '@/modules/org-teams';
 import EventModal, { type EventModalMode } from '@/components/EventModal';
 import {
   buildCalendarEvents,
@@ -67,16 +68,29 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
   const updateEvent = useUpdateMemberEvent(member.userId);
   const deleteEvent = useDeleteMemberEvent(member.userId);
 
-  // Tâches d'équipe assignées au membre (à planifier) + couleur de leur projet.
+  // Tâches d'équipe à planifier + couleur de leur projet. Visibles si assignées
+  // nommément AU membre, OU si son projet appartient à une équipe dont le
+  // membre fait partie (pas besoin d'assignation individuelle — l'agenda pro
+  // reflète la charge de toute l'équipe, pas seulement « ses » tâches).
   const { data: allTeamTasks = [] } = useTeamTasks(member.orgId);
   const { data: projects = [] } = useTeamProjects(member.orgId);
+  const { data: teamMembers = [] } = useOrgTeamMembers(member.orgId);
   const projectColorHex = useCallback(
     (projectId: string) => PROJECT_HEX[projects.find((p) => p.id === projectId)?.color ?? 'blue'] ?? PROJECT_HEX.blue,
     [projects],
   );
+  const memberTeamIds = useMemo(
+    () => new Set(teamMembers.filter((tm) => tm.userId === member.userId).map((tm) => tm.teamId)),
+    [teamMembers, member.userId],
+  );
   const memberTasks = useMemo(
-    () => sortOpenTasks(allTeamTasks.filter((t) => !t.completed && t.assigneeIds.includes(member.userId))),
-    [allTeamTasks, member.userId],
+    () => sortOpenTasks(allTeamTasks.filter((t) => {
+      if (t.completed) return false;
+      if (t.assigneeIds.includes(member.userId)) return true;
+      const projectTeamId = projects.find((p) => p.id === t.projectId)?.teamId;
+      return !!projectTeamId && memberTeamIds.has(projectTeamId);
+    })),
+    [allTeamTasks, member.userId, projects, memberTeamIds],
   );
 
   // Modales (mêmes états que la page Agenda).

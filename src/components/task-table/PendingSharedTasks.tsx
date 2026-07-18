@@ -6,7 +6,7 @@
 // (la tâche reste dans la to-do, sort du bandeau) ; refuser retire la grant.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useMemo, useState } from 'react';
-import { Check, X, Users } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
@@ -87,8 +87,7 @@ const PendingSharedTasks: React.FC = () => {
 
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-        <Users size={13} aria-hidden="true" />
+      <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
         Tâches partagées en attente ({pendingTasks.length})
       </p>
       {pendingTasks.map((task) => (
@@ -100,8 +99,8 @@ const PendingSharedTasks: React.FC = () => {
             <p className="text-sm font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }} title={task.name}>
               {task.name}
             </p>
-            <p className="text-xs truncate inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
-              <Users size={11} aria-hidden="true" /> Partagé par {sharerName(task)}
+            <p className="text-xs truncate text-amber-700 dark:text-amber-300">
+              Partagé par {sharerName(task)}
             </p>
           </div>
           <div className="flex gap-1.5 shrink-0">

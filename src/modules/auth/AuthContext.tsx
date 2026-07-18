@@ -224,7 +224,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       try {
         dlog('initializeAuth: calling getSession()');
-        const { data: { session } } = await supabase.auth.getSession();
+        let session;
+        try {
+          ({ data: { session } } = await supabase.auth.getSession());
+        } catch (err) {
+          // Erreur transitoire (réseau, cold start) — un seul retry avant
+          // d'abandonner, pour éviter de traiter un raté ponctuel comme une
+          // déconnexion et d'envoyer l'utilisateur sur la landing page.
+          dlog(`initializeAuth: getSession() failed, retrying once — ${(err as Error)?.message}`);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          ({ data: { session } } = await supabase.auth.getSession());
+        }
         dlog(`initializeAuth: getSession() resolved — session=${!!session?.user}`);
         if (session?.user) {
           setUser(mapSupabaseUserToAppUser(session.user));
@@ -234,7 +244,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dlog('initializeAuth: restoreAndRefresh() returned');
         }
       } catch (err) {
-        dlog(`initializeAuth: caught error — ${(err as Error)?.message}`);
+        dlog(`initializeAuth: caught error after retry — ${(err as Error)?.message}`);
+        Sentry.captureException(err, { tags: { context: 'auth-init-getSession-retry-failed' } });
       } finally {
         dlog('initializeAuth: setIsLoading(false) — done');
         setIsLoading(false);

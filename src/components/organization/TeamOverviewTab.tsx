@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
-import { ListTodo, AlertTriangle, Target, Activity, TrendingUp, FolderKanban, Users } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
@@ -26,14 +25,12 @@ const firstName = (name: string) => name.split(' ')[0];
 const velocityConfig = { completed: { label: 'Terminées', color: '#10b981' } } satisfies ChartConfig;
 const trendConfig = { rate: { label: 'Taux de complétion', color: '#6366f1' } } satisfies ChartConfig;
 
-const SectionCard = ({ title, Icon, iconClass, children, aside }: {
-  title: string; Icon: typeof ListTodo; iconClass: string; children: React.ReactNode; aside?: React.ReactNode;
+const SectionCard = ({ title, children, aside }: {
+  title: string; children: React.ReactNode; aside?: React.ReactNode;
 }) => (
   <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 sm:p-5">
     <div className="flex items-center justify-between gap-2 mb-4">
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5">
-        <Icon size={15} className={iconClass} aria-hidden="true" /> {title}
-      </h3>
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</h3>
       {aside}
     </div>
     {children}
@@ -144,7 +141,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title="Par membre" Icon={Users} iconClass="text-blue-500">
+        <SectionCard title="Par membre">
           {load.every((m) => m.total === 0) ? (
             <EmptyRow>Aucune tâche assignée sur la période.</EmptyRow>
           ) : (
@@ -170,7 +167,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title="Répartition par projet" Icon={FolderKanban} iconClass="text-indigo-500">
+        <SectionCard title="Répartition par projet">
           {byProject.length === 0 ? (
             <EmptyRow>Aucune tâche par projet sur la période.</EmptyRow>
           ) : (
@@ -195,7 +192,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Vélocité + Tendance */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title="Vélocité (tâches terminées / semaine)" Icon={Activity} iconClass="text-emerald-500">
+        <SectionCard title="Vélocité (tâches terminées / semaine)">
           {!hasVelocity ? (
             <EmptyRow>Aucune complétion sur la période.</EmptyRow>
           ) : (
@@ -211,7 +208,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title="Tendance du taux de complétion" Icon={TrendingUp} iconClass="text-indigo-500">
+        <SectionCard title="Tendance du taux de complétion">
           {!hasTrend ? (
             <EmptyRow>Pas assez de données sur la période.</EmptyRow>
           ) : (
@@ -229,7 +226,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </div>
 
       {/* Avancement OKR détaillé */}
-      <SectionCard title="Avancement des OKR" Icon={Target} iconClass="text-indigo-500">
+      <SectionCard title="Avancement des OKR">
         {okrStats.length === 0 ? (
           <EmptyRow>Aucun OKR d'équipe pour l'instant.</EmptyRow>
         ) : (
@@ -257,7 +254,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* Retards par membre + liste des tâches en retard */}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
-          <SectionCard title="Retards par membre" Icon={AlertTriangle} iconClass="text-red-500">
+          <SectionCard title="Retards par membre">
             <ul className="space-y-2.5">
               {overdueMembers.map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
@@ -270,8 +267,8 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           </SectionCard>
 
           <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/50 dark:bg-red-900/10 p-4 sm:p-5">
-            <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3 inline-flex items-center gap-1.5">
-              <AlertTriangle size={15} aria-hidden="true" /> Tâches en retard ({overdueTasks.length})
+            <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3">
+              Tâches en retard ({overdueTasks.length})
             </h3>
             <ul className="space-y-1.5">
               {overdueTasks.slice(0, 6).map((t) => {
