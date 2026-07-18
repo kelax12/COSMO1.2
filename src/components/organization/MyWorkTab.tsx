@@ -124,8 +124,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
         <div className="grid lg:grid-cols-2 gap-5 items-start">
           {/* Mes tâches */}
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3 inline-flex items-center gap-1.5">
-              <ListTodo size={15} className="text-blue-500" aria-hidden="true" /> Mes tâches ({open.length})
+            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+              Mes tâches ({open.length})
             </h3>
             {open.length === 0 ? (
               <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">Tout est terminé 🎉</p>
@@ -173,8 +173,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
 
           {/* Mes échéances (agenda entreprise) */}
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3 inline-flex items-center gap-1.5">
-              <CalendarDays size={15} className="text-violet-500" aria-hidden="true" /> Mes échéances ({scheduled.length})
+            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+              Mes échéances ({scheduled.length})
             </h3>
             {scheduled.length === 0 ? (
               <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">Aucune échéance datée.</p>

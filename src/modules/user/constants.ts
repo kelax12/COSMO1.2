@@ -17,7 +17,6 @@ export const DEMO_USER: User = {
   id: 'demo-user',
   name: 'Demo',
   email: 'demo@cosmo.app',
-  avatar: '👤',
   autoValidation: false,
 };
 

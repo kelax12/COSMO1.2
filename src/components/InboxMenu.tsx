@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks, Building2 } from 'lucide-react';
+import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -419,8 +419,8 @@ const InboxMenu: React.FC = () => {
         {/* ── Demandes d'amis ── */}
         {!showManageFriends && incomingRequests.length > 0 && (
           <div className="px-3 pt-3">
-            <p className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-              <UserPlus size={12} aria-hidden="true" /> Demandes d'amis ({incomingRequests.length})
+            <p className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Demandes d'amis ({incomingRequests.length})
             </p>
             <div className="space-y-2">
               {incomingRequests.map((req: PendingFriendRequest) => {
@@ -479,8 +479,8 @@ const InboxMenu: React.FC = () => {
         {/* ── Tâches à accepter ── */}
         {!showManageFriends && tasksToAccept.length > 0 && (
           <div className="px-3 pt-3 pb-1">
-            <p className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-              <Users size={12} aria-hidden="true" /> Tâches partagées ({tasksToAccept.length})
+            <p className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Tâches partagées ({tasksToAccept.length})
             </p>
             <div className="space-y-2">
               {tasksToAccept.map((task) => {
@@ -506,8 +506,8 @@ const InboxMenu: React.FC = () => {
                       <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
                         {task.name}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate inline-flex items-center gap-1">
-                        <Users size={11} aria-hidden="true" /> Reçu de {sharerName}
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        Reçu de {sharerName}
                       </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
@@ -538,8 +538,8 @@ const InboxMenu: React.FC = () => {
         {/* ── Listes partagées à accepter — identité teal (vs ambre tâches) ── */}
         {!showManageFriends && incomingLists.length > 0 && (
           <div className="px-3 pt-3 pb-1">
-            <p className="px-1 text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 mb-2 text-teal-600 dark:text-teal-400">
-              <ListChecks size={12} aria-hidden="true" /> Listes partagées ({incomingLists.length})
+            <p className="px-1 text-xs font-semibold uppercase tracking-wide mb-2 text-teal-600 dark:text-teal-400">
+              Listes partagées ({incomingLists.length})
             </p>
             <div className="space-y-2">
               {incomingLists.map((grant) => {
@@ -565,8 +565,8 @@ const InboxMenu: React.FC = () => {
                       <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
                         {grant.name}
                       </p>
-                      <p className="text-xs truncate inline-flex items-center gap-1 text-teal-700 dark:text-teal-300">
-                        <ListChecks size={11} aria-hidden="true" /> Reçu de {sharerName} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
+                      <p className="text-xs truncate text-teal-700 dark:text-teal-300">
+                        Reçu de {sharerName} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
                       </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
@@ -598,8 +598,8 @@ const InboxMenu: React.FC = () => {
         {/* ── Demandes d'adhésion entreprise (admin) — identité indigo ── */}
         {!showManageFriends && pendingJoinRequests.length > 0 && (
           <div className="px-3 pt-3 pb-1">
-            <p className="px-1 text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 mb-2 text-indigo-600 dark:text-indigo-400">
-              <Building2 size={12} aria-hidden="true" /> Demandes d'adhésion ({pendingJoinRequests.length})
+            <p className="px-1 text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600 dark:text-indigo-400">
+              Demandes d'adhésion ({pendingJoinRequests.length})
             </p>
             <div className="space-y-2">
               {pendingJoinRequests.map((req) => {
@@ -625,8 +625,8 @@ const InboxMenu: React.FC = () => {
                         <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
                           {req.requesterName || 'Utilisateur'}
                         </p>
-                        <p className="text-xs truncate inline-flex items-center gap-1 text-indigo-700 dark:text-indigo-300">
-                          <Building2 size={11} aria-hidden="true" /> Souhaite rejoindre{timeAgo ? ` · ${timeAgo}` : ''}
+                        <p className="text-xs truncate text-indigo-700 dark:text-indigo-300">
+                          Souhaite rejoindre{timeAgo ? ` · ${timeAgo}` : ''}
                         </p>
                       </div>
                       <div className="flex gap-1.5 shrink-0">

@@ -308,11 +308,11 @@ const OKRPage: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCheckin(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold border-2 border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             aria-label="Ouvrir le check-in hebdo (démo)"
             title="Disponible uniquement en mode démo — en production le check-in s'ouvre automatiquement lundi/mardi depuis le Dashboard"
           >
-            <CalendarCheck size={18} />
+            <CalendarCheck size={15} />
             <span>Check-in hebdo</span>
             <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">démo</span>
           </motion.button>
@@ -322,10 +322,10 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
-          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-white shadow-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-all"
           aria-label="Créer un nouvel objectif"
         >
-          <Plus size={20} />
+          <Plus size={15} />
           <span>Nouvel Objectif</span>
         </motion.button>
       </div>
@@ -369,6 +369,8 @@ const OKRPage: React.FC = () => {
         newCategoryColor={newCategoryColor}
         setNewCategoryColor={setNewCategoryColor}
         createCategoryMutation={createCategoryMutation}
+        large
+        accentAllActive
       />
 
       {/* État d'erreur (#39) : sans lui, un échec réseau laissait la page

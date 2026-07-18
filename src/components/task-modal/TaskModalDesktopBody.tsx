@@ -109,6 +109,19 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   filteredFriends, collabIdOf, toggleCollaborator,
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
+  // Enregistrement principal (bouton + touche Entrée dans un champ) : les
+  // boutons vivent hors du <form> (footer sticky), donc on partage cette
+  // logique entre onSubmit du form et onClick du bouton pour préserver la
+  // soumission au clavier. Champs manquants → shake + focus, sinon save.
+  const handlePrimarySubmit = () => {
+    const missing = missingStep1Fields();
+    if (missing.length > 0) {
+      validateForm();
+      dTrigger(missing);
+      return;
+    }
+    handleSave();
+  };
   return (
         <div
           className="flex flex-col flex-1 min-h-0 w-full rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
@@ -158,7 +171,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
               </div>
             }
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+              <form onSubmit={(e) => { e.preventDefault(); if (collaboratorsOnly) { if (isTaskOwner && hasChanges) handleSave(); } else { handlePrimarySubmit(); } }}>
 
                 {collaboratorsOnly ? (
                   /* Ouverture ciblée « Partager » (menu ⋯ → Collaborateur) :
@@ -266,70 +279,38 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 </div>
                   </>
                 )}
+            </form>
+          </div>
 
-                {/* ── Action Buttons ── */}
-                <div
-                  className="-mx-6 -mb-6 px-4 sm:px-6 pt-3 pb-3 sm:pb-4 mt-6 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3"
-                  style={{
-                    borderColor: 'rgb(var(--color-border))',
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
-                  }}
-                >
-                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
-                    {collaboratorsOnly ? (
-                      /* Vue « Partager » : destinataire → simple « Fermer » ;
-                         propriétaire → « Enregistrer » les partages modifiés. */
-                      !isTaskOwner ? (
-                        <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 !text-white !border-0">
-                          Fermer
-                        </Button>
-                      ) : (
-                        <>
-                          <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                            Annuler
-                          </Button>
-                          <Button
-                            type="submit"
-                            size="lg"
-                            disabled={isLoading || !hasChanges}
-                            className={`min-h-11 w-full sm:w-auto ${
-                              isLoading || !hasChanges
-                                ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                                : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
-                            }`}
-                          >
-                            {isLoading ? (
-                              <>
-                                <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                                <span>Enregistrement...</span>
-                              </>
-                            ) : (
-                              'Enregistrer'
-                            )}
-                          </Button>
-                        </>
-                      )
-                    ) : (
-                      <>
+          {/* ── Action Buttons — sticky, hors zone de scroll ── */}
+          <div
+            className="px-4 sm:px-6 pt-3 pb-3 sm:pb-4 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
+            style={{
+              borderColor: 'rgb(var(--color-border))',
+              backgroundColor: 'rgb(var(--color-surface))',
+              paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+            }}
+          >
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
+              {collaboratorsOnly ? (
+                /* Vue « Partager » : destinataire → simple « Fermer » ;
+                   propriétaire → « Enregistrer » les partages modifiés. */
+                !isTaskOwner ? (
+                  <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 !text-white !border-0">
+                    Fermer
+                  </Button>
+                ) : (
+                  <>
                     <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
                       Annuler
                     </Button>
                     <Button
-                      type="submit"
+                      type="button"
                       size="lg"
-                      onClick={(e) => {
-                        // Champs manquants : shake + focus sur le premier champ invalide.
-                        const missing = missingStep1Fields();
-                        if (missing.length > 0) {
-                          e.preventDefault();
-                          validateForm();
-                          dTrigger(missing);
-                        }
-                      }}
-                      disabled={isLoading || (!hasChanges && !isCreating)}
+                      onClick={handleSave}
+                      disabled={isLoading || !hasChanges}
                       className={`min-h-11 w-full sm:w-auto ${
-                        isLoading || !isFormValid() || (!hasChanges && !isCreating)
+                        isLoading || !hasChanges
                           ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
                           : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
                       }`}
@@ -337,17 +318,42 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                       {isLoading ? (
                         <>
                           <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                          <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                          <span>Enregistrement...</span>
                         </>
                       ) : (
-                        isCreating ? 'Créer la tâche' : 'Sauvegarder'
+                        'Enregistrer'
                       )}
                     </Button>
-                      </>
-                    )}
-                  </div>
-              </div>
-            </form>
+                  </>
+                )
+              ) : (
+                <>
+              <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                onClick={handlePrimarySubmit}
+                disabled={isLoading || (!hasChanges && !isCreating)}
+                className={`min-h-11 w-full sm:w-auto ${
+                  isLoading || !isFormValid() || (!hasChanges && !isCreating)
+                    ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
+                    : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
+                    <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                  </>
+                ) : (
+                  isCreating ? 'Créer la tâche' : 'Sauvegarder'
+                )}
+              </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
         </div>

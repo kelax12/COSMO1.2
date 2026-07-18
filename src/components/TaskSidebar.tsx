@@ -400,9 +400,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     : 'Pas d\'échéance'}
                 </div>
                 
-                {/* Drag indicator */}
+                {/* Drag indicator — masqué par défaut (n'occupe aucune place) et
+                    révélé au survol de la carte, pour supprimer l'espace vide
+                    sous la deadline hors survol. */}
                 {!isPlaced ? (
-                  <div className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'rgb(var(--color-accent))' }}>
+                  <div className="hidden group-hover:block mt-2 text-xs" style={{ color: 'rgb(var(--color-accent))' }}>
                     ↗ Glisser vers le calendrier
                   </div>
                 ) : (

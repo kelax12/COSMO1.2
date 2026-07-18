@@ -44,6 +44,10 @@ interface CategoryFilterBarProps {
   createCategoryMutation: CreateCategoryMutationLike;
   /** false = lecture seule : masque édition/suppression/ajout (défaut true). */
   canManage?: boolean;
+  /** true = chips agrandies (~+20%) — utilisé par la page OKR perso. */
+  large?: boolean;
+  /** true = bouton « Tous » actif en bleu (DA Cosmo) plutôt qu'en neutre. */
+  accentAllActive?: boolean;
 }
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
@@ -71,7 +75,20 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   setNewCategoryColor,
   createCategoryMutation,
   canManage = true,
+  large = false,
+  accentAllActive = false,
 }) => {
+  // Taille des chips — la page OKR perso les agrandit (~+20%) via `large`.
+  const chipCls = large
+    ? 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors'
+    : 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors';
+  const dotCls = large ? 'w-2.5 h-2.5' : 'w-2 h-2';
+  const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-blue-400 transition-colors ${
+    large ? 'gap-1.5 px-3 py-1.5 text-sm' : 'gap-1 px-2.5 py-1 text-xs'
+  }`;
+  const allActiveCls = accentAllActive
+    ? 'bg-blue-600 text-white border-transparent'
+    : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent';
   return (
       <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">
         {/* Style « pastilles » du mode entreprise, appliqué aux deux modes :
@@ -79,9 +96,9 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
             actions (crayon/corbeille) restent révélées au survol d'une chip. */}
         <button
           onClick={() => setSelectedCategory('all')}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+          className={`${chipCls} ${
             selectedCategory === 'all'
-              ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent'
+              ? allActiveCls
               : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
           }`}>
           Tous
@@ -198,14 +215,14 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   ) : (
                     <button
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      className={`${chipCls} ${
                         selectedCategory === category.id
                           ? 'text-white border-transparent'
                           : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                       }`}
                       style={selectedCategory === category.id ? { backgroundColor: resolveColor(category.color) } : undefined}>
                       <span
-                        className="w-2 h-2 rounded-full shrink-0"
+                        className={`${dotCls} rounded-full shrink-0`}
                         style={{ backgroundColor: selectedCategory === category.id ? 'rgba(255,255,255,0.9)' : resolveColor(category.color) }}
                         aria-hidden="true"
                       />
@@ -225,7 +242,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 onClick={() => setShowCreateCategory(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-blue-400 transition-colors"
+                className={addChipCls}
                 title="Nouvelle catégorie"
               >
                 <Plus size={12} /> Nouvelle catégorie

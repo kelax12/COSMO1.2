@@ -55,16 +55,16 @@ const DEMO_ORGS: Organization[] = [
 //   Camille Richard = NON PLACÉE (montre le flux de placement).
 const DEMO_MEMBERS: OrgMember[] = [
   // ── Nova Studio (demo-user admin) ──
-  { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
-  { orgId: DEMO_ORG_ID, userId: 'friend-1', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 80 * DAY).toISOString(), displayName: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
-  { orgId: DEMO_ORG_ID, userId: 'friend-2', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 75 * DAY).toISOString(), displayName: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
-  { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
-  { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com', avatar: '🧑' },
-  { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', managerId: null, joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com', avatar: '👩' },
+  { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },
+  { orgId: DEMO_ORG_ID, userId: 'friend-1', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 80 * DAY).toISOString(), displayName: 'Marie Dupont', email: 'marie.dupont@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'friend-2', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 75 * DAY).toISOString(), displayName: 'Jean Martin', email: 'jean.martin@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', managerId: null, joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com' },
   // ── Atelier Lune (demo-user membre simple, sous Nina) ──
-  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com', avatar: '👩‍🎨' },
-  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app', avatar: '🚀' },
-  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com', avatar: '🧔‍♂️' },
+  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com' },
+  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },
+  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com' },
 ];
 
 const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
@@ -165,7 +165,6 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       joinedAt: new Date().toISOString(),
       displayName: 'Vous',
       email: 'demo@cosmo.app',
-      avatar: '🚀',
     });
     localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
     return org;

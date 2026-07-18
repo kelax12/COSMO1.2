@@ -13,9 +13,9 @@ const DEMO_USER_ID = 'demo-user';
 // ═══════════════════════════════════════════════════════════════════
 
 const DEMO_FRIENDS: Friend[] = [
-  { id: 'friend-1', name: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
-  { id: 'friend-2', name: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
-  { id: 'friend-3', name: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
+  { id: 'friend-1', name: 'Marie Dupont', email: 'marie.dupont@email.com' },
+  { id: 'friend-2', name: 'Jean Martin', email: 'jean.martin@email.com' },
+  { id: 'friend-3', name: 'Sophie Bernard', email: 'sophie.bernard@email.com' },
 ];
 
 const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
@@ -27,7 +27,6 @@ const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
     senderId: 'user-lucas',
     senderEmail: 'lucas.moreau@email.com',
     senderName: 'Lucas Moreau',
-    senderAvatar: '🧑',
   },
   {
     id: 'req-demo-2',
@@ -37,7 +36,6 @@ const DEMO_INCOMING_REQUESTS: PendingFriendRequest[] = [
     senderId: 'user-camille',
     senderEmail: 'camille.richard@email.com',
     senderName: 'Camille Richard',
-    senderAvatar: '👩',
   },
 ];
 

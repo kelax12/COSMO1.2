@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, CalendarClock, UsersRound, Building2, ArrowUpRight } from 'lucide-react';
+import { Check, CalendarClock, UsersRound, ArrowUpRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -61,9 +61,6 @@ const TeamAssignedSection = () => {
     <section className="mt-8" aria-label="Mes tâches d'équipe">
       {/* En-tête de section — marque la frontière avec les tâches perso */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
-          <Building2 size={15} aria-hidden="true" />
-        </span>
         <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
           Mes tâches d'équipe
         </h2>
