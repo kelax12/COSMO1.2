@@ -18,6 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ARTICLES } from './src/content/blog/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
@@ -115,6 +116,86 @@ const ROUTES = [
         <p>Connectez-vous pour retrouver vos tâches, habitudes, agenda et objectifs OKR.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
   },
+  {
+    path: '/a-propos',
+    title: 'À propos de Cosmo — qui sommes-nous ?',
+    description: "Pourquoi Cosmo existe : une application de productivité française, gratuite, qui réunit tâches, habitudes, agenda et OKR dans un seul écosystème.",
+    extraLd: [{ obj: breadcrumb('À propos', '/a-propos'), id: 'apropos-breadcrumb' }],
+    noscript: `<h1>À propos de Cosmo</h1>
+        <p>Cosmo est une application de productivité française, gratuite et tout-en-un : tâches, habitudes, agenda avec time-blocking et OKR connectés dans un seul écosystème. Produit indépendant, développé en France.</p>
+        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a></p>`,
+  },
+  {
+    path: '/blog',
+    title: 'Blog Cosmo — Productivité, OKR, habitudes et time-blocking',
+    description: "Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.",
+    extraLd: [
+      { obj: breadcrumb('Blog', '/blog'), id: 'blog-breadcrumb' },
+      {
+        obj: {
+          '@context': 'https://schema.org',
+          '@type': 'Blog',
+          name: 'Blog Cosmo',
+          url: `${BASE}/blog`,
+          inLanguage: 'fr-FR',
+          publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
+          blogPost: ARTICLES.map((a) => ({
+            '@type': 'BlogPosting',
+            headline: a.title,
+            url: `${BASE}/blog/${a.slug}`,
+            datePublished: a.datePublished,
+          })),
+        },
+        id: 'blog-schema',
+      },
+    ],
+    noscript: `<h1>Le blog Cosmo</h1>
+        <p>Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité personnelle.</p>
+        <ul>
+          ${ARTICLES.map((a) => `<li><a href="/blog/${a.slug}">${a.title}</a> — ${a.description}</li>`).join('\n          ')}
+        </ul>
+        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+  },
+  // Articles de blog — contenu complet visible (src/content/blog/*.mjs)
+  ...ARTICLES.map((a) => ({
+    path: `/blog/${a.slug}`,
+    title: `${a.metaTitle} | Blog Cosmo`,
+    description: a.description,
+    extraLd: [
+      {
+        obj: {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${BASE}/` },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE}/blog` },
+            { '@type': 'ListItem', position: 3, name: a.title, item: `${BASE}/blog/${a.slug}` },
+          ],
+        },
+        id: `blog-${a.slug}-breadcrumb`,
+      },
+      {
+        obj: {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: a.title,
+          description: a.description,
+          url: `${BASE}/blog/${a.slug}`,
+          inLanguage: 'fr-FR',
+          datePublished: a.datePublished,
+          dateModified: a.dateModified,
+          author: { '@type': 'Organization', name: 'Cosmo', url: BASE },
+          publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
+          mainEntityOfPage: `${BASE}/blog/${a.slug}`,
+        },
+        id: `blog-${a.slug}-posting`,
+      },
+    ],
+    noscript: `<p><a href="/">Accueil</a> › <a href="/blog">Blog</a></p>
+        <h1>${a.title}</h1>
+        ${a.html}
+        <p><a href="/blog">← Tous les articles</a> · <a href="/signup">Essayer Cosmo gratuitement</a></p>`,
+  })),
   {
     path: '/cgu',
     title: "Conditions Générales d'Utilisation – Cosmo App",
@@ -218,14 +299,22 @@ if (!home.includes('"FAQPage"')) {
 home = injectStaticContent(home, HOME_STATIC);
 writeFileSync(join(DIST, 'index.html'), home, 'utf8');
 
-// ── Sitemap : lastmod = date de build ─────────────────────────────────────
+// ── Sitemap : lastmod = date de build + URLs blog/à-propos générées ───────
 const sitemapPath = join(DIST, 'sitemap.xml');
+const sitemapEntry = (loc, lastmod, changefreq, priority) =>
+  `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
 try {
-  const sitemap = readFileSync(sitemapPath, 'utf8');
-  writeFileSync(sitemapPath, sitemap.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${TODAY}</lastmod>`), 'utf8');
-  console.log(`  sitemap lastmod → ${TODAY}`);
+  let sitemap = readFileSync(sitemapPath, 'utf8');
+  sitemap = sitemap.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${TODAY}</lastmod>`);
+  const generated =
+    sitemapEntry(`${BASE}/a-propos`, TODAY, 'yearly', '0.5') +
+    sitemapEntry(`${BASE}/blog`, TODAY, 'weekly', '0.8') +
+    ARTICLES.map((a) => sitemapEntry(`${BASE}/blog/${a.slug}`, a.dateModified, 'monthly', '0.7')).join('');
+  sitemap = sitemap.replace('</urlset>', `${generated}</urlset>`);
+  writeFileSync(sitemapPath, sitemap, 'utf8');
+  console.log(`  sitemap → lastmod ${TODAY} + ${2 + ARTICLES.length} URLs générées (blog, à-propos)`);
 } catch {
-  console.warn('  ⚠ dist/sitemap.xml introuvable — lastmod non mis à jour');
+  console.warn('  ⚠ dist/sitemap.xml introuvable — sitemap non enrichi');
 }
 
 console.log(`✓ prerender done — ${count} routes + home (FAQ schema + contenu statique)`);

@@ -15,6 +15,8 @@ const LandingFooter: React.FC = () => (
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400 flex-wrap justify-center md:justify-end">
               <a href="/guide" className="hover:text-white transition-colors">Guide d'utilisation</a>
+              <a href="/blog" className="hover:text-white transition-colors">Blog</a>
+              <a href="/a-propos" className="hover:text-white transition-colors">À propos</a>
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
               <a href="/signup" className="hover:text-white transition-colors">Inscription gratuite</a>
               <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
