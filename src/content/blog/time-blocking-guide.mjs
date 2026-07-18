@@ -8,6 +8,11 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 8,
+  faq: [
+    ['Combien de temps faut-il pour prendre le pli du time-blocking ?', 'Comptez deux semaines de rodage : la première sert surtout à découvrir que vous sous-estimez vos durées.'],
+    ['Le time-blocking fonctionne-t-il avec un métier fait d’imprévus ?', 'Oui, en inversant la logique : bloquez seulement 2-3 heures protégées par jour et laissez le reste ouvert.'],
+    ['Faut-il time-blocker le week-end ?', 'Rien ne l’impose. Beaucoup n’en tirent bénéfice que pour un ou deux blocs choisis — le reste du temps libre reste libre.'],
+  ],
   html: `
 <p class="lead">Une todo-list dit ce que vous avez à faire. Elle ne dit jamais <em>quand</em>. C'est exactement pour ça que la vôtre déborde : sans rendez-vous dans le calendrier, une tâche reste un vœu. Le <strong>time-blocking</strong> corrige ce défaut structurel en donnant un créneau horaire à chaque chose importante. Cal Newport, auteur de <em>Deep Work</em>, estime qu'une semaine de 40 heures time-blockée produit autant qu'une semaine de 60 heures menée au fil de l'eau. Voici comment vous y mettre, concrètement.</p>
 

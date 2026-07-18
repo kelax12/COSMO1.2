@@ -8,6 +8,8 @@ export interface BlogArticle {
   datePublished: string;
   dateModified: string;
   readingMinutes: number;
+  /** Paires [question, réponse] — FAQPage JSON-LD généré par prerender.mjs */
+  faq?: [string, string][];
   html: string;
 }
 
