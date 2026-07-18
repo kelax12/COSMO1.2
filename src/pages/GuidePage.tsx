@@ -495,7 +495,7 @@ const GuidePage: React.FC = () => {
 
             {/* ── Footer guide ── */}
             <div className="border-t border-white/10 pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-slate-500 text-sm">Une question ? Contactez-nous à <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a></p>
+              <p className="text-slate-500 text-sm">Une question ? Contactez-nous à <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a></p>
               <Link
                 to="/"
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"

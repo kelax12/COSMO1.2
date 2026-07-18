@@ -91,7 +91,7 @@ const CGUPage: React.FC = () => {
             Les données que vous créez dans Cosmo (tâches, habitudes, objectifs, événements) vous appartiennent. Cosmo n'y accède que dans le cadre de la fourniture du service.
           </p>
           <p>
-            Vous pouvez demander l'export ou la suppression de vos données à tout moment via les paramètres ou en contactant <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a>.
+            Vous pouvez demander l'export ou la suppression de vos données à tout moment via les paramètres ou en contactant <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>.
           </p>
         </Section>
 
@@ -142,7 +142,7 @@ const CGUPage: React.FC = () => {
 
         <Section title="13. Contact">
           <p>
-            Pour toute question relative aux présentes CGU : <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a>
+            Pour toute question relative aux présentes CGU : <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>
           </p>
         </Section>
       </div>

@@ -34,7 +34,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
 
         <Section title="1. Responsable du traitement">
           <p>
-            Le responsable du traitement des données personnelles collectées via l'application Cosmo est l'équipe Cosmo, joignable à <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a>.
+            Le responsable du traitement des données personnelles collectées via l'application Cosmo est l'équipe Cosmo, joignable à <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>.
           </p>
         </Section>
 
@@ -123,7 +123,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <li><strong className="text-white">Droit d'opposition</strong> — s'opposer à certains traitements</li>
             <li><strong className="text-white">Droit à la limitation</strong> — restreindre le traitement dans certains cas</li>
           </ul>
-          <p className="mt-3">Pour exercer ces droits : <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a>. Réponse sous 30 jours.</p>
+          <p className="mt-3">Pour exercer ces droits : <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>. Réponse sous 30 jours.</p>
           <p className="mt-2">Vous pouvez également saisir la <strong className="text-white">CNIL</strong> : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.cnil.fr</a></p>
         </Section>
 
