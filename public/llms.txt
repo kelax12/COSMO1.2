@@ -1,0 +1,29 @@
+# Cosmo
+
+> Cosmo est une application web de productivité gratuite, en français, qui centralise quatre piliers dans un seul écosystème : gestion de tâches, suivi d'habitudes, agenda avec time-blocking et objectifs OKR (Objectives & Key Results). Un mode démo complet est accessible sans inscription.
+
+Cosmo se différencie de Notion (espace de notes flexible mais sans structure de productivité native) et de Todoist (gestionnaire de tâches sans habitudes, OKR ni time-blocking) en connectant les quatre piliers dans une seule application.
+
+## Fonctionnalités
+
+- Gestion de tâches : priorités 1-5, catégories colorées, deadlines, listes intelligentes, filtres avancés
+- Suivi d'habitudes : heatmap 26 semaines style GitHub, streaks, taux de complétion
+- Agenda : time-blocking par glisser-déposer, vues jour/semaine/mois
+- OKR : méthode Objectives & Key Results (Google, Intel, Netflix), progression calculée automatiquement
+- Statistiques multi-modules : temps investi sur tâches, habitudes, agenda et OKR
+- Collaboration : partage de tâches en équipe avec rôles Lecteur/Éditeur
+- Mode démo instantané : application complète pré-remplie (100 tâches, 100 habitudes, 150 événements, 8 OKR), sans compte ni email
+- Mobile-first : fonctionne dans tout navigateur iOS/Android, mode sombre/clair
+
+## Pages
+
+- [Accueil](https://thecosmo.app/) : présentation, fonctionnalités, FAQ (10 questions)
+- [Guide d'utilisation](https://thecosmo.app/guide) : prise en main, tâches, habitudes, agenda, OKR, statistiques
+- [Inscription gratuite](https://thecosmo.app/signup)
+
+## Infos
+
+- Langue : français (fr-FR)
+- Prix : gratuit (fonctionnalités principales sans limite)
+- Plateforme : web (aucun téléchargement)
+- Données : stockées sur Supabase avec Row Level Security ; en mode démo, données locales au navigateur

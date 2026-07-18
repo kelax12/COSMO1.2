@@ -14,5 +14,11 @@ Disallow: /okr
 Disallow: /statistics
 Disallow: /settings
 Disallow: /premium
+Disallow: /entreprise
+Disallow: /admin
+
+# /invite/ et /org-invite/ ne sont volontairement PAS bloqués ici :
+# ils sont désindexés via le header X-Robots-Tag (vercel.json), que Google
+# ne pourrait pas voir si le crawl était interdit.
 
 Sitemap: https://thecosmo.app/sitemap.xml
