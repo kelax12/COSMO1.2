@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  ListTodo, CheckCircle2, AlertTriangle, CalendarDays, FolderKanban, Check,
+  ListTodo, AlertTriangle, CalendarDays, Check,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -13,6 +13,7 @@ import {
 } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { projectColor, PRIORITY_META, sortOpenTasks } from './team-projects.helpers';
+import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
 
 interface MyWorkTabProps {
@@ -27,15 +28,29 @@ const isOverdue = (t: TeamTask): boolean => {
   return isPast(d) && !isToday(d);
 };
 
-const StatCard = ({ Icon, label, value, tone }: { Icon: typeof ListTodo; label: string; value: string; tone: string }) => (
-  <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${tone}`}>
-      <Icon size={18} aria-hidden="true" />
+/** Bloc latéral « prochaine échéance » de la carte de synthèse Aperçu. */
+const NextDeadline = ({ task }: { task: TeamTask | null }) => {
+  if (!task || !task.deadline) {
+    return (
+      <div className="flex flex-col items-center text-[rgb(var(--color-text-muted))]">
+        <CalendarDays size={22} aria-hidden="true" />
+        <span className="text-xs mt-1.5">À jour</span>
+      </div>
+    );
+  }
+  const d = parseISO(task.deadline);
+  const late = isOverdue(task);
+  return (
+    <div className="flex flex-col items-center max-w-[130px]">
+      <div className={`flex flex-col items-center leading-none ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}>
+        <span className="text-xl font-bold">{format(d, 'd', { locale: fr })}</span>
+        <span className="text-[10px] uppercase mt-0.5">{format(d, 'MMM', { locale: fr })}</span>
+      </div>
+      <span className="text-xs text-[rgb(var(--color-text-primary))] mt-2 text-center truncate max-w-full">{task.name}</span>
+      <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">Prochaine échéance</span>
     </div>
-    <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{value}</p>
-    <p className="text-xs text-[rgb(var(--color-text-muted))]">{label}</p>
-  </div>
-);
+  );
+};
 
 /**
  * Onglet Aperçu (#7) — MON travail dans l'entreprise : mes tâches assignées
@@ -69,9 +84,9 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
     [open],
   );
 
-  const myProjects = useMemo(
-    () => activeProjects.filter((p) => mine.some((t) => t.projectId === p.id)),
-    [activeProjects, mine],
+  const nextDeadline = useMemo(
+    () => scheduled.find((t) => !isOverdue(t)) ?? scheduled[0] ?? null,
+    [scheduled],
   );
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
@@ -83,13 +98,16 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
 
   return (
     <div className="space-y-5">
-      {/* Mes indicateurs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard Icon={ListTodo} label="Mes tâches en cours" value={String(open.length)} tone="bg-blue-500/10 text-blue-500" />
-        <StatCard Icon={CheckCircle2} label="Ma complétion" value={`${completionRate}%`} tone="bg-green-500/10 text-green-500" />
-        <StatCard Icon={AlertTriangle} label="En retard" value={String(overdue.length)} tone="bg-red-500/10 text-red-500" />
-        <StatCard Icon={FolderKanban} label="Mes projets" value={String(myProjects.length)} tone="bg-indigo-500/10 text-indigo-500" />
-      </div>
+      {/* Carte de synthèse « progress-first » */}
+      <WorkSummaryCard
+        title={`Mes ${mine.length} tâche${mine.length > 1 ? 's' : ''} assignée${mine.length > 1 ? 's' : ''}`}
+        completed={done.length}
+        inProgress={Math.max(0, open.length - overdue.length)}
+        overdue={overdue.length}
+        completionRate={completionRate}
+        emptyLabel="Aucune tâche assignée."
+        aside={<NextDeadline task={nextDeadline} />}
+      />
 
       {mine.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-14 text-center">

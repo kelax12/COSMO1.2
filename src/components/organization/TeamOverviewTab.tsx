@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
-import { ListTodo, CheckCircle2, AlertTriangle, Target, Activity, TrendingUp, FolderKanban, Users } from 'lucide-react';
+import { ListTodo, AlertTriangle, Target, Activity, TrendingUp, FolderKanban, Users } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
@@ -24,17 +25,6 @@ const firstName = (name: string) => name.split(' ')[0];
 
 const velocityConfig = { completed: { label: 'Terminées', color: '#10b981' } } satisfies ChartConfig;
 const trendConfig = { rate: { label: 'Taux de complétion', color: '#6366f1' } } satisfies ChartConfig;
-
-const StatCard = ({ Icon, label, value, tone, hint }: { Icon: typeof ListTodo; label: string; value: string; tone: string; hint?: string }) => (
-  <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${tone}`}>
-      <Icon size={18} aria-hidden="true" />
-    </div>
-    <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{value}</p>
-    <p className="text-xs text-[rgb(var(--color-text-muted))]">{label}</p>
-    {hint && <p className="text-[10px] text-[rgb(var(--color-text-muted))]/70 mt-0.5">{hint}</p>}
-  </div>
-);
 
 const SectionCard = ({ title, Icon, iconClass, children, aside }: {
   title: string; Icon: typeof ListTodo; iconClass: string; children: React.ReactNode; aside?: React.ReactNode;
@@ -141,13 +131,16 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </div>
       </div>
 
-      {/* Cartes de synthèse */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard Icon={ListTodo} label="Tâches" value={String(summary.total)} hint={periodHint} tone="bg-blue-500/10 text-blue-500" />
-        <StatCard Icon={CheckCircle2} label="Complétées" value={`${summary.completionRate}%`} hint={`${summary.completed} terminée${summary.completed > 1 ? 's' : ''}`} tone="bg-green-500/10 text-green-500" />
-        <StatCard Icon={AlertTriangle} label="En retard" value={String(summary.overdueCount)} hint="à ce jour" tone="bg-red-500/10 text-red-500" />
-        <StatCard Icon={Target} label="Progression OKR" value={`${okrProgress}%`} hint="en direct" tone="bg-indigo-500/10 text-indigo-500" />
-      </div>
+      {/* Carte de synthèse « progress-first » */}
+      <WorkSummaryCard
+        title={`${summary.total} tâche${summary.total > 1 ? 's' : ''} · ${periodHint}`}
+        completed={summary.completed}
+        inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
+        overdue={summary.overdueCount}
+        completionRate={summary.completionRate}
+        emptyLabel="Aucune tâche sur la période."
+        aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
+      />
 
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
