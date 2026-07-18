@@ -219,6 +219,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // F-2 (audit Fable 2026-07-18) — team_tasks.assignee_ids est un UUID[]
+    // SANS FK (mig. 072) : aucune cascade ne retire l'uid du compte supprimé.
+    // La RPC purge_user_from_team_assignments (mig. 080, service_role) fait le
+    // `array_remove`. Sans ça, un identifiant personnel survit à l'effacement
+    // (RGPD art. 17). Table absente d'un projet démo/local → no-op toléré.
+    {
+      const { error } = await supabaseAdmin.rpc('purge_user_from_team_assignments', {
+        p_user: user.id,
+      })
+      if (error && !isMissingTableError(error)) {
+        console.error('delete-account: failed to purge team assignments:', error.message)
+        failedTables.push('team_tasks')
+      }
+    }
+
     // M-6 — If any cleanup failed, refuse to drop the auth row. Otherwise we
     // permanently lose the user's identity and orphan data becomes impossible
     // to purge later (RGPD violation). The client can retry; the function is
