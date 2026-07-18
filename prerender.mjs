@@ -124,6 +124,8 @@ const ROUTES = [
     extraLd: [{ obj: breadcrumb('À propos', '/a-propos'), id: 'apropos-breadcrumb' }],
     noscript: `<h1>À propos de Cosmo</h1>
         <p>Cosmo est une application de productivité française, gratuite et tout-en-un : tâches, habitudes, agenda avec time-blocking et OKR connectés dans un seul écosystème. Produit indépendant, développé en France.</p>
+        <h2>Cosmo, The Cosmo App ou thecosmo ?</h2>
+        <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app » — c'est toujours nous. Cosmo est une application web sans téléchargement ; son seul site officiel est thecosmo.app.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a></p>`,
   },
   {
@@ -191,10 +193,29 @@ const ROUTES = [
         },
         id: `blog-${a.slug}-posting`,
       },
+      // FAQPage si l'article a une section FAQ (rich results)
+      ...(a.faq?.length
+        ? [{
+            obj: {
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: a.faq.map(([q, ans]) => ({
+                '@type': 'Question',
+                name: q,
+                acceptedAnswer: { '@type': 'Answer', text: ans },
+              })),
+            },
+            id: `blog-${a.slug}-faq`,
+          }]
+        : []),
     ],
     noscript: `<p><a href="/">Accueil</a> › <a href="/blog">Blog</a></p>
         <h1>${a.title}</h1>
         ${a.html}
+        <h2>À lire ensuite</h2>
+        <ul>
+          ${ARTICLES.filter((o) => o.slug !== a.slug).slice(0, 3).map((o) => `<li><a href="/blog/${o.slug}">${o.title}</a></li>`).join('\n          ')}
+        </ul>
         <p><a href="/blog">← Tous les articles</a> · <a href="/signup">Essayer Cosmo gratuitement</a></p>`,
   })),
   // Pages use-case commerciales — contenu complet visible (src/content/use-cases.mjs)

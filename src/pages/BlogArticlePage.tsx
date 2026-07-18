@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
-import { getArticle } from '@/content/blog/index.mjs';
+import { ARTICLES, getArticle } from '@/content/blog/index.mjs';
 
 const formatDate = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -59,7 +59,23 @@ const BlogArticlePage: React.FC = () => {
           <div className="blog-prose" dangerouslySetInnerHTML={{ __html: article.html }} />
         </article>
 
-        <aside className="mt-16 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
+        <nav aria-label="À lire ensuite" className="mt-16">
+          <h2 className="text-lg font-bold text-white mb-4">À lire ensuite</h2>
+          <div className="space-y-3">
+            {ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3).map((a) => (
+              <Link
+                key={a.slug}
+                to={`/blog/${a.slug}`}
+                className="block rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors px-5 py-4"
+              >
+                <span className="font-medium text-white">{a.title}</span>
+                <span className="block text-xs text-slate-500 mt-1">{a.readingMinutes} min de lecture</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
+
+        <aside className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
           <p className="text-lg font-semibold mb-2">Essayez Cosmo gratuitement</p>
           <p className="text-slate-400 text-sm mb-5">
             Tâches, habitudes, agenda et OKR dans une seule application. Démo instantanée, sans inscription.

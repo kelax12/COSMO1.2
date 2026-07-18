@@ -56,6 +56,16 @@ const AProposPage: React.FC = () => {
           </ul>
         </Section>
 
+        <Section title="Cosmo, The Cosmo App ou thecosmo ?">
+          <p>
+            Les trois désignent la même application : <strong className="text-white">Cosmo</strong>, accessible à
+            l'adresse <strong className="text-white">thecosmo.app</strong>. On nous cherche aussi sous « Cosmo app »,
+            « The Cosmo » ou « thecosmo app » — c'est toujours nous. À ne pas confondre avec d'autres produits
+            homonymes sur les stores mobiles : Cosmo est une application web, sans téléchargement, et son seul
+            site officiel est thecosmo.app.
+          </p>
+        </Section>
+
         <Section title="Qui est derrière ?">
           <p>
             Cosmo est un produit indépendant, développé en France par une très petite équipe — pas de

@@ -8,6 +8,11 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 7,
+  faq: [
+    ['Alors, 21, 30, 66 ou 90 jours pour prendre une habitude ?', '66 jours en médiane selon l’étude de référence (Lally, 2009), avec une fourchette réelle de 18 à 254 jours selon l’habitude et la personne.'],
+    ['Combien d’habitudes lancer en même temps ?', '2 ou 3 maximum. Chaque habitude en formation consomme de l’attention.'],
+    ['Un streak cassé, tout est perdu ?', 'Non : un accroc isolé n’a pas d’effet mesurable sur la formation de l’habitude. La règle : ne jamais rater deux fois de suite.'],
+  ],
   html: `
 <p class="lead">« Il faut 21 jours pour prendre une habitude. » Vous avez lu ce chiffre partout — il est faux. La recherche donne une réponse à la fois moins vendeuse et beaucoup plus utile : <strong>en moyenne 66 jours, avec d'énormes variations selon l'habitude et la personne (de 18 à 254 jours)</strong>. Comprendre pourquoi change complètement la façon de s'y prendre — et surtout, ça explique pourquoi vous n'avez jamais été « nul » : vous aviez juste un mauvais chiffre en tête.</p>
 

@@ -10,6 +10,11 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 5,
+  faq: [
+    ['Le template OKR fonctionne-t-il sur Google Sheets ?', 'Oui : importez le fichier .xlsx dans Google Sheets (Fichier → Importer), les formules de progression sont conservées. Compatible aussi LibreOffice Calc.'],
+    ['Puis-je partager le template à mon équipe ?', 'Oui, librement. Dupliquez la feuille « OKR équipe-startup » par personne si chacun suit ses propres OKR.'],
+    ['Faut-il donner son email pour télécharger ?', 'Non. Le lien est direct, sans formulaire ni inscription.'],
+  ],
   html: `
 <p class="lead">Vous connaissez la méthode, il ne manque que le support. Voici un <strong>template OKR gratuit au format Excel</strong> (compatible Google Sheets et LibreOffice) : deux feuilles prêtes à remplir — OKR personnels et OKR équipe/startup — avec des exemples concrets et la progression calculée automatiquement. Téléchargement direct, <strong>sans email demandé</strong>.</p>
 

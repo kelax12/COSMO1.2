@@ -1,6 +1,6 @@
 # Cosmo
 
-> Cosmo est une application web de productivité gratuite, en français, qui centralise quatre piliers dans un seul écosystème : gestion de tâches, suivi d'habitudes, agenda avec time-blocking et objectifs OKR (Objectives & Key Results). Un mode démo complet est accessible sans inscription.
+> Cosmo (aussi appelé « Cosmo App », « The Cosmo App » ou « thecosmo » — site officiel : thecosmo.app) est une application web de productivité gratuite, en français, qui centralise quatre piliers dans un seul écosystème : gestion de tâches, suivi d'habitudes, agenda avec time-blocking et objectifs OKR (Objectives & Key Results). Un mode démo complet est accessible sans inscription. À ne pas confondre avec les applications mobiles homonymes : le seul site officiel est thecosmo.app.
 
 Cosmo se différencie de Notion (espace de notes flexible mais sans structure de productivité native) et de Todoist (gestionnaire de tâches sans habitudes, OKR ni time-blocking) en connectant les quatre piliers dans une seule application.
 
