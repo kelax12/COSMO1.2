@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 Allow: /guide
+Allow: /blog
+Allow: /a-propos
 Allow: /login
 Allow: /signup
 Allow: /cgu

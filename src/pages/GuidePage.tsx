@@ -77,10 +77,12 @@ const GuidePage: React.FC = () => {
               <span className="font-semibold text-white">Cosmo</span>
             </Link>
             <ChevronRight size={14} className="text-slate-600" />
-            <span className="text-sm text-slate-400 flex items-center gap-1.5">
+            {/* h1 sémantique (SEO) — rendu identique au span grâce au preflight
+                Tailwind (les headings héritent font-size/weight) */}
+            <h1 className="text-sm text-slate-400 flex items-center gap-1.5 font-normal">
               <BookOpen size={14} />
               Guide d'utilisation
-            </span>
+            </h1>
           </div>
           <Link
             to="/"

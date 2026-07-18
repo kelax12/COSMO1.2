@@ -1,3 +1,23 @@
+/* Inter self-hosted (variable 300-700) — remplace Google Fonts : supprime
+   2 connexions externes render-blocking + conformité RGPD (pas d'IP vers
+   Google). Fichiers dans public/fonts/, préload du latin dans index.html. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/inter-var-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/inter-var-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1230,3 +1250,74 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     display: none;
   }
 }
+
+/* ── Blog (.blog-prose) — typographie des articles (BlogArticlePage) ────────
+   Contenu injecté depuis src/content/blog/*.mjs ; thème sombre slate fixe
+   (pages publiques). ~65ch de largeur de lecture via le conteneur max-w-3xl. */
+.blog-prose {
+  color: #cbd5e1; /* slate-300 */
+  line-height: 1.75;
+  font-size: 1.0625rem;
+}
+.blog-prose .lead {
+  font-size: 1.1875rem;
+  color: #e2e8f0; /* slate-200 */
+}
+.blog-prose h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+.blog-prose h3 {
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.5rem;
+}
+.blog-prose p {
+  margin: 0 0 1rem;
+}
+.blog-prose ul,
+.blog-prose ol {
+  margin: 0 0 1.25rem;
+  padding-left: 1.5rem;
+}
+.blog-prose ul { list-style: disc; }
+.blog-prose ol { list-style: decimal; }
+.blog-prose li { margin-bottom: 0.5rem; }
+.blog-prose li::marker { color: #64748b; }
+.blog-prose strong { color: #fff; font-weight: 600; }
+.blog-prose em { color: #e2e8f0; }
+.blog-prose a {
+  color: #60a5fa; /* blue-400 */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.blog-prose a:hover { color: #93c5fd; }
+.blog-prose .table-wrap {
+  overflow-x: auto;
+  margin: 0 0 1.25rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0.75rem;
+}
+.blog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.blog-prose th {
+  text-align: left;
+  color: #fff;
+  font-weight: 600;
+  background: rgb(255 255 255 / 0.05);
+  padding: 0.625rem 0.875rem;
+}
+.blog-prose td {
+  padding: 0.625rem 0.875rem;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+  vertical-align: top;
+}
+.blog-prose td:first-child { color: #e2e8f0; font-weight: 500; }

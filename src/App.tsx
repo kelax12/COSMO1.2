@@ -79,6 +79,9 @@ const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/Organizat
 const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'));
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'));
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'));
+const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'));
+const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'));
+const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'));
 
 // Lazy load Layout
 const Layout = lazyWithRetry(() => import('@/components/Layout'));
@@ -183,6 +186,9 @@ const AppRoutes = () => (
     <Route path="forgot-password" element={<PageWithSuspense><ForgotPasswordPage /></PageWithSuspense>} />
     <Route path="reset-password" element={<PageWithSuspense><ResetPasswordPage /></PageWithSuspense>} />
     <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
+    <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
+    <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
+    <Route path="a-propos" element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
     <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
     <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
     <Route path="cgu" element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />

@@ -53,7 +53,7 @@ export const Step: React.FC<{ n: number; title: string; children: React.ReactNod
       {n}
     </div>
     <div>
-      <p className="font-semibold text-white mb-1">{title}</p>
+      <h3 className="font-semibold text-white mb-1 text-base">{title}</h3>
       <p className="text-sm text-slate-400 leading-relaxed">{children}</p>
     </div>
   </div>
