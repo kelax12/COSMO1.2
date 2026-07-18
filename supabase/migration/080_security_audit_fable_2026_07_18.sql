@@ -104,7 +104,8 @@ REVOKE EXECUTE ON FUNCTION public.validate_team_okr_team() FROM anon;
 -- createForUser). On le fige côté serveur : INSERT → created_by = auth.uid() ;
 -- UPDATE → created_by immuable. Empêche l'usurpation d'auteur via insert
 -- direct (le mapper mapEventToDb est déjà propre, mais la RLS ne contraint
--- pas created_by). COALESCE préserve le backfill service_role éventuel.
+-- pas created_by). Le garde `auth.uid() IS NOT NULL` préserve le backfill
+-- service_role éventuel (created_by laissé tel quel hors contexte authentifié).
 
 CREATE OR REPLACE FUNCTION public.events_enforce_created_by()
 RETURNS TRIGGER
