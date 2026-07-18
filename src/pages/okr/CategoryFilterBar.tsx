@@ -73,20 +73,19 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   canManage = true,
 }) => {
   return (
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6" data-tutorial-id="okr-category-filter">
-        <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégorie :</span>
-        <div className="flex gap-2 flex-wrap">
-            <button
-            onClick={() => setSelectedCategory('all')}
-            className="px-3 py-1 rounded-full text-sm font-medium transition-all border"
-            style={{
-              backgroundColor: selectedCategory === 'all' ? 'rgb(var(--color-accent) / 0.1)' : 'rgb(var(--color-chip-bg))',
-              borderColor: selectedCategory === 'all' ? 'rgb(var(--color-accent) / 0.3)' : 'rgb(var(--color-chip-border))',
-              color: selectedCategory === 'all' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-secondary))'
-            }}>
-
-              Tous
-            </button>
+      <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">
+        {/* Style « pastilles » du mode entreprise, appliqué aux deux modes :
+            « Tous » + chips colorées (pastille + fond plein si actif). Les
+            actions (crayon/corbeille) restent révélées au survol d'une chip. */}
+        <button
+          onClick={() => setSelectedCategory('all')}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+            selectedCategory === 'all'
+              ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent'
+              : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+          }`}>
+          Tous
+        </button>
             {categories.map((category) => {
               const isHovered = hoveredCategoryId === category.id;
               const isEditing = editingCategoryId === category.id;
@@ -199,13 +198,17 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   ) : (
                     <button
                       onClick={() => setSelectedCategory(category.id)}
-                      className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 border"
-                      style={{
-                        backgroundColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '18',
-                        borderColor: selectedCategory === category.id ? resolveColor(category.color) : resolveColor(category.color) + '60',
-                        color: selectedCategory === category.id ? '#ffffff' : resolveColor(category.color),
-                        boxShadow: selectedCategory === category.id ? `0 4px 12px ${resolveColor(category.color)}40` : 'none'
-                      }}>
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        selectedCategory === category.id
+                          ? 'text-white border-transparent'
+                          : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                      }`}
+                      style={selectedCategory === category.id ? { backgroundColor: resolveColor(category.color) } : undefined}>
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: selectedCategory === category.id ? 'rgba(255,255,255,0.9)' : resolveColor(category.color) }}
+                        aria-hidden="true"
+                      />
                       <span>{category.name}</span>
                     </button>
                   )}
@@ -222,10 +225,10 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 onClick={() => setShowCreateCategory(true)}
-                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-blue-400 transition-colors"
                 title="Nouvelle catégorie"
               >
-                <Plus size={14} />
+                <Plus size={12} /> Nouvelle catégorie
               </motion.button>
             ) : (
               <motion.form
@@ -292,7 +295,6 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
             )}
           </AnimatePresence>
           )}
-        </div>
       </div>
   );
 };
