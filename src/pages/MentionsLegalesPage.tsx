@@ -36,7 +36,7 @@ const MentionsLegalesPage: React.FC = () => {
           <p>Le site et l'application <strong className="text-white">Cosmo</strong> sont édités par :</p>
           <ul className="list-none space-y-1 mt-2">
             <li><span className="text-slate-400">Dénomination :</span> Cosmo</li>
-            <li><span className="text-slate-400">Adresse e-mail :</span> contact@cosmo.app</li>
+            <li><span className="text-slate-400">Adresse e-mail :</span> axellongattepro@gmail.com</li>
             <li><span className="text-slate-400">Directeur de la publication :</span> L'équipe Cosmo</li>
           </ul>
         </Section>
@@ -75,7 +75,7 @@ const MentionsLegalesPage: React.FC = () => {
 
         <Section title="6. Contact">
           <p>
-            Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : <a href="mailto:contact@cosmo.app" className="text-blue-400 hover:underline">contact@cosmo.app</a>
+            Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>
           </p>
         </Section>
       </div>

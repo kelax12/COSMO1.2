@@ -186,7 +186,7 @@ const SettingsPage: React.FC = () => {
           const { error } = await supabase.functions.invoke('delete-account');
           if (error) {
             toast.error('La suppression automatique a échoué', {
-              description: 'Contactez support@cosmo.app — votre demande sera traitée manuellement.',
+              description: 'Contactez axellongattepro@gmail.com — votre demande sera traitée manuellement.',
             });
             return;
           }
@@ -195,7 +195,7 @@ const SettingsPage: React.FC = () => {
           navigate('/');
         } catch {
           toast.error('Erreur réseau', {
-            description: 'Réessayez ou contactez support@cosmo.app.',
+            description: 'Réessayez ou contactez axellongattepro@gmail.com.',
           });
         } finally {
           setDeletingAccount(false);
@@ -295,7 +295,7 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleOpenSupport = () => {
-    window.location.href = 'mailto:support@cosmo.app';
+    window.location.href = 'mailto:axellongattepro@gmail.com';
   };
 
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();

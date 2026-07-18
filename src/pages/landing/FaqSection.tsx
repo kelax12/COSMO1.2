@@ -80,7 +80,7 @@ const FaqSection: React.FC = () => {
           <p className="text-center text-slate-500 text-sm mt-8">
             Une question non listée ?{' '}
             <a
-              href="mailto:contact@cosmo.app"
+              href="mailto:axellongattepro@gmail.com"
               className="text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
             >
               Écrivez-nous
