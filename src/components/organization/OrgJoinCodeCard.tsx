@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, KeyRound, RefreshCw } from 'lucide-react';
+import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRegenerateJoinCode } from '@/modules/organizations';
 
@@ -36,10 +36,7 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps)
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <KeyRound size={16} className="text-indigo-500" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Code d'invitation</h3>
-      </div>
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">Code d'invitation</h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
         Partagez ce code pour que de nouveaux membres demandent à rejoindre l'entreprise.
         Chaque demande doit être validée par un administrateur.

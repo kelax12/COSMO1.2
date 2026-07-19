@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, UserMinus, UsersRound } from 'lucide-react';
+import { Plus, Trash2, UserMinus } from 'lucide-react';
 import {
   useOrgTeams,
   useOrgTeamMembers,
@@ -74,8 +74,8 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5">
-          <UsersRound size={15} className="text-blue-500" aria-hidden="true" /> Équipes ({teams.length})
+        <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+          Équipes ({teams.length})
         </h2>
         {isManager && (
           <button
