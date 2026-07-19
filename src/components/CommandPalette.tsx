@@ -17,6 +17,7 @@ import {
   Plus,
   CalendarPlus,
   Keyboard,
+  FolderKanban,
 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -26,6 +27,8 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
+import { useActiveOrganization } from '@/modules/organizations';
+import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 
 interface PaletteCommand {
   id: string;
@@ -55,6 +58,11 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const { data: habits = [] } = useHabits();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
+  // Périmètre équipe (#8 v2) : tâches et projets de l'org active — hooks
+  // no-op (enabled: !!orgId) pour un utilisateur sans entreprise.
+  const { activeOrg } = useActiveOrganization();
+  const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
+  const { data: teamProjects = [] } = useTeamProjects(activeOrg?.id);
 
   const q = normalize(query);
 
@@ -73,6 +81,14 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const matchedOkrs = useMemo(
     () => okrs.filter((o) => normalize(o.title).includes(q)).slice(0, MAX_DATA_RESULTS),
     [okrs, q]
+  );
+  const matchedTeamTasks = useMemo(
+    () => teamTasks.filter((t) => normalize(t.name).includes(q)).slice(0, MAX_DATA_RESULTS),
+    [teamTasks, q]
+  );
+  const matchedTeamProjects = useMemo(
+    () => teamProjects.filter((p) => !p.archivedAt && normalize(p.name).includes(q)).slice(0, MAX_DATA_RESULTS),
+    [teamProjects, q]
   );
 
   const go = (path: string, state?: Record<string, string>) => {
@@ -121,6 +137,27 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
             <CommandItem key={`okr-${o.id}`} value={`okr-${o.id}`} onSelect={() => go('/okr', { selectedOKRId: o.id })}>
               <Target size={16} aria-hidden="true" />
               <span>{o.title}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+      {matchedTeamTasks.length > 0 && (
+        <CommandGroup heading="Tâches d'équipe">
+          {matchedTeamTasks.map((t) => (
+            <CommandItem key={`team-task-${t.id}`} value={`team-task-${t.id}`} onSelect={() => go('/entreprise?tab=projects')}>
+              <CheckSquare size={16} className={t.completed ? 'opacity-40' : ''} aria-hidden="true" />
+              <span className={`flex-1 ${t.completed ? 'line-through opacity-60' : ''}`}>{t.name}</span>
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">Équipe</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+      {matchedTeamProjects.length > 0 && (
+        <CommandGroup heading="Projets d'équipe">
+          {matchedTeamProjects.map((p) => (
+            <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go('/entreprise?tab=projects')}>
+              <FolderKanban size={16} aria-hidden="true" />
+              <span>{p.name}</span>
             </CommandItem>
           ))}
         </CommandGroup>
