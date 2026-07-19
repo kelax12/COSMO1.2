@@ -25,6 +25,8 @@ export const useTeamOKRs = (orgId: string | undefined) => {
     enabled: !!orgId,
     refetchInterval: 30_000,
     staleTime: 1000 * 60 * 2,
+    // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
+    refetchOnWindowFocus: true,
   });
 };
 

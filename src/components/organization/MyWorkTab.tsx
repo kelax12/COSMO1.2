@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  ListTodo, AlertTriangle, CalendarDays, Check, Target,
+  ListTodo, AlertTriangle, CalendarDays, Check, Target, CircleCheck, ChevronRight,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -58,6 +59,46 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
  * (cochables), mes échéances à venir et mes projets. Les statistiques
  * collectives ont déménagé dans l'onglet Statistiques (#13, managers/admin).
  */
+/** Étape de la checklist de démarrage (reco #3, admins d'une org jeune). */
+interface StartStep { id: string; label: string; done: boolean; tab: string; }
+
+const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
+  const navigate = useNavigate();
+  const doneCount = steps.filter((s) => s.done).length;
+  return (
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Bien démarrer</h3>
+        <span className="text-xs text-[rgb(var(--color-text-muted))]">{doneCount}/{steps.length}</span>
+      </div>
+      <ul className="space-y-1">
+        {steps.map((s) => (
+          <li key={s.id}>
+            <button
+              type="button"
+              disabled={s.done}
+              onClick={() => navigate(`/entreprise?tab=${s.tab}`)}
+              className={`w-full flex items-center gap-2.5 py-2 px-2 rounded-xl text-left transition-colors ${
+                s.done ? 'opacity-60' : 'hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              <CircleCheck
+                size={17}
+                className={s.done ? 'text-emerald-500 shrink-0' : 'text-[rgb(var(--color-text-muted))] shrink-0'}
+                aria-hidden="true"
+              />
+              <span className={`flex-1 text-sm ${s.done ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
+                {s.label}
+              </span>
+              {!s.done && <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: tasks = [] } = useTeamTasks(orgId);
@@ -115,6 +156,17 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
     return items.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 6);
   }, [tasks, okrs, activeProjectIds, projectById]);
 
+  // Checklist de démarrage (reco #3) — admins uniquement, masquée dès que
+  // les 4 étapes sont faites.
+  const isAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
+  const startSteps = useMemo<StartStep[]>(() => [
+    { id: 'project', label: 'Créer un premier projet', done: activeProjects.length > 0, tab: 'projects' },
+    { id: 'invite', label: 'Inviter des membres', done: members.length > 1, tab: 'members' },
+    { id: 'pyramid', label: 'Construire la pyramide hiérarchique', done: members.some((m) => !!m.managerId), tab: 'pyramid' },
+    { id: 'okr', label: 'Définir un premier OKR', done: okrs.length > 0, tab: 'okr' },
+  ], [activeProjects.length, members, okrs.length]);
+  const showChecklist = isAdmin && startSteps.some((s) => !s.done);
+
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
@@ -122,6 +174,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
 
   return (
     <div className="space-y-5">
+      {showChecklist && <StartChecklist steps={startSteps} />}
+
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
         title={`Mes ${mine.length} tâche${mine.length > 1 ? 's' : ''} assignée${mine.length > 1 ? 's' : ''}`}

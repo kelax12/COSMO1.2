@@ -21,6 +21,8 @@ export const useTeamProjects = (orgId: string | undefined) => {
     queryFn: () => repository.getProjects(orgId as string),
     enabled: !!orgId,
     staleTime: 1000 * 60 * 5,
+    // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
+    refetchOnWindowFocus: true,
   });
 };
 
