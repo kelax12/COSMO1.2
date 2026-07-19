@@ -119,6 +119,15 @@ test.describe('a11y audit', () => {
     assertNoCritical(violations, 'Agenda');
   });
 
+  test('Entreprise (demo)', async ({ demoPage }) => {
+    // Membre de « Nova Studio » en démo — lien visible (sidebar ou sheet Plus).
+    await navTo(demoPage, /entreprise/i, /\/entreprise/);
+    await demoPage.waitForLoadState('networkidle');
+    const violations = await scan(demoPage, 'entreprise');
+    console.log(`[a11y] Entreprise: ${violations.length} violation(s)`);
+    assertNoCritical(violations, 'Entreprise');
+  });
+
   test('Statistics (demo)', async ({ demoPage }) => {
     await navTo(demoPage, /statistiques?|statistics/i, /\/statistics/);
     await demoPage.waitForLoadState('networkidle');

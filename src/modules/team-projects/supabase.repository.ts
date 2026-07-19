@@ -4,6 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 import { ITeamProjectsRepository } from './repository';
 import {
   TeamProject,
@@ -177,7 +178,9 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (filters?.completed !== undefined) query = query.eq('completed', filters.completed);
     const { data, error } = await query.order('created_at', { ascending: false }).limit(1000);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as TaskRow[]).map(mapTask);
+    // Reco #20 : la limite 1000 était silencieuse — au-delà, on prévient
+    // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
+    return warnIfTruncated((data ?? []) as TaskRow[], 1000, 'team_tasks').map(mapTask);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
