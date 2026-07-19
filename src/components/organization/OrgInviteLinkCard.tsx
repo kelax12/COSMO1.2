@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link2, Copy, Check, RotateCcw } from 'lucide-react';
+import { Copy, Check, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateInviteLink } from '@/modules/organizations';
 
@@ -48,10 +48,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Link2 size={16} className="text-indigo-500" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Lien d'invitation</h3>
-      </div>
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">Lien d'invitation</h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
         Lien à usage unique, valable 7 jours. La personne crée son compte et rejoint
         directement l'entreprise, rattachée à vous — sans validation à faire.
