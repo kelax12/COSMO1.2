@@ -402,10 +402,19 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 
                 {/* Drag indicator — masqué par défaut (n'occupe aucune place) et
                     révélé au survol de la carte, pour supprimer l'espace vide
-                    sous la deadline hors survol. */}
+                    sous la deadline hors survol. Animation grid-rows 0fr→1fr
+                    (+ fondu) pour une apparition/disparition progressive plutôt
+                    qu'un hidden/block abrupt. */}
                 {!isPlaced ? (
-                  <div className="hidden group-hover:block mt-2 text-xs" style={{ color: 'rgb(var(--color-accent))' }}>
-                    ↗ Glisser vers le calendrier
+                  <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-200 ease-out">
+                    <div className="overflow-hidden">
+                      <div
+                        className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-150 group-hover:delay-75"
+                        style={{ color: 'rgb(var(--color-accent))' }}
+                      >
+                        ↗ Glisser vers le calendrier
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="mt-2 text-xs font-semibold" style={{ color: 'rgb(var(--color-success))' }}>
