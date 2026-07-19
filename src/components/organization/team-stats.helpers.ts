@@ -50,6 +50,27 @@ export function filterByPeriod(tasks: TeamTask[], start: Date | null): TeamTask[
   return tasks.filter((t) => isCreatedWithin(t, start));
 }
 
+/**
+ * La tâche est-elle « active » dans la fenêtre [start, now] ? (reco #13)
+ * Une tâche ouverte reste toujours pertinente (charge, retards) même créée
+ * avant la fenêtre ; une tâche terminée compte si sa création OU sa complétion
+ * tombe dans la fenêtre. start null = toujours vrai.
+ */
+export function isActiveWithin(task: TeamTask, start: Date | null): boolean {
+  if (!start) return true;
+  if (!task.completed) return true;
+  const created = parse(task.createdAt);
+  if (created && created >= start) return true;
+  const completed = parse(task.completedAt);
+  return completed ? completed >= start : true; // date illisible : ne pas exclure
+}
+
+/** Filtre les tâches actives dans la fenêtre (remplace le filtre par createdAt). */
+export function filterByActivity(tasks: TeamTask[], start: Date | null): TeamTask[] {
+  if (!start) return tasks;
+  return tasks.filter((t) => isActiveWithin(t, start));
+}
+
 // ─── Retard ───────────────────────────────────────────────────────────
 
 export const isOverdue = (t: TeamTask): boolean => {
@@ -262,6 +283,23 @@ export function completionTrend(
       rate: createdBy.length ? Math.round((completedBy.length / createdBy.length) * 100) : 0,
     };
   });
+}
+
+// ─── Périmètre OKR (reco #15) ─────────────────────────────────────────
+
+/**
+ * Restreint les OKR au périmètre d'un manager : garde ceux dont ≥ 1 KR est
+ * assigné à un membre du périmètre, plus les objectifs « collectifs » (aucun
+ * KR assigné à personne). Exclut ceux clairement portés hors périmètre.
+ * Admin : tout.
+ */
+export function scopeOkrs(okrs: TeamOKR[], scopedIds: Set<string>, isAdmin: boolean): TeamOKR[] {
+  if (isAdmin) return okrs;
+  return okrs.filter(
+    (o) =>
+      o.keyResults.some((kr) => kr.assigneeId && scopedIds.has(kr.assigneeId)) ||
+      o.keyResults.every((kr) => !kr.assigneeId),
+  );
 }
 
 // ─── OKR par objectif ─────────────────────────────────────────────────
