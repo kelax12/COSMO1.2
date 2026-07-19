@@ -10,6 +10,8 @@ import {
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
   TeamTaskFilters,
+  TeamTaskComment,
+  CreateTeamTaskCommentInput,
 } from './types';
 
 export interface ITeamProjectsRepository {
@@ -24,4 +26,9 @@ export interface ITeamProjectsRepository {
   createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask>;
   updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask>;
   deleteTask(taskId: string): Promise<void>;
+
+  // Commentaires (mig. 082) — journal immuable, delete auteur only.
+  getComments(taskId: string): Promise<TeamTaskComment[]>;
+  addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment>;
+  deleteComment(commentId: string): Promise<void>;
 }

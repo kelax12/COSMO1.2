@@ -10,6 +10,8 @@ export type {
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
   TeamTaskFilters,
+  TeamTaskComment,
+  CreateTeamTaskCommentInput,
 } from './types';
 
 export {
@@ -38,4 +40,7 @@ export {
   useCreateTeamTask,
   useUpdateTeamTask,
   useDeleteTeamTask,
+  useTeamTaskComments,
+  useAddTeamTaskComment,
+  useDeleteTeamTaskComment,
 } from './hooks';

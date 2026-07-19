@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useActiveOrganization } from '@/modules/organizations';
+import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
 import OrgSwitcher from '@/components/organization/OrgSwitcher';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
@@ -150,6 +151,7 @@ const PAGE_TITLES: Record<string, string> = {
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const pendingRequestCount = usePendingRequestCount();
+  const orgNotificationCount = useOrgNotificationCount();
   // Entrée « Entreprise » visible uniquement pour les membres d'une organisation.
   const { activeOrg: myOrg, organizations } = useActiveOrganization();
   // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
@@ -219,7 +221,8 @@ const NavItems = () =>
       {myOrg && (
         <>
           <NavItemLink to="/entreprise" label="Entreprise" icon={<Building2 size={20} aria-hidden="true" />}
-            hoverColor="#6366f1" collapsed={isCollapsed} />
+            hoverColor="#6366f1" collapsed={isCollapsed}
+            badge={orgNotificationCount} badgeLabel="notifications entreprise" />
           {/* Switcher multi-org — affiché seulement si plusieurs entreprises */}
           {organizations.length > 1 && <OrgSwitcher collapsed={isCollapsed} />}
         </>

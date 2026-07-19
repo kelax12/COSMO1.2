@@ -13,6 +13,8 @@ import {
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
   TeamTaskFilters,
+  TeamTaskComment,
+  CreateTeamTaskCommentInput,
 } from './types';
 
 interface ProjectRow {
@@ -52,6 +54,24 @@ const mapProject = (r: ProjectRow): TeamProject => ({
   archivedAt: r.archived_at,
   createdAt: r.created_at,
   teamId: r.team_id,
+});
+
+interface CommentRow {
+  id: string;
+  task_id: string;
+  author_id: string | null;
+  body: string;
+  mentions: string[] | null;
+  created_at: string;
+}
+
+const mapComment = (r: CommentRow): TeamTaskComment => ({
+  id: r.id,
+  taskId: r.task_id,
+  authorId: r.author_id,
+  body: r.body,
+  mentions: r.mentions ?? [],
+  createdAt: r.created_at,
 });
 
 const mapTask = (r: TaskRow): TeamTask => ({
@@ -212,6 +232,47 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async deleteTask(taskId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.from('team_tasks').delete().eq('id', taskId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Commentaires (mig. 082) ───────────────────────────────────────
+
+  async getComments(taskId: string): Promise<TeamTaskComment[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_comments')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (error) throw normalizeApiError(error);
+    return ((data ?? []) as CommentRow[]).map(mapComment);
+  }
+
+  async addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: session } = await supabase.auth.getSession();
+    const uid = session.session?.user?.id;
+    if (!uid) throw new Error('Not authenticated');
+    // Whitelist explicite (anti mass-assignment V1) ; author_id = self,
+    // vérifié aussi par la policy WITH CHECK.
+    const { data, error } = await supabase
+      .from('team_task_comments')
+      .insert({
+        task_id: input.taskId,
+        author_id: uid,
+        body: input.body,
+        mentions: input.mentions ?? [],
+      })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapComment(data as CommentRow);
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.from('team_task_comments').delete().eq('id', commentId);
     if (error) throw normalizeApiError(error);
   }
 }

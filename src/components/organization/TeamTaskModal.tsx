@@ -6,6 +6,8 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
+import TaskCommentsSection from './TaskCommentsSection';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 interface TeamTaskModalProps {
   /** Tâche à éditer — absente en création. */
@@ -51,6 +53,7 @@ const TeamTaskModal = ({
   const [showAssignees, setShowAssignees] = useState(isCreating ? (defaultAssigneeIds?.length ?? 0) > 0 : (task?.assigneeIds.length ?? 0) > 0);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const { user } = useAuth();
 
   const hasChanges = useMemo(() => {
     if (isCreating) return true;
@@ -303,6 +306,11 @@ const TeamTaskModal = ({
               )}
             </div>
           </form>
+
+          {/* Commentaires (reco #9) — édition uniquement (la tâche existe). */}
+          {!isCreating && task && (
+            <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
+          )}
         </div>
 
         {/* Footer — mêmes boutons que TaskModal */}

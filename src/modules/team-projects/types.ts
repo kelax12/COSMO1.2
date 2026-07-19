@@ -73,6 +73,24 @@ export interface UpdateTeamTaskInput {
   completed?: boolean;
 }
 
+/** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */
+export interface TeamTaskComment {
+  id: string;
+  taskId: string;
+  /** auth.users.id de l'auteur — null si compte supprimé (FK SET NULL). */
+  authorId: string | null;
+  body: string;
+  /** auth.users.id mentionnés via @ — purgés à la suppression de compte. */
+  mentions: string[];
+  createdAt: string;
+}
+
+export interface CreateTeamTaskCommentInput {
+  taskId: string;
+  body: string;
+  mentions?: string[];
+}
+
 export interface TeamTaskFilters {
   projectId?: string;
   /** Filtre « assignée à » — matche si l'uid figure dans assigneeIds. */

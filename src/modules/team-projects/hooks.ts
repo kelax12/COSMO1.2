@@ -138,3 +138,41 @@ export const useDeleteTeamTask = (orgId: string) => {
     onError: (error: Error) => toast.error(`Impossible de supprimer la tâche : ${error.message}`),
   });
 };
+
+// ─── Commentaires (mig. 082, reco #9) ────────────────────────────────
+
+export const useTeamTaskComments = (taskId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.comments(taskId ?? ''),
+    queryFn: () => repository.getComments(taskId as string),
+    enabled: !!taskId,
+    staleTime: 1000 * 15,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useAddTeamTaskComment = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (input: { body: string; mentions?: string[] }) =>
+      repository.addComment({ taskId, body: input.body, mentions: input.mentions }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible d'ajouter le commentaire : ${error.message}`),
+  });
+};
+
+export const useDeleteTeamTaskComment = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (commentId: string) => repository.deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de supprimer le commentaire : ${error.message}`),
+  });
+};
