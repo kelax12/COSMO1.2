@@ -37,11 +37,12 @@ describe('ProtectedRoute (gate auth)', () => {
     expect(screen.getByText('PUBLIC LANDING')).toBeTruthy();
   });
 
-  it('shows a spinner (and NO content) while the session is loading — pas de flash de redirect', () => {
+  it('renders nothing (no content, no redirect) while the session is loading — pas de flash', () => {
     mockAuth.mockReturnValue({ isAuthenticated: false, isLoading: true });
     const { container } = renderAt();
     expect(screen.queryByText('PRIVATE CONTENT')).toBeNull();
     expect(screen.queryByText('PUBLIC LANDING')).toBeNull(); // ne redirige PAS pendant le chargement
-    expect(container.querySelector('.animate-spin')).toBeTruthy();
+    // Plus d'écran de chargement plein écran : rendu vide, le body garde son fond.
+    expect(container.querySelector('.animate-spin')).toBeNull();
   });
 });

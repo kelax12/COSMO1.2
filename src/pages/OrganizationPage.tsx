@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
   useOrgMembers,
   useLeaveOrganization,
   useDeleteOrganization,
+  useTransferOwnership,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
@@ -23,6 +24,7 @@ import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
+import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
 
 type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members';
 
@@ -57,11 +59,13 @@ const OrganizationPage = () => {
   const [editProfile, setEditProfile] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [transferring, setTransferring] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
   const deleteMutation = useDeleteOrganization();
+  const transferMutation = useTransferOwnership();
 
   if (isLoading) {
     return (
@@ -228,14 +232,26 @@ const OrganizationPage = () => {
                   Supprime définitivement l'entreprise, ses projets, OKR et équipes.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                disabled={deleteMutation.isPending}
-                className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
-              >
-                <Trash2 size={15} aria-hidden="true" /> Supprimer l'entreprise
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                {user?.id === myOrg.ownerId && members.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setTransferring(true)}
+                    disabled={transferMutation.isPending}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
+                  >
+                    <ArrowRightLeft size={15} aria-hidden="true" /> Transférer la propriété
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  disabled={deleteMutation.isPending}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
+                >
+                  <Trash2 size={15} aria-hidden="true" /> Supprimer l'entreprise
+                </button>
+              </div>
             </div>
           ) : (
             <div className="pt-2">
@@ -250,6 +266,21 @@ const OrganizationPage = () => {
             </div>
           )}
         </div>
+      )}
+
+      {transferring && (
+        <TransferOwnershipDialog
+          orgName={myOrg.name}
+          candidates={members.filter((m) => m.userId !== myOrg.ownerId)}
+          pending={transferMutation.isPending}
+          onConfirm={(newOwnerId) =>
+            transferMutation.mutate(
+              { orgId: myOrg.id, newOwnerId },
+              { onSuccess: () => setTransferring(false) },
+            )
+          }
+          onCancel={() => setTransferring(false)}
+        />
       )}
 
       {confirmingLeave && (

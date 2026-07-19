@@ -54,6 +54,7 @@ export {
   useRemoveMember,
   useLeaveOrganization,
   useDeleteOrganization,
+  useTransferOwnership,
   useUpdateOrganization,
   useSetMemberManager,
   useCreateInviteLink,

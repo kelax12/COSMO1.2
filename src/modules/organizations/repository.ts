@@ -44,6 +44,8 @@ export interface IOrganizationsRepository {
   leaveOrganization(orgId: string): Promise<void>;
   /** Supprime DÉFINITIVEMENT l'entreprise (admin — RPC, cascade totale). */
   deleteOrganization(orgId: string): Promise<void>;
+  /** Transfère la propriété à un autre membre (owner actuel uniquement, mig. 081). */
+  transferOwnership(orgId: string, newOwnerId: string): Promise<void>;
 
   // Invitations placées (v2, lot 1c) — entrée directe, single-use, 7 jours.
   /** Crée un lien d'invitation vers une place de la pyramide (managerId null = non placé, admin only). */

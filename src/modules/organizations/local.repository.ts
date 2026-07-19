@@ -233,6 +233,23 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     this.saveRequests(this.getRequestsArray().filter((r) => r.orgId !== orgId));
   }
 
+  async transferOwnership(orgId: string, newOwnerId: string): Promise<void> {
+    const orgs = this.getOrgsArray();
+    const org = orgs.find((o) => o.id === orgId);
+    if (!org) throw new Error('Entreprise introuvable');
+    if (org.ownerId !== DEMO_USER_ID) throw new Error('Seul le propriétaire peut transférer la propriété');
+    const members = this.getMembersArray();
+    if (!members.some((m) => m.orgId === orgId && m.userId === newOwnerId)) {
+      throw new Error('Le nouveau propriétaire doit être membre de l\'entreprise');
+    }
+    org.ownerId = newOwnerId;
+    this.saveOrgs(orgs);
+    // Le nouveau propriétaire devient admin (miroir de la RPC 081).
+    this.saveMembers(members.map((m) =>
+      m.orgId === orgId && m.userId === newOwnerId ? { ...m, role: 'admin' as const } : m,
+    ));
+  }
+
   // ─── Administration ────────────────────────────────────────────────
 
   private saveMembers(members: OrgMember[]): void {

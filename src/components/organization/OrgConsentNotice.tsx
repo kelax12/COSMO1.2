@@ -15,7 +15,7 @@ const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => (
     </p>
     <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1.5 list-disc pl-4">
       <li>Les membres voient votre nom, votre avatar et votre activité sur les projets d'équipe (tâches, commentaires).</li>
-      <li>Vos responsables pourront voir vos créneaux occupés ; seuls les événements de vos catégories <strong>professionnelles</strong> leur sont visibles en détail — vos catégories restent <strong>privées par défaut</strong>.</li>
+      <li>Vos responsables (managers et admins) peuvent <strong>consulter votre agenda</strong> et y ajouter des événements — sauf ceux que vous marquez <strong>« Privé »</strong>, qui restent invisibles pour eux.</li>
       <li>Vos tâches, habitudes et données personnelles restent invisibles pour l'entreprise.</li>
     </ul>
     <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
@@ -23,7 +23,7 @@ const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => (
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))] accent-indigo-600"
+        className="mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))] accent-[rgb(var(--color-accent))]"
       />
       <span className="text-xs text-[rgb(var(--color-text-primary))]">
         J'ai compris ce que l'entreprise pourra voir et j'accepte ces conditions.

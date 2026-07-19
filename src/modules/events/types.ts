@@ -37,6 +37,12 @@ export interface CalendarEvent {
    * créateur pour distinguer perso / pro. Absent en création (posé serveur).
    */
   createdBy?: string;
+  /**
+   * Événement privé (mode entreprise, mig. 081 / F-1) : exclu des policies
+   * « agenda manager » — seule la personne le voit, jamais sa hiérarchie.
+   * Défaut false. Sans effet hors organisation.
+   */
+  isPrivate?: boolean;
 }
 
 /**
