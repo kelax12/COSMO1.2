@@ -308,7 +308,7 @@ const SettingsPage: React.FC = () => {
 
       {/* ──────── SIDEBAR ──────── */}
       <motion.aside
-        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0 h-screen max-h-screen overflow-y-auto"
+        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0 h-full max-h-full overflow-y-auto"
         style={{ background: 'rgb(var(--color-surface))' }}
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
