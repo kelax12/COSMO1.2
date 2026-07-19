@@ -126,15 +126,8 @@ const queryClient = new QueryClient({
 
 installMobileFocusRecovery(queryClient);
 
-// Loading spinner component
-const LoadingSpinner = () => (
-  <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      <p className="text-slate-400 text-sm">Chargement...</p>
-    </div>
-  </div>
-);
+// Pendant le boot (auth en cours, chunks en vol), on n'affiche rien :
+// le body garde son fond thémé, pas d'écran « Chargement... » plein écran.
 
 // Page loading fallback
 const PageLoader = () => (
@@ -145,7 +138,7 @@ const PageLoader = () => (
 
 // Layout wrapper with Suspense
 const LayoutWithSuspense = () => (
-  <Suspense fallback={<LoadingSpinner />}>
+  <Suspense fallback={null}>
     <Layout />
   </Suspense>
 );
@@ -164,7 +157,7 @@ const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '
 
 const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return null;
   if (isAuthenticated) {
     // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
     // fallback dashboard si inconnue ou invalide.
