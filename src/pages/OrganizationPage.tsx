@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3 } from 'lucide-react';
+import { Navigate, useSearchParams } from 'react-router-dom';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -22,6 +22,7 @@ import TeamsSection from '@/components/organization/TeamsSection';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import MyWorkTab from '@/components/organization/MyWorkTab';
+import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
 
 type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members';
 
@@ -40,11 +41,23 @@ const TABS: { id: OrgTab; label: string; Icon: typeof Users; managerOnly?: boole
  * routing plat cohérent avec l'app). Réservé aux membres d'une organisation :
  * un non-membre est redirigé vers le dashboard.
  */
+const TAB_IDS: readonly string[] = TABS.map((t) => t.id);
+
+/** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
+const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
+
 const OrganizationPage = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState<OrgTab>('overview');
+  // #1 — onglet actif dans l'URL (?tab=okr) : survit au refresh et se partage.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const tab: OrgTab = rawTab && TAB_IDS.includes(rawTab) ? (rawTab as OrgTab) : 'overview';
+  const setTab = (id: OrgTab) =>
+    setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true });
   const [editProfile, setEditProfile] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
@@ -53,7 +66,7 @@ const OrganizationPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[rgb(var(--color-accent))]" />
       </div>
     );
   }
@@ -65,16 +78,21 @@ const OrganizationPage = () => {
   // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
   const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
 
-  const handleLeave = () => {
-    if (!window.confirm(`Quitter ${myOrg.name} ? Vous perdrez l'accès aux projets et OKR de l'équipe.`)) return;
-    leaveMutation.mutate(myOrg.id);
+  let bannerDismissed = seatsBannerDismissed;
+  try {
+    bannerDismissed = bannerDismissed || !!localStorage.getItem(seatsBannerKey(myOrg.id));
+  } catch { /* localStorage indisponible : bannière visible */ }
+
+  const dismissSeatsBanner = () => {
+    setSeatsBannerDismissed(true);
+    try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
   };
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
       {/* En-tête */}
       <header className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shrink-0 overflow-hidden">
+        <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-primary))] shrink-0 overflow-hidden">
           {myOrg.avatarUrl ? (
             <img src={myOrg.avatarUrl} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -89,7 +107,7 @@ const OrganizationPage = () => {
                 type="button"
                 onClick={() => setEditProfile(true)}
                 aria-label="Modifier le profil de l'entreprise"
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
                 <Pencil size={14} aria-hidden="true" />
               </button>
@@ -108,15 +126,26 @@ const OrganizationPage = () => {
       {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
 
       {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
-          est false (gate dormant ; le vrai blocage sera côté serveur). */}
-      {members.length >= ORG_FREE_SEATS && (
-        <div className="mb-5 rounded-2xl border border-indigo-300/60 dark:border-indigo-700/40 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3">
-          <p className="text-xs text-indigo-700 dark:text-indigo-300">
-            <span className="font-semibold">{members.length} membres.</span>{' '}
+          est false (gate dormant ; le vrai blocage sera côté serveur).
+          #5 : dismissible (persistant par org) tant qu'elle est informative. */}
+      {members.length >= ORG_FREE_SEATS && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
+        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{members.length} membres.</span>{' '}
             {ENTERPRISE_BILLING_ENFORCED
               ? 'Au-delà de 5 collaborateurs, un abonnement entreprise est requis pour accepter de nouveaux membres.'
               : 'COSMO Entreprise restera gratuit jusqu\'à 5 collaborateurs — une offre payante arrivera au-delà (20 €/mois jusqu\'à 50, 100 €/mois ensuite). Rien ne change pour vous aujourd\'hui.'}
           </p>
+          {!ENTERPRISE_BILLING_ENFORCED && (
+            <button
+              type="button"
+              onClick={dismissSeatsBanner}
+              aria-label="Masquer cette information"
+              className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
 
@@ -130,7 +159,7 @@ const OrganizationPage = () => {
             aria-current={tab === id ? 'page' : undefined}
             className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
               tab === id
-                ? 'border-indigo-500 text-[rgb(var(--color-text-primary))]'
+                ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
                 : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
             }`}
           >
@@ -212,7 +241,7 @@ const OrganizationPage = () => {
             <div className="pt-2">
               <button
                 type="button"
-                onClick={handleLeave}
+                onClick={() => setConfirmingLeave(true)}
                 disabled={leaveMutation.isPending}
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
               >
@@ -221,6 +250,17 @@ const OrganizationPage = () => {
             </div>
           )}
         </div>
+      )}
+
+      {confirmingLeave && (
+        <ConfirmLeaveOrgDialog
+          orgName={myOrg.name}
+          pending={leaveMutation.isPending}
+          onConfirm={() =>
+            leaveMutation.mutate(myOrg.id, { onSettled: () => setConfirmingLeave(false) })
+          }
+          onCancel={() => setConfirmingLeave(false)}
+        />
       )}
 
       {confirmingDelete && (
