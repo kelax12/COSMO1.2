@@ -15,8 +15,10 @@ import {
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
   TeamTaskFilters,
+  TeamTaskComment,
+  CreateTeamTaskCommentInput,
 } from './types';
-import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from './constants';
+import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY } from './constants';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -95,6 +97,13 @@ const DEMO_TASKS: TeamTask[] = [
   t('tproj-3', 'Budget prévisionnel Q3', 3, 4, -1, false),
   t('tproj-3', 'Commande matériel', 2, 2, 3, true),
   t('tproj-3', 'Planifier le séminaire', 5, 3, 14, false),
+];
+
+// Commentaires seed (mig. 082) — fil de discussion réaliste sur 2 tâches.
+const DEMO_COMMENTS: TeamTaskComment[] = [
+  { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma — retours bienvenus !', mentions: [], createdAt: iso(-4) },
+  { id: 'comment-seed-2', taskId: 'ttask-1', authorId: DEMO_USER_ID, body: '@Marie Dupont super base, je préfère la variante B pour le hero.', mentions: ['friend-1'], createdAt: iso(-3) },
+  { id: 'comment-seed-3', taskId: 'ttask-8', authorId: 'friend-2', body: 'Le planning presse est calé, reste à valider le budget.', mentions: [], createdAt: iso(-2) },
 ];
 
 function readOrSeed<T>(key: string, seed: T): T {
@@ -233,5 +242,38 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
 
   async deleteTask(taskId: string): Promise<void> {
     this.saveTasks(this.getTasksArray().filter((x) => x.id !== taskId));
+  }
+
+  // ─── Commentaires (mig. 082) ───────────────────────────────────────
+
+  private getCommentsArray(): TeamTaskComment[] {
+    return readOrSeed<TeamTaskComment[]>(TEAM_TASK_COMMENTS_STORAGE_KEY, DEMO_COMMENTS);
+  }
+  private saveComments(c: TeamTaskComment[]): void {
+    localStorage.setItem(TEAM_TASK_COMMENTS_STORAGE_KEY, JSON.stringify(c));
+  }
+
+  async getComments(taskId: string): Promise<TeamTaskComment[]> {
+    return this.getCommentsArray()
+      .filter((c) => c.taskId === taskId)
+      .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+  }
+
+  async addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment> {
+    const comment: TeamTaskComment = {
+      id: `comment-${Date.now()}`,
+      taskId: input.taskId,
+      authorId: DEMO_USER_ID,
+      body: input.body,
+      mentions: input.mentions ?? [],
+      createdAt: new Date().toISOString(),
+    };
+    this.saveComments([...this.getCommentsArray(), comment]);
+    return comment;
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    // Auteur only (miroir de la RLS) — en démo, seul demo-user écrit.
+    this.saveComments(this.getCommentsArray().filter((c) => c.id !== commentId));
   }
 }

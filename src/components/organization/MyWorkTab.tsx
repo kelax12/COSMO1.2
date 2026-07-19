@@ -17,6 +17,7 @@ import type { OrgMember } from '@/modules/organizations';
 import { projectColor, PRIORITY_META, sortOpenTasks } from './team-projects.helpers';
 import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
+import TeamActivityFeed from './TeamActivityFeed';
 
 interface MyWorkTabProps {
   orgId: string;
@@ -283,6 +284,9 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           </div>
         </div>
       )}
+
+      {/* Activité de l'équipe (reco #11) — dérivée des tâches, 14 derniers jours. */}
+      <TeamActivityFeed tasks={tasks} projects={projects} members={members} />
 
       {/* Prochaines échéances de l'entreprise (reco #2) — visibles par tous,
           même sans tâche assignée. */}
