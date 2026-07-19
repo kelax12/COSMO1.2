@@ -21,6 +21,7 @@ export interface EventRow {
   user_id?: string;
   created_by?: string;
   created_at?: string;
+  is_private?: boolean;
 }
 
 /** DB input type for insert/update operations (snake_case). */
@@ -36,6 +37,7 @@ export interface EventDbInput {
   recurrence_days?: number[];
   exceptions?: string[];
   user_id?: string;
+  is_private?: boolean;
 }
 
 export function mapEventFromDb(row: EventRow): CalendarEvent {
@@ -52,6 +54,7 @@ export function mapEventFromDb(row: EventRow): CalendarEvent {
     recurrenceDays: row.recurrence_days ?? [],
     exceptions: row.exceptions ?? [],
     createdBy: row.created_by,
+    isPrivate: row.is_private ?? false,
   };
 }
 
@@ -67,5 +70,6 @@ export function mapEventToDb(input: Partial<CalendarEvent>): EventDbInput {
   if (input.recurrence !== undefined) result.recurrence = input.recurrence;
   if (input.recurrenceDays !== undefined) result.recurrence_days = input.recurrenceDays;
   if (input.exceptions !== undefined) result.exceptions = input.exceptions;
+  if (input.isPrivate !== undefined) result.is_private = input.isPrivate;
   return result;
 }

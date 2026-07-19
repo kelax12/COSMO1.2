@@ -188,6 +188,22 @@ export const useDeleteOrganization = () => {
   });
 };
 
+export const useTransferOwnership = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ orgId, newOwnerId }: { orgId: string; newOwnerId: string }) =>
+      repository.transferOwnership(orgId, newOwnerId),
+    onSuccess: () => {
+      toast.success('Propriété transférée');
+      queryClient.invalidateQueries({ queryKey: orgKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible de transférer la propriété : ${error.message}`);
+    },
+  });
+};
+
 export const useSetMemberManager = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();

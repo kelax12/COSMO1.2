@@ -45,6 +45,11 @@ export interface EventModalFormProps {
   duration: string | null;
   isMobileFormValid: boolean;
   isPrefilledMode: boolean;
+  /** Événement privé (F-1) — masqué à la hiérarchie en mode entreprise. */
+  isPrivate: boolean;
+  setIsPrivate: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Affiche le toggle privé uniquement pour un membre d'une organisation. */
+  showPrivacy: boolean;
 }
 
 /** Props du corps (mobile/desktop) : tout EventModalFormProps + la largeur animée du drag handle. */

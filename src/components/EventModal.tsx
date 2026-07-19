@@ -20,6 +20,7 @@ import { CalendarEvent, EventRecurrence } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 import { useFavoriteColors } from '@/modules/ui-states';
+import { useActiveOrganization } from '@/modules/organizations';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
@@ -43,6 +44,8 @@ type EventData = {
   taskId?: string;
   recurrence?: EventRecurrence;
   recurrenceDays?: number[];
+  /** Privé (F-1) : invisible pour la hiérarchie en mode entreprise. */
+  isPrivate?: boolean;
 };
 
 type EventModalProps = {
@@ -108,6 +111,10 @@ const EventModal: React.FC<EventModalProps> = ({
   const [color, setColor] = useState(categories[0]?.color || "#3B82F6");
   const [recurrence, setRecurrence] = useState<EventRecurrence>('none');
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  // Privé (F-1) : proposé uniquement aux membres d'une organisation.
+  const [isPrivate, setIsPrivate] = useState(false);
+  const { activeOrg } = useActiveOrganization();
+  const showPrivacy = !!activeOrg;
   const [showDaysModal, setShowDaysModal] = useState(false);
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
@@ -116,7 +123,7 @@ const EventModal: React.FC<EventModalProps> = ({
   // des changements non sauvés demande confirmation. En création, le brouillon
   // (useFormDraft) protège déjà la saisie.
   const initialSnapshotRef = React.useRef<string>('');
-  const currentSnapshot = JSON.stringify([title, startDate, startTime, endDate, endTime, notes, color, recurrence, recurrenceDays]);
+  const currentSnapshot = JSON.stringify([title, startDate, startTime, endDate, endTime, notes, color, recurrence, recurrenceDays, isPrivate]);
   const isEditDirty = mode === 'edit' && initialSnapshotRef.current !== '' && currentSnapshot !== initialSnapshotRef.current;
   const guardedClose = () => {
     if (!confirmDiscard(isEditDirty)) return;
@@ -141,6 +148,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setColor(event.color || "#3B82F6");
       setRecurrence(event.recurrence ?? 'none');
       setRecurrenceDays(event.recurrenceDays ?? []);
+      setIsPrivate(event.isPrivate ?? false);
 
       const start = new Date(event.start);
       const end = new Date(event.end);
@@ -161,10 +169,12 @@ const EventModal: React.FC<EventModalProps> = ({
         event.title || "", startD, startT, endD, endT,
         event.notes || "", event.color || "#3B82F6",
         event.recurrence ?? 'none', event.recurrenceDays ?? [],
+        event.isPrivate ?? false,
       ]);
     } else if (mode === 'add' && task) {
       setRecurrence('none');
       setRecurrenceDays([]);
+      setIsPrivate(false);
       setTitle(task.name || "");
       if (task.name) prefilled.add("title");
 
@@ -311,6 +321,7 @@ const EventModal: React.FC<EventModalProps> = ({
         taskId: task.id,
         recurrence,
         recurrenceDays: recurrence === 'custom' ? recurrenceDays : [],
+        isPrivate,
       });
       onClose();
       resetForm();
@@ -323,6 +334,7 @@ const EventModal: React.FC<EventModalProps> = ({
         notes: notes.trim(),
         recurrence,
         recurrenceDays: recurrence === 'custom' ? recurrenceDays : [],
+        isPrivate,
       });
     } else if (mode === 'convert' && onConvert) {
       onConvert({
@@ -333,6 +345,7 @@ const EventModal: React.FC<EventModalProps> = ({
         notes: notes.trim(),
         recurrence,
         recurrenceDays: recurrence === 'custom' ? recurrenceDays : [],
+        isPrivate,
       });
       onClose();
     }
@@ -349,6 +362,7 @@ const EventModal: React.FC<EventModalProps> = ({
     setColor(categories[0]?.color || "#3B82F6");
     setRecurrence('none');
     setRecurrenceDays([]);
+    setIsPrivate(false);
   };
 
   // Suppression directe sans popup de confirmation : le parent (AgendaPage)
@@ -404,6 +418,9 @@ const EventModal: React.FC<EventModalProps> = ({
           setRecurrence={setRecurrence}
           recurrenceDays={recurrenceDays}
           setShowDaysModal={setShowDaysModal}
+          isPrivate={isPrivate}
+          setIsPrivate={setIsPrivate}
+          showPrivacy={showPrivacy}
           showDescription={showDescription}
           setShowDescription={setShowDescription}
           setIsColorSettingsOpen={setIsColorSettingsOpen}

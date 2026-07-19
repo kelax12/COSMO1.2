@@ -282,6 +282,16 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (error) throw normalizeApiError(error);
   }
 
+  async transferOwnership(orgId: string, newOwnerId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RPC SECURITY DEFINER (mig. 081) — owner actuel uniquement.
+    const { error } = await supabase.rpc('transfer_org_ownership', {
+      p_org: orgId,
+      p_new_owner: newOwnerId,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
   async setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.rpc('set_member_manager', {
