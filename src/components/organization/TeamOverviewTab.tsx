@@ -6,8 +6,10 @@ import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import { projectColor } from './team-projects.helpers';
+import { Download } from 'lucide-react';
+import { downloadCSV } from '@/lib/csv-export';
 import {
-  STATS_PERIODS, type StatsPeriod, periodStart, filterByPeriod,
+  STATS_PERIODS, type StatsPeriod, periodStart, filterByActivity, scopeOkrs,
   summarize, overallOkrProgress, memberLoad, overdueByMember,
   projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
 } from './team-stats.helpers';
@@ -61,7 +63,7 @@ const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) =
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
   const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: projects = [] } = useTeamProjects(orgId);
-  const { data: okrs = [] } = useTeamOKRs(orgId);
+  const { data: allOkrs = [] } = useTeamOKRs(orgId);
   const [period, setPeriod] = useState<StatsPeriod>('30');
 
   // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
@@ -78,9 +80,17 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     return allTasks.filter((t) => t.assigneeIds.some((id) => scope.has(id)));
   }, [allTasks, scopedMembers, isAdmin]);
 
+  // OKR du périmètre : admin → tout ; manager → KR assignés à son sous-arbre
+  // + objectifs collectifs (reco #15, cohérence avec tâches/membres).
+  const okrs = useMemo(() => {
+    const scope = new Set(scopedMembers.map((m) => m.userId));
+    return scopeOkrs(allOkrs, scope, isAdmin);
+  }, [allOkrs, scopedMembers, isAdmin]);
+
   const start = useMemo(() => periodStart(period), [period]);
-  // Tâches créées dans la fenêtre — base des cartes et répartitions.
-  const periodTasks = useMemo(() => filterByPeriod(scopedTasks, start), [scopedTasks, start]);
+  // Tâches « actives » dans la fenêtre (ouvertes, créées ou terminées dedans) —
+  // base des cartes et répartitions (reco #13 : plus de biais createdAt).
+  const periodTasks = useMemo(() => filterByActivity(scopedTasks, start), [scopedTasks, start]);
 
   const summary = useMemo(() => summarize(periodTasks), [periodTasks]);
   const okrProgress = useMemo(() => overallOkrProgress(okrs), [okrs]);
@@ -99,7 +109,30 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const hasTrend = trend.some((t) => t.rate > 0);
 
   const periodLabel = STATS_PERIODS.find((p) => p.id === period)?.label ?? '';
-  const periodHint = period === 'all' ? 'depuis le début' : `créées sur ${periodLabel}`;
+  const periodHint = period === 'all' ? 'depuis le début' : `actives sur ${periodLabel}`;
+
+  // Export CSV (reco #14) — membres, projets, OKR (3 fichiers espacés,
+  // Safari refuse plusieurs .click() simultanés, cf. exportAllCSV).
+  const handleExport = () => {
+    downloadCSV(
+      'cosmo-stats-membres',
+      ['Membre', 'Ouvertes', 'Terminées', 'Total', 'Taux (%)', 'En retard'],
+      load.map((m) => [
+        m.name, m.open, m.done, m.total, m.completionRate,
+        overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0,
+      ]),
+    );
+    setTimeout(() => downloadCSV(
+      'cosmo-stats-projets',
+      ['Projet', 'Ouvertes', 'En retard', 'Total'],
+      byProject.map((p) => [p.name, p.open, p.overdue, p.total]),
+    ), 150);
+    setTimeout(() => downloadCSV(
+      'cosmo-stats-okr',
+      ['Objectif', 'Progression (%)', 'Nb KR'],
+      okrStats.map((o) => [o.title, o.progress, o.krCount]),
+    ), 300);
+  };
 
   return (
     <div className="space-y-5">
@@ -108,23 +141,32 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         <p className="text-xs text-[rgb(var(--color-text-muted))]">
           {isAdmin ? "Statistiques de toute l'entreprise." : 'Statistiques de votre périmètre (vous et vos équipes).'}
         </p>
-        <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label="Période">
-          {STATS_PERIODS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              role="tab"
-              aria-selected={period === p.id}
-              onClick={() => setPeriod(p.id)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                period === p.id
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label="Période">
+            {STATS_PERIODS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                role="tab"
+                aria-selected={period === p.id}
+                onClick={() => setPeriod(p.id)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  period === p.id
+                    ? 'bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))]'
+                    : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          >
+            <Download size={13} aria-hidden="true" /> Exporter CSV
+          </button>
         </div>
       </div>
 

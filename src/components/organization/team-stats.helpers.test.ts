@@ -4,6 +4,7 @@ import type { TeamOKR } from '@/modules/team-okrs';
 import type { OrgMember } from '@/modules/organizations';
 import {
   periodStart, isCreatedWithin, filterByPeriod, isOverdue,
+  isActiveWithin, filterByActivity, scopeOkrs,
   summarize, overallOkrProgress, okrProgress,
   memberLoad, overdueByMember, projectBreakdown,
   velocityByWeek, completionTrend, okrBreakdown,
@@ -56,6 +57,60 @@ describe('isCreatedWithin / filterByPeriod', () => {
     const tasks = [task({ id: 'a', createdAt: iso(2) }), task({ id: 'b', createdAt: iso(40) })];
     expect(filterByPeriod(tasks, periodStart('30', NOW)).map((t) => t.id)).toEqual(['a']);
     expect(filterByPeriod(tasks, null)).toHaveLength(2);
+  });
+});
+
+describe('isActiveWithin / filterByActivity', () => {
+  it('une tâche ouverte reste active même créée avant la fenêtre', () => {
+    const start = periodStart('7', NOW);
+    expect(isActiveWithin(task({ createdAt: iso(90), completed: false }), start)).toBe(true);
+  });
+  it('une tâche terminée dans la fenêtre est active', () => {
+    const start = periodStart('7', NOW);
+    expect(isActiveWithin(task({ createdAt: iso(90), completed: true, completedAt: iso(2) }), start)).toBe(true);
+  });
+  it('une tâche terminée avant la fenêtre est exclue', () => {
+    const start = periodStart('7', NOW);
+    expect(isActiveWithin(task({ createdAt: iso(90), completed: true, completedAt: iso(30) }), start)).toBe(false);
+  });
+  it('start null = tout passe', () => {
+    expect(isActiveWithin(task({ completed: true, completedAt: iso(999) }), null)).toBe(true);
+  });
+  it('terminée sans date lisible : ne pas exclure', () => {
+    expect(isActiveWithin(task({ createdAt: 'x', completed: true, completedAt: null }), periodStart('7', NOW))).toBe(true);
+  });
+  it('filterByActivity garde ouvertes + terminées récentes', () => {
+    const tasks = [
+      task({ id: 'open-old', createdAt: iso(90), completed: false }),
+      task({ id: 'done-recent', createdAt: iso(90), completed: true, completedAt: iso(3) }),
+      task({ id: 'done-old', createdAt: iso(90), completed: true, completedAt: iso(60) }),
+    ];
+    expect(filterByActivity(tasks, periodStart('30', NOW)).map((t) => t.id)).toEqual(['open-old', 'done-recent']);
+  });
+});
+
+describe('scopeOkrs', () => {
+  const okr = (over: Partial<TeamOKR>): TeamOKR => ({
+    id: 'o1', orgId: 'o', title: 'Obj', createdBy: 'u1', createdAt: iso(10),
+    teamIds: [], keyResults: [], ...over,
+  });
+  const kr = (id: string, assigneeId: string | null) => ({
+    id, okrId: 'o1', orgId: 'o', title: id, currentValue: 0, targetValue: 10, completed: false, assigneeId,
+  });
+  it('admin : tout passe', () => {
+    const okrs = [okr({ id: 'a', keyResults: [kr('k', 'ext')] })];
+    expect(scopeOkrs(okrs, new Set(['u1']), true)).toHaveLength(1);
+  });
+  it('manager : garde les OKR avec ≥ 1 KR assigné dans le périmètre', () => {
+    const okrs = [
+      okr({ id: 'in', keyResults: [kr('k1', 'u1'), kr('k2', 'ext')] }),
+      okr({ id: 'out', keyResults: [kr('k3', 'ext')] }),
+    ];
+    expect(scopeOkrs(okrs, new Set(['u1']), false).map((o) => o.id)).toEqual(['in']);
+  });
+  it('manager : garde les objectifs collectifs (aucun KR assigné)', () => {
+    const okrs = [okr({ id: 'collectif', keyResults: [kr('k1', null), kr('k2', null)] })];
+    expect(scopeOkrs(okrs, new Set(['u1']), false)).toHaveLength(1);
   });
 });
 

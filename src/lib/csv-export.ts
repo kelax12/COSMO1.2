@@ -59,6 +59,15 @@ function todayStr(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+/**
+ * Export CSV générique (headers + rows déjà construits) — même échappement
+ * anti formula-injection (N11) que les exports par module. Le nom de fichier
+ * est suffixé de la date du jour.
+ */
+export function downloadCSV(baseName: string, headers: string[], rows: unknown[][]): void {
+  download(`${baseName}-${todayStr()}.csv`, rowsToCSV(headers, rows));
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Exports par module
 // ═══════════════════════════════════════════════════════════════════

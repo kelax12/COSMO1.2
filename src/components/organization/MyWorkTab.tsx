@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  ListTodo, AlertTriangle, CalendarDays, Check,
+  ListTodo, AlertTriangle, CalendarDays, Check, Target,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -11,6 +11,7 @@ import {
   type TeamTask,
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
+import { useTeamOKRs } from '@/modules/team-okrs';
 import type { OrgMember } from '@/modules/organizations';
 import { projectColor, PRIORITY_META, sortOpenTasks } from './team-projects.helpers';
 import WorkSummaryCard from './WorkSummaryCard';
@@ -60,6 +61,7 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
 const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: tasks = [] } = useTeamTasks(orgId);
+  const { data: okrs = [] } = useTeamOKRs(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
 
@@ -90,6 +92,28 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   );
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
+
+  // Prochaines échéances de l'ENTREPRISE (reco #2, Option A) : deadlines des
+  // tâches d'équipe ouvertes (tous assignés) + échéances des OKR, à venir,
+  // triées, 6 max. Zéro modèle d'événement partagé nécessaire.
+  const orgDeadlines = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const items: { id: string; date: Date; name: string; kind: 'task' | 'okr'; projectName?: string }[] = [];
+    for (const t of tasks) {
+      if (t.completed || !t.deadline || !activeProjectIds.has(t.projectId)) continue;
+      const d = parseISO(t.deadline);
+      if (Number.isNaN(d.getTime()) || d < today) continue;
+      items.push({ id: `task-${t.id}`, date: d, name: t.name, kind: 'task', projectName: projectById.get(t.projectId)?.name });
+    }
+    for (const o of okrs) {
+      if (!o.endDate) continue;
+      const d = parseISO(o.endDate);
+      if (Number.isNaN(d.getTime()) || d < today) continue;
+      items.push({ id: `okr-${o.id}`, date: d, name: o.title, kind: 'okr' });
+    }
+    return items.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 6);
+  }, [tasks, okrs, activeProjectIds, projectById]);
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
@@ -142,7 +166,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                         type="button"
                         onClick={() => toggleComplete(t)}
                         aria-label={`Marquer « ${t.name} » comme terminée`}
-                        className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-indigo-500 flex items-center justify-center shrink-0 transition-colors"
+                        className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center shrink-0 transition-colors"
                       >
                         {t.completed && <Check size={13} aria-hidden="true" />}
                       </button>
@@ -150,7 +174,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       <button
                         type="button"
                         onClick={() => setEditingTask(t)}
-                        className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
+                        className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
                       >
                         <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
                       </button>
@@ -191,7 +215,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                         late ? 'border-red-300/60 bg-red-50/40 dark:bg-red-900/10' : 'border-[rgb(var(--color-border))]'
                       }`}
                     >
-                      <div className={`flex flex-col items-center justify-center w-10 shrink-0 ${late ? 'text-red-500' : today ? 'text-indigo-500' : 'text-[rgb(var(--color-text-secondary))]'}`}>
+                      <div className={`flex flex-col items-center justify-center w-10 shrink-0 ${late ? 'text-red-500' : today ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                         <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: fr })}</span>
                         <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: fr })}</span>
                       </div>
@@ -203,6 +227,36 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
               </ul>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Prochaines échéances de l'entreprise (reco #2) — visibles par tous,
+          même sans tâche assignée. */}
+      {orgDeadlines.length > 0 && (
+        <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+          <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+            Prochaines échéances de l'entreprise
+          </h3>
+          <ul className="space-y-1.5">
+            {orgDeadlines.map((item) => (
+              <li key={item.id} className="flex items-center gap-3 p-2 rounded-xl border border-[rgb(var(--color-border))]">
+                <div className="flex flex-col items-center justify-center w-10 shrink-0 text-[rgb(var(--color-text-secondary))]">
+                  <span className="text-sm font-bold leading-none">{format(item.date, 'd', { locale: fr })}</span>
+                  <span className="text-[10px] uppercase">{format(item.date, 'MMM', { locale: fr })}</span>
+                </div>
+                <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{item.name}</span>
+                {item.kind === 'okr' ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+                    <Target size={10} aria-hidden="true" /> OKR
+                  </span>
+                ) : item.projectName ? (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 truncate max-w-[110px] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+                    {item.projectName}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
