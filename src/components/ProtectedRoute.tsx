@@ -6,12 +6,10 @@ const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
+  // Auth en cours de résolution : on n'affiche rien (le body garde son fond
+  // thémé) plutôt qu'un écran de chargement plein écran au refresh.
   if (isLoading) {
-    return (
-      <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500" />
-      </div>
-    );
+    return null;
   }
 
   if (!isAuthenticated) {
