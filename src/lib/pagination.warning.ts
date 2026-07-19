@@ -13,6 +13,7 @@ const TABLE_LABELS: Record<string, string> = {
   categories: 'catégories',
   lists: 'listes',
   friends: 'amis',
+  team_tasks: 'tâches d\'équipe',
 };
 
 /**
