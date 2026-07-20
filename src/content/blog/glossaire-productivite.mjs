@@ -9,7 +9,7 @@ export const article = {
   dateModified: '2026-07-18',
   readingMinutes: 8,
   html: `
-<p class="lead">Le monde de la productivité adore le jargon. Voici les 20 termes que vous croiserez partout, définis clairement et sans mystique — avec, pour chacun, ce qu'il faut vraiment en retenir.</p>
+<p class="lead">Le monde de la productivité adore le jargon. Voici les 20 termes que vous croiserez partout, définis clairement et sans mystique, avec pour chacun ce qu'il faut vraiment en retenir.</p>
 
 <h2 id="objectifs">Objectifs &amp; mesure</h2>
 <h3>OKR (Objectives &amp; Key Results)</h3>
@@ -31,17 +31,17 @@ export const article = {
 <h3>Task batching</h3>
 <p>Regrouper les tâches de même nature (emails, factures, appels) dans un même bloc pour éliminer les changements de contexte.</p>
 <h3>Deep work (travail profond)</h3>
-<p>Terme de Cal Newport : travail en concentration totale sur une tâche cognitivement exigeante, sans interruption. La ressource la plus rare — et la plus productive — d'une journée de travail.</p>
+<p>Terme de Cal Newport : travail en concentration totale sur une tâche cognitivement exigeante, sans interruption. La ressource la plus rare, et la plus productive, d'une journée de travail.</p>
 <h3>Changement de contexte (context switching)</h3>
 <p>Le coût cognitif de passer d'une tâche à une autre : après une interruption, il faut en moyenne 23 minutes pour retrouver sa pleine concentration (Gloria Mark, UC Irvine).</p>
 <h3>Méthode Pomodoro</h3>
 <p>Travailler par intervalles de 25 minutes séparés de courtes pauses. Efficace pour démarrer quand la motivation manque ; moins adapté aux vraies sessions de deep work qu'il fragmente.</p>
 <h3>Loi de Parkinson</h3>
-<p>« Le travail s'étale de façon à occuper tout le temps disponible. » Corollaire pratique : donner moins de temps à une tâche la comprime — c'est le principe actif du time-boxing.</p>
+<p>« Le travail s'étale de façon à occuper tout le temps disponible. » Corollaire pratique : donner moins de temps à une tâche la comprime. C'est le principe actif du time-boxing.</p>
 
 <h2 id="priorisation">Priorisation</h2>
 <h3>Matrice Eisenhower</h3>
-<p>Classement des tâches selon deux axes — urgent/important — en 4 quadrants : faire, planifier, déléguer, supprimer. → <a href="/blog/matrice-eisenhower">Guide avec exemples</a>.</p>
+<p>Classement des tâches selon deux axes (urgent, important) en 4 quadrants : faire, planifier, déléguer, supprimer. → <a href="/blog/matrice-eisenhower">Guide avec exemples</a>.</p>
 <h3>MIT (Most Important Task)</h3>
 <p>La (ou les 2-3) tâche(s) qui, si c'était la seule chose faite aujourd'hui, rendrait la journée réussie. Se choisit le matin, avant les emails.</p>
 <h3>Eat the frog</h3>
@@ -49,15 +49,15 @@ export const article = {
 
 <h2 id="habitudes">Habitudes</h2>
 <h3>Streak (série)</h3>
-<p>Nombre de jours consécutifs où une habitude a été tenue. Puissant moteur de motivation — à condition de savoir qu'un accroc isolé ne ruine rien. → <a href="/blog/combien-de-temps-prendre-habitude">Combien de temps pour prendre une habitude ?</a></p>
+<p>Nombre de jours consécutifs où une habitude a été tenue. Puissant moteur de motivation, à condition de savoir qu'un accroc isolé ne ruine rien. → <a href="/blog/combien-de-temps-prendre-habitude">Combien de temps pour prendre une habitude ?</a></p>
 <h3>Habit stacking (empilement d'habitudes)</h3>
 <p>Accrocher une nouvelle habitude à une routine existante : « après [habitude actuelle], je fais [nouvelle habitude] ». Le déclencheur contextuel bat l'heure abstraite.</p>
 <h3>Heatmap d'habitudes</h3>
-<p>Grille calendaire où chaque jour tenu colore une case (façon graphe de contributions GitHub). Rend la régularité — et les trous — visibles d'un coup d'œil.</p>
+<p>Grille calendaire où chaque jour tenu colore une case (façon graphe de contributions GitHub). Rend la régularité, et les trous, visibles d'un coup d'œil.</p>
 <h3>Règle des deux jours</h3>
 <p>Ne jamais rater une habitude deux jours de suite. Fondée sur la recherche : l'accroc isolé n'a pas d'effet mesurable, c'est la répétition de l'accroc qui tue l'habitude.</p>
 <h3>Loi des 21 jours (mythe)</h3>
-<p>L'idée qu'une habitude se forme en 21 jours — un contresens sur une observation de Maxwell Maltz. La science (Lally, 2009) : 66 jours en médiane, de 18 à 254 selon les cas.</p>
+<p>L'idée qu'une habitude se forme en 21 jours : un contresens sur une observation de Maxwell Maltz. La science (Lally, 2009) : 66 jours en médiane, de 18 à 254 selon les cas.</p>
 
 <h2 id="pratique">Passer du glossaire à la pratique</h2>
 <p>Tous ces concepts vivent au même endroit dans <a href="/">Cosmo</a> : les OKR avec progression automatique, le time-blocking par glisser-déposer, les priorités pour appliquer Eisenhower, et les habitudes avec heatmap et streaks. <a href="/signup">Gratuit</a>, démo instantanée sans inscription.</p>
