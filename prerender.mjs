@@ -351,4 +351,44 @@ try {
   console.warn('  ⚠ dist/sitemap.xml introuvable — sitemap non enrichi');
 }
 
+// ── RSS : flux du blog généré depuis ARTICLES (autodiscovery dans <head>) ──
+const rfc822 = (d) => new Date(`${d}T12:00:00Z`).toUTCString();
+const rssItems = [...ARTICLES]
+  .sort((a, b) => (a.datePublished < b.datePublished ? 1 : -1))
+  .map((a) =>
+    `    <item>\n      <title><![CDATA[${a.title}]]></title>\n      <link>${BASE}/blog/${a.slug}</link>\n      <guid isPermaLink="true">${BASE}/blog/${a.slug}</guid>\n      <pubDate>${rfc822(a.datePublished)}</pubDate>\n      <description><![CDATA[${a.description}]]></description>\n    </item>`
+  )
+  .join('\n');
+const rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog Cosmo — Productivité, OKR, habitudes et time-blocking</title>
+    <link>${BASE}/blog</link>
+    <atom:link href="${BASE}/rss.xml" rel="self" type="application/rss+xml" />
+    <description>Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.</description>
+    <language>fr-FR</language>
+    <lastBuildDate>${rfc822(TODAY)}</lastBuildDate>
+${rssItems}
+  </channel>
+</rss>
+`;
+writeFileSync(join(DIST, 'rss.xml'), rss, 'utf8');
+console.log(`  rss.xml → ${ARTICLES.length} articles`);
+
+// ── llms.txt : sections blog + cas d'usage générées depuis les registres ──
+try {
+  const llmsPath = join(DIST, 'llms.txt');
+  let llms = readFileSync(llmsPath, 'utf8');
+  const llmsGenerated =
+    `\n## Articles du blog\n\n` +
+    ARTICLES.map((a) => `- [${a.title}](${BASE}/blog/${a.slug}) : ${a.description}`).join('\n') +
+    `\n\n## Cas d'usage\n\n` +
+    USE_CASES.map((u) => `- [${u.title}](${BASE}/${u.slug}) : ${u.description}`).join('\n') +
+    `\n\n## Autres pages\n\n- [Blog](${BASE}/blog)\n- [À propos](${BASE}/a-propos)\n- [Flux RSS](${BASE}/rss.xml)\n`;
+  writeFileSync(llmsPath, llms.trimEnd() + '\n' + llmsGenerated, 'utf8');
+  console.log(`  llms.txt → +${ARTICLES.length} articles, +${USE_CASES.length} cas d'usage`);
+} catch {
+  console.warn('  ⚠ dist/llms.txt introuvable — llms.txt non enrichi');
+}
+
 console.log(`✓ prerender done — ${count} routes + home (FAQ schema + contenu statique)`);
