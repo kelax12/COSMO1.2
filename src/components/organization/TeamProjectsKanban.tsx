@@ -102,7 +102,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
               <span className="ml-auto flex items-center gap-1 shrink-0">
                 <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                   {colTasks.length}
-                  {overdue > 0 && <span className="text-red-500 font-semibold"> · {overdue} ⏰</span>}
+                  {overdue > 0 && <span className="text-red-500 font-semibold" title={`${overdue} tâche${overdue > 1 ? 's' : ''} en retard`}> · {overdue} retard</span>}
                 </span>
                 <button
                   type="button"
