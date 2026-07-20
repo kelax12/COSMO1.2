@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Activity, CheckCircle2, PlusCircle } from 'lucide-react';
+import { CheckCircle2, PlusCircle } from 'lucide-react';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 
@@ -73,8 +73,8 @@ const TeamActivityFeed = ({ tasks, projects, members }: TeamActivityFeedProps) =
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 className="flex items-center gap-2 text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        <Activity size={15} aria-hidden="true" /> Activité de l'équipe
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+        Activité de l'équipe
       </h3>
       <ul className="space-y-2">
         {items.map((item) => (
