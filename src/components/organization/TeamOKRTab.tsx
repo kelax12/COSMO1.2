@@ -252,6 +252,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
             setNewCategoryColor={setNewCategoryColor}
             createCategoryMutation={createCategory}
             canManage={isManager}
+            accentAllActive
           />
         )}
         {isManager && (

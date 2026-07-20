@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Link2, Copy, Check, KeyRound } from 'lucide-react';
+import { X, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useActiveOrganization,
@@ -97,8 +97,8 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
 
         {/* ── Lien d'invitation placé ── */}
         <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4 mb-4">
-          <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5 mb-1">
-            <Link2 size={14} className="text-indigo-500" aria-hidden="true" /> Lien d'invitation personnalisé
+          <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
+            Lien d'invitation personnalisé
           </h3>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
             Usage unique, valable 7 jours. Après création de son compte, la personne rejoint
@@ -133,8 +133,8 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
         {/* ── Code d'invitation de l'entreprise ── */}
         {joinCode && (
           <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
-            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-1.5 mb-1">
-              <KeyRound size={14} className="text-indigo-500" aria-hidden="true" /> Code d'invitation de l'entreprise
+            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
+              Code d'invitation de l'entreprise
             </h3>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
               Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un
