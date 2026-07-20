@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { MyOrganization } from '@/modules/organizations';
 
 interface DeleteOrganizationDialogProps {
@@ -33,9 +33,6 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
         aria-label={`Supprimer l'entreprise ${org.name}`}
       >
         <div className="flex items-center gap-3 px-5 py-4 border-b border-[rgb(var(--color-border))]">
-          <span className="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
-            <AlertTriangle size={18} aria-hidden="true" />
-          </span>
           <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] flex-1">
             Supprimer {org.name} ?
           </h2>
@@ -85,7 +82,7 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
             disabled={!match || pending}
             className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {pending ? 'Suppression…' : 'Je comprends les conséquences — supprimer cette entreprise'}
+            {pending ? 'Suppression…' : 'Supprimer cette entreprise'}
           </button>
         </div>
       </div>
