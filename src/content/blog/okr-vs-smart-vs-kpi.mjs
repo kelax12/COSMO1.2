@@ -14,11 +14,11 @@ export const article = {
     ['Quelle méthode pour des objectifs personnels ?', "Les OKR s'adaptent très bien au personnel : un cycle de 6-12 semaines, 2-3 objectifs, des résultats clés simples à mesurer. SMART aide à formuler chaque résultat clé proprement."],
   ],
   html: `
-<p class="lead">Trois acronymes, trois promesses de « mieux atteindre ses objectifs » — et beaucoup de confusion. La réalité est plus simple : <strong>OKR, SMART et KPI ne répondent pas à la même question</strong>. SMART formule un objectif, KPI surveille une métrique, OKR organise un cycle d'ambition. Une fois cette distinction posée, savoir lequel utiliser devient évident.</p>
+<p class="lead">Trois acronymes, trois promesses de « mieux atteindre ses objectifs », et beaucoup de confusion. La réalité est plus simple : <strong>OKR, SMART et KPI ne répondent pas à la même question</strong>. SMART formule un objectif, KPI surveille une métrique, OKR organise un cycle d'ambition. Une fois cette distinction posée, savoir lequel utiliser devient évident.</p>
 
 <h2 id="definitions">Les trois méthodes en une phrase chacune</h2>
 <ul>
-<li><strong>SMART</strong> est une <em>grille de formulation</em> : un objectif doit être Spécifique, Mesurable, Atteignable, Réaliste et Temporellement défini. SMART ne dit pas quoi viser — il vérifie que ce que vous visez est bien écrit.</li>
+<li><strong>SMART</strong> est une <em>grille de formulation</em> : un objectif doit être Spécifique, Mesurable, Atteignable, Réaliste et Temporellement défini. SMART ne dit pas quoi viser : il vérifie que ce que vous visez est bien écrit.</li>
 <li><strong>KPI</strong> (Key Performance Indicator) est un <em>instrument de surveillance</em> : une métrique suivie en continu pour connaître la santé d'une activité (trafic mensuel, taux de churn, panier moyen, poids sur la balance).</li>
 <li><strong>OKR</strong> (Objectives &amp; Key Results) est un <em>système de cycle</em> : une ambition qualitative (l'objectif) prouvée par 2 à 5 mesures chiffrées (les résultats clés), sur un trimestre, avec une cible de réussite à ~70 %.</li>
 </ul>
@@ -38,16 +38,16 @@ export const article = {
 <h2 id="complementaires">Pourquoi les opposer est une erreur</h2>
 <p>Les trois s'emboîtent naturellement :</p>
 <ol>
-<li><strong>Vos KPI tournent en continu</strong> — c'est le tableau de bord. La plupart du temps, on les regarde et on ne fait rien de spécial : tout va bien.</li>
+<li><strong>Vos KPI tournent en continu</strong> : c'est le tableau de bord. La plupart du temps, on les regarde et on ne fait rien de spécial : tout va bien.</li>
 <li><strong>Quand un KPI doit bouger significativement</strong> (le churn monte, le trafic stagne, le sommeil se dégrade), il devient la matière d'un <strong>OKR</strong> : un trimestre d'effort concentré avec des résultats clés chiffrés.</li>
 <li><strong>Chaque résultat clé est formulé façon SMART</strong> : spécifique, mesurable, borné dans le temps. SMART est l'outil de rédaction ; l'OKR est la structure qui lui donne une direction et un rythme.</li>
 </ol>
-<p>Exemple complet : votre KPI « visites organiques mensuelles » stagne à 2 000 depuis six mois. Vous en faites un OKR de trimestre — Objectif : « Faire du contenu notre premier canal d'acquisition » ; KR1 : passer de 2 000 à 8 000 visites/mois ; KR2 : publier 12 articles ; KR3 : obtenir 15 backlinks. Chaque KR est SMART. En fin de cycle, le KPI redevient un simple indicateur de surveillance… à son nouveau niveau.</p>
+<p>Exemple complet : votre KPI « visites organiques mensuelles » stagne à 2 000 depuis six mois. Vous en faites un OKR de trimestre. Objectif : « Faire du contenu notre premier canal d'acquisition » ; KR1 : passer de 2 000 à 8 000 visites/mois ; KR2 : publier 12 articles ; KR3 : obtenir 15 backlinks. Chaque KR est SMART. En fin de cycle, le KPI redevient un simple indicateur de surveillance… à son nouveau niveau.</p>
 
 <h2 id="quand">Quelle méthode, quand ? La règle simple</h2>
 <ul>
 <li><strong>Vous voulez surveiller</strong> → KPI. Définissez 3 à 7 indicateurs de santé, pas quarante.</li>
-<li><strong>Vous voulez changer quelque chose</strong> → OKR. 2 à 4 objectifs par cycle, pas plus — piochez dans nos <a href="/blog/methode-okr-exemples">15 exemples d'OKR</a> ou partez du <a href="/blog/template-okr-gratuit">template gratuit</a>.</li>
+<li><strong>Vous voulez changer quelque chose</strong> → OKR. 2 à 4 objectifs par cycle, pas plus. Piochez dans nos <a href="/blog/methode-okr-exemples">15 exemples d'OKR</a> ou partez du <a href="/blog/template-okr-gratuit">template gratuit</a>.</li>
 <li><strong>Vous rédigez n'importe quel objectif ou résultat clé</strong> → passez-le au filtre SMART avant de le valider.</li>
 </ul>
 
@@ -56,7 +56,7 @@ export const article = {
 
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Peut-on utiliser OKR et KPI en même temps ?</h3>
-<p>Oui — c'est la configuration idéale. Les KPI surveillent, les OKR concentrent l'effort là où un indicateur doit bouger.</p>
+<p>Oui, c'est la configuration idéale. Les KPI surveillent, les OKR concentrent l'effort là où un indicateur doit bouger.</p>
 <h3>Un objectif SMART peut-il servir de résultat clé ?</h3>
 <p>Un bon résultat clé est de facto SMART. L'OKR ajoute l'ambition qualitative qui relie plusieurs mesures.</p>
 <h3>Et pour des objectifs personnels ?</h3>
