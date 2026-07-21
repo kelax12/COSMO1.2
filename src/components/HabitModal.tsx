@@ -8,8 +8,8 @@ import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
+import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
-import { confirmDiscard } from '@/lib/confirm-discard';
 
 interface HabitModalProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     color: '#3B82F6',
   });
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const { register, trigger, clear, isInvalid } = useInvalidShake();
   // Garde anti-double-soumission : un double-clic rapide déclenchait deux
   // mutations create avant que `isPending` ne passe à true (re-render async).
@@ -56,7 +57,11 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
   const isDirty = initialSnapshotRef.current !== '' && JSON.stringify(formData) !== initialSnapshotRef.current;
   const guardedClose = () => {
-    if (!confirmDiscard(isDirty)) return;
+    if (isDirty) { setShowDiscardConfirm(true); return; }
+    onClose();
+  };
+  const confirmDiscardClose = () => {
+    setShowDiscardConfirm(false);
     onClose();
   };
 
@@ -443,6 +448,12 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
       {/* ColorSettingsModal en dehors du div overlay pour éviter la propagation de clics */}
       <ColorSettingsModal isOpen={isColorSettingsOpen} onClose={() => setIsColorSettingsOpen(false)} />
+
+      <ConfirmDiscardDialog
+        isOpen={showDiscardConfirm}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={confirmDiscardClose}
+      />
     </>
   );
 };

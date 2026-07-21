@@ -18,7 +18,6 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import SubtaskChecklist from './SubtaskChecklist';
-import CopyShareLinkButton from './CopyShareLinkButton';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 
@@ -60,8 +59,9 @@ export interface DesktopDetailsStepProps {
   handleDelete: () => void;
   /** Tâche existante (mode édition) — requis pour la checklist de sous-tâches. */
   task?: import('@/modules/tasks').Task | null;
-  /** Propriétaire de la tâche (= peut générer un lien de partage, #42). */
-  isTaskOwner?: boolean;
+  /** Section Description masquée par défaut — même système que EventModal. */
+  showDescription: boolean;
+  setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
@@ -70,7 +70,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   dRegister, dClear, dInvalid,
   categories, createCategoryMutation, listColorOptions,
   lists, selectedListIds, setSelectedListIds, createListMutation,
-  isCreating, isLoading, handleDelete, task, isTaskOwner = false,
+  isCreating, isLoading, handleDelete, task,
+  showDescription, setShowDescription,
 }) => {
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
@@ -466,21 +467,34 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     />
                   )}
 
-                  {/* Description — placée en bas, juste avant les actions */}
-                  <div>
-                    <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      Description <span className="normal-case font-normal opacity-60">(Facultatif)</span>
-                    </label>
-                    <textarea
-                      id="task-description"
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      rows={3}
-                      placeholder="Détails de la tâche…"
-                      className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base resize-none border-slate-200 dark:border-slate-700"
-                      style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                    />
-                  </div>
+                  {/* Description — masquée par défaut pour épurer l'UI (même
+                      système que EventModal, cf. docs/UI-PATTERNS.md). Visible
+                      d'emblée seulement si la tâche a déjà une description. */}
+                  {showDescription ? (
+                    <div>
+                      <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        Description <span className="normal-case font-normal opacity-60">(Facultatif)</span>
+                      </label>
+                      <textarea
+                        id="task-description"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        rows={3}
+                        autoFocus={!formData.description}
+                        placeholder="Détails de la tâche…"
+                        className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base resize-none border-slate-200 dark:border-slate-700"
+                        style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowDescription(true)}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
+                    >
+                      + Ajouter une description
+                    </button>
+                  )}
 
                   {/* Status toggles */}
                   <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
@@ -513,11 +527,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         >
                           <Trash2 size={20} className="text-red-500" />
                         </button>
-                      )}
-
-                      {/* Partage en un clic (#42) */}
-                      {!isCreating && task && (
-                        <CopyShareLinkButton taskId={task.id} ownerCanShare={isTaskOwner} />
                       )}
 
                       <DropdownMenu>

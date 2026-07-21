@@ -123,12 +123,33 @@ export class LocalStorageListsRepository implements IListsRepository {
 
   async create(input: CreateListInput): Promise<TaskList> {
     const lists = this.getLists();
+
+    // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
+    // de `position` et retombent sur le tri alphabétique (cf. mig. 021). Sans
+    // ce backfill, la nouvelle liste (elle aussi sans position) rejoindrait
+    // ce groupe et s'insérerait alphabétiquement au milieu au lieu
+    // d'apparaître en dernier — donnant l'impression que l'ordre a changé.
+    // On fige donc l'ordre visuel ACTUEL en position explicite pour toutes
+    // les listes concernées, puis on ajoute la nouvelle après tout le monde.
+    const sorted = [...lists].sort((a, b) => {
+      const ap = a.position ?? Number.MAX_SAFE_INTEGER;
+      const bp = b.position ?? Number.MAX_SAFE_INTEGER;
+      if (ap !== bp) return ap - bp;
+      return a.name.localeCompare(b.name);
+    });
+    let nextPosition = 1 + Math.max(-1, ...sorted.map(l => l.position ?? -1));
+    const backfilled = sorted.map((l) => {
+      if (l.position !== undefined) return l;
+      return { ...l, position: nextPosition++ };
+    });
+
     const newList: TaskList = {
       ...input,
       id: crypto.randomUUID(),
       taskIds: [],
+      position: input.position ?? nextPosition,
     };
-    this.saveLists([...lists, newList]);
+    this.saveLists([...backfilled, newList]);
     return newList;
   }
 

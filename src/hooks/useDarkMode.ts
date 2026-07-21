@@ -25,6 +25,11 @@ export const useDarkMode = () => {
     }
     if (theme === 'black') {
       root.classList.add('black');
+      // `monochrome` pilote les variants Tailwind `monochrome:` (haute
+      // accessibilité — pas de bleu résiduel) utilisés dans toute l'app pour
+      // les états actifs/sélectionnés. Sans cette classe, ces variants
+      // n'ont jamais de sélecteur à cibler et restent inertes (B-monochrome).
+      root.classList.add('monochrome');
     }
 
     localStorage.setItem('theme', theme);

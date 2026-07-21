@@ -15,6 +15,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "../ui/dropdown-menu";
 import TaskCategoryIndicator from "../TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
@@ -414,11 +417,20 @@ export const TaskRow = React.memo(({
               </DropdownMenuItem>
             )}
             {/* Snooze (#8) : report rapide de la deadline d'une tâche en retard */}
-            {overdue && getSnoozeOptions().map((opt) => (
-              <DropdownMenuItem key={opt.id} onClick={() => onSnooze(task.id, opt.deadline)}>
-                <Hourglass aria-hidden="true" /> Reporter : {opt.label.toLowerCase()}
-              </DropdownMenuItem>
-            ))}
+            {overdue && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Hourglass aria-hidden="true" /> Reporter
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {getSnoozeOptions().map((opt) => (
+                    <DropdownMenuItem key={opt.id} onClick={() => onSnooze(task.id, opt.deadline)}>
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
             <DropdownMenuItem onClick={() => onOpenCollaborator(task.id)}>
               <UserPlus aria-hidden="true" /> Collaborateur
             </DropdownMenuItem>

@@ -70,6 +70,9 @@ export interface DesktopBodyProps {
   handleDelete: () => void;
   isTaskOwner: boolean;
   task?: Task;
+  /** Section Description masquée par défaut — même système que EventModal. */
+  showDescription: boolean;
+  setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
   /** Crée la tâche à la volée (création) pour générer le lien d'invitation. */
   onGenerateShareLink: () => Promise<string | null>;
   collaborators: string[];
@@ -103,7 +106,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   lists, selectedListIds, setSelectedListIds, createListMutation,
   isLoading, isCreating, collaboratorsOnly = false,
   handleClose, handleSave, handleDelete,
-  isTaskOwner, task, onGenerateShareLink,
+  isTaskOwner, task, showDescription, setShowDescription, onGenerateShareLink,
   collaborators, displayInfo, pendingShareIds, handleRemoveCollaborator,
   emailInput, setEmailInput, inputError, setInputError, handleAddEmail,
   filteredFriends, collabIdOf, toggleCollaborator,
@@ -225,7 +228,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     isLoading={isLoading}
                     handleDelete={handleDelete}
                     task={task}
-                    isTaskOwner={isTaskOwner}
+                    showDescription={showDescription}
+                    setShowDescription={setShowDescription}
                   />
 
                 {/* ── Collaborateurs en disclosure (#29) — repliés par défaut,

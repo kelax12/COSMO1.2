@@ -8,6 +8,7 @@ import TaskModalMobileBody from './task-modal/TaskModalMobileBody';
 import TaskModalDesktopBody from './task-modal/TaskModalDesktopBody';
 // Feuille de confirmation de suppression extraite (cf. task-modal/DeleteTaskConfirm.tsx).
 import DeleteTaskConfirm from './task-modal/DeleteTaskConfirm';
+import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 // Helper d'identité des collaborateurs (cf. task-modal/collaborators.ts).
 import { collabIdOf } from './task-modal/collaborators';
 // Toute la logique (état, effets, handlers) vit dans le hook contrôleur.
@@ -32,6 +33,8 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
     dRegister, dTrigger, dClear, dInvalid, collaboratorRef,
     handleSave, handleDelete, confirmDelete, handleClose,
     showDeleteConfirm, setShowDeleteConfirm,
+    showDiscardConfirm, setShowDiscardConfirm, confirmDiscardClose,
+    showDescription, setShowDescription,
     showCategoryModal, setShowCategoryModal,
     isLoading, isMobile,
   } = useTaskModal(props);
@@ -119,6 +122,8 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
             handleDelete={handleDelete}
             isTaskOwner={isTaskOwner}
             task={task}
+            showDescription={showDescription}
+            setShowDescription={setShowDescription}
             onGenerateShareLink={onGenerateShareLink}
             collaborators={collaborators}
             displayInfo={displayInfo}
@@ -144,6 +149,13 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
           onCancel={() => setShowDeleteConfirm(false)}
           onConfirm={confirmDelete}
           isLoading={isLoading}
+          isTaskOwner={isTaskOwner}
+        />
+
+        <ConfirmDiscardDialog
+          isOpen={showDiscardConfirm}
+          onCancel={() => setShowDiscardConfirm(false)}
+          onConfirm={confirmDiscardClose}
         />
 
             <ColorSettingsModal

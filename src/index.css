@@ -1021,6 +1021,22 @@ body > .fc-event {
 .monochrome [data-slot="input"]:focus {
   border-color: rgb(160 160 160) !important;
 }
+
+/* Bordures neutres façon GitHub dark — toute bordure bleue codée en dur
+   (hover/focus d'inputs, cartes/badges "info", chips sélectionnées…) devient
+   grise en mode Noir. Couvre `border-blue-*` sous toutes ses variantes
+   (hover:, focus:, dark:) car ces classes n'ont pas d'équivalent
+   `monochrome:` écrit au cas par cas dans chaque composant. */
+.monochrome [class*="border-blue-"] {
+  border-color: rgb(115 115 115) !important;
+}
+.monochrome [class*="hover:border-blue-"]:hover {
+  border-color: rgb(140 140 140) !important;
+}
+.monochrome [class*="focus:border-blue-"]:focus,
+.monochrome [class*="focus:border-blue-"]:focus-within {
+  border-color: rgb(160 160 160) !important;
+}
 .monochrome ::-webkit-scrollbar-thumb {
   background: rgb(60 60 60);
   background-clip: content-box;

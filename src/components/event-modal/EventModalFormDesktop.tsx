@@ -2,7 +2,7 @@
 // EventModalFormDesktop — corps desktop de EventModal
 // ═══════════════════════════════════════════════════════════════════
 // Extrait verbatim de EventModalForm (branche desktop), piloté par props.
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Clock, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -20,13 +20,14 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
   title, setTitle, startDate, setStartDate, startTime, setStartTime,
   endDate, setEndDate, endTime, setEndTime, notes, setNotes, color, setColor,
   recurrence, setRecurrence, recurrenceDays, setShowDaysModal,
-  isPrivate, setIsPrivate, showPrivacy,
   showDescription, setShowDescription, setIsColorSettingsOpen,
   prefilledFields, categories, lockedSet, register, isInvalid,
   handleFieldChange, handleSubmit, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, isPrefilledMode,
 }) => {
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
+  // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
+  const [showCategoryLegend, setShowCategoryLegend] = useState(false);
 
   return (
     <>
@@ -104,8 +105,9 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
             </div>
 
             <div className="space-y-3">
-              {/* Sélecteur de date */}
-              <div ref={register('date')}>
+              {/* Ligne compacte : Date (50%) + Début/Fin (25% chacun) */}
+              <div className="flex gap-3">
+              <div className="w-1/2" ref={register('date')}>
                 <label
                   className="block text-xs font-semibold uppercase tracking-wider mb-2"
                   style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -192,9 +194,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                 </div>
               </div>
 
-              {/* Sélecteurs d'heure */}
-              <div className="grid grid-cols-2 gap-3">
-                <div ref={register('startTime')}>
+              <div className="w-1/4" ref={register('startTime')}>
                   <label
                     className="block text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -229,7 +229,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   </div>
                 </div>
 
-                <div ref={register('endTime')}>
+                <div className="w-1/4" ref={register('endTime')}>
                   <label
                     className="block text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
@@ -344,32 +344,6 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     </button>
                   </div>
                 )}
-                {/* Privé (F-1) — visible uniquement pour un membre d'une org */}
-                {showPrivacy && (
-                  <div className="flex items-center justify-between gap-3 mt-3">
-                    <span
-                      className="text-xs font-semibold uppercase tracking-wider"
-                      style={{ color: "rgb(var(--color-text-secondary))" }}
-                      title="Un événement privé n'apparaît jamais dans la vue agenda de votre hiérarchie (mode entreprise)."
-                    >
-                      Privé
-                    </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isPrivate}
-                      aria-label="Événement privé — invisible pour votre hiérarchie"
-                      onClick={() => setIsPrivate((v) => !v)}
-                      className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
-                      style={{ backgroundColor: isPrivate ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))' }}
-                    >
-                      <span
-                        className="inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform"
-                        style={{ transform: isPrivate ? 'translateX(18px)' : 'translateX(2px)' }}
-                      />
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -420,7 +394,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
             )}
           </div>
 
-          <div className="md:col-span-5 space-y-3 md:flex md:flex-col">
+          <div className="md:col-span-5 space-y-3">
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label
@@ -479,78 +453,91 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               </div>
 
               {categories.length > 0 && (
-                <div
-                  className="p-2.5 rounded-xl border transition-colors overflow-hidden"
-                  style={{
-                    borderColor: "rgb(var(--color-border))",
-                    backgroundColor: "rgb(var(--color-surface))",
-                  }}
-                >
-                  <h4
-                    className="text-[12px] font-bold uppercase tracking-widest mb-2"
-                    style={{ color: "rgb(var(--color-text-muted))" }}
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryLegend((v) => !v)}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
                   >
-                    Légende des catégories
-                  </h4>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
-                    {categories.map((cat) => (
-                      <div key={cat.id} className="flex items-center gap-1.5 shrink-0">
-                        <div
-                          className="w-2 h-2 rounded-full shadow-sm"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <span
-                          className="text-[13px] font-medium truncate"
-                          style={{ color: "rgb(var(--color-text-primary))" }}
-                        >
-                          {cat.name}
-                        </span>
+                    {showCategoryLegend ? 'Masquer la légende des catégories' : 'Voir la légende des catégories'}
+                  </button>
+                  {showCategoryLegend && (
+                    <div
+                      className="mt-2 p-2.5 rounded-xl border transition-colors overflow-hidden"
+                      style={{
+                        borderColor: "rgb(var(--color-border))",
+                        backgroundColor: "rgb(var(--color-surface))",
+                      }}
+                    >
+                      <h4
+                        className="text-[12px] font-bold uppercase tracking-widest mb-2"
+                        style={{ color: "rgb(var(--color-text-muted))" }}
+                      >
+                        Légende des catégories
+                      </h4>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
+                        {categories.map((cat) => (
+                          <div key={cat.id} className="flex items-center gap-1.5 min-w-0">
+                            <div
+                              className="w-2 h-2 rounded-full shadow-sm shrink-0"
+                              style={{ backgroundColor: cat.color }}
+                            />
+                            <span
+                              className="text-[13px] font-medium truncate"
+                              style={{ color: "rgb(var(--color-text-primary))" }}
+                            >
+                              {cat.name}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
             {/* Section "Aperçu" retirée — l'UI est suffisamment claire
                 sans : titre + couleur déjà visibles, durée affichée
                 ailleurs si besoin. */}
-
-            <div
-              className={`sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 md:mt-auto border-t flex ${mode === 'edit' ? 'flex-col-reverse sm:flex-row gap-2 sm:gap-3' : ''}`}
-              style={{
-                borderColor: 'rgb(var(--color-border))',
-                backgroundColor: 'rgb(var(--color-surface))',
-                paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
-              }}
-            >
-              {mode === 'edit' && (
-                <Button
-                  type="button"
-                  onClick={handleDelete}
-                  className="min-h-11 sm:flex-1 text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
-                >
-                  Supprimer
-                </Button>
-              )}
-              {mode === 'edit' && handleDuplicate && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleDuplicate}
-                  className="min-h-11 sm:flex-1 text-sm font-semibold rounded-lg transition-all"
-                >
-                  Dupliquer
-                </Button>
-              )}
-              <Button
-                type="submit"
-                className={`min-h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:flex-1' : 'w-full'}`}
-              >
-                {getSubmitButtonText()}
-              </Button>
-            </div>
           </div>
+        </div>
+
+        {/* Actions — footer fixe en bas à droite de la popup, indépendant de
+            la hauteur des colonnes (ne suit plus le contenu de la légende). */}
+        <div
+          className="sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 border-t flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3"
+          style={{
+            borderColor: 'rgb(var(--color-border))',
+            backgroundColor: 'rgb(var(--color-surface))',
+            paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+          }}
+        >
+          {mode === 'edit' && (
+            <Button
+              type="button"
+              onClick={handleDelete}
+              className="min-h-11 sm:w-auto text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
+            >
+              Supprimer
+            </Button>
+          )}
+          {mode === 'edit' && handleDuplicate && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDuplicate}
+              className="min-h-11 sm:w-auto text-sm font-semibold rounded-lg transition-all"
+            >
+              Dupliquer
+            </Button>
+          )}
+          <Button
+            type="submit"
+            className={`min-h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:w-auto' : 'w-full sm:w-auto'}`}
+          >
+            {getSubmitButtonText()}
+          </Button>
         </div>
       </form>
     </>

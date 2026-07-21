@@ -14,6 +14,7 @@ import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import MemberAvatar from '@/components/organization/MemberAvatar';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
+import ColorSettingsModal from '../components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -84,6 +85,7 @@ const AgendaPage: React.FC = () => {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showRecurringManager, setShowRecurringManager] = useState(false);
+  const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false);
 
   // Ouverture directe du modal de création depuis la palette ⌘K (#19).
   const location = useLocation();
@@ -102,6 +104,9 @@ const AgendaPage: React.FC = () => {
   // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
   const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
   const [calendarKey, setCalendarKey] = useState(0);
+  // Plage visible du calendrier desktop — permet de savoir si "aujourd'hui"
+  // est déjà affiché (bouton « Aujourd'hui » → sélecteur de date sinon).
+  const [desktopVisibleRange, setDesktopVisibleRange] = useState<{ start: Date; end: Date } | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
@@ -412,7 +417,12 @@ const AgendaPage: React.FC = () => {
   // Desktop : met à jour la fenêtre chargée selon la plage visible.
   const handleDesktopDatesSet = (info: DatesSetArg) => {
     applyVisibleRange(info.start, info.end);
+    setDesktopVisibleRange({ start: info.start, end: info.end });
   };
+
+  const isDesktopTodayVisible = !!desktopVisibleRange
+    && new Date() >= desktopVisibleRange.start
+    && new Date() < desktopVisibleRange.end;
 
   const isMonthView = mobileViewMode === 'dayGridMonth';
 
@@ -491,6 +501,7 @@ const AgendaPage: React.FC = () => {
           calendarRef={calendarRef}
           setShowRecurringManager={setShowRecurringManager}
           handleOpenAddModal={handleOpenAddModal}
+          isTodayVisible={isDesktopTodayVisible}
         />
 
         {/* ── MOBILE : bandeau jours + label (masqué en vue mois) ── */}
@@ -648,8 +659,14 @@ const AgendaPage: React.FC = () => {
           categories={categories}
           onCreate={handleQuickCreate}
           onClose={handleQuickClose}
+          onAddCategory={() => setShowQuickCategoryModal(true)}
         />
       )}
+
+      <ColorSettingsModal
+        isOpen={showQuickCategoryModal}
+        onClose={() => setShowQuickCategoryModal(false)}
+      />
 
       {showAddEventModal && (
         <EventModal

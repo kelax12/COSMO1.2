@@ -120,6 +120,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // Modal d'ajout groupé à une liste (#23) — remplace l'ancien DropdownMenu
   // (désactivé quand aucune liste manuelle → bouton « Liste » sans réaction).
   const [showBulkListModal, setShowBulkListModal] = useState(false);
+  // Modal de confirmation bloquant pour la suppression groupée (#10).
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   // Nombre de tâches figé à l'ouverture du modal : bulkAddToList vide la
   // sélection, on évite un « 0 tâche » qui clignoterait pendant la fermeture.
   const [bulkModalCount, setBulkModalCount] = useState(0);
@@ -336,33 +338,43 @@ const TaskTable: React.FC<TaskTableProps> = ({
     exitSelectMode();
   };
 
-  const bulkDelete = () => {
-    // On ne supprime en lot que les tâches perso (les collaboratives/reçues
-    // gardent leur flux individuel avec confirmation).
-    const snapshots = tasks.filter(t =>
-      selectedIds.includes(t.id) &&
-      !t.isCollaborative &&
-      !(!isDemo && !!t.userId && !!user?.id && t.userId !== user.id)
+  const confirmBulkDelete = () => {
+    const selected = tasks.filter(t => selectedIds.includes(t.id));
+
+    // Tâches REÇUES (prod) : on n'en est pas propriétaire, la RLS bloque le
+    // DELETE. On quitte plutôt le partage (unshare) — non restaurable via undo.
+    const received = selected.filter(t =>
+      !isDemo && !!t.userId && !!user?.id && t.userId !== user.id
     );
-    snapshots.forEach(t => deleteMutation.mutate(t.id));
-    if (snapshots.length > 0) {
-      showUndoToast(`${snapshots.length} tâche${snapshots.length > 1 ? 's' : ''} supprimée${snapshots.length > 1 ? 's' : ''}`, () => {
-        snapshots.forEach(s => {
+    // Tout le reste (perso + collaboratives dont on est propriétaire) : DELETE
+    // classique, réversible via le toast « Annuler ».
+    const ownedSnapshots = selected.filter(t => !received.includes(t));
+
+    received.forEach(t => {
+      if (user?.id) unshareTaskMutation.mutate({ taskId: t.id, friendId: user.id });
+    });
+    ownedSnapshots.forEach(t => deleteMutation.mutate(t.id));
+
+    if (ownedSnapshots.length > 0) {
+      showUndoToast(`${ownedSnapshots.length} tâche${ownedSnapshots.length > 1 ? 's' : ''} supprimée${ownedSnapshots.length > 1 ? 's' : ''}`, () => {
+        ownedSnapshots.forEach(s => {
           const { id: _id, createdAt: _ca, ...rest } = s;
           createMutation.mutate(rest);
         });
       });
+    } else if (received.length > 0) {
+      toast.success(`Vous avez quitté ${received.length} tâche${received.length > 1 ? 's' : ''} partagée${received.length > 1 ? 's' : ''}`);
     }
-    const skipped = selectedIds.length - snapshots.length;
-    if (skipped > 0) {
-      toast.info(`${skipped} tâche${skipped > 1 ? 's' : ''} collaborative${skipped > 1 ? 's' : ''} ignorée${skipped > 1 ? 's' : ''} — suppression individuelle requise`);
-    }
+
+    setShowBulkDeleteConfirm(false);
     exitSelectMode();
   };
 
   // Menu « ⋯ » : modification groupée de la catégorie / deadline.
-  const bulkSetCategory = (categoryName: string) => {
-    selectedIds.forEach(id => updateMutation.mutate({ id, updates: { category: categoryName } }));
+  // `task.category` stocke l'ID de la catégorie (cf. seed démo `cat-1`..`cat-5`
+  // + useCategoryLookup, qui indexe par id) — jamais le nom affiché.
+  const bulkSetCategory = (categoryId: string, categoryName: string) => {
+    selectedIds.forEach(id => updateMutation.mutate({ id, updates: { category: categoryId } }));
     toast.success(`${selectedIds.length} tâche${selectedIds.length > 1 ? 's' : ''} déplacée${selectedIds.length > 1 ? 's' : ''} vers ${categoryName}`);
     exitSelectMode();
   };
@@ -678,7 +690,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <ListPlus size={16} data-icon="inline-start" />
               <span className="hidden sm:inline">Liste</span>
             </Button>
-            <Button size="sm" variant="outline" onClick={bulkDelete} disabled={selectedIds.length === 0} className="!text-red-500 hover:!bg-red-500/10">
+            <Button size="sm" variant="outline" onClick={() => setShowBulkDeleteConfirm(true)} disabled={selectedIds.length === 0} className="!text-red-500 hover:!bg-red-500/10">
               <Trash2 size={16} data-icon="inline-start" />
               <span className="hidden sm:inline">Supprimer</span>
             </Button>
@@ -760,7 +772,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                                   key={cat.id}
                                   type="button"
                                   role="menuitem"
-                                  onClick={() => bulkSetCategory(cat.name)}
+                                  onClick={() => bulkSetCategory(cat.id, cat.name)}
                                   className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
                                   style={{ color: 'rgb(var(--color-text-primary))' }}
                                 >
@@ -885,6 +897,58 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </button>
                   <button
                     onClick={confirmDelete}
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* Confirmation bloquante de la suppression groupée (#10) */}
+        <AnimatePresence>
+        {showBulkDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
+            onClick={() => setShowBulkDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              <div className="sm:hidden flex justify-center pt-4 pb-3">
+                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+              </div>
+              <div className="p-5 sm:p-6">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
+                  <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
+                  Supprimer {selectedIds.length} tâche{selectedIds.length > 1 ? 's' : ''}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
+                  Êtes-vous sûr de vouloir supprimer {selectedIds.length > 1 ? 'ces' : 'cette'} {selectedIds.length} tâche{selectedIds.length > 1 ? 's' : ''} ? Vous pourrez annuler juste après.
+                </p>
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+                  <button
+                    onClick={() => setShowBulkDeleteConfirm(false)}
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 monochrome:border-neutral-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmBulkDelete}
                     className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
                   >
                     Supprimer

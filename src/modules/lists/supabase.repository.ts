@@ -110,8 +110,30 @@ export class SupabaseListsRepository implements IListsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+
+    // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
+    // de `position` et retombent sur le tri alphabétique (cf. mig. 021). Sans
+    // ce backfill, la nouvelle liste (elle aussi sans position) rejoindrait
+    // ce groupe et s'insérerait alphabétiquement au milieu au lieu
+    // d'apparaître en dernier — donnant l'impression que l'ordre a changé.
+    // On fige donc l'ordre visuel ACTUEL en position explicite pour toutes
+    // les listes concernées, puis on ajoute la nouvelle après tout le monde.
+    const existing = input.position === undefined ? await this.getAll() : [];
+    let nextPosition = input.position;
+    if (nextPosition === undefined) {
+      nextPosition = 1 + Math.max(-1, ...existing.map(l => l.position ?? -1));
+      const toBackfill = existing.filter(l => l.position === undefined);
+      let backfillPos = nextPosition - toBackfill.length;
+      await Promise.all(
+        toBackfill.map((l) =>
+          supabase!.from('lists').update({ position: backfillPos++ }).eq('id', l.id).eq('user_id', user.id)
+        )
+      );
+    }
+
     const dbInput: ListDbInput = {
       ...this.mapToDb(input),
+      position: nextPosition,
       task_ids: [],
       user_id: user.id,
     };

@@ -419,7 +419,6 @@ const DashboardPage: React.FC = () => {
         {weeklyCheckin.shouldShow && !checkinOpen && (
           <motion.div variants={itemVariants}>
             <div className="flex items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
-              <span className="text-xl" aria-hidden="true">📋</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Votre semaine vous attend</p>
                 <p className="text-xs text-[rgb(var(--color-text-muted))]">Faites le point sur vos objectifs — 2 minutes suffisent.</p>

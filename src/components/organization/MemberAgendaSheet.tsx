@@ -415,6 +415,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           task={{ id: '', name: '', priority: 3, category: 'blue', deadline: '', estimatedTime: 60, createdAt: '', bookmarked: false, completed: false }}
           onAddEvent={handleAddEvent}
           prefilledTimeSlot={selectedSlot || undefined}
+          enterprisePublic
         />
       )}
 
@@ -427,6 +428,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           event={selectedEvent}
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}
+          enterprisePublic
         />
       )}
     </div>,

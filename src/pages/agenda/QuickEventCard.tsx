@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Valeur factice interceptée par onValueChange pour ouvrir le gestionnaire de
+// catégories au lieu de sélectionner une catégorie (#option "+ Ajouter").
+const ADD_CATEGORY_VALUE = '__add_category__';
 
 // ── Petite popup de création rapide depuis une plage horaire ────────────────
 interface QuickEventCardProps {
@@ -15,9 +21,11 @@ interface QuickEventCardProps {
   categories: { id: string; name: string; color: string }[];
   onCreate: (title: string, color?: string) => void;
   onClose: () => void;
+  /** Ouvre le gestionnaire de catégories (option « + Ajouter une catégorie »). */
+  onAddCategory?: () => void;
 }
 
-const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCreate, onClose }) => {
+const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCreate, onClose, onAddCategory }) => {
   const [title, setTitle] = useState('');
   const [cat, setCat] = useState(categories[0]?.id ?? '');
   const start = new Date(slot.start);
@@ -60,8 +68,14 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose(); }}
         />
-        {categories.length > 0 && (
-          <Select value={cat} onValueChange={setCat}>
+        {(categories.length > 0 || onAddCategory) && (
+          <Select
+            value={cat}
+            onValueChange={(value) => {
+              if (value === ADD_CATEGORY_VALUE) { onAddCategory?.(); return; }
+              setCat(value);
+            }}
+          >
             <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder="Catégorie" /></SelectTrigger>
             <SelectContent className="z-[70]">
               {categories.map((c) => (
@@ -72,6 +86,17 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
                   </span>
                 </SelectItem>
               ))}
+              {onAddCategory && (
+                <>
+                  {categories.length > 0 && <SelectSeparator />}
+                  <SelectItem value={ADD_CATEGORY_VALUE}>
+                    <span className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
+                      <Plus size={12} aria-hidden="true" />
+                      Ajouter une catégorie
+                    </span>
+                  </SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
         )}

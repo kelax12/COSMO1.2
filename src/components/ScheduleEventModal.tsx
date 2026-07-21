@@ -57,8 +57,11 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
   const categoryColor = useCategoryColor(task?.category ?? '');
 
   const [title, setTitle] = useState('');
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
+  // Date unique + heures de début/fin séparées (au lieu de 2 datetime-local) —
+  // un événement planifié depuis une tâche tient toujours sur un seul jour.
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -66,22 +69,24 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
     // Les champs date/heure restent vides à l'ouverture : l'utilisateur choisit
     // explicitement le créneau (pas de pré-remplissage via defaultSlot).
     setTitle(task?.name ?? '');
-    setStart('');
-    setEnd('');
+    setDate('');
+    setStartTime('');
+    setEndTime('');
     setNotes('');
   }, [open, task]);
 
-  const canSave = title.trim().length > 0 && !!start && !!end;
+  const canSave = title.trim().length > 0 && !!date && !!startTime && !!endTime;
 
   const handleSave = () => {
     if (!canSave || !task) return;
     const payload: CreateEventInput = {
       title: title.trim(),
-      start: localInputToIso(start),
-      end: localInputToIso(end),
+      start: localInputToIso(`${date}T${startTime}`),
+      end: localInputToIso(`${date}T${endTime}`),
       notes: notes.trim() || undefined,
       taskId: task.id,
       color: categoryColor,
+      isPrivate: true,
     };
     createEvent.mutate(payload, { onSuccess: () => onOpenChange(false) });
   };
@@ -113,23 +118,32 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
               }}
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="schedule-event-date">Date</Label>
+            <Input
+              id="schedule-event-date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="schedule-event-start">Début</Label>
+              <Label htmlFor="schedule-event-start-time">Heure de début</Label>
               <Input
-                id="schedule-event-start"
-                type="datetime-local"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
+                id="schedule-event-start-time"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="schedule-event-end">Fin</Label>
+              <Label htmlFor="schedule-event-end-time">Heure de fin</Label>
               <Input
-                id="schedule-event-end"
-                type="datetime-local"
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
+                id="schedule-event-end-time"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
               />
             </div>
           </div>

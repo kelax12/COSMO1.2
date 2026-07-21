@@ -50,6 +50,8 @@ interface TaskListsBarProps {
   submitEditList: () => void;
   handleToggleDefault: (list: TaskList) => void;
   handleReorderLists: (newOrder: TaskList[]) => void;
+  /** Persiste l'ordre courant côté backend — appelé une seule fois au drag-end. */
+  commitReorderLists: () => void;
   handleCreateSmartList: (presetKey: SmartRulePreset) => void;
   startChipLongPress: (listId: string) => void;
   cancelChipLongPress: () => void;
@@ -67,7 +69,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   selectingTasksForListId, selectedTasksForList, setListToDeleteId,
   createListMutation, deleteListMutation,
   clearListFilter, handleListSelect, startSelectingTasks, confirmAddTasksToList, cancelSelectingTasks,
-  startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists,
+  startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists, commitReorderLists,
   handleCreateSmartList, startChipLongPress, cancelChipLongPress,
   onShareList,
 }) => (
@@ -198,6 +200,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             //     = scroll attendu ; drag-to-reorder rentrerait en conflit avec le scroll).
                             // En usage desktop, framer-motion distingue click (mouvement < 4px) du drag.
                             drag={isEditing || isMobile ? false : 'x'}
+                            onDragEnd={commitReorderLists}
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
                             className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
                             onMouseEnter={() => setHoveredListId(list.id)}

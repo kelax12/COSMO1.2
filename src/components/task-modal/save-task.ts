@@ -52,6 +52,10 @@ export interface TaskSaveDeps {
   computeValidationErrors: () => { [key: string]: string };
   setErrors: (errors: { [key: string]: string }) => void;
   onClose: () => void;
+  /** Appelé après une CRÉATION réussie à la place de `onClose` — remet le
+   *  formulaire à zéro sans fermer la popup (saisie rapide de plusieurs
+   *  tâches à la suite). `onClose` reste utilisé pour la mise à jour. */
+  onCreated: (task: Task) => void;
 }
 
 // Construit le payload de création d'une tâche depuis l'état du formulaire.
@@ -119,7 +123,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
     lists, selectedListIds, isTaskOwner, existingShareIds,
     createTaskMutation, updateTaskMutation, addTaskToListMutation,
     removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
-    computeValidationErrors, setErrors, onClose,
+    computeValidationErrors, setErrors, onClose, onCreated,
   } = deps;
 
   const validationErrors = computeValidationErrors();
@@ -134,11 +138,17 @@ export async function runTaskSave(deps: TaskSaveDeps) {
 
   if (isCreating) {
     try {
-      await createTaskWithShares({
+      const newTask = await createTaskWithShares({
         formData, collaborators, pendingInvitesLocal, friends,
         createTaskMutation, shareTaskMutation,
       });
-      onClose();
+      // Listes sélectionnées en création (#23) — createTaskWithShares ne gère
+      // que le partage, pas les listes : sans ceci, « Ajouter à une liste »
+      // n'avait aucun effet à la création (seule l'édition les synchronisait).
+      selectedListIds.forEach(listId => {
+        addTaskToListMutation.mutate({ taskId: newTask.id, listId });
+      });
+      onCreated(newTask);
     } catch (err) {
       console.error('Error creating task:', err);
       setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
