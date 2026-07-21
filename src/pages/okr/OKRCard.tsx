@@ -43,31 +43,6 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
               const remainingTime = end.getTime() - today.getTime();
               const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
               const timeProgress = totalTime > 0 ? Math.min(Math.max((elapsedTime / totalTime) * 100, 0), 100) : 0;
-              
-              // New Logic: Comparison between progress and time elapsed
-              // Using ratio of progress / timeProgress to determine health
-              let hue = 120;
-                const saturation = 80;
-                const lightness = 45;
-
-                if (timeProgress > 0) {
-                    const ratio = progress / timeProgress;
-                    if (ratio >= 1.5) {
-                      hue = 120; // Green for being way ahead
-                    } else if (ratio >= 1.0) {
-                      hue = 145; // Darker/Vibrant Green (on track or slightly ahead)
-                    } else if (ratio >= 0.8) {
-                    hue = 60; // Yellow (slightly behind)
-                  } else if (ratio >= 0.5) {
-                    hue = 30; // Orange (behind)
-                  } else {
-                    hue = 0; // Red (significantly behind)
-                  }
-                }
-              
-              const healthColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.1)`;
-              const healthBorder = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.2)`;
-              const healthText = `hsl(${hue}, ${saturation}%, ${lightness - 5}%)`;
 
               return (
                 <motion.div
@@ -85,7 +60,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   <div className="flex justify-between items-center mb-4 gap-4">
                     <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
-                      <span>{category?.name ?? objective.category}</span>
+                      <span>{category?.name ?? 'Sans catégorie'}</span>
                     </span>
 
                     <div className="flex-1 flex items-center justify-center gap-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
@@ -112,27 +87,37 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     </div>
                   </div>
 
-                  {remainingDays > 0 && (
-                    <div className="mb-4">
-                      <div
-                        className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full backdrop-blur-md border shadow-sm transition-transform group-hover:scale-105 w-fit"
-                        style={{
-                          backgroundColor: healthColor,
-                          borderColor: healthBorder,
-                          color: healthText
-                        }}
-                      >
-                        <span className="flex items-center gap-1.5 whitespace-nowrap">
-                          <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: healthText }}></span>
-                          {remainingDays}j restants
-                        </span>
-                      </div>
+                  {(remainingDays > 0 || totalTime > 0) && (
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                      {remainingDays > 0 && (
+                        <div
+                          className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm transition-transform group-hover:scale-105 w-fit"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-accent) / 0.1)',
+                            borderColor: 'rgb(var(--color-accent) / 0.2)',
+                            color: 'rgb(var(--color-accent))'
+                          }}
+                        >
+                          <span className="whitespace-nowrap">{remainingDays}j restants</span>
+                        </div>
+                      )}
+                      {totalTime > 0 && (
+                        <div
+                          className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm w-fit"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-hover))',
+                            borderColor: 'rgb(var(--color-border))',
+                            color: 'rgb(var(--color-text-secondary))'
+                          }}
+                        >
+                          <span className="whitespace-nowrap">{Math.round(timeProgress)}% du temps écoulé</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   <div>
-                    <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
-                    <p className="text-xs sm:text-sm line-clamp-2 mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
+                    <h3 className="text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
                   </div>
 
                 <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">

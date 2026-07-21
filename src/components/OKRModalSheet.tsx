@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -173,12 +174,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="okr-end">Échéance</Label>
-                <Input
-                  id="okr-end"
-                  type="date"
+                <Label>Échéance</Label>
+                <DatePicker
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={setEndDate}
+                  displayFormat="d MMMM yyyy"
+                  allowClear={false}
                 />
               </div>
             </div>
@@ -237,8 +238,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Durée (min)</Label>
-                      <Input type="number" className="h-8" value={kr.estimatedTime} onChange={(e) => setKR(kr.id, { estimatedTime: Number(e.target.value) })} />
+                      <Label className="text-muted-foreground text-xs">Durée (min) <span className="normal-case font-normal opacity-70">(Facultatif)</span></Label>
+                      <Input
+                        type="number"
+                        className="h-8"
+                        placeholder="0"
+                        value={kr.estimatedTime === 0 ? '' : kr.estimatedTime}
+                        onChange={(e) => setKR(kr.id, { estimatedTime: e.target.value === '' ? 0 : Number(e.target.value) })}
+                      />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs" title="Importance du KR dans la progression globale">Coef. (1–10)</Label>

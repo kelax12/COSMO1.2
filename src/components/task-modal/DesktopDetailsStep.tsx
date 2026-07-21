@@ -4,7 +4,7 @@
 // Extrait verbatim de TaskModalDesktopBody (bloc `step === 1`). Possède ses
 // propres états locaux de création inline catégorie/liste (propres à cette
 // étape). Tout le reste vient des props.
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, AlertCircle, Bookmark, Trash2, List, ChevronDown, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -75,6 +75,16 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
 }) => {
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
+
+  // `isCreating` peut basculer true → false en cours de session (génération
+  // d'un lien de partage pendant la création : la tâche est persistée à la
+  // volée et la popup bascule en édition sans démonter ce composant). Sans ce
+  // sync, `showAllFields` restait figé à `false` et le bouton "Plus d'options"
+  // — rendu seulement quand `isCreating` — disparaissait aussi : tous les
+  // champs (priorité, catégorie, échéance, durée…) devenaient inaccessibles.
+  useEffect(() => {
+    if (!isCreating) setShowAllFields(true);
+  }, [isCreating]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
