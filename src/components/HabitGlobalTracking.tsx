@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type PeriodType = 'week' | 'month' | 'all';
 
@@ -91,7 +92,9 @@ const HabitGlobalTracking: React.FC = () => {
     if (habits.length === 0) return 0;
     const filtered = selectedHabitId === 'all' ? habits : habits.filter((h) => h.id === selectedHabitId);
     const active = filtered.filter((h) => {
-      const created = h.createdAt ? h.createdAt.split('T')[0] : '';
+      // Date locale (en-CA) — évite le décalage J-1 si createdAt (ISO UTC)
+      // et la date de la colonne (locale) divergent au petit matin.
+      const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
       return !created || date >= created;
     });
     if (active.length === 0) return 0;
@@ -195,7 +198,7 @@ const HabitGlobalTracking: React.FC = () => {
           )}
 
           <div
-            className="flex items-center rounded-lg p-1 border transition-colors"
+            className="flex items-center rounded-xl p-1.5 border transition-colors"
             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
           >
             {periodOptions.map((opt) => (
@@ -206,7 +209,7 @@ const HabitGlobalTracking: React.FC = () => {
                   if (opt.value !== 'all') setCurrentDate(new Date());
                   setGlobalPage(0);
                 }}
-                className="px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+                className="px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-sm md:text-base font-semibold transition-all"
                 style={{
                   backgroundColor: period === opt.value ? '#2563EB' : 'transparent',
                   color: period === opt.value ? 'white' : 'rgb(var(--color-text-secondary))',
@@ -217,23 +220,19 @@ const HabitGlobalTracking: React.FC = () => {
             ))}
           </div>
 
-          <select
-            value={selectedHabitId}
-            onChange={(e) => setSelectedHabitId(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-            style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-              color: 'rgb(var(--color-text-primary))',
-            }}
-          >
-            <option value="all">Toutes les habitudes</option>
-            {habits.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.name}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
+            <SelectTrigger className="!h-10 md:!h-11 min-w-[180px] rounded-xl text-sm">
+              <SelectValue placeholder="Toutes les habitudes" />
+            </SelectTrigger>
+            <SelectContent className="z-[70]">
+              <SelectItem value="all">Toutes les habitudes</SelectItem>
+              {habits.map((h) => (
+                <SelectItem key={h.id} value={h.id}>
+                  {h.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -246,7 +245,9 @@ const HabitGlobalTracking: React.FC = () => {
             <div key={rowIndex} className="flex justify-between w-full px-2">
               {rowDays.map((day) => {
                 const active = habits.filter((h) => {
-                  const created = h.createdAt ? h.createdAt.split('T')[0] : '';
+                  // Date locale (en-CA) — évite le décalage J-1 si createdAt (ISO UTC)
+      // et la date de la colonne (locale) divergent au petit matin.
+      const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
                   return !created || day.date >= created;
                 });
                 if (active.length === 0) {

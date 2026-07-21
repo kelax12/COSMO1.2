@@ -30,6 +30,8 @@ import { shouldShowAdWall } from '@/modules/billing/subscription.logic';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
 import HabitsAdGate from '@/components/HabitsAdGate';
+import { useWeeklyFreezeModal } from '@/lib/hooks/use-weekly-freeze-modal';
+import HabitWeeklyFreezeModal from '@/components/HabitWeeklyFreezeModal';
 
 type ViewMode = 'list' | 'table' | 'global';
 
@@ -72,6 +74,9 @@ const HabitsPage: React.FC = () => {
     isPaidSubscriber,
     seenToday,
   });
+
+  // Modale hebdomadaire « gel » (#1) — tous les lundis, à la première visite.
+  const { shouldShow: showWeeklyFreezeModal, dismiss: dismissWeeklyFreezeModal } = useWeeklyFreezeModal();
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
@@ -285,6 +290,12 @@ const HabitsPage: React.FC = () => {
       {showAdWall && (
         <HabitsAdGate onUnlocked={markSeenToday} onDismiss={markSeenToday} />
       )}
+
+      <HabitWeeklyFreezeModal
+        isOpen={showWeeklyFreezeModal && habits.length > 0}
+        habits={habits}
+        onClose={dismissWeeklyFreezeModal}
+      />
     </div>
   );
 };

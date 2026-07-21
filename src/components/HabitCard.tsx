@@ -78,7 +78,9 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     // affiché en bleu glacé avec un flocon de gel (style « streak freeze »
     // Duolingo), distinct du check bleu plein des jours réellement cochés.
     const isJokerDay = !isCompleted && jokerDates.includes(day.date);
-    const createdDate = habit.createdAt ? habit.createdAt.split('T')[0] : '';
+    // Date locale (en-CA), pas split('T')[0] sur l'ISO UTC — sinon J-1 reste
+    // cliquable dans les fuseaux en avance sur UTC (ex. France, tôt le matin).
+    const createdDate = habit.createdAt ? new Date(habit.createdAt).toLocaleDateString('en-CA') : '';
     const isBeforeCreation = createdDate ? day.date < createdDate : false;
     const btnSize = size === 'normal' ? 'w-9 h-9 md:w-10 md:h-10' : 'w-8 h-8 md:w-9 md:h-9';
     const iconSize = size === 'normal' ? 18 : 14;
