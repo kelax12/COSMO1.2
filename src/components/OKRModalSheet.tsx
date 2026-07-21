@@ -238,7 +238,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Durée (min) <span className="normal-case font-normal opacity-70">(Facultatif)</span></Label>
+                      <Label className="text-muted-foreground text-xs whitespace-nowrap">Durée <span className="normal-case font-normal opacity-70">(Facultatif)</span></Label>
                       <Input
                         type="number"
                         className="h-8"

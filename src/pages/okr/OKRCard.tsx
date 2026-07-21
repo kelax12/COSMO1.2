@@ -59,7 +59,9 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   }}>
                   <div className="flex justify-between items-center mb-4 gap-4">
                     <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }} />
+                      {category && (
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: resolveColor(category.color) }} />
+                      )}
                       <span>{category?.name ?? 'Sans catégorie'}</span>
                     </span>
 
