@@ -2,7 +2,7 @@
 // Props alignées sur l'ancien OKRModal (isOpen / onClose) pour un remplacement
 // transparent dans OKRPage. Réutilise getProgress ; aucune logique métier nouvelle.
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import ColorSettingsModal from './ColorSettingsModal';
 import AddCategoryButton from './AddCategoryButton';
 import {
@@ -13,6 +13,12 @@ import {
   SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -76,8 +82,6 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const [endDate, setEndDate] = useState('');
   const [keyResults, setKeyResults] = useState<KRDraft[]>([newKR()]);
   const [showColorSettings, setShowColorSettings] = useState(false);
-  // Réordonnancement des KR par drag & drop (poignée GripVertical).
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -218,30 +222,26 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
             <div className="grid gap-3">
               {keyResults.map((kr, index) => (
-                <div
-                  key={kr.id}
-                  draggable={keyResults.length > 1}
-                  onDragStart={() => setDragIndex(index)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (dragIndex !== null) moveKR(dragIndex, index);
-                    setDragIndex(null);
-                  }}
-                  onDragEnd={() => setDragIndex(null)}
-                  className={`border-border grid gap-3 rounded-lg border p-3 transition-opacity ${dragIndex === index ? 'opacity-50' : ''}`}
-                >
+                <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
                   <div className="flex items-center gap-2">
-                    {keyResults.length > 1 && (
-                      <span
-                        aria-label="Glisser pour réordonner"
-                        title="Glisser pour réordonner"
-                        className="text-muted-foreground shrink-0 cursor-grab active:cursor-grabbing touch-none"
-                      >
-                        <GripVertical size={16} aria-hidden="true" />
-                      </span>
-                    )}
                     <Input value={kr.title} placeholder="Résultat clé mesurable" className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    {keyResults.length > 1 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button type="button" variant="outline" size="icon-sm" aria-label="Réordonner le résultat clé">
+                            <ArrowUpDown aria-hidden="true" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem disabled={index === 0} onClick={() => moveKR(index, index - 1)}>
+                            Monter
+                          </DropdownMenuItem>
+                          <DropdownMenuItem disabled={index === keyResults.length - 1} onClick={() => moveKR(index, index + 1)}>
+                            Descendre
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     {keyResults.length > 1 && (
                       <Button type="button" variant="destructive" size="icon-sm" aria-label="Retirer" onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
                         <Trash2 aria-hidden="true" />
