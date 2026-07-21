@@ -17,6 +17,8 @@ interface DatePickerProps {
   className?: string
   /** Affiche « Pas de date » (onChange('')). Défaut : true. */
   allowClear?: boolean
+  /** Format date-fns du libellé affiché. Défaut : "dd/MM/yyyy". */
+  displayFormat?: string
 }
 
 export function DatePicker({
@@ -25,6 +27,7 @@ export function DatePicker({
   placeholder = "Sélectionner une date",
   className,
   allowClear = true,
+  displayFormat = "dd/MM/yyyy",
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -58,7 +61,7 @@ export function DatePicker({
         >
           <span>
             {selectedDate
-              ? format(selectedDate, "dd/MM/yyyy")
+              ? format(selectedDate, displayFormat, { locale: fr })
               : placeholder}
           </span>
           <CalendarIcon size={16} />
@@ -94,6 +97,16 @@ export function DatePicker({
           onSelect={handleSelect}
           locale={fr}
           initialFocus
+          className="w-full"
+          classNames={{
+            root: "w-full",
+            months: "w-full",
+            month: "w-full",
+            weekdays: "flex w-full",
+            weekday: "flex-1 text-center",
+            week: "mt-2 flex w-full",
+            day: "group/day relative flex-1 aspect-square rounded-[var(--cell-radius)] p-0 text-center select-none",
+          }}
         />
       </PopoverContent>
     </Popover>

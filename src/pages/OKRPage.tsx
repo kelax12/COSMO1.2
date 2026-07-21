@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '@/modules/auth/AuthContext';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,9 +33,8 @@ const OKRPage: React.FC = () => {
   const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
   const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
   const location = useLocation();
-  const { isDemo } = useAuth();
-  // Bouton "Check-in hebdo" visible uniquement en mode démo pour tester le
-  // composant (en prod il s'auto-déclenche lundi/mardi depuis le Dashboard).
+  // Le check-in hebdo peut aussi être ouvert manuellement (bouton), en plus de
+  // l'auto-déclenchement lundi/mardi depuis le Dashboard.
   const [showCheckin, setShowCheckin] = useState(false);
   // Use new OKR module hooks
   const { data: objectives = [], isLoading: isLoadingOkrs, isError: isOkrsError, error: okrsError, refetch: refetchOkrs } = useOkrs();
@@ -301,22 +299,19 @@ const OKRPage: React.FC = () => {
       </div>
 
       <div className="hidden sm:flex justify-end mb-8 gap-3">
-        {/* Bouton démo : ouvrir le check-in hebdo manuellement. En prod il
-            s'auto-déclenche lundi/mardi via le Dashboard. */}
-        {isDemo && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowCheckin(true)}
-            className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-            aria-label="Ouvrir le check-in hebdo (démo)"
-            title="Disponible uniquement en mode démo — en production le check-in s'ouvre automatiquement lundi/mardi depuis le Dashboard"
-          >
-            <CalendarCheck size={15} />
-            <span>Check-in hebdo</span>
-            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">démo</span>
-          </motion.button>
-        )}
+        {/* Ouvrir le check-in hebdo manuellement — en plus de l'auto-déclenchement
+            lundi/mardi depuis le Dashboard, disponible en démo ET en production. */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowCheckin(true)}
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          aria-label="Ouvrir le check-in hebdo"
+          title="Faire le point sur vos OKR — s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
+        >
+          <CalendarCheck size={15} />
+          <span>Check-in hebdo</span>
+        </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -330,20 +325,17 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Bouton démo mobile — affiché sous le H1 */}
-      {isDemo && (
-        <div className="sm:hidden mb-4">
-          <button
-            type="button"
-            onClick={() => setShowCheckin(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900"
-          >
-            <CalendarCheck size={18} />
-            <span>Ouvrir le check-in hebdo</span>
-            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">démo</span>
-          </button>
-        </div>
-      )}
+      {/* Bouton mobile — affiché sous le H1, disponible en démo ET en production */}
+      <div className="sm:hidden mb-4">
+        <button
+          type="button"
+          onClick={() => setShowCheckin(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900"
+        >
+          <CalendarCheck size={18} />
+          <span>Ouvrir le check-in hebdo</span>
+        </button>
+      </div>
 
       <CategoryFilterBar
         categories={categories}
