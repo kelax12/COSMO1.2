@@ -102,5 +102,19 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		// `monochrome:` — variant haute accessibilité (thème "Noir", cf.
+		// useDarkMode.ts) : cible tout descendant de .monochrome. Sans ce
+		// plugin, les classes `monochrome:*` utilisées dans toute l'app sont
+		// silencieusement ignorées (aucun sélecteur généré).
+		// Sélecteur `html.monochrome &` (et pas juste `.monochrome &`) pour
+		// gagner en spécificité sur `dark:` (`:is(.dark *)`) — sinon l'ordre
+		// d'émission CSS des variants plugin vs core variants n'est pas
+		// garanti et `dark:bg-*` peut rester visuellement prioritaire même
+		// quand .monochrome est bien présent sur <html>.
+		require("tailwindcss/plugin")(function ({ addVariant }) {
+			addVariant("monochrome", "html.monochrome &");
+		}),
+	],
 };

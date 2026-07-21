@@ -45,7 +45,10 @@ const TeamTaskModal = ({
 }: TeamTaskModalProps) => {
   const [name, setName] = useState(task?.name ?? '');
   const [description, setDescription] = useState(task?.description ?? '');
-  const [priority, setPriority] = useState(task?.priority ?? 3);
+  // Pas de présélection en création : tant que l'utilisateur n'a pas cliqué
+  // une priorité, aucune n'apparaît « choisie ». Le fallback à 3 (défaut DB,
+  // mig. 062) n'intervient qu'au save, si le champ reste vraiment vide.
+  const [priority, setPriority] = useState<number | null>(task?.priority ?? null);
   const [deadline, setDeadline] = useState(task?.deadline ?? '');
   const [estimatedTime, setEstimatedTime] = useState(task?.estimatedTime?.toString() ?? '');
   const [projectId, setProjectId] = useState(task?.projectId ?? defaultProjectId ?? projects[0]?.id ?? '');
@@ -83,7 +86,7 @@ const TeamTaskModal = ({
     const common = {
       name: name.trim(),
       description: description.trim(),
-      priority,
+      ...(priority !== null ? { priority } : {}),
       deadline,
       ...(minutes !== undefined && !Number.isNaN(minutes) ? { estimatedTime: minutes } : {}),
       assigneeIds,

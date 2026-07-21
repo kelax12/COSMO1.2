@@ -363,11 +363,22 @@ const TasksPage: React.FC = () => {
   };
 
   // Réordonne les listes (drag-to-reorder).
-  // 1. Update immédiat du state local → l'UI ne snap-back pas.
-  // 2. Push les diffs vers le backend en arrière-plan.
+  // Framer Motion appelle `onReorder` en continu pendant le drag (à chaque
+  // fois que l'item survole un voisin), pas une seule fois à la fin. On ne
+  // met donc à jour QUE le state local ici (optimiste, pas de snap-back) ;
+  // la persistance backend est déférée à `commitReorderLists` (drag-end),
+  // sinon un seul geste de drag déclenche une rafale de mutations
+  // concurrentes sur les mêmes lignes — source du faux positif « Impossible
+  // de modifier la liste : ressource introuvable » alors que l'ordre
+  // final était pourtant correct.
   const handleReorderLists = (newOrder: TaskList[]) => {
     setOrderedLists(newOrder);
-    newOrder.forEach((list, idx) => {
+  };
+
+  // Committe l'ordre courant vers le backend — appelé une seule fois au
+  // relâchement du drag (onDragEnd sur chaque Reorder.Item).
+  const commitReorderLists = () => {
+    orderedLists.forEach((list, idx) => {
       if (list.position !== idx) {
         updateListMutation.mutate({ id: list.id, updates: { position: idx } });
       }
@@ -468,6 +479,7 @@ const TasksPage: React.FC = () => {
                 submitEditList={submitEditList}
                 handleToggleDefault={handleToggleDefault}
                 handleReorderLists={handleReorderLists}
+                commitReorderLists={commitReorderLists}
                 onShareList={(list) => setShareListTarget(list)}
                 handleCreateSmartList={handleCreateSmartList}
                 startChipLongPress={startChipLongPress}

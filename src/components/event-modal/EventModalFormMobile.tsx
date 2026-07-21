@@ -16,7 +16,6 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   title, setTitle, startDate, setStartDate, startTime, setStartTime,
   setEndDate, endTime, setEndTime, notes, setNotes, color, setColor,
   recurrence, setRecurrence, recurrenceDays, setShowDaysModal,
-  isPrivate, setIsPrivate, showPrivacy,
   showDescription, setShowDescription, setIsColorSettingsOpen,
   categories, lockedSet, register, isInvalid,
   handleFieldChange, doSave, handleDelete, handleDuplicate,
@@ -212,29 +211,6 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                   : 'Choisir'}
               </span>
             </button>
-          </>
-        )}
-        {/* Privé (F-1) — membre d'une organisation uniquement */}
-        {showPrivacy && (
-          <>
-            <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
-            <div className="flex items-center px-4 min-h-11 gap-3">
-              <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Privé</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isPrivate}
-                aria-label="Événement privé — invisible pour votre hiérarchie"
-                onClick={() => setIsPrivate((v) => !v)}
-                className="relative inline-flex h-6 w-10 items-center rounded-full transition-colors"
-                style={{ backgroundColor: isPrivate ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))' }}
-              >
-                <span
-                  className="inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform"
-                  style={{ transform: isPrivate ? 'translateX(18px)' : 'translateX(2px)' }}
-                />
-              </button>
-            </div>
           </>
         )}
       </div>

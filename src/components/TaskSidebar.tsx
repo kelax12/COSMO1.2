@@ -336,14 +336,14 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 )}
                 
                     <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: getCategoryColor(task.category) }}
                       />
-                      <span className={`font-medium text-sm ${isPlaced ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
+                      <span className={`font-medium text-sm truncate ${isPlaced ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
                         {task.bookmarked && (
-                          <Bookmark size={14} className="favorite-icon filled" />
+                          <Bookmark size={14} className="favorite-icon filled shrink-0" />
                         )}
                     </div>
                     <div className="flex flex-col items-end gap-1">

@@ -1,20 +1,19 @@
-// Feuille de confirmation de suppression de tâche — extraite de TaskModal.tsx.
-// Bottom-sheet mobile / dialog desktop, gère son propre useBottomSheet (drag-to-close).
+// Confirmation avant fermeture avec modifications non sauvegardées (#40) —
+// modale interne à l'app (remplace l'ancien window.confirm de confirm-discard.ts,
+// non stylable et incohérent avec le reste de l'UI). Même pattern que
+// DeleteTaskConfirm (bottom-sheet mobile / dialog desktop, drag-to-close).
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
-interface DeleteTaskConfirmProps {
+interface ConfirmDiscardDialogProps {
   isOpen: boolean;
   onCancel: () => void;
   onConfirm: () => void;
-  isLoading: boolean;
-  /** false = tâche reçue d'un partage : on quitte, on ne supprime pas pour tout le monde. */
-  isTaskOwner?: boolean;
 }
 
-const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel, onConfirm, isLoading, isTaskOwner = true }) => {
+const ConfirmDiscardDialog: React.FC<ConfirmDiscardDialogProps> = ({ isOpen, onCancel, onConfirm }) => {
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onCancel);
 
   return (
@@ -42,16 +41,14 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
               <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
             </div>
             <div className="p-5 sm:p-6">
-              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
-                <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
+              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
+                <AlertTriangle className="text-amber-600 dark:text-amber-400 monochrome:text-neutral-300" size={24} />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
-                {isTaskOwner ? 'Supprimer la tâche' : 'Quitter la tâche partagée'}
+                Abandonner les modifications ?
               </h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                {isTaskOwner
-                  ? 'Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.'
-                  : 'Vous quitterez cette tâche partagée — elle restera visible pour son propriétaire et les autres collaborateurs.'}
+                Les modifications non enregistrées seront perdues.
               </p>
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                 <button
@@ -59,15 +56,14 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
                   onClick={onCancel}
                   className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 monochrome:border-neutral-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 >
-                  Annuler
+                  Continuer la saisie
                 </button>
                 <button
                   type="button"
                   onClick={onConfirm}
-                  disabled={isLoading}
-                  className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10 disabled:opacity-50"
+                  className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
                 >
-                  {isLoading ? (isTaskOwner ? 'Suppression…' : 'Départ…') : (isTaskOwner ? 'Supprimer' : 'Quitter')}
+                  Abandonner
                 </button>
               </div>
             </div>
@@ -78,4 +74,4 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
   );
 };
 
-export default DeleteTaskConfirm;
+export default ConfirmDiscardDialog;

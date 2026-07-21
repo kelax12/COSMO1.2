@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
-import { confirmDiscard } from '@/lib/confirm-discard';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
 
@@ -34,6 +33,7 @@ import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask,
 // BillingContext — vérification premium côté serveur
 // ═══════════════════════════════════════════════════════════════════
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useIsDemo } from '@/lib/app-mode.store';
 
 // Logique de validation pure extraite (cf. task-modal/validation.ts).
 import {
@@ -96,6 +96,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const cancelFriendRequestMutation = useRejectFriendRequest();
 
   const { user } = useAuth();
+  const isDemo = useIsDemo();
 
   // Propriétaire de la tâche : seul lui peut gérer les collaborateurs (la policy
   // RLS shared_tasks_insert exige auth.uid() = shared_by + propriété de la tâche).
@@ -172,6 +173,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const [inputError, setInputError] = useState<string | null>(null);
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  // Section Description masquée par défaut (même système que le formulaire
+  // événement, cf. EventModal.tsx) — visible seulement si la tâche a déjà une
+  // description (édition), sinon bouton « + Ajouter une description ».
+  const [showDescription, setShowDescription] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [step, setStep] = useState(1);
@@ -235,6 +241,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       // saisie (sans initialData — le flux OKR garde ses champs pré-remplis),
       // on restaure le brouillon au lieu de repartir de zéro.
       const draft = !initialData ? readDraft() : null;
+      const draftOrInitialDescription = draft ? (draft.description ?? '') : (initialData?.description || '');
+      setShowDescription(Boolean(draftOrInitialDescription.length > 0));
       // Les brouillons antérieurs n'ont pas de champ subtasks → fallback [].
       setFormData(draft ? { ...draft, subtasks: draft.subtasks ?? [] } : {
         name: initialData?.name || '',
@@ -269,6 +277,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       setErrors({});
       setShowCollaboratorSection(showCollaborators);
     } else if (task) {
+      setShowDescription(Boolean(task.description && task.description.length > 0));
       setFormData({
         name: task.name || '',
         description: task.description || '',
@@ -426,15 +435,48 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     dClear(field);
   };
 
+  // Après une création réussie : au lieu de fermer la popup, on la remet à
+  // zéro pour permettre la saisie enchaînée de plusieurs tâches sans
+  // réouvrir le modal à chaque fois.
+  const resetCreateForm = (createdTaskName: string) => {
+    clearDraft();
+    setFormData({
+      name: '',
+      description: '',
+      priority: 0,
+      category: '',
+      deadline: '',
+      estimatedTime: 0,
+      completed: false,
+      bookmarked: false,
+      isFromOKR: false,
+      krId: '',
+      recurrence: 'none',
+      subtasks: [],
+    });
+    setOkrFields({});
+    setCollaborators([]);
+    setCollaboratorsDirty(false);
+    setPendingInvitesLocal([]);
+    setSelectedListIds([]);
+    setHasChanges(false);
+    setErrors({});
+    setShowCollaboratorSection(showCollaborators);
+    setStep(1);
+    toast.success(`Tâche « ${createdTaskName} » créée`);
+  };
+
   const handleSave = async () => {
     await runTaskSave({
       isCreating: effectiveIsCreating, task: effectiveTask, formData, collaborators, collaboratorsDirty, pendingInvitesLocal, friends,
       lists, selectedListIds, isTaskOwner, existingShareIds,
       createTaskMutation, updateTaskMutation, addTaskToListMutation,
       removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
-      // onClose n'est appelé par runTaskSave qu'en cas de SUCCÈS → on peut
-      // purger le brouillon (#47) ici sans risquer de perdre une saisie.
+      // onClose n'est appelé par runTaskSave qu'en cas de succès de MISE À
+      // JOUR → on peut purger le brouillon (#47) ici sans risquer de perdre
+      // une saisie. La CRÉATION passe par onCreated (reset, pas de fermeture).
       computeValidationErrors, setErrors, onClose: () => { clearDraft(); onClose(); },
+      onCreated: (task) => resetCreateForm(task.name),
     });
   };
 
@@ -481,6 +523,31 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const confirmDelete = () => {
     if (effectiveTask) {
       const taskSnapshot = effectiveTask;
+
+      // Tâche reçue (prod, non-propriétaire) : un collaborateur en rôle
+      // "editor" peut légitimement DELETE la ligne côté RLS — ce qui
+      // supprimerait la tâche pour TOUT LE MONDE (propriétaire + autres
+      // collaborateurs), alors qu'un non-propriétaire ne devrait retirer
+      // que son propre accès. On quitte le partage au lieu de supprimer.
+      if (!isDemo && !isTaskOwner && user?.id) {
+        unshareTaskMutation.mutate(
+          { taskId: taskSnapshot.id, friendId: user.id },
+          {
+            onSuccess: () => {
+              setShowDeleteConfirm(false);
+              onClose();
+              toast.success('Vous avez quitté la tâche partagée');
+            },
+            onError: (err) => {
+              console.error('Leave shared task failed', err);
+              setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+              setShowDeleteConfirm(false);
+            },
+          }
+        );
+        return;
+      }
+
       deleteTaskMutation.mutate(effectiveTask.id, {
         onSuccess: () => {
           setShowDeleteConfirm(false);
@@ -504,7 +571,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // #40 — en édition, une fermeture avec changements non sauvés demande
     // confirmation. En création, le brouillon (useFormDraft) protège déjà la
     // saisie : fermer est sans perte, pas de friction inutile.
-    if (!effectiveIsCreating && !confirmDiscard(hasChanges)) return;
+    if (!effectiveIsCreating && hasChanges) { setShowDiscardConfirm(true); return; }
+    onClose();
+  };
+  const confirmDiscardClose = () => {
+    setShowDiscardConfirm(false);
     onClose();
   };
 
@@ -608,6 +679,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // actions
     handleSave, handleDelete, confirmDelete, handleClose, onGenerateShareLink,
     showDeleteConfirm, setShowDeleteConfirm,
+    showDiscardConfirm, setShowDiscardConfirm, confirmDiscardClose,
+    showDescription, setShowDescription,
     showCategoryModal, setShowCategoryModal,
     isLoading, isMobile,
   };

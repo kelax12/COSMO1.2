@@ -1,9 +1,12 @@
 // En-tête desktop de l'agenda (toggle tâches, zoom, sélecteur de vue, nav,
 // récurrences, nouveau) — extrait verbatim de AgendaPage, prop-driven.
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Plus, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { fr } from 'date-fns/locale';
 import type FullCalendar from '@fullcalendar/react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 interface AgendaDesktopHeaderProps {
   showTaskSidebar: boolean;
@@ -17,12 +20,20 @@ interface AgendaDesktopHeaderProps {
   calendarRef: React.RefObject<FullCalendar>;
   setShowRecurringManager: React.Dispatch<React.SetStateAction<boolean>>;
   handleOpenAddModal: () => void;
+  /** Le jour courant (aujourd'hui) est déjà dans la plage affichée par le calendrier. */
+  isTodayVisible: boolean;
 }
 
 const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
   showTaskSidebar, setShowTaskSidebar, handleZoomIn, handleZoomOut, zoomLevel, zoomDurations,
   handleViewChange, currentView, calendarRef, setShowRecurringManager, handleOpenAddModal,
-}) => (
+  isTodayVisible,
+}) => {
+  // Aujourd'hui est déjà affiché : le bouton « Aujourd'hui » ne ferait rien —
+  // il ouvre plutôt un sélecteur pour naviguer vers une autre date.
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  return (
         <div className="hidden md:block">
           <motion.div
             initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
@@ -41,7 +52,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                   color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))',
                 }}
               >
-                <Calendar size={18} />
+                <CalendarIcon size={18} />
                 <span className="font-medium text-sm lg:text-base">Tâches</span>
               </motion.button>
 
@@ -81,13 +92,34 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <ChevronLeft size={18} />
                   </motion.button>
-                  {/* Retour à aujourd'hui (#16) */}
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    onClick={() => calendarRef.current?.getApi().today()}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:text-blue-600 hover:border-blue-400/60"
-                    style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}>
-                    Aujourd'hui
-                  </motion.button>
+                  {/* Retour à aujourd'hui (#16) — si aujourd'hui est déjà
+                      affiché, ouvre plutôt un sélecteur pour aller ailleurs. */}
+                  <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+                    <PopoverTrigger asChild>
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          if (isTodayVisible) { setShowDatePicker(true); return; }
+                          calendarRef.current?.getApi().today();
+                        }}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:text-blue-600 hover:border-blue-400/60"
+                        style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}>
+                        Aujourd'hui
+                      </motion.button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[100]" align="center" sideOffset={8}>
+                      <Calendar
+                        mode="single"
+                        selected={undefined}
+                        onSelect={(d) => {
+                          if (!d) return;
+                          calendarRef.current?.getApi().gotoDate(d);
+                          setShowDatePicker(false);
+                        }}
+                        locale={fr}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => calendarRef.current?.getApi().next()}
                     className="p-2 rounded-lg transition-colors hover:text-blue-600"
@@ -114,6 +146,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
             </div>
           </motion.div>
         </div>
-);
+  );
+};
 
 export default AgendaDesktopHeader;

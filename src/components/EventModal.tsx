@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
-import { confirmDiscard } from '@/lib/confirm-discard';
 import { useInvalidShake } from "@/hooks/use-invalid-shake";
 import ColorSettingsModal from "./ColorSettingsModal";
+import ConfirmDiscardDialog from "./ConfirmDiscardDialog";
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Types (MIGRÉ)
@@ -20,7 +20,6 @@ import { CalendarEvent, EventRecurrence } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 import { useFavoriteColors } from '@/modules/ui-states';
-import { useActiveOrganization } from '@/modules/organizations';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
@@ -67,6 +66,14 @@ type EventModalProps = {
    * date imposés, seuls horaires et catégorie restent éditables).
    */
   lockedFields?: ('title' | 'startDate' | 'endDate')[];
+  /**
+   * Événement créé côté « mode entreprise » (ex. manager planifiant dans
+   * l'agenda d'un subordonné via MemberAgendaSheet) : visible par la
+   * hiérarchie (`isPrivate: false`). Par défaut (espace personnel de
+   * l'utilisateur — Agenda, Tâches, Habitudes, OKR…) l'événement est
+   * toujours privé, sans choix possible pour l'utilisateur (F-1).
+   */
+  enterprisePublic?: boolean;
 };
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -82,6 +89,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onDuplicateEvent,
   onConvert,
   lockedFields = [],
+  enterprisePublic = false,
 }) => {
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
@@ -111,22 +119,26 @@ const EventModal: React.FC<EventModalProps> = ({
   const [color, setColor] = useState(categories[0]?.color || "#3B82F6");
   const [recurrence, setRecurrence] = useState<EventRecurrence>('none');
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
-  // Privé (F-1) : proposé uniquement aux membres d'une organisation.
-  const [isPrivate, setIsPrivate] = useState(false);
-  const { activeOrg } = useActiveOrganization();
-  const showPrivacy = !!activeOrg;
+  // Privé (F-1) : aucun choix utilisateur — toujours privé dans l'espace
+  // personnel, toujours public (visible hiérarchie) en mode entreprise.
+  const isPrivate = !enterprisePublic;
   const [showDaysModal, setShowDaysModal] = useState(false);
   const [prefilledFields, setPrefilledFields] = useState<Set<string>>(new Set());
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // #40 — snapshot des valeurs initiales (mode édition) : une fermeture avec
   // des changements non sauvés demande confirmation. En création, le brouillon
   // (useFormDraft) protège déjà la saisie.
   const initialSnapshotRef = React.useRef<string>('');
-  const currentSnapshot = JSON.stringify([title, startDate, startTime, endDate, endTime, notes, color, recurrence, recurrenceDays, isPrivate]);
+  const currentSnapshot = JSON.stringify([title, startDate, startTime, endDate, endTime, notes, color, recurrence, recurrenceDays]);
   const isEditDirty = mode === 'edit' && initialSnapshotRef.current !== '' && currentSnapshot !== initialSnapshotRef.current;
   const guardedClose = () => {
-    if (!confirmDiscard(isEditDirty)) return;
+    if (isEditDirty) { setShowDiscardConfirm(true); return; }
+    onClose();
+  };
+  const confirmDiscardClose = () => {
+    setShowDiscardConfirm(false);
     onClose();
   };
 
@@ -148,7 +160,6 @@ const EventModal: React.FC<EventModalProps> = ({
       setColor(event.color || "#3B82F6");
       setRecurrence(event.recurrence ?? 'none');
       setRecurrenceDays(event.recurrenceDays ?? []);
-      setIsPrivate(event.isPrivate ?? false);
 
       const start = new Date(event.start);
       const end = new Date(event.end);
@@ -169,12 +180,10 @@ const EventModal: React.FC<EventModalProps> = ({
         event.title || "", startD, startT, endD, endT,
         event.notes || "", event.color || "#3B82F6",
         event.recurrence ?? 'none', event.recurrenceDays ?? [],
-        event.isPrivate ?? false,
       ]);
     } else if (mode === 'add' && task) {
       setRecurrence('none');
       setRecurrenceDays([]);
-      setIsPrivate(false);
       setTitle(task.name || "");
       if (task.name) prefilled.add("title");
 
@@ -362,7 +371,6 @@ const EventModal: React.FC<EventModalProps> = ({
     setColor(categories[0]?.color || "#3B82F6");
     setRecurrence('none');
     setRecurrenceDays([]);
-    setIsPrivate(false);
   };
 
   // Suppression directe sans popup de confirmation : le parent (AgendaPage)
@@ -418,9 +426,6 @@ const EventModal: React.FC<EventModalProps> = ({
           setRecurrence={setRecurrence}
           recurrenceDays={recurrenceDays}
           setShowDaysModal={setShowDaysModal}
-          isPrivate={isPrivate}
-          setIsPrivate={setIsPrivate}
-          showPrivacy={showPrivacy}
           showDescription={showDescription}
           setShowDescription={setShowDescription}
           setIsColorSettingsOpen={setIsColorSettingsOpen}
@@ -445,6 +450,12 @@ const EventModal: React.FC<EventModalProps> = ({
       <ColorSettingsModal
         isOpen={isColorSettingsOpen}
         onClose={() => setIsColorSettingsOpen(false)}
+      />
+
+      <ConfirmDiscardDialog
+        isOpen={showDiscardConfirm}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={confirmDiscardClose}
       />
 
       {/* Modal de sélection des jours de répétition (récurrence personnalisée) */}
