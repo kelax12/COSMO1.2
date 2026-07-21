@@ -7,6 +7,9 @@ import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { getLastVisitedPage } from '@/modules/ui-states';
+// Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
+// Vite + React Router, hébergé sur Vercel (cf. vercel.json).
+import { Analytics } from '@vercel/analytics/react';
 
 // Providers
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -252,6 +255,7 @@ const App: React.FC = () => {
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
+            <Analytics />
             </MotionConfig>
           </TooltipProvider>
         </BillingProvider>
