@@ -43,6 +43,13 @@ const HabitGlobalTracking: React.FC = () => {
         d.setHours(0, 0, 0, 0);
         if (d < oldest) oldest = d;
       }
+      // Une complétion peut être antérieure à la création (un jour passé peut
+      // être coché librement) — la fenêtre « Tout » doit alors remonter jusqu'à elle.
+      Object.keys(h.completions).forEach((dateStr) => {
+        const [y, m, dd] = dateStr.split('-').map(Number);
+        const d = new Date(y, m - 1, dd);
+        if (d < oldest) oldest = d;
+      });
     });
     const sevenAgo = new Date();
     sevenAgo.setDate(sevenAgo.getDate() - 7);
@@ -92,10 +99,10 @@ const HabitGlobalTracking: React.FC = () => {
     if (habits.length === 0) return 0;
     const filtered = selectedHabitId === 'all' ? habits : habits.filter((h) => h.id === selectedHabitId);
     const active = filtered.filter((h) => {
-      // Date locale (en-CA) — évite le décalage J-1 si createdAt (ISO UTC)
-      // et la date de la colonne (locale) divergent au petit matin.
+      // Une habitude compte pour un jour si elle existait déjà, OU si elle a été
+      // cochée ce jour-là (un jour passé antérieur à la création reste cochable).
       const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
-      return !created || date >= created;
+      return !created || date >= created || h.completions[date];
     });
     if (active.length === 0) return 0;
     return Math.round((active.filter((h) => h.completions[date]).length / active.length) * 100);
@@ -245,10 +252,10 @@ const HabitGlobalTracking: React.FC = () => {
             <div key={rowIndex} className="flex justify-between w-full px-2">
               {rowDays.map((day) => {
                 const active = habits.filter((h) => {
-                  // Date locale (en-CA) — évite le décalage J-1 si createdAt (ISO UTC)
-      // et la date de la colonne (locale) divergent au petit matin.
-      const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
-                  return !created || day.date >= created;
+                  // Existe déjà ce jour-là, OU cochée ce jour-là (un jour passé
+                  // antérieur à la création reste cochable et doit compter).
+                  const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
+                  return !created || day.date >= created || h.completions[day.date];
                 });
                 if (active.length === 0) {
                   return (

@@ -30,8 +30,6 @@ import { shouldShowAdWall } from '@/modules/billing/subscription.logic';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
 import HabitsAdGate from '@/components/HabitsAdGate';
-import { useWeeklyFreezeModal } from '@/lib/hooks/use-weekly-freeze-modal';
-import HabitWeeklyFreezeModal from '@/components/HabitWeeklyFreezeModal';
 
 type ViewMode = 'list' | 'table' | 'global';
 
@@ -74,11 +72,6 @@ const HabitsPage: React.FC = () => {
     isPaidSubscriber,
     seenToday,
   });
-
-  // Modale hebdomadaire « gel » (#1) — tous les lundis, à la première visite.
-  const { shouldShow: showWeeklyFreezeModal, dismiss: dismissWeeklyFreezeModal } = useWeeklyFreezeModal();
-  // TODO(temporaire) : bouton de test pour ouvrir la modale gel hors lundi — à retirer après validation.
-  const [forceShowFreezeModal, setForceShowFreezeModal] = useState(false);
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
@@ -165,14 +158,6 @@ const HabitsPage: React.FC = () => {
             <Plus size={18} />
             <span>Nouvelle</span>
           </motion.button>
-
-          {/* TODO(temporaire) : test manuel de la modale gel — à retirer après validation. */}
-          <button
-            onClick={() => setForceShowFreezeModal(true)}
-            className="flex-none px-3 py-2 rounded-lg text-xs font-semibold border border-dashed border-cyan-500 text-cyan-600 dark:text-cyan-300"
-          >
-            Tester la modale gel
-          </button>
         </div>
       </div>
 
@@ -300,15 +285,6 @@ const HabitsPage: React.FC = () => {
       {showAdWall && (
         <HabitsAdGate onUnlocked={markSeenToday} onDismiss={markSeenToday} />
       )}
-
-      <HabitWeeklyFreezeModal
-        isOpen={(showWeeklyFreezeModal || forceShowFreezeModal) && habits.length > 0}
-        habits={habits}
-        onClose={() => {
-          dismissWeeklyFreezeModal();
-          setForceShowFreezeModal(false);
-        }}
-      />
     </div>
   );
 };
