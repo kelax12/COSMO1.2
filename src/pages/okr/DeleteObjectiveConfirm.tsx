@@ -44,7 +44,7 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
                     <Button variant="outline" className="flex-1 min-h-11" onClick={() => setDeletingObjective(null)}>
                       Annuler
                     </Button>
-                    <Button variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteObjective(deletingObjective)}>
+                    <Button variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white" onClick={() => deleteObjective(deletingObjective)}>
                       Supprimer
                     </Button>
                   </div>

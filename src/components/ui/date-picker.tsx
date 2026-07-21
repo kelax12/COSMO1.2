@@ -68,7 +68,11 @@ export function DatePicker({
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-auto p-0 z-[100]" align="start" sideOffset={8}>
+      <PopoverContent
+        className="w-[min(22rem,var(--radix-popover-trigger-width,22rem))] min-w-[280px] p-0 z-[100]"
+        align="start"
+        sideOffset={8}
+      >
         {/* Presets au-dessus du calendrier (#25) */}
         <div className="flex flex-wrap gap-1.5 p-2 border-b border-border">
           {buildDatePresets().map((preset) => (
@@ -97,7 +101,7 @@ export function DatePicker({
           onSelect={handleSelect}
           locale={fr}
           initialFocus
-          className="w-full"
+          className="w-full p-3 [--cell-size:2.5rem]"
           classNames={{
             root: "w-full",
             months: "w-full",

@@ -37,7 +37,7 @@ const DeleteCategoryConfirm: React.FC<DeleteCategoryConfirmProps> = ({ open, cat
                 <Button variant="outline" className="flex-1 min-h-11" onClick={onCancel}>
                   Annuler
                 </Button>
-                <Button variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 text-white" onClick={onConfirm}>
+                <Button variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white" onClick={onConfirm}>
                   Supprimer
                 </Button>
               </div>
