@@ -3,8 +3,11 @@
 // Extrait verbatim de statistics/sections.tsx (god-component refactor).
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import type { Habit } from '@/modules/habits';
 import { getLocalDateString } from '../../lib/workTimeCalculator';
+
+type HeatmapCell = { date: Date; dateStr: string; completed: number; total: number; rate: number; isFuture: boolean };
 
 export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const WEEKS = 26;
@@ -14,6 +17,9 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(embedded ? 28 : 13);
   const CELL = cellSize;
+  // Tooltip rendu via portail (document.body) pour ne jamais être découpé
+  // par l'overflow-y-auto du conteneur défilant (bug : tooltip masqué en arrière-plan).
+  const [hovered, setHovered] = useState<{ cell: HeatmapCell; rect: DOMRect } | null>(null);
 
   useEffect(() => {
     if (embedded) return;
@@ -39,7 +45,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     const dow = firstDay.getDay();
     firstDay.setDate(firstDay.getDate() + (dow === 0 ? 1 : dow === 1 ? 0 : 8 - dow));
 
-    const allCells: { date: Date; dateStr: string; completed: number; total: number; rate: number; isFuture: boolean }[] = [];
+    const allCells: HeatmapCell[] = [];
     for (let i = 0; i < WEEKS * 7; i++) {
       const date = new Date(firstDay);
       date.setDate(firstDay.getDate() + i);
@@ -79,34 +85,46 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     }
   }, [weeks]);
 
+  // Échelle rouge → vert (même logique que HabitGlobalTracking : haut taux = vert, bas taux = rouge).
   const getCellColor = (rate: number) => {
     if (rate < 0) return 'transparent';
-    if (rate === 0) return 'rgba(234,179,8,0.08)';
-    if (rate <= 0.25) return 'rgba(234,179,8,0.30)';
-    if (rate <= 0.5) return 'rgba(234,179,8,0.55)';
-    if (rate <= 0.75) return 'rgba(234,179,8,0.78)';
-    return '#EAB308';
+    if (rate === 0) return '#991B1B'; // rouge foncé
+    if (rate <= 0.25) return '#EF4444'; // rouge
+    if (rate <= 0.5) return '#F97316'; // orange
+    if (rate <= 0.75) return '#EAB308'; // jaune
+    if (rate < 1) return '#22C55E'; // vert clair
+    return '#166534'; // vert foncé
   };
 
+  const CELL_BORDER = 'rgb(var(--color-border-muted))';
   const DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-  const renderTooltip = (cell: { completed: number; total: number; date: Date }) => (
+  const tooltipPortal = hovered && createPortal(
     <div
-      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-      style={{ backgroundColor: 'rgb(var(--color-surface))', border: '1px solid rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
+      className="fixed px-2 py-1 rounded-md whitespace-nowrap shadow-lg pointer-events-none"
+      style={{
+        left: hovered.rect.left + hovered.rect.width / 2,
+        top: hovered.rect.top - 6,
+        transform: 'translate(-50%, -100%)',
+        zIndex: 9999,
+        backgroundColor: 'rgb(var(--color-surface))',
+        border: '1px solid rgb(var(--color-border))',
+        color: 'rgb(var(--color-text-primary))',
+      }}
     >
-      <div className="text-[10px] font-bold text-center">{cell.completed}/{cell.total}</div>
+      <div className="text-[10px] font-bold text-center">{hovered.cell.completed}/{hovered.cell.total}</div>
       <div className="text-[9px] font-normal text-center mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        {cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+        {hovered.cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 
   const legend = (
     <div className="flex items-center gap-1.5 mt-3 justify-end flex-shrink-0">
       <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
-      {[0, 0.26, 0.51, 0.76, 1].map((r, i) => (
-        <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: '1px solid rgba(234,179,8,0.15)', flexShrink: 0 }} />
+      {[0, 0.1, 0.3, 0.55, 0.8, 1].map((r, i) => (
+        <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: `1px solid ${CELL_BORDER}`, flexShrink: 0 }} />
       ))}
       <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
     </div>
@@ -138,12 +156,20 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
               </div>
               {/* Day cells */}
               {week.map((cell, di) => (
-                <div key={di} className="relative group" style={{ width: CELL, height: CELL, flexShrink: 0 }}>
+                <div
+                  key={di}
+                  className="relative group"
+                  style={{ width: CELL, height: CELL, flexShrink: 0 }}
+                  onMouseEnter={(e) => {
+                    if (cell.isFuture || cell.rate < 0) return;
+                    setHovered({ cell, rect: e.currentTarget.getBoundingClientRect() });
+                  }}
+                  onMouseLeave={() => setHovered(null)}
+                >
                   <div
                     className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-110"
-                    style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : 'rgba(234,179,8,0.15)'}` }}
+                    style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : CELL_BORDER}` }}
                   />
-                  {!cell.isFuture && cell.rate >= 0 && renderTooltip(cell)}
                 </div>
               ))}
             </div>
@@ -158,6 +184,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
       <div className="flex flex-col h-full min-h-0">
         {grid('overflow-y-auto flex-1 min-h-0')}
         {legend}
+        {tooltipPortal}
       </div>
     );
   }
@@ -171,6 +198,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
         {grid('overflow-y-auto')}
       </div>
       {legend}
+      {tooltipPortal}
     </div>
   );
 });

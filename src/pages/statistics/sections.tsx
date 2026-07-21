@@ -458,16 +458,6 @@ export const HabitsStatistics: React.FC<{
     return { ...habit, periodCompletions: completionsCount, periodTime: completionsCount * habit.estimatedTime, relevantDaysCount, frequency: habit.frequency };
   }), [habits, rollingRange, now]);
 
-  const totalCompletions = habitsStats.reduce((sum, h) => sum + h.periodCompletions, 0);
-  const totalEstimatedTime = habitsStats.reduce((sum, h) => sum + h.periodTime, 0);
-  const totalExpected = habitsStats.reduce((sum, h) => {
-    if (h.frequency === 'weekly')  return sum + Math.ceil(h.relevantDaysCount / 7);
-    if (h.frequency === 'monthly') return sum + Math.max(1, Math.round(h.relevantDaysCount / 30));
-    return sum + h.relevantDaysCount;
-  }, 0);
-  const avgRate = totalExpected > 0 ? Math.round((totalCompletions / totalExpected) * 100) : 0;
-
-  const activeHabitsCount = useMemo(() => habitsStats.filter(h => h.periodCompletions > 0).length, [habitsStats]);
   const sortedRelevantHabits = useMemo(
     () => habitsStats.filter(h => h.relevantDaysCount > 0).sort((a, b) => b.periodTime - a.periodTime),
     [habitsStats]
@@ -485,21 +475,6 @@ export const HabitsStatistics: React.FC<{
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Habitudes actives {periodSuffix}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{activeHabitsCount}</p>
-        </div>
-        <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Taux de succès {periodSuffix}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{avgRate}%</p>
-        </div>
-        <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Temps investi {periodSuffix}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalEstimatedTime)}</p>
-        </div>
-      </div>
-
       <div className="card p-6">
         <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
           Détail par habitude {periodSuffix}
