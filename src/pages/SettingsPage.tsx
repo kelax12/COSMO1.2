@@ -502,27 +502,68 @@ const SettingsPage: React.FC = () => {
                     }`} />
                   </button>
 
-                  {tzPref.mode === 'manual' && (
-                    <div className="flex items-center gap-2 pl-1 pt-1">
-                      <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">Décalage :</label>
-                      <div className="inline-flex items-stretch rounded-lg border border-[rgb(var(--color-border))] overflow-hidden focus-within:ring-2 focus-within:ring-[rgb(var(--color-accent))]/30">
-                        <span className="inline-flex items-center px-3 bg-[rgb(var(--color-hover))] text-sm font-semibold text-[rgb(var(--color-text-primary))] select-none">
-                          UTC+
-                        </span>
-                        <input
-                          id="tz-offset"
-                          type="number"
-                          inputMode="numeric"
-                          min={0}
-                          max={14}
-                          step={1}
-                          value={tzPref.offsetHours}
-                          onChange={(e) => setTzOffset(clampOffsetHours(Number(e.target.value)))}
-                          className="w-16 px-3 py-2 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
-                        />
+                  {tzPref.mode === 'manual' && (() => {
+                    // Signe + magnitude dérivés du décalage signé stocké (ex. -5 →
+                    // signe '-', magnitude 5). L'utilisateur choisit le signe via
+                    // un toggle +/− et la magnitude via le champ numérique ; les
+                    // deux se recombinent en un offsetHours signé unique.
+                    const sign: '+' | '-' = tzPref.offsetHours < 0 ? '-' : '+';
+                    const magnitude = Math.abs(tzPref.offsetHours);
+                    const applySign = (nextSign: '+' | '-') =>
+                      setTzOffset(clampOffsetHours(nextSign === '-' ? -magnitude : magnitude));
+                    const applyMagnitude = (nextMagnitude: number) =>
+                      setTzOffset(clampOffsetHours(sign === '-' ? -nextMagnitude : nextMagnitude));
+                    return (
+                      <div className="flex items-center gap-2 pl-1 pt-1">
+                        <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">Décalage :</label>
+
+                        {/* Toggle du signe : UTC+ (est de Greenwich) / UTC- (ouest) */}
+                        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label="Signe du décalage">
+                          <button
+                            type="button"
+                            onClick={() => applySign('+')}
+                            aria-pressed={sign === '+'}
+                            className={`px-3 py-2 text-sm font-semibold transition-colors ${
+                              sign === '+'
+                                ? 'bg-[rgb(var(--color-accent))] text-white'
+                                : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                            }`}
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applySign('-')}
+                            aria-pressed={sign === '-'}
+                            className={`px-3 py-2 text-sm font-semibold border-l border-[rgb(var(--color-border))] transition-colors ${
+                              sign === '-'
+                                ? 'bg-[rgb(var(--color-accent))] text-white'
+                                : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                            }`}
+                          >
+                            −
+                          </button>
+                        </div>
+
+                        <div className="inline-flex items-stretch rounded-lg border border-[rgb(var(--color-border))] overflow-hidden focus-within:ring-2 focus-within:ring-[rgb(var(--color-accent))]/30">
+                          <span className="inline-flex items-center px-3 bg-[rgb(var(--color-hover))] text-sm font-semibold text-[rgb(var(--color-text-primary))] select-none">
+                            UTC{sign}
+                          </span>
+                          <input
+                            id="tz-offset"
+                            type="number"
+                            inputMode="numeric"
+                            min={0}
+                            max={sign === '-' ? 12 : 14}
+                            step={1}
+                            value={magnitude}
+                            onChange={(e) => applyMagnitude(Number(e.target.value))}
+                            className="w-16 px-3 py-2 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </SectionCard>
 
