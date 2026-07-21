@@ -72,7 +72,7 @@ export default function StatisticsPage() {
   // viennent de la RPC SQL get_work_time_stats en prod (payload ~1 kB au
   // lieu de toutes les entités), et du même calcul historique en démo.
   const chartRangeDefs = useMemo(() => {
-    const defs: { label: string; range: WorkTimeRange }[] = [];
+    const defs: { label: string; tooltipLabel?: string; range: WorkTimeRange }[] = [];
     switch (selectedPeriod) {
       case 'day':
         for (let i = 9; i >= 0; i--) {
@@ -87,9 +87,9 @@ export default function StatisticsPage() {
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
           const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-          const startOfYear = new Date(weekStart.getFullYear(), 0, 1);
-          const weekNumber = Math.ceil(((weekStart.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-          defs.push({ label: `S${weekNumber}`, range: { start: getLocalDateString(weekStart), end: getLocalDateString(weekEnd) } });
+          const label = weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+          const tooltipLabel = `du ${weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} au ${weekEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+          defs.push({ label, tooltipLabel, range: { start: getLocalDateString(weekStart), end: getLocalDateString(weekEnd) } });
         }
         break;
       case 'month':
@@ -145,7 +145,7 @@ export default function StatisticsPage() {
   }, [selectedSection]);
 
   const workTimeData = useMemo(
-    () => chartRangeDefs.map((def, index) => ({ label: def.label, totalTime: pickBucketTime(chartBuckets?.[index]) })),
+    () => chartRangeDefs.map((def, index) => ({ label: def.label, tooltipLabel: def.tooltipLabel, totalTime: pickBucketTime(chartBuckets?.[index]) })),
     [chartRangeDefs, chartBuckets, pickBucketTime]
   );
 
@@ -243,7 +243,7 @@ export default function StatisticsPage() {
     selectedSection === 'habits' ? '#EAB308' :
     selectedSection === 'okr' ? '#22C55E' : '#8B5CF6';
 
-  const areaChartData = workTimeData.map(d => ({ label: d.label, minutes: d.totalTime }));
+  const areaChartData = workTimeData.map(d => ({ label: d.label, tooltipLabel: d.tooltipLabel ?? d.label, minutes: d.totalTime }));
 
   const areaChartConfig = useMemo<ChartConfig>(() => ({
     minutes: { label: 'Temps (min)', color: sectionColor },
@@ -491,14 +491,14 @@ export default function StatisticsPage() {
             />
             <ChartTooltip
               cursor={false}
-              content={((props: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
+              content={((props: { active?: boolean; payload?: Array<{ value: number; payload?: { tooltipLabel?: string } }>; label?: string }) => {
                 if (!props.active || !props.payload?.length) return null;
                 return (
                   <div
                     className="rounded-xl border px-3 py-2 shadow-lg text-sm"
                     style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
                   >
-                    <p className="text-xs mb-1 font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>{props.label}</p>
+                    <p className="text-xs mb-1 font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>{props.payload[0].payload?.tooltipLabel ?? props.label}</p>
                     <p className="font-black" style={{ color: sectionColor }}>{formatTime(props.payload[0].value)}</p>
                   </div>
                 );
