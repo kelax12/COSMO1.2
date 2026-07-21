@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { formatTimeInTz, toDisplayISO, getTimezonePref, type TimezonePref } from '@/lib/timezone';
 
 // Valeur factice interceptée par onValueChange pour ouvrir le gestionnaire de
 // catégories au lieu de sélectionner une catégorie (#option "+ Ajouter").
@@ -19,18 +20,22 @@ const ADD_CATEGORY_VALUE = '__add_category__';
 interface QuickEventCardProps {
   slot: { start: string; end: string; x: number; y: number };
   categories: { id: string; name: string; color: string }[];
+  /** Fuseau d'affichage choisi (heure locale par défaut). */
+  tzPref?: TimezonePref;
   onCreate: (title: string, color?: string) => void;
   onClose: () => void;
   /** Ouvre le gestionnaire de catégories (option « + Ajouter une catégorie »). */
   onAddCategory?: () => void;
 }
 
-const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCreate, onClose, onAddCategory }) => {
+const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPref, onCreate, onClose, onAddCategory }) => {
   const [title, setTitle] = useState('');
   const [cat, setCat] = useState(categories[0]?.id ?? '');
-  const start = new Date(slot.start);
-  const end = new Date(slot.end);
-  const fmt = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const pref = tzPref ?? getTimezonePref();
+  // slot.start/end sont des instants « vrais » : on affiche date + heure dans le
+  // fuseau choisi (heure locale en mode défaut).
+  const start = new Date(toDisplayISO(slot.start, pref));
+  const fmt = (iso: string) => formatTimeInTz(iso, pref);
   const color = categories.find((c) => c.id === cat)?.color;
 
   // Recolore l'aperçu de sélection FullCalendar (.fc-event-mirror) selon la
@@ -58,7 +63,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
         style={{ left, top }}
       >
         <div className="text-muted-foreground mb-2 text-xs">
-          {start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })} · {fmt(start)} – {fmt(end)}
+          {start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })} · {fmt(slot.start)} – {fmt(slot.end)}
         </div>
         <Input
           autoFocus
@@ -89,8 +94,8 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, onCre
               {onAddCategory && (
                 <>
                   {categories.length > 0 && <SelectSeparator />}
-                  <SelectItem value={ADD_CATEGORY_VALUE}>
-                    <span className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
+                  <SelectItem value={ADD_CATEGORY_VALUE} className="group">
+                    <span className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 group-focus:text-inherit font-medium">
                       <Plus size={12} aria-hidden="true" />
                       Ajouter une catégorie
                     </span>

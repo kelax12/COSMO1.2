@@ -2,6 +2,7 @@
 // événements vers le format FullCalendar. Extraite pour être testable.
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
+import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
 
 // Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la
 // sidebar. Une tâche sans durée estimée a `estimatedTime = 0` (défaut du
@@ -79,5 +80,25 @@ export function buildCalendarEvents(events: CalendarEvent[], now: Date = new Dat
     textColor: '#ffffff',
     editable: !event.id.includes('::'),
     extendedProps: { notes: event.notes, taskId: event.taskId, isRecurringInstance: event.id.includes('::'), createdBy: event.createdBy },
+  }));
+}
+
+/**
+ * Décale les instants start/end des événements dans le fuseau d'affichage choisi
+ * (préférence utilisateur). Le calendrier reste rendu en heure locale : on lui
+ * fournit donc des instants décalés pour qu'il affiche l'heure murale UTC+offset.
+ * Les callbacks du calendrier (drag/resize/select) retirent ce décalage avant de
+ * persister — cf. AgendaPage. En mode « défaut » c'est l'identité (référence
+ * inchangée → pas de re-render superflu).
+ */
+export function shiftEventsForDisplay(
+  events: FullCalendarEvent[],
+  pref: TimezonePref,
+): FullCalendarEvent[] {
+  if (pref.mode !== 'manual') return events;
+  return events.map(ev => ({
+    ...ev,
+    start: toDisplayISO(ev.start, pref),
+    end: toDisplayISO(ev.end, pref),
   }));
 }
