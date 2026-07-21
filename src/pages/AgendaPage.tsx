@@ -6,7 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import { findNextFreeSlot } from './agenda/free-slot';
-import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent, getMasterId } from '@/modules/events';
+import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories } from '@/modules/categories';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -33,6 +33,7 @@ import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
 import QuickEventCard from './agenda/QuickEventCard';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
+import { findSourceEvent } from './agenda/find-event';
 import PageErrorState from '@/components/PageErrorState';
 
 // ── Page principale ──────────────────────────────────────────────────────────
@@ -254,9 +255,8 @@ const AgendaPage: React.FC = () => {
     if (Date.now() - lastDragEndAtRef.current < 300) return;
     try { clickInfo.view.calendar.unselect(); } catch { /* ignore */ }
     const rawId = clickInfo.event.id;
-    const masterId = getMasterId(rawId);
     const taskId = clickInfo.event.extendedProps?.taskId;
-    const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
+    const event = findSourceEvent(events, rawId, taskId);
     if (event) {
       setSelectedEvent(event);
       // Si c'est une instance virtuelle (id contient "::"), mémoriser sa date
@@ -276,9 +276,8 @@ const AgendaPage: React.FC = () => {
   });
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
-    const masterId = getMasterId(dropInfo.event.id);
     const taskId = dropInfo.event.extendedProps?.taskId;
-    const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
+    const event = findSourceEvent(events, dropInfo.event.id, taskId);
     if (!event) return;
     const rawStart = dropInfo.event.start?.toISOString();
     if (!rawStart) return;
@@ -295,9 +294,8 @@ const AgendaPage: React.FC = () => {
   // desktop. Sans ce handler, FullCalendar applique le resize visuellement mais
   // ne le persiste jamais : au prochain rendu l'event revient à sa durée initiale.
   const handleEventResize = (resizeInfo: EventResizeDoneArg) => {
-    const masterId = getMasterId(resizeInfo.event.id);
     const taskId = resizeInfo.event.extendedProps?.taskId;
-    const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
+    const event = findSourceEvent(events, resizeInfo.event.id, taskId);
     if (!event) { resizeInfo.revert(); return; }
     const rawStart = resizeInfo.event.start?.toISOString();
     const rawEnd = resizeInfo.event.end?.toISOString();
@@ -402,7 +400,11 @@ const AgendaPage: React.FC = () => {
   const handleDuplicateEvent = (eventId: string) => {
     const source = events.find(e => e.id === eventId);
     if (!source) return;
-    const { id: _id, ...rest } = source;
+    // taskId retiré : la copie n'est PAS le même créneau de la même tâche.
+    // Le conserver ferait exister deux événements avec le même taskId, ce qui
+    // fait échouer la résolution par id+taskId ailleurs (drag/click/resize) —
+    // un des deux se retrouve silencieusement modifié à la place de l'autre.
+    const { id: _id, taskId: _taskId, ...rest } = source;
     createEventMutation.mutate({ ...rest, title: `${source.title} (copie)` } as CreateEventInput);
     setShowEditEventModal(false);
     setSelectedEvent(null);
