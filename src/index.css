@@ -458,6 +458,17 @@ body {
       -webkit-appearance: none;
     }
 
+    /* Icône native (calendrier/horloge) des inputs date/time — sombre par
+       défaut dans le navigateur, donc invisible sur fond sombre. Inversée en
+       dark/monochrome (hors wrapper ci-dessus, où elle est masquée). */
+    .dark input[type="date"]::-webkit-calendar-picker-indicator,
+    .dark input[type="time"]::-webkit-calendar-picker-indicator,
+    html.monochrome input[type="date"]::-webkit-calendar-picker-indicator,
+    html.monochrome input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) brightness(1.4);
+      cursor: pointer;
+    }
+
     /* Inputs sans bordure (modals landing) */
     input.borderless-input,
     input.borderless-input:hover,

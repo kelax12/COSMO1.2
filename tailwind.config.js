@@ -21,6 +21,9 @@ export default {
 			screens: {
 				xs: '480px',
 			},
+			borderColor: {
+				DEFAULT: 'hsl(var(--border))',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

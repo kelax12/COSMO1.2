@@ -173,7 +173,7 @@ export function PremiumPage() {
               ) : (
                 <motion.button
                   onClick={() => setShowChoiceModal(true)}
-                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center"
+                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -238,7 +238,7 @@ export function PremiumPage() {
                         <motion.button
                           onClick={handleCheckout}
                           disabled={isCheckoutLoading}
-                          className="w-full bg-[rgb(var(--color-accent))] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
+                          className="w-full bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
                           whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
                           whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
                         >
@@ -464,7 +464,7 @@ export function PremiumPage() {
             <div className="mt-6 flex justify-center">
               <motion.button
                 onClick={() => setShowChoiceModal(true)}
-                className="px-6 py-3 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-sm shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-2"
+                className="px-6 py-3 bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 rounded-xl font-bold text-sm shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-2"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

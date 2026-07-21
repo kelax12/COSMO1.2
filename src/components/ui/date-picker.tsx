@@ -69,8 +69,9 @@ export function DatePicker({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[min(22rem,var(--radix-popover-trigger-width,22rem))] min-w-[280px] p-0 z-[100]"
+        className="w-[clamp(240px,22rem,calc(100vw-2rem))] p-0 z-[100]"
         align="start"
+        collisionPadding={16}
         sideOffset={8}
       >
         {/* Presets au-dessus du calendrier (#25) */}
