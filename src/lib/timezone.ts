@@ -20,7 +20,10 @@ export type TimezoneMode = 'default' | 'manual';
 
 export interface TimezonePref {
   mode: TimezoneMode;
-  /** Décalage en heures après « UTC+ ». Entier borné [0, 14]. */
+  /**
+   * Décalage signé en heures par rapport à UTC (ex. -5 = UTC-5, 9 = UTC+9).
+   * Entier borné [-12, 14] — plage réelle des fuseaux UTC (UTC-12 à UTC+14).
+   */
   offsetHours: number;
 }
 
@@ -28,10 +31,13 @@ export const TIMEZONE_PREF_KEY = 'cosmo_timezone_pref';
 
 export const DEFAULT_TIMEZONE_PREF: TimezonePref = { mode: 'default', offsetHours: 0 };
 
-/** Borne le décalage saisi par l'utilisateur dans une plage réaliste. */
+export const MIN_OFFSET_HOURS = -12;
+export const MAX_OFFSET_HOURS = 14;
+
+/** Borne le décalage saisi par l'utilisateur dans la plage réelle des fuseaux UTC. */
 export function clampOffsetHours(value: number): number {
   if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(14, Math.trunc(value)));
+  return Math.max(MIN_OFFSET_HOURS, Math.min(MAX_OFFSET_HOURS, Math.trunc(value)));
 }
 
 // ── Fonctions pures de décalage ────────────────────────────────────────
@@ -90,9 +96,11 @@ export function formatTimeInTz(
   return shifted.toLocaleTimeString('fr-FR', options);
 }
 
-/** Libellé court du fuseau actif (ex. « UTC+2 » ou « Heure locale »). */
+/** Libellé court du fuseau actif (ex. « UTC+2 », « UTC-5 » ou « Heure locale »). */
 export function timezoneLabel(pref: TimezonePref): string {
-  return pref.mode === 'manual' ? `UTC+${pref.offsetHours}` : 'Heure locale';
+  if (pref.mode !== 'manual') return 'Heure locale';
+  const sign = pref.offsetHours < 0 ? '-' : '+';
+  return `UTC${sign}${Math.abs(pref.offsetHours)}`;
 }
 
 // ── Store (useSyncExternalStore, backed by localStorage, cross-tab) ────

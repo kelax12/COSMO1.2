@@ -13,10 +13,12 @@ const DEFAULT: TimezonePref = { mode: 'default', offsetHours: 0 };
 const manual = (h: number): TimezonePref => ({ mode: 'manual', offsetHours: h });
 
 describe('clampOffsetHours', () => {
-  it('bornes [0,14] et tronque', () => {
-    expect(clampOffsetHours(-3)).toBe(0);
+  it('bornes signées [-12,14] et tronque', () => {
+    expect(clampOffsetHours(-3)).toBe(-3);
     expect(clampOffsetHours(2.9)).toBe(2);
+    expect(clampOffsetHours(-2.9)).toBe(-2);
     expect(clampOffsetHours(99)).toBe(14);
+    expect(clampOffsetHours(-99)).toBe(-12);
     expect(clampOffsetHours(NaN)).toBe(0);
   });
 });
@@ -31,9 +33,9 @@ describe('mode défaut = identité', () => {
 });
 
 describe('toDisplayISO / fromDisplayISO sont réciproques', () => {
-  it('round-trip identité pour tout offset', () => {
+  it('round-trip identité pour tout offset (UTC-12 à UTC+14)', () => {
     const iso = '2026-07-21T09:30:00.000Z';
-    for (let h = 0; h <= 14; h++) {
+    for (let h = -12; h <= 14; h++) {
       const pref = manual(h);
       const back = fromDisplayISO(toDisplayISO(iso, pref), pref);
       expect(new Date(back).getTime()).toBe(new Date(iso).getTime());
@@ -76,11 +78,19 @@ describe('formatTimeInTz', () => {
     const b = formatTimeInTz(iso, manual(4));
     expect(a).not.toBe(b);
   });
+  it('un offset négatif (UTC-N) diffère d’un offset positif (UTC+N)', () => {
+    const iso = '2026-07-21T12:00:00.000Z';
+    const west = formatTimeInTz(iso, manual(-5));
+    const east = formatTimeInTz(iso, manual(5));
+    expect(west).not.toBe(east);
+  });
 });
 
 describe('timezoneLabel', () => {
-  it('libellés lisibles', () => {
+  it('libellés lisibles, signe + et -', () => {
     expect(timezoneLabel(DEFAULT)).toBe('Heure locale');
     expect(timezoneLabel(manual(2))).toBe('UTC+2');
+    expect(timezoneLabel(manual(-5))).toBe('UTC-5');
+    expect(timezoneLabel(manual(0))).toBe('UTC+0');
   });
 });
