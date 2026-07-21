@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight, Snowflake } from 'lucide-react';
+import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
-import { calculateStreakWithJoker } from '@/modules/habits/streak';
+import { calculateStreak } from '@/modules/habits/streak';
 import { Button } from '@/components/ui/button';
 
 const colorOptions = [
@@ -308,8 +308,8 @@ const HabitTable: React.FC = () => {
             </thead>
           <tbody>
             {habits.map((habit, index) => {
-              // Série + jours joker via la logique partagée (parité vue Liste #23).
-              const { streak, jokerDates } = calculateStreakWithJoker(habit.completions);
+              // Série de jours consécutifs (parité vue Liste).
+              const streak = calculateStreak(habit.completions);
               return (
               <tr key={habit.id} className="border-b transition-colors" style={{
                 borderColor: 'rgb(var(--table-border))',
@@ -332,13 +332,6 @@ const HabitTable: React.FC = () => {
                   </td>
                     {days.map((day) => {
                     const isCompleted = habit.completions[day.date];
-                    // Date locale (en-CA) — évite le décalage J-1 cliquable si
-                    // createdAt (ISO UTC) et day.date (local) divergent au petit matin.
-                    const createdDate = habit.createdAt ? new Date(habit.createdAt).toLocaleDateString('en-CA') : '';
-                    const isBeforeCreation = createdDate ? day.date < createdDate : false;
-                    // Jour manqué couvert par un joker (parité vue Liste) : flocon
-                    // de gel bleu glacé au lieu du cercle vide.
-                    const isJokerDay = !isCompleted && !isBeforeCreation && !day.isFuture && jokerDates.includes(day.date);
 
                     return (
                       <td key={day.date} className="p-1 md:p-2 text-center transition-colors">
@@ -346,24 +339,21 @@ const HabitTable: React.FC = () => {
                           type="button"
                           role="checkbox"
                           aria-checked={!!isCompleted}
-                          aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : isJokerDay ? ' (couvert par le joker)' : ''}`}
-                          title={isJokerDay ? 'Jour couvert par le joker (série maintenue)' : undefined}
+                          aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : ''}`}
                           onClick={() => handleDayClick(habit.id, day.date)}
-                          disabled={day.isFuture || isBeforeCreation}
+                          disabled={day.isFuture}
                           className="w-7 h-7 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
                           style={{
-                            backgroundColor: isCompleted ? '#2563EB' : isJokerDay ? 'rgba(34, 211, 238, 0.12)' : day.isFuture || isBeforeCreation ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
-                            borderColor: isCompleted ? '#2563EB' : isJokerDay ? '#22D3EE' : day.isToday ? '#2563EB' : day.isFuture || isBeforeCreation ? 'transparent' : 'rgb(var(--color-border))',
-                            color: isCompleted ? 'white' : day.isFuture || isBeforeCreation ? 'rgb(var(--color-text-muted) / 0.2)' : 'rgb(var(--color-text-secondary))',
-                            cursor: day.isFuture || isBeforeCreation ? 'not-allowed' : 'pointer',
-                            opacity: isBeforeCreation ? 0.3 : 1
+                            backgroundColor: isCompleted ? '#2563EB' : day.isFuture ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
+                            borderColor: isCompleted ? '#2563EB' : day.isToday ? '#2563EB' : day.isFuture ? 'transparent' : 'rgb(var(--color-border))',
+                            color: isCompleted ? 'white' : day.isFuture ? 'rgb(var(--color-text-muted) / 0.2)' : 'rgb(var(--color-text-secondary))',
+                            cursor: day.isFuture ? 'not-allowed' : 'pointer',
+                            opacity: 1
                           }}>
 
                               {isCompleted ?
                           <CheckCircle size={14} /> :
-                          isJokerDay ?
-                          <Snowflake size={14} className="text-cyan-600 dark:text-cyan-300" /> :
-                          day.isFuture || isBeforeCreation ?
+                          day.isFuture ?
                           <Circle size={12} className="opacity-10" /> :
 
                           <Circle size={14} className="opacity-30 hover:opacity-100" />
@@ -377,9 +367,6 @@ const HabitTable: React.FC = () => {
                       <div className="flex items-center justify-center gap-1">
                         <Flame size={14} className="text-orange-500 md:w-4 md:h-4" />
                         <span className="font-semibold text-xs md:text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{streak}</span>
-                        {jokerDates.length > 0 && (
-                          <Snowflake size={12} className="text-cyan-500 md:w-3.5 md:h-3.5" aria-label="Joker utilisé" />
-                        )}
                       </div>
                     </td>
                 </tr>
