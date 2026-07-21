@@ -13,12 +13,6 @@ import {
   SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -225,22 +219,17 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
                   <div className="flex items-center gap-2">
                     <Input value={kr.title} placeholder="Résultat clé mesurable" className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
-                    {keyResults.length > 1 && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="outline" size="icon-sm" aria-label="Réordonner le résultat clé">
-                            <ArrowUpDown aria-hidden="true" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem disabled={index === 0} onClick={() => moveKR(index, index - 1)}>
-                            Monter
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={index === keyResults.length - 1} onClick={() => moveKR(index, index + 1)}>
-                            Descendre
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    {index > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Faire remonter le résultat clé"
+                        title="Faire remonter"
+                        onClick={() => moveKR(index, index - 1)}
+                      >
+                        <ArrowUpDown aria-hidden="true" />
+                      </Button>
                     )}
                     {keyResults.length > 1 && (
                       <Button type="button" variant="destructive" size="icon-sm" aria-label="Retirer" onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
