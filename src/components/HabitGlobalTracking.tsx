@@ -198,7 +198,7 @@ const HabitGlobalTracking: React.FC = () => {
           )}
 
           <div
-            className="flex items-center rounded-xl p-1.5 border transition-colors"
+            className="flex items-center rounded-lg p-1 border transition-colors"
             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
           >
             {periodOptions.map((opt) => (
@@ -209,7 +209,7 @@ const HabitGlobalTracking: React.FC = () => {
                   if (opt.value !== 'all') setCurrentDate(new Date());
                   setGlobalPage(0);
                 }}
-                className="px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-sm md:text-base font-semibold transition-all"
+                className="px-2.5 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-all"
                 style={{
                   backgroundColor: period === opt.value ? '#2563EB' : 'transparent',
                   color: period === opt.value ? 'white' : 'rgb(var(--color-text-secondary))',
@@ -221,7 +221,7 @@ const HabitGlobalTracking: React.FC = () => {
           </div>
 
           <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
-            <SelectTrigger className="!h-10 md:!h-11 min-w-[180px] rounded-xl text-sm">
+            <SelectTrigger className="!h-8 md:!h-9 min-w-[160px] rounded-lg text-xs md:text-sm">
               <SelectValue placeholder="Toutes les habitudes" />
             </SelectTrigger>
             <SelectContent className="z-[70]">
