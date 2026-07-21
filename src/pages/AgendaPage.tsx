@@ -23,7 +23,11 @@ import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
-import { getInitialScrollTime, buildCalendarEvents, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
+import { getInitialScrollTime, buildCalendarEvents, shiftEventsForDisplay, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
+import { useTimezonePref, fromDisplayISO, displayNow } from '@/lib/timezone';
+import AgendaSlotReviewModal from './agenda/AgendaSlotReviewModal';
+import { findOverdueTaskSlots, type OverdueTaskSlot } from './agenda/overdue-slots';
+import { useTasks, useToggleTaskComplete, useDeleteTask } from '@/modules/tasks';
 import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
@@ -50,7 +54,15 @@ const AgendaPage: React.FC = () => {
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
+  // Feature « revue de créneau » : tâches + mutations pour valider/supprimer.
+  const { data: tasks = [] } = useTasks();
+  const toggleTaskComplete = useToggleTaskComplete();
+  const deleteTaskMutation = useDeleteTask();
+  // Créneaux « écartés » pour cette session (fermeture sans décision) : ils
+  // réapparaîtront au prochain retour sur l'agenda.
+  const [snoozedSlotIds, setSnoozedSlotIds] = useState<Set<string>>(new Set());
   const { data: categories = [] } = useCategories();
+  const { pref: tzPref } = useTimezonePref();
   const { user } = useAuth();
   const { activeOrg } = useActiveOrganization();
   // Membres de l'org active : sert à résoudre l'avatar de l'AUTEUR d'un
@@ -207,9 +219,12 @@ const AgendaPage: React.FC = () => {
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     const je = selectInfo.jsEvent as MouseEvent | null;
+    // Le calendrier renvoie des instants dans le fuseau d'affichage : on retire
+    // le décalage pour stocker l'instant « vrai ». QuickEventCard réaffiche
+    // ensuite l'heure dans le fuseau choisi (formatTimeInTz).
     setQuickSlot({
-      start: selectInfo.start.toISOString(),
-      end: selectInfo.end.toISOString(),
+      start: fromDisplayISO(selectInfo.start.toISOString(), tzPref),
+      end: fromDisplayISO(selectInfo.end.toISOString(), tzPref),
       x: je?.clientX ?? Math.round(window.innerWidth / 2),
       y: je?.clientY ?? Math.round(window.innerHeight / 2),
     });
@@ -265,11 +280,14 @@ const AgendaPage: React.FC = () => {
     const taskId = dropInfo.event.extendedProps?.taskId;
     const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
     if (!event) return;
-    const newStart = dropInfo.event.start?.toISOString();
-    if (!newStart) return;
-    const newEnd = dropInfo.event.end
+    const rawStart = dropInfo.event.start?.toISOString();
+    if (!rawStart) return;
+    const rawEnd = dropInfo.event.end
       ? dropInfo.event.end.toISOString()
       : new Date((dropInfo.event.start?.getTime() ?? Date.now()) + 3600000).toISOString();
+    // Retire le décalage d'affichage avant de persister l'instant « vrai ».
+    const newStart = fromDisplayISO(rawStart, tzPref);
+    const newEnd = fromDisplayISO(rawEnd, tzPref);
     updateEventMutation.mutate({ id: event.id, updates: { start: newStart, end: newEnd } });
   };
 
@@ -281,20 +299,26 @@ const AgendaPage: React.FC = () => {
     const taskId = resizeInfo.event.extendedProps?.taskId;
     const event = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
     if (!event) { resizeInfo.revert(); return; }
-    const newStart = resizeInfo.event.start?.toISOString();
-    const newEnd = resizeInfo.event.end?.toISOString();
-    if (!newStart || !newEnd) { resizeInfo.revert(); return; }
+    const rawStart = resizeInfo.event.start?.toISOString();
+    const rawEnd = resizeInfo.event.end?.toISOString();
+    if (!rawStart || !rawEnd) { resizeInfo.revert(); return; }
+    const newStart = fromDisplayISO(rawStart, tzPref);
+    const newEnd = fromDisplayISO(rawEnd, tzPref);
     updateEventMutation.mutate({ id: event.id, updates: { start: newStart, end: newEnd } });
   };
 
   const handleEventReceive = (receiveInfo: EventReceiveArg) => {
     const eventData = receiveInfo.event;
+    const rawStart = eventData.start?.toISOString() ?? new Date().toISOString();
+    const rawEnd = eventData.end
+      ? eventData.end.toISOString()
+      : new Date((eventData.start?.getTime() ?? Date.now()) + taskEventDurationMinutes(eventData.extendedProps.estimatedTime as number) * 60000).toISOString();
     const newEvent: CreateEventInput = {
       title: eventData.title,
-      start: eventData.start?.toISOString() ?? new Date().toISOString(),
-      end: eventData.end
-        ? eventData.end.toISOString()
-        : new Date((eventData.start?.getTime() ?? Date.now()) + taskEventDurationMinutes(eventData.extendedProps.estimatedTime as number) * 60000).toISOString(),
+      // Retire le décalage d'affichage (la tâche est déposée sur la grille
+      // décalée) pour stocker l'instant « vrai ».
+      start: fromDisplayISO(rawStart, tzPref),
+      end: fromDisplayISO(rawEnd, tzPref),
       color: eventData.backgroundColor ?? undefined,
       notes: `Priorité: ${eventData.extendedProps.priority} | Catégorie: ${eventData.extendedProps.categoryName}`,
       taskId: eventData.extendedProps.taskId as string,
@@ -311,7 +335,15 @@ const AgendaPage: React.FC = () => {
   // ni les tâches perso à deadline (#20 retiré), ni les tâches d'équipe — ces
   // dernières se gèrent dans l'espace entreprise / To-Do.
   const calendarEvents = buildCalendarEvents(events);
-  const allCalendarEvents = calendarEvents as EventInput[];
+  // Décale les instants dans le fuseau d'affichage choisi (feature « heure
+  // personnalisée »). Le reste de la page (conflits, prochain créneau libre,
+  // EventModal) raisonne sur les instants « vrais » : seul le calendrier voit
+  // les instants décalés, et ses callbacks retirent le décalage (fromDisplayISO).
+  const allCalendarEvents = shiftEventsForDisplay(calendarEvents, tzPref) as EventInput[];
+  // « Maintenant » et heure de scroll dans le fuseau choisi pour rester cohérent
+  // avec les événements décalés (l'indicateur d'heure courante suit le fuseau).
+  const calendarNow = tzPref.mode === 'manual' ? () => displayNow(tzPref) : undefined;
+  const calendarScrollTime = getInitialScrollTime(displayNow(tzPref));
 
   // Conflits (#21) : ids des événements horaires qui se chevauchent.
   const conflictIds = React.useMemo(() => {
@@ -387,6 +419,50 @@ const AgendaPage: React.FC = () => {
     setShowAddEventModal(false);
     setSelectedTimeSlot(null);
     setTimeout(() => { calendarRef.current?.getApi().unselect(); }, 100);
+  };
+
+  // ── Revue des créneaux de tâche terminés (feature 2) ───────────────────────
+  // File des créneaux passés à traiter, écartés de cette session retirés.
+  const overdueSlots = React.useMemo(
+    () => findOverdueTaskSlots(events, tasks).filter((s) => !snoozedSlotIds.has(s.event.id)),
+    [events, tasks, snoozedSlotIds],
+  );
+  const currentReviewSlot = overdueSlots[0] ?? null;
+
+  const dismissReviewSlot = (eventId: string) =>
+    setSnoozedSlotIds((prev) => new Set(prev).add(eventId));
+
+  // Réalisée → valide la tâche côté tâche (comme partout ailleurs : toggle +
+  // toast d'annulation). Filtrée à « non complétée », donc le toggle = valider.
+  const handleSlotValidate = (slot: OverdueTaskSlot) => {
+    if (!slot.task.completed) toggleTaskComplete.mutate(slot.task.id);
+    dismissReviewSlot(slot.event.id);
+  };
+
+  // Reporter → replace le créneau à DEMAIN (relatif à maintenant) en conservant
+  // l'heure de début et la durée d'origine. Toujours dans le futur, même pour un
+  // créneau en retard de plusieurs jours (sinon le modal réapparaîtrait).
+  const handleSlotPostpone = (slot: OverdueTaskSlot) => {
+    const origStart = new Date(slot.event.start);
+    const durationMs = new Date(slot.event.end).getTime() - origStart.getTime();
+    const next = new Date();
+    next.setDate(next.getDate() + 1);
+    next.setHours(origStart.getHours(), origStart.getMinutes(), 0, 0);
+    const newStart = next.toISOString();
+    const newEnd = new Date(next.getTime() + Math.max(durationMs, 0)).toISOString();
+    updateEventMutation.mutate({ id: slot.event.id, updates: { start: newStart, end: newEnd } });
+    dismissReviewSlot(slot.event.id);
+  };
+
+  // Abandonner → supprime la tâche et son créneau agenda.
+  const handleSlotDelete = (slot: OverdueTaskSlot) => {
+    deleteEventMutation.mutate(slot.event.id);
+    deleteTaskMutation.mutate(slot.task.id);
+    dismissReviewSlot(slot.event.id);
+  };
+
+  const handleSlotSnooze = () => {
+    if (currentReviewSlot) dismissReviewSlot(currentReviewSlot.event.id);
   };
 
   // ── Mobile handlers ───────────────────────────────────────────────────────
@@ -549,7 +625,8 @@ const AgendaPage: React.FC = () => {
               locale="fr"
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
-              scrollTime={getInitialScrollTime()}
+              scrollTime={calendarScrollTime}
+              now={calendarNow}
               allDaySlot={false}
               nowIndicator={true}
               eventDisplay="block"
@@ -609,7 +686,8 @@ const AgendaPage: React.FC = () => {
                 locale="fr"
                 slotMinTime="00:00:00"
                 slotMaxTime="24:00:00"
-                scrollTime={getInitialScrollTime()}
+                scrollTime={calendarScrollTime}
+                now={calendarNow}
                 allDaySlot={false}
                 nowIndicator={true}
                 eventDisplay="block"
@@ -657,6 +735,7 @@ const AgendaPage: React.FC = () => {
         <QuickEventCard
           slot={quickSlot}
           categories={categories}
+          tzPref={tzPref}
           onCreate={handleQuickCreate}
           onClose={handleQuickClose}
           onAddCategory={() => setShowQuickCategoryModal(true)}
@@ -700,6 +779,17 @@ const AgendaPage: React.FC = () => {
           onDuplicateEvent={handleDuplicateEvent}
         />
       )}
+
+      {/* Revue des créneaux de tâche terminés (feature 2) */}
+      <AgendaSlotReviewModal
+        slot={currentReviewSlot}
+        remaining={overdueSlots.length}
+        tzPref={tzPref}
+        onValidate={handleSlotValidate}
+        onPostpone={handleSlotPostpone}
+        onDelete={handleSlotDelete}
+        onSnooze={handleSlotSnooze}
+      />
 
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
       <PageTutorial

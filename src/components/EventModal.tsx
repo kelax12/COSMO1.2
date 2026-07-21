@@ -20,6 +20,7 @@ import { CalendarEvent, EventRecurrence } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 import { useFavoriteColors } from '@/modules/ui-states';
+import { useTimezonePref, toDisplayISO, fromDisplayISO } from '@/lib/timezone';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
@@ -108,6 +109,7 @@ const EventModal: React.FC<EventModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
   const { favoriteColors } = useFavoriteColors();
+  const { pref: tzPref } = useTimezonePref();
   const { data: categories = [] } = useCategories();
 
   const [title, setTitle] = useState("");
@@ -161,8 +163,11 @@ const EventModal: React.FC<EventModalProps> = ({
       setRecurrence(event.recurrence ?? 'none');
       setRecurrenceDays(event.recurrenceDays ?? []);
 
-      const start = new Date(event.start);
-      const end = new Date(event.end);
+      // Affichage dans le fuseau choisi : on décale l'instant « vrai » vers le
+      // fuseau d'affichage avant d'en extraire date + heure (identité en mode
+      // défaut). La sauvegarde retire ce décalage (fromDisplayISO).
+      const start = new Date(toDisplayISO(event.start, tzPref));
+      const end = new Date(toDisplayISO(event.end, tzPref));
 
       // Date LOCALE (en-CA) — l'heure vient de toTimeString() (locale) : mixer
       // avec une date UTC décalait l'événement d'un jour à la sauvegarde
@@ -188,8 +193,8 @@ const EventModal: React.FC<EventModalProps> = ({
       if (task.name) prefilled.add("title");
 
       if (prefilledTimeSlot) {
-        const start = new Date(prefilledTimeSlot.start);
-        const end = new Date(prefilledTimeSlot.end);
+        const start = new Date(toDisplayISO(prefilledTimeSlot.start, tzPref));
+        const end = new Date(toDisplayISO(prefilledTimeSlot.end, tzPref));
         setStartDate(start.toLocaleDateString("en-CA"));
         setStartTime(start.toTimeString().slice(0, 5));
         setEndDate(end.toLocaleDateString("en-CA"));
@@ -277,7 +282,7 @@ const EventModal: React.FC<EventModalProps> = ({
     }
 
     setPrefilledFields(prefilled);
-  }, [isOpen, mode, task, event, prefilledTimeSlot, categories, favoriteColors, readDraft]);
+  }, [isOpen, mode, task, event, prefilledTimeSlot, categories, favoriteColors, readDraft, tzPref]);
 
   const SHAKE_KEY: Record<string, string> = {
     title: 'title',
@@ -306,8 +311,10 @@ const EventModal: React.FC<EventModalProps> = ({
       return;
     }
 
-    const start = new Date(`${startDate}T${startTime}`).toISOString();
-    const end = new Date(`${endDate}T${endTime}`).toISOString();
+    // Les champs date/heure sont saisis dans le fuseau d'affichage : on retire
+    // le décalage pour stocker l'instant « vrai » (identité en mode défaut).
+    const start = fromDisplayISO(new Date(`${startDate}T${startTime}`).toISOString(), tzPref);
+    const end = fromDisplayISO(new Date(`${endDate}T${endTime}`).toISOString(), tzPref);
 
     const rangeStatus = validateEventRange(start, end);
     if (rangeStatus === 'invalid-date') {

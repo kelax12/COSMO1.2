@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat, BarChart3, Keyboard,
+  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Clock,
 } from 'lucide-react';
+import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '../components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
@@ -45,6 +46,7 @@ const SettingsPage: React.FC = () => {
   const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
 
   const { user, logout, isDemo } = useAuth();
+  const { pref: tzPref, setMode: setTzMode, setOffsetHours: setTzOffset } = useTimezonePref();
   const isAdmin = useIsAdmin();
   const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
@@ -389,7 +391,7 @@ const SettingsPage: React.FC = () => {
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)} style={{ minHeight: '36px' }}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                  active ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                  active ? 'bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
                 <Icon size={13} />
                 {item.label}
@@ -443,6 +445,87 @@ const SettingsPage: React.FC = () => {
                   <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
                 </div>
               </SectionCard>
+
+              {/* ── Fuseau horaire d'affichage ── */}
+              <SectionCard>
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                  <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Fuseau horaire</h3>
+                </div>
+                <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">
+                  Choisissez le fuseau utilisé pour afficher les heures de l'agenda et de vos événements.
+                </p>
+                <div className="flex flex-col gap-2.5">
+                  {/* Option : heure par défaut (locale) */}
+                  <button
+                    type="button"
+                    onClick={() => setTzMode('default')}
+                    style={{ minHeight: '56px' }}
+                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
+                      tzPref.mode === 'default'
+                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/8'
+                        : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/40'
+                    }`}
+                    aria-pressed={tzPref.mode === 'default'}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure par défaut</p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Fuseau automatique de votre appareil</p>
+                    </div>
+                    <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
+                      tzPref.mode === 'default'
+                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]'
+                        : 'border-[rgb(var(--color-border))]'
+                    }`} />
+                  </button>
+
+                  {/* Option : heure personnalisée (UTC+N) */}
+                  <button
+                    type="button"
+                    onClick={() => setTzMode('manual')}
+                    style={{ minHeight: '56px' }}
+                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
+                      tzPref.mode === 'manual'
+                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/8'
+                        : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/40'
+                    }`}
+                    aria-pressed={tzPref.mode === 'manual'}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure personnalisée</p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Fixez un décalage UTC</p>
+                    </div>
+                    <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
+                      tzPref.mode === 'manual'
+                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]'
+                        : 'border-[rgb(var(--color-border))]'
+                    }`} />
+                  </button>
+
+                  {tzPref.mode === 'manual' && (
+                    <div className="flex items-center gap-2 pl-1 pt-1">
+                      <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">Décalage :</label>
+                      <div className="inline-flex items-stretch rounded-lg border border-[rgb(var(--color-border))] overflow-hidden focus-within:ring-2 focus-within:ring-[rgb(var(--color-accent))]/30">
+                        <span className="inline-flex items-center px-3 bg-[rgb(var(--color-hover))] text-sm font-semibold text-[rgb(var(--color-text-primary))] select-none">
+                          UTC+
+                        </span>
+                        <input
+                          id="tz-offset"
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          max={14}
+                          step={1}
+                          value={tzPref.offsetHours}
+                          onChange={(e) => setTzOffset(clampOffsetHours(Number(e.target.value)))}
+                          className="w-16 px-3 py-2 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
+
               {/* Mode entreprise : carte info (membre) ou conversion (particulier). */}
               <SectionCard>
                 <OrganizationSettingsCard />
