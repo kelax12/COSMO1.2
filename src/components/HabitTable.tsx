@@ -332,7 +332,9 @@ const HabitTable: React.FC = () => {
                   </td>
                     {days.map((day) => {
                     const isCompleted = habit.completions[day.date];
-                    const createdDate = habit.createdAt ? habit.createdAt.split('T')[0] : '';
+                    // Date locale (en-CA) — évite le décalage J-1 cliquable si
+                    // createdAt (ISO UTC) et day.date (local) divergent au petit matin.
+                    const createdDate = habit.createdAt ? new Date(habit.createdAt).toLocaleDateString('en-CA') : '';
                     const isBeforeCreation = createdDate ? day.date < createdDate : false;
                     // Jour manqué couvert par un joker (parité vue Liste) : flocon
                     // de gel bleu glacé au lieu du cercle vide.
