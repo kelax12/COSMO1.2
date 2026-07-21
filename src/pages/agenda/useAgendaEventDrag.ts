@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { EventApi } from '@fullcalendar/core';
 import { type CalendarEvent, getMasterId } from '@/modules/events';
+import { findSourceEvent } from './find-event';
 
 // FullCalendar v6 ne ré-exporte pas EventDragStartArg/EventDragStopArg depuis
 // core. Type local minimal couvrant ce que les handlers utilisent (compatible
@@ -108,8 +109,7 @@ export function useAgendaEventDrag({
         typeof x === 'number' && typeof y === 'number' &&
         Math.abs(x - startPos.x) < 5 && Math.abs(y - startPos.y) < 5
       ) {
-        const masterId = getMasterId(draggedId);
-        const ev = events.find(e => e.id === masterId || (taskId && e.taskId === taskId));
+        const ev = findSourceEvent(events, draggedId, taskId);
         if (ev) {
           setSelectedEvent(ev);
           setShowEditEventModal(true);
