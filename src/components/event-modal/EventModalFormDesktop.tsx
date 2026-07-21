@@ -534,7 +534,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
           )}
           <Button
             type="submit"
-            className={`min-h-11 text-sm font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:w-auto' : 'w-full sm:w-auto'}`}
+            className={`min-h-12 px-8 text-base font-semibold border-0 text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:w-auto' : 'w-full sm:w-auto'}`}
           >
             {getSubmitButtonText()}
           </Button>

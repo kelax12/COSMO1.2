@@ -35,6 +35,7 @@ const DEMO_TASKS: Task[] = [
   // ── TRAVAIL (cat-1) ───────────────────────────────────────────────────
   t('t001','Bilan annuel 2025',               'Revue complète + plan 2026',               5,'cat-1',-105,-97, -99, true, 120),
   t('t002','Préparer présentation Q1 2026',   'Résultats 3 mois + projections',           5,'cat-1',-5,   3,  null, true, 90),
+  t('t013','Envoyer facture client Dupont',   'Facture en retard, relance client',        4,'cat-1',-10,  -3, null, false, 30),
 
   // ── PROJETS (cat-5) ───────────────────────────────────────────────────
   t('t003','Audit sécurité Q1 2026',          'Pentest + correctifs CVE',                 5,'cat-5',-12,  5,  null),

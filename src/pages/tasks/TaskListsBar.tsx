@@ -134,7 +134,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             >
                               <button
                                 onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}
-                                className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 shadow-sm transition-colors"
+                                className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-emerald-200 dark:border-emerald-600 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 shadow-sm transition-colors"
                                 title="Ajouter des tâches à aujourd'hui (pose leur échéance à aujourd'hui)"
                                 aria-label="Ajouter des tâches à aujourd'hui"
                               >
@@ -142,7 +142,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setTodayHidden(true); }}
-                                className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
+                                className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
                                 title="Masquer la chip Aujourd'hui (réactivable depuis ✨)"
                                 aria-label="Masquer la chip Aujourd'hui"
                               >
@@ -221,7 +221,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     className={`p-2 rounded-lg border shadow-sm transition-colors ${
                                       list.isDefault
                                         ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300'
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400'
                                     }`}
                                     title={list.isDefault ? 'Liste par défaut (cliquez pour désépingler)' : 'Définir comme liste par défaut'}
                                     aria-label={list.isDefault ? 'Liste par défaut' : 'Épingler comme liste par défaut'}
@@ -232,7 +232,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title="Ajouter des tâches"
                                       aria-label="Ajouter des tâches"
                                     >
@@ -243,7 +243,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startEditList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title="Modifier la liste"
                                       aria-label="Modifier la liste"
                                     >
@@ -254,7 +254,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onShareList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
                                       title="Partager la liste"
                                       aria-label="Partager la liste"
                                     >
@@ -263,7 +263,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   )}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
-                                    className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                                    className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
                                     title="Supprimer la liste"
                                     aria-label="Supprimer la liste"
                                   >
