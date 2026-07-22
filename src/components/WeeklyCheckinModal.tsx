@@ -282,7 +282,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 type="button"
                 onClick={handleNext}
                 disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
                   'Enregistrement…'

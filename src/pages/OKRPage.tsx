@@ -317,7 +317,7 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-white shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
           aria-label="Créer un nouvel objectif"
         >
           <Plus size={15} />
@@ -490,7 +490,7 @@ const OKRPage: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowAddObjective(true)}
         aria-label="Nouvel objectif"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/40 flex items-center justify-center"
       >
         <Plus size={28} />
       </motion.button>

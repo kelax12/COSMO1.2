@@ -192,7 +192,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                   onClick={() => setTeamIds([])}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                     teamIds.length === 0
-                      ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-white'
+                      ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                       : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
@@ -207,7 +207,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       onClick={() => toggleTeam(team.id)}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                         active
-                          ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-white'
+                          ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                           : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
@@ -232,7 +232,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 size="sm"
                 onClick={() => setKeyResults((p) => (p.length < 10 ? [...p, newKR()] : p))}
                 disabled={keyResults.length >= 10}
-                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white border-0"
+                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
               >
                 <Plus aria-hidden="true" /> Ajouter
               </Button>

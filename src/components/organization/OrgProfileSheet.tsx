@@ -104,7 +104,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Changer l'image de l'entreprise"
-              className="relative group/av w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 flex items-center justify-center text-white shrink-0"
+              className="relative group/av w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] shrink-0"
             >
               {shownAvatar ? (
                 <img src={shownAvatar} alt="" className="w-full h-full object-cover" />

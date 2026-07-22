@@ -96,7 +96,7 @@ export const InlineForm: React.FC<{
           type="button"
           onClick={() => { if (name.trim()) onSave(name.trim(), color); }}
           disabled={!name.trim()}
-          className="flex-1 min-h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white transition-colors"
+          className="flex-1 min-h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] transition-colors"
         >
           {saveLabel}
         </button>

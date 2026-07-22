@@ -125,7 +125,7 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
           onClick={addItem}
           disabled={!newName.trim() || items.length >= 50}
           aria-label="Ajouter"
-          className="p-2 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white disabled:opacity-40 transition-all"
+          className="p-2 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-40 transition-all"
         >
           <Plus size={16} />
         </button>

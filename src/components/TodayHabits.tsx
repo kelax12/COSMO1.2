@@ -96,7 +96,7 @@ const TodayHabits: React.FC = () => {
                         onClick={() => handleToggle(habit.id)}
                         className={`h-7 w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           habit.completedToday 
-                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-white dark:border-[rgb(var(--color-accent-solid))] shadow-md' 
+                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-solid-foreground))] dark:border-[rgb(var(--color-accent-solid))] shadow-md' 
                             : 'bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border-strong))] text-transparent hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-100'
                         }`}
                       >

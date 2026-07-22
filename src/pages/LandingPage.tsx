@@ -455,7 +455,7 @@ const LandingPage: React.FC = () => {
               <button
                 ref={magneticNavCta}
                 onClick={handleRegisterClick}
-                className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 text-white px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 text-[rgb(var(--color-accent-solid-foreground))] px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
                 <span className="relative lg:hidden">Commencer</span>
@@ -627,7 +627,7 @@ const LandingPage: React.FC = () => {
                     loginDemo();
                     setTimeout(() => navigate('/dashboard'), 0);
                   }}
-                  className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-violet-500 text-[rgb(var(--color-accent-solid-foreground))] px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   aria-label="Essayer la démo sans inscription"
                 >
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
@@ -788,7 +788,7 @@ const LandingPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRegisterClick}
-                  className="group bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
+                  className="group bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-700 text-[rgb(var(--color-accent-solid-foreground))] px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
                 >
                   Commencer maintenant
                 </button>

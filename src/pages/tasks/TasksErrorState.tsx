@@ -20,7 +20,7 @@ const TasksErrorState: React.FC<TasksErrorStateProps> = ({ error, onRetry }) => 
       </p>
       <button
         onClick={onRetry}
-        className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold text-sm"
+        className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold text-sm"
       >
         Réessayer
       </button>

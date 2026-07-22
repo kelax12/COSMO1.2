@@ -17,8 +17,9 @@ function stubViewport({ width, prefersDark }: { width: number; prefersDark: bool
 }
 
 describe('isTheme', () => {
-  it('accepte les 3 thèmes et rejette le reste', () => {
-    expect(['light', 'dark', 'black'].every(isTheme)).toBe(true);
+  it('accepte les 4 thèmes et rejette le reste', () => {
+    expect(['light', 'dark', 'gris', 'noir'].every(isTheme)).toBe(true);
+    expect(isTheme('black')).toBe(false);
     expect(isTheme('midnight')).toBe(false);
     expect(isTheme('glass')).toBe(false);
     expect(isTheme(null)).toBe(false);
@@ -28,9 +29,9 @@ describe('isTheme', () => {
 describe('defaultTheme', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('choisit le thème noir sur mobile, quelle que soit la préférence système', () => {
+  it('choisit le thème gris sur mobile, quelle que soit la préférence système', () => {
     stubViewport({ width: 375, prefersDark: false });
-    expect(defaultTheme()).toBe('black');
+    expect(defaultTheme()).toBe('gris');
   });
 
   it('suit la préférence système sur desktop', () => {
@@ -51,16 +52,22 @@ describe('resolveInitialTheme', () => {
     expect(resolveInitialTheme()).toBe('light');
   });
 
-  it.each(['midnight', 'monochrome'])(
-    'migre l’ancien thème « %s » vers black, en base comme en retour',
+  it('privilégie noir même si l’ancien défaut mobile était gris', () => {
+    stubViewport({ width: 375, prefersDark: false });
+    localStorage.setItem('theme', 'noir');
+    expect(resolveInitialTheme()).toBe('noir');
+  });
+
+  it.each(['black', 'midnight', 'monochrome'])(
+    'migre l’ancien thème « %s » vers gris, en base comme en retour',
     (legacy) => {
       stubViewport({ width: 1440, prefersDark: false });
       localStorage.setItem('theme', legacy);
 
-      expect(resolveInitialTheme()).toBe('black');
+      expect(resolveInitialTheme()).toBe('gris');
       // Sans réécriture, l'utilisateur retomberait sur `light` au prochain
       // démarrage puisque la valeur stockée resterait invalide.
-      expect(localStorage.getItem('theme')).toBe('black');
+      expect(localStorage.getItem('theme')).toBe('gris');
     },
   );
 
@@ -87,19 +94,24 @@ describe('applyTheme', () => {
     expect([...root.classList]).toEqual(['dark']);
   });
 
-  it('black pose dark + black', () => {
-    applyTheme(root, 'black');
-    expect([...root.classList].sort()).toEqual(['black', 'dark']);
+  it('gris pose dark + gris', () => {
+    applyTheme(root, 'gris');
+    expect([...root.classList].sort()).toEqual(['dark', 'gris']);
+  });
+
+  it('noir pose dark + noir', () => {
+    applyTheme(root, 'noir');
+    expect([...root.classList].sort()).toEqual(['dark', 'noir']);
   });
 
   it('purge les classes du thème précédent', () => {
-    applyTheme(root, 'black');
+    applyTheme(root, 'noir');
     applyTheme(root, 'light');
     expect(root.className).toBe('');
   });
 
   it('purge les reliquats d’anciens thèmes', () => {
-    root.classList.add('glass', 'test', 'monochrome', 'midnight');
+    root.classList.add('glass', 'test', 'monochrome', 'midnight', 'black');
     applyTheme(root, 'dark');
     expect([...root.classList]).toEqual(['dark']);
   });

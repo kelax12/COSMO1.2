@@ -166,7 +166,7 @@ const ShareInviteClaimer: React.FC = () => {
                 <button
                   onClick={handleAccept}
                   disabled={busy}
-                  className="flex-1 min-h-11 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors shadow-md shadow-blue-500/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="flex-1 min-h-11 px-4 py-2.5 rounded-xl text-sm font-bold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors shadow-md shadow-blue-500/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   <span className="inline-flex items-center gap-1.5 justify-center">
                     {busy ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}

@@ -178,7 +178,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
                         </span>
                         <span
                           className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
-                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-white' : 'border-[rgb(var(--color-border))]'
+                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'border-[rgb(var(--color-border))]'
                           }`}
                           aria-hidden="true"
                         >

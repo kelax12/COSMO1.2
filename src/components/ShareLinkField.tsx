@@ -93,7 +93,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
             variant="default"
             onClick={handleGenerate}
             disabled={generating}
-            className="inline-flex items-center justify-center gap-2 min-h-11 w-full sm:w-auto bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white"
+            className="inline-flex items-center justify-center gap-2 min-h-11 w-full sm:w-auto bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]"
           >
             {generating
               ? <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
@@ -125,7 +125,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
               variant="default"
               onClick={handleCopy}
               disabled={isCreating || !inviteUrl}
-              className={`inline-flex items-center justify-center gap-2 min-h-11 ${linkCopied ? 'bg-emerald-600 hover:bg-emerald-600 text-white' : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white'}`}
+              className={`inline-flex items-center justify-center gap-2 min-h-11 ${linkCopied ? 'bg-emerald-600 hover:bg-emerald-600 text-[rgb(var(--color-accent-solid-foreground))]' : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]'}`}
             >
               {linkCopied ? <Check size={16} data-icon="inline-start" /> : <Copy size={16} data-icon="inline-start" />}
               {linkCopied ? 'Copié !' : 'Copier'}

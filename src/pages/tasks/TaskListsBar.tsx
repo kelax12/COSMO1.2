@@ -77,11 +77,11 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="mb-4 sm:mb-8"
+                  className="mb-2 sm:mb-8"
                   data-tutorial-id="tasks-lists"
                 >
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="mb-2 sm:mb-4">
+                    <div className="flex items-center justify-between mb-1 sm:mb-4">
                       <h3 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h3>
                       {!showCreateList && (
                         <button
@@ -94,18 +94,22 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                       )}
                     </div>
 
-                    <div className="flex sm:flex-wrap gap-3 pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                    {/* `pt-8` sur desktop réserve l'espace du survol (boutons
+                        +/corbeille de la chip « Aujourd'hui », en -top-8). Ce
+                        survol n'existe pas au tactile → `pt-2` sur mobile,
+                        ~24px d'espace vide en moins. */}
+                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => {
                           clearListFilter();
                         }}
-                        // `min-h-touch` sous 640px : les chips faisaient 38px de
-                        // haut, sous la cible tactile de 44px (WCAG 2.5.5).
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
+                        // Chips mobile : 40px de haut (assez pour le pouce,
+                        // volontairement plus compactes que 44px sur demande).
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
                           !selectedListId
-                            ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
+                            ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                             : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
                         }`}
                       >
@@ -157,7 +161,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
                             selectedListId === VIRTUAL_TODAY_ID
                               ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
                               : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
@@ -324,7 +328,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 <button
                                   type="submit"
                                   disabled={!editListName.trim()}
-                                  className="px-2 py-1 text-xs rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                                  className="px-2 py-1 text-xs rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                                 >
                                   OK
                                 </button>
@@ -349,9 +353,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                className={`flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all border shadow-sm ${
+                                className={`flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all border shadow-sm ${
                                   isSelected
-                                    ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
+                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                                     : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
                                 }`}
                               >
@@ -485,7 +489,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               <button
                                 type="submit"
                                 disabled={!newListName.trim()}
-                                className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                                className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                               >
                                 Créer
                               </button>
@@ -551,7 +555,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             <button
                               type="submit"
                               disabled={!newListName.trim()}
-                              className="px-3 py-2 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                              className="px-3 py-2 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                             >
                               Créer
                             </button>
@@ -585,7 +589,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           <button
                             onClick={confirmAddTasksToList}
                             disabled={selectedTasksForList.length === 0}
-                            className="px-5 py-2.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold disabled:opacity-40 transition-all"
+                            className="px-5 py-2.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold disabled:opacity-40 transition-all"
                           >
                             Valider
                           </button>

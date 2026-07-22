@@ -291,7 +291,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full min-h-10 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-white transition-colors"
+                className="w-full min-h-10 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] transition-colors"
               >
                 Terminer
               </button>

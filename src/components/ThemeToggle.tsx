@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Circle } from 'lucide-react';
+import { Sun, Moon, Circle, MoonStar } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 import type { Theme } from '@/lib/theme';
 
@@ -10,20 +10,23 @@ interface ThemeToggleProps {
 }
 
 const THEMES: { id: Theme; icon: React.ElementType; label: string }[] = [
-  { id: 'light', icon: Sun,    label: 'Clair'  },
-  { id: 'dark',  icon: Moon,   label: 'Sombre' },
-  { id: 'black', icon: Circle, label: 'Noir'   },
+  { id: 'light', icon: Sun,      label: 'Clair'  },
+  { id: 'dark',  icon: Moon,     label: 'Sombre' },
+  { id: 'gris',  icon: Circle,   label: 'Gris'   },
+  { id: 'noir',  icon: MoonStar, label: 'Noir'   },
 ];
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {
   const { theme, setTheme, toggleTheme } = useDarkMode();
   const visibleThemes = THEMES;
 
-  /* ── Segmented control (3 buttons) ── */
+  /* ── Segmented control (4 buttons) ── */
   if (showLabel) {
     return (
       <div
-        className={`inline-flex items-center gap-0.5 p-1 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl ${className}`}
+        // `flex-wrap` : 4 thèmes × 60px ne tiennent pas sur un écran de 375px
+        // dans le panneau Réglages — sans ça le 4ᵉ bouton déborde.
+        className={`inline-flex flex-wrap items-center gap-0.5 p-1 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl ${className}`}
         role="radiogroup"
         aria-label="Thème de l'interface"
       >
@@ -36,7 +39,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
               aria-checked={active}
               onClick={() => setTheme(id)}
               title={label}
-              style={{ minHeight: '36px', minWidth: '64px' }}
+              style={{ minHeight: '36px', minWidth: '60px' }}
               className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
                 active
                   ? 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] shadow-sm border border-[rgb(var(--color-border))]'
@@ -48,7 +51,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
                 className={
                   id === 'light'
                     ? active ? 'text-amber-500' : ''
-                    : id === 'dark'
+                    : id === 'dark' || id === 'gris'
                     ? active ? 'text-[rgb(var(--color-accent))]' : ''
                     : active ? 'text-[rgb(var(--color-text-primary))]' : ''
                 }

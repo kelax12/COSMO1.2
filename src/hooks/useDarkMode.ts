@@ -8,8 +8,8 @@ import {
 
 export type { Theme };
 
-/** Ordre de cyclage du bouton unique : clair → sombre → noir → clair. */
-const CYCLE: Theme[] = ['light', 'dark', 'black'];
+/** Ordre de cyclage du bouton unique : clair → sombre → gris → noir → clair. */
+const CYCLE: Theme[] = ['light', 'dark', 'gris', 'noir'];
 
 export const useDarkMode = () => {
   const [theme, setThemeState] = useState<Theme>(resolveInitialTheme);

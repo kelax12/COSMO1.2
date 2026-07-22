@@ -56,7 +56,7 @@ const ClaimOrgInvitePage = () => {
             <button
               type="button"
               onClick={() => navigate('/entreprise')}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all inline-flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all inline-flex items-center justify-center gap-2"
             >
               Découvrir mon espace <ArrowRight size={16} aria-hidden="true" />
             </button>
@@ -87,7 +87,7 @@ const ClaimOrgInvitePage = () => {
             <button
               type="button"
               onClick={() => navigate(`/login?redirect=/org-invite/${token}`)}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all"
             >
               Se connecter
             </button>
@@ -109,7 +109,7 @@ const ClaimOrgInvitePage = () => {
               type="button"
               onClick={handleJoin}
               disabled={!consent || claimMutation.isPending}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 disabled:opacity-50 transition-all"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 disabled:opacity-50 transition-all"
             >
               {claimMutation.isPending ? 'Adhésion…' : "Rejoindre l'entreprise"}
             </button>

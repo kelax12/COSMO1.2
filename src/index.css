@@ -30,6 +30,7 @@
     --color-accent: 37 99 235;
     --color-accent-solid: 37 99 235; /* pas de duo dédié en Clair — repli sur l'accent existant */
     --color-accent-solid-hover: 29 78 216; /* blue-700 — survol des boutons/chips pleins */
+    --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
     --color-success: 34 197 94;
     --color-warning: 245 158 11;
     --color-error: 239 68 68;
@@ -92,6 +93,7 @@
     --accent-foreground: 0 0% 100%;
     --accent-solid: 217 91% 60%; /* pas de duo dédié en Clair — repli sur l'accent existant */
     --accent-solid-hover: 224 76% 48%; /* blue-700 */
+    --accent-solid-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
@@ -111,7 +113,7 @@
        type Spotify. Plancher absolu : 11px (--t-caption).
        Ces tokens sont indépendants des thèmes : ils ne portent
        aucune couleur et ne sont donc jamais overridés par
-       .dark / .black.
+       .dark / .gris / .noir.
        ────────────────────────────────────────────────────────────── */
     --t-display: 1.75rem;   /* 28px — titre de page */
     --t-title: 1.375rem;    /* 22px — titre de section majeur */
@@ -156,6 +158,7 @@
         --color-accent: 59 130 246;
         --color-accent-solid: 59 130 246; /* pas de duo dédié en Sombre — repli sur l'accent existant */
         --color-accent-solid-hover: 37 99 235; /* blue-600 — survol des boutons/chips pleins */
+        --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
         --color-success: 52 211 153;
         --color-warning: 251 191 36;
         --color-error: 239 68 68;
@@ -218,6 +221,7 @@
     --accent-foreground: 0 0% 100%;
     --accent-solid: 217 91% 60%; /* pas de duo dédié en Sombre — repli sur l'accent existant */
     --accent-solid-hover: 221 83% 53%; /* blue-600 */
+    --accent-solid-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 27%;
@@ -240,18 +244,21 @@
 --chart-5: 340 75% 55%;
 }
 
-  /* ── Black (palette GitHub Dimmed) — appliqué AVEC .dark, override uniquement les couleurs ──
+  /* ── Gris (palette GitHub Dimmed) — appliqué AVEC .dark, override uniquement les couleurs ──
+     Anciennement « Noir » (classe .black) ; renommé quand le vrai thème Noir
+     (OLED + monochrome, cf. bloc .noir plus bas) a été restauré comme 4e thème.
      Chaque couleur du tableau « Palette cible » est écrite une seule fois en hex, puis déclinée
      ci-dessous en RGB (famille --color-*) ET en HSL (famille shadcn) avec des valeurs qui se
      correspondent exactement — c'est la règle d'or qui évite toute divergence entre les deux
      systèmes de tokens (cf. CLAUDE.md / plan de thème). */
-  .black {
+  .gris {
     /* Base palette (RGB format) */
     --color-primary: 173 186 199;      /* #adbac7 texte secondaire */
     --color-secondary: 118 131 144;    /* #768390 texte muted */
     --color-accent: 88 166 255;        /* #58a6ff texte / liens / focus / bordures actives */
     --color-accent-solid: 56 139 253;  /* #388bfd fonds pleins de boutons/chips actifs — intensifié pour rester percutant sur fond graphite (#1f6feb original trop terne) */
     --color-accent-solid-hover: 88 166 255; /* #58a6ff — même teinte que --color-accent, s'éclaircit au survol */
+    --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
     --color-success: 52 211 153;
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
@@ -297,7 +304,7 @@
     --table-row-even: 43 49 55;
     --table-row-odd: 36 41 46;
 
-    /* shadcn/ui variables (HSL format) — Black mode */
+    /* shadcn/ui variables (HSL format) — Gris mode */
     --background: 210 12% 16%;   /* #24292e */
     --foreground: 210 17% 98%;   /* #fafbfc */
     --card: 210 12% 19%;         /* #2b3137 */
@@ -314,13 +321,14 @@
     --accent-foreground: 0 0% 100%;
     --accent-solid: 215 98% 61%; /* #388bfd — intensifié */
     --accent-solid-hover: 212 100% 67%; /* #58a6ff */
+    --accent-solid-foreground: 0 0% 100%;
     --destructive: 0 63% 40%;
     --destructive-foreground: 210 17% 98%;
     --border: 214 13% 25%;       /* #373e47 */
     --input: 214 13% 25%;
     --ring: 212 100% 67%;        /* #58a6ff */
 
-    /* shadcn/ui sidebar variables — Black mode */
+    /* shadcn/ui sidebar variables — Gris mode */
     --sidebar-background: 210 12% 19%;
     --sidebar-foreground: 210 10% 51%;
     --sidebar-primary: 210 17% 98%;
@@ -329,6 +337,102 @@
     --sidebar-accent-foreground: 210 17% 98%;
     --sidebar-border: 214 13% 25%;
     --sidebar-ring: 212 100% 67%;
+  }
+
+  /* ── Noir (vrai noir / OLED, monochrome) — 4e thème, restauré à l'identique
+     de l'ancien thème "Noir" (id `black`, pré-palette GitHub) : fond quasi-noir,
+     accent quasi-blanc, aucune couleur — le mode haute accessibilité/contraste.
+     Trois tokens n'existaient pas dans l'ancienne palette (accent-solid,
+     accent-solid-hover, border-strong) : ajoutés ici pour rester compatible
+     avec le système de boutons/bordures unifié introduit depuis. Golden
+     rule : chaque couleur en RGB (--color-*) ET en HSL (famille shadcn),
+     valeurs synchronisées. */
+  .noir {
+    /* Base palette (RGB format) — pure grays, no hue */
+    --color-primary: 200 200 200;
+    --color-secondary: 140 140 140;
+    --color-accent: 240 240 240;              /* near-white — texte / liens / focus / bordures actives */
+    --color-accent-solid: 240 240 240;        /* fonds pleins de boutons/chips actifs */
+    --color-accent-solid-hover: 210 210 210;  /* survol — légèrement plus terne */
+    --color-accent-solid-foreground: 8 8 8;   /* texte quasi-noir sur bouton quasi-blanc */
+    --color-success: 160 160 160;
+    --color-warning: 180 180 180;
+    --color-error: 200 60 60;                 /* rouge désaturé, gardé pour les actions destructives */
+    --color-surface: 22 22 22;
+    --color-background: 8 8 8;
+
+    /* Semantic colors */
+    --color-text-primary: 242 242 242;
+    --color-text-secondary: 168 168 168;
+    --color-text-muted: 96 96 96;
+    --color-border: 46 46 46;
+    --color-border-muted: 32 32 32;
+    --color-border-strong: 70 70 70;          /* survol */
+    --color-hover: 32 32 32;
+    --color-active: 50 50 50;
+    --color-chip-bg: 32 32 32;
+    --color-chip-border: 52 52 52;
+
+    /* Navigation specific colors */
+    --nav-bg: 22 22 22;
+    --nav-border: 46 46 46;
+    --nav-item-text: 110 110 110;
+    --nav-item-hover-bg: 32 32 32;
+    --nav-item-hover-text: 210 210 210;
+    --nav-item-active-bg: 240 240 240;
+    --nav-item-active-text: 8 8 8;
+
+    /* Calendar specific colors */
+    --calendar-bg: 22 22 22;
+    --calendar-border: 46 46 46;
+    --calendar-header-bg: 8 8 8;
+    --calendar-header-text: 160 160 160;
+    --calendar-day-bg: 8 8 8;
+    --calendar-day-hover: 22 22 22;
+    --calendar-today-bg: 36 36 36;
+
+    /* Table specific colors */
+    --table-bg: 22 22 22;
+    --table-border: 46 46 46;
+    --table-header-bg: 8 8 8;
+    --table-header-text: 160 160 160;
+    --table-row-hover: 32 32 32;
+    --table-row-even: 22 22 22;
+    --table-row-odd: 8 8 8;
+
+    /* shadcn/ui variables (HSL format) — Noir mode */
+    --background: 0 0% 3%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 0% 94%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 3%;
+    --accent-solid: 0 0% 94%;
+    --accent-solid-hover: 0 0% 82%;
+    --accent-solid-foreground: 0 0% 3%;
+    --destructive: 0 55% 40%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 80%;
+
+    /* shadcn/ui sidebar variables — Noir mode */
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 55%;
+    --sidebar-primary: 0 0% 94%;
+    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 80%;
   }
 
 body {
@@ -544,12 +648,14 @@ body {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
-  /* Thème Noir : le fond actif de la sidebar est le même bleu vif que
-     l'icône (couleur par item, ex. hoverColor="#3b82f6" posée en inline
-     style par NavItemLink) — contraste quasi nul entre icône et fond.
-     Clair/Sombre utilisent un fond neutre (gris/slate), pas de souci là.
-     `!important` nécessaire : bat l'inline style posé par le composant. */
-  .black .sidebar-item.active .nav-item-icon {
+  /* Thèmes Gris/Noir : le fond actif de la sidebar est une teinte vive
+     (bleu en Gris, quasi-blanc en Noir) proche de la couleur par-item posée
+     en inline style par NavItemLink (hoverColor, ex. "#3b82f6") — contraste
+     quasi nul entre icône et fond. Clair/Sombre utilisent un fond neutre
+     (gris/slate), pas de souci là. `!important` nécessaire : bat l'inline
+     style posé par le composant. */
+  .gris .sidebar-item.active .nav-item-icon,
+  .noir .sidebar-item.active .nav-item-icon {
     color: rgb(var(--nav-item-active-text)) !important;
   }
 
@@ -872,6 +978,25 @@ body.fc-quick-preview .fc-event.fc-event-mirror {
 
 .fc .fc-button-primary:not(:disabled).fc-button-active {
   background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+}
+
+/* Thème Noir : dégradé bleu codé en dur, hors du système de tokens (les
+   boutons FullCalendar ne passent pas par des classes Tailwind) — jure sur
+   fond quasi-noir/accent quasi-blanc. Neutralisé en gris, comme le reste du
+   thème. `!important` nécessaire pour battre les règles `.fc-button` ci-dessus. */
+.noir .fc .fc-button {
+  background: rgb(var(--color-active)) !important;
+  box-shadow: none !important;
+}
+.noir .fc .fc-button:hover {
+  background: rgb(var(--color-border-strong)) !important;
+  transform: none;
+}
+.noir .fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: rgb(90 90 90) !important;
+}
+.noir .fc .fc-daygrid-more-link {
+  color: rgb(var(--color-text-secondary));
 }
 
 .fc .fc-toolbar-title {

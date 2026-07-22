@@ -208,7 +208,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 type="button"
                 size="sm"
                 onClick={() => setKeyResults((p) => [...p, newKR()])}
-                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white border-0"
+                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
               >
                 <Plus aria-hidden="true" /> Ajouter
               </Button>

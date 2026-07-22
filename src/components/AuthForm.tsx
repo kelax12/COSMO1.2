@@ -351,7 +351,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20 mt-2"
+          className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20 mt-2"
         >
           {isLoading
             ? slowHint

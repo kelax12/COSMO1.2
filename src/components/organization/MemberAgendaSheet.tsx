@@ -299,7 +299,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           <button
             type="button"
             onClick={openNewEvent}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
           >
             <Plus size={18} aria-hidden="true" />
             <span className="font-medium text-sm">Nouveau</span>
