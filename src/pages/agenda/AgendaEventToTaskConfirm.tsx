@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ListChecks, Trash2, X, CalendarClock } from 'lucide-react';
 import type { CalendarEvent } from '@/modules/events';
 
 interface AgendaEventToTaskConfirmProps {
@@ -54,34 +53,33 @@ const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
               <button
                 onClick={onCancel}
                 aria-label="Fermer"
-                className="shrink-0 p-1.5 rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
+                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-lg leading-none"
               >
-                <X size={18} />
+                &times;
               </button>
             </div>
 
-            <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] px-4 py-3 mb-5 flex items-center gap-2">
-              <CalendarClock size={16} className="shrink-0 text-[rgb(var(--color-text-muted))]" />
+            <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] px-4 py-3 mb-5">
               <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
                 {event.title}
               </p>
             </div>
 
-            <div className="flex flex-col gap-2.5">
-              <button
-                onClick={onConvertToTask}
-                style={{ minHeight: '48px' }}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold active:scale-[0.98] transition-all duration-150"
-              >
-                <ListChecks size={17} /> Transformer en tâche
-              </button>
-
+            <div className="flex gap-2.5">
               <button
                 onClick={onDelete}
                 style={{ minHeight: '48px' }}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 text-red-500 text-sm font-semibold hover:bg-red-500 hover:text-white hover:border-red-500 active:scale-[0.98] transition-all duration-150"
+                className="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold active:scale-[0.98] transition-all duration-150"
               >
-                <Trash2 size={16} /> Supprimer l'événement
+                Supprimer
+              </button>
+
+              <button
+                onClick={onConvertToTask}
+                style={{ minHeight: '48px' }}
+                className="flex-1 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold active:scale-[0.98] transition-all duration-150"
+              >
+                Transformer en tâche
               </button>
             </div>
           </motion.div>
