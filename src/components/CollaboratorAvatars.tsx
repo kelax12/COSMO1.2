@@ -28,7 +28,7 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
   );
   if (resolvedIds.length === 0) return null;
 
-  const sizeClasses = size === 'sm' ? 'size-7 text-[10px]' : 'size-9 text-xs';
+  const sizeClasses = size === 'sm' ? 'size-7 text-caption' : 'size-9 text-xs';
   const visible = resolvedIds.slice(0, maxVisible);
   const overflow = resolvedIds.length - maxVisible;
 

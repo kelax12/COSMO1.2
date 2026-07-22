@@ -196,7 +196,7 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="inline-flex shrink-0 items-center gap-1.5 h-9 px-3 rounded-lg border-2 border-dashed border-violet-300 dark:border-violet-600 bg-transparent text-sm font-medium text-violet-500 dark:text-violet-400 hover:border-violet-500 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+        className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-violet-300 dark:border-violet-600 bg-transparent text-sm font-medium text-violet-500 dark:text-violet-400 hover:border-violet-500 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
         title="Créer une liste intelligente"
         aria-label="Créer une liste intelligente"
         aria-expanded={open}

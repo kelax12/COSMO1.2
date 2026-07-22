@@ -26,10 +26,24 @@ export const PADDING = 8;
 // ───────────────────────────────────────────────────────────────────
 // Helpers : recherche d'élément + calcul du rect (en coordonnées viewport)
 // ───────────────────────────────────────────────────────────────────
+/**
+ * Résout la cible d'une étape de tutoriel.
+ *
+ * Renvoie le premier élément **visible** et non le premier du DOM : depuis que
+ * les pages ont un rendu mobile et un rendu desktop distincts (`md:hidden` /
+ * `hidden md:flex`), un même `data-tutorial-id` peut exister deux fois. Un
+ * simple `querySelector` tomberait alors sur la version masquée et le spotlight
+ * viserait un rectangle de 0×0 dans un coin de l'écran.
+ */
 export const findTarget = (selector: string | undefined): HTMLElement | null => {
   if (!selector) return null;
   try {
-    return document.querySelector<HTMLElement>(selector);
+    const candidates = [...document.querySelectorAll<HTMLElement>(selector)];
+    const visible = candidates.find((el) => {
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+    return visible ?? candidates[0] ?? null;
   } catch {
     return null;
   }

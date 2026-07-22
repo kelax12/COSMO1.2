@@ -276,7 +276,7 @@
     --nav-item-text: 118 131 144;
     --nav-item-hover-bg: 47 53 59;
     --nav-item-hover-text: 173 186 199;
-    --nav-item-active-bg: 31 111 235;
+    --nav-item-active-bg: 56 139 253; /* #388bfd — même intensité que --color-accent-solid */
     --nav-item-active-text: 255 255 255;
 
     /* Calendar specific colors */
@@ -542,6 +542,15 @@ body {
     background-color: rgb(var(--nav-item-active-bg));
     color: rgb(var(--nav-item-active-text));
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Thème Noir : le fond actif de la sidebar est le même bleu vif que
+     l'icône (couleur par item, ex. hoverColor="#3b82f6" posée en inline
+     style par NavItemLink) — contraste quasi nul entre icône et fond.
+     Clair/Sombre utilisent un fond neutre (gris/slate), pas de souci là.
+     `!important` nécessaire : bat l'inline style posé par le composant. */
+  .black .sidebar-item.active .nav-item-icon {
+    color: rgb(var(--nav-item-active-text)) !important;
   }
 
   /* Navigation container */

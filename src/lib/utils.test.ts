@@ -15,4 +15,22 @@ describe('cn (clsx + tailwind-merge)', () => {
   it('keeps non-conflicting utilities', () => {
     expect(cn('p-2', 'text-sm')).toBe('p-2 text-sm');
   });
+
+  describe('échelle typographique mobile', () => {
+    // Régression réelle : sans la config `extendTailwindMerge`, tailwind-merge
+    // classait `text-caption` comme une COULEUR et la supprimait dès qu'une
+    // vraie couleur suivait — les libellés de la tab bar retombaient à 16px.
+    it('ne confond pas une taille custom avec une couleur de texte', () => {
+      expect(cn('text-caption', 'text-[rgb(var(--color-text-muted))]')).toBe(
+        'text-caption text-[rgb(var(--color-text-muted))]',
+      );
+      expect(cn('text-display', 'text-red-500')).toBe('text-display text-red-500');
+    });
+
+    it('fait bien gagner la dernière taille quand deux tailles se suivent', () => {
+      expect(cn('text-display', 'text-headline')).toBe('text-headline');
+      expect(cn('text-sm', 'text-body')).toBe('text-body');
+      expect(cn('text-body', 'text-sm')).toBe('text-sm');
+    });
+  });
 });
