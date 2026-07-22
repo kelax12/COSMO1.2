@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
+import { applyTheme, resolveInitialTheme } from './lib/theme';
 import './index.css';
 
 // Sentry — error monitoring prod (faille §14 / I3). Init synchrone, AVANT le
@@ -77,19 +78,13 @@ performance.mark('cosmo:boot');
 
 // Thème appliqué AVANT le premier paint, pour toutes les pages — publiques
 // incluses. Sans ça, /login /signup /forgot-password /reset-password rendaient
-// toujours en mode clair : la classe .dark n'était posée que par useDarkMode,
-// monté uniquement dans l'app authentifiée (même logique de résolution :
-// localStorage 'theme' puis prefers-color-scheme).
+// toujours en mode clair : les classes de thème n'étaient posées que par
+// useDarkMode, monté uniquement dans l'app authentifiée. La résolution et
+// l'application partagent le même module que le hook (src/lib/theme.ts) pour
+// qu'un flash de thème incorrect reste impossible.
 try {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (savedTheme === 'dark' || savedTheme === 'black' || (savedTheme !== 'light' && prefersDark)) {
-    document.documentElement.classList.add('dark');
-  }
-  if (savedTheme === 'black') {
-    document.documentElement.classList.add('black');
-  }
-} catch { /* localStorage inaccessible (navigation privée stricte) — thème clair */ }
+  applyTheme(document.documentElement, resolveInitialTheme());
+} catch { /* localStorage/matchMedia inaccessibles (navigation privée stricte) */ }
 
 // iOS Safari has a well-known WebKit bug where the *very first* cross-origin
 // fetch made during page load can fail silently with "Load failed" / DOMException

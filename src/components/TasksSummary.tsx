@@ -85,7 +85,8 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
           )}
           <button
             onClick={() => setShowColorSettings(true)}
-            className="p-2 rounded-lg transition-colors"
+            aria-label="Modifier la légende des couleurs"
+            className="inline-flex items-center justify-center min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 sm:p-2 rounded-lg transition-colors"
             style={{ color: 'rgb(var(--color-text-muted))' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'rgb(var(--color-text-secondary))';

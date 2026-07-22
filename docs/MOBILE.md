@@ -15,15 +15,68 @@
 - **`min-h-[100dvh]`** (jamais `min-h-screen`/`100vh`) sur les wrappers de page — sinon Safari iOS rogne le contenu.
 - **FAB** : `fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500`. **Pages avec FAB** : Tasks, Habits, OKR. Sans FAB : Dashboard, Settings, Agenda, Statistics.
 
-## Échelle typographique (H1 des pages)
+## Design system mobile (2026-07-22)
 
-| Famille | Mobile | Desktop | Pages |
+Le mobile n'avait aucun système : 10 tailles de texte arbitraires (`text-[8px]` → `text-[17px]`) en plus des 9 tailles Tailwind, 4 gouttières de page différentes, 9 rayons arbitraires, 176 boutons sous la cible tactile. Tout est désormais adossé à des **tokens**.
+
+### Échelle typographique — FERMÉE à 6 crans
+
+Tokens dans `src/index.css` (`:root`), exposés en utilitaires Tailwind (`tailwind.config.js`).
+
+| Utilitaire | Token | Taille | Usage |
 |---|---|---|---|
-| **Hero salutation** | `text-2xl` | `sm:text-4xl lg:text-5xl` | DashboardPage uniquement |
-| **Standard** | `text-2xl` | `sm:text-3xl` / `md:text-3xl` | HabitsPage, OKRPage, StatisticsPage, PremiumPage (`sm:text-4xl`) |
-| **Compact inline** | `text-lg` | `sm:text-3xl` | TasksPage |
+| `text-display` | `--t-display` | 28 px | Titre de page (`MobileHeader`) |
+| `text-title` | `--t-title` | 22 px | Titre de section majeur |
+| `text-headline` | `--t-headline` | 17 px | Titre de carte, header compacté |
+| `text-body` | `--t-body` | 15 px | Texte courant, titre de ligne |
+| `text-label` | `--t-label` | 13 px | Labels, boutons, chips |
+| `text-caption` | `--t-caption` | 11 px | Meta, badges, labels de tab bar |
 
-> Ne pas inventer une 4ème famille sans raison UX claire.
+> **11 px est le plancher absolu.** Le test `src/design-system.guard.test.ts` échoue si une taille sous 11 px apparaît, et plafonne le stock de `text-[Npx]` restants (budget qui ne doit que baisser).
+
+### Grille, rayons, cible tactile
+
+| Utilitaire | Token | Valeur |
+|---|---|---|
+| `p-gutter` / `gap-gutter` | `--gutter` | 16 px — gouttière unique de toutes les pages |
+| `gap-row` | `--gap-row` | 12 px — entre deux lignes de liste |
+| `gap-section` | `--gap-section` | 28 px — entre deux sections |
+| `rounded-row` / `rounded-card` / `rounded-sheet` | `--r-row` / `--r-card` / `--r-sheet` | 12 / 16 / 20 px |
+| `min-h-touch` / `min-w-touch` | `--touch-min` | 44 px (WCAG 2.5.5) |
+
+### ⚠️ tailwind-merge doit connaître ces tailles
+
+`cn()` (`src/lib/utils.ts`) utilise `extendTailwindMerge` pour déclarer `text-display/title/headline/body/label/caption` dans le groupe `font-size`. **Sans cette config**, tailwind-merge les prend pour des couleurs de texte et les **supprime silencieusement** dès qu'une couleur suit dans le même `cn()` — symptôme constaté : les libellés de `MobileTabBar` retombés à 16 px, sans erreur. Toute nouvelle taille custom doit être ajoutée à cette liste.
+
+### Primitives — `src/components/mobile/`
+
+| Primitive | Rôle |
+|---|---|
+| `MobileScreen` | Wrapper de page : `min-h-[100dvh]`, gouttière, réserve tab bar + safe-area (+ FAB via `hasFab`) |
+| `MobileHeader` | Grand titre qui se compacte au scroll (motif « large title » iOS) + slot actions |
+| `ListRow` | Ligne canonique : rail couleur, titre `text-body`, meta `text-caption`, `min-h-touch` |
+| `SectionHeader` | Titre de section discret + compte + action |
+| `Segmented` | Contrôle segmenté (pastille active animée via `layoutId`) |
+| `TouchTarget` | Bouton-icône dont la zone tactile fait réellement 44×44 px |
+| `mobile-motion.ts` | Courbes partagées (`SHEET_SPRING`…) + `haptic()` + `prefersReducedMotion()` |
+
+Composer ces briques plutôt que redessiner. Tests : `src/components/mobile/mobile-primitives.test.tsx`.
+
+### Champs de saisie — 16 px obligatoire
+
+`src/index.css` impose `font-size: 16px` à tous les champs texte sous 768 px. En dessous de 16 px, **iOS Safari zoome automatiquement** au focus et la page reste décalée. Ne pas rétablir un `text-xs` sur un input mobile.
+
+### Listes bord à bord — `.card-plain-mobile`
+
+Une liste mobile ne vit pas dans une carte : la carte ajoute une 2ᵉ gouttière et vole ~24 px de largeur utile par ligne. `.card-plain-mobile` (dans `src/index.css`) neutralise le chrome de `.card` sous 768 px ; au-delà, `.card` reprend à l'identique. Utilisé par `TasksPage`.
+
+### Thèmes
+
+3 thèmes : `light`, `dark`, `black` (graphite + accent bleu). Résolution et application centralisées dans **`src/lib/theme.ts`** (`resolveInitialTheme` / `applyTheme`), consommées par `src/main.tsx` (avant le premier paint) ET `src/hooks/useDarkMode.ts`. **Sur mobile, un visiteur sans choix explicite démarre en `black`** ; un choix utilisateur reste toujours prioritaire. Les anciennes valeurs `midnight` / `monochrome` sont migrées vers `black`. Tests : `src/lib/theme.test.ts`.
+
+### Tutoriels et rendus mobile/desktop séparés
+
+Quand une page rend deux en-têtes (`md:hidden` + `hidden md:flex`), un même `data-tutorial-id` existe deux fois. `findTarget` (`src/components/tutorial/page-tutorial-helpers.ts`) renvoie le premier élément **visible** (rect non nul), pas le premier du DOM — sinon le spotlight vise la version masquée.
 
 ## Modals — pattern bottom-sheet
 
@@ -159,6 +212,12 @@ if (supabaseUrl) {
 
 ## Ne jamais faire (mobile)
 
+- ❌ **Écrire `text-[Npx]` sur du mobile** — utiliser l'échelle à 6 crans (`design-system.guard.test.ts` bloque sous 11 px)
+- ❌ **Ajouter une taille custom à `tailwind.config.js` sans l'ajouter aussi à `extendTailwindMerge`** dans `src/lib/utils.ts` — elle disparaîtra silencieusement du DOM
+- ❌ **Recalculer à la main** le padding de page — utiliser `MobileScreen` (ou au minimum `p-gutter` + la réserve `pb-[calc(...)]`)
+- ❌ **Enfermer une liste mobile dans une `.card`** — utiliser `.card-plain-mobile`
+- ❌ Mettre un input mobile sous 16 px (iOS zoome au focus)
+- ❌ Redessiner un en-tête / une ligne / un contrôle segmenté au lieu de composer `src/components/mobile/`
 - ❌ Modal centré sur mobile (toujours bottom-sheet)
 - ❌ Touch target < 44 × 44 px (WCAG 2.5.5)
 - ❌ Lire `window.innerWidth` en boucle dans le render — utiliser `useIsMobile()`

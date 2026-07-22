@@ -105,7 +105,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
     >
       <div
-        className="min-w-[20px] flex items-center justify-center relative"
+        className="nav-item-icon min-w-[20px] flex items-center justify-center relative"
         onMouseEnter={() => setIconHovered(true)}
         onMouseLeave={() => setIconHovered(false)}
         style={{

@@ -204,7 +204,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             : m.role === 'admin'
               ? 'border-indigo-400/60'
               : manager
-                ? 'border-blue-400/50'
+                ? 'border-[rgb(var(--color-accent-solid))]/50'
                 : 'border-[rgb(var(--color-border))]';
 
   const myTeams = teamsByUser.get(m.userId) ?? [];

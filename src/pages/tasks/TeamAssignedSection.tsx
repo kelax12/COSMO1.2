@@ -67,7 +67,7 @@ const TeamAssignedSection = () => {
         <span className="text-xs text-[rgb(var(--color-text-muted))]">· {activeOrg.name}</span>
         <Link
           to="/entreprise"
-          className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
+          className="ml-auto inline-flex items-center gap-1 min-h-touch sm:min-h-0 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
         >
           Espace entreprise <ArrowUpRight size={12} aria-hidden="true" />
         </Link>
@@ -108,9 +108,14 @@ const TeamAssignedSection = () => {
                         type="button"
                         onClick={() => toggleComplete(task)}
                         aria-label={`Marquer « ${task.name} » comme terminée`}
-                        className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-indigo-500 flex items-center justify-center shrink-0 transition-colors"
+                        // La case reste visuellement à 20px, mais la ZONE
+                        // tactile fait 44px (marges négatives pour ne pas
+                        // déformer la ligne). Cf. docs/MOBILE.md § cibles.
+                        className="min-w-touch min-h-touch -my-3 -mx-3 sm:my-0 sm:mx-0 sm:min-w-0 sm:min-h-0 flex items-center justify-center shrink-0 transition-colors"
                       >
-                        {task.completed && <Check size={13} aria-hidden="true" />}
+                        <span className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-indigo-500 flex items-center justify-center transition-colors">
+                          {task.completed && <Check size={13} aria-hidden="true" />}
+                        </span>
                       </button>
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} title={priority.label} aria-hidden="true" />
                       <button
@@ -130,7 +135,7 @@ const TeamAssignedSection = () => {
                       </button>
                       {task.assigneeIds.length > 1 && (
                         <span
-                          className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] shrink-0"
+                          className="text-caption font-semibold text-[rgb(var(--color-text-muted))] shrink-0"
                           title="Tâche partagée avec d'autres membres"
                         >
                           +{task.assigneeIds.length - 1}
