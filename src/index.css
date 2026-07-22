@@ -28,18 +28,20 @@
     --color-primary: 71 85 105;
     --color-secondary: 100 116 139;
     --color-accent: 37 99 235;
+    --color-accent-solid: 37 99 235; /* pas de duo dédié en Clair — repli sur l'accent existant */
     --color-success: 34 197 94;
     --color-warning: 245 158 11;
     --color-error: 239 68 68;
     --color-surface: 255 255 255;
     --color-background: 248 250 252;
-    
+
     /* Semantic colors for better accessibility */
     --color-text-primary: 15 23 42;
     --color-text-secondary: 71 85 105;
     --color-text-muted: 148 163 184;
     --color-border: 226 232 240;
     --color-border-muted: 241 245 249;
+    --color-border-strong: 203 213 225; /* slate-300 — un cran au-dessus de --color-border */
       --color-hover: 241 245 249;
       --color-active: 226 232 240;
       --color-chip-bg: 241 245 249;
@@ -87,6 +89,7 @@
     --muted-foreground: 215 16% 47%;
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
+    --accent-solid: 217 91% 60%; /* pas de duo dédié en Clair — repli sur l'accent existant */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
@@ -97,6 +100,36 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
+
+    /* ──────────────────────────────────────────────────────────────
+       Tokens dimensionnels MOBILE (design system — cf. docs/MOBILE.md)
+
+       Échelle fermée à 6 crans. Toute nouvelle taille de texte mobile
+       DOIT sortir de cette liste — c'est ce qui donne la cohérence
+       type Spotify. Plancher absolu : 11px (--t-caption).
+       Ces tokens sont indépendants des thèmes : ils ne portent
+       aucune couleur et ne sont donc jamais overridés par
+       .dark / .black.
+       ────────────────────────────────────────────────────────────── */
+    --t-display: 1.75rem;   /* 28px — titre de page */
+    --t-title: 1.375rem;    /* 22px — titre de section majeur */
+    --t-headline: 1.0625rem;/* 17px — titre de carte, header compacté */
+    --t-body: 0.9375rem;    /* 15px — texte courant, titre de ligne */
+    --t-label: 0.8125rem;   /* 13px — labels, boutons, chips */
+    --t-caption: 0.6875rem; /* 11px — meta, badges, labels de tab bar */
+
+    /* Grille mobile — une seule gouttière horizontale pour toute l'app */
+    --gutter: 1rem;         /* 16px */
+    --gap-row: 0.75rem;     /* 12px — entre deux lignes de liste */
+    --gap-section: 1.75rem; /* 28px — entre deux sections */
+
+    /* Rayons mobile */
+    --r-row: 0.75rem;       /* 12px */
+    --r-card: 1rem;         /* 16px */
+    --r-sheet: 1.25rem;     /* 20px */
+
+    /* Cible tactile minimale (WCAG 2.5.5) */
+    --touch-min: 2.75rem;   /* 44px */
 
     /* shadcn/ui sidebar variables - Light mode */
     --sidebar-background: 0 0% 100%;
@@ -119,18 +152,20 @@
         --color-primary: 148 163 184;
         --color-secondary: 100 116 139;
         --color-accent: 59 130 246;
+        --color-accent-solid: 59 130 246; /* pas de duo dédié en Sombre — repli sur l'accent existant */
         --color-success: 52 211 153;
         --color-warning: 251 191 36;
         --color-error: 239 68 68;
         --color-surface: 30 41 59;
     --color-background: 15 23 42;
-    
+
     /* Semantic colors for dark mode */
     --color-text-primary: 248 250 252;
     --color-text-secondary: 203 213 225;
     --color-text-muted: 148 163 184;
     --color-border: 51 65 85;
     --color-border-muted: 51 65 85;
+    --color-border-strong: 71 85 105; /* slate-600 — un cran au-dessus de --color-border */
       --color-hover: 51 65 85;
       --color-active: 71 85 105;
       --color-chip-bg: 51 65 85;
@@ -178,6 +213,7 @@
     --muted-foreground: 215 20% 65%;
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
+    --accent-solid: 217 91% 60%; /* pas de duo dédié en Sombre — repli sur l'accent existant */
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 27%;
@@ -200,163 +236,93 @@
 --chart-5: 340 75% 55%;
 }
 
-  /* ── Black (vrai noir / OLED) — appliqué AVEC .dark, override uniquement les couleurs ── */
+  /* ── Black (palette GitHub Dimmed) — appliqué AVEC .dark, override uniquement les couleurs ──
+     Chaque couleur du tableau « Palette cible » est écrite une seule fois en hex, puis déclinée
+     ci-dessous en RGB (famille --color-*) ET en HSL (famille shadcn) avec des valeurs qui se
+     correspondent exactement — c'est la règle d'or qui évite toute divergence entre les deux
+     systèmes de tokens (cf. CLAUDE.md / plan de thème). */
   .black {
-    /* Base palette (RGB format) — fond quasi noir, surfaces anthracite neutres */
-    --color-primary: 161 161 170;
-    --color-secondary: 113 113 122;
-    --color-accent: 59 130 246;
+    /* Base palette (RGB format) */
+    --color-primary: 173 186 199;      /* #adbac7 texte secondaire */
+    --color-secondary: 118 131 144;    /* #768390 texte muted */
+    --color-accent: 88 166 255;        /* #58a6ff texte / liens / focus / bordures actives */
+    --color-accent-solid: 31 111 235;  /* #1f6feb fonds pleins de boutons/chips actifs */
     --color-success: 52 211 153;
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
-    --color-surface: 15 15 18;
-    --color-background: 5 5 7;
+    --color-surface: 43 49 55;         /* #2b3137 card/surface */
+    --color-background: 36 41 46;      /* #24292e canvas */
 
     /* Semantic colors */
-    --color-text-primary: 245 245 247;
-    --color-text-secondary: 190 192 198;
-    --color-text-muted: 122 124 132;
-    --color-border: 39 39 45;
-    --color-border-muted: 28 28 33;
-    --color-hover: 28 28 33;
-    --color-active: 44 44 51;
-    --color-chip-bg: 26 26 31;
-    --color-chip-border: 48 48 55;
+    --color-text-primary: 250 251 252;   /* #fafbfc */
+    --color-text-secondary: 173 186 199; /* #adbac7 */
+    --color-text-muted: 118 131 144;     /* #768390 */
+    --color-border: 55 62 71;            /* #373e47 */
+    --color-border-muted: 47 53 59;      /* #2f353b */
+    --color-border-strong: 68 76 86;     /* #444c56 — survol */
+    --color-hover: 47 53 59;             /* #2f353b */
+    --color-active: 58 65 73;            /* #3a4149 */
+    --color-chip-bg: 47 53 59;
+    --color-chip-border: 55 62 71;
 
     /* Navigation specific colors */
-    --nav-bg: 12 12 15;
-    --nav-border: 34 34 40;
-    --nav-item-text: 132 134 142;
-    --nav-item-hover-bg: 28 28 33;
-    --nav-item-hover-text: 212 214 220;
-    --nav-item-active-bg: 44 44 51;
+    --nav-bg: 36 41 46;
+    --nav-border: 55 62 71;
+    --nav-item-text: 118 131 144;
+    --nav-item-hover-bg: 47 53 59;
+    --nav-item-hover-text: 173 186 199;
+    --nav-item-active-bg: 31 111 235;
     --nav-item-active-text: 255 255 255;
 
     /* Calendar specific colors */
-    --calendar-bg: 15 15 18;
-    --calendar-border: 42 42 48;
-    --calendar-header-bg: 5 5 7;
-    --calendar-header-text: 190 192 198;
-    --calendar-day-bg: 5 5 7;
-    --calendar-day-hover: 15 15 18;
-    --calendar-today-bg: 34 34 40;
+    --calendar-bg: 43 49 55;
+    --calendar-border: 55 62 71;
+    --calendar-header-bg: 36 41 46;
+    --calendar-header-text: 173 186 199;
+    --calendar-day-bg: 36 41 46;
+    --calendar-day-hover: 47 53 59;
+    --calendar-today-bg: 58 65 73;
 
     /* Table specific colors */
-    --table-bg: 15 15 18;
-    --table-border: 42 42 48;
-    --table-header-bg: 5 5 7;
-    --table-header-text: 190 192 198;
-    --table-row-hover: 28 28 33;
-    --table-row-even: 15 15 18;
-    --table-row-odd: 5 5 7;
+    --table-bg: 43 49 55;
+    --table-border: 55 62 71;
+    --table-header-bg: 36 41 46;
+    --table-header-text: 173 186 199;
+    --table-row-hover: 47 53 59;
+    --table-row-even: 43 49 55;
+    --table-row-odd: 36 41 46;
 
     /* shadcn/ui variables (HSL format) — Black mode */
-    --background: 240 12% 2%;
-    --foreground: 220 14% 96%;
-    --card: 240 6% 6%;
-    --card-foreground: 220 14% 96%;
-    --popover: 240 6% 7%;
-    --popover-foreground: 220 14% 96%;
-    --primary: 240 4% 65%;
-    --primary-foreground: 240 12% 4%;
-    --secondary: 240 5% 16%;
-    --secondary-foreground: 220 14% 96%;
-    --muted: 240 5% 10%;
-    --muted-foreground: 227 5% 60%;
-    --accent: 217 91% 60%;
+    --background: 210 12% 16%;   /* #24292e */
+    --foreground: 210 17% 98%;   /* #fafbfc */
+    --card: 210 12% 19%;         /* #2b3137 */
+    --card-foreground: 210 17% 98%;
+    --popover: 212 11% 22%;      /* #32383f */
+    --popover-foreground: 210 17% 98%;
+    --primary: 210 19% 73%;      /* #adbac7 */
+    --primary-foreground: 210 12% 16%;
+    --secondary: 214 13% 25%;    /* #373e47 */
+    --secondary-foreground: 210 17% 98%;
+    --muted: 210 11% 21%;        /* #2f353b */
+    --muted-foreground: 210 10% 51%; /* #768390 */
+    --accent: 212 100% 67%;      /* #58a6ff */
     --accent-foreground: 0 0% 100%;
+    --accent-solid: 216 84% 52%; /* #1f6feb */
     --destructive: 0 63% 40%;
-    --destructive-foreground: 220 14% 96%;
-    --border: 240 6% 16%;
-    --input: 240 6% 16%;
-    --ring: 217 91% 60%;
+    --destructive-foreground: 210 17% 98%;
+    --border: 214 13% 25%;       /* #373e47 */
+    --input: 214 13% 25%;
+    --ring: 212 100% 67%;        /* #58a6ff */
 
     /* shadcn/ui sidebar variables — Black mode */
-    --sidebar-background: 240 6% 6%;
-    --sidebar-foreground: 227 5% 60%;
-    --sidebar-primary: 220 14% 96%;
-    --sidebar-primary-foreground: 240 12% 4%;
-    --sidebar-accent: 240 5% 12%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 240 6% 16%;
-    --sidebar-ring: 217 91% 60%;
-  }
-
-  /* ── Monochrome (Noir & Blanc) — overrides .dark variables ── */
-  .monochrome {
-    /* Base palette — pure grays, no hue */
-    --color-primary: 200 200 200;
-    --color-secondary: 140 140 140;
-    --color-accent: 240 240 240;      /* near-white accent replaces blue */
-    --color-success: 160 160 160;
-    --color-warning: 180 180 180;
-    --color-error: 200 60 60;         /* desaturated red kept for destructive safety */
-    --color-surface: 22 22 22;
-    --color-background: 8 8 8;
-
-    --color-text-primary: 242 242 242;
-    --color-text-secondary: 168 168 168;
-    --color-text-muted: 96 96 96;
-    --color-border: 46 46 46;
-    --color-border-muted: 32 32 32;
-    --color-hover: 32 32 32;
-    --color-active: 50 50 50;
-    --color-chip-bg: 32 32 32;
-    --color-chip-border: 52 52 52;
-
-    --nav-bg: 22 22 22;
-    --nav-border: 46 46 46;
-    --nav-item-text: 110 110 110;
-    --nav-item-hover-bg: 32 32 32;
-    --nav-item-hover-text: 210 210 210;
-    --nav-item-active-bg: 240 240 240;
-    --nav-item-active-text: 8 8 8;
-
-    --calendar-bg: 22 22 22;
-    --calendar-border: 46 46 46;
-    --calendar-header-bg: 8 8 8;
-    --calendar-header-text: 160 160 160;
-    --calendar-day-bg: 8 8 8;
-    --calendar-day-hover: 22 22 22;
-    --calendar-today-bg: 36 36 36;
-
-    --table-bg: 22 22 22;
-    --table-border: 46 46 46;
-    --table-header-bg: 8 8 8;
-    --table-header-text: 160 160 160;
-    --table-row-hover: 32 32 32;
-    --table-row-even: 22 22 22;
-    --table-row-odd: 8 8 8;
-
-    /* shadcn/ui variables (HSL) — B&W */
-    --background: 0 0% 3%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 0 0% 94%;
-    --primary-foreground: 0 0% 3%;
-    --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 85%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 0 0% 94%;
-    --accent-foreground: 0 0% 3%;
-    --destructive: 0 55% 40%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 0% 80%;
-
-    --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 0 0% 55%;
-    --sidebar-primary: 0 0% 94%;
-    --sidebar-primary-foreground: 0 0% 3%;
-    --sidebar-accent: 0 0% 14%;
-    --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 0 0% 80%;
+    --sidebar-background: 210 12% 19%;
+    --sidebar-foreground: 210 10% 51%;
+    --sidebar-primary: 210 17% 98%;
+    --sidebar-primary-foreground: 210 12% 16%;
+    --sidebar-accent: 210 11% 21%;
+    --sidebar-accent-foreground: 210 17% 98%;
+    --sidebar-border: 214 13% 25%;
+    --sidebar-ring: 212 100% 67%;
   }
 
 body {
@@ -406,33 +372,38 @@ body {
     }
   }
 
-  /* Global Input Styles */
-  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]), 
-  select, 
+  /* Global Input Styles — bordure 1px constante, jamais 2px : le focus change
+     la couleur (token accent) via un box-shadow inset, pas l'épaisseur, pour
+     ne jamais décaler le contenu voisin d'1px. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+  select,
   textarea,
   [data-slot="input"],
   [data-slot="textarea"],
   [data-slot="select-trigger"] {
-    @apply transition-all border-slate-200 dark:border-slate-700 outline-none border rounded-lg !important;
+    @apply transition-all outline-none border rounded-lg !important;
+    border-color: rgb(var(--color-border)) !important;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):hover, 
-  select:hover, 
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):hover,
+  select:hover,
   textarea:hover,
   [data-slot="input"]:hover,
   [data-slot="textarea"]:hover,
   [data-slot="select-trigger"]:hover {
-    @apply border-blue-500 !important;
+    border-color: rgb(var(--color-border-strong)) !important;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="time"]):focus,
-  select:focus, 
+  select:focus,
   textarea:focus,
   [data-slot="input"]:focus,
   [data-slot="textarea"]:focus,
   [data-slot="select-trigger"]:focus,
     [data-state="open"][data-slot="select-trigger"] {
-      @apply border-2 border-blue-600 outline-none !ring-0 !ring-offset-0 !important;
+      @apply outline-none !ring-0 !ring-offset-0 !important;
+      border-color: rgb(var(--color-accent)) !important;
+      box-shadow: 0 0 0 1px rgb(var(--color-accent)) !important;
     }
 
     /* Suppress focus styling only on time inputs inside desktop wrapper */
@@ -460,11 +431,9 @@ body {
 
     /* Icône native (calendrier/horloge) des inputs date/time — sombre par
        défaut dans le navigateur, donc invisible sur fond sombre. Inversée en
-       dark/monochrome (hors wrapper ci-dessus, où elle est masquée). */
+       dark (hors wrapper ci-dessus, où elle est masquée). */
     .dark input[type="date"]::-webkit-calendar-picker-indicator,
-    .dark input[type="time"]::-webkit-calendar-picker-indicator,
-    html.monochrome input[type="date"]::-webkit-calendar-picker-indicator,
-    html.monochrome input[type="time"]::-webkit-calendar-picker-indicator {
+    .dark input[type="time"]::-webkit-calendar-picker-indicator {
       filter: invert(1) brightness(1.4);
       cursor: pointer;
     }
@@ -493,8 +462,46 @@ body {
     transition: background-color 0.3s ease, border-color 0.3s ease;
   }
 
-  .dark .card {
-    border-color: rgba(255, 255, 255, 0.05);
+  /* iOS Safari zoome automatiquement sur un champ dont la police fait moins de
+     16px : l'utilisateur tape dans la recherche et toute la page part en
+     zoom, puis reste décalée. Plusieurs champs de l'app étaient en `text-xs`
+     (12px) et déclenchaient ce comportement. Plancher à 16px sur mobile
+     uniquement — au-delà de 768px, les tailles d'origine reprennent la main. */
+  @media (max-width: 767px) {
+    input[type='text'],
+    input[type='search'],
+    input[type='email'],
+    input[type='password'],
+    input[type='number'],
+    input[type='tel'],
+    input[type='url'],
+    input[type='date'],
+    input[type='time'],
+    input[type='datetime-local'],
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  /* Design system mobile — annule le chrome de `.card` sous 768px.
+     Une liste mobile ne doit PAS vivre dans une carte : la carte ajoute une
+     2ᵉ gouttière (bordure + padding) qui écrase le contenu au centre de
+     l'écran et produit l'effet « boîte dans une boîte ». Sur mobile le
+     contenu va bord à bord, seules les lignes gèrent leur padding.
+     Au-delà de 768px, `.card` reprend la main à l'identique. */
+  .card-plain-mobile {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  @media (min-width: 768px) {
+    .card-plain-mobile {
+      background-color: rgb(var(--color-surface));
+      border-color: rgb(var(--color-border));
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
   }
 
   .card-elevated {
@@ -1005,58 +1012,6 @@ body > .fc-event {
   animation: taskComplete 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* ── Monochrome overrides for colored hard-coded elements ── */
-.monochrome .fc .fc-button,
-.monochrome .fc .fc-button-primary {
-  background: rgb(50 50 50) !important;
-  box-shadow: none !important;
-}
-.monochrome .fc .fc-button:hover {
-  background: rgb(70 70 70) !important;
-  transform: none;
-}
-.monochrome .fc .fc-button-primary:not(:disabled).fc-button-active {
-  background: rgb(90 90 90) !important;
-}
-.monochrome .fc .fc-daygrid-more-link {
-  color: rgb(200 200 200);
-}
-/* Remove any blue shadows/rings in monochrome */
-.monochrome *:focus-visible {
-  outline-color: rgb(200 200 200) !important;
-  box-shadow: 0 0 0 2px rgb(200 200 200 / 0.3) !important;
-}
-.monochrome input:focus,
-.monochrome textarea:focus,
-.monochrome select:focus,
-.monochrome [data-slot="input"]:focus {
-  border-color: rgb(160 160 160) !important;
-}
-
-/* Bordures neutres façon GitHub dark — toute bordure bleue codée en dur
-   (hover/focus d'inputs, cartes/badges "info", chips sélectionnées…) devient
-   grise en mode Noir. Couvre `border-blue-*` sous toutes ses variantes
-   (hover:, focus:, dark:) car ces classes n'ont pas d'équivalent
-   `monochrome:` écrit au cas par cas dans chaque composant. */
-.monochrome [class*="border-blue-"] {
-  border-color: rgb(115 115 115) !important;
-}
-.monochrome [class*="hover:border-blue-"]:hover {
-  border-color: rgb(140 140 140) !important;
-}
-.monochrome [class*="focus:border-blue-"]:focus,
-.monochrome [class*="focus:border-blue-"]:focus-within {
-  border-color: rgb(160 160 160) !important;
-}
-.monochrome ::-webkit-scrollbar-thumb {
-  background: rgb(60 60 60);
-  background-clip: content-box;
-}
-.monochrome ::-webkit-scrollbar-thumb:hover {
-  background: rgb(80 80 80);
-  background-clip: content-box;
-}
-
 /* Trash icon turns red on hover */
 button:has(.lucide-trash-2):hover,
 button:has(.lucide-trash):hover,
@@ -1074,15 +1029,9 @@ button:has(.lucide-trash):hover,
 button:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 [role="button"]:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]) {
-  outline: 2px solid rgb(59 130 246);
+  outline: 2px solid rgb(var(--color-accent));
   outline-offset: 2px;
   border-radius: 6px;
-}
-
-.monochrome button:focus-visible,
-.monochrome a:focus-visible,
-.monochrome [role="button"]:focus-visible {
-  outline-color: rgb(255 255 255) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════

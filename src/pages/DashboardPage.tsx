@@ -91,8 +91,8 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
               </div>
             )}
             <div
-              className={`w-full rounded-t-[3px] transition-all duration-150 monochrome:bg-white ${
-                hovered === i ? 'monochrome:bg-white' : 'monochrome:bg-white/40'
+              className={`w-full rounded-t-[3px] transition-all duration-150 ${
+                hovered === i ? '' : ''
               }`}
               style={{
                 height: `${Math.max((d.value / max) * 100, 8)}%`,
@@ -347,11 +347,11 @@ const DashboardPage: React.FC = () => {
                         loop={false}
                         showCursor={true}
                         cursorCharacter="|"
-                        cursorClassName="text-blue-500 monochrome:text-white"
-                        textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
+                        cursorClassName="text-blue-500"
+                        textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
                       />
                 ) : (
-                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 monochrome:from-white monochrome:via-zinc-300 monochrome:to-white bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                     {displayUser.name}
                   </span>
                 )}
@@ -453,7 +453,7 @@ const DashboardPage: React.FC = () => {
                   className={cn(
                     'flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
-                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
+                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                   )}
                 >
@@ -473,9 +473,9 @@ const DashboardPage: React.FC = () => {
                 transition={{ delay: index * 0.05, type: 'spring', stiffness: 100 }}
                 whileHover={{ y: -4, scale: 1.02 }}
               >
-                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] monochrome:group-hover:border-white/20">
+                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)]">
                   <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
-                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors monochrome:group-hover:text-white truncate">
+                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors truncate">
                       {stat.label}
                     </p>
                     <motion.p

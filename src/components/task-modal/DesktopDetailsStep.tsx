@@ -105,8 +105,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       type="text"
                       value={formData.name}
                       onChange={(e) => { handleInputChange('name', e.target.value); dClear('name'); }}
-                      className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
-                        errors.name || dInvalid('name') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'
+                      className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base ${
+                        errors.name || dInvalid('name') ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                       } ${okrFields.name ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
                       style={{
                         backgroundColor: okrFields.name ? undefined : 'rgb(var(--color-surface))',
@@ -134,7 +134,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAllFields(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-blue-400/60 hover:bg-blue-500/5 border-slate-300 dark:border-slate-600"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-[rgb(var(--color-border-strong))] hover:bg-blue-500/5 border-[rgb(var(--color-border))]"
                       style={{ color: 'rgb(var(--color-text-secondary))' }}
                     >
                       <ChevronDown size={16} aria-hidden="true" />
@@ -154,8 +154,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             id="task-priority"
                             value={formData.priority}
                             onChange={(e) => { handleInputChange('priority', Number(e.target.value)); dClear('priority'); }}
-                            className={`w-full px-4 pr-12 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base appearance-none cursor-pointer ${
-                              dInvalid('priority') ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'
+                            className={`w-full px-4 pr-12 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base appearance-none cursor-pointer ${
+                              dInvalid('priority') ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                             }`}
                             style={{
                               backgroundColor: 'rgb(var(--color-surface))',
@@ -215,8 +215,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           <DropdownMenuTrigger asChild>
                                 <button
                                   type="button"
-                                  className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 data-[state=open]:border-blue-600 data-[state=open]:border-2 transition-all text-base ${
-                                    errors.category || dInvalid('category') ? 'border-red-400 dark:border-red-500' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700')
+                                  className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] data-[state=open]:border-[rgb(var(--color-accent))] data-[state=open]:ring-1 data-[state=open]:ring-[rgb(var(--color-accent))] transition-all text-base ${
+                                    errors.category || dInvalid('category') ? 'border-[rgb(var(--color-error))]' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-[rgb(var(--color-border))]')
                                   } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
                                   style={{
                                   backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
@@ -230,7 +230,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="start"
-                            className="w-[var(--radix-dropdown-menu-trigger-width)] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
+                            className="w-[var(--radix-dropdown-menu-trigger-width)] border-[rgb(var(--color-border))] p-1 shadow-xl"
                             style={{ backgroundColor: 'rgb(var(--color-surface))' }}
                           >
                               {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
@@ -309,7 +309,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               }
                             }}
                             placeholder="Nom de la catégorie..."
-                            className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
+                            className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                           />
                           <button
@@ -367,7 +367,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           value={formData.deadline}
                           onChange={(date) => handleInputChange('deadline', date)}
                           placeholder="Sélectionner une date"
-                          className={`h-12 w-full ${errors.deadline || dInvalid('deadline') ? 'border-red-400 dark:border-red-500' : ''}`}
+                          className={`h-12 w-full ${errors.deadline || dInvalid('deadline') ? 'border-[rgb(var(--color-error))]' : ''}`}
                         />
 
                         {errors.deadline &&
@@ -385,7 +385,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               id="task-recurrence"
                               value={formData.recurrence}
                               onChange={(e) => handleInputChange('recurrence', e.target.value)}
-                              className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none hover:border-blue-500 focus:border-blue-600 transition-all"
+                              className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] transition-all"
                               style={{
                                 backgroundColor: 'rgb(var(--color-surface))',
                                 color: 'rgb(var(--color-text-primary))',
@@ -412,8 +412,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
                               onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
                               placeholder="Estimation en minute"
-                              className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
-                                errors.estimatedTime ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
+                              className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base ${
+                                errors.estimatedTime ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                               } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
                               style={{
                                 backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
@@ -432,7 +432,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 });
                                 if (errors.estimatedTime) setErrors((prev) => ({ ...prev, estimatedTime: '' }));
                               }}
-                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-blue-500 transition-colors shrink-0"
+                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-border-strong))] transition-colors shrink-0"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
                               aria-label="Diminuer le temps estimé de 5 minutes"
                             >
@@ -447,7 +447,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 });
                                 if (errors.estimatedTime) setErrors((prev) => ({ ...prev, estimatedTime: '' }));
                               }}
-                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-blue-500 transition-colors shrink-0"
+                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-border-strong))] transition-colors shrink-0"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
                               aria-label="Augmenter le temps estimé de 5 minutes"
                             >
@@ -493,7 +493,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         rows={3}
                         autoFocus={!formData.description}
                         placeholder="Détails de la tâche…"
-                        className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base resize-none border-slate-200 dark:border-slate-700"
+                        className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base resize-none border-[rgb(var(--color-border))]"
                         style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                       />
                     </div>
@@ -516,7 +516,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         className={`p-2.5 rounded-lg border transition-all ${
                           formData.bookmarked
                             ? 'bg-yellow-500/15 border-yellow-500/40'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-yellow-400/50 hover:bg-yellow-500/10'
+                            : 'border-[rgb(var(--color-border))] hover:border-yellow-400/50 hover:bg-yellow-500/10'
                         }`}
                         style={!formData.bookmarked ? { backgroundColor: 'rgb(var(--color-hover))' } : {}}
                       >
@@ -544,7 +544,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-slate-200 dark:border-slate-700 hover:border-blue-400/50 hover:bg-blue-500/10"
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-blue-500/10"
                             style={{
                               backgroundColor: 'rgb(var(--color-hover))',
                               color: 'rgb(var(--color-text-primary))',
@@ -644,7 +644,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               }
                             }}
                             placeholder="Nom de la liste..."
-                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
+                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                           />
                           <button

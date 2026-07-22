@@ -189,13 +189,9 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       transition={{ duration: 0.5 }}
     >
       {/* Background blobs */}
-      <div className="absolute inset-0 overflow-hidden monochrome:hidden">
+      <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
-      </div>
-      <div className="absolute inset-0 overflow-hidden hidden monochrome:block">
-        <div className="absolute -top-32 -right-32 w-64 h-64 bg-white/[0.02] rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-white/[0.01] rounded-full blur-3xl" />
       </div>
 
       {/* Header */}

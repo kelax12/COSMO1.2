@@ -77,7 +77,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                     <button key={view} onClick={() => handleViewChange(view)}
                       className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
                         currentView === view
-                          ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
+                          ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                           : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                       }`}>
                       {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
@@ -138,7 +138,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={handleOpenAddModal}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black shrink-0 whitespace-nowrap">
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shrink-0 whitespace-nowrap">
                   <Plus size={18} />
                   <span className="font-medium text-sm lg:text-base">Nouveau</span>
                 </motion.button>

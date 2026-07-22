@@ -335,7 +335,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           value={formData.name}
                           onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
                           className={`w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-sm ${
-                            isInvalid('name') ? 'border-red-500 focus:ring-red-500/40' : 'focus:ring-blue-500 focus:border-blue-500'
+                            isInvalid('name') ? 'border-red-500 focus:ring-red-500/40' : 'focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))]'
                           }`}
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
@@ -354,7 +354,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           type="number"
                           value={formData.estimatedTime}
                           onChange={(e) => setFormData({ ...formData, estimatedTime: Number(e.target.value) })}
-                          className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                          className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors text-sm"
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: 'rgb(var(--color-text-primary))',
@@ -388,7 +388,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         <button
                           type="button"
                           onClick={() => setIsColorSettingsOpen(true)}
-                          className="w-9 h-9 rounded-lg border-2 border-dashed flex items-center justify-center transition-all hover:scale-105 hover:border-blue-500"
+                          className="w-9 h-9 rounded-lg border-2 border-dashed flex items-center justify-center transition-all hover:scale-105 hover:border-[rgb(var(--color-accent))]"
                           style={{ borderColor: 'rgb(var(--color-border))' }}
                         >
                           <Plus className="w-4 h-4 text-blue-500" />

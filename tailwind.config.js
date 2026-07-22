@@ -21,6 +21,30 @@ export default {
 			screens: {
 				xs: '480px',
 			},
+			// ── Design system MOBILE (cf. docs/MOBILE.md) ──
+			// Échelle fermée à 6 crans, adossée aux tokens CSS de src/index.css.
+			// Utiliser `text-display/title/headline/body/label/caption` sur mobile
+			// plutôt que `text-[Npx]` : c'est ce qui garantit la cohérence.
+			fontSize: {
+				display: ['var(--t-display)', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
+				title: ['var(--t-title)', { lineHeight: '1.25', letterSpacing: '-0.015em' }],
+				headline: ['var(--t-headline)', { lineHeight: '1.3', letterSpacing: '-0.01em' }],
+				body: ['var(--t-body)', { lineHeight: '1.45' }],
+				label: ['var(--t-label)', { lineHeight: '1.35' }],
+				caption: ['var(--t-caption)', { lineHeight: '1.3' }],
+			},
+			spacing: {
+				gutter: 'var(--gutter)',
+				row: 'var(--gap-row)',
+				section: 'var(--gap-section)',
+				touch: 'var(--touch-min)',
+			},
+			minHeight: {
+				touch: 'var(--touch-min)',
+			},
+			minWidth: {
+				touch: 'var(--touch-min)',
+			},
 			borderColor: {
 				DEFAULT: 'hsl(var(--border))',
 			},
@@ -58,6 +82,9 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				'accent-solid': 'hsl(var(--accent-solid))',
+				'border-strong': 'rgb(var(--color-border-strong))',
+				'border-muted': 'rgb(var(--color-border-muted))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -72,7 +99,11 @@ export default {
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				// Rayons du design system mobile
+				row: 'var(--r-row)',
+				card: 'var(--r-card)',
+				sheet: 'var(--r-sheet)'
 			},
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -107,17 +138,5 @@ export default {
 	},
 	plugins: [
 		require("tailwindcss-animate"),
-		// `monochrome:` — variant haute accessibilité (thème "Noir", cf.
-		// useDarkMode.ts) : cible tout descendant de .monochrome. Sans ce
-		// plugin, les classes `monochrome:*` utilisées dans toute l'app sont
-		// silencieusement ignorées (aucun sélecteur généré).
-		// Sélecteur `html.monochrome &` (et pas juste `.monochrome &`) pour
-		// gagner en spécificité sur `dark:` (`:is(.dark *)`) — sinon l'ordre
-		// d'émission CSS des variants plugin vs core variants n'est pas
-		// garanti et `dark:bg-*` peut rester visuellement prioritaire même
-		// quand .monochrome est bien présent sur <html>.
-		require("tailwindcss/plugin")(function ({ addVariant }) {
-			addVariant("monochrome", "html.monochrome &");
-		}),
 	],
 };

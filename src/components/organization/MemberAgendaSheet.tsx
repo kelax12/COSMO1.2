@@ -287,7 +287,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
                 aria-pressed={view === v.id}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   view === v.id
-                    ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm monochrome:bg-white monochrome:text-zinc-900'
+                    ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                 }`}
               >
@@ -299,7 +299,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           <button
             type="button"
             onClick={openNewEvent}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black shrink-0"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shrink-0"
           >
             <Plus size={18} aria-hidden="true" />
             <span className="font-medium text-sm">Nouveau</span>

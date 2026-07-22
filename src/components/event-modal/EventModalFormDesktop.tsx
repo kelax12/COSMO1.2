@@ -79,11 +79,11 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   handleFieldChange("title", setTitle, e.target.value)
                 }
                 readOnly={lockedSet.has('title')}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors ${
                   isInvalid('title')
                     ? 'border-red-400 dark:border-red-500'
                     : lockedSet.has('title')
-                    ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                    ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-[rgb(var(--color-border))]'
                     : isPrefilledMode && prefilledFields.has("title")
                     ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                     : ""
@@ -126,7 +126,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   placeholder="Sélectionner une date"
                   className={`md:hidden w-full px-4 h-11 border rounded-lg text-sm transition-colors ${
                     lockedSet.has('startDate')
-                      ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                      ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-[rgb(var(--color-border))]'
                       : isPrefilledMode && prefilledFields.has("startDate")
                       ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                       : ""
@@ -148,7 +148,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                           isInvalid('date')
                             ? 'border-red-400 dark:border-red-500'
                             : lockedSet.has('startDate')
-                            ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                            ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-[rgb(var(--color-border))]'
                             : isPrefilledMode && prefilledFields.has("startDate")
                             ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                             : ""
@@ -364,7 +364,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   }
                   rows={6}
                   autoFocus={!notes}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm ${
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] resize-none transition-colors text-sm ${
                     isPrefilledMode && prefilledFields.has("notes")
                       ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                       : ""

@@ -83,7 +83,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
     ? 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors'
     : 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors';
   const dotCls = large ? 'w-2.5 h-2.5' : 'w-2 h-2';
-  const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-blue-400 transition-colors ${
+  const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors ${
     large ? 'gap-1.5 px-3 py-1.5 text-sm' : 'gap-1 px-2.5 py-1 text-xs'
   }`;
   const allActiveCls = accentAllActive
@@ -128,7 +128,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); startEditCategory(category); }}
-                          className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                          className="p-1 rounded bg-white dark:bg-slate-800 border border-[rgb(var(--color-border))] text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                           title="Modifier la catégorie"
                           aria-label="Modifier la catégorie"
                         >
@@ -138,7 +138,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
-                          className="p-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                          className="p-1 rounded bg-white dark:bg-slate-800 border border-[rgb(var(--color-border))] text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
                           title="Supprimer la catégorie"
                           aria-label="Supprimer la catégorie"
                         >

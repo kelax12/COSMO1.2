@@ -408,10 +408,12 @@ const TasksPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="p-3 sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
+      // Gouttière mobile = --gutter (16px), unique pour toute l'app.
+      // `sm:p-8` reprend la main dès 640px : le desktop est inchangé.
+      className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
     >
       <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
-      <div className="flex flex-col gap-4 sm:gap-8">
+      <div className="flex flex-col gap-row sm:gap-8">
         <TasksHeader
           showDeadlineCalendar={showDeadlineCalendar}
           onToggleCalendar={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
@@ -437,7 +439,10 @@ const TasksPage: React.FC = () => {
             transition={{ delay: 0.4 }}
             className={summaryAtBottom ? "" : "xl:col-span-3"}
           >
-            <div className="card p-3 sm:p-6">
+            {/* `card-plain-mobile` : la liste sort de la carte sous 768px.
+                Enfermer une liste pleine largeur dans une carte ajoutait une
+                2ᵉ gouttière et volait ~24px de largeur utile par ligne. */}
+            <div className="card card-plain-mobile p-0 sm:p-6">
               {!showCompleted && !showAddTaskForm && (
               <TaskListsBar
                 lists={lists}
@@ -516,7 +521,7 @@ const TasksPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
-                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 monochrome:shadow-white/10 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 monochrome:from-white monochrome:to-neutral-200 monochrome:text-black monochrome:hover:from-neutral-100 monochrome:hover:to-neutral-300"
+                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
                       aria-label="Créer une nouvelle tâche"
                     >
                       <Plus size={20} />

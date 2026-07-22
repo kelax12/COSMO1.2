@@ -193,7 +193,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                     teamIds.length === 0
                       ? 'bg-blue-500 border-blue-500 text-white'
-                      : 'border-border text-muted-foreground hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
+                      : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
                   <Building2 size={13} aria-hidden="true" /> Toute l'entreprise
@@ -208,7 +208,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                         active
                           ? 'bg-blue-500 border-blue-500 text-white'
-                          : 'border-border text-muted-foreground hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
+                          : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
                       <Users size={13} aria-hidden="true" /> {team.name}

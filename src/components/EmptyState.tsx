@@ -27,8 +27,6 @@ interface EmptyStateProps {
  *   2. Un titre positif (pas "vide", plutôt "prêt à commencer")
  *   3. Une description courte
  *   4. Une action concrète (le 1er pas)
- *
- * Compatible mode monochrome via dégradation gracieuse des couleurs.
  */
 const EmptyState: React.FC<EmptyStateProps> = ({
   icon: Icon,
@@ -52,14 +50,13 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       <div
         className={`${
           compact ? 'w-12 h-12 mb-3' : 'w-16 h-16 mb-4'
-        } rounded-2xl flex items-center justify-center monochrome:bg-white/10`}
+        } rounded-2xl flex items-center justify-center`}
         style={{ backgroundColor: `${accentColor}15` }}
         aria-hidden="true"
       >
         <Icon
           size={compact ? 24 : 32}
           style={{ color: accentColor }}
-          className="monochrome:text-white"
         />
       </div>
       <h3
@@ -80,7 +77,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         <button
           type="button"
           onClick={onAction}
-          className="mt-4 px-5 py-2.5 rounded-xl font-semibold text-sm text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 monochrome:bg-white monochrome:text-black"
+          className="mt-4 px-5 py-2.5 rounded-xl font-semibold text-sm text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           style={{ backgroundColor: accentColor }}
         >
           {actionLabel}

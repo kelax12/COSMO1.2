@@ -8,6 +8,10 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" />
+    <!-- Mobile (<768px) démarre toujours en thème Noir (palette GitHub), cf.
+         src/lib/theme.ts → defaultTheme(). D'où la règle mobile en premier :
+         elle doit gagner sur la préférence système dark/light. -->
+    <meta name="theme-color" content="#24292e" media="(max-width: 767px)" />
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -50,6 +54,43 @@
 
     <!-- Inter self-hosted (déclaré dans src/index.css) — préload du subset latin -->
     <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- ───────────────────────────────────────────────────────────────────
+         Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
+
+         La CSP de vercel.json est `script-src 'self'` — sans 'unsafe-inline'
+         ni nonce : tout <script> inline est bloqué en prod (et seulement en
+         prod, le serveur de dev n'envoie pas la CSP). Masquer le bloc SEO en
+         JS marcherait donc en local et échouerait silencieusement en ligne.
+         D'où le choix du CSS pur : `style-src` autorise bien 'unsafe-inline'.
+
+         Règle du jeu :
+         - #boot-screen est peint immédiatement (overlay opaque plein écran),
+           puis React l'efface tout seul — createRoot().render() vide les
+           enfants de #root au premier commit. Aucun code à synchroniser.
+         - #seo-fallback (injecté par prerender.mjs dans dist/) reste dans le
+           HTML pour les crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
+           PerplexityBot…) — ils lisent le balisage, pas le CSS — mais n'est
+           jamais peint par un navigateur.
+         - <noscript> ci-dessous : JS désactivé = pas de SPA possible, on rend
+           donc le contenu SEO visible et on retire le spinner (sinon l'écran
+           de chargement tournerait indéfiniment).
+         ─────────────────────────────────────────────────────────────────── -->
+    <style>
+      #boot-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#ffffff}
+      #boot-screen .ring{width:32px;height:32px;border:3px solid rgba(15,23,42,.14);border-top-color:#6366f1;border-radius:50%;animation:boot-spin .7s linear infinite}
+      @keyframes boot-spin{to{transform:rotate(360deg)}}
+      @media (prefers-color-scheme:dark){#boot-screen{background:#0f172a}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#818cf8}}
+      /* Mobile démarre toujours en thème Noir (palette GitHub), cf. src/lib/theme.ts →
+         defaultTheme() — indépendant de la préférence système, d'où la règle après
+         (et non combinée avec prefers-color-scheme:dark) pour gagner y compris en clair. */
+      @media (max-width:767px){#boot-screen{background:#24292e}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#58a6ff}}
+      @media (prefers-reduced-motion:reduce){#boot-screen .ring{animation-duration:2.4s}}
+      #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
+    </style>
+    <noscript>
+      <style>#boot-screen{display:none}#seo-fallback{display:block}</style>
+    </noscript>
 
     <!-- AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2572718224166714"
@@ -160,9 +201,17 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
-    <!-- Fallback pour les crawlers sans JS — contenu indexable minimal -->
-    <noscript>
+    <div id="root">
+      <!-- Écran de démarrage — effacé par React au premier render. En prod,
+           prerender.mjs injecte #seo-fallback juste au-dessus. Voir le <style>
+           du <head> pour le pourquoi du 100 % CSS. -->
+      <div id="boot-screen" role="status" aria-label="Chargement de Cosmo">
+        <div class="ring"></div>
+      </div>
+    </div>
+    <!-- Fallback pour les crawlers sans JS — contenu indexable minimal.
+         Retiré de dist/ par prerender.mjs (remplacé par #seo-fallback). -->
+    <noscript id="seo-noscript">
       <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b">
         <h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1>
         <p>Cosmo est une application de productivité gratuite qui centralise la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results).</p>
