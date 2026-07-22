@@ -105,7 +105,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-11 w-11 sm:h-9 sm:w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 monochrome:bg-neutral-800 monochrome:hover:bg-neutral-700"
+                className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-11 w-11 sm:h-9 sm:w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
                 aria-label="Effacer la recherche"
               >
                 <X size={16} aria-hidden="true" />
@@ -119,7 +119,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             <div className="relative w-40 sm:w-52 shrink-0">
               <select
                 id="task-filter"
-                className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-all cursor-pointer shadow-sm"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
@@ -155,7 +155,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                   onClick={onToggleSortDirection}
                   aria-label={sortDirection === 'asc' ? 'Tri croissant — cliquer pour décroissant' : 'Tri décroissant — cliquer pour croissant'}
                   title={sortDirection === 'asc' ? 'Ordre croissant' : 'Ordre décroissant'}
-                  className="absolute inset-y-0 right-1 my-auto z-10 flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="absolute inset-y-0 right-1 my-auto z-10 flex h-11 w-11 sm:h-7 sm:w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
                 >
                   <ArrowUpDown size={15} aria-hidden="true" />
@@ -175,7 +175,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 <Button
                   variant="outline"
                   onClick={clearAllFilters}
-                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 monochrome:bg-neutral-900 text-red-600 dark:text-red-400 monochrome:text-neutral-300 hover:bg-red-100 dark:hover:bg-red-900/40 monochrome:hover:bg-neutral-800 border-red-200 dark:border-red-800/50 monochrome:border-neutral-700 shrink-0"
+                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 border-red-200 dark:border-red-800/50 shrink-0"
                   aria-label="Réinitialiser tous les filtres"
                 >
                   <X size={16} data-icon="inline-start" aria-hidden="true" />
@@ -192,8 +192,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 type="button"
                 className={`hidden sm:inline-flex items-center justify-center gap-2 shrink-0 px-5 py-2.5 text-sm rounded-lg border font-medium transition-colors ${
                   showAdvancedFilters || hasActiveFilters
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white'
-                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
                 aria-label="Afficher les filtres avancés"
                 aria-expanded={showAdvancedFilters}
@@ -201,7 +201,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 <SlidersHorizontal size={18} aria-hidden="true" />
                 <span>Filtres</span>
                 {hasActiveFilters && (
-                  <span className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  <span className="bg-white dark:bg-blue-500 text-blue-600 dark:text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                     {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
                   </span>
                 )}
@@ -267,10 +267,10 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
             aria-label={showQuickFilters ? "Masquer les options" : "Afficher les options"}
             aria-pressed={showQuickFilters}
-            className={`md:hidden shrink-0 flex items-center gap-1 px-2 py-2 text-sm font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
+            className={`md:hidden shrink-0 flex items-center gap-1 px-2 min-h-touch text-sm font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
               showQuickFilters
-                ? 'text-blue-700 dark:text-blue-300 monochrome:text-white'
-                : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 monochrome:text-neutral-300 monochrome:hover:text-white'
+                ? 'text-blue-700 dark:text-blue-300'
+                : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
             }`}
           >
             <Plus size={14} aria-hidden="true" />

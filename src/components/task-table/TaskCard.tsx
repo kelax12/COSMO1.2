@@ -139,13 +139,13 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   return (
     <motion.div
       ref={ref}
-      className="relative mb-2"
+      className="relative mb-1.5"
       layout
       animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 260 }}
     >
     {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
-    <div className="relative overflow-hidden rounded-xl">
+    <div className="relative overflow-hidden rounded-card">
     {/* Reveal layers BEHIND the card — full size, full color */}
     {!addToListMode && (
       <>
@@ -154,27 +154,27 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           style={{ opacity: greenOpacity }}
           animate={isValidating ? { scale: [1, 1.04, 1] } : {}}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-xl"
+          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-card"
         >
           <motion.div
             style={{ opacity: greenIconOpacity }}
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
             <CheckCircle2 size={22} strokeWidth={2.5} />
-            <span className="text-sm font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
+            <span className="text-label font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
           </motion.div>
         </motion.div>
         {/* Left swipe → gray bg behind */}
         <motion.div
           style={{ opacity: grayOpacity }}
-          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-xl"
+          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-card"
         >
           <motion.div
             style={{ opacity: grayIconOpacity }}
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
             <MoreHorizontal size={22} strokeWidth={2.5} />
-            <span className="text-sm font-bold">Options</span>
+            <span className="text-label font-bold">Options</span>
           </motion.div>
         </motion.div>
       </>
@@ -203,7 +203,10 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       }}
       whileTap={addToListMode ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.1 }}
-      className={`relative flex items-stretch gap-3 p-3 rounded-xl border transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-60' : ''}`}
+      // Pas de bordure au repos : sur un fond sombre, une bordure par ligne
+      // dessine une grille qui fatigue l'œil dans une liste dense. La séparation
+      // vient du contraste surface/fond et de l'espace entre les lignes.
+      className={`relative flex items-stretch gap-3 px-3 py-2.5 rounded-card transition-colors ${addToListMode ? 'cursor-default border' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
@@ -240,7 +243,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           <span
             className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
               selectedForListIds.includes(task.id)
-                ? 'bg-blue-500 border-blue-500'
+                ? 'bg-[rgb(var(--color-accent))] border-[rgb(var(--color-accent))]'
                 : 'border-slate-400 dark:border-slate-500'
             }`}
           >
@@ -266,8 +269,8 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           <span
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
               task.completed
-                ? 'bg-blue-500 border-blue-500'
-                : 'border-gray-400'
+                ? 'bg-[rgb(var(--color-accent))] border-[rgb(var(--color-accent))]'
+                : 'border-[rgb(var(--color-text-muted))]'
             }`}
           >
             {task.completed && (
@@ -282,14 +285,14 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
-        <p className={`font-semibold text-sm leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+        <p className={`font-medium text-body leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
           {task.name}
         </p>
 
         {/* Collaborateur — ligne dédiée sous le titre, ne concurrence plus la méta */}
         {task.sharedBy && (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[rgb(var(--color-accent))] truncate">
-            <Users size={10} aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 text-caption font-medium text-[rgb(var(--color-accent))] truncate">
+            <Users size={12} aria-hidden="true" />
             Reçu de {task.sharedBy}
           </span>
         )}
@@ -314,9 +317,9 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         )}
 
         {/* Méta : date · durée — toujours sur une ligne propre */}
-        <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
           <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
-            {isOverdue && <AlertTriangle size={10} aria-hidden="true" />}
+            {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
             {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
             {isOverdue && <span className="sr-only"> (en retard)</span>}
           </span>
@@ -340,14 +343,14 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           mobile/desktop + dark mode. Masqué si priorité facultative (0). */}
       {task.priority > 0 && (
         <div
-          className={`self-center shrink-0 px-2 py-0.5 rounded font-bold text-[11px] task-priority-${task.priority}`}
+          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption task-priority-${task.priority}`}
         >
           P{task.priority}
         </div>
       )}
 
       {task.bookmarked && (
-        <Bookmark size={14} className="self-center shrink-0 text-amber-500" fill="currentColor" />
+        <Bookmark size={16} className="self-center shrink-0 text-amber-500" fill="currentColor" />
       )}
 
       {/* Affordance permanente — bouton "…" pour révéler les actions sans devoir swipe/long-press.
@@ -381,27 +384,27 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           className="overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-xl border" style={{
+          <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-card border" style={{
             borderColor: 'rgb(var(--color-border))',
             backgroundColor: 'rgb(var(--color-hover))'
           }}>
             <button
               onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
-              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
               aria-label="Modifier la tâche"
             >
               <Pencil size={18} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(task.id); setActionsVisible(false); }}
-              className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
+              className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
               aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
             >
               <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onOpenCollaborator(task.id); setActionsVisible(false); }}
-              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
               aria-label="Ajouter un collaborateur"
             >
               <UserPlus size={18} />
@@ -409,7 +412,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             {!task.completed && (
               <button
                 onClick={(e) => { e.stopPropagation(); onScheduleTask(task); setActionsVisible(false); }}
-                className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+                className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
                 aria-label="Planifier dans l'agenda"
               >
                 <Calendar size={18} />
@@ -417,14 +420,14 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onAddToList(task.id); setActionsVisible(false); }}
-              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
               aria-label="Ajouter à une liste"
             >
               <MoreHorizontal size={18} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDuplicate(task.id); setActionsVisible(false); }}
-              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-500 flex items-center justify-center"
+              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
               aria-label="Dupliquer la tâche"
             >
               <Copy size={18} />
@@ -438,7 +441,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                   onSnooze(task.id, getSnoozeOptions()[0].deadline);
                   setActionsVisible(false);
                 }}
-                className={`min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center ${isOverdue ? 'text-amber-500' : 'text-slate-500'}`}
+                className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center ${isOverdue ? 'text-amber-500' : 'text-slate-500'}`}
                 aria-label="Reporter à demain"
               >
                 <Hourglass size={18} />
@@ -446,14 +449,14 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
-              className="min-w-11 min-h-11 p-2 rounded-lg text-red-500 flex items-center justify-center"
+              className="min-w-touch min-h-touch p-2 rounded-row text-red-500 flex items-center justify-center"
               aria-label="Supprimer la tâche"
             >
               <Trash2 size={18} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setActionsVisible(false); }}
-              className="min-w-11 min-h-11 p-2 rounded-lg text-slate-400 dark:text-slate-500 flex items-center justify-center"
+              className="min-w-touch min-h-touch p-2 rounded-row text-slate-400 dark:text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
               aria-label="Fermer"
             >
               <X size={18} />

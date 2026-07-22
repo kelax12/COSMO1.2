@@ -476,7 +476,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+                className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
               >
                 Tout replanifier
               </button>
@@ -512,12 +512,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
       <div className="hidden md:block table-container shadow-sm overflow-x-auto">
         <table className="data-table w-full" style={{ minWidth: '1000px' }}>
           <thead>
-            <tr className="monochrome:bg-neutral-900 monochrome:text-neutral-200">
+            <tr className="">
               {/* A11y: empty <th> need a label for screen readers. */}
-              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '40px' }}><span className="sr-only">Compléter</span></th>
-              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '48px' }}><span className="sr-only">Catégorie (couleur)</span></th>
+              <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">Compléter</span></th>
+              <th className="px-2 py-3" style={{ width: '48px' }}><span className="sr-only">Catégorie (couleur)</span></th>
               <th
-                className="cursor-pointer px-2 py-3 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800"
+                className="cursor-pointer px-2 py-3"
                 onClick={() => handleSort('name')}
               >
                 Nom de la tache
@@ -525,7 +525,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
-              <th className="px-2 py-3 monochrome:border-neutral-700" style={{ width: '150px' }}>Catégorie</th>
+              <th className="px-2 py-3" style={{ width: '150px' }}>Catégorie</th>
               <th 
                 className="cursor-pointer text-center px-1 py-3"
                 onClick={() => handleSort('priority')}
@@ -874,15 +874,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
               exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
+              className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               <div className="p-5 sm:p-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
-                  <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
@@ -891,13 +891,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => setTaskToDelete(null)}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 monochrome:border-neutral-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-[rgb(var(--color-border))] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={confirmDelete}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
                   >
                     Supprimer
                   </button>
@@ -924,15 +924,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
               exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 monochrome:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
+              className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">
                 <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
               </div>
               <div className="p-5 sm:p-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 monochrome:bg-neutral-800 flex items-center justify-center mb-4">
-                  <Trash2 className="text-red-600 dark:text-red-400 monochrome:text-neutral-300" size={24} />
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
                   Supprimer {selectedIds.length} tâche{selectedIds.length > 1 ? 's' : ''}
@@ -943,13 +943,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => setShowBulkDeleteConfirm(false)}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 monochrome:border-neutral-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-[rgb(var(--color-border))] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={confirmBulkDelete}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black transition-all shadow-md shadow-red-500/20 monochrome:shadow-white/10"
+                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
                   >
                     Supprimer
                   </button>

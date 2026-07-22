@@ -403,7 +403,7 @@ const LandingPage: React.FC = () => {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className={`mx-auto max-w-5xl rounded-2xl transition-all duration-300 ${
             scrolled
-              ? 'bg-slate-950/75 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] monochrome:bg-black/90 monochrome:border-white/30'
+              ? 'bg-slate-950/75 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)]'
               : 'bg-white/[0.03] backdrop-blur-md border border-white/[0.06]'
           }`}
         >
@@ -420,7 +420,7 @@ const LandingPage: React.FC = () => {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-600 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity" aria-hidden="true" />
               </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent monochrome:text-white">
+              <span className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                 Cosmo
               </span>
             </button>
@@ -455,7 +455,7 @@ const LandingPage: React.FC = () => {
               <button
                 ref={magneticNavCta}
                 onClick={handleRegisterClick}
-                className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 monochrome:bg-white monochrome:text-black"
+                className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
                 <span className="relative lg:hidden">Commencer</span>
@@ -597,11 +597,11 @@ const LandingPage: React.FC = () => {
                 ref={headingRef}
                 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
               >
-                <span className="hero-line block bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent monochrome:text-white">
+                <span className="hero-line block bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
                   Toute votre productivité,
                 </span>
                 <span
-                  className="hero-line hero-line-accent block bg-gradient-to-r from-blue-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent monochrome:text-white"
+                  className="hero-line hero-line-accent block bg-gradient-to-r from-blue-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
                   style={{ backgroundSize: '200% auto' }}
                 >
                   réunie dans une seule app.
@@ -627,7 +627,7 @@ const LandingPage: React.FC = () => {
                     loginDemo();
                     setTimeout(() => navigate('/dashboard'), 0);
                   }}
-                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 monochrome:bg-white monochrome:text-black"
+                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   aria-label="Essayer la démo sans inscription"
                 >
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
@@ -637,7 +637,7 @@ const LandingPage: React.FC = () => {
                 <button
                   ref={magneticHeroSignup}
                   onClick={handleRegisterClick}
-                  className="group bg-white/5 hover:bg-white/10 text-white border border-white/15 px-8 py-4 rounded-2xl font-semibold text-base backdrop-blur-md transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 monochrome:border-white/40"
+                  className="group bg-white/5 hover:bg-white/10 text-white border border-white/15 px-8 py-4 rounded-2xl font-semibold text-base backdrop-blur-md transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                   Créer un compte gratuit
                 </button>

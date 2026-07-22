@@ -260,7 +260,7 @@ export const TaskRow = React.memo(({
                   className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
                     selectedForListIds.includes(task.id)
                       ? 'bg-blue-500 border-blue-500'
-                      : 'border-slate-600 dark:border-slate-400'
+                      : 'border-[rgb(var(--color-border-strong))]'
                   }`}
                 >
                   <motion.svg
@@ -290,8 +290,8 @@ export const TaskRow = React.memo(({
               showChecked
                 ? 'bg-blue-500 border-blue-500'
                 : addToListMode
-                  ? 'border-gray-600 dark:border-gray-500 hover:border-blue-500'
-                  : 'border-gray-400 hover:border-blue-500'
+                  ? 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'
+                  : 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'
             }`}
           >
             {showChecked && (
@@ -330,7 +330,7 @@ export const TaskRow = React.memo(({
             </span>
           )}
           {task.sharedBy ? (
-            <span className="text-xs bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
+            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
             <span className="flex items-center gap-1 shrink-0">
               {(collaboratorsByTask.get(task.id) ?? [])
@@ -341,7 +341,7 @@ export const TaskRow = React.memo(({
                 .map(({ id, friend }) => (
                   <span
                     key={id}
-                    className="text-xs bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 px-2 py-0.5 rounded-full"
+                    className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full"
                     title={friend.name}
                   >
                     {friend.name}

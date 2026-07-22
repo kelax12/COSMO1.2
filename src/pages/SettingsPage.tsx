@@ -391,7 +391,7 @@ const SettingsPage: React.FC = () => {
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)} style={{ minHeight: '36px' }}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                  active ? 'bg-[rgb(var(--color-accent))] text-white monochrome:text-zinc-900 shadow-sm'
+                  active ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
                 <Icon size={13} />
                 {item.label}

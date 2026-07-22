@@ -84,11 +84,11 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
           className={`${btnSize} rounded-lg border-2 transition-all flex items-center justify-center ${
             day.isToday
               ? 'border-slate-900 dark:border-slate-100 bg-slate-50 dark:bg-slate-800 shadow-sm'
-              : 'border-slate-200 dark:border-slate-700'
+              : 'border-[rgb(var(--color-border))]'
           } ${
             isCompleted
               ? 'border-blue-500 text-white'
-              : 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+              : 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-[rgb(var(--color-border-strong))]'
           }`}
           style={{ backgroundColor: isCompleted ? '#2563EB' : undefined }}
         >
@@ -177,7 +177,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
 
         {/* Vue détaillée 30 jours */}
         {showDetails && (
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+          <div className="border-t border-[rgb(var(--color-border))] pt-4 mt-2">
             <h4 className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 mb-3">
               Suivi détaillé (30 jours)
             </h4>

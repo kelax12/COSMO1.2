@@ -87,7 +87,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         <button
                           onClick={() => setShowCreateList(true)}
                           aria-label="Nouvelle liste"
-                          className="sm:hidden flex items-center justify-center w-9 h-9 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
+                          className="sm:hidden flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
                         >
                           <Plus size={20} strokeWidth={2.5} />
                         </button>
@@ -101,10 +101,12 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         onClick={() => {
                           clearListFilter();
                         }}
-                        className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                        // `min-h-touch` sous 640px : les chips faisaient 38px de
+                        // haut, sous la cible tactile de 44px (WCAG 2.5.5).
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
                           !selectedListId
-                            ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                            ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 shadow-md'
+                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-[rgb(var(--color-border))] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                         }`}
                       >
                         <span className="hidden sm:inline">Toutes les tâches</span>
@@ -142,7 +144,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setTodayHidden(true); }}
-                                className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
+                                className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
                                 title="Masquer la chip Aujourd'hui (réactivable depuis ✨)"
                                 aria-label="Masquer la chip Aujourd'hui"
                               >
@@ -155,7 +157,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
                             selectedListId === VIRTUAL_TODAY_ID
                               ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
                               : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
@@ -221,7 +223,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     className={`p-2 rounded-lg border shadow-sm transition-colors ${
                                       list.isDefault
                                         ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300'
-                                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400'
+                                        : 'bg-white dark:bg-slate-700 border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400'
                                     }`}
                                     title={list.isDefault ? 'Liste par défaut (cliquez pour désépingler)' : 'Définir comme liste par défaut'}
                                     aria-label={list.isDefault ? 'Liste par défaut' : 'Épingler comme liste par défaut'}
@@ -232,7 +234,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title="Ajouter des tâches"
                                       aria-label="Ajouter des tâches"
                                     >
@@ -243,7 +245,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startEditList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title="Modifier la liste"
                                       aria-label="Modifier la liste"
                                     >
@@ -254,7 +256,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onShareList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
                                       title="Partager la liste"
                                       aria-label="Partager la liste"
                                     >
@@ -263,7 +265,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   )}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
-                                    className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-500 text-slate-500 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                                    className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
                                     title="Supprimer la liste"
                                     aria-label="Supprimer la liste"
                                   >
@@ -347,10 +349,10 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
+                                className={`flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
                                   isSelected
-                                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
-                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
+                                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 shadow-md'
+                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-[rgb(var(--color-border))] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                                 }`}
                               >
                                 {/* Indicateur visuel : pastille couleur, ou icône Sparkles si smart */}
@@ -368,12 +370,12 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     className={isSelected ? 'opacity-80' : 'text-amber-500'}
                                   />
                                 )}
-                                <span className="text-xs opacity-60 ml-1 monochrome:text-neutral-400">
+                                <span className="text-xs opacity-60 ml-1">
                                   {tasksCountByListId.get(list.id) ?? 0}
                                 </span>
                                 {isSelected && (
-                                  <div className="text-white monochrome:text-black">
-                                    <X size={14} className="ml-1 hover:text-red-200 monochrome:hover:text-neutral-600" />
+                                  <div className="text-white">
+                                    <X size={14} className="ml-1 hover:text-red-200" />
                                   </div>
                                 )}
                               </button>
@@ -414,7 +416,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
                               onClick={() => setShowCreateList(true)}
-                              className="inline-flex shrink-0 items-center gap-1.5 h-9 px-3 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                              className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
                               title="Nouvelle liste manuelle"
                             >
                               <Plus size={16} /> Liste

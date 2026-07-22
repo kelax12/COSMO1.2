@@ -141,24 +141,21 @@ Flags : `cosmo_tutorial_seen_tasks_(desktop|mobile)`, idem `agenda`, `habits`, `
 });
 ```
 
-## Theme `monochrome:` (accessibilité haute contraste)
+## Thèmes — 3 valeurs, source unique
 
-L'app supporte un **mode monochrome** activé via classe CSS racine. Toutes les classes Tailwind colorées doivent avoir un équivalent `monochrome:` :
+`light` · `dark` · `black`. **Source de vérité : `src/lib/theme.ts`** (`Theme`, `resolveInitialTheme`, `applyTheme`, `isTheme`) — consommée par `src/main.tsx` (avant premier paint) et `src/hooks/useDarkMode.ts`. Ne pas redupliquer la résolution ailleurs.
 
-```tsx
-// ✅ OK
-className="bg-blue-600 text-white monochrome:bg-white monochrome:text-black"
-// ❌ Cassé en mode monochrome
-className="bg-blue-600 text-white"
-```
+Sur mobile, un visiteur sans `localStorage.theme` démarre en `black` ; un choix explicite prime toujours. Les valeurs historiques `midnight` et `monochrome` sont migrées vers `black` au chargement.
 
-Patterns standards :
-- `bg-blue-*` → `monochrome:bg-white` (fond clair) ou `monochrome:bg-neutral-900` (fond foncé)
-- `text-blue-*` → `monochrome:text-black` ou `monochrome:text-white`
-- `border-blue-*` → `monochrome:border-white` ou `monochrome:border-neutral-700`
-- `hover:` couleurs → `monochrome:hover:bg-neutral-800`
+### `black` — palette GitHub (graphite + accent bleu, 2026-07-22)
 
-Référence : `TaskTable.tsx` (pills de catégorie), `MobileTabBar.tsx` (nav active).
+Le thème `black` fusionne les anciens `midnight` (OLED + accent) et `black` (monochrome, sans couleur) en un seul thème reprenant la palette GitHub dark : fond `#24292e`, surfaces `#2b3137`, accent `#58a6ff` (texte/bordures) / `#1f6feb` (fonds pleins). Tokens dans `src/index.css → .black`, RGB (`--color-*`) et HSL (shadcn) toujours en valeurs synchronisées — ne jamais faire diverger les deux familles.
+
+Le variant Tailwind `monochrome:` et la classe `.monochrome` **ont été entièrement supprimés** (plugin `addVariant` retiré de `tailwind.config.js`, ~250 classes `monochrome:*` reciblées ou supprimées dans les composants). Ne pas les réintroduire — le thème `black` porte désormais de la couleur (accent bleu) comme les deux autres.
+
+### Bordures — tokens sémantiques (2026-07-22)
+
+`--color-border` (défaut) · `--color-border-muted` (discret) · `--color-border-strong` (survol), déclarés dans les 3 thèmes. Le focus change la **couleur** de bordure vers `--color-accent` via un `box-shadow` inset 1px — jamais l'épaisseur (`border-2`), pour ne pas décaler le contenu voisin. Ne pas réintroduire `border-slate-*` / `hover:border-blue-*` codés en dur ni `focus:border-2` sur les champs de formulaire — utiliser les tokens.
 
 ## Échelle z-index (audit 2026-07)
 

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Sun, Moon, MoonStar } from 'lucide-react';
+import { Sun, Moon, Circle } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
-
-type Theme = 'light' | 'dark' | 'black';
+import type { Theme } from '@/lib/theme';
 
 interface ThemeToggleProps {
   className?: string;
@@ -11,9 +10,9 @@ interface ThemeToggleProps {
 }
 
 const THEMES: { id: Theme; icon: React.ElementType; label: string }[] = [
-  { id: 'light', icon: Sun,      label: 'Clair'  },
-  { id: 'dark',  icon: Moon,     label: 'Sombre' },
-  { id: 'black', icon: MoonStar, label: 'Noir'   },
+  { id: 'light', icon: Sun,    label: 'Clair'  },
+  { id: 'dark',  icon: Moon,   label: 'Sombre' },
+  { id: 'black', icon: Circle, label: 'Noir'   },
 ];
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {

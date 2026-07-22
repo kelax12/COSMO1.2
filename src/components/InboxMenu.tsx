@@ -454,7 +454,7 @@ const InboxMenu: React.FC = () => {
                         <button
                           onClick={() => handleAcceptFriend(req.id)}
                           disabled={acceptFriendMutation.isPending}
-                          className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 monochrome:bg-white monochrome:text-zinc-900"
+                          className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           aria-label={`Accepter la demande d'ami de ${prettyName(req.senderEmail)}`}
                         >
                           <Check size={15} aria-hidden="true" />
@@ -513,7 +513,7 @@ const InboxMenu: React.FC = () => {
                     <div className="flex gap-1.5 shrink-0">
                       <button
                         onClick={() => handleAcceptTask(task)}
-                        className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 monochrome:bg-white monochrome:text-zinc-900"
+                        className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         aria-label={`Accepter la tâche partagée ${task.name}`}
                       >
                         <Check size={15} aria-hidden="true" />
@@ -573,7 +573,7 @@ const InboxMenu: React.FC = () => {
                       <button
                         onClick={() => handleAcceptList(grant)}
                         disabled={acceptSharedListMutation.isPending}
-                        className="w-9 h-9 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 monochrome:bg-white monochrome:text-zinc-900"
+                        className="w-9 h-9 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                         aria-label={`Accepter la liste partagée ${grant.name}`}
                       >
                         <Check size={15} aria-hidden="true" />
@@ -633,7 +633,7 @@ const InboxMenu: React.FC = () => {
                         <button
                           onClick={() => handleRespondJoin(req.id, true)}
                           disabled={respondJoinRequestMutation.isPending}
-                          className="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 monochrome:bg-white monochrome:text-zinc-900"
+                          className="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                           aria-label={`Accepter la demande d'adhésion de ${req.requesterName || 'cet utilisateur'}`}
                         >
                           <Check size={15} aria-hidden="true" />
@@ -716,7 +716,7 @@ const InboxMenu: React.FC = () => {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent)/0.5)] hover:bg-[rgb(var(--color-hover))] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 monochrome:hover:border-white/30"
+        className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent)/0.5)] hover:bg-[rgb(var(--color-hover))] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label={total > 0 ? `Boîte de réception, ${total} en attente` : 'Boîte de réception'}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -724,7 +724,7 @@ const InboxMenu: React.FC = () => {
         <Inbox size={20} aria-hidden="true" />
         {total > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))] monochrome:bg-white monochrome:text-black"
+            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
             aria-hidden="true"
           >
             {total > 9 ? '9+' : total}

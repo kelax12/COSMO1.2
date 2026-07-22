@@ -35,7 +35,7 @@ const LegendDot = ({ colorClass, label, value, valueClass }: {
 
 /**
  * Anneau de progression (0..100), pattern repris d'OKRCard : track neutre +
- * arc en couleur d'accent (correct en thème monochrome). Valeur centrée.
+ * arc en couleur d'accent. Valeur centrée.
  */
 export const ProgressRing = ({ value, label }: { value: number; label: string }) => {
   const r = 32;
