@@ -20,7 +20,7 @@ const cardBase =
 const inputClasses =
   'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
 const primaryBtn =
-  'w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20';
+  'w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20';
 
 /**
  * Choix « Créer une entreprise » ou « Rejoindre via code ». Réutilisé par la

@@ -87,7 +87,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
     large ? 'gap-1.5 px-3 py-1.5 text-sm' : 'gap-1 px-2.5 py-1 text-xs'
   }`;
   const allActiveCls = accentAllActive
-    ? 'bg-[rgb(var(--color-accent-solid))] text-white border-transparent'
+    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-transparent'
     : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent';
   return (
       <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">
@@ -199,7 +199,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                       <button
                         type="submit"
                         disabled={editCategoryName.trim().length < 2}
-                        className="px-2 py-1 text-xs rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                        className="px-2 py-1 text-xs rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                       >
                         OK
                       </button>
@@ -297,7 +297,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 <button
                   type="submit"
                   disabled={newCategoryName.trim().length < 2}
-                  className="px-3 py-1 text-sm rounded-full bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                  className="px-3 py-1 text-sm rounded-full bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                 >
                   Créer
                 </button>

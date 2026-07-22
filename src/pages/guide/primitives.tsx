@@ -49,7 +49,7 @@ export const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const Step: React.FC<{ n: number; title: string; children: React.ReactNode }> = ({ n, title, children }) => (
   <div className="flex gap-4">
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[rgb(var(--color-accent-solid))] flex items-center justify-center text-xs font-bold text-white mt-0.5">
+    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[rgb(var(--color-accent-solid))] flex items-center justify-center text-xs font-bold text-[rgb(var(--color-accent-solid-foreground))] mt-0.5">
       {n}
     </div>
     <div>

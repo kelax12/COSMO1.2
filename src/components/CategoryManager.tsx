@@ -233,7 +233,7 @@ export const getColorFr = (colorName: string) => {
                                   onClick={() => setFormData({ ...formData, icon })}
                                   className={`aspect-square rounded-lg text-lg flex items-center justify-center transition-all ${
                                     formData.icon === icon
-                                      ? 'bg-[rgb(var(--color-accent-solid))] text-white shadow-md shadow-blue-500/20 scale-105'
+                                      ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-md shadow-blue-500/20 scale-105'
                                       : 'hover:bg-[rgb(var(--color-hover))]'
                                   }`}
                                 >
@@ -274,7 +274,7 @@ export const getColorFr = (colorName: string) => {
                         <div className="flex gap-2 pt-2">
                           <button
                             type="submit"
-                            className="flex-1 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                            className="flex-1 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                           >
                             <Check size={18} />
                             Enregistrer
@@ -377,7 +377,7 @@ export const getColorFr = (colorName: string) => {
               <div className="p-4 px-6 border-t dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
                 <button
                   onClick={onClose}
-                  className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 dark:bg-[rgb(var(--color-accent-solid))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-bold rounded-xl transition-all shadow-lg active:scale-95"
+                  className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 dark:bg-[rgb(var(--color-accent-solid))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-bold rounded-xl transition-all shadow-lg active:scale-95"
                 >
                   Fermer
                 </button>

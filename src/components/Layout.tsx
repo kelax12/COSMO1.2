@@ -297,7 +297,7 @@ const NavItems = () =>
           onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
           data-tutorial-id="global-quick-add-fab"
           aria-label="Créer une tâche rapide"
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] to-purple-600 text-white shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] to-purple-600 text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
           style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
         >
           <Zap size={24} aria-hidden="true" />

@@ -119,7 +119,10 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             <div className="relative w-40 sm:w-52 shrink-0">
               <select
                 id="task-filter"
-                className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-all cursor-pointer shadow-sm"
+                // Mobile : `py-[11px]` + `rounded-xl` pour égaler exactement la
+                // hauteur (45px) et le rayon de la barre de recherche voisine.
+                // Desktop inchangé (sm: restaure py-2.5 / rounded-lg).
+                className="w-full appearance-none border rounded-xl sm:rounded-lg pl-3 pr-16 h-[45px] sm:h-auto py-[11px] sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-all cursor-pointer shadow-sm"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
@@ -192,7 +195,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 type="button"
                 className={`hidden sm:inline-flex items-center justify-center gap-2 shrink-0 px-5 py-2.5 text-sm rounded-lg border font-medium transition-colors ${
                   showAdvancedFilters || hasActiveFilters
-                    ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white border-[rgb(var(--color-accent-solid))]'
+                    ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))]'
                     : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
                 aria-label="Afficher les filtres avancés"
@@ -201,7 +204,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 <SlidersHorizontal size={18} aria-hidden="true" />
                 <span>Filtres</span>
                 {hasActiveFilters && (
-                  <span className="bg-white dark:bg-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  <span className="bg-white dark:bg-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-[rgb(var(--color-accent-solid-foreground))] text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                     {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
                   </span>
                 )}

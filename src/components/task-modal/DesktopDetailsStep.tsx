@@ -238,7 +238,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleInputChange('category', 'okr')}
-                                className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-white shadow-sm"
+                                className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm"
                               >
                                 <div className="w-2 h-2 rounded-full bg-[rgb(var(--color-accent-solid))]" />
                                 OKR
@@ -253,8 +253,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 onClick={() => handleInputChange('category', formData.category === cat.id ? '' : cat.id)}
                                 className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
                                   formData.category === cat.id
-                                    ? 'bg-[rgb(var(--color-accent-solid))] text-white shadow-sm'
-                                    : 'text-slate-700 dark:text-slate-200 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:text-white dark:hover:bg-[rgb(var(--color-accent-solid-hover))]'
+                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
+                                    : 'text-slate-700 dark:text-slate-200 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:text-[rgb(var(--color-accent-solid-foreground))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))]'
                                 }`}
                               >
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
@@ -333,7 +333,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 }
                               );
                             }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                           >
                             {createCategoryMutation.isPending ? 'Création...' : 'Créer'}
                           </button>
@@ -665,7 +665,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 }
                               );
                             }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
+                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                           >
                             {createListMutation.isPending ? 'Création...' : 'Créer'}
                           </button>

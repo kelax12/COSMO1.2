@@ -454,7 +454,7 @@ const InboxMenu: React.FC = () => {
                         <button
                           onClick={() => handleAcceptFriend(req.id)}
                           disabled={acceptFriendMutation.isPending}
-                          className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           aria-label={`Accepter la demande d'ami de ${prettyName(req.senderEmail)}`}
                         >
                           <Check size={15} aria-hidden="true" />
@@ -513,7 +513,7 @@ const InboxMenu: React.FC = () => {
                     <div className="flex gap-1.5 shrink-0">
                       <button
                         onClick={() => handleAcceptTask(task)}
-                        className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         aria-label={`Accepter la tâche partagée ${task.name}`}
                       >
                         <Check size={15} aria-hidden="true" />
@@ -673,7 +673,7 @@ const InboxMenu: React.FC = () => {
             <button
               onClick={handleSendFriendRequest}
               disabled={!friendEmail.trim() || sendFriendMutation.isPending}
-              className="h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <Send size={13} aria-hidden="true" /> Envoyer
             </button>

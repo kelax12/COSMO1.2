@@ -85,7 +85,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
                     if (recurrenceDays.length === 0) setRecurrence('none');
                     onClose();
                   }}
-                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
+                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
                 >
                   Valider
                 </button>

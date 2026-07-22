@@ -100,7 +100,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
               onClick={handleCheckout}
               disabled={isCheckoutLoading}
               aria-label="Passer Premium — 3,50 € par mois"
-              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-white disabled:opacity-60"
+              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-60"
             >
               {isCheckoutLoading ? (
                 <Loader2 size={15} className="animate-spin" aria-hidden="true" />

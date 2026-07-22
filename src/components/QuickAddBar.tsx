@@ -174,7 +174,7 @@ const QuickAddBar = () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!parsed.name.trim() || createTaskMutation.isPending}
-                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <CornerDownLeft size={14} aria-hidden="true" />
                 Créer

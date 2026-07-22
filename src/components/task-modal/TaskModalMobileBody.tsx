@@ -594,7 +594,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         className="w-full pl-9 pr-3 py-2 text-[15px] bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
                       />
                     </div>
-                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-[rgb(var(--color-accent-solid))] disabled:bg-blue-300 text-white rounded-xl">
+                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-[rgb(var(--color-accent-solid))] disabled:bg-blue-300 text-[rgb(var(--color-accent-solid-foreground))] rounded-xl">
                       <UserPlus size={16} />
                     </button>
                   </div>

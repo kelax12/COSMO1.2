@@ -275,7 +275,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     >
                       Durée totale
                     </span>
-                    <div className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                    <div className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-3 py-1 rounded-full text-xs font-bold shadow-sm">
                       <Clock size={12} />
                       <span>{calculateDuration()}</span>
                     </div>
@@ -534,7 +534,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
           )}
           <Button
             type="submit"
-            className={`min-h-12 px-8 text-base font-semibold border-0 text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:w-auto' : 'w-full sm:w-auto'}`}
+            className={`min-h-12 px-8 text-base font-semibold border-0 text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 shadow-md shadow-blue-500/20 transition-all ${mode === 'edit' ? 'sm:w-auto' : 'w-full sm:w-auto'}`}
           >
             {getSubmitButtonText()}
           </Button>

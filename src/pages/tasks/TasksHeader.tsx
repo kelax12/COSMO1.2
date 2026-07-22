@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Search } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, TouchTarget } from '@/components/mobile';
 
@@ -25,8 +25,6 @@ interface TasksHeaderProps {
  * (page-tutorial-helpers) sélectionne celui qui est réellement visible.
  */
 const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggleCalendar }) => {
-  const openSearch = () => window.dispatchEvent(new CustomEvent('open-command-palette'));
-
   return (
     <>
       {/* ── Mobile ── */}
@@ -34,10 +32,9 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
         title="Tâches"
         actions={
           <>
-            {/* Recherche globale (#41) — sur mobile la loupe était enterrée sous « Plus » */}
-            <TouchTarget aria-label="Recherche globale" onClick={openSearch}>
-              <Search size={20} aria-hidden="true" />
-            </TouchTarget>
+            {/* Loupe retirée du header mobile : redondante avec la barre de
+                recherche visible juste en dessous. La recherche globale reste
+                accessible via la palette (Cmd/Ctrl+K) et l'onglet « Plus ». */}
             <TouchTarget
               aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
               aria-pressed={showDeadlineCalendar}
@@ -91,7 +88,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
               aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
               className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
                 showDeadlineCalendar
-                  ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
+                  ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                   : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-border-strong))]'
               }`}
             >

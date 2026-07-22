@@ -102,7 +102,7 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
             type="button"
             onClick={handleCreate}
             disabled={!newName.trim() || createCategory.isPending}
-            className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white text-xs font-semibold"
+            className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold"
           >
             Créer
           </button>

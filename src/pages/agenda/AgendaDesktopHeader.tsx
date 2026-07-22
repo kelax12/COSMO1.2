@@ -138,7 +138,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={handleOpenAddModal}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0 whitespace-nowrap">
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0 whitespace-nowrap">
                   <Plus size={18} />
                   <span className="font-medium text-sm lg:text-base">Nouveau</span>
                 </motion.button>

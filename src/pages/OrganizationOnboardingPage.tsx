@@ -44,7 +44,7 @@ const OrganizationOnboardingPage = () => {
             <button
               type="button"
               onClick={() => navigate('/entreprise')}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20 inline-flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20 inline-flex items-center justify-center gap-2"
             >
               Accéder à mon entreprise <ArrowRight size={16} aria-hidden="true" />
             </button>

@@ -432,7 +432,7 @@ const TasksPage: React.FC = () => {
           )}
         </AnimatePresence>
         
-        <div className={`grid grid-cols-1 gap-8 items-start ${summaryAtBottom ? '' : 'xl:grid-cols-4'}`}>
+        <div className={`grid grid-cols-1 gap-4 sm:gap-8 items-start ${summaryAtBottom ? '' : 'xl:grid-cols-4'}`}>
           <motion.div 
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -497,7 +497,7 @@ const TasksPage: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="flex flex-col md:flex-row justify-between items-stretch md:items-start mb-8 gap-6"
+                  className="flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
                 >
                   <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
                     <TaskFilter
@@ -521,7 +521,7 @@ const TasksPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
-                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
+                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
                       aria-label="Créer une nouvelle tâche"
                     >
                       <Plus size={20} />

@@ -259,7 +259,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-white shadow-sm transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
           >
             <Plus size={15} aria-hidden="true" /> Nouvel objectif
           </button>

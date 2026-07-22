@@ -214,7 +214,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-full sm:w-48 min-h-11 py-3 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:bg-[rgb(var(--color-accent-solid))] text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20 flex items-center justify-center"
+                className="w-full sm:w-48 min-h-11 py-3 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20 flex items-center justify-center"
               >
                 {isSaving ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />

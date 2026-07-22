@@ -649,7 +649,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <button
               type="button"
               onClick={() => setShowCreateFromEmpty(true)}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white text-sm font-semibold transition-colors shadow-sm"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold transition-colors shadow-sm"
             >
               Créer une tâche
             </button>
@@ -675,7 +675,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <span className="text-sm font-semibold whitespace-nowrap" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {selectedIds.length} sélectionnée{selectedIds.length > 1 ? 's' : ''}
             </span>
-            <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white">
+            <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]">
               <CheckCircle2 size={16} data-icon="inline-start" />
               <span className="hidden sm:inline">Compléter</span>
             </Button>
