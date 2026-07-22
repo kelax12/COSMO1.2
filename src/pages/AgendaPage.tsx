@@ -13,6 +13,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import MemberAvatar from '@/components/organization/MemberAvatar';
 import TaskSidebar from '../components/TaskSidebar';
+import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import ColorSettingsModal from '../components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -114,6 +115,9 @@ const AgendaPage: React.FC = () => {
   // l'ouverture d'EventModal, jugé trop lourd visuellement).
   const [quickSlot, setQuickSlot] = useState<{ start: string; end: string; x: number; y: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  // Event sans tâche liée déposé sur la sidebar (feature création tâche depuis event) :
+  // ouvre TaskModal pré-rempli avec les infos de l'événement.
+  const [eventForTaskCreation, setEventForTaskCreation] = useState<CalendarEvent | null>(null);
   // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
   const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
   const [calendarKey, setCalendarKey] = useState(0);
@@ -273,6 +277,7 @@ const AgendaPage: React.FC = () => {
     setShowEditEventModal,
     setCalendarKey,
     setMobileCalendarKey,
+    onDropUnlinkedEvent: setEventForTaskCreation,
   });
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
@@ -779,6 +784,26 @@ const AgendaPage: React.FC = () => {
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}
           onDuplicateEvent={handleDuplicateEvent}
+        />
+      )}
+
+      {/* Event sans tâche liée déposé sur la sidebar → création de tâche pré-remplie */}
+      {eventForTaskCreation && (
+        <TaskModal
+          isOpen={true}
+          isCreating={true}
+          onClose={() => setEventForTaskCreation(null)}
+          initialData={{
+            name: eventForTaskCreation.title,
+            category: categories.find(cat => cat.color === eventForTaskCreation.color)?.id,
+            deadline: eventForTaskCreation.start.slice(0, 10),
+            estimatedTime: Math.max(
+              1,
+              Math.round(
+                (new Date(eventForTaskCreation.end).getTime() - new Date(eventForTaskCreation.start).getTime()) / 60000
+              )
+            ),
+          }}
         />
       )}
 

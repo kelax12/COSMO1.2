@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, CalendarClock, Trash2, X, Clock } from 'lucide-react';
+import { CheckCircle2, CalendarClock, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { formatTimeInTz, toDisplayISO, type TimezonePref } from '@/lib/timezone';
@@ -51,9 +51,6 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
-                  <Clock size={20} />
-                </div>
                 <div>
                   <h3 id="slot-review-title" className="text-base font-bold text-[rgb(var(--color-text-primary))] leading-tight">
                     Créneau terminé

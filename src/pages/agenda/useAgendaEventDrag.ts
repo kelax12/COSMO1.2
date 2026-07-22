@@ -15,6 +15,9 @@ interface UseAgendaEventDragParams {
   setShowEditEventModal: (open: boolean) => void;
   setCalendarKey: React.Dispatch<React.SetStateAction<number>>;
   setMobileCalendarKey: React.Dispatch<React.SetStateAction<number>>;
+  // Événement SANS tâche liée déposé sur la sidebar → au lieu de le supprimer,
+  // on propose de créer une tâche à partir de ses infos (nom, horaires…).
+  onDropUnlinkedEvent?: (event: CalendarEvent) => void;
 }
 
 // Gère le cycle de vie d'un drag d'event sur l'agenda (FullCalendar) : drop sur
@@ -28,6 +31,7 @@ export function useAgendaEventDrag({
   setShowEditEventModal,
   setCalendarKey,
   setMobileCalendarKey,
+  onDropUnlinkedEvent,
 }: UseAgendaEventDragParams) {
   // Timestamp pour suppression du clic résiduel après un drag — auto-expire après 300ms
   // (jamais "stuck" même si le cleanup ne tourne pas).
@@ -80,6 +84,13 @@ export function useAgendaEventDrag({
           if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
             const masterId = getMasterId(draggedId);
             const ev = events.find(e2 => e2.id === masterId);
+            if (ev && !ev.taskId) {
+              // Event non rattaché à une tâche → propose la création d'une
+              // tâche à partir de ses infos, sans le supprimer (FC le fait
+              // revenir naturellement à sa position d'origine).
+              onDropUnlinkedEvent?.(ev);
+              return;
+            }
             if (ev) {
               // Quand un event FC est droppé hors de ses drop zones, FC entre
               // dans un état d'auto-revert qui retient la référence DOM de
