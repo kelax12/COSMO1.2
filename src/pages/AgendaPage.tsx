@@ -614,7 +614,11 @@ const AgendaPage: React.FC = () => {
         {isMobile && (
           <div
             data-tutorial-id="agenda-mobile-calendar"
-            className="md:hidden mobile-calendar flex-1 overflow-hidden pb-[calc(64px+env(safe-area-inset-bottom))]"
+            // Pas de `pb` : le conteneur `flex-1` s'arrête déjà pile au-dessus
+            // de la tab bar. L'ancien `pb-64px` (réservé pour dégager le FAB)
+            // volait ~64px à la grille sans raison — le FAB étant `fixed`, il
+            // flotte au-dessus du coin bas-droit sans réduire le calendrier.
+            className="md:hidden mobile-calendar flex-1 overflow-hidden"
           >
             <FullCalendar
               key={mobileCalendarKey}

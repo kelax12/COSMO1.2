@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
-  Zap } from
+  Plus } from
   'lucide-react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
@@ -294,13 +294,20 @@ const NavItems = () =>
             toutes les pages protégées : une pensée doit se capturer en 1 tap. */}
         <button
           type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
+          onClick={() => {
+            // Sur /tasks, la capture rapide (QuickAddBar) n'est pas la bonne
+            // popup : on ouvre le formulaire de création complet, comme le
+            // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
+            // événement. Ailleurs, capture rapide globale inchangée.
+            const evt = location.pathname === '/tasks' ? 'open-task-create' : 'open-quick-add';
+            window.dispatchEvent(new CustomEvent(evt));
+          }}
           data-tutorial-id="global-quick-add-fab"
-          aria-label="Créer une tâche rapide"
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] to-purple-600 text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Créer une tâche"
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
           style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <Zap size={24} aria-hidden="true" />
+          <Plus size={26} aria-hidden="true" />
         </button>
         <MobileTabBar />
         {globalOverlays}

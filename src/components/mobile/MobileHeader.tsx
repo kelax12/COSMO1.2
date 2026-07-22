@@ -48,7 +48,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         'transition-[padding,background-color,border-color] duration-200',
         compact
           ? 'py-2 bg-[rgb(var(--color-background))]/85 backdrop-blur-xl border-b border-[rgb(var(--color-border))]'
-          : 'pt-1 pb-3 bg-transparent border-b border-transparent',
+          : 'pt-0.5 pb-1 bg-transparent border-b border-transparent',
         className,
       )}
     >
