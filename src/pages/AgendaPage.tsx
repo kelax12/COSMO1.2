@@ -15,6 +15,7 @@ import MemberAvatar from '@/components/organization/MemberAvatar';
 import TaskSidebar from '../components/TaskSidebar';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
+import AgendaEventToTaskConfirm from './agenda/AgendaEventToTaskConfirm';
 import ColorSettingsModal from '../components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -116,7 +117,9 @@ const AgendaPage: React.FC = () => {
   const [quickSlot, setQuickSlot] = useState<{ start: string; end: string; x: number; y: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   // Event sans tâche liée déposé sur la sidebar (feature création tâche depuis event) :
-  // ouvre TaskModal pré-rempli avec les infos de l'événement.
+  // 1) popup de choix (supprimer / transformer en tâche), 2) si "transformer",
+  // TaskModal pré-rempli avec les infos de l'événement.
+  const [eventPendingDecision, setEventPendingDecision] = useState<CalendarEvent | null>(null);
   const [eventForTaskCreation, setEventForTaskCreation] = useState<CalendarEvent | null>(null);
   // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
   const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
@@ -277,7 +280,7 @@ const AgendaPage: React.FC = () => {
     setShowEditEventModal,
     setCalendarKey,
     setMobileCalendarKey,
-    onDropUnlinkedEvent: setEventForTaskCreation,
+    onDropUnlinkedEvent: setEventPendingDecision,
   });
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
@@ -787,7 +790,21 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
-      {/* Event sans tâche liée déposé sur la sidebar → création de tâche pré-remplie */}
+      {/* Event sans tâche liée déposé sur la sidebar → choix supprimer / transformer en tâche */}
+      <AgendaEventToTaskConfirm
+        event={eventPendingDecision}
+        onCancel={() => setEventPendingDecision(null)}
+        onDelete={() => {
+          if (eventPendingDecision) deleteEventMutation.mutate(eventPendingDecision.id);
+          setEventPendingDecision(null);
+        }}
+        onConvertToTask={() => {
+          setEventForTaskCreation(eventPendingDecision);
+          setEventPendingDecision(null);
+        }}
+      />
+
+      {/* Transformer en tâche confirmé → ouvre TaskModal pré-rempli */}
       {eventForTaskCreation && (
         <TaskModal
           isOpen={true}
