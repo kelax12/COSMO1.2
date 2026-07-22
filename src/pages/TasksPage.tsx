@@ -166,6 +166,14 @@ const TasksPage: React.FC = () => {
   const [summaryAtBottom, setSummaryAtBottom] = useState(true);
   const bottomSummaryRef = useRef<HTMLDivElement>(null);
 
+  // Le FAB « + » global (Layout) ouvre le formulaire de création COMPLET sur
+  // cette page (et non la capture rapide QuickAddBar, jugée hors sujet ici).
+  useEffect(() => {
+    const openCreate = () => setShowAddTaskForm(true);
+    window.addEventListener('open-task-create', openCreate);
+    return () => window.removeEventListener('open-task-create', openCreate);
+  }, []);
+
   const handleToggleSummaryPosition = () => {
     const newPosition = !summaryAtBottom;
     setSummaryAtBottom(newPosition);
