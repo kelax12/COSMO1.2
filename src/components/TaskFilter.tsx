@@ -267,7 +267,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
             onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
             aria-label={showQuickFilters ? "Masquer les options" : "Afficher les options"}
             aria-pressed={showQuickFilters}
-            className={`md:hidden shrink-0 flex items-center gap-1 px-2 min-h-touch text-sm font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
+            className={`md:hidden shrink-0 flex items-center gap-1 px-2 min-h-touch text-label font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
               showQuickFilters
                 ? 'text-blue-700 dark:text-blue-300'
                 : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'

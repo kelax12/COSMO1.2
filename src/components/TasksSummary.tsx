@@ -102,9 +102,9 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
           </button>
         </div>
         
-        <h2 className="text-xl font-bold mb-1 pr-16" style={{ color: 'rgb(var(--color-text-primary))' }}>Taches en cour : {totalTasks}</h2>
+        <h2 className="text-headline sm:text-xl font-bold mb-1 pr-16" style={{ color: 'rgb(var(--color-text-primary))' }}>Taches en cour : {totalTasks}</h2>
         {todayMinutes > 0 && (
-          <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <p className="text-label sm:text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             ≈ {todayLoadLabel} planifiées aujourd'hui
           </p>
         )}
@@ -117,10 +117,10 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
                 className="w-4 h-4 rounded" 
                 style={{ backgroundColor: category.color }}
               ></div>
-              <span className="text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
+              <span className="text-label sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {category.name}
               </span>
-              <span className="ml-auto text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+              <span className="ml-auto text-label sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {categoryCounts[category.id] || 0}
               </span>
             </div>

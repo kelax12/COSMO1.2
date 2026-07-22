@@ -87,7 +87,7 @@ const PendingSharedTasks: React.FC = () => {
 
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+      <p className="text-label sm:text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
         Tâches partagées en attente ({pendingTasks.length})
       </p>
       {pendingTasks.map((task) => (
@@ -96,10 +96,10 @@ const PendingSharedTasks: React.FC = () => {
           className="flex items-center gap-3 p-3 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20"
         >
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }} title={task.name}>
+            <p className="text-body sm:text-sm font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }} title={task.name}>
               {task.name}
             </p>
-            <p className="text-xs truncate text-amber-700 dark:text-amber-300">
+            <p className="text-caption sm:text-xs truncate text-amber-700 dark:text-amber-300">
               Partagé par {sharerName(task)}
             </p>
           </div>
@@ -108,7 +108,7 @@ const PendingSharedTasks: React.FC = () => {
               type="button"
               onClick={() => handleAccept(task)}
               disabled={acceptSharedTaskMutation.isPending}
-              className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label={`Accepter la tâche partagée ${task.name}`}
             >
               <Check size={15} aria-hidden="true" />
@@ -117,7 +117,7 @@ const PendingSharedTasks: React.FC = () => {
               type="button"
               onClick={() => handleReject(task)}
               disabled={unshareTaskMutation.isPending}
-              className="w-9 h-9 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              className="min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
               aria-label={`Refuser la tâche partagée ${task.name}`}
             >
               <X size={15} aria-hidden="true" />
