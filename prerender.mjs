@@ -269,22 +269,31 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
         </ul>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`;
 
-// Injecte le contenu indexable en HTML VISIBLE dans <div id="root"> : lu par
-// tous les crawlers (Googlebot, Bing, GPTBot/ClaudeBot/PerplexityBot qui
-// n'exécutent pas le JS), puis remplacé par React au premier render —
-// createRoot().render() écrase les enfants existants du container.
-// Le <noscript> devient redondant et est retiré (évite le contenu dupliqué).
+// Injecte le contenu indexable dans <div id="root">, AVANT #boot-screen.
+//
+// Il est présent dans le balisage — donc lu par les crawlers qui n'exécutent
+// pas le JS (GPTBot, ClaudeBot, PerplexityBot, Bing…), qui parsent le HTML
+// sans appliquer le CSS — mais `#seo-fallback{display:none}` (défini dans le
+// <style> d'index.html) fait qu'un vrai navigateur ne le peint JAMAIS : il
+// voit #boot-screen, l'écran de chargement, jusqu'au premier render de React.
+//
+// ⚠ Ne PAS masquer ce bloc en JS : la CSP de vercel.json est
+// `script-src 'self'` (ni 'unsafe-inline' ni nonce) → un <script> inline est
+// bloqué en prod, alors qu'il passe en local où il n'y a pas de CSP. C'est le
+// piège qui laissait ce mur de texte SEO à l'écran à chaque refresh ou plantage
+// au démarrage. Le masquage doit rester purement CSS.
+//
+// Le <noscript> d'origine devient redondant (le <noscript><style> du <head>
+// réaffiche #seo-fallback quand le JS est coupé) et est retiré : ciblage par
+// son id pour ne pas emporter celui du <head>.
 function injectStaticContent(out, content) {
-  const marker = '<div id="root"></div>';
+  const marker = '<div id="root">';
   if (!out.includes(marker)) {
-    console.warn('  ⚠ marqueur <div id="root"></div> introuvable — contenu statique non injecté');
+    console.warn('  ⚠ marqueur <div id="root"> introuvable — contenu statique non injecté');
     return out;
   }
-  out = out.replace(
-    marker,
-    `<div id="root">\n      <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b">\n        ${content}\n      </div>\n    </div>`
-  );
-  out = out.replace(/<noscript>[\s\S]*?<\/noscript>\s*/, '');
+  out = out.replace(marker, `${marker}\n      <div id="seo-fallback">\n        ${content}\n      </div>`);
+  out = out.replace(/<noscript id="seo-noscript">[\s\S]*?<\/noscript>\s*/, '');
   return out;
 }
 
