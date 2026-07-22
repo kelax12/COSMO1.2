@@ -206,7 +206,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
               {/* Barre de progression globale */}
               <div className="h-1 bg-[rgb(var(--color-hover))] rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-blue-500"
+                  className="h-full bg-[rgb(var(--color-accent-solid))]"
                   animate={{ width: `${progress}%` }}
                   transition={{ type: 'spring', damping: 22 }}
                 />
@@ -259,7 +259,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 </div>
                 <div className="h-2 bg-[rgb(var(--color-hover))] rounded-full overflow-hidden">
                   <motion.div
-                    className={`h-full ${krProgress >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                    className={`h-full ${krProgress >= 100 ? 'bg-emerald-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
                     animate={{ width: `${Math.min(krProgress, 100)}%` }}
                     transition={{ type: 'spring', damping: 22 }}
                   />
@@ -282,7 +282,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 type="button"
                 onClick={handleNext}
                 disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
                   'Enregistrement…'

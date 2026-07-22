@@ -85,8 +85,8 @@ const TodayHabits: React.FC = () => {
           key={habit.id}
             className={`p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg ${
               habit.completedToday ?
-              'bg-blue-600 dark:bg-blue-900 border-blue-400 dark:border-blue-700 shadow-md' :
-              'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-slate-700/50'}`
+              'bg-[rgb(var(--color-accent-solid))] dark:bg-blue-900 border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md' :
+              'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-50/50 dark:hover:bg-slate-700/50'}`
               }
             onClick={() => handleToggle(habit.id)}>
 
@@ -96,8 +96,8 @@ const TodayHabits: React.FC = () => {
                         onClick={() => handleToggle(habit.id)}
                         className={`h-7 w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           habit.completedToday 
-                            ? 'bg-white text-blue-600 border-white dark:bg-blue-500 dark:text-white dark:border-blue-600 shadow-md' 
-                            : 'bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-600 text-transparent hover:border-blue-500 hover:bg-blue-100'
+                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-white dark:border-[rgb(var(--color-accent-solid))] shadow-md' 
+                            : 'bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border-strong))] text-transparent hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-100'
                         }`}
                       >
                       <Check className="h-4 w-4" strokeWidth={4} />

@@ -121,7 +121,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                     onChange={(e) => { setEmailInput(e.target.value); if (inputError) setInputError(null); }}
                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
                                     placeholder="Email, nom ou identifiant..."
-                                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-2 text-sm transition-colors ${inputError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 hover:border-blue-500 focus:border-blue-600'}`}
+                                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-2 text-sm transition-colors ${inputError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))]'}`}
                                     style={{
                                       backgroundColor: 'rgb(var(--color-surface))',
                                       color: 'rgb(var(--color-text-primary))',
@@ -133,7 +133,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                   size="icon"
                                   onClick={handleAddEmail}
                                   disabled={!emailInput.trim()}
-                                  className={emailInput.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-white border-0 !opacity-100'}
+                                  className={emailInput.trim() ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-white border-0 !opacity-100'}
                                 >
                                   <UserPlus size={16} />
                                 </Button>
@@ -201,7 +201,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                       return (
                                       <div
                                         key={req.id}
-                                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-colors ${selected ? 'border-blue-400/50 bg-blue-500/10' : 'border-amber-400/30 bg-amber-500/10'}`}
+                                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-colors ${selected ? 'border-[rgb(var(--color-accent-solid))]/50 bg-[rgb(var(--color-accent-solid))]/10' : 'border-amber-400/30 bg-amber-500/10'}`}
                                       >
                                         <button
                                           type="button"

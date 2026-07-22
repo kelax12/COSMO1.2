@@ -191,7 +191,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
               {load.filter((m) => m.total > 0).map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
-                  <MiniBar ratio={m.open / maxOpen} colorClass="bg-blue-500" />
+                  <MiniBar ratio={m.open / maxOpen} colorClass="bg-[rgb(var(--color-accent-solid))]" />
                   <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Tâches ouvertes">
                     {m.open}
                   </span>

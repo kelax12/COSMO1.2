@@ -105,8 +105,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         // haut, sous la cible tactile de 44px (WCAG 2.5.5).
                         className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
                           !selectedListId
-                            ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 shadow-md'
-                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-[rgb(var(--color-border))] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                            ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
+                            : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
                         }`}
                       >
                         <span className="hidden sm:inline">Toutes les tâches</span>
@@ -324,7 +324,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 <button
                                   type="submit"
                                   disabled={!editListName.trim()}
-                                  className="px-2 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                                  className="px-2 py-1 text-xs rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                                 >
                                   OK
                                 </button>
@@ -351,8 +351,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
                                 className={`flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
                                   isSelected
-                                    ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 shadow-md'
-                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-[rgb(var(--color-border))] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                                    ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
+                                    : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
                                 }`}
                               >
                                 {/* Indicateur visuel : pastille couleur, ou icône Sparkles si smart */}
@@ -485,7 +485,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               <button
                                 type="submit"
                                 disabled={!newListName.trim()}
-                                className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                                className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                               >
                                 Créer
                               </button>
@@ -551,7 +551,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             <button
                               type="submit"
                               disabled={!newListName.trim()}
-                              className="px-3 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                              className="px-3 py-2 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                             >
                               Créer
                             </button>
@@ -573,7 +573,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
-                          className="mt-3 flex items-center gap-3 px-6 py-5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
+                          className="mt-3 flex items-center gap-3 px-6 py-5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]"
                         >
                           <span className="text-sm text-blue-700 dark:text-blue-300 font-medium flex-1">
                             {selectedTasksForList.length === 0
@@ -585,7 +585,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           <button
                             onClick={confirmAddTasksToList}
                             disabled={selectedTasksForList.length === 0}
-                            className="px-5 py-2.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-40 transition-all"
+                            className="px-5 py-2.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold disabled:opacity-40 transition-all"
                           >
                             Valider
                           </button>

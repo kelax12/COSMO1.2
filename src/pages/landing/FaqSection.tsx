@@ -48,7 +48,7 @@ const FaqSection: React.FC = () => {
             >
               Tout ce que vous voulez savoir
               <br />
-              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
                 sur Cosmo
               </span>
             </motion.h2>

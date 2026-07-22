@@ -329,7 +329,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                   >
                 {isPlaced && (
                   <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg flex items-center justify-center pointer-events-none">
-                    <div className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg">
+                    <div className="bg-[rgb(var(--color-surface))] rounded-full p-2 shadow-lg">
                       <CheckCircle2 size={24} className="text-green-500" />
                     </div>
                   </div>

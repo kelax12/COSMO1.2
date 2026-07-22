@@ -105,7 +105,7 @@ const WhySection: React.FC = () => {
   return (
       <section ref={sectionRef} id="why" className="py-24 bg-black/20 relative overflow-hidden">
         {/* Ambient blobs */}
-        <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-[rgb(var(--color-accent-solid))]/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,7 +138,7 @@ const WhySection: React.FC = () => {
               className="bento-tile md:col-span-4 md:row-span-2 relative overflow-hidden p-8 lg:p-10 group"
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-blue-400/40 group-hover:h-[3px] transition-all duration-500" />
+              <div className="absolute top-0 left-0 right-0 h-px bg-[rgb(var(--color-accent-solid))]/40 group-hover:h-[3px] transition-all duration-500" />
 
               {/* Mini agenda visual */}
               <div className="absolute bottom-0 right-0 w-[70%] h-[55%] opacity-90 pointer-events-none" style={{ maskImage: 'linear-gradient(to top left, black 40%, transparent 90%)' }}>

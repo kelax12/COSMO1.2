@@ -115,7 +115,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
             className={`!text-white !border-0 ${
               !title.trim()
                 ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
-                : '!bg-blue-600 hover:!bg-blue-700'
+                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
             }`}
           >
             Créer

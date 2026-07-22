@@ -454,7 +454,7 @@ const InboxMenu: React.FC = () => {
                         <button
                           onClick={() => handleAcceptFriend(req.id)}
                           disabled={acceptFriendMutation.isPending}
-                          className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           aria-label={`Accepter la demande d'ami de ${prettyName(req.senderEmail)}`}
                         >
                           <Check size={15} aria-hidden="true" />
@@ -513,7 +513,7 @@ const InboxMenu: React.FC = () => {
                     <div className="flex gap-1.5 shrink-0">
                       <button
                         onClick={() => handleAcceptTask(task)}
-                        className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         aria-label={`Accepter la tâche partagée ${task.name}`}
                       >
                         <Check size={15} aria-hidden="true" />
@@ -668,12 +668,12 @@ const InboxMenu: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && handleSendFriendRequest()}
               placeholder="email@exemple.com"
               aria-label="Email de l'ami à inviter"
-              className="flex-1 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+              className="flex-1 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-[rgb(var(--color-accent-solid))] transition-all"
             />
             <button
               onClick={handleSendFriendRequest}
               disabled={!friendEmail.trim() || sendFriendMutation.isPending}
-              className="h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 text-white text-sm font-semibold flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <Send size={13} aria-hidden="true" /> Envoyer
             </button>
@@ -681,7 +681,7 @@ const InboxMenu: React.FC = () => {
         ) : (
           <button
             onClick={() => setShowAddFriend(true)}
-            className="w-full h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-[rgb(var(--color-accent-solid-hover))] hover:text-blue-600 dark:hover:text-blue-400 text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             <UserPlus size={14} aria-hidden="true" /> Ajouter un ami
           </button>

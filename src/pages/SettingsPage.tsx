@@ -319,7 +319,7 @@ const SettingsPage: React.FC = () => {
         <div className="p-5 border-b border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-3">
             <div className="relative shrink-0 group/av cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-sm font-bold select-none">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-white text-sm font-bold select-none">
                 {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                   : <span>{initials}</span>}
               </div>
@@ -408,7 +408,7 @@ const SettingsPage: React.FC = () => {
               <SectionCard>
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                   <div className="relative group/av shrink-0">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-2xl font-bold shadow-sm select-none">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-white text-2xl font-bold shadow-sm select-none">
                       {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                         : <span>{initials}</span>}
                     </div>
@@ -645,7 +645,7 @@ const SettingsPage: React.FC = () => {
                     aria-label="Activer le rappel habitudes du soir"
                     onClick={() => setHabitReminderEnabled(!habitReminderEnabled)}
                     className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                      habitReminderEnabled ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+                      habitReminderEnabled ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
                   >
                     <span
@@ -699,7 +699,7 @@ const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => navigate('/guide')}
                   style={{ minHeight: '48px' }}
-                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150"
+                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150"
                 >
                   Ouvrir le guide <ChevronRight size={15} />
                 </button>
@@ -708,7 +708,7 @@ const SettingsPage: React.FC = () => {
               {/* support card */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center shrink-0">
                     <HelpCircle size={15} className="text-white" />
                   </div>
                   <div>

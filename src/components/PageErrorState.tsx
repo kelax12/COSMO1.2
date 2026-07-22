@@ -24,7 +24,7 @@ const PageErrorState: React.FC<PageErrorStateProps> = ({ subject, error, onRetry
       </p>
       <button
         onClick={onRetry}
-        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm"
+        className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold text-sm"
       >
         Réessayer
       </button>

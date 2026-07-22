@@ -103,7 +103,7 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
         </div>
         <div className="mt-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${done ? 'bg-green-500' : 'bg-blue-500'}`}
+            className={`h-full rounded-full transition-all ${done ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -259,7 +259,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white shadow-sm transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-white shadow-sm transition-colors"
           >
             <Plus size={15} aria-hidden="true" /> Nouvel objectif
           </button>
@@ -298,7 +298,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                   <div className="flex flex-wrap items-center gap-2">
                     {okr.category && (
                       <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${catColor ? '' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'}`}
+                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${catColor ? '' : 'bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400'}`}
                         style={catColor ? { backgroundColor: `${catColor}1a`, color: catColor } : undefined}
                       >
                         {catColor && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: catColor }} aria-hidden="true" />}
@@ -318,7 +318,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                       </span>
                     ) : (
                       okr.teamIds.map((tid) => (
-                        <span key={tid} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <span key={tid} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400">
                           <Users size={11} aria-hidden="true" /> {teamName(tid)}
                         </span>
                       ))
@@ -334,7 +334,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                       type="button"
                       onClick={() => setEditingOKR(okr)}
                       aria-label={`Modifier l'objectif ${okr.title}`}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-blue-500/10 transition-colors"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/10 transition-colors"
                     >
                       <Pencil size={15} aria-hidden="true" />
                     </button>

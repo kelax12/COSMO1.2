@@ -20,7 +20,7 @@ const cardBase =
 const inputClasses =
   'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
 const primaryBtn =
-  'w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20';
+  'w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20';
 
 /**
  * Choix « Créer une entreprise » ou « Rejoindre via code ». Réutilisé par la
@@ -143,7 +143,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
         <button
           type="button"
           onClick={() => setMode('create')}
-          className={`${cardBase} border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-blue-500 hover:ring-2 hover:ring-blue-500/30`}
+          className={`${cardBase} border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:ring-2 hover:ring-blue-500/30`}
         >
           <Building2 size={22} className="text-blue-500" aria-hidden="true" />
           <span className="text-base font-bold text-[rgb(var(--color-text-primary))]">Créer une entreprise</span>

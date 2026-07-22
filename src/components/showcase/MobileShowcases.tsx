@@ -40,7 +40,7 @@ export const TaskCardMobileShowcase: React.FC = () => {
       <div className="flex items-center justify-between px-2 py-2 mb-2">
         <span className="text-base font-bold text-white">Tâches</span>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[rgb(var(--color-accent-solid))]/20 flex items-center justify-center">
             <Calendar size={14} className="text-blue-400" />
           </div>
           <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
@@ -158,7 +158,7 @@ export const AgendaMobileShowcase: React.FC = () => {
           <span className="text-sm font-bold text-white">Avril 2025</span>
           <ChevronRight size={16} className="text-slate-400" />
         </div>
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[rgb(var(--color-accent-solid))] flex items-center justify-center">
           <Plus size={14} className="text-white" />
         </div>
       </div>
@@ -468,7 +468,7 @@ export const OKRMobileShowcase: React.FC = () => {
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 1.2, ease: 'easeOut' }}
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-[rgb(var(--color-accent-solid))] rounded-full"
               />
             </div>
           </div>

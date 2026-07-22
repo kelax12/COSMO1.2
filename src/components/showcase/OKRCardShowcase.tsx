@@ -326,7 +326,7 @@ const OKRCardShowcase: React.FC = () => {
                     >
                       <motion.div
                         className={`h-1.5 rounded-full ${
-                          kr.completed ? 'bg-green-500' : 'bg-blue-500'
+                          kr.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'
                         }`}
                         animate={{ width: `${krProgress}%` }}
                         transition={{ duration: 0.9, ease: 'easeOut' }}

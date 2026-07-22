@@ -315,7 +315,7 @@ export function PremiumPage() {
                 variants={itemVariants}
               >
                 <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white text-center tracking-tight leading-tight">
-                  Comment ça <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400">marche</span> ?
+                  Comment ça <span className="text-transparent bg-clip-text bg-[rgb(var(--color-accent-solid))] to-sky-600 dark:from-blue-400 dark:to-sky-400">marche</span> ?
                 </h3>
               </motion.div>
 
@@ -346,13 +346,13 @@ export function PremiumPage() {
                       icon: Zap,
                       title: 'Activation',
                       desc: '1 jour premium est consommé chaque jour pour maintenir votre statut Premium',
-                      color: 'from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
+                      color: 'bg-[rgb(var(--color-accent-solid))] to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
                       glow: 'group-hover:shadow-blue-500/40',
                       iconColor: 'text-blue-50',
-                      bgBase: 'bg-blue-100/80 dark:bg-blue-500/40',
-                      bgHover: 'hover:bg-blue-200/95 dark:hover:bg-blue-500/60',
-                      borderColor: 'border-blue-200 dark:border-blue-500/40',
-                      borderHover: 'hover:border-blue-400 dark:hover:border-blue-400'
+                      bgBase: 'bg-blue-100/80 dark:bg-[rgb(var(--color-accent-solid))]/40',
+                      bgHover: 'hover:bg-blue-200/95 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/60',
+                      borderColor: 'border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/40',
+                      borderHover: 'hover:border-[rgb(var(--color-accent-solid-hover))] dark:hover:border-[rgb(var(--color-accent-solid-hover))]'
                     },
                     {
                       icon: Crown,

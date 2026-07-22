@@ -286,7 +286,7 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCompletedModal(true)}
           aria-label="Voir la liste des OKR terminés"
-          className="shrink-0 flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm bg-white text-slate-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-emerald-900/20"
+          className="shrink-0 flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 dark:hover:bg-emerald-900/20"
         >
           <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
           <span className="hidden sm:inline">OKR terminés</span>
@@ -305,7 +305,7 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCheckin(true)}
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-blue-400 dark:border-[rgb(var(--color-accent-solid))] bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
           aria-label="Ouvrir le check-in hebdo"
           title="Faire le point sur vos OKR — s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
         >
@@ -317,7 +317,7 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-white shadow-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-all"
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-white shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
           aria-label="Créer un nouvel objectif"
         >
           <Plus size={15} />
@@ -330,7 +330,7 @@ const OKRPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowCheckin(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-900"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-blue-400 dark:border-[rgb(var(--color-accent-solid))] bg-white dark:bg-slate-900"
         >
           <CalendarCheck size={18} />
           <span>Ouvrir le check-in hebdo</span>
@@ -490,7 +490,7 @@ const OKRPage: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowAddObjective(true)}
         aria-label="Nouvel objectif"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
       >
         <Plus size={28} />
       </motion.button>

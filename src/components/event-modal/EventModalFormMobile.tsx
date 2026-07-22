@@ -236,7 +236,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                     aria-pressed={isSelected}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-200 dark:border-gray-700'
                     }`}
                   >

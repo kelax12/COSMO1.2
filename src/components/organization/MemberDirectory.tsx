@@ -50,7 +50,7 @@ interface MemberDirectoryProps {
 // QUE depuis la pyramide (#1 : plus de changement de rôle depuis l'annuaire).
 const BADGE_META = {
   admin: { label: 'Admin', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
-  manager: { label: 'Manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-blue-500/10' },
+  manager: { label: 'Manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-[rgb(var(--color-accent-solid))]/10' },
   member: { label: 'Membre', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
 } as const;
 

@@ -29,6 +29,7 @@
     --color-secondary: 100 116 139;
     --color-accent: 37 99 235;
     --color-accent-solid: 37 99 235; /* pas de duo dédié en Clair — repli sur l'accent existant */
+    --color-accent-solid-hover: 29 78 216; /* blue-700 — survol des boutons/chips pleins */
     --color-success: 34 197 94;
     --color-warning: 245 158 11;
     --color-error: 239 68 68;
@@ -90,6 +91,7 @@
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
     --accent-solid: 217 91% 60%; /* pas de duo dédié en Clair — repli sur l'accent existant */
+    --accent-solid-hover: 224 76% 48%; /* blue-700 */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
@@ -153,6 +155,7 @@
         --color-secondary: 100 116 139;
         --color-accent: 59 130 246;
         --color-accent-solid: 59 130 246; /* pas de duo dédié en Sombre — repli sur l'accent existant */
+        --color-accent-solid-hover: 37 99 235; /* blue-600 — survol des boutons/chips pleins */
         --color-success: 52 211 153;
         --color-warning: 251 191 36;
         --color-error: 239 68 68;
@@ -214,6 +217,7 @@
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
     --accent-solid: 217 91% 60%; /* pas de duo dédié en Sombre — repli sur l'accent existant */
+    --accent-solid-hover: 221 83% 53%; /* blue-600 */
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 27%;
@@ -246,7 +250,8 @@
     --color-primary: 173 186 199;      /* #adbac7 texte secondaire */
     --color-secondary: 118 131 144;    /* #768390 texte muted */
     --color-accent: 88 166 255;        /* #58a6ff texte / liens / focus / bordures actives */
-    --color-accent-solid: 31 111 235;  /* #1f6feb fonds pleins de boutons/chips actifs */
+    --color-accent-solid: 56 139 253;  /* #388bfd fonds pleins de boutons/chips actifs — intensifié pour rester percutant sur fond graphite (#1f6feb original trop terne) */
+    --color-accent-solid-hover: 88 166 255; /* #58a6ff — même teinte que --color-accent, s'éclaircit au survol */
     --color-success: 52 211 153;
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
@@ -307,7 +312,8 @@
     --muted-foreground: 210 10% 51%; /* #768390 */
     --accent: 212 100% 67%;      /* #58a6ff */
     --accent-foreground: 0 0% 100%;
-    --accent-solid: 216 84% 52%; /* #1f6feb */
+    --accent-solid: 215 98% 61%; /* #388bfd — intensifié */
+    --accent-solid-hover: 212 100% 67%; /* #58a6ff */
     --destructive: 0 63% 40%;
     --destructive-foreground: 210 17% 98%;
     --border: 214 13% 25%;       /* #373e47 */

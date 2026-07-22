@@ -152,7 +152,7 @@ const QuickAddBar = () => {
           >
             {/* Champ de saisie */}
             <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-              <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-600/10 dark:bg-blue-500/15 shrink-0" aria-hidden="true">
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-[rgb(var(--color-accent-solid))]/10 dark:bg-[rgb(var(--color-accent-solid))]/15 shrink-0" aria-hidden="true">
                 <Zap size={18} className="text-blue-500" />
               </span>
               <input
@@ -174,7 +174,7 @@ const QuickAddBar = () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!parsed.name.trim() || createTaskMutation.isPending}
-                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <CornerDownLeft size={14} aria-hidden="true" />
                 Créer
@@ -190,7 +190,7 @@ const QuickAddBar = () => {
               ) : (
                 <>
                   {parsed.deadline && (
-                    <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-500/20">
+                    <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-[rgb(var(--color-accent-solid))]/20">
                       <CalendarDays size={13} aria-hidden="true" /> {formatDeadline(parsed.deadline)}
                     </span>
                   )}

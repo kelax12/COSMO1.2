@@ -84,7 +84,7 @@ const CollaboratorItemBase: React.FC<CollaboratorItemProps> = ({
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAction(); }}
         className={`w-full flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left ${
           isSelected
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+            ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
             : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:border-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))]'
         }`}
         aria-label={variant === 'remove' ? `Retirer ${name}` : `Ajouter ${name}`}

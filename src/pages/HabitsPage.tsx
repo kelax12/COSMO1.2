@@ -92,7 +92,7 @@ const HabitsPage: React.FC = () => {
         </p>
         <button
           onClick={() => refetch()}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm"
+          className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-semibold text-sm"
         >
           Réessayer
         </button>
@@ -153,7 +153,7 @@ const HabitsPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowModal(true)}
             data-tutorial-id="habits-create-button"
-            className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+            className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
           >
             <Plus size={18} />
             <span>Nouvelle</span>
@@ -190,7 +190,7 @@ const HabitsPage: React.FC = () => {
                 variant="default"
                 size="lg"
                 onClick={() => setShowModal(true)}
-                className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
               >
                 Créer une habitude
               </Button>
@@ -221,7 +221,7 @@ const HabitsPage: React.FC = () => {
               variant="default"
               size="lg"
               onClick={() => setShowModal(true)}
-              className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+              className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
             >
               Créer une habitude
             </Button>
@@ -250,7 +250,7 @@ const HabitsPage: React.FC = () => {
               variant="default"
               size="lg"
               onClick={() => setShowModal(true)}
-              className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+              className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
             >
               Créer une habitude
             </Button>
@@ -266,7 +266,7 @@ const HabitsPage: React.FC = () => {
         onClick={() => setShowModal(true)}
         data-tutorial-id="habits-fab"
         aria-label="Nouvelle habitude"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-white shadow-lg shadow-blue-500/40 flex items-center justify-center"
       >
         <Plus size={28} />
       </motion.button>

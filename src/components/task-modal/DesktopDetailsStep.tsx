@@ -134,7 +134,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAllFields(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-[rgb(var(--color-border-strong))] hover:bg-blue-500/5 border-[rgb(var(--color-border))]"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/5 border-[rgb(var(--color-border))]"
                       style={{ color: 'rgb(var(--color-text-secondary))' }}
                     >
                       <ChevronDown size={16} aria-hidden="true" />
@@ -216,7 +216,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 <button
                                   type="button"
                                   className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] data-[state=open]:border-[rgb(var(--color-accent))] data-[state=open]:ring-1 data-[state=open]:ring-[rgb(var(--color-accent))] transition-all text-base ${
-                                    errors.category || dInvalid('category') ? 'border-[rgb(var(--color-error))]' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-[rgb(var(--color-border))]')
+                                    errors.category || dInvalid('category') ? 'border-[rgb(var(--color-error))]' : (okrFields.category ? 'border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
                                   } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
                                   style={{
                                   backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
@@ -238,9 +238,9 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleInputChange('category', 'okr')}
-                                className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-blue-600 text-white shadow-sm"
+                                className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-white shadow-sm"
                               >
-                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                <div className="w-2 h-2 rounded-full bg-[rgb(var(--color-accent-solid))]" />
                                 OKR
                               </button>
                             </DropdownMenuItem>
@@ -253,8 +253,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 onClick={() => handleInputChange('category', formData.category === cat.id ? '' : cat.id)}
                                 className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
                                   formData.category === cat.id
-                                    ? 'bg-blue-600 text-white shadow-sm'
-                                    : 'text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600'
+                                    ? 'bg-[rgb(var(--color-accent-solid))] text-white shadow-sm'
+                                    : 'text-slate-700 dark:text-slate-200 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:text-white dark:hover:bg-[rgb(var(--color-accent-solid-hover))]'
                                 }`}
                               >
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
@@ -333,7 +333,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 }
                               );
                             }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                           >
                             {createCategoryMutation.isPending ? 'Création...' : 'Créer'}
                           </button>
@@ -544,7 +544,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-blue-500/10"
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/10"
                             style={{
                               backgroundColor: 'rgb(var(--color-hover))',
                               color: 'rgb(var(--color-text-primary))',
@@ -578,7 +578,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 }
                                 setHasChanges(true);
                               }}
-                              className="focus:bg-blue-500/10"
+                              className="focus:bg-[rgb(var(--color-accent-solid))]/10"
                               style={{ color: 'rgb(var(--color-text-primary))' }}
                             >
                               <div className="flex items-center gap-2">
@@ -594,7 +594,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           <DropdownMenuItem asChild>
                             <button
                               type="button"
-                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-[rgb(var(--color-accent-solid))]/10 hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
                               onClick={() => { setShowNewListInput(true); setNewListName(''); }}
                             >
                               <Plus size={15} />
@@ -665,7 +665,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 }
                               );
                             }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                           >
                             {createListMutation.isPending ? 'Création...' : 'Créer'}
                           </button>
@@ -689,7 +689,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                   return (
                                     <div
                                       key={id}
-                                      className="flex items-center gap-1.5 text-xs font-medium bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/20"
+                                      className="flex items-center gap-1.5 text-xs font-medium bg-[rgb(var(--color-accent-solid))]/10 text-blue-400 px-3 py-1.5 rounded-lg border border-[rgb(var(--color-accent-solid))]/20"
                                     >
                                       {list.name}
                                       <button

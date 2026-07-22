@@ -108,7 +108,7 @@ const PendingSharedTasks: React.FC = () => {
               type="button"
               onClick={() => handleAccept(task)}
               disabled={acceptSharedTaskMutation.isPending}
-              className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-9 h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label={`Accepter la tâche partagée ${task.name}`}
             >
               <Check size={15} aria-hidden="true" />

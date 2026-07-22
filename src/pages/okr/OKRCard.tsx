@@ -189,7 +189,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             </button>
                             {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                               <span
-                                className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
+                                className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
                                 title="Tâches en cours liées à ce résultat clé"
                               >
                                 {tasksByKr.get(keyResult.id)} tâche{(tasksByKr.get(keyResult.id) ?? 0) > 1 ? 's' : ''}
@@ -237,7 +237,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           
                           <div className="flex items-center gap-3 w-full">
                             <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
+                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
                             <span className="text-[10px] sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
                           </div>

@@ -55,7 +55,7 @@ const TaskTableShowcase: React.FC = () => (
           key={label}
           className={`flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-semibold cursor-default ${
             active
-              ? 'bg-blue-600 border-blue-500 text-white'
+              ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-white'
               : 'bg-slate-800/60 border-slate-700 text-slate-400'
           }`}
         >
@@ -111,7 +111,7 @@ const TaskTableShowcase: React.FC = () => (
                 <td className="px-3 py-3.5">
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      task.completed ? 'bg-blue-500 border-blue-500' : 'border-slate-500'
+                      task.completed ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]' : 'border-slate-500'
                     }`}
                   >
                     {task.completed && (
@@ -136,7 +136,7 @@ const TaskTableShowcase: React.FC = () => (
                       {task.name}
                     </span>
                     {task.isCollaborative && (
-                      <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold shrink-0">
+                      <span className="text-[10px] bg-[rgb(var(--color-accent-solid))] text-white px-2 py-0.5 rounded-full font-semibold shrink-0">
                         Collaboratif
                       </span>
                     )}

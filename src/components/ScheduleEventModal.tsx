@@ -171,7 +171,7 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
             className={`!text-white !border-0 ${
               !canSave || createEvent.isPending
                 ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
-                : '!bg-blue-600 hover:!bg-blue-700'
+                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
             }`}
           >
             Planifier

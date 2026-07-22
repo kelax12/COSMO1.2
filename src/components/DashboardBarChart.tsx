@@ -136,7 +136,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
     >
       {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[rgb(var(--color-accent-solid))]/5 dark:bg-[rgb(var(--color-accent-solid))]/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
       </div>
 

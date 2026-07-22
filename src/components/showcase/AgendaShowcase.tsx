@@ -396,7 +396,7 @@ const AgendaShowcase: React.FC = () => {
                           transition={{ duration: 0.35 }}
                           className="absolute -top-8 left-0 right-0 flex justify-center"
                         >
-                          <div className="flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 bg-[rgb(var(--color-accent-solid))] text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-lg whitespace-nowrap">
                             <Calendar size={10} /> Créer un événement
                           </div>
                         </motion.div>

@@ -97,7 +97,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
         transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-        className="bg-white dark:bg-slate-800 rounded-t-[28px] sm:rounded-2xl w-full sm:max-w-2xl overflow-hidden transition-colors shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh]"
+        className="bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl w-full sm:max-w-2xl overflow-hidden transition-colors shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -106,7 +106,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         </div>
 
         {/* Header */}
-        <div className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-4 flex items-center justify-between">
+        <div className="border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Play size={24} />
             <span className="font-bold">Publicité Sponsorisée</span>

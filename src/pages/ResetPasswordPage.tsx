@@ -164,7 +164,7 @@ const ResetPasswordPage = () => {
           <button
             type="submit"
             disabled={isLoading || hasSession === false}
-            className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20"
+            className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20"
           >
             {isLoading ? 'Enregistrement...' : 'Enregistrer le mot de passe'}
           </button>

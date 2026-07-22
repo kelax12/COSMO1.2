@@ -78,7 +78,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
         <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
           <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-blue-500 to-emerald-500" />
           <div className="flex items-center gap-3 p-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 flex items-center justify-center shrink-0">
               <Sparkles size={18} className="text-white" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
@@ -100,7 +100,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
               onClick={handleCheckout}
               disabled={isCheckoutLoading}
               aria-label="Passer Premium — 3,50 € par mois"
-              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white disabled:opacity-60"
+              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-white disabled:opacity-60"
             >
               {isCheckoutLoading ? (
                 <Loader2 size={15} className="animate-spin" aria-hidden="true" />

@@ -269,7 +269,7 @@ const CollaborativeTasks: React.FC = () => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+            className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-[rgb(var(--color-border))]"
           >
             <div className="p-6">
               <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">

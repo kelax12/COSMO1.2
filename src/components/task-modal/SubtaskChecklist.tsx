@@ -78,7 +78,7 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
                 aria-label={sub.completed ? `Décocher « ${sub.name} »` : `Cocher « ${sub.name} »`}
                 onClick={() => commit(items.map(s => s.id === sub.id ? { ...s, completed: !s.completed } : s))}
                 className={`w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded border-2 flex items-center justify-center transition-all ${
-                  sub.completed ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
+                  sub.completed ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]' : 'border-slate-300 dark:border-slate-600 hover:border-[rgb(var(--color-accent-solid-hover))]'
                 }`}
               >
                 {sub.completed && (
@@ -117,7 +117,7 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
           }}
           placeholder="Ajouter une sous-tâche…"
           aria-label="Ajouter une sous-tâche"
-          className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:border-blue-500 border-slate-200 dark:border-slate-700"
+          className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent-solid))] border-slate-200 dark:border-slate-700"
           style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
         />
         <button
@@ -125,7 +125,7 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
           onClick={addItem}
           disabled={!newName.trim() || items.length >= 50}
           aria-label="Ajouter"
-          className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40 transition-all"
+          className="p-2 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white disabled:opacity-40 transition-all"
         >
           <Plus size={16} />
         </button>

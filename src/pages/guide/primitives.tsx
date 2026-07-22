@@ -34,7 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
 // ─── Sub-components ───────────────────────────────────────────────────
 
 export const Tip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mt-6">
+  <div className="flex gap-3 bg-[rgb(var(--color-accent-solid))]/10 border border-[rgb(var(--color-accent-solid))]/20 rounded-xl p-4 mt-6">
     <Lightbulb size={16} className="text-blue-400 shrink-0 mt-0.5" />
     <p className="text-sm text-blue-200 leading-relaxed">{children}</p>
   </div>
@@ -49,7 +49,7 @@ export const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const Step: React.FC<{ n: number; title: string; children: React.ReactNode }> = ({ n, title, children }) => (
   <div className="flex gap-4">
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white mt-0.5">
+    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[rgb(var(--color-accent-solid))] flex items-center justify-center text-xs font-bold text-white mt-0.5">
       {n}
     </div>
     <div>

@@ -66,7 +66,7 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-blue-400 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
           >
             <Plus size={12} aria-hidden="true" /> Nouvelle catégorie
           </button>
@@ -102,7 +102,7 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
             type="button"
             onClick={handleCreate}
             disabled={!newName.trim() || createCategory.isPending}
-            className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold"
+            className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-white text-xs font-semibold"
           >
             Créer
           </button>

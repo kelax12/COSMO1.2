@@ -65,7 +65,7 @@ export function DataTab() {
         onClick={handleExportAll}
         className="w-full flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-colors text-left"
       >
-        <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0">
           <Download size={22} className="text-white" />
         </div>
         <div className="flex-1">

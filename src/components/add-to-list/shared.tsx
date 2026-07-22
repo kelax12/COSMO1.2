@@ -81,7 +81,7 @@ export const InlineForm: React.FC<{
           if (e.key === 'Escape') onCancel();
         }}
         placeholder="Nom de la liste"
-        className="w-full h-11 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] transition-all"
+        className="w-full h-11 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-slate-50 dark:bg-slate-800/50 text-sm font-medium focus:outline-none focus:border-[rgb(var(--color-accent-solid))] focus:ring-2 focus:ring-blue-500/20 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] transition-all"
       />
       <ColorRow selected={color} onChange={setColor} />
       <div className="flex items-center gap-2 pt-1">
@@ -96,7 +96,7 @@ export const InlineForm: React.FC<{
           type="button"
           onClick={() => { if (name.trim()) onSave(name.trim(), color); }}
           disabled={!name.trim()}
-          className="flex-1 min-h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white transition-colors"
+          className="flex-1 min-h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white transition-colors"
         >
           {saveLabel}
         </button>

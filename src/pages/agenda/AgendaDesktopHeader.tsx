@@ -101,7 +101,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                           if (isTodayVisible) { setShowDatePicker(true); return; }
                           calendarRef.current?.getApi().today();
                         }}
-                        className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:text-blue-600 hover:border-blue-400/60"
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:text-blue-600 hover:border-[rgb(var(--color-accent-solid-hover))]/60"
                         style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}>
                         Aujourd'hui
                       </motion.button>
@@ -138,7 +138,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={handleOpenAddModal}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shrink-0 whitespace-nowrap">
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0 whitespace-nowrap">
                   <Plus size={18} />
                   <span className="font-medium text-sm lg:text-base">Nouveau</span>
                 </motion.button>
