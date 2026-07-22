@@ -230,7 +230,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="start"
-                            className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
+                            className="w-[var(--radix-dropdown-menu-trigger-width)] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
                           >
                               {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
                             <DropdownMenuItem asChild>

@@ -49,6 +49,10 @@ const TAB_IDS: readonly string[] = TABS.map((t) => t.id);
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
 const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
 
+/** Bannière lancement « gratuit jusqu'au 1er août » : dismiss persistant par org. */
+const launchBannerKey = (orgId: string) => `cosmo_org_launch_banner_dismissed_${orgId}`;
+const LAUNCH_FREE_UNTIL = new Date('2026-08-01T00:00:00');
+
 const OrganizationPage = () => {
   const { user } = useAuth();
   // #1 — onglet actif dans l'URL (?tab=okr) : survit au refresh et se partage.
@@ -62,6 +66,7 @@ const OrganizationPage = () => {
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
+  const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
 
   // Badge nav (reco #7) : visiter la page marque les notifications comme vues.
@@ -97,6 +102,18 @@ const OrganizationPage = () => {
     setSeatsBannerDismissed(true);
     try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
   };
+
+  let launchDismissed = launchBannerDismissed;
+  try {
+    launchDismissed = launchDismissed || !!localStorage.getItem(launchBannerKey(myOrg.id));
+  } catch { /* localStorage indisponible : bannière visible */ }
+
+  const dismissLaunchBanner = () => {
+    setLaunchBannerDismissed(true);
+    try { localStorage.setItem(launchBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
+  };
+
+  const showLaunchBanner = !launchDismissed && Date.now() < LAUNCH_FREE_UNTIL.getTime();
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
@@ -134,6 +151,26 @@ const OrganizationPage = () => {
       </header>
 
       {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
+
+      {/* Bannière lancement — gratuit pour tout le monde jusqu'au 1er août,
+          quel que soit le nombre de membres. Se masque d'elle-même après
+          cette date (et reste dismissible avant). */}
+      {showLaunchBanner && (
+        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-accent)/0.3)] bg-[rgb(var(--color-accent)/0.08)] px-4 py-3 flex items-start justify-between gap-3">
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+            <span className="font-semibold text-[rgb(var(--color-text-primary))]">COSMO Entreprise est gratuit</span>
+            {' '}jusqu'au 1er août — profitez-en avec toute votre équipe, sans limite.
+          </p>
+          <button
+            type="button"
+            onClick={dismissLaunchBanner}
+            aria-label="Masquer cette information"
+            className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
           est false (gate dormant ; le vrai blocage sera côté serveur).
