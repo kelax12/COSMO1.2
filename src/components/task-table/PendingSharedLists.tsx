@@ -25,7 +25,7 @@ const PendingSharedLists: React.FC = () => {
 
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400">
+      <p className="text-label sm:text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400">
         Listes partagées en attente ({grants.length})
       </p>
       {grants.map((grant) => (
@@ -34,10 +34,10 @@ const PendingSharedLists: React.FC = () => {
           className="flex items-center gap-3 p-3 rounded-xl border border-teal-300 dark:border-teal-700/60 bg-teal-50 dark:bg-teal-900/20"
         >
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }} title={grant.name}>
+            <p className="text-body sm:text-sm font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }} title={grant.name}>
               {grant.name}
             </p>
-            <p className="text-xs truncate text-teal-700 dark:text-teal-300">
+            <p className="text-caption sm:text-xs truncate text-teal-700 dark:text-teal-300">
               Partagé par {grant.sharedByName ?? 'un collaborateur'} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
             </p>
           </div>

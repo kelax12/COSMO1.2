@@ -61,10 +61,10 @@ const TeamAssignedSection = () => {
     <section className="mt-8" aria-label="Mes tâches d'équipe">
       {/* En-tête de section — marque la frontière avec les tâches perso */}
       <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+        <h2 className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))]">
           Mes tâches d'équipe
         </h2>
-        <span className="text-xs text-[rgb(var(--color-text-muted))]">· {activeOrg.name}</span>
+        <span className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))]">· {activeOrg.name}</span>
         <Link
           to="/entreprise"
           className="ml-auto inline-flex items-center gap-1 min-h-touch sm:min-h-0 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
@@ -84,13 +84,13 @@ const TeamAssignedSection = () => {
               {/* Catégorie auto = projet (style distinct des catégories perso) */}
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-dashed border-indigo-300/40 dark:border-indigo-700/40">
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
-                <span className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
+                <span className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
                   {project.name}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
+                <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
                   <UsersRound size={10} aria-hidden="true" /> Équipe
                 </span>
-                <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
+                <span className="ml-auto text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                   {tasks.length} tâche{tasks.length > 1 ? 's' : ''}
                 </span>
               </div>
@@ -124,9 +124,9 @@ const TeamAssignedSection = () => {
                         aria-label={`Modifier la tâche ${task.name}`}
                         className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
                       >
-                        <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
+                        <span className="block text-body sm:text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
                         {task.deadline && (
-                          <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                          <span className={`text-caption sm:text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
                             <CalendarClock size={11} aria-hidden="true" />
                             {format(parseISO(task.deadline), 'd MMM', { locale: fr })}
                             {overdue && ' · en retard'}

@@ -82,7 +82,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                 >
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <h3 className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h3>
+                      <h3 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h3>
                       {!showCreateList && (
                         <button
                           onClick={() => setShowCreateList(true)}
@@ -103,7 +103,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         }}
                         // `min-h-touch` sous 640px : les chips faisaient 38px de
                         // haut, sous la cible tactile de 44px (WCAG 2.5.5).
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
                           !selectedListId
                             ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                             : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
@@ -157,7 +157,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
                             selectedListId === VIRTUAL_TODAY_ID
                               ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
                               : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
@@ -166,7 +166,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         >
                           <Sparkles size={13} />
                           <span>Aujourd'hui</span>
-                          <span className="text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
+                          <span className="text-caption sm:text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
                         </motion.button>
                       </div>
                       )}
@@ -349,7 +349,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                className={`flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
+                                className={`flex items-center gap-2 px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all border shadow-sm ${
                                   isSelected
                                     ? 'bg-[rgb(var(--color-accent-solid))] text-white border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                                     : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
@@ -370,7 +370,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     className={isSelected ? 'opacity-80' : 'text-amber-500'}
                                   />
                                 )}
-                                <span className="text-xs opacity-60 ml-1">
+                                <span className="text-caption sm:text-xs opacity-60 ml-1">
                                   {tasksCountByListId.get(list.id) ?? 0}
                                 </span>
                                 {isSelected && (

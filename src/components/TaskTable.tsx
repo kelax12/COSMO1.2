@@ -469,14 +469,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {!addToListMode && !showCompleted && activeQuickFilter === 'none' && overdueTasks.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10">
           <AlertTriangle size={18} className="text-red-500 shrink-0" aria-hidden="true" />
-          <span className="flex-1 text-sm font-medium text-red-700 dark:text-red-300">
+          <span className="flex-1 text-label sm:text-sm font-medium text-red-700 dark:text-red-300">
             {overdueTasks.length} tâche{overdueTasks.length > 1 ? 's' : ''} en retard
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+                className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
               >
                 Tout replanifier
               </button>
