@@ -102,7 +102,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             <div data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
               {okrs.length === 0 ? (
                 <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
                     <CheckCircle2 size={28} className="text-slate-400" />
                   </div>
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
@@ -121,7 +121,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                     return (
                       <div
                         key={okr.id}
-                        className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 p-4 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                        className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] p-4 hover:border-[rgb(var(--color-border-strong))] transition-colors"
                       >
                         {/* Header de la carte */}
                         <div className="flex items-start justify-between gap-3 mb-3">
@@ -170,7 +170,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                         <div className="flex items-center gap-3 mb-3">
                           <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-blue-500"
+                              className="h-full rounded-full bg-[rgb(var(--color-accent-solid))]"
                               style={{ width: `${Math.min(progress, 100)}%` }}
                             />
                           </div>
@@ -195,7 +195,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                                 </span>
                                 <div className="w-20 h-1 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0">
                                   <div
-                                    className={`h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                    className={`h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
                                     style={{ width: `${Math.min(krProgress, 100)}%` }}
                                   />
                                 </div>

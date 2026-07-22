@@ -64,7 +64,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
                         </span>
                         <span
                           className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                            checked ? 'bg-blue-500 border-blue-500' : 'border-slate-400 dark:border-slate-500'
+                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]' : 'border-slate-400 dark:border-slate-500'
                           }`}
                         >
                           {checked && (
@@ -85,7 +85,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
                     if (recurrenceDays.length === 0) setRecurrence('none');
                     onClose();
                   }}
-                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
                 >
                   Valider
                 </button>

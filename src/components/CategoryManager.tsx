@@ -143,7 +143,7 @@ export const getColorFr = (colorName: string) => {
             {/* Header */}
             <div className="p-6 border-b flex items-center justify-between z-10" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-[rgb(var(--color-accent-solid))]/10 rounded-xl flex items-center justify-center">
                   <LayoutGrid className="text-blue-500" size={24} />
                 </div>
                 <div>
@@ -212,7 +212,7 @@ export const getColorFr = (colorName: string) => {
                             autoFocus
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold shadow-sm border"
+                            className="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[rgb(var(--color-accent-solid))] transition-all font-semibold shadow-sm border"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
                             placeholder="Nom de la catégorie (ex: Sport, Travail...)"
                           />
@@ -233,7 +233,7 @@ export const getColorFr = (colorName: string) => {
                                   onClick={() => setFormData({ ...formData, icon })}
                                   className={`aspect-square rounded-lg text-lg flex items-center justify-center transition-all ${
                                     formData.icon === icon
-                                      ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-105'
+                                      ? 'bg-[rgb(var(--color-accent-solid))] text-white shadow-md shadow-blue-500/20 scale-105'
                                       : 'hover:bg-[rgb(var(--color-hover))]'
                                   }`}
                                 >
@@ -274,7 +274,7 @@ export const getColorFr = (colorName: string) => {
                         <div className="flex gap-2 pt-2">
                           <button
                             type="submit"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                            className="flex-1 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                           >
                             <Check size={18} />
                             Enregistrer
@@ -299,7 +299,7 @@ export const getColorFr = (colorName: string) => {
                     <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgb(var(--color-text-muted))' }}>Vos catégories ({categories.length})</h3>
                     <button
                       onClick={() => setIsAdding(true)}
-                      className="p-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition-all active:scale-90"
+                      className="p-1.5 bg-[rgb(var(--color-accent-solid))]/10 text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/20 rounded-lg transition-all active:scale-90"
                       title="Ajouter une catégorie"
                     >
                       <Plus size={16} />
@@ -318,7 +318,7 @@ export const getColorFr = (colorName: string) => {
                         <motion.div
                           layout
                           key={category.id}
-                          className="group flex items-center justify-between p-4 bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 rounded-2xl transition-all hover:shadow-xl hover:shadow-slate-200/40 dark:hover:shadow-none"
+                          className="group flex items-center justify-between p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all hover:shadow-xl hover:shadow-slate-200/40 dark:hover:shadow-none"
                           style={{
                             background: `linear-gradient(135deg, ${getColorHex(category.color)}08 0%, transparent 100%)`,
                             borderColor: getColorHex(category.color) + '20'
@@ -377,7 +377,7 @@ export const getColorFr = (colorName: string) => {
               <div className="p-4 px-6 border-t dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
                 <button
                   onClick={onClose}
-                  className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95"
+                  className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 dark:bg-[rgb(var(--color-accent-solid))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-bold rounded-xl transition-all shadow-lg active:scale-95"
                 >
                   Fermer
                 </button>

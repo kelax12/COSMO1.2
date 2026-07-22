@@ -32,7 +32,7 @@ const DemoConversionBanner: React.FC = () => {
     <div
       role="region"
       aria-label="Mode démo"
-      className="flex items-center gap-3 px-4 py-2.5 bg-blue-500/10 border-b border-blue-500/20 text-sm"
+      className="flex items-center gap-3 px-4 py-2.5 bg-[rgb(var(--color-accent-solid))]/10 border-b border-[rgb(var(--color-accent-solid))]/20 text-sm"
     >
       <CloudUpload size={16} className="shrink-0 text-blue-400" aria-hidden="true" />
       <p className="flex-1 text-[rgb(var(--color-text-secondary))] leading-snug">

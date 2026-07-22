@@ -27,7 +27,7 @@ interface NewTeamProjectModalProps {
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 const inputClass =
-  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base';
+  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
@@ -221,7 +221,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTask(); } }}
                 placeholder="Ajouter une tâche…"
                 maxLength={500}
-                className="flex-1 h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                className="flex-1 h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
                 style={inputStyle}
               />
               <AssigneesPicker members={members} value={composerAssignees} onChange={setComposerAssignees} />
@@ -259,7 +259,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
             className={`min-h-11 w-full sm:w-auto ${
               pending || !name.trim()
                 ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
             }`}
           >
             {pending ? (

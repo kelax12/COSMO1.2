@@ -267,7 +267,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           <button type="button" onClick={() => nav('prev')} aria-label="Période précédente" className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
-          <button type="button" onClick={() => nav('today')} className="px-3 h-8 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-blue-600 hover:border-blue-400/60 transition-colors">
+          <button type="button" onClick={() => nav('today')} className="px-3 h-8 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-blue-600 hover:border-[rgb(var(--color-accent-solid-hover))]/60 transition-colors">
             Aujourd'hui
           </button>
           <button type="button" onClick={() => nav('next')} aria-label="Période suivante" className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
@@ -299,7 +299,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           <button
             type="button"
             onClick={openNewEvent}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shrink-0"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
           >
             <Plus size={18} aria-hidden="true" />
             <span className="font-medium text-sm">Nouveau</span>

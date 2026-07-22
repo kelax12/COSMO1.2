@@ -122,7 +122,7 @@ const CookieBanner: React.FC = () => {
                 onClick={handleAccept}
                 className="
                   flex-1 h-[42px] rounded-xl
-                  bg-blue-600 hover:bg-blue-500
+                  bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))]
                   text-white
                   text-[13px] font-semibold
                   transition-colors active:scale-[0.97] transform-gpu

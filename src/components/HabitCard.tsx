@@ -87,7 +87,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               : 'border-[rgb(var(--color-border))]'
           } ${
             isCompleted
-              ? 'border-blue-500 text-white'
+              ? 'border-[rgb(var(--color-accent-solid))] text-white'
               : 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-[rgb(var(--color-border-strong))]'
           }`}
           style={{ backgroundColor: isCompleted ? '#2563EB' : undefined }}

@@ -87,7 +87,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
     large ? 'gap-1.5 px-3 py-1.5 text-sm' : 'gap-1 px-2.5 py-1 text-xs'
   }`;
   const allActiveCls = accentAllActive
-    ? 'bg-blue-600 text-white border-transparent'
+    ? 'bg-[rgb(var(--color-accent-solid))] text-white border-transparent'
     : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent';
   return (
       <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">
@@ -128,7 +128,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); startEditCategory(category); }}
-                          className="p-1 rounded bg-white dark:bg-slate-800 border border-[rgb(var(--color-border))] text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
+                          className="p-1 rounded bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                           title="Modifier la catégorie"
                           aria-label="Modifier la catégorie"
                         >
@@ -138,7 +138,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
-                          className="p-1 rounded bg-white dark:bg-slate-800 border border-[rgb(var(--color-border))] text-slate-500 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
+                          className="p-1 rounded bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
                           title="Supprimer la catégorie"
                           aria-label="Supprimer la catégorie"
                         >
@@ -199,7 +199,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                       <button
                         type="submit"
                         disabled={editCategoryName.trim().length < 2}
-                        className="px-2 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                        className="px-2 py-1 text-xs rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                       >
                         OK
                       </button>
@@ -297,7 +297,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 <button
                   type="submit"
                   disabled={newCategoryName.trim().length < 2}
-                  className="px-3 py-1 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-40 transition-all"
+                  className="px-3 py-1 text-sm rounded-full bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white font-medium disabled:opacity-40 transition-all"
                 >
                   Créer
                 </button>

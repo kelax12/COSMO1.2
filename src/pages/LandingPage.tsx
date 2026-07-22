@@ -385,7 +385,7 @@ const LandingPage: React.FC = () => {
       {/* Barre de progression de lecture (GSAP scrub) */}
       <div
         ref={progressRef}
-        className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left scale-x-0 bg-gradient-to-r from-blue-500 via-violet-500 to-fuchsia-500"
+        className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left scale-x-0 bg-[rgb(var(--color-accent-solid))] via-violet-500 to-fuchsia-500"
         aria-hidden="true"
       />
       <LoginModal
@@ -418,7 +418,7 @@ const LandingPage: React.FC = () => {
                 <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[10deg]">
                   <img src="/logo.png" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain bg-white/10" />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-600 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity" aria-hidden="true" />
+                <div className="absolute inset-0 bg-[rgb(var(--color-accent-solid))] to-violet-600 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity" aria-hidden="true" />
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                 Cosmo
@@ -439,7 +439,7 @@ const LandingPage: React.FC = () => {
                   className="group relative px-3.5 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 whitespace-nowrap"
                 >
                   {label}
-                  <span className="pointer-events-none absolute inset-x-3.5 bottom-1 h-px bg-gradient-to-r from-blue-400 to-violet-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                  <span className="pointer-events-none absolute inset-x-3.5 bottom-1 h-px bg-[rgb(var(--color-accent-solid))] to-violet-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </a>
               ))}
             </nav>
@@ -455,7 +455,7 @@ const LandingPage: React.FC = () => {
               <button
                 ref={magneticNavCta}
                 onClick={handleRegisterClick}
-                className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 text-white px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
                 <span className="relative lg:hidden">Commencer</span>
@@ -536,7 +536,7 @@ const LandingPage: React.FC = () => {
               orbes qui dérivent en continu (GSAP, gaté reduced-motion) */}
           <div className="hero-beam-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-blue-400/80 to-transparent" />
           <div className="hero-beam-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-violet-400/70 to-transparent" />
-          <div className="hero-orb absolute top-[20%] left-[10%] h-3 w-3 rounded-full bg-blue-400/60 blur-[2px]" />
+          <div className="hero-orb absolute top-[20%] left-[10%] h-3 w-3 rounded-full bg-[rgb(var(--color-accent-solid))]/60 blur-[2px]" />
           <div className="hero-orb absolute top-[64%] left-[80%] h-2 w-2 rounded-full bg-violet-400/60 blur-[1px]" />
           <div className="hero-orb absolute top-[40%] left-[52%] h-2.5 w-2.5 rounded-full bg-cyan-300/50 blur-[2px]" />
 
@@ -557,7 +557,7 @@ const LandingPage: React.FC = () => {
           />
           {/* Aurores */}
           <motion.div
-            className="absolute -top-24 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-600/25 via-violet-600/20 to-fuchsia-600/20 blur-[110px]"
+            className="absolute -top-24 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] via-violet-600/20 to-fuchsia-600/20 blur-[110px]"
             whileInView={reduceMotion ? undefined : { opacity: [0.55, 0.8, 0.55], scale: [1, 1.06, 1] }}
             transition={reduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
           />
@@ -601,7 +601,7 @@ const LandingPage: React.FC = () => {
                   Toute votre productivité,
                 </span>
                 <span
-                  className="hero-line hero-line-accent block bg-gradient-to-r from-blue-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
+                  className="hero-line hero-line-accent block bg-[rgb(var(--color-accent-solid))] via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
                   style={{ backgroundSize: '200% auto' }}
                 >
                   réunie dans une seule app.
@@ -627,7 +627,7 @@ const LandingPage: React.FC = () => {
                     loginDemo();
                     setTimeout(() => navigate('/dashboard'), 0);
                   }}
-                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   aria-label="Essayer la démo sans inscription"
                 >
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
@@ -662,7 +662,7 @@ const LandingPage: React.FC = () => {
               style={{ perspective: 1400 }}
             >
               {/* Glow derrière le frame */}
-              <div className="absolute -inset-6 bg-gradient-to-tr from-blue-600/25 via-violet-600/20 to-fuchsia-500/20 rounded-[2rem] blur-3xl" aria-hidden="true" />
+              <div className="absolute -inset-6 bg-gradient-to-tr bg-[rgb(var(--color-accent-solid))] via-violet-600/20 to-fuchsia-500/20 rounded-[2rem] blur-3xl" aria-hidden="true" />
 
               <motion.div
                 onPointerMove={isMobile || reduceMotion ? undefined : handleMockupPointer}
@@ -730,9 +730,9 @@ const LandingPage: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="cta-card bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-blue-500/30 rounded-3xl p-12 relative overflow-hidden"
+            className="cta-card bg-[rgb(var(--color-accent-solid))] to-purple-600/20 backdrop-blur-xl border border-[rgb(var(--color-accent-solid))]/30 rounded-3xl p-12 relative overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 z-0"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-purple-500/5 z-0"></div>
             {/* Halo conique rotatif (GSAP) — mouvement ambiant permanent */}
             <div
               className="cta-halo absolute -inset-[45%] opacity-25 pointer-events-none"
@@ -753,7 +753,7 @@ const LandingPage: React.FC = () => {
                   </span>
                 </span>
                 <span className="block overflow-hidden">
-                  <span className="cta-line block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  <span className="cta-line block bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
                     votre productivité ?
                   </span>
                 </span>
@@ -769,7 +769,7 @@ const LandingPage: React.FC = () => {
                   { value: 150, label: 'événements' },
                 ].map(({ value, label }) => (
                   <div key={label} className="flex flex-col items-center">
-                    <span data-countup={value} className="text-3xl lg:text-4xl font-bold tabular-nums bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent" aria-hidden="true">
+                    <span data-countup={value} className="text-3xl lg:text-4xl font-bold tabular-nums bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent" aria-hidden="true">
                       {value}
                     </span>
                     <span className="text-xs uppercase tracking-widest text-slate-500" aria-hidden="true">{label}</span>
@@ -788,7 +788,7 @@ const LandingPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRegisterClick}
-                  className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
+                  className="group bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
                 >
                   Commencer maintenant
                 </button>

@@ -500,7 +500,7 @@ const GuidePage: React.FC = () => {
               <p className="text-slate-500 text-sm">Une question ? Contactez-nous à <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a></p>
               <Link
                 to="/"
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
+                className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
               >
                 Commencer gratuitement
                 <ArrowRight size={15} />

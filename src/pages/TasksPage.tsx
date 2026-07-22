@@ -521,7 +521,7 @@ const TasksPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
-                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
+                      className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
                       aria-label="Créer une nouvelle tâche"
                     >
                       <Plus size={20} />
@@ -540,7 +540,7 @@ const TasksPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={clearListFilter}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
                       aria-label="Retirer le filtre de liste"
                     >
                       Liste : {selectedListId === VIRTUAL_TODAY_ID
@@ -553,7 +553,7 @@ const TasksPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedCategories([])}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
                       aria-label="Retirer le filtre de catégories"
                     >
                       {selectedCategories.length === 1 ? 'Catégorie' : `Catégories : ${selectedCategories.length}`}
@@ -564,7 +564,7 @@ const TasksPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSearchTerm('')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
                       aria-label="Effacer la recherche"
                     >
                       Recherche : « {searchTerm.trim()} »

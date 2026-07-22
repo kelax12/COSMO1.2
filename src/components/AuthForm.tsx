@@ -213,7 +213,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
                     aria-pressed={selected}
                     className={`flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-all ${
                       selected
-                        ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/40'
+                        ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10 ring-2 ring-blue-500/40'
                         : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-text-muted))]'
                     }`}
                   >
@@ -351,7 +351,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20 mt-2"
+          className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20 mt-2"
         >
           {isLoading
             ? slowHint

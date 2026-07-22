@@ -159,11 +159,11 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
                   <motion.button
                     onClick={handleCheckout}
                     disabled={isCheckoutLoading}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed group"
+                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))] hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed group"
                     whileHover={{ scale: isCheckoutLoading ? 1 : 1.01 }}
                     whileTap={{ scale: isCheckoutLoading ? 1 : 0.99 }}
                   >
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 bg-[rgb(var(--color-accent-solid))] rounded-xl flex items-center justify-center shrink-0">
                       {isCheckoutLoading ? (
                         <Loader2 size={18} className="text-white animate-spin" />
                       ) : (

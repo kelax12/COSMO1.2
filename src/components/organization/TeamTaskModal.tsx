@@ -30,7 +30,7 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 // Tailles/traitement alignés sur le TaskModal personnel (DesktopDetailsStep) :
 // px-4 h-12, text-base, bordure hover/focus au lieu d'un ring.
 const inputClass =
-  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base';
+  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
@@ -221,7 +221,7 @@ const TeamTaskModal = ({
                       onClick={() => setPriority(p)}
                       className={`flex-1 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors ${
                         priority === p
-                          ? 'border-blue-500 bg-blue-500/10'
+                          ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10'
                           : 'border-slate-200 dark:border-slate-700 hover:bg-[rgb(var(--color-hover))]'
                       }`}
                       style={{ color: priority === p ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))' }}
@@ -273,7 +273,7 @@ const TeamTaskModal = ({
                 <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />
                 Assigner la tâche
                 {assigneeIds.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-500">
+                  <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
                     {assigneeIds.length}
                   </span>
                 )}
@@ -296,7 +296,7 @@ const TeamTaskModal = ({
                         </span>
                         <span
                           className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
-                            checked ? 'bg-blue-600 border-blue-600 text-white' : 'border-[rgb(var(--color-border))]'
+                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-white' : 'border-[rgb(var(--color-border))]'
                           }`}
                           aria-hidden="true"
                         >
@@ -349,7 +349,7 @@ const TeamTaskModal = ({
               className={`min-h-11 w-full sm:w-auto ${
                 pending || !name.trim() || (!hasChanges && !isCreating)
                   ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                  : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                  : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
               }`}
             >
               {pending ? (

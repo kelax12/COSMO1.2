@@ -259,7 +259,7 @@ export const TaskRow = React.memo(({
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   className={`w-6 h-6 rounded-sm border-2 flex items-center justify-center shrink-0 ${
                     selectedForListIds.includes(task.id)
-                      ? 'bg-blue-500 border-blue-500'
+                      ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                       : 'border-[rgb(var(--color-border-strong))]'
                   }`}
                 >
@@ -288,7 +288,7 @@ export const TaskRow = React.memo(({
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
               showChecked
-                ? 'bg-blue-500 border-blue-500'
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                 : addToListMode
                   ? 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'
                   : 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'

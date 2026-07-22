@@ -62,12 +62,12 @@ const FEATURES: Feature[] = [
     id: 'tasks',
     path: '/tasks',
     icon: CheckCircle,
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: 'bg-[rgb(var(--color-accent-solid))] to-cyan-500',
     shadow: 'shadow-blue-500/30',
-    glow: 'from-blue-500/20 to-cyan-500/20',
+    glow: 'bg-[rgb(var(--color-accent-solid))] to-cyan-500/20',
     titleTop: 'Gestion de tâches',
     titleAccent: 'nouvelle génération',
-    accentText: 'from-blue-400 to-cyan-400',
+    accentText: 'bg-[rgb(var(--color-accent-solid))] to-cyan-400',
     description:
       "Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.",
     bullets: [
@@ -300,7 +300,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
               Tâches, habitudes, agenda et OKR
             </span>
             <br />
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
               dans un seul outil
             </span>
           </motion.h2>

@@ -414,7 +414,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('favoris')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             {activeQuickFilter === 'favoris' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
             <span className="hidden sm:inline">{activeQuickFilter === 'favoris' ? 'Tous' : 'Favoris'}</span>
@@ -424,7 +424,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('terminées')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <CheckCircle2 size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Terminées</span>
@@ -434,7 +434,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('retard')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'retard' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'retard' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <AlertTriangle size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Retard</span>
@@ -444,7 +444,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('collaboration')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <Users size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">Collaboration</span>
@@ -455,7 +455,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <Button
               variant="outline"
               onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-              className={`flex items-center gap-2 ${selectMode ? '!bg-blue-600 hover:!bg-blue-700 !text-white !border-blue-600' : ''}`}
+              className={`flex items-center gap-2 ${selectMode ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
             >
               <CheckSquare size={20} data-icon="inline-start" />
               <span>{selectMode ? 'Annuler' : 'Sélectionner'}</span>
@@ -632,7 +632,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {sortedTasks.length === 0 && isLoadingTasks && (
         <div className="space-y-2 p-2">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="h-14 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div key={i} className="h-14 rounded-xl bg-[rgb(var(--color-hover))] animate-pulse" />
           ))}
         </div>
       )}
@@ -649,7 +649,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <button
               type="button"
               onClick={() => setShowCreateFromEmpty(true)}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white text-sm font-semibold transition-colors shadow-sm"
             >
               Créer une tâche
             </button>
@@ -675,7 +675,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <span className="text-sm font-semibold whitespace-nowrap" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {selectedIds.length} sélectionnée{selectedIds.length > 1 ? 's' : ''}
             </span>
-            <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white">
               <CheckCircle2 size={16} data-icon="inline-start" />
               <span className="hidden sm:inline">Compléter</span>
             </Button>
@@ -874,7 +874,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
+              className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">
@@ -924,7 +924,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
+              className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">

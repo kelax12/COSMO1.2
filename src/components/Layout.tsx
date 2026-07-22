@@ -297,7 +297,7 @@ const NavItems = () =>
           onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add'))}
           data-tutorial-id="global-quick-add-fab"
           aria-label="Créer une tâche rapide"
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] to-purple-600 text-white shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
           style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
         >
           <Zap size={24} aria-hidden="true" />
@@ -318,7 +318,7 @@ const NavItems = () =>
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-blue-500 transition-opacity"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
           title="Réduire/agrandir ( [ )"
           aria-label={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}

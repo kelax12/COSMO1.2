@@ -348,10 +348,10 @@ const DashboardPage: React.FC = () => {
                         showCursor={true}
                         cursorCharacter="|"
                         cursorClassName="text-blue-500"
-                        textClassName="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
+                        textClassName="bg-[rgb(var(--color-accent-solid))] via-purple-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
                       />
                 ) : (
-                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                  <span className="bg-[rgb(var(--color-accent-solid))] via-purple-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                     {displayUser.name}
                   </span>
                 )}
@@ -426,7 +426,7 @@ const DashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCheckinOpen(true)}
-                className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
               >
                 Faire le point
               </button>

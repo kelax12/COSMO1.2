@@ -192,7 +192,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 type="button"
                 className={`hidden sm:inline-flex items-center justify-center gap-2 shrink-0 px-5 py-2.5 text-sm rounded-lg border font-medium transition-colors ${
                   showAdvancedFilters || hasActiveFilters
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                    ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-white border-[rgb(var(--color-accent-solid))]'
                     : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
                 aria-label="Afficher les filtres avancés"
@@ -201,7 +201,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 <SlidersHorizontal size={18} aria-hidden="true" />
                 <span>Filtres</span>
                 {hasActiveFilters && (
-                  <span className="bg-white dark:bg-blue-500 text-blue-600 dark:text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  <span className="bg-white dark:bg-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                     {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
                   </span>
                 )}

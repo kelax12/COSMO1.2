@@ -231,7 +231,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                                 aria-pressed={isSelected}
                                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
                                   isSelected
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
                                     : 'border-gray-200 dark:border-gray-700'
                                 }`}
                               >
@@ -294,7 +294,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       onClick={doSave}
                       className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
                         formData.name.trim()
-                          ? 'bg-blue-600 active:bg-blue-700'
+                          ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))]'
                           : 'bg-blue-200 dark:bg-blue-900/40'
                       }`}
                     >
@@ -433,7 +433,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       type="submit"
                       form="habit-form"
                       size="lg"
-                      className="bg-blue-600 hover:bg-blue-700 !text-white !border-0 gap-2 sm:w-auto"
+                      className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0 gap-2 sm:w-auto"
                     >
                       <Check size={16} />
                       {isEditing ? 'Sauvegarder' : "Créer l'habitude"}

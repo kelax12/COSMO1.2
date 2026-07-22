@@ -121,7 +121,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
               placeholder="Ex : Marketing"
               autoFocus
               maxLength={80}
-              className="w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base"
+              className="w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base"
               style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
             />
           </div>
@@ -167,7 +167,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
                         aria-pressed={checked}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left transition-colors ${
                           checked
-                            ? 'border-blue-500 bg-blue-500/5'
+                            ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/5'
                             : 'border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
                         }`}
                         style={{ backgroundColor: checked ? undefined : 'rgb(var(--color-surface))' }}
@@ -178,7 +178,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
                         </span>
                         <span
                           className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
-                            checked ? 'bg-blue-600 border-blue-600 text-white' : 'border-[rgb(var(--color-border))]'
+                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-white' : 'border-[rgb(var(--color-border))]'
                           }`}
                           aria-hidden="true"
                         >
@@ -213,7 +213,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
             className={`min-h-11 w-full sm:w-auto ${
               pending || !name.trim()
                 ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                : 'bg-blue-600 hover:bg-blue-700 !text-white !border-0'
+                : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
             }`}
           >
             {pending ? (

@@ -118,7 +118,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
             return (
               <div key={team.id} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3.5">
                 <div className="flex items-center gap-2 mb-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" aria-hidden="true" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-accent-solid))] shrink-0" aria-hidden="true" />
                   <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] flex-1 truncate">{team.name}</h3>
                   <span className="text-xs text-[rgb(var(--color-text-muted))]">{teamMemberIds.length} membre{teamMemberIds.length > 1 ? 's' : ''}</span>
                   {canManageThisTeam && (
@@ -162,7 +162,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                   {addable.length > 0 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger
-                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-blue-400 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
                         aria-label={`Ajouter un membre à l'équipe ${team.name}`}
                       >
                         <Plus size={11} aria-hidden="true" /> Ajouter

@@ -75,7 +75,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
                                   setShowEditEventModal(true);
                                   setShowRecurringManager(false);
                                 }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-200 dark:border-blue-800/40 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 hover:text-white hover:bg-[rgb(var(--color-accent-solid-hover))] border border-blue-200 dark:border-blue-800/40 transition-colors"
                                 aria-label="Modifier la récurrence"
                               >
                                 <Pencil size={13} />

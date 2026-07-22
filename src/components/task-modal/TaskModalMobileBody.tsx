@@ -349,7 +349,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 aria-label={formData.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                 onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
                 className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                  formData.bookmarked ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+                  formData.bookmarked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
                 }`}
               >
                 <motion.span
@@ -424,7 +424,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           onClick={handleCreateOrSave}
           disabled={isLoading}
           className={`w-full h-[50px] rounded-2xl text-white text-[17px] font-semibold transition-colors ${
-            isValid && !isLoading ? 'bg-blue-600 active:bg-blue-700' : 'bg-blue-200 dark:bg-blue-900/40'
+            isValid && !isLoading ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))]' : 'bg-blue-200 dark:bg-blue-900/40'
           }`}
         >
           {isLoading ? (
@@ -594,7 +594,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         className="w-full pl-9 pr-3 py-2 text-[15px] bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
                       />
                     </div>
-                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-blue-500 disabled:bg-blue-300 text-white rounded-xl">
+                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-[rgb(var(--color-accent-solid))] disabled:bg-blue-300 text-white rounded-xl">
                       <UserPlus size={16} />
                     </button>
                   </div>
