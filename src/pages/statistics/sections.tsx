@@ -147,13 +147,13 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
               <circle cx="0" cy="0" r="0.75" fill="rgb(var(--color-surface))" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total</span>
+              <span className="text-caption md:text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total</span>
               <span className="text-xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalTime)}</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 w-full">
             {breakdown.filter(i => i.time > 0).map(item => (
-              <div key={item.id} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground justify-center">
+              <div key={item.id} className="flex items-center gap-2 text-caption md:text-[10px] font-bold uppercase tracking-wider text-muted-foreground justify-center">
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                 {item.label}
               </div>
@@ -301,7 +301,7 @@ export const AgendaStatistics: React.FC<{
                 <circle cx="0" cy="0" r="0.75" fill="rgb(var(--color-surface))" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total</span>
+                <span className="text-caption md:text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total</span>
                 <span className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalMinutesAll)}</span>
               </div>
             </div>
@@ -314,7 +314,7 @@ export const AgendaStatistics: React.FC<{
                       <span className="font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.name}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{formatTime(item.minutes)}</span>
+                      <span className="text-caption md:text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{formatTime(item.minutes)}</span>
                       <span className="font-black text-violet-500">{Math.round((item.minutes / totalMinutesAll) * 100)}%</span>
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export const AgendaStatistics: React.FC<{
                   </div>
                   <div className="overflow-hidden min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{event.title}</p>
-                    <p className="text-[10px] uppercase tracking-wider font-bold truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <p className="text-caption md:text-[10px] uppercase tracking-wider font-bold truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       {categories.find(c => c.color.toLowerCase() === event.color?.toLowerCase())?.name || event.color}
                       <span className="hidden sm:inline"> · {new Date(event.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                     </p>

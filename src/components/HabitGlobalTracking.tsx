@@ -161,7 +161,7 @@ const HabitGlobalTracking: React.FC = () => {
           <h3 className="text-base md:text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
             Suivi Global
           </h3>
-          <p className="text-[10px] md:text-sm mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <p className="text-caption md:text-sm mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             {selectedHabitId === 'all'
               ? 'Complétion moyenne par jour'
               : `Suivi pour : ${habits.find((h) => h.id === selectedHabitId)?.name}`}
@@ -216,7 +216,7 @@ const HabitGlobalTracking: React.FC = () => {
                   if (opt.value !== 'all') setCurrentDate(new Date());
                   setGlobalPage(0);
                 }}
-                className="px-2.5 md:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-all"
+                className="px-2.5 md:px-4 min-h-touch md:min-h-0 md:py-2 rounded-md text-xs md:text-sm font-medium transition-all"
                 style={{
                   backgroundColor: period === opt.value ? '#2563EB' : 'transparent',
                   color: period === opt.value ? 'white' : 'rgb(var(--color-text-secondary))',
@@ -228,7 +228,7 @@ const HabitGlobalTracking: React.FC = () => {
           </div>
 
           <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
-            <SelectTrigger className="!h-8 md:!h-9 min-w-[160px] rounded-lg text-xs md:text-sm">
+            <SelectTrigger className="min-h-touch md:!h-9 min-w-[160px] rounded-lg text-xs md:text-sm">
               <SelectValue placeholder="Toutes les habitudes" />
             </SelectTrigger>
             <SelectContent className="z-[70]">
@@ -262,7 +262,7 @@ const HabitGlobalTracking: React.FC = () => {
                     <div key={day.date} className="flex flex-col items-center gap-1.5">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg opacity-20 bg-slate-300" />
                       <div
-                        className={`text-[9px] md:text-[10px] ${
+                        className={`text-caption md:text-[10px] ${
                           day.isToday ? 'font-bold text-blue-600' : 'text-slate-500'
                         }`}
                       >
@@ -284,10 +284,10 @@ const HabitGlobalTracking: React.FC = () => {
                       }}
                       title={`${day.dayNumber}: ${pct}%`}
                     >
-                      <span className="text-[10px] md:text-xs font-bold text-white">{pct}%</span>
+                      <span className="text-caption md:text-xs font-bold text-white">{pct}%</span>
                     </div>
                     <div
-                      className={`text-[9px] md:text-[10px] ${
+                      className={`text-caption md:text-[10px] ${
                         day.isToday ? 'font-bold text-blue-600' : 'text-slate-500'
                       }`}
                     >
@@ -307,6 +307,7 @@ const HabitGlobalTracking: React.FC = () => {
                 aria-label="Page précédente"
                 onClick={() => setGlobalPage((p) => Math.max(0, p - 1))}
                 disabled={globalPage === 0}
+                className="min-w-touch min-h-touch md:min-w-0 md:min-h-0"
                 style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
                 <ChevronLeft size={20} aria-hidden="true" />
@@ -320,6 +321,7 @@ const HabitGlobalTracking: React.FC = () => {
                 aria-label="Page suivante"
                 onClick={() => setGlobalPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={globalPage === totalPages - 1}
+                className="min-w-touch min-h-touch md:min-w-0 md:min-h-0"
                 style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
                 <ChevronRight size={20} aria-hidden="true" />

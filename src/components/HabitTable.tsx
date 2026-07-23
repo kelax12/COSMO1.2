@@ -209,7 +209,7 @@ const HabitTable: React.FC = () => {
                   size="icon"
                   onClick={() => navigatePeriod('prev')}
                   aria-label="Période précédente"
-                  className="border md:border-0"
+                  className="min-w-touch min-h-touch md:min-w-0 md:min-h-0 border md:border-0"
                   style={{
                     color: 'rgb(var(--color-text-secondary))',
                     borderColor: 'rgb(var(--color-border))'
@@ -226,7 +226,7 @@ const HabitTable: React.FC = () => {
                   onClick={() => navigatePeriod('next')}
                   disabled={!canNavigateNext()}
                   aria-label="Période suivante"
-                  className="border md:border-0"
+                  className="min-w-touch min-h-touch md:min-w-0 md:min-h-0 border md:border-0"
                   style={{
                     color: canNavigateNext() ? 'rgb(var(--color-text-secondary))' : 'rgb(var(--color-text-muted))',
                     borderColor: 'rgb(var(--color-border))'
@@ -251,7 +251,7 @@ const HabitTable: React.FC = () => {
                     setCurrentDate(new Date());
                   }
                 }}
-                className="flex-1 md:flex-none px-2 md:px-3 py-1.5 md:py-2 rounded-md text-xs md:text-sm font-medium transition-all"
+                className="flex-1 md:flex-none px-2 md:px-3 min-h-touch md:min-h-0 md:py-2 rounded-md text-xs md:text-sm font-medium transition-all"
                 style={{
                   backgroundColor: period === option.value ? '#2563EB' : 'transparent',
                   color: period === option.value ? 'white' : 'rgb(var(--color-text-secondary))',
@@ -286,14 +286,14 @@ const HabitTable: React.FC = () => {
                 </th>
                   {days.map((day) =>
                   <th key={day.date} className="text-center p-2 font-medium min-w-[40px] md:min-w-[50px] snap-start transition-colors" style={{ color: 'rgb(var(--table-header-text))' }}>
-                    <div className="text-[10px] md:text-xs mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{day.dayName}</div>
+                    <div className="text-caption md:text-xs mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{day.dayName}</div>
                     <div className={`text-xs md:text-sm ${day.isToday ? 'font-bold' : ''}`} style={{
                       color: day.isToday ? 'rgb(var(--color-accent))' : 'rgb(var(--table-header-text))'
                     }}>
                       {day.dayNumber}
                     </div>
                     {(period === 'month' || period === 'all') &&
-                      <div className="text-[9px] md:text-xs opacity-70" style={{ color: 'rgb(var(--color-text-muted))' }}>{day.monthName}</div>
+                      <div className="text-caption md:text-xs opacity-70" style={{ color: 'rgb(var(--color-text-muted))' }}>{day.monthName}</div>
                     }
                   </th>
                   )}
@@ -323,7 +323,7 @@ const HabitTable: React.FC = () => {
                         style={{ backgroundColor: habit.color.startsWith('#') ? habit.color : (colorOptions.find((c) => c.value === habit.color)?.color ?? '#3B82F6') }} />
 
                       <div className="min-w-0">
-                        <div className="font-medium truncate text-[11px] md:text-sm leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.name}</div>
+                        <div className="font-medium truncate text-caption md:text-sm leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.name}</div>
                         <div className="hidden md:flex text-xs items-center gap-2 mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           <span>{habit.estimatedTime} min</span>
                         </div>
@@ -342,7 +342,7 @@ const HabitTable: React.FC = () => {
                           aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : ''}`}
                           onClick={() => handleDayClick(habit.id, day.date)}
                           disabled={day.isFuture}
-                          className="w-7 h-7 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
+                          className="w-11 h-11 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
                           style={{
                             backgroundColor: isCompleted ? '#2563EB' : day.isFuture ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
                             borderColor: isCompleted ? '#2563EB' : day.isToday ? '#2563EB' : day.isFuture ? 'transparent' : 'rgb(var(--color-border))',

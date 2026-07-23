@@ -26,7 +26,7 @@ const ActiveOKRs: React.FC = () => {
     }
 
     return (
-        <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
+        <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div>
                 <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">OKR en cours</h2>

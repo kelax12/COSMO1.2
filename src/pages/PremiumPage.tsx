@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageHeading } from '@/components/ui/typography';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Crown, Zap, Play, Check, Sparkles, Loader2, X, Minus } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
@@ -9,6 +9,7 @@ import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { containerVariants, itemVariants, features, COMPARISON_ROWS } from './premium/data';
+import { BottomSheet } from '@/components/mobile';
 
 export function PremiumPage() {
   const { user } = useAuth();
@@ -306,7 +307,7 @@ export function PremiumPage() {
             </motion.div>
 
             <motion.div
-              className="mt-12 backdrop-blur-2xl bg-white/40 dark:bg-white/[0.06] border border-slate-200 dark:border-white/20 rounded-[2.5rem] p-8 sm:p-12 shadow-xl dark:shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] relative overflow-hidden group/section"
+              className="mt-12 backdrop-blur-2xl bg-white/40 dark:bg-white/[0.06] border border-slate-200 dark:border-white/20 rounded-sheet md:rounded-[2.5rem] p-8 sm:p-12 shadow-xl dark:shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] relative overflow-hidden group/section"
             variants={itemVariants}
           >
           <div className="relative">
@@ -369,12 +370,12 @@ export function PremiumPage() {
                   ].map((item, i) => (
                     <motion.div
                       key={i}
-                      className={`relative group backdrop-blur-xl ${item.bgBase} ${item.borderColor} border rounded-[2.5rem] p-8 ${item.bgHover} ${item.borderHover} transition-all duration-500 shadow-lg hover:shadow-xl`}
+                      className={`relative group backdrop-blur-xl ${item.bgBase} ${item.borderColor} border rounded-sheet md:rounded-[2.5rem] p-8 ${item.bgHover} ${item.borderHover} transition-all duration-500 shadow-lg hover:shadow-xl`}
                       variants={itemVariants}
                     >
                       <div className="flex flex-col items-center text-center relative z-10">
                         <motion.div
-                          className={`w-28 h-28 bg-gradient-to-br ${item.color} rounded-[2rem] flex items-center justify-center mb-8 border border-white/10 shadow-2xl relative z-10 transition-all duration-500 ${item.glow}`}
+                          className={`w-28 h-28 bg-gradient-to-br ${item.color} rounded-card md:rounded-[2rem] flex items-center justify-center mb-8 border border-white/10 shadow-2xl relative z-10 transition-all duration-500 ${item.glow}`}
                           animate={{ y: [0, -8, 0] }}
                           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
                         >
@@ -385,7 +386,7 @@ export function PremiumPage() {
                             {i + 1}
                           </motion.div>
                           <motion.div
-                            className="absolute inset-0 border border-white/20 rounded-[2rem]"
+                            className="absolute inset-0 border border-white/20 rounded-card md:rounded-[2rem]"
                             animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
                             transition={{ duration: 2, repeat: Infinity, delay: i * 0.7 }}
                           />
@@ -477,98 +478,75 @@ export function PremiumPage() {
       </motion.div>
 
       {/* Choice modal — bottom-sheet on mobile, centered on desktop */}
-      <AnimatePresence>
-        {showChoiceModal && (
-          <motion.div
-            key="choice-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
+      <BottomSheet
+        open={showChoiceModal}
+        onClose={() => setShowChoiceModal(false)}
+        ariaLabel="Comment veux-tu passer Premium ?"
+      >
+        {/* Header */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
+            Comment veux-tu passer Premium ?
+          </h2>
+          <button
             onClick={() => setShowChoiceModal(false)}
+            className="min-w-touch min-h-touch flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-surface-hover,var(--color-border)))] transition-colors"
+            aria-label="Fermer"
           >
-            <motion.div
-              key="choice-sheet"
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh]"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              {/* Drag handle */}
-              <div className="sm:hidden flex justify-center pt-2 pb-1">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-              </div>
+            <X size={20} className="text-[rgb(var(--color-text-muted))]" />
+          </button>
+        </div>
 
-              {/* Header */}
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-                  Comment veux-tu passer Premium ?
-                </h2>
-                <button
-                  onClick={() => setShowChoiceModal(false)}
-                  className="p-2 rounded-lg hover:bg-[rgb(var(--color-surface-hover,var(--color-border)))] transition-colors"
-                  aria-label="Fermer"
-                >
-                  <X size={20} className="text-[rgb(var(--color-text-muted))]" />
-                </button>
-              </div>
+        {/* Body — two choices */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 flex flex-col gap-4">
+          {/* Option 1 — Pub */}
+          <motion.button
+            onClick={() => {
+              setShowChoiceModal(false);
+              setShowAdModal(true);
+            }}
+            className="w-full text-left p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4 hover:bg-emerald-500/20 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+              <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">Regarder une pub</p>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
+                Gratuit · Gagne +1 jour Premium
+              </p>
+            </div>
+          </motion.button>
 
-              {/* Body — two choices */}
-              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 flex flex-col gap-4">
-                {/* Option 1 — Pub */}
-                <motion.button
-                  onClick={() => {
-                    setShowChoiceModal(false);
-                    setShowAdModal(true);
-                  }}
-                  className="w-full text-left p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4 hover:bg-emerald-500/20 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-                    <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">Regarder une pub</p>
-                    <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
-                      Gratuit · Gagne +1 jour Premium
-                    </p>
-                  </div>
-                </motion.button>
-
-                {/* Option 2 — Abonnement */}
-                <motion.button
-                  onClick={() => {
-                    setShowChoiceModal(false);
-                    void handleCheckout();
-                  }}
-                  disabled={isCheckoutLoading}
-                  className="w-full text-left p-5 rounded-2xl bg-[rgb(var(--color-accent)/0.1)] border border-[rgb(var(--color-accent)/0.3)] flex items-center gap-4 hover:bg-[rgb(var(--color-accent)/0.18)] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-                  whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
-                  whileTap={{ scale: isCheckoutLoading ? 1 : 0.97 }}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent)/0.15)] flex items-center justify-center shrink-0">
-                    {isCheckoutLoading ? (
-                      <Loader2 size={24} className="text-[rgb(var(--color-accent))] animate-spin" />
-                    ) : (
-                      <Crown size={24} className="text-[rgb(var(--color-accent))]" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">S'abonner</p>
-                    <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
-                      3,50 € / mois · 30 jours Premium
-                    </p>
-                  </div>
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {/* Option 2 — Abonnement */}
+          <motion.button
+            onClick={() => {
+              setShowChoiceModal(false);
+              void handleCheckout();
+            }}
+            disabled={isCheckoutLoading}
+            className="w-full text-left p-5 rounded-2xl bg-[rgb(var(--color-accent)/0.1)] border border-[rgb(var(--color-accent)/0.3)] flex items-center gap-4 hover:bg-[rgb(var(--color-accent)/0.18)] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
+            whileTap={{ scale: isCheckoutLoading ? 1 : 0.97 }}
+          >
+            <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent)/0.15)] flex items-center justify-center shrink-0">
+              {isCheckoutLoading ? (
+                <Loader2 size={24} className="text-[rgb(var(--color-accent))] animate-spin" />
+              ) : (
+                <Crown size={24} className="text-[rgb(var(--color-accent))]" />
+              )}
+            </div>
+            <div>
+              <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">S'abonner</p>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
+                3,50 € / mois · 30 jours Premium
+              </p>
+            </div>
+          </motion.button>
+        </div>
+      </BottomSheet>
 
       <AdModal
         isOpen={showAdModal}

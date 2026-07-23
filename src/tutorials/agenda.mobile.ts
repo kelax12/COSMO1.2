@@ -47,9 +47,9 @@ export const agendaTutorialStepsMobile: TutorialStep[] = [
   {
     title: 'Créer un événement',
     description:
-      "Le « + » ouvre le formulaire en bottom-sheet, pré-rempli à l'heure courante du jour sélectionné.",
-    target: '[data-tutorial-id="agenda-mobile-add-button"]',
-    cardPlacement: 'bottom',
+      "Le bouton « + » en bas de l'écran ouvre le formulaire en bottom-sheet, pré-rempli à l'heure courante du jour sélectionné.",
+    target: '[data-tutorial-id="global-quick-add-fab"]',
+    cardPlacement: 'top',
     action: 'pulse',
   },
   {

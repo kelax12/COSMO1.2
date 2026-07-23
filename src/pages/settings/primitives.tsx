@@ -56,14 +56,14 @@ export function LabeledInput({
         />
         {showToggle && (
           <button type="button" tabIndex={-1} onClick={() => setVisible(v => !v)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors p-1"
+            className="absolute right-1 top-1/2 -translate-y-1/2 min-h-touch min-w-touch sm:min-h-0 sm:min-w-0 flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors sm:p-1"
             aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>
             {visible ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         )}
       </div>
       {hint && (
-        <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{hint}</p>
+        <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">{hint}</p>
       )}
     </div>
   );

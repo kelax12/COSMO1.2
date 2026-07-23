@@ -291,7 +291,7 @@ const OKRPage: React.FC = () => {
           <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
           <span className="hidden sm:inline">OKR terminés</span>
           {completedCount > 0 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            <span className="text-caption md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
               {completedCount}
             </span>
           )}

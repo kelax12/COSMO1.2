@@ -80,11 +80,11 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
 }) => {
   // Taille des chips — la page OKR perso les agrandit (~+20%) via `large`.
   const chipCls = large
-    ? 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors'
-    : 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors';
+    ? 'inline-flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-full text-sm font-medium border transition-colors'
+    : 'inline-flex items-center gap-1.5 px-2.5 min-h-touch sm:min-h-0 sm:py-1 rounded-full text-xs font-medium border transition-colors';
   const dotCls = large ? 'w-2.5 h-2.5' : 'w-2 h-2';
-  const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors ${
-    large ? 'gap-1.5 px-3 py-1.5 text-sm' : 'gap-1 px-2.5 py-1 text-xs'
+  const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors min-h-touch sm:min-h-0 ${
+    large ? 'gap-1.5 px-3 sm:py-1.5 text-sm' : 'gap-1 px-2.5 sm:py-1 text-xs'
   }`;
   const allActiveCls = accentAllActive
     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-transparent'

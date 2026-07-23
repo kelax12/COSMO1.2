@@ -86,7 +86,7 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
             }}
           >
             {hovered === i && (
-              <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
+              <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-caption md:text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
                 {tooltipLabel ? `${tooltipLabel} : ` : ''}{d.value}
               </div>
             )}
@@ -434,7 +434,7 @@ const DashboardPage: React.FC = () => {
                 type="button"
                 onClick={() => weeklyCheckin.dismiss()}
                 aria-label="Ignorer le check-in cette semaine"
-                className="shrink-0 p-2 rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                className="shrink-0 min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 sm:p-2 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
               >
                 ✕
               </button>
@@ -451,7 +451,7 @@ const DashboardPage: React.FC = () => {
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    'flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
+                    'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
                       ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'

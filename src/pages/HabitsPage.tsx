@@ -135,7 +135,7 @@ const HabitsPage: React.FC = () => {
                   key={mode}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setViewMode(mode)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium transition-all"
                   style={{
                     backgroundColor: viewMode === mode ? '#2563EB' : 'transparent',
                     color: viewMode === mode ? 'white' : 'rgb(var(--color-text-secondary))',

@@ -389,8 +389,8 @@ const SettingsPage: React.FC = () => {
             const Icon = item.icon;
             const active = activeTab === item.id;
             return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)} style={{ minHeight: '36px' }}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+              <button key={item.id} onClick={() => setActiveTab(item.id)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 min-h-touch rounded-lg text-xs font-semibold transition-all duration-150 ${
                   active ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
                 <Icon size={13} />
@@ -421,13 +421,13 @@ const SettingsPage: React.FC = () => {
                     <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h3>
                     <p className="text-sm text-[rgb(var(--color-text-muted))] mt-0.5">{user.email}</p>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
-                      <button onClick={() => fileInputRef.current?.click()} style={{ minHeight: '36px' }}
-                        className="inline-flex items-center gap-1.5 px-4 py-1.5 border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
+                      <button onClick={() => fileInputRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
                         <Camera size={12} /> Changer la photo
                       </button>
                       {user.avatar && (
-                        <button onClick={handleRemoveAvatar} style={{ minHeight: '36px' }}
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white transition-all duration-150">
+                        <button onClick={handleRemoveAvatar}
+                          className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white transition-all duration-150">
                           Supprimer
                         </button>
                       )}
@@ -470,7 +470,7 @@ const SettingsPage: React.FC = () => {
                   >
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure par défaut</p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Fuseau automatique de votre appareil</p>
+                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">Fuseau automatique de votre appareil</p>
                     </div>
                     <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
                       tzPref.mode === 'default'
@@ -493,7 +493,7 @@ const SettingsPage: React.FC = () => {
                   >
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure personnalisée</p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Fixez un décalage UTC</p>
+                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">Fixez un décalage UTC</p>
                     </div>
                     <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
                       tzPref.mode === 'manual'
@@ -523,7 +523,7 @@ const SettingsPage: React.FC = () => {
                             type="button"
                             onClick={() => applySign('+')}
                             aria-pressed={sign === '+'}
-                            className={`px-3 py-2 text-sm font-semibold transition-colors ${
+                            className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold transition-colors ${
                               sign === '+'
                                 ? 'bg-[rgb(var(--color-accent))] text-white'
                                 : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
@@ -535,7 +535,7 @@ const SettingsPage: React.FC = () => {
                             type="button"
                             onClick={() => applySign('-')}
                             aria-pressed={sign === '-'}
-                            className={`px-3 py-2 text-sm font-semibold border-l border-[rgb(var(--color-border))] transition-colors ${
+                            className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold border-l border-[rgb(var(--color-border))] transition-colors ${
                               sign === '-'
                                 ? 'bg-[rgb(var(--color-accent))] text-white'
                                 : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
@@ -558,7 +558,7 @@ const SettingsPage: React.FC = () => {
                             step={1}
                             value={magnitude}
                             onChange={(e) => applyMagnitude(Number(e.target.value))}
-                            className="w-16 px-3 py-2 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
+                            className="w-16 px-3 min-h-touch sm:min-h-9 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
                           />
                         </div>
                       </div>
@@ -620,7 +620,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Mode d'affichage</p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
                     </div>
                   </div>
                   <ThemeToggle showLabel />
@@ -635,7 +635,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Rappel habitudes du soir</p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">Après 18 h, un bandeau signale les habitudes non cochées</p>
+                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">Après 18 h, un bandeau signale les habitudes non cochées</p>
                     </div>
                   </div>
                   <button
@@ -665,7 +665,7 @@ const SettingsPage: React.FC = () => {
                   <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h3>
                 </div>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] -mt-2 mb-3">
-                  Aussi accessibles à tout moment avec la touche <kbd className="px-1.5 py-0.5 rounded border text-[11px]" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
+                  Aussi accessibles à tout moment avec la touche <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
                 </p>
                 <ShortcutsList compact />
               </SectionCard>
@@ -716,8 +716,8 @@ const SettingsPage: React.FC = () => {
                     <p className="text-xs text-[rgb(var(--color-text-muted))]">Notre équipe répond sous 24h.</p>
                   </div>
                 </div>
-                <button onClick={handleOpenSupport} style={{ minHeight: '40px' }}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
+                <button onClick={handleOpenSupport}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
                   Contacter le support <ChevronRight size={12} />
                 </button>
               </div>
@@ -735,8 +735,8 @@ const SettingsPage: React.FC = () => {
                       <p className="text-xs text-[rgb(var(--color-text-muted))]">Croissance, activité et conversion — réservé admin.</p>
                     </div>
                   </div>
-                  <button onClick={() => navigate('/admin')} style={{ minHeight: '40px' }}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
+                  <button onClick={() => navigate('/admin')}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
                     Ouvrir le dashboard <ChevronRight size={12} />
                   </button>
                 </div>

@@ -19,18 +19,26 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
-/** Zones où le plancher de 11px est appliqué strictement. À étendre à chaque migration. */
-const ENFORCED_SCOPE = ['src/components/mobile'];
+/** Zones où le plancher de 11px est appliqué strictement. À étendre à chaque migration.
+ *  N'y entrent que les dossiers totalement exempts de `text-[Npx]`, y compris
+ *  les variantes `md:`/`sm:` qui préservent volontairement un rendu desktop
+ *  existant (le regex ne distingue pas le préfixe responsive). OKR/Statistiques/
+ *  Agenda gardent quelques tailles arbitraires *desktop-only* (`md:text-[10px]`)
+ *  pour ne jamais changer le rendu desktop lors de la migration mobile — elles
+ *  restent donc hors de ce tableau, mais le budget global ci-dessous a bien
+ *  baissé pour ces pages. Cf. docs/MOBILE.md. */
+const ENFORCED_SCOPE = ['src/components/mobile', 'src/pages/settings', 'src/pages/premium'];
 
 const SCAN_ROOTS = ['src/components', 'src/pages'];
 /** shadcn (non modifiable) + showcases marketing (déjà ignorés par ESLint). */
 const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
 
 /**
- * Stock de tailles arbitraires en px hors zone migrée, mesuré au 2026-07-22.
+ * Stock de tailles arbitraires en px hors zone migrée, mesuré au 2026-07-23
+ * après migration de Réglages/OKR/Statistiques/Premium/Habitudes/Dashboard/Agenda.
  * Ce nombre ne doit JAMAIS monter. Il baisse au fil des pages migrées.
  */
-const ARBITRARY_BUDGET = 294;
+const ARBITRARY_BUDGET = 204;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;
@@ -84,7 +92,7 @@ describe('design system mobile — échelle typographique', () => {
     // Le plancher bas s'applique même hors zone migrée : personne ne doit
     // AJOUTER un nouveau text-[8px]. Les occurrences historiques sont listées
     // ici — cette liste ne doit que rétrécir.
-    const KNOWN_SUB_11PX = 143;
+    const KNOWN_SUB_11PX = 85;
 
     const count = files.reduce(
       (sum, file) =>
