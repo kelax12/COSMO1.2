@@ -71,7 +71,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+            className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             {/* Drag handle — reacts to swipe on mobile */}
@@ -80,18 +80,18 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             </div>
 
             {/* Header */}
-            <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-between gap-3">
+            <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+                <h2 className="text-base sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">
                   OKR terminés
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[rgb(var(--color-text-muted))]">
                   {okrs.length} objectif{okrs.length > 1 ? 's' : ''} clôturé{okrs.length > 1 ? 's' : ''}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-lg text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
                 aria-label="Fermer"
               >
                 <X size={18} />

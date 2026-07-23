@@ -21,14 +21,14 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   handleFieldChange, doSave, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, duration, isMobileFormValid,
 }) => (
-  <div className="flex flex-col bg-gray-50 dark:bg-gray-950 h-full">
+  <div className="flex flex-col bg-[rgb(var(--color-background))] h-full">
     {/* Drag handle */}
     <div className="flex justify-center pt-2.5 shrink-0">
-      <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" />
+      <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-[rgb(var(--color-border-strong))]" />
     </div>
 
     {/* iOS Header */}
-    <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200/80 dark:border-gray-800 bg-gray-50/95 dark:bg-gray-950/95 shrink-0">
+    <div className="flex items-center justify-between px-4 h-14 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))]/95 shrink-0">
       <button
         type="button"
         onClick={onClose}
@@ -36,7 +36,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       >
         Annuler
       </button>
-      <span className="text-[17px] font-semibold text-gray-900 dark:text-gray-100 truncate mx-2">
+      <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))] truncate mx-2">
         {getHeaderTitle()}
       </span>
       <button
@@ -56,12 +56,12 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       {/* Groupe 1 — Titre (sans overflow-hidden) */}
       <div
         ref={register('title')}
-        className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+        className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
           isInvalid('title') ? 'ring-2 ring-red-500' : ''
         }`}
       >
         {lockedSet.has('title') ? (
-          <div className="w-full px-4 min-h-12 flex items-center text-[17px] text-gray-500 cursor-not-allowed opacity-80">
+          <div className="w-full px-4 min-h-12 flex items-center text-[17px] text-[rgb(var(--color-text-muted))] cursor-not-allowed opacity-80">
             {title || "Titre de l'événement"}
           </div>
         ) : (
@@ -71,27 +71,27 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
             onChange={(e) => handleFieldChange("title", setTitle, e.target.value)}
             placeholder="Titre de l'événement"
             autoFocus={!lockedSet.has('title')}
-            className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+            className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
             style={{ border: 'none' }}
           />
         )}
       </div>
 
       {/* Section HORAIRES */}
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
         Horaires
       </p>
       <div
         ref={(el) => { register('date')(el); register('startTime')(el); register('endTime')(el); }}
-        className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden transition-[box-shadow] ${
+        className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden transition-[box-shadow] ${
           isInvalid('date') || isInvalid('startTime') || isInvalid('endTime') ? 'ring-2 ring-red-500' : ''
         }`}
       >
 
         {/* Date */}
         <div className={`flex items-center px-4 min-h-11 relative ${lockedSet.has('startDate') ? 'opacity-60' : ''}`}>
-          <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Date</span>
-          <span className={`text-[15px] ${startDate ? 'text-blue-500' : 'text-gray-400'}`}>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Date</span>
+          <span className={`text-[15px] ${startDate ? 'text-blue-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
             {startDate
               ? format(new Date(startDate + "T12:00:00"), "d MMM yyyy", { locale: fr })
               : 'Aucune'}
@@ -110,11 +110,11 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           )}
         </div>
 
-        <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
+        <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
 
         {/* Début */}
         <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Début</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Début</span>
           <input
             type="time"
             value={startTime}
@@ -124,11 +124,11 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           />
         </div>
 
-        <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
+        <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
 
         {/* Fin */}
         <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Fin</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Fin</span>
           <input
             type="time"
             value={endTime}
@@ -141,9 +141,9 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
         {/* Durée calculée */}
         {duration && (
           <>
-            <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
+            <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
             <div className="flex items-center px-4 min-h-11">
-              <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Durée</span>
+              <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Durée</span>
               <span className={`text-[15px] ${duration.startsWith('⚠️') ? 'text-red-500' : 'text-blue-500'}`}>
                 {duration}
               </span>
@@ -153,13 +153,13 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       </div>
 
       {/* Section OPTIONS */}
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
         Options
       </p>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
         {/* Récurrence */}
         <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Récurrence</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Récurrence</span>
           <div
             className="inline-flex rounded-full p-0.5 border text-[11px]"
             style={{
@@ -198,13 +198,13 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
         {/* Jours personnalisés — visible uniquement en récurrence 'custom' */}
         {recurrence === 'custom' && (
           <>
-            <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-4" />
+            <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
             <button
               type="button"
               onClick={() => setShowDaysModal(true)}
-              className="w-full flex items-center px-4 min-h-11 gap-3 active:bg-gray-100 dark:active:bg-gray-800"
+              className="w-full flex items-center px-4 min-h-11 gap-3 active:bg-[rgb(var(--color-hover))]"
             >
-              <span className="flex-1 text-left text-[15px] text-gray-900 dark:text-gray-100">Jours</span>
+              <span className="flex-1 text-left text-[15px] text-[rgb(var(--color-text-primary))]">Jours</span>
               <span className="text-[15px] text-blue-500">
                 {recurrenceDays.length > 0
                   ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')
@@ -220,10 +220,10 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           catégorie (le swatch seul est ambigu). */}
       {categories.length > 0 && (
         <>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
             Couleur
           </p>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden px-4 py-4">
+          <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
             <div className="grid grid-cols-2 gap-2">
               {categories.map((cat) => {
                 const isSelected = color === cat.color;
@@ -237,14 +237,14 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
                       isSelected
                         ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
+                        : 'border-[rgb(var(--color-border))]'
                     }`}
                   >
                     <span
                       className="w-6 h-6 rounded-lg shrink-0"
                       style={{ backgroundColor: cat.color }}
                     />
-                    <span className="flex-1 text-left text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
                       {cat.name}
                     </span>
                   </button>
@@ -254,7 +254,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                 type="button"
                 onClick={() => setIsColorSettingsOpen(true)}
                 aria-label="Personnaliser les couleurs"
-                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-blue-500 text-[13px] font-medium"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
               >
                 <Plus className="w-4 h-4" />
                 Personnaliser
@@ -265,10 +265,10 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       )}
 
       {/* Description */}
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
         Commentaire
       </p>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
         {showDescription ? (
           <div className="px-4 py-3">
             <textarea
@@ -277,7 +277,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               rows={4}
               autoFocus={!notes}
               placeholder="Description de l'événement"
-              className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 resize-none"
+              className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
               style={{ border: 'none' }}
             />
           </div>
@@ -296,7 +296,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
 
       {/* Dupliquer (#3) — mode édition uniquement */}
       {mode === 'edit' && handleDuplicate && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden mt-5">
+        <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden mt-5">
           <button
             type="button"
             onClick={handleDuplicate}
@@ -310,10 +310,10 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       {/* Supprimer — mode édition uniquement */}
       {mode === 'edit' && (
         <>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
             Zone dangereuse
           </p>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={handleDelete}

@@ -104,9 +104,9 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
   const popoverInner = (
     <>
       {/* En-tête */}
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-violet-50 dark:bg-violet-900/20">
-        <span className="font-bold text-sm text-slate-900 dark:text-white">Listes intelligentes</span>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+      <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] bg-violet-50 dark:bg-violet-900/20">
+        <span className="font-bold text-sm text-[rgb(var(--color-text-primary))]">Listes intelligentes</span>
+        <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-1">
           Le contenu se met à jour automatiquement.
         </p>
       </div>
@@ -119,13 +119,13 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
               type="button"
               role="menuitem"
               onClick={() => { onToggleToday(); setOpen(false); }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800 focus-visible:outline-none"
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[rgb(var(--color-hover))] transition-colors border-b border-[rgb(var(--color-border))] focus-visible:outline-none"
             >
               <Sun size={15} className="shrink-0 text-emerald-500" aria-hidden />
-              <span className="flex-1 font-medium text-sm text-slate-900 dark:text-white">
+              <span className="flex-1 font-medium text-sm text-[rgb(var(--color-text-primary))]">
                 {todayHidden ? "Afficher « Aujourd'hui »" : "Masquer « Aujourd'hui »"}
               </span>
-              {!todayHidden && <span className="text-xs text-slate-400">({todayCount})</span>}
+              {!todayHidden && <span className="text-xs text-[rgb(var(--color-text-muted))]">({todayCount})</span>}
             </button>
           </li>
         )}
@@ -146,14 +146,14 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
                   else onSelect(preset.preset);
                   setOpen(false);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none"
               >
                 <span
                   className="w-3 h-3 rounded-full shrink-0"
                   style={{ backgroundColor: COLOR_HEX[preset.color] || '#64748B' }}
                   aria-hidden
                 />
-                <span className="flex-1 font-medium text-sm text-slate-900 dark:text-white">
+                <span className="flex-1 font-medium text-sm text-[rgb(var(--color-text-primary))]">
                   {preset.label}
                 </span>
                 {isActive && <Check size={15} className="shrink-0 text-emerald-500" aria-hidden />}
@@ -181,7 +181,7 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
             right: popoverPos.right,
             zIndex: 9999,
           }}
-          className="w-72 max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+          className="w-72 max-w-[calc(100vw-32px)] bg-[rgb(var(--color-surface))] rounded-xl shadow-2xl border border-[rgb(var(--color-border))] overflow-hidden"
           role="menu"
         >
           {popoverInner}

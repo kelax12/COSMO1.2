@@ -47,8 +47,8 @@ const CookieBanner: React.FC = () => {
         >
           {/* Card */}
           <div className="
-            bg-white dark:bg-gray-900
-            border border-gray-100 dark:border-white/10
+            bg-[rgb(var(--color-surface))]
+            border border-[rgb(var(--color-border))]
             rounded-2xl shadow-xl shadow-gray-200/80 dark:shadow-black/40
             overflow-hidden
           ">
@@ -59,13 +59,13 @@ const CookieBanner: React.FC = () => {
                 <div className="w-8 h-8 rounded-[8px] bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
                   <Cookie size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
                 </div>
-                <span className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                <span className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))]">
                   Cookies
                 </span>
               </div>
               <button
                 onClick={handleRefuse}
-                className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="w-7 h-7 rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
                 aria-label="Fermer"
               >
                 <X size={14} />
@@ -73,7 +73,7 @@ const CookieBanner: React.FC = () => {
             </div>
 
             {/* Separator */}
-            <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4" />
+            <div className="h-px bg-[rgb(var(--color-border))] mx-4" />
 
             {/* Body */}
             <div className="px-4 pt-3 pb-4">
@@ -87,9 +87,9 @@ const CookieBanner: React.FC = () => {
                 </span>
               </div>
 
-              <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="text-[13px] text-[rgb(var(--color-text-muted))] leading-relaxed">
                 Uniquement des cookies{' '}
-                <strong className="text-gray-900 dark:text-white font-semibold">strictement nécessaires</strong>
+                <strong className="text-[rgb(var(--color-text-primary))] font-semibold">strictement nécessaires</strong>
                 {' '}au fonctionnement (session, préférences).{' '}
                 {/* A11y: links inside text blocks need a non-color affordance
                     (WCAG 1.4.1). underline is always on, not only :hover. */}
@@ -109,9 +109,9 @@ const CookieBanner: React.FC = () => {
                 onClick={handleRefuse}
                 className="
                   flex-1 h-[42px] rounded-xl
-                  bg-gray-100 dark:bg-gray-800
-                  text-gray-700 dark:text-gray-300
-                  hover:bg-gray-200 dark:hover:bg-gray-700
+                  bg-[rgb(var(--color-hover))]
+                  text-[rgb(var(--color-text-secondary))]
+                  hover:bg-[rgb(var(--color-border))]
                   text-[13px] font-semibold
                   transition-colors active:scale-[0.97] transform-gpu
                 "

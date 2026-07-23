@@ -94,7 +94,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
             <motion.div
               ref={sheetRef}
               {...sheetDragProps}
-              className="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col"
+              className="relative w-full sm:max-w-md bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -123,8 +123,8 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
 
               {/* Body */}
               <div className="p-6">
-                <p className="text-slate-600 dark:text-slate-300 text-sm mb-6 text-center">
-                  Débloquez <span className="font-semibold text-slate-800 dark:text-white">{featureName}</span> en regardant une pub gratuite ou en souscrivant.
+                <p className="text-[rgb(var(--color-text-secondary))] text-sm mb-6 text-center">
+                  Débloquez <span className="font-semibold text-[rgb(var(--color-text-primary))]">{featureName}</span> en regardant une pub gratuite ou en souscrivant.
                 </p>
 
                 <div className="space-y-3">
@@ -150,9 +150,9 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
 
                   {/* Séparateur */}
                   <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
                     <span className="text-xs text-slate-400 font-medium">ou</span>
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
                   </div>
 
                   {/* Option 2 — Abonnement */}
