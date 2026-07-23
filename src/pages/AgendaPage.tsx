@@ -425,6 +425,15 @@ const AgendaPage: React.FC = () => {
     setShowAddEventModal(true);
   };
 
+  // FAB global (Layout.tsx) : sur /agenda il n'y a plus de « + » dans l'en-tête
+  // mobile (doublon retiré) — le FAB devient l'unique point de création.
+  useEffect(() => {
+    const handler = () => handleOpenAddModal();
+    window.addEventListener('open-agenda-create', handler);
+    return () => window.removeEventListener('open-agenda-create', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarEvents]);
+
   const handleCloseAddModal = () => {
     setShowAddEventModal(false);
     setSelectedTimeSlot(null);
@@ -570,7 +579,6 @@ const AgendaPage: React.FC = () => {
           onSetView={handleMobileSetView}
           onPrevMonth={handleMobileMonthPrev}
           onNextMonth={handleMobileMonthNext}
-          onAddEvent={handleOpenAddModal}
           onToday={() => handleMobileSelectDate(new Date())}
         />
 

@@ -116,7 +116,7 @@ const TodayTasks: React.FC = () => {
 
   if (isLoadingTasks) {
     return (
-      <div className="p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
+      <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
         <div className="mb-6">
           <div className="h-5 w-32 bg-[rgb(var(--color-border))] rounded animate-pulse mb-2" />
           <div className="h-4 w-24 bg-[rgb(var(--color-border))] rounded animate-pulse" />
@@ -140,7 +140,7 @@ const TodayTasks: React.FC = () => {
 
   return (
     <>
-      <div className="p-4 sm:p-6 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm">
+      <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
         <div className="mb-4 sm:mb-6">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
           <p className="text-[rgb(var(--color-text-secondary))] text-sm">
@@ -172,7 +172,7 @@ const TodayTasks: React.FC = () => {
                     aria-checked={task.completed}
                     aria-label={task.completed ? `Marquer "${task.name}" comme non complétée` : `Marquer "${task.name}" comme complétée`}
                     onClick={(e) => { e.stopPropagation(); handleToggleComplete(task.id); }}
-                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                    className={`w-11 h-11 md:w-5 md:h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                       task.completed
                         ? 'bg-[rgb(var(--color-error))] border-[rgb(var(--color-error))]'
                         : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-error)/0.5)]'

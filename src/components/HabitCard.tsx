@@ -73,12 +73,12 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     size?: 'normal' | 'small';
   }) => {
     const isCompleted = habit.completions[day.date];
-    const btnSize = size === 'normal' ? 'w-9 h-9 md:w-10 md:h-10' : 'w-8 h-8 md:w-9 md:h-9';
+    const btnSize = size === 'normal' ? 'w-11 h-11 md:w-10 md:h-10' : 'w-11 h-11 md:w-9 md:h-9';
     const iconSize = size === 'normal' ? 18 : 14;
 
     return (
       <div className="flex flex-col items-center">
-        <div className="text-[10px] md:text-xs text-slate-500 mb-1 font-medium">{day.dayName}</div>
+        <div className="text-caption md:text-xs text-slate-500 mb-1 font-medium">{day.dayName}</div>
         <button
           onClick={() => handleDayClick(day.date)}
           className={`${btnSize} rounded-lg border-2 transition-all flex items-center justify-center ${
@@ -123,7 +123,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                 </div>
                 {paused && pausedUntil && (
                   <div
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-medium"
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-caption font-medium"
                     title={`En pause jusqu'au ${format(pausedUntil, "d MMMM yyyy", { locale: fr })}`}
                   >
                     <Pause size={10} />

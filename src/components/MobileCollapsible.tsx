@@ -52,9 +52,7 @@ const MobileCollapsible: React.FC<MobileCollapsibleProps> = ({
           )}
         />
       </button>
-      {open && (
-        <div className="mobile-collapsible-body [&>div]:rounded-t-none [&>div]:border-t-0">{children}</div>
-      )}
+      {open && <div className="mobile-collapsible-body">{children}</div>}
     </div>
   );
 };

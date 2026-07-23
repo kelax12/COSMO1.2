@@ -97,7 +97,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
         transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-        className="bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl w-full sm:max-w-2xl overflow-hidden transition-colors shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh]"
+        className="bg-[rgb(var(--color-surface))] rounded-t-sheet sm:rounded-2xl w-full sm:max-w-2xl overflow-hidden transition-colors shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -111,7 +111,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
             <Play size={24} />
             <span className="font-bold">Publicité Sponsorisée</span>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+          <button onClick={onClose} aria-label="Fermer" className="min-w-touch min-h-touch flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -148,7 +148,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
               {canSkip && (
                 <button
                   onClick={() => setAdState('completed')}
-                  className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white px-4 py-2 rounded-lg text-sm transition-colors z-10"
+                  className="absolute bottom-2 right-2 min-h-touch bg-black/50 hover:bg-black/70 text-white px-4 rounded-lg text-sm transition-colors z-10"
                 >
                   Passer →
                 </button>

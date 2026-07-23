@@ -4,14 +4,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { format, addDays, isSameDay, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
 
 export const mobileCalendarStyles = `
   .mobile-calendar .fc-timegrid-slot { height: 20px !important; }
   .mobile-calendar .fc-timegrid-slot-label {
-    font-size: 10px !important;
+    font-size: 11px !important;
     padding: 0 4px !important;
     vertical-align: top;
     color: rgb(var(--color-text-muted));
@@ -32,7 +32,6 @@ interface MobileAgendaHeaderProps {
   onSetView: (v: MobileView) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
-  onAddEvent: () => void;
   /** Retour à aujourd'hui (#16). */
   onToday: () => void;
 }
@@ -45,7 +44,6 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onSetView,
   onPrevMonth,
   onNextMonth,
-  onAddEvent,
   onToday,
 }) => {
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: fr });
@@ -70,7 +68,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
         <button
           onClick={onToggleSidebar}
           data-tutorial-id="agenda-mobile-tasks-toggle"
-          className={`flex items-center gap-1 px-2 min-h-[44px] rounded-lg text-xs font-medium transition-colors`}
+          className={`flex items-center gap-1 px-2 min-h-touch rounded-lg text-xs font-medium transition-colors`}
           style={{
             backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'transparent',
             color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
@@ -92,7 +90,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
               <button
                 key={key}
                 onClick={() => onSetView(key)}
-                className="px-2 py-1.5 font-medium transition-colors"
+                className="px-2 min-h-touch min-w-touch flex items-center justify-center font-medium transition-colors"
                 style={{
                   backgroundColor:
                     viewMode === key ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
@@ -108,20 +106,10 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           <button
             onClick={onToday}
             aria-label="Revenir à aujourd'hui"
-            className="px-2 min-h-[44px] flex items-center justify-center rounded-lg text-xs font-semibold border"
+            className="px-2 min-h-touch min-w-touch flex items-center justify-center rounded-lg text-xs font-semibold border"
             style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
           >
             Auj.
-          </button>
-
-          {/* Add */}
-          <button
-            onClick={onAddEvent}
-            data-tutorial-id="agenda-mobile-add-button"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg"
-            style={{ color: 'rgb(var(--color-accent))' }}
-          >
-            <Plus size={22} />
           </button>
         </div>
       </div>
@@ -134,7 +122,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
         >
           <button
             onClick={onPrevMonth}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="min-h-touch min-w-touch flex items-center justify-center"
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
             <ChevronLeft size={20} />
@@ -142,7 +130,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           <span className="font-semibold text-base">{capitalMonthYear}</span>
           <button
             onClick={onNextMonth}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="min-h-touch min-w-touch flex items-center justify-center"
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
             <ChevronRight size={20} />
@@ -186,10 +174,10 @@ const MobileDayStripBase: React.FC<MobileDayStripProps> = ({ selectedDate, onSel
           <button
             key={key}
             onClick={() => onSelectDate(day)}
-            className="flex flex-col items-center gap-1 min-w-[44px] py-2 flex-shrink-0"
+            className="flex flex-col items-center gap-1 min-w-touch py-2 flex-shrink-0"
           >
             <span
-              className="text-[10px] font-semibold uppercase"
+              className="text-caption font-semibold uppercase"
               style={{ color: 'rgb(var(--color-text-muted))' }}
             >
               {initial}

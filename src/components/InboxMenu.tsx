@@ -724,7 +724,7 @@ const InboxMenu: React.FC = () => {
         <Inbox size={20} aria-hidden="true" />
         {total > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-caption md:text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
             aria-hidden="true"
           >
             {total > 9 ? '9+' : total}

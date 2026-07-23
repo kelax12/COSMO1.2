@@ -52,20 +52,16 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
                   data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
-                  className="rounded-lg shadow-sm border p-6 transition-all relative overflow-hidden group"
-                  style={{
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    borderColor: 'rgb(var(--color-border))'
-                  }}>
+                  className="card-plain-mobile rounded-lg border md:p-6 p-gutter transition-all relative overflow-hidden group">
                   <div className="flex justify-between items-center mb-4 gap-4">
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
                       {category && (
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: resolveColor(category.color) }} />
                       )}
                       <span>{category?.name ?? 'Sans catégorie'}</span>
                     </span>
 
-                    <div className="flex-1 flex items-center justify-center gap-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                       <span>→</span>
                       <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
@@ -75,14 +71,14 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       <button
                         onClick={() => handleEditObjective(objective.id)}
                         aria-label="Modifier l'objectif"
-                        className="p-1.5 transition-colors hover:bg-hover rounded-md"
+                        className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => setDeletingObjective(objective.id)}
                         aria-label="Supprimer l'objectif"
-                        className="p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
+                        className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Trash2 size={16} />
                       </button>
@@ -93,7 +89,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     <div className="mb-4 flex flex-wrap items-center gap-2">
                       {remainingDays > 0 && (
                         <div
-                          className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm transition-transform group-hover:scale-105 w-fit"
+                          className="px-2.5 py-1 text-caption md:text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm transition-transform group-hover:scale-105 w-fit"
                           style={{
                             backgroundColor: 'rgb(var(--color-accent) / 0.1)',
                             borderColor: 'rgb(var(--color-accent) / 0.2)',
@@ -105,7 +101,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       )}
                       {totalTime > 0 && (
                         <div
-                          className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm w-fit"
+                          className="px-2.5 py-1 text-caption md:text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm w-fit"
                           style={{
                             backgroundColor: 'rgb(var(--color-hover))',
                             borderColor: 'rgb(var(--color-border))',
@@ -159,7 +155,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
                             {(keyResult.weight ?? 1) !== 1 && (
                               <span
-                                className="shrink-0 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                className="shrink-0 text-caption sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
                                 title={`Coefficient d'importance ×${keyResult.weight}`}
                               >
                                 ×{keyResult.weight}
@@ -172,7 +168,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
                                 setShowAddTaskModal(true);
                               }}
-                              className="p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               title="Créer une tâche">
 
                               <CheckCircle size={14} className="text-blue-500" />
@@ -182,20 +178,20 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
                                 setShowAddEventModal(true);
                               }}
-                              className="p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               title="Planifier un événement">
 
                               <Calendar size={14} className="text-purple-500" />
                             </button>
                             {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                               <span
-                                className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
+                                className="text-caption sm:text-xs px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
                                 title="Tâches en cours liées à ce résultat clé"
                               >
                                 {tasksByKr.get(keyResult.id)} tâche{(tasksByKr.get(keyResult.id) ?? 0) > 1 ? 's' : ''}
                               </span>
                             )}
-                            <span className="text-[10px] sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                            <span className="text-caption sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
                               <Clock size={12} />
                               {keyResult.estimatedTime}min
                             </span>
@@ -210,7 +206,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               onClick={() => updateKeyResult(objective.id, keyResult.id, Math.max(0, keyResult.currentValue - 1))}
                               disabled={keyResult.currentValue <= 0}
                               aria-label={`Diminuer ${keyResult.title}`}
-                              className="w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+                              className="w-11 h-11 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                             >
                               −
@@ -226,7 +222,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               type="button"
                               onClick={() => updateKeyResult(objective.id, keyResult.id, keyResult.currentValue + 1)}
                               aria-label={`Augmenter ${keyResult.title}`}
-                              className="w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              className="w-11 h-11 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                             >
                               +
@@ -239,7 +235,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
                               <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
-                            <span className="text-[10px] sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
+                            <span className="text-caption sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
                           </div>
                         </div>
                       </div>);

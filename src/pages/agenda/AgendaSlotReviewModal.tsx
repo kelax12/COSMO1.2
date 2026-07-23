@@ -84,7 +84,7 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
             </div>
 
             {remaining > 1 && (
-              <p className="text-[11px] text-[rgb(var(--color-text-muted))] mb-3 text-center">
+              <p className="text-caption text-[rgb(var(--color-text-muted))] mb-3 text-center">
                 {remaining} créneaux à passer en revue
               </p>
             )}

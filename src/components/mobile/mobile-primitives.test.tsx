@@ -10,6 +10,7 @@ import SectionHeader from './SectionHeader';
 import Segmented from './Segmented';
 import TouchTarget from './TouchTarget';
 import MobileScreen from './MobileScreen';
+import BottomSheet from './BottomSheet';
 
 describe('MobileScreen', () => {
   it('réserve plus de place en bas quand la page a un FAB', () => {
@@ -144,5 +145,29 @@ describe('TouchTarget', () => {
   it('est de type button par défaut (ne soumet pas un formulaire parent)', () => {
     render(<TouchTarget aria-label="Filtrer">i</TouchTarget>);
     expect(screen.getByRole('button', { name: 'Filtrer' }).getAttribute('type')).toBe('button');
+  });
+});
+
+describe('BottomSheet', () => {
+  it("ne rend rien tant qu'elle n'est pas ouverte", () => {
+    render(<BottomSheet open={false} onClose={vi.fn()} ariaLabel="Choix">contenu</BottomSheet>);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('affiche son contenu une fois ouverte, avec le bon libellé accessible', () => {
+    render(<BottomSheet open onClose={vi.fn()} ariaLabel="Choix">contenu du sheet</BottomSheet>);
+    const dialog = screen.getByRole('dialog', { name: 'Choix' });
+    expect(dialog).toBeTruthy();
+    expect(screen.getByText('contenu du sheet')).toBeTruthy();
+  });
+
+  it('ferme au clic sur le fond, pas au clic sur le panneau', () => {
+    const onClose = vi.fn();
+    render(<BottomSheet open onClose={onClose} ariaLabel="Choix">contenu</BottomSheet>);
+    fireEvent.click(screen.getByText('contenu'));
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('presentation'));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

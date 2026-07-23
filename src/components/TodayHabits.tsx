@@ -45,7 +45,7 @@ const TodayHabits: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="card p-6">
+      <div className="card card-plain-mobile p-gutter md:p-6">
         <div className="flex items-center gap-3 mb-6">
           <div>
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
@@ -62,7 +62,7 @@ const TodayHabits: React.FC = () => {
   }
 
   return (
-    <div className="card p-6">
+    <div className="card card-plain-mobile p-gutter md:p-6">
     <div className="flex items-center gap-3 mb-6">
       <div>
         <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
@@ -94,7 +94,7 @@ const TodayHabits: React.FC = () => {
                   <div className="flex-shrink-0 completion-toggle" onClick={(e) => e.stopPropagation()}>
                       <div
                         onClick={() => handleToggle(habit.id)}
-                        className={`h-7 w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
+                        className={`h-11 w-11 md:h-7 md:w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           habit.completedToday 
                             ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-solid-foreground))] dark:border-[rgb(var(--color-accent-solid))] shadow-md' 
                             : 'bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border-strong))] text-transparent hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-100'
@@ -140,7 +140,7 @@ const TodayHabits: React.FC = () => {
         {todayHabits.length > visibleLimit && (
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+            className="w-full flex items-center justify-center gap-2 min-h-touch md:min-h-0 md:py-2.5 rounded-xl text-sm font-semibold transition-colors text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
           >
             {showAll ? (
               <>

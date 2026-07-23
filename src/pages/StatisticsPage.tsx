@@ -355,7 +355,7 @@ export default function StatisticsPage() {
                   onClick={() => setSelectedSection(section.id as StatSection)}
                   aria-label={section.label}
                   aria-pressed={isSelected}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isSelected ? 'shadow-sm' : ''}`}
+                  className={`flex items-center gap-2 px-3 min-h-touch md:min-h-0 md:py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isSelected ? 'shadow-sm' : ''}`}
                   style={{
                     backgroundColor: isSelected ? 'rgb(var(--color-surface))' : 'transparent',
                     color: isSelected ? section.color : 'rgb(var(--color-text-secondary))',
@@ -376,7 +376,7 @@ export default function StatisticsPage() {
             <button
               key={period.id}
               onClick={() => setSelectedPeriod(period.id as TimePeriod)}
-              className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
+              className={`flex-1 md:flex-none px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
                 selectedPeriod === period.id ? 'shadow-sm' : ''
               }`}
               style={{
@@ -398,7 +398,7 @@ export default function StatisticsPage() {
               type="button"
               onClick={() => setOverviewDetail(false)}
               aria-pressed={!overviewDetail}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+              className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
                 backgroundColor: !overviewDetail ? 'rgb(var(--color-accent))' : 'transparent',
                 color: !overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
@@ -410,7 +410,7 @@ export default function StatisticsPage() {
               type="button"
               onClick={() => setOverviewDetail(true)}
               aria-pressed={overviewDetail}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+              className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
                 backgroundColor: overviewDetail ? 'rgb(var(--color-accent))' : 'transparent',
                 color: overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',

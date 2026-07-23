@@ -94,7 +94,7 @@ export function OKRListSkeleton({ count = 4 }: { count?: number }) {
 
 export function DashboardCardSkeleton() {
   return (
-    <div className="p-6 rounded-3xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] space-y-4">
+    <div className="card-plain-mobile p-gutter md:p-6 rounded-3xl space-y-4">
       <div className="flex items-center justify-between">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-6 w-16 rounded-full" />

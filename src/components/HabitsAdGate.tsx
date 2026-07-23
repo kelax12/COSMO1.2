@@ -91,7 +91,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             </div>
             <button
               onClick={() => setShowAdModal(true)}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="shrink-0 flex items-center gap-1.5 px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               <Play size={12} fill="white" aria-hidden="true" />
               Regarder
@@ -100,7 +100,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
               onClick={handleCheckout}
               disabled={isCheckoutLoading}
               aria-label="Passer Premium — 3,50 € par mois"
-              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-60"
+              className="shrink-0 min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-60"
             >
               {isCheckoutLoading ? (
                 <Loader2 size={15} className="animate-spin" aria-hidden="true" />
@@ -111,7 +111,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             <button
               onClick={onDismiss}
               aria-label="Masquer pour aujourd'hui"
-              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="shrink-0 min-w-touch min-h-touch sm:w-8 sm:h-8 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X size={14} aria-hidden="true" />
             </button>

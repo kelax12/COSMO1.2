@@ -299,7 +299,9 @@ const NavItems = () =>
             // popup : on ouvre le formulaire de création complet, comme le
             // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
             // événement. Ailleurs, capture rapide globale inchangée.
-            const evt = location.pathname === '/tasks' ? 'open-task-create' : 'open-quick-add';
+            const evt = location.pathname === '/tasks' ? 'open-task-create'
+              : location.pathname === '/agenda' ? 'open-agenda-create'
+              : 'open-quick-add';
             window.dispatchEvent(new CustomEvent(evt));
           }}
           data-tutorial-id="global-quick-add-fab"

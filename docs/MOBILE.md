@@ -13,11 +13,13 @@
 - **`MobileTabBar`** (bottom tab bar, hauteur ~64 px) — visible sur mobile uniquement : `Accueil / Tâches / Agenda / Habitudes / Plus`.
 - **Padding-bottom obligatoire** sur les pages : `pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8` (avec FAB) ou `+24px` (sans FAB). **Toutes les pages protégées doivent l'avoir** — sinon le dernier élément est caché derrière la tab bar.
 - **`min-h-[100dvh]`** (jamais `min-h-screen`/`100vh`) sur les wrappers de page — sinon Safari iOS rogne le contenu.
-- **FAB** : `fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500`. **Pages avec FAB** : Tasks, Habits, OKR. Sans FAB : Dashboard, Settings, Agenda, Statistics.
+- **FAB global** (`src/components/Layout.tsx`) : `fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl`, unique bouton de création sur toutes les pages protégées. Il dispatch un `CustomEvent` différent selon la route : `open-task-create` sur `/tasks` (formulaire complet), `open-agenda-create` sur `/agenda` (modal d'ajout d'événement, écoutée par `AgendaPage` via `useEffect`), `open-quick-add` ailleurs (capture rapide). **Ne jamais** dupliquer un bouton "+" dans l'en-tête d'une page tant que le FAB peut couvrir le même besoin — cf. l'ancien bouton "+" de l'en-tête Agenda, retiré le 2026-07-23 au profit du FAB seul (évitait un doublon flottant au-dessus du calendrier).
 
-## Design system mobile (2026-07-22)
+## Design system mobile (2026-07-22, étendu 2026-07-23)
 
 Le mobile n'avait aucun système : 10 tailles de texte arbitraires (`text-[8px]` → `text-[17px]`) en plus des 9 tailles Tailwind, 4 gouttières de page différentes, 9 rayons arbitraires, 176 boutons sous la cible tactile. Tout est désormais adossé à des **tokens**.
+
+**Les 8 pages mobiles sont migrées** : Tâches (page vitrine, 3 passes), Réglages, OKR, Statistiques, Premium, Habitudes, Dashboard, Agenda. Voir `git log --oneline -- 'src/pages/*' 'src/components/mobile'` pour l'historique. Le budget d'arbitraire et le plancher 11px (`design-system.guard.test.ts`) sont passés de 294/143 à 204/85 sur cette dernière vague.
 
 ### Échelle typographique — FERMÉE à 6 crans
 
@@ -58,9 +60,12 @@ Tokens dans `src/index.css` (`:root`), exposés en utilitaires Tailwind (`tailwi
 | `SectionHeader` | Titre de section discret + compte + action |
 | `Segmented` | Contrôle segmenté (pastille active animée via `layoutId`) |
 | `TouchTarget` | Bouton-icône dont la zone tactile fait réellement 44×44 px |
+| `BottomSheet` | Feuille bas-d'écran mobile / dialogue centré desktop (`sm:`), drag-to-dismiss, extrait de la modale de choix Premium — réutilisée telle quelle par toute nouvelle feuille modale à 2 choix ou plus |
 | `mobile-motion.ts` | Courbes partagées (`SHEET_SPRING`…) + `haptic()` + `prefersReducedMotion()` |
 
 Composer ces briques plutôt que redessiner. Tests : `src/components/mobile/mobile-primitives.test.tsx`.
+
+> **Le pattern bottom-sheet existe aussi hors de `BottomSheet`** : `AdModal.tsx` (pub Premium/Habitudes) a son propre hook `useBottomSheet` (`src/hooks/use-bottom-sheet.ts`) avec drag-to-dismiss, antérieur à la primitive partagée. Les deux implémentations sont volontairement restées séparées (risque de régression trop élevé pour un gain cosmétique) — ne pas les fusionner sans un passage dédié.
 
 ### Champs de saisie — 16 px obligatoire
 
@@ -68,11 +73,23 @@ Composer ces briques plutôt que redessiner. Tests : `src/components/mobile/mobi
 
 ### Listes bord à bord — `.card-plain-mobile`
 
-Une liste mobile ne vit pas dans une carte : la carte ajoute une 2ᵉ gouttière et vole ~24 px de largeur utile par ligne. `.card-plain-mobile` (dans `src/index.css`) neutralise le chrome de `.card` sous 768 px ; au-delà, `.card` reprend à l'identique. Utilisé par `TasksPage`.
+Une liste mobile ne vit pas dans une carte : la carte ajoute une 2ᵉ gouttière et vole ~24 px de largeur utile par ligne. `.card-plain-mobile` (dans `src/index.css`) neutralise le chrome de `.card` sous 768 px ; au-delà, `.card` reprend à l'identique. Utilisé par `TasksPage`, `OKRCard`, et les 4 widgets Dashboard (`TodayTasks`, `TodayHabits`, `CollaborativeTasks`, `ActiveOKRs` + `DashboardCardSkeleton`).
+
+**Piège `MobileCollapsible`** (`src/components/MobileCollapsible.tsx`, Dashboard uniquement) : le composant enveloppait chaque widget déplié dans un hack `[&>div]:rounded-t-none [&>div]:border-t-0` pour masquer la couture entre son en-tête (bg/bordure pleins) et la carte `.card` de l'enfant. Depuis que les 4 widgets utilisent `.card-plain-mobile` (transparents sous 768 px), il n'y a plus de couture à masquer — le hack a été retiré. **Ne pas le réintroduire** si un futur widget wrappé garde encore un fond/bordure plein sur mobile ; corriger plutôt le widget lui-même. La classe `.mobile-collapsible-body` reste nécessaire (elle masque le titre dupliqué du widget via `src/index.css`), seul le child-selector de couture a disparu.
+
+### Exceptions documentées (densité / mimique volontaire — ne pas "corriger")
+
+- **`HabitHeatmap`** (`src/pages/statistics/HabitHeatmap.tsx`) : labels de jour/mois à 8-9px dans des cellules de calendrier de 13-20px. Forcer 11px ferait déborder une grille de 26 semaines × 7 jours sur un écran de 393px. Densité de données assumée, pas une dette.
+- **Toggle iOS** (`src/pages/SettingsPage.tsx`, rappel habitudes du soir) : `w-[51px] h-[31px]` mimant les proportions natives iOS. Seule occurrence dans l'app (pas de `Toggle` partagé créé pour un seul appelant).
+- **Rayons de graphique** (`DashboardBarChart.tsx` barres/légende `rounded-[2px]`/`rounded-t-[3px]`, dormant derrière `SHOW_REPARTITION_CHART=false`) : accents décoratifs sub-pixel sur des barres fines, hors de l'échelle `rounded-row/card/sheet` qui vise les cartes/lignes, pas les micro-détails de chart.
 
 ### Thèmes
 
 3 thèmes : `light`, `dark`, `black` (graphite + accent bleu). Résolution et application centralisées dans **`src/lib/theme.ts`** (`resolveInitialTheme` / `applyTheme`), consommées par `src/main.tsx` (avant le premier paint) ET `src/hooks/useDarkMode.ts`. **Sur mobile, un visiteur sans choix explicite démarre en `black`** ; un choix utilisateur reste toujours prioritaire. Les anciennes valeurs `midnight` / `monochrome` sont migrées vers `black`. Tests : `src/lib/theme.test.ts`.
+
+### CSS injecté non-Tailwind — FullCalendar mobile
+
+`src/pages/agenda/MobileAgenda.tsx` exporte `mobileCalendarStyles`, un bloc `<style>` brut injecté pour surcharger le CSS interne de FullCalendar (les classes `.fc-*` ne sont pas atteignables en Tailwind). Le garde-fou `design-system.guard.test.ts` ne voit **pas** ces occurrences (ce n'est pas la syntaxe `text-[Npx]`) — `font-size: 11px !important` sur `.fc-timegrid-slot-label` a été corrigé manuellement (était 10px). Si une autre valeur y est ajoutée, l'aligner à la main sur l'échelle mobile ; le garde-fou ne le fera pas pour vous.
 
 ### Tutoriels et rendus mobile/desktop séparés
 
