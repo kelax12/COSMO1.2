@@ -344,7 +344,7 @@ export default function StatisticsPage() {
       <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
         {/* Sélecteur de section */}
         <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-          <span className="text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Analyser :</span>
+          <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Analyser :</span>
           <div className="flex rounded-xl p-1 overflow-x-auto flex-nowrap flex-1 md:flex-none" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
             {sections.map(section => {
               const Icon = section.icon;

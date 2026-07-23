@@ -191,7 +191,7 @@ const TodayTasks: React.FC = () => {
                       <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{task.name}</h3>
                       {getPriorityIcon(task.priority)}
                       {task.sharedBy ? (
-                        <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0" title={task.sharedBy}>
+                        <span className="hidden md:inline-flex text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0" title={task.sharedBy}>
                           {task.sharedBy}
                         </span>
                       ) : task.isCollaborative ? (
@@ -201,7 +201,7 @@ const TodayTasks: React.FC = () => {
                           return (
                             <span
                               key={id}
-                              className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0"
+                              className="hidden md:inline-flex text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0"
                               title={name}
                             >
                               {name}
