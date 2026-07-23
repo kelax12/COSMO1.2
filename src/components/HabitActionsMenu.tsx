@@ -147,11 +147,11 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
           exit={{ opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-64 max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+          className="w-64 max-w-[calc(100vw-32px)] bg-[rgb(var(--color-surface))] rounded-xl shadow-xl border border-[rgb(var(--color-border))] overflow-hidden"
           role="menu"
         >
           <div className="px-3 pt-2.5 pb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
               Actions
             </span>
           </div>
@@ -162,14 +162,14 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 type="button"
                 role="menuitem"
                 onClick={handleCreateTask}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
               >
-                <ListPlus size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                <ListPlus size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-900 dark:text-white">
+                  <div className="text-sm text-[rgb(var(--color-text-primary))]">
                     Créer une tâche
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
                     Aujourd'hui · {habit.estimatedTime} min
                   </p>
                 </div>
@@ -182,14 +182,14 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 type="button"
                 role="menuitem"
                 onClick={handleScheduleEvent}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
               >
-                <CalendarPlus size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                <CalendarPlus size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-900 dark:text-white">
+                  <div className="text-sm text-[rgb(var(--color-text-primary))]">
                     Planifier dans l'agenda
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
                     Événement avec heure ajustable
                   </p>
                 </div>
@@ -209,21 +209,21 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                   );
                   setOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
               >
-                <Copy size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                <Copy size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-900 dark:text-white">
+                  <div className="text-sm text-[rgb(var(--color-text-primary))]">
                     Dupliquer l'habitude
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
                     Copie avec un historique vierge
                   </p>
                 </div>
               </button>
             </li>
 
-            <li className="my-1 mx-3 border-t border-slate-100 dark:border-slate-800" />
+            <li className="my-1 mx-3 border-t border-[rgb(var(--color-border))]" />
 
             {/* Pause / Reprendre — toggle direct sans sous-menu */}
             <li>
@@ -242,18 +242,18 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                   }
                   setOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left focus-visible:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-700"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
               >
                 {paused ? (
-                  <CirclePlay size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                  <CirclePlay size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 ) : (
-                  <CircleSlash size={17} strokeWidth={1.75} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                  <CircleSlash size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-slate-900 dark:text-white">
+                  <div className="text-sm text-[rgb(var(--color-text-primary))]">
                     {paused ? 'Reprendre l\'habitude' : 'Mettre en pause'}
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
                     {paused ? 'Réactiver le suivi' : 'Vacances, maladie… streak conservé'}
                   </p>
                 </div>
@@ -274,7 +274,7 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="h-11 w-11 sm:h-9 sm:w-9 flex items-center justify-center rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="h-11 w-11 sm:h-9 sm:w-9 flex items-center justify-center rounded-md text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         title="Plus d'actions"
         aria-label="Plus d'actions"
         aria-expanded={open}

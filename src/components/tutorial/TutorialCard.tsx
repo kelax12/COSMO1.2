@@ -35,7 +35,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', damping: 24, stiffness: 320 }}
-      className="absolute pointer-events-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-5 border-2"
+      className="absolute pointer-events-auto bg-[rgb(var(--color-surface))] rounded-2xl shadow-2xl p-5 border-2"
       style={{
         ...cardStyle,
         width: CARD_W,
@@ -48,7 +48,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
       <button
         onClick={onClose}
         aria-label="Passer le tutoriel"
-        className="absolute top-2 right-2 min-w-touch min-h-touch sm:min-w-9 sm:min-h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2"
+        className="absolute top-2 right-2 min-w-touch min-h-touch sm:min-w-9 sm:min-h-9 flex items-center justify-center rounded-full text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2"
         style={{ outlineColor: accentColor }}
       >
         <X size={16} />
@@ -56,11 +56,11 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
 
       <h3
         id="tut-card-title"
-        className="text-base sm:text-lg font-bold mb-1 pr-8 text-slate-900 dark:text-white"
+        className="text-base sm:text-lg font-bold mb-1 pr-8 text-[rgb(var(--color-text-primary))]"
       >
         {step.title}
       </h3>
-      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+      <p className="text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
         {step.description}
       </p>
 
@@ -77,7 +77,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
             }}
           />
         ))}
-        <span className="ml-auto text-xs font-semibold text-slate-400">
+        <span className="ml-auto text-xs font-semibold text-[rgb(var(--color-text-muted))]">
           {stepIndex + 1} / {totalSteps}
         </span>
       </div>
@@ -88,7 +88,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
           type="button"
           onClick={onPrev}
           disabled={stepIndex === 0}
-          className="px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-medium text-sm text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:cursor-not-allowed"
+          className="px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-medium text-sm text-[rgb(var(--color-text-secondary))] disabled:opacity-30 hover:bg-[rgb(var(--color-hover))] transition-colors disabled:cursor-not-allowed"
         >
           ← Précédent
         </button>

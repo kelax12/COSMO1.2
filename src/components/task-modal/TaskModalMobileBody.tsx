@@ -113,18 +113,18 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   };
 
   return (
-    <motion.div ref={sheetRef} {...sheetDragProps} className="flex flex-col h-full w-full rounded-t-3xl bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <motion.div ref={sheetRef} {...sheetDragProps} className="flex flex-col h-full w-full rounded-t-3xl bg-[rgb(var(--color-background))] overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="shrink-0 bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200/80 dark:border-gray-800" style={{ paddingTop: '10px' }}>
+      <div className="shrink-0 bg-[rgb(var(--color-background))]/95 backdrop-blur-sm border-b border-[rgb(var(--color-border))]" style={{ paddingTop: '10px' }}>
         <div className="flex justify-center pb-2">
-          <div className="w-9 h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" />
+          <div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" />
         </div>
         <div className="flex items-center justify-between px-4 h-11">
           <button type="button" onClick={handleClose} className="text-blue-500 text-[15px] min-w-[64px] text-left">
             Annuler
           </button>
-          <span className="text-[17px] font-semibold text-gray-900 dark:text-gray-100">
+          <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
             {isCreating ? 'Nouvelle tâche' : 'Modifier'}
           </span>
           <button
@@ -145,7 +145,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           {/* ── Groupe 1 : Nom ── */}
           <div
             ref={register('name')}
-            className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+            className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
               isInvalid('name') ? 'ring-2 ring-red-500' : ''
             }`}
           >
@@ -158,7 +158,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 ${
                 cellErrors.name
                   ? 'text-red-500 placeholder-red-300'
-                  : 'text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600'
+                  : 'text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]'
               }`}
             />
           </div>
@@ -173,7 +173,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               value={
                 formData.priority !== 0
                   ? <span className={priorityColor(formData.priority)}>P{formData.priority}</span>
-                  : <span className="text-gray-400">Choisir</span>
+                  : <span className="text-[rgb(var(--color-text-muted))]">Choisir</span>
               }
               onTap={() => setShowPrioritySheet(true)}
             />
@@ -183,7 +183,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               label={<span className={cellErrors.category ? 'text-red-500' : ''}>Catégorie</span>}
               value={(() => {
                 const cat = categories.find(c => c.id === formData.category);
-                if (!cat) return <span className="text-gray-400">Choisir</span>;
+                if (!cat) return <span className="text-[rgb(var(--color-text-muted))]">Choisir</span>;
                 return (
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: cat.color }} />
@@ -200,7 +200,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               value={
                 formData.deadline
                   ? <span className="text-blue-500">{format(new Date(formData.deadline + 'T12:00:00'), 'd MMM', { locale: fr })}</span>
-                  : <span className="text-gray-400">Aucune</span>
+                  : <span className="text-[rgb(var(--color-text-muted))]">Aucune</span>
               }
               onTap={() => setShowDeadlinePicker(prev => !prev)}
             />
@@ -221,7 +221,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                           key={preset.label}
                           type="button"
                           onClick={() => { handleInputChange('deadline', preset.value); setShowDeadlinePicker(false); }}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]"
                         >
                           {preset.label}
                         </button>
@@ -246,7 +246,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                       <button
                         type="button"
                         onClick={() => { handleInputChange('deadline', ''); setShowDeadlinePicker(false); }}
-                        className="w-full text-center text-[14px] text-red-500 py-3 border-t border-gray-100 dark:border-gray-800"
+                        className="w-full text-center text-[14px] text-red-500 py-3 border-t border-[rgb(var(--color-border))]"
                       >
                         Effacer la date
                       </button>
@@ -260,7 +260,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               <>
                 <CellSeparator />
                 <div className="flex items-center justify-between px-4 min-h-11 gap-3">
-                  <span className="text-[15px] text-gray-900 dark:text-gray-100">Répéter</span>
+                  <span className="text-[15px] text-[rgb(var(--color-text-primary))]">Répéter</span>
                   <select
                     value={formData.recurrence}
                     onChange={(e) => handleInputChange('recurrence', e.target.value)}
@@ -278,7 +278,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <CellSeparator />
             {/* Durée */}
             <div className="flex items-center justify-between px-4 min-h-11">
-              <span className="text-[15px] text-gray-900 dark:text-gray-100">Durée</span>
+              <span className="text-[15px] text-[rgb(var(--color-text-primary))]">Durée</span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -287,7 +287,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     handleInputChange('estimatedTime', Math.max(0, cur - 5));
                     setStepperDir(-1); setTimeout(() => setStepperDir(0), 80);
                   }}
-                  className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300"
+                  className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))]"
                   aria-label="Diminuer de 5 minutes"
                 >
                   <Minus size={14} />
@@ -308,7 +308,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     handleInputChange('estimatedTime', cur + 5);
                     setStepperDir(1); setTimeout(() => setStepperDir(0), 80);
                   }}
-                  className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300"
+                  className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))]"
                   aria-label="Augmenter de 5 minutes"
                 >
                   <Plus size={14} />
@@ -326,7 +326,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               label="Listes"
               value={(() => {
                 const inLists = taskId ? lists.filter(l => l.taskIds.includes(taskId)) : lists.filter(l => selectedListIds.includes(l.id));
-                if (inLists.length === 0) return <span className="text-gray-400">Aucune</span>;
+                if (inLists.length === 0) return <span className="text-[rgb(var(--color-text-muted))]">Aucune</span>;
                 if (inLists.length === 1) return <span className="text-blue-500">{inLists[0].name}</span>;
                 return <span className="text-blue-500">{inLists.length} listes</span>;
               })()}
@@ -338,8 +338,8 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <CellSeparator />
             {/* Favori — toggle iOS */}
             <div className="flex items-center justify-between px-4 min-h-11">
-              <span className="flex items-center gap-2 text-[15px] text-gray-900 dark:text-gray-100">
-                <Bookmark size={16} className="text-gray-500" />
+              <span className="flex items-center gap-2 text-[15px] text-[rgb(var(--color-text-primary))]">
+                <Bookmark size={16} className="text-[rgb(var(--color-text-muted))]" />
                 Favori
               </span>
               <button
@@ -349,7 +349,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 aria-label={formData.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                 onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
                 className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                  formData.bookmarked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
+                  formData.bookmarked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-[rgb(var(--color-hover))]'
                 }`}
               >
                 <motion.span
@@ -387,7 +387,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               value={
                 collaborators.length > 0
                   ? <span className="text-blue-500">{collaborators.length}</span>
-                  : <span className="text-gray-400">0</span>
+                  : <span className="text-[rgb(var(--color-text-muted))]">0</span>
               }
               onTap={() => setShowCollabSheet(true)}
             />
@@ -402,7 +402,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   type="button"
                   onClick={handleDelete}
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center min-h-11 text-red-500 text-[15px] active:bg-gray-100 dark:active:bg-gray-800 disabled:opacity-50 transition-colors"
+                  className="w-full flex items-center justify-center min-h-11 text-red-500 text-[15px] active:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors"
                 >
                   Supprimer la tâche
                 </button>
@@ -416,7 +416,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
 
       {/* ── Footer CTA ── */}
       <div
-        className="shrink-0 px-4 pt-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/95 dark:bg-gray-950/95 backdrop-blur-sm"
+        className="shrink-0 px-4 pt-3 border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))]/95 backdrop-blur-sm"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
       >
         <button
@@ -450,18 +450,18 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full bg-white dark:bg-gray-900 rounded-t-2xl overflow-hidden"
+              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-              <div className="flex justify-center pt-3 pb-2"><div className="w-9 h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2">Priorité</p>
+              <div className="flex justify-center pt-3 pb-2"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2">Priorité</p>
               {PRIORITY_OPTIONS.map((opt, i) => (
                 <React.Fragment key={opt.value}>
                   {i > 0 && <CellSeparator />}
                   <button
                     type="button"
                     onClick={() => { handleInputChange('priority', opt.value); setCellErrors(prev => ({ ...prev, priority: false })); setShowPrioritySheet(false); }}
-                    className="w-full flex items-center justify-between px-4 min-h-11 active:bg-gray-100 dark:active:bg-gray-800"
+                    className="w-full flex items-center justify-between px-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
                   >
                     <span className={`text-[15px] ${opt.color}`}>{opt.label}</span>
                     {formData.priority === opt.value && <Check size={16} className="text-blue-500" />}
@@ -486,11 +486,11 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full bg-white dark:bg-gray-900 rounded-t-2xl overflow-hidden max-h-[70vh] flex flex-col"
+              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden max-h-[70vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2 shrink-0">Catégorie</p>
+              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">Catégorie</p>
               <div className="flex-1 overflow-y-auto">
                 {categories.map((cat, i) => (
                   <React.Fragment key={cat.id}>
@@ -498,11 +498,11 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     <button
                       type="button"
                       onClick={() => { handleInputChange('category', formData.category === cat.id ? '' : cat.id); setShowCategorySheet(false); }}
-                      className="w-full flex items-center justify-between px-4 min-h-11 active:bg-gray-100 dark:active:bg-gray-800"
+                      className="w-full flex items-center justify-between px-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
-                        <span className="text-[15px] text-gray-900 dark:text-gray-100">{cat.name}</span>
+                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{cat.name}</span>
                       </span>
                       {formData.category === cat.id && <Check size={16} className="text-blue-500" />}
                     </button>
@@ -524,7 +524,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     <input
                       autoFocus type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
                       placeholder="Nom de la catégorie…"
-                      className="flex-1 text-[15px] bg-transparent focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                      className="flex-1 text-[15px] bg-transparent focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                     />
                     <button
                       type="button"
@@ -571,13 +571,13 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full bg-white dark:bg-gray-900 rounded-t-2xl overflow-hidden max-h-[80vh] flex flex-col"
+              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden max-h-[80vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-2 shrink-0">Collaborateurs</p>
+              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">Collaborateurs</p>
               {!isTaskOwner && (
-                <p className="px-4 pb-2 text-[13px] text-gray-500 dark:text-gray-400 shrink-0">
+                <p className="px-4 pb-2 text-[13px] text-[rgb(var(--color-text-muted))] shrink-0">
                   Cette tâche t'a été partagée. Seul le propriétaire peut gérer les collaborateurs.
                 </p>
               )}
@@ -585,13 +585,13 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 <div className="px-4 pb-3 shrink-0">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" />
                       <input
                         type="text" value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
                         placeholder="Email ou nom…"
-                        className="w-full pl-9 pr-3 py-2 text-[15px] bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                        className="w-full pl-9 pr-3 py-2 text-[15px] bg-[rgb(var(--color-hover))] rounded-xl focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                       />
                     </div>
                     <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-[rgb(var(--color-accent-solid))] disabled:bg-blue-300 text-[rgb(var(--color-accent-solid-foreground))] rounded-xl">
@@ -604,14 +604,14 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 </div>
               )}
               {collaborators.length > 0 && (
-                <div className="px-4 pb-2 shrink-0 border-b border-gray-100 dark:border-gray-800">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 pb-1">{isTaskOwner ? `Sélectionnés (${collaborators.length})` : 'Participants'}</p>
+                <div className="px-4 pb-2 shrink-0 border-b border-[rgb(var(--color-border))]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] pb-1">{isTaskOwner ? `Sélectionnés (${collaborators.length})` : 'Participants'}</p>
                   {collaborators.map((id) => {
                     const info = displayInfo(id);
                     const isSent = isTaskOwner && !info.isPending && pendingShareIds.has(id);
                     return (
                       <div key={id} className="flex items-center justify-between py-1.5 gap-2">
-                        <span className="text-[14px] text-gray-900 dark:text-gray-100 truncate flex-1">
+                        <span className="text-[14px] text-[rgb(var(--color-text-primary))] truncate flex-1">
                           {info.name}{!isTaskOwner && id === ownerId ? ' · Propriétaire' : ''}
                         </span>
                         {isSent && (
@@ -633,15 +633,15 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     return (
                       <button
                         key={friend.id} type="button" onClick={() => toggleCollaborator(cId)}
-                        className="w-full flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                        className="w-full flex items-center justify-between py-2.5 border-b border-[rgb(var(--color-border))] last:border-0"
                       >
-                        <span className="text-[15px] text-gray-900 dark:text-gray-100">{friend.name}</span>
-                        {isSelected ? <Check size={16} className="text-blue-500" /> : <Plus size={16} className="text-gray-400" />}
+                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{friend.name}</span>
+                        {isSelected ? <Check size={16} className="text-blue-500" /> : <Plus size={16} className="text-[rgb(var(--color-text-muted))]" />}
                       </button>
                     );
                   })}
                   {filteredFriends.length === 0 && (
-                    <p className="text-center py-6 text-[14px] text-gray-400">Aucun ami à ajouter</p>
+                    <p className="text-center py-6 text-[14px] text-[rgb(var(--color-text-muted))]">Aucun ami à ajouter</p>
                   )}
                 </div>
               )}

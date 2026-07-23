@@ -337,12 +337,12 @@ export const getColorFr = (colorName: string) => {
                               {category.icon}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              <span className="font-bold text-[rgb(var(--color-text-secondary))] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                 {category.name}
                               </span>
                               <div className="flex items-center gap-1.5">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getColorHex(category.color) }} />
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                <span className="text-[10px] font-bold text-[rgb(var(--color-text-muted))] uppercase tracking-tight">
                                   {getColorFr(category.color)}
                                 </span>
                               </div>
@@ -352,14 +352,14 @@ export const getColorFr = (colorName: string) => {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => startEdit(category)}
-                                className="p-2.5 bg-slate-50 dark:bg-slate-700/50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-all shadow-sm active:scale-90"
+                                className="p-2.5 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-all shadow-sm active:scale-90"
                                 title="Modifier"
                               >
                                 <Edit2 size={18} />
                               </button>
                               <button
                                 onClick={() => setCategoryToDelete(category.id)}
-                                className="p-2.5 bg-slate-50 dark:bg-slate-700/50 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all shadow-sm active:scale-90"
+                                className="p-2.5 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all shadow-sm active:scale-90"
                                 title="Supprimer"
                               >
                                 <Trash2 size={18} />
@@ -374,10 +374,10 @@ export const getColorFr = (colorName: string) => {
               </div>
 
               {/* Footer */}
-              <div className="p-4 px-6 border-t dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
+              <div className="p-4 px-6 border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))]/50 flex justify-end">
                 <button
                   onClick={onClose}
-                  className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 dark:bg-[rgb(var(--color-accent-solid))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-bold rounded-xl transition-all shadow-lg active:scale-95"
+                  className="px-8 py-2.5 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-bold rounded-xl transition-all shadow-lg active:scale-95"
                 >
                   Fermer
                 </button>

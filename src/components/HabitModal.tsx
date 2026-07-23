@@ -125,14 +125,14 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             >
               {isMobile ? (
                 /* ── MOBILE iOS ── */
-                <div className="flex flex-col bg-gray-50 dark:bg-gray-950 rounded-t-3xl">
+                <div className="flex flex-col bg-[rgb(var(--color-background))] rounded-t-3xl">
                   {/* Drag handle */}
                   <div className="flex justify-center pt-2.5 shrink-0">
-                    <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-gray-300/70 dark:bg-gray-600/60" />
+                    <motion.div style={{ width: handleBarWidth }} className="h-1 rounded-full bg-[rgb(var(--color-border-strong))]" />
                   </div>
 
                   {/* iOS Header */}
-                  <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200/80 dark:border-gray-800 shrink-0">
+                  <div className="flex items-center justify-between px-4 h-14 border-b border-[rgb(var(--color-border))] shrink-0">
                     <button
                       type="button"
                       onClick={guardedClose}
@@ -140,7 +140,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     >
                       Annuler
                     </button>
-                    <span className="text-[17px] font-semibold text-gray-900 dark:text-gray-100">
+                    <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
                       {isEditing ? 'Modifier' : 'Nouvelle habitude'}
                     </span>
                     <button
@@ -160,7 +160,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     {/* Groupe 1 — Nom (sans overflow-hidden pour iOS selection handles) */}
                     <div
                       ref={register('name')}
-                      className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm transition-[box-shadow] ${
+                      className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
                         isInvalid('name') ? 'ring-2 ring-red-500' : ''
                       }`}
                     >
@@ -170,18 +170,18 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
                         placeholder="Nom de l'habitude"
                         autoFocus
-                        className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                        className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                         style={{ border: 'none' }}
                       />
                     </div>
 
                     {/* Section DÉTAILS */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
                       Détails
                     </p>
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                       <div className="flex items-center px-4 min-h-11">
-                        <span className="flex-1 text-[15px] text-gray-900 dark:text-gray-100">Durée</span>
+                        <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Durée</span>
                         <div className="flex items-center gap-2.5">
                           <button
                             type="button"
@@ -189,7 +189,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                               setFormData({ ...formData, estimatedTime: Math.max(5, formData.estimatedTime - 5) })
                             }
                             aria-label="Réduire la durée"
-                            className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-lg leading-none"
+                            className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
                           >
                             −
                           </button>
@@ -202,7 +202,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                               setFormData({ ...formData, estimatedTime: formData.estimatedTime + 5 })
                             }
                             aria-label="Augmenter la durée"
-                            className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 text-lg leading-none"
+                            className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
                           >
                             +
                           </button>
@@ -214,10 +214,10 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         pour que l'utilisateur sache à quelle catégorie chaque
                         couleur appartient. Fallback sur favoriteColors si aucune
                         catégorie n'existe encore. */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 px-4 pb-1 pt-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
                       Couleur
                     </p>
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden px-4 py-4">
+                    <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
                       {categories.length > 0 ? (
                         <div className="grid grid-cols-2 gap-2">
                           {categories.map((cat) => {
@@ -232,14 +232,14 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
                                   isSelected
                                     ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-gray-200 dark:border-gray-700'
+                                    : 'border-[rgb(var(--color-border))]'
                                 }`}
                               >
                                 <span
                                   className="w-6 h-6 rounded-lg shrink-0"
                                   style={{ backgroundColor: cat.color }}
                                 />
-                                <span className="flex-1 text-left text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate">
+                                <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
                                   {cat.name}
                                 </span>
                               </button>
@@ -249,7 +249,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                             type="button"
                             onClick={() => setIsColorSettingsOpen(true)}
                             aria-label="Personnaliser les couleurs"
-                            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-blue-500 text-[13px] font-medium"
+                            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
                           >
                             <Plus className="w-4 h-4" />
                             Personnaliser
@@ -275,7 +275,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                             type="button"
                             onClick={() => setIsColorSettingsOpen(true)}
                             aria-label="Personnaliser les couleurs"
-                            className="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center"
+                            className="w-10 h-10 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] flex items-center justify-center"
                           >
                             <Plus className="w-4 h-4 text-blue-500" />
                           </button>
@@ -286,7 +286,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                   {/* Footer CTA */}
                   <div
-                    className="px-4 pt-3 border-t border-gray-100 dark:border-gray-800 shrink-0"
+                    className="px-4 pt-3 border-t border-[rgb(var(--color-border))] shrink-0"
                     style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
                   >
                     <button

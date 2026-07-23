@@ -102,7 +102,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+          <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-[rgb(var(--color-border-strong))]" />
         </div>
 
         {/* Header */}
@@ -111,7 +111,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
             <Play size={24} />
             <span className="font-bold">Publicité Sponsorisée</span>
           </div>
-          <button onClick={onClose} aria-label="Fermer" className="min-w-touch min-h-touch flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+          <button onClick={onClose} aria-label="Fermer" className="min-w-touch min-h-touch flex items-center justify-center hover:bg-[rgb(var(--color-hover))] rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -173,7 +173,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-700 text-center text-sm text-slate-600 dark:text-slate-300 transition-colors">
+        <div className="p-4 bg-[rgb(var(--color-background))] text-center text-sm text-[rgb(var(--color-text-secondary))] transition-colors">
           <p>En regardant cette publicité, vous soutenez le développement de Cosmo</p>
         </div>
       </motion.div>

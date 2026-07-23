@@ -322,12 +322,12 @@ export default function StatisticsPage() {
           </div>
           {/* Overlay */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4">
+            <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4">
               <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <BarChart3 size={24} className="text-amber-600 dark:text-amber-400" />
               </div>
-              <h3 className="font-bold text-slate-800 dark:text-white mb-1">Analyses détaillées</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+              <h3 className="font-bold text-[rgb(var(--color-text-primary))] mb-1">Analyses détaillées</h3>
+              <p className="text-[rgb(var(--color-text-muted))] text-sm mb-4">
                 Accédez aux graphiques et aux statistiques avancées avec un compte Premium.
               </p>
               <button

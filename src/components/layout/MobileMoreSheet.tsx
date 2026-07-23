@@ -73,14 +73,14 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-            className="fixed bottom-0 inset-x-0 z-50 rounded-t-[28px] bg-gray-50 dark:bg-gray-950 flex flex-col"
+            className="fixed bottom-0 inset-x-0 z-50 rounded-t-[28px] bg-[rgb(var(--color-background))] flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             {...sheetDragProps}
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-2.5 pb-1 shrink-0">
               <motion.div
-                className="h-[5px] rounded-full bg-gray-300 dark:bg-gray-700"
+                className="h-[5px] rounded-full bg-[rgb(var(--color-border-strong))]"
                 style={{ width: handleBarWidth }}
               />
             </div>
@@ -89,11 +89,11 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
             <div className="px-4 pb-5 flex flex-col gap-3" data-scroll-area>
 
               {/* — Profile card — */}
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                 <button
                   type="button"
                   onClick={() => handleNav('/settings')}
-                  className="w-full flex items-center gap-3.5 px-4 min-h-[72px] active:bg-gray-100 dark:active:bg-gray-800 transition-colors"
+                  className="w-full flex items-center gap-3.5 px-4 min-h-[72px] active:bg-[rgb(var(--color-hover))] transition-colors"
                   aria-label="Aller aux paramètres"
                 >
                   {/* Avatar */}
@@ -107,10 +107,10 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
                   {/* Name + email */}
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 truncate leading-snug">
+                    <p className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))] truncate leading-snug">
                       {user?.name ?? 'Utilisateur'}
                     </p>
-                    <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate mt-0.5 leading-snug">
+                    <p className="text-[13px] text-[rgb(var(--color-text-muted))] truncate mt-0.5 leading-snug">
                       {user?.email ?? ''}
                     </p>
                   </div>
@@ -122,32 +122,32 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                         Premium
                       </span>
                     )}
-                    <ChevronRight size={18} className="text-gray-400 dark:text-gray-600" />
+                    <ChevronRight size={18} className="text-[rgb(var(--color-text-muted))]" />
                   </div>
                 </button>
               </div>
 
               {/* — Switcher multi-org (si plusieurs entreprises) — */}
               {organizations.length > 1 && (
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-3">
+                <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm p-3">
                   <OrgSwitcher />
                 </div>
               )}
 
               {/* — Navigation links — */}
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                 {visibleLinks.map(({ to, label, icon: Icon, iconBg, description }, idx) => (
                   <React.Fragment key={to}>
                     {idx > 0 && (
-                      <div className="h-px bg-gray-200/80 dark:bg-gray-700/60 ml-[68px]" />
+                      <div className="h-px bg-[rgb(var(--color-border))] ml-[68px]" />
                     )}
                     <button
                       type="button"
                       onClick={() => handleNav(to)}
                       className={[
                         'w-full flex items-center gap-3.5 px-4 min-h-[60px] text-left transition-colors',
-                        'active:bg-gray-100 dark:active:bg-gray-800',
-                        location.pathname === to ? 'bg-gray-50 dark:bg-gray-800/50' : '',
+                        'active:bg-[rgb(var(--color-hover))]',
+                        location.pathname === to ? 'bg-[rgb(var(--color-hover))]' : '',
                       ].join(' ')}
                       aria-current={location.pathname === to ? 'page' : undefined}
                     >
@@ -158,25 +158,25 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
                       {/* Label + description */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-medium text-gray-900 dark:text-gray-100 leading-snug">
+                        <p className="text-[15px] font-medium text-[rgb(var(--color-text-primary))] leading-snug">
                           {label}
                           {to === '/premium' && isPremium() && (
                             <span className="ml-2 text-[11px] font-semibold text-amber-500 uppercase tracking-wide">Actif</span>
                           )}
                         </p>
-                        <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                        <p className="text-[12px] text-[rgb(var(--color-text-muted))] mt-0.5 truncate">
                           {description}
                         </p>
                       </div>
 
-                      <ChevronRight size={16} className="text-gray-300 dark:text-gray-600 shrink-0" />
+                      <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
                     </button>
                   </React.Fragment>
                 ))}
               </div>
 
               {/* — Logout — */}
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -188,7 +188,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                   <p className="flex-1 text-[15px] font-medium text-red-500">
                     Déconnexion
                   </p>
-                  <ChevronRight size={16} className="text-gray-300 dark:text-gray-600 shrink-0" />
+                  <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
                 </button>
               </div>
 

@@ -119,7 +119,7 @@ const ShareInviteClaimer: React.FC = () => {
           />
 
           <motion.div
-            className="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full sm:max-w-md bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -127,7 +127,7 @@ const ShareInviteClaimer: React.FC = () => {
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
           >
             <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-              <div className="h-[5px] w-10 rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+              <div className="h-[5px] w-10 rounded-full bg-[rgb(var(--color-border-strong))]" />
             </div>
 
             <div className="p-6 text-center">
@@ -144,20 +144,20 @@ const ShareInviteClaimer: React.FC = () => {
                   <Users size={26} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
                 )}
               </div>
-              <h2 id="share-invite-title" className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+              <h2 id="share-invite-title" className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-1">
                 Tâche partagée avec vous
               </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-                <span className="font-semibold text-slate-800 dark:text-white">{invite.owner_name}</span>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
+                <span className="font-semibold text-[rgb(var(--color-text-primary))]">{invite.owner_name}</span>
                 {' '}vous propose de collaborer sur{' '}
-                <span className="font-semibold text-slate-800 dark:text-white">« {invite.task_name} »</span>.
+                <span className="font-semibold text-[rgb(var(--color-text-primary))]">« {invite.task_name} »</span>.
               </p>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2">
                 <button
                   onClick={handleRefuse}
                   disabled={busy}
-                  className="flex-1 min-h-11 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  className="flex-1 min-h-11 px-4 py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                 >
                   <span className="inline-flex items-center gap-1.5 justify-center">
                     <X size={15} aria-hidden="true" /> Refuser

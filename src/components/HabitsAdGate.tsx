@@ -75,17 +75,17 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
         aria-label="Soutenir Cosmo"
         className="fixed inset-x-2 sm:inset-x-auto sm:right-4 sm:max-w-sm bottom-[calc(64px+env(safe-area-inset-bottom)+8px)] md:bottom-4 z-40"
       >
-        <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
+        <div className="relative bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl overflow-hidden">
           <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-blue-500 to-emerald-500" />
           <div className="flex items-center gap-3 p-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 flex items-center justify-center shrink-0">
               <Sparkles size={18} className="text-white" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+              <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] leading-tight">
                 Soutenez Cosmo
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">
+              <p className="text-xs text-[rgb(var(--color-text-muted))] leading-snug">
                 Une pub de 15 s = 1 jour Premium offert.
               </p>
             </div>
@@ -111,7 +111,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             <button
               onClick={onDismiss}
               aria-label="Masquer pour aujourd'hui"
-              className="shrink-0 min-w-touch min-h-touch sm:w-8 sm:h-8 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="shrink-0 min-w-touch min-h-touch sm:w-8 sm:h-8 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <X size={14} aria-hidden="true" />
             </button>
