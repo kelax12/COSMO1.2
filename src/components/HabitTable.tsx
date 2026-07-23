@@ -237,8 +237,8 @@ const HabitTable: React.FC = () => {
               </div>
             }
 
-            {/* Sélecteur de période */}
-            <div className="flex items-center rounded-lg p-1 shadow-sm border transition-colors w-full md:w-auto" style={{
+            {/* Sélecteur de période — desktop uniquement (mobile : la période reste fixée par défaut, cf. décision produit) */}
+            <div className="hidden md:flex items-center rounded-lg p-1 shadow-sm border transition-colors w-full md:w-auto" style={{
               backgroundColor: 'rgb(var(--color-surface))',
               borderColor: 'rgb(var(--color-border))'
             }}>

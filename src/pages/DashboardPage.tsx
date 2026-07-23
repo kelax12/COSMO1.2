@@ -1,7 +1,6 @@
 import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeading } from '@/components/ui/typography';
-import { Search } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -401,15 +400,6 @@ const DashboardPage: React.FC = () => {
             </div>
             {/* Boîte de réception : demandes d'amis + tâches partagées à accepter */}
             <div className="shrink-0 pt-1 flex items-center gap-2">
-              {/* Recherche globale (#41) — mobile uniquement (desktop : loupe sidebar) */}
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-                aria-label="Recherche globale"
-                className="md:hidden flex items-center justify-center rounded-xl min-w-11 min-h-11 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] shadow-sm"
-              >
-                <Search size={18} aria-hidden="true" />
-              </button>
               <InboxMenu />
             </div>
             </div>
