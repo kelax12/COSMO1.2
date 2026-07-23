@@ -291,26 +291,30 @@ const NavItems = () =>
           <Outlet />
         </main>
         {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
-            toutes les pages protégées : une pensée doit se capturer en 1 tap. */}
-        <button
-          type="button"
-          onClick={() => {
-            // Sur /tasks, la capture rapide (QuickAddBar) n'est pas la bonne
-            // popup : on ouvre le formulaire de création complet, comme le
-            // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
-            // événement. Ailleurs, capture rapide globale inchangée.
-            const evt = location.pathname === '/tasks' ? 'open-task-create'
-              : location.pathname === '/agenda' ? 'open-agenda-create'
-              : 'open-quick-add';
-            window.dispatchEvent(new CustomEvent(evt));
-          }}
-          data-tutorial-id="global-quick-add-fab"
-          aria-label="Créer une tâche"
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
-          style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
-        >
-          <Plus size={26} aria-hidden="true" />
-        </button>
+            toutes les pages protégées SAUF le Dashboard (déjà un widget
+            "Tâches prioritaires" en haut, pas besoin d'un raccourci flottant
+            en plus). Une pensée doit se capturer en 1 tap ailleurs. */}
+        {location.pathname !== '/dashboard' && (
+          <button
+            type="button"
+            onClick={() => {
+              // Sur /tasks, la capture rapide (QuickAddBar) n'est pas la bonne
+              // popup : on ouvre le formulaire de création complet, comme le
+              // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
+              // événement. Ailleurs, capture rapide globale inchangée.
+              const evt = location.pathname === '/tasks' ? 'open-task-create'
+                : location.pathname === '/agenda' ? 'open-agenda-create'
+                : 'open-quick-add';
+              window.dispatchEvent(new CustomEvent(evt));
+            }}
+            data-tutorial-id="global-quick-add-fab"
+            aria-label="Créer une tâche"
+            className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            <Plus size={26} aria-hidden="true" />
+          </button>
+        )}
         <MobileTabBar />
         {globalOverlays}
       </div>
