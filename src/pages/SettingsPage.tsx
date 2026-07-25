@@ -329,7 +329,7 @@ const SettingsPage: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate leading-tight">{user.name}</p>
-              <p className="text-[11px] text-[rgb(var(--color-text-muted))] truncate mt-0.5">{user.email}</p>
+              <p className="text-[11px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{user.email}</p>
             </div>
           </div>
           <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
@@ -338,7 +338,7 @@ const SettingsPage: React.FC = () => {
         <nav className="flex-1 p-3 flex flex-col gap-5">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
-              <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[rgb(var(--color-text-muted))]">{group.label}</p>
+              <p className="px-3 mb-1.5 text-caption font-bold uppercase tracking-[0.18em] text-[rgb(var(--color-text-secondary))]">{group.label}</p>
               <div className="flex flex-col gap-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
@@ -391,7 +391,7 @@ const SettingsPage: React.FC = () => {
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)}
                 className={`shrink-0 flex items-center gap-1.5 px-3 min-h-touch rounded-lg text-xs font-semibold transition-all duration-150 ${
-                  active ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                  active ? 'bg-[#1f6feb] text-white shadow-sm' // #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
                 <Icon size={13} />
                 {item.label}
@@ -418,8 +418,8 @@ const SettingsPage: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h3>
-                    <p className="text-sm text-[rgb(var(--color-text-muted))] mt-0.5">{user.email}</p>
+                    <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h2>
+                    <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">{user.email}</p>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
                       <button onClick={() => fileInputRef.current?.click()}
                         className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
@@ -436,7 +436,7 @@ const SettingsPage: React.FC = () => {
                 </div>
               </SectionCard>
               <SectionCard>
-                <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h3>
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
                   <LabeledInput label="Adresse email" type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" disabled={isThirdParty} hint={isThirdParty ? 'Email géré par votre connexion externe — non modifiable ici.' : undefined} />
@@ -450,9 +450,9 @@ const SettingsPage: React.FC = () => {
               <SectionCard>
                 <div className="flex items-center gap-2 mb-1">
                   <Clock size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Fuseau horaire</h3>
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Fuseau horaire</h2>
                 </div>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
                   Choisissez le fuseau utilisé pour afficher les heures de l'agenda et de vos événements.
                 </p>
                 <div className="flex flex-col gap-2.5">
@@ -470,7 +470,7 @@ const SettingsPage: React.FC = () => {
                   >
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure par défaut</p>
-                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">Fuseau automatique de votre appareil</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">Fuseau automatique de votre appareil</p>
                     </div>
                     <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
                       tzPref.mode === 'default'
@@ -493,7 +493,7 @@ const SettingsPage: React.FC = () => {
                   >
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure personnalisée</p>
-                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">Fixez un décalage UTC</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">Fixez un décalage UTC</p>
                     </div>
                     <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
                       tzPref.mode === 'manual'
@@ -578,8 +578,8 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
               <SectionCard>
-                <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Changer le mot de passe</h3>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] mb-5">Minimum 8 caractères. Utilisez un mélange de lettres, chiffres et symboles.</p>
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Changer le mot de passe</h2>
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">Minimum 8 caractères. Utilisez un mélange de lettres, chiffres et symboles.</p>
                 <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
                   <LabeledInput label="Mot de passe actuel" showToggle value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -594,7 +594,7 @@ const SettingsPage: React.FC = () => {
               <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-sm font-bold text-red-600 dark:text-red-500">Zone de danger</h3>
+                    <h2 className="text-sm font-bold text-red-600 dark:text-red-500">Zone de danger</h2>
                     <p className="text-xs text-red-500/70 mt-1">Supprimer définitivement votre compte et toutes vos données.</p>
                   </div>
                   <button onClick={handleDeleteAccount} style={{ minHeight: '44px' }}
@@ -610,8 +610,8 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'appearance' && (
             <motion.div key="appearance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
               <SectionCard>
-                <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Thème de l'interface</h3>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] mb-5">Choisissez l'apparence qui vous convient le mieux.</p>
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Thème de l'interface</h2>
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">Choisissez l'apparence qui vous convient le mieux.</p>
                 <div style={{ minHeight: '72px' }}
                   className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
                   <div className="flex items-center gap-3.5">
@@ -620,7 +620,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Mode d'affichage</p>
-                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
                     </div>
                   </div>
                   <ThemeToggle showLabel />
@@ -635,7 +635,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Rappel habitudes du soir</p>
-                      <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5">Après 18 h, un bandeau signale les habitudes non cochées</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">Après 18 h, un bandeau signale les habitudes non cochées</p>
                     </div>
                   </div>
                   <button
@@ -662,9 +662,9 @@ const SettingsPage: React.FC = () => {
               <SectionCard className="mt-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Keyboard size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h3>
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h2>
                 </div>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] -mt-2 mb-3">
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
                   Aussi accessibles à tout moment avec la touche <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
                 </p>
                 <ShortcutsList compact />
@@ -694,7 +694,7 @@ const SettingsPage: React.FC = () => {
               >
                 <div>
                   <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">Guide complet</p>
-                  <p className="text-sm text-[rgb(var(--color-text-muted))] mt-0.5">Tâches, Agenda, Habitudes, OKR, Statistiques, Premium — tout y est.</p>
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">Tâches, Agenda, Habitudes, OKR, Statistiques, Premium — tout y est.</p>
                 </div>
                 <button
                   onClick={() => navigate('/guide')}
@@ -713,7 +713,7 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Besoin d'aide ?</p>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))]">Notre équipe répond sous 24h.</p>
+                    <p className="text-xs text-[rgb(var(--color-text-secondary))]">Notre équipe répond sous 24h.</p>
                   </div>
                 </div>
                 <button onClick={handleOpenSupport}
@@ -732,7 +732,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Stats COSMO</p>
-                      <p className="text-xs text-[rgb(var(--color-text-muted))]">Croissance, activité et conversion — réservé admin.</p>
+                      <p className="text-xs text-[rgb(var(--color-text-secondary))]">Croissance, activité et conversion — réservé admin.</p>
                     </div>
                   </div>
                   <button onClick={() => navigate('/admin')}
