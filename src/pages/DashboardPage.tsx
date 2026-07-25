@@ -346,11 +346,11 @@ const DashboardPage: React.FC = () => {
                         loop={false}
                         showCursor={true}
                         cursorCharacter="|"
-                        cursorClassName="text-blue-500"
-                        textClassName="bg-[rgb(var(--color-accent-solid))] via-purple-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
+                        cursorClassName="text-[rgb(var(--color-accent-solid))]"
+                        textClassName="text-[rgb(var(--color-accent-solid))]"
                       />
                 ) : (
-                  <span className="bg-[rgb(var(--color-accent-solid))] via-purple-600 dark:from-blue-400 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                  <span className="text-[rgb(var(--color-accent-solid))]">
                     {displayUser.name}
                   </span>
                 )}
@@ -443,7 +443,7 @@ const DashboardPage: React.FC = () => {
                   className={cn(
                     'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
-                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                      ? 'bg-[#1f6feb] text-white shadow-sm' // bleu foncé dédié : --color-accent (#58a6ff) ne passe pas le contraste AA (2.5:1) avec du texte blanc
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                   )}
                 >

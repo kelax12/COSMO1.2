@@ -373,7 +373,7 @@ const InboxMenu: React.FC = () => {
               {friends.map((friend) => (
                 <div
                   key={friend.id}
-                  className="p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
+                  className="p-3"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
@@ -430,7 +430,7 @@ const InboxMenu: React.FC = () => {
                 return (
                   <div
                     key={req.id}
-                    className="p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
+                    className="p-3"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
@@ -490,7 +490,7 @@ const InboxMenu: React.FC = () => {
                 return (
                 <div
                   key={task.id}
-                  className="p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
+                  className="p-3"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
@@ -700,7 +700,7 @@ const InboxMenu: React.FC = () => {
           exit={{ opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
           style={{ position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9999 }}
-          className="w-[22rem] max-w-[calc(100vw-24px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-2xl border border-[rgb(var(--color-border))] overflow-hidden"
+          className="w-[22rem] max-w-[calc(100vw-24px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
           role="dialog"
           aria-label="Boîte de réception"
         >
@@ -724,7 +724,7 @@ const InboxMenu: React.FC = () => {
         <Inbox size={20} aria-hidden="true" />
         {total > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-caption md:text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-caption md:text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
             aria-hidden="true"
           >
             {total > 9 ? '9+' : total}
