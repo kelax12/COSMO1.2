@@ -492,7 +492,7 @@ const OKRPage: React.FC = () => {
         aria-label="Nouvel objectif"
         className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
-        <Plus size={28} />
+        <Plus size={26} />
       </motion.button>
 
       {/* Tutoriel page OKR — variante adaptée au viewport */}

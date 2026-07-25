@@ -1,5 +1,6 @@
 import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { motion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -426,7 +427,8 @@ const DashboardPage: React.FC = () => {
                 aria-label="Ignorer le check-in cette semaine"
                 className="shrink-0 min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 sm:p-2 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
               >
-                ✕
+                <X size={16} className="md:hidden" aria-hidden="true" />
+                <span className="hidden md:inline">✕</span>
               </button>
             </div>
           </motion.div>

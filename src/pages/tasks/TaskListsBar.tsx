@@ -89,7 +89,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           aria-label="Nouvelle liste"
                           className="sm:hidden flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
                         >
-                          <Plus size={20} strokeWidth={2.5} />
+                          <Plus size={20} />
                         </button>
                       )}
                     </div>

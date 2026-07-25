@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy } from 'lucide-react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy, Lightbulb } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -439,7 +439,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <X size={14} />
           </button>
           <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <p className="font-medium mb-1">💡 Comment utiliser :</p>
+            <p className="font-medium mb-1 flex items-center gap-1.5 md:block">
+              <Lightbulb size={13} className="shrink-0 md:hidden" aria-hidden="true" />
+              <span className="md:hidden">Comment utiliser :</span>
+              <span className="hidden md:inline">💡 Comment utiliser :</span>
+            </p>
             <p>• Glissez une tâche vers le calendrier</p>
             <p>• Les propriétés se transfèrent automatiquement</p>
             <p>• La durée définit la longueur de l'événement</p>

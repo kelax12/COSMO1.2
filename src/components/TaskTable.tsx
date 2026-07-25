@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft } from 'lucide-react';
+import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
@@ -595,8 +595,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
             className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg text-xs"
             style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
           >
-            <span className="flex-1">
-              💡 Glissez à droite pour valider · maintenez (ou « ⋯ ») pour les options
+            <span className="flex-1 flex items-center gap-1.5">
+              <Lightbulb size={14} className="shrink-0" aria-hidden="true" />
+              Glissez à droite pour valider · maintenez (ou « ⋯ ») pour les options
             </span>
             <button
               type="button"
