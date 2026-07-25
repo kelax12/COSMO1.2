@@ -80,7 +80,7 @@ const MobileTabBar: React.FC = () => {
                       {end && pendingRequestCount > 0 && (
                         <span
                           aria-label={`${pendingRequestCount} demandes en attente`}
-                          className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
+                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
                         >
                           {pendingRequestCount}
                         </span>

@@ -231,7 +231,7 @@ const CollaborativeTasks: React.FC = () => {
         })}
 
           {collaborativeTasks.length === 0 && (
-            <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
+            <div className="text-center py-8 text-[rgb(var(--color-text-secondary))]">
               <Users size={48} className="mx-auto mb-4 opacity-30" />
               <p className="text-body sm:text-base">Aucune tâche collaborative</p>
               <p className="text-label sm:text-sm">Commencez à partager des tâches avec votre équipe</p>

@@ -309,7 +309,7 @@ const NavItems = () =>
             }}
             data-tutorial-id="global-quick-add-fab"
             aria-label="Créer une tâche"
-            className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+            className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform"
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
             <Plus size={26} aria-hidden="true" />
