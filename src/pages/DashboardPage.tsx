@@ -357,7 +357,7 @@ const DashboardPage: React.FC = () => {
                 </PageHeading>
               {/* Résumé contextuel cliquable (#38) + « Journée bouclée » (#39) */}
               <motion.p
-                className="text-[rgb(var(--color-text-secondary))] text-sm sm:text-base lg:text-lg"
+                className="text-[rgb(var(--color-text-secondary))] text-label sm:text-base lg:text-lg"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -410,13 +410,13 @@ const DashboardPage: React.FC = () => {
           <motion.div variants={itemVariants}>
             <div className="flex items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Votre semaine vous attend</p>
-                <p className="text-xs text-[rgb(var(--color-text-muted))]">Faites le point sur vos objectifs — 2 minutes suffisent.</p>
+                <p className="text-label sm:text-sm font-semibold text-[rgb(var(--color-text-primary))]">Votre semaine vous attend</p>
+                <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))]">Faites le point sur vos objectifs — 2 minutes suffisent.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setCheckinOpen(true)}
-                className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
+                className="shrink-0 min-h-touch sm:min-h-0 px-4 py-2 rounded-xl text-label sm:text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
               >
                 Faire le point
               </button>
@@ -441,7 +441,7 @@ const DashboardPage: React.FC = () => {
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 outline-none',
+                    'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-medium capitalize transition-all duration-200 outline-none',
                     viewMode === mode
                       ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
@@ -465,12 +465,12 @@ const DashboardPage: React.FC = () => {
               >
                 <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)]">
                   <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
-                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors truncate">
+                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors truncate">
                       {stat.label}
                     </p>
                     <motion.p
                       key={`${stat.label}-${viewMode}`}
-                      className="text-2xl sm:text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
+                      className="text-title sm:text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: 'spring' }}

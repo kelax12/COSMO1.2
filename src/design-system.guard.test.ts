@@ -26,8 +26,26 @@ import path from 'path';
  *  Agenda gardent quelques tailles arbitraires *desktop-only* (`md:text-[10px]`)
  *  pour ne jamais changer le rendu desktop lors de la migration mobile — elles
  *  restent donc hors de ce tableau, mais le budget global ci-dessous a bien
- *  baissé pour ces pages. Cf. docs/MOBILE.md. */
-const ENFORCED_SCOPE = ['src/components/mobile', 'src/pages/settings', 'src/pages/premium'];
+ *  baissé pour ces pages. Cf. docs/MOBILE.md.
+ *
+ *  Dashboard (2026-07-25) : mêmes règles. `src/pages/DashboardPage.tsx` et
+ *  `InboxMenu.tsx` gardent chacun un `md:text-[10px]` desktop-only (tooltip du
+ *  mini-graphique / badge de la boîte de réception) — même exception
+ *  qu'OKR/Statistiques/Agenda — donc restent hors de ce tableau.
+ *  `TodayTasks.tsx`, `MobileCollapsible.tsx`, `DemoConversionBanner.tsx`,
+ *  `ActiveOKRs.tsx`, `TodayHabits.tsx` et `CollaborativeTasks.tsx` sont
+ *  entièrement sur l'échelle mobile et y entrent. */
+const ENFORCED_SCOPE = [
+  'src/components/mobile',
+  'src/pages/settings',
+  'src/pages/premium',
+  'src/components/TodayTasks.tsx',
+  'src/components/MobileCollapsible.tsx',
+  'src/components/DemoConversionBanner.tsx',
+  'src/components/ActiveOKRs.tsx',
+  'src/components/TodayHabits.tsx',
+  'src/components/CollaborativeTasks.tsx',
+];
 
 const SCAN_ROOTS = ['src/components', 'src/pages'];
 /** shadcn (non modifiable) + showcases marketing (déjà ignorés par ESLint). */
@@ -38,7 +56,7 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
  * après migration de Réglages/OKR/Statistiques/Premium/Habitudes/Dashboard/Agenda.
  * Ce nombre ne doit JAMAIS monter. Il baisse au fil des pages migrées.
  */
-const ARBITRARY_BUDGET = 204;
+const ARBITRARY_BUDGET = 202;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;

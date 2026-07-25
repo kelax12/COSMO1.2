@@ -32,7 +32,7 @@ const DemoConversionBanner: React.FC = () => {
     <div
       role="region"
       aria-label="Mode démo"
-      className="flex items-center gap-3 px-4 py-2.5 bg-[rgb(var(--color-accent-solid))]/10 border-b border-[rgb(var(--color-accent-solid))]/20 text-sm"
+      className="flex items-center gap-3 px-4 py-2.5 bg-[rgb(var(--color-accent-solid))]/10 border-b border-[rgb(var(--color-accent-solid))]/20 text-label md:text-sm"
     >
       <CloudUpload size={16} className="shrink-0 text-blue-400" aria-hidden="true" />
       <p className="flex-1 text-[rgb(var(--color-text-secondary))] leading-snug">
@@ -51,7 +51,7 @@ const DemoConversionBanner: React.FC = () => {
         type="button"
         onClick={dismiss}
         aria-label="Masquer la bannière démo"
-        className="shrink-0 p-1.5 rounded-lg text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+        className="shrink-0 min-w-touch min-h-touch md:min-w-0 md:min-h-0 md:p-1.5 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <X size={16} aria-hidden="true" />
       </button>

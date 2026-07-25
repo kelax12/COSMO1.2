@@ -44,21 +44,21 @@ const ActiveOKRs: React.FC = () => {
                       className="p-4 bg-[rgb(var(--color-hover))] rounded-xl border border-[rgb(var(--color-border))] transition-all duration-300 hover:shadow-md hover:border-[rgb(var(--color-success)/0.5)] hover:bg-[rgb(var(--color-success)/0.05)] cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">{okr.title}</h3>
+                      <h3 className="font-semibold text-body sm:text-base text-[rgb(var(--color-text-primary))]">{okr.title}</h3>
                       <div className="flex items-center gap-2">
                         <TrendingUp size={16} className="text-[rgb(var(--color-success))]" />
-                        <span className="font-semibold text-[rgb(var(--color-success))]">{progress}%</span>
+                        <span className="font-semibold text-body sm:text-base text-[rgb(var(--color-success))]">{progress}%</span>
                       </div>
                     </div>
-                    
+
                     <div className="w-full bg-[rgb(var(--color-border-muted))] rounded-full h-1.5 mb-3">
-                      <div 
+                      <div
                         className="bg-[rgb(var(--color-success))] h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                  
-                  <div className="text-sm text-[rgb(var(--color-text-secondary))]">
+
+                  <div className="text-label sm:text-sm text-[rgb(var(--color-text-secondary))]">
                     <div className="flex items-center gap-2 mb-1">
                       <Clock size={14} className="text-[rgb(var(--color-text-muted))]" />
                       <span>
