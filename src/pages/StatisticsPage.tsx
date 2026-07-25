@@ -380,7 +380,8 @@ export default function StatisticsPage() {
                 selectedPeriod === period.id ? 'shadow-sm' : ''
               }`}
               style={{
-                backgroundColor: selectedPeriod === period.id ? 'rgb(var(--color-accent))' : 'transparent',
+                // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
+                backgroundColor: selectedPeriod === period.id ? '#1f6feb' : 'transparent',
                 color: selectedPeriod === period.id ? 'white' : 'rgb(var(--color-text-secondary))',
               }}
             >
@@ -393,14 +394,14 @@ export default function StatisticsPage() {
       {/* Vue d'ensemble : toggle Tout / voir le détail */}
       {selectedSection === 'all' && (
         <div className="flex justify-end mb-3">
-          <div className="inline-flex rounded-xl border p-0.5" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
+          <div className="inline-flex rounded-xl border p-1" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
             <button
               type="button"
               onClick={() => setOverviewDetail(false)}
               aria-pressed={!overviewDetail}
               className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                backgroundColor: !overviewDetail ? 'rgb(var(--color-accent))' : 'transparent',
+                backgroundColor: !overviewDetail ? '#1f6feb' : 'transparent', // #58a6ff ne passe pas le contraste AA avec du texte blanc
                 color: !overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
               }}
             >
@@ -412,7 +413,7 @@ export default function StatisticsPage() {
               aria-pressed={overviewDetail}
               className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                backgroundColor: overviewDetail ? 'rgb(var(--color-accent))' : 'transparent',
+                backgroundColor: overviewDetail ? '#1f6feb' : 'transparent', // #58a6ff ne passe pas le contraste AA avec du texte blanc
                 color: overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
               }}
             >
@@ -437,7 +438,7 @@ export default function StatisticsPage() {
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {selectedSection === 'agenda' ? 'Durée totale des événements' : 'Temps investi'}
             </h2>
-            <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Moyenne : {formatTime(avgWorkTime)} · Total : {formatTime(totalWorkTime)}
             </p>
           </div>
@@ -481,13 +482,14 @@ export default function StatisticsPage() {
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} tick={{ fill: 'rgb(var(--color-text-secondary))' }} />
             <YAxis
               tickLine={false}
               axisLine={false}
               tickMargin={4}
               width={56}
               tickFormatter={(v: number) => formatTimeShort(v)}
+              tick={{ fill: 'rgb(var(--color-text-secondary))' }}
             />
             <ChartTooltip
               cursor={false}
