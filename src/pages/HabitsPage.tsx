@@ -112,7 +112,7 @@ const HabitsPage: React.FC = () => {
             Développez de bonnes habitudes au quotidien
           </p>
           {habits.length > 0 && (
-            <div className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <div className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Progression : {getTodayCompletionRate()}% (
               {habits.filter(h => h.completions[new Date().toLocaleDateString('en-CA')]).length}/
               {habits.length})
@@ -266,17 +266,18 @@ const HabitsPage: React.FC = () => {
         onClick={() => setShowModal(true)}
         data-tutorial-id="habits-fab"
         aria-label="Nouvelle habitude"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/40 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={28} />
       </motion.button>
 
       {/* Tutoriel page Habitudes — variante adaptée au viewport */}
+      {/* accentColor en jaune foncé : #EAB308 ne passait pas le contraste AA (1.9:1, le pire relevé) avec le texte blanc du bouton "Suivant" */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#EAB308"
+        accentColor="#A16207"
       />
 
       {/* Bannière pub quotidienne NON bloquante (#50) — la page reste
