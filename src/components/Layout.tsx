@@ -293,8 +293,11 @@ const NavItems = () =>
         {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
             toutes les pages protégées SAUF le Dashboard (déjà un widget
             "Tâches prioritaires" en haut, pas besoin d'un raccourci flottant
-            en plus). Une pensée doit se capturer en 1 tap ailleurs. */}
-        {location.pathname !== '/dashboard' && (
+            en plus), et SAUF Habitudes/OKR qui ont déjà leur propre FAB dédié
+            (même position, z-30) — le garder ici les rendait inutilisables :
+            ce FAB (z-40) passait au-dessus et interceptait tous les taps,
+            ouvrant la capture rapide générique au lieu du bon modal. */}
+        {location.pathname !== '/dashboard' && location.pathname !== '/habits' && location.pathname !== '/okr' && (
           <button
             type="button"
             onClick={() => {
