@@ -305,7 +305,7 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCheckin(true)}
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-blue-400 dark:border-[rgb(var(--color-accent-solid))] bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           aria-label="Ouvrir le check-in hebdo"
           title="Faire le point sur vos OKR — s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
         >
@@ -330,7 +330,7 @@ const OKRPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowCheckin(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-blue-400 dark:border-[rgb(var(--color-accent-solid))] bg-white dark:bg-slate-900"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))]"
         >
           <CalendarCheck size={18} />
           <span>Ouvrir le check-in hebdo</span>
