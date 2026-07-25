@@ -695,11 +695,12 @@ const TasksPage: React.FC = () => {
       />
 
       {/* Tutoriel page Tâches — variante adaptée au viewport */}
+      {/* accentColor en bleu foncé : #3B82F6 ne passait pas le contraste AA (3.7:1) avec le texte blanc du bouton "Suivant" */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#3B82F6"
+        accentColor="#1F6FEB"
       />
     </motion.div>
   );

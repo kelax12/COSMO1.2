@@ -87,7 +87,7 @@ const PendingSharedTasks: React.FC = () => {
 
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-label sm:text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+      <p className="text-label sm:text-xs font-semibold text-amber-600 dark:text-amber-400">
         Tâches partagées en attente ({pendingTasks.length})
       </p>
       {pendingTasks.map((task) => (
