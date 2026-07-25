@@ -36,10 +36,10 @@ const MobileCollapsible: React.FC<MobileCollapsibleProps> = ({
           open ? 'rounded-t-2xl border-b-0' : 'rounded-2xl'
         )}
       >
-        <span className="flex items-center gap-2 font-bold text-[rgb(var(--color-text-primary))]">
+        <span className="flex items-center gap-2 font-bold text-body text-[rgb(var(--color-text-primary))]">
           {title}
           {badge !== undefined && badge !== 0 && badge !== '0' && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent))] text-white">
+            <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent))] text-white">
               {badge}
             </span>
           )}

@@ -105,15 +105,15 @@ const TodayHabits: React.FC = () => {
                   </div>
                 
                   <div className="flex-1">
-                    <h3 className={`font-bold ${habit.completedToday ? 'text-white dark:text-blue-300 line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
+                    <h3 className={`font-bold text-body sm:text-base ${habit.completedToday ? 'text-white dark:text-blue-300 line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
                       {habit.name}
                     </h3>
                 <div className="flex items-center gap-4 mt-1">
-                  <div className={`flex items-center gap-1 text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
+                  <div className={`flex items-center gap-1 text-label sm:text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                     <Clock size={14} />
                     <span>{habit.estimatedTime} min</span>
                   </div>
-                  <div className={`flex items-center gap-1 text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                  <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     <span>🔥</span>
                     <span>{Object.values(habit.completions).filter(Boolean).length} jours</span>
                   </div>

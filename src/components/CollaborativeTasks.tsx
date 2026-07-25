@@ -131,8 +131,8 @@ const CollaborativeTasks: React.FC = () => {
                   >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-bold text-[rgb(var(--color-text-primary))]">{task.name}</h3>
-                      <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                      <h3 className="font-bold text-body sm:text-base text-[rgb(var(--color-text-primary))]">{task.name}</h3>
+                      <div className="flex flex-wrap items-center gap-4 mt-1 text-label sm:text-sm text-[rgb(var(--color-text-secondary))]">
                         <div className="flex items-center gap-1.5">
                           <Users size={14} />
                           <span>Partagé par {task.sharedBy || 'Moi'}</span>
@@ -233,8 +233,8 @@ const CollaborativeTasks: React.FC = () => {
           {collaborativeTasks.length === 0 && (
             <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
               <Users size={48} className="mx-auto mb-4 opacity-30" />
-              <p>Aucune tâche collaborative</p>
-              <p className="text-sm">Commencez à partager des tâches avec votre équipe</p>
+              <p className="text-body sm:text-base">Aucune tâche collaborative</p>
+              <p className="text-label sm:text-sm">Commencez à partager des tâches avec votre équipe</p>
             </div>
           )}
         </div>

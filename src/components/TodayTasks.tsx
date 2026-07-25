@@ -142,8 +142,8 @@ const TodayTasks: React.FC = () => {
     <>
       <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
         <div className="mb-4 sm:mb-6">
-          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
-          <p className="text-[rgb(var(--color-text-secondary))] text-sm">
+          <h2 className="text-headline sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
+          <p className="text-[rgb(var(--color-text-secondary))] text-label sm:text-sm">
             {todayTasks.length} tâches • {Math.floor(totalTime / 60)}h{totalTime % 60}min
           </p>
         </div>
@@ -188,7 +188,7 @@ const TodayTasks: React.FC = () => {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{task.name}</h3>
+                      <h3 className="font-semibold text-body sm:text-base text-[rgb(var(--color-text-primary))] truncate">{task.name}</h3>
                       {getPriorityIcon(task.priority)}
                       {task.sharedBy ? (
                         <span className="hidden md:inline-flex text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0" title={task.sharedBy}>
@@ -210,7 +210,7 @@ const TodayTasks: React.FC = () => {
                         })
                       ) : null}
                     </div>
-                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-label sm:text-sm text-[rgb(var(--color-text-secondary))]">
                       <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
                       {task.priority > 0 && (
                         <div className="flex items-center gap-1">
@@ -218,7 +218,7 @@ const TodayTasks: React.FC = () => {
                           <span>Priorité {task.priority}</span>
                         </div>
                       )}
-                      <div className="text-xs whitespace-nowrap">
+                      <div className="text-caption sm:text-xs whitespace-nowrap">
                         {task.deadline ? new Date(task.deadline).toLocaleDateString('fr-FR') : "Pas d'échéance"}
                       </div>
                     </div>

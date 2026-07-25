@@ -22,8 +22,8 @@ interface PageHeadingProps {
 }
 
 const VARIANT_CLASSES: Record<NonNullable<PageHeadingProps['variant']>, string> = {
-  // text-2xl mobile → text-4xl sm → text-5xl lg
-  hero:     'text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight',
+  // text-title (22px, échelle mobile) → text-4xl sm → text-5xl lg
+  hero:     'text-title sm:text-4xl lg:text-5xl font-bold tracking-tight',
   // text-2xl mobile → text-3xl sm
   standard: 'text-2xl sm:text-3xl font-bold',
   // text-lg mobile → text-3xl sm  (côtoie une icône)
