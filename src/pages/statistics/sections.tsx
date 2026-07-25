@@ -115,7 +115,7 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(item.time)}</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       {totalTime > 0 ? Math.round((item.time / totalTime) * 100) : 0}%
                     </span>
                   </div>
@@ -147,13 +147,13 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
               <circle cx="0" cy="0" r="0.75" fill="rgb(var(--color-surface))" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-caption md:text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total</span>
+              <span className="text-caption md:text-[10px] text-[rgb(var(--color-text-secondary))] uppercase font-black tracking-widest mb-1">Total</span>
               <span className="text-xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalTime)}</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 w-full">
             {breakdown.filter(i => i.time > 0).map(item => (
-              <div key={item.id} className="flex items-center gap-2 text-caption md:text-[10px] font-bold uppercase tracking-wider text-muted-foreground justify-center">
+              <div key={item.id} className="flex items-center gap-2 text-caption md:text-[10px] font-bold uppercase tracking-wider justify-center" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                 {item.label}
               </div>
@@ -301,7 +301,7 @@ export const AgendaStatistics: React.FC<{
                 <circle cx="0" cy="0" r="0.75" fill="rgb(var(--color-surface))" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-caption md:text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total</span>
+                <span className="text-caption md:text-[10px] text-[rgb(var(--color-text-secondary))] uppercase font-black tracking-widest mb-1">Total</span>
                 <span className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalMinutesAll)}</span>
               </div>
             </div>
@@ -314,7 +314,7 @@ export const AgendaStatistics: React.FC<{
                       <span className="font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.name}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-caption md:text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{formatTime(item.minutes)}</span>
+                      <span className="text-caption md:text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-[rgb(var(--color-text-secondary))]">{formatTime(item.minutes)}</span>
                       <span className="font-black text-violet-500">{Math.round((item.minutes / totalMinutesAll) * 100)}%</span>
                     </div>
                   </div>
@@ -348,7 +348,7 @@ export const AgendaStatistics: React.FC<{
                 </div>
                 <p className="font-black text-sm shrink-0 ml-3" style={{ color: getColorValue(event.color) }}>{formatTime(event.duration)}</p>
               </div>
-            )) : <div className="py-8 text-center text-muted-foreground">Aucun événement</div>}
+            )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">Aucun événement</div>}
           </div>
         </div>
       </div>
@@ -385,15 +385,15 @@ export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start:
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Total Objectifs</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">Total Objectifs</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{objectives.length}</p>
         </div>
         <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Objectifs travaillés</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">Objectifs travaillés</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{okrWorkTime.length}</p>
         </div>
         <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Temps total réel</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">Temps total réel</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalWorkedTime)}</p>
         </div>
       </div>
@@ -418,7 +418,7 @@ export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start:
                   style={{ width: `${(okr.workedTime / maxWorkedTime) * 100}%` }} />
               </div>
             </div>
-          )) : <div className="py-8 text-center text-muted-foreground">Aucun effort enregistré.</div>}
+          )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">Aucun effort enregistré.</div>}
         </div>
       </div>
     </div>
@@ -484,7 +484,7 @@ export const HabitsStatistics: React.FC<{
             ? sortedRelevantHabits.map(habit => (
                 <HabitStatItem key={habit.id} habit={habit} formatTime={formatTime} />
               ))
-            : <div className="py-8 text-center text-muted-foreground">Aucune habitude complétée ou active sur cette période.</div>}
+            : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">Aucune habitude complétée ou active sur cette période.</div>}
         </div>
       </div>
     </div>
