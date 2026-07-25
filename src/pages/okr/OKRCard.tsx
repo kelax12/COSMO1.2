@@ -115,7 +115,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   )}
 
                   <div>
-                    <h3 className="text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
+                    <h2 className="text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
                   </div>
 
                 <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
@@ -141,7 +141,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
+                  <h3 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h3>
                   {objective.keyResults.map((keyResult) => {
                     // Guard targetValue > 0 (B17) : évite NaN quand la cible vaut 0.
                     const krProgress = keyResult.targetValue > 0
@@ -181,7 +181,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               title="Planifier un événement">
 
-                              <Calendar size={14} className="text-purple-500" />
+                              <Calendar size={14} style={{ color: 'rgb(var(--color-text-muted))' }} />
                             </button>
                             {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                               <span

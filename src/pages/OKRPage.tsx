@@ -490,17 +490,18 @@ const OKRPage: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowAddObjective(true)}
         aria-label="Nouvel objectif"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/40 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={28} />
       </motion.button>
 
       {/* Tutoriel page OKR — variante adaptée au viewport */}
+      {/* accentColor en vert foncé : #22C55E ne passait pas le contraste AA (2.3:1) avec le texte blanc du bouton "Suivant" */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#22C55E"
+        accentColor="#15803D"
       />
 
       {/* Check-in hebdo — accessible manuellement en mode démo (en prod il

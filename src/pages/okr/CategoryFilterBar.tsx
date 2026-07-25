@@ -87,7 +87,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
     large ? 'gap-1.5 px-3 sm:py-1.5 text-sm' : 'gap-1 px-2.5 sm:py-1 text-xs'
   }`;
   const allActiveCls = accentAllActive
-    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-transparent'
+    ? 'bg-[#1f6feb] text-[rgb(var(--color-accent-solid-foreground))] border-transparent' // bleu fonce : --color-accent-solid (#388bfd) ne passe pas le contraste AA (3.3:1) avec du texte blanc
     : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent';
   return (
       <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">
