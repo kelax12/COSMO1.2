@@ -286,7 +286,7 @@ const HabitTable: React.FC = () => {
                 </th>
                   {days.map((day) =>
                   <th key={day.date} className="text-center p-2 font-medium min-w-[40px] md:min-w-[50px] snap-start transition-colors" style={{ color: 'rgb(var(--table-header-text))' }}>
-                    <div className="text-caption md:text-xs mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{day.dayName}</div>
+                    <div className="text-caption md:text-xs mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{day.dayName}</div>
                     <div className={`text-xs md:text-sm ${day.isToday ? 'font-bold' : ''}`} style={{
                       color: day.isToday ? 'rgb(var(--color-accent))' : 'rgb(var(--table-header-text))'
                     }}>
