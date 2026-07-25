@@ -171,7 +171,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               title="Créer une tâche">
 
-                              <CheckCircle size={14} className="text-blue-500" />
+                              <CheckCircle size={14} className="text-[rgb(var(--color-accent-solid))] md:text-blue-500" />
                             </button>
                             <button
                               onClick={() => {

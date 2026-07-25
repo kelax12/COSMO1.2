@@ -160,7 +160,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             style={{ opacity: greenIconOpacity }}
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
-            <CheckCircle2 size={22} strokeWidth={2.5} />
+            <CheckCircle2 size={22} />
             <span className="text-label font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
           </motion.div>
         </motion.div>
@@ -173,7 +173,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             style={{ opacity: grayIconOpacity }}
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
-            <MoreHorizontal size={22} strokeWidth={2.5} />
+            <MoreHorizontal size={22} />
             <span className="text-label font-bold">Options</span>
           </motion.div>
         </motion.div>
