@@ -14,7 +14,7 @@ export const mobileCalendarStyles = `
     font-size: 11px !important;
     padding: 0 4px !important;
     vertical-align: top;
-    color: rgb(var(--color-text-muted));
+    color: rgb(var(--color-text-secondary)); /* --color-text-muted ne passe pas le contraste AA (3.4:1) sur le fond de la grille */
   }
   .mobile-calendar .fc-timegrid-axis { width: 40px !important; }
   .mobile-calendar .fc-col-header { display: none !important; }
@@ -70,7 +70,8 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           data-tutorial-id="agenda-mobile-tasks-toggle"
           className={`flex items-center gap-1 px-2 min-h-touch rounded-lg text-xs font-medium transition-colors`}
           style={{
-            backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'transparent',
+            // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
+            backgroundColor: showTaskSidebar ? '#1f6feb' : 'transparent',
             color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
           }}
         >
@@ -83,8 +84,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           {/* 3-way view selector */}
           <div
             data-tutorial-id="agenda-mobile-view-switcher"
-            className="flex rounded-lg overflow-hidden border text-xs"
-            style={{ borderColor: 'rgb(var(--color-border))' }}
+            className="flex rounded-lg overflow-hidden text-xs"
           >
             {views.map(({ key, label }) => (
               <button
@@ -92,8 +92,9 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
                 onClick={() => onSetView(key)}
                 className="px-2 min-h-touch min-w-touch flex items-center justify-center font-medium transition-colors"
                 style={{
+                  // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
                   backgroundColor:
-                    viewMode === key ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
+                    viewMode === key ? '#1f6feb' : 'rgb(var(--color-chip-bg))',
                   color: viewMode === key ? 'white' : 'rgb(var(--color-text-secondary))',
                 }}
               >

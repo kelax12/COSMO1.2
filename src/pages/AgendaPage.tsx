@@ -745,8 +745,8 @@ const AgendaPage: React.FC = () => {
                 .dark .fc-theme-standard .fc-timegrid-col { background-color: transparent !important; }
                 .fc-event { transition: all 0.2s ease; }
                 .fc-event:hover { transform: scale(1.02); z-index: 999; }
-                /* Conflit d'horaires (#21) : liseré d'alerte discret */
-                .fc-event.event-conflict { box-shadow: inset 4px 0 0 #ef4444, 0 1px 2px rgba(0,0,0,0.1); }
+                /* Conflit d'horaires (#21) : liseré d'alerte discret — bordure fine sur tout le contour plutôt qu'un bandeau épais d'un seul côté */
+                .fc-event.event-conflict { box-shadow: inset 0 0 0 2px #ef4444, 0 1px 2px rgba(0,0,0,0.1); }
               `}</style>
             </div>
           </div>
@@ -848,11 +848,12 @@ const AgendaPage: React.FC = () => {
       />
 
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
+      {/* accentColor en rouge foncé : #EF4444 ne passait pas le contraste AA (3.8:1) avec le texte blanc du bouton "Suivant" */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#EF4444"
+        accentColor="#DC2626"
       />
     </motion.div>
   );
