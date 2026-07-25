@@ -82,7 +82,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                 >
                   <div className="mb-2 sm:mb-4">
                     <div className="flex items-center justify-between mb-1 sm:mb-4">
-                      <h3 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h3>
+                      <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h2>
                       {!showCreateList && (
                         <button
                           onClick={() => setShowCreateList(true)}

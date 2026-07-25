@@ -689,7 +689,7 @@ body {
   }
 
   .dark .task-priority-2 {
-    @apply bg-orange-600/30 text-orange-400 border-orange-700;
+    @apply bg-orange-600/30 text-orange-300 border-orange-700;
   }
 
   .task-priority-3 {

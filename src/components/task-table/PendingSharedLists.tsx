@@ -25,7 +25,7 @@ const PendingSharedLists: React.FC = () => {
 
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-label sm:text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400">
+      <p className="text-label sm:text-xs font-semibold text-teal-600 dark:text-teal-400">
         Listes partagées en attente ({grants.length})
       </p>
       {grants.map((grant) => (
