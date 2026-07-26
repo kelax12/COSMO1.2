@@ -45,7 +45,7 @@ Légende :
 | L2  | 🟡 Low       | OKR — pas d'édition inline de catégorie        | ✅ Corrigé   | Bouton crayon au hover sur chip catégorie + form inline (nom + couleur) |
 | L3  | 🟡 Low       | EventModal — section Aperçu redondante + Description toujours visible | ✅ Corrigé   | Aperçu supprimée, Description repliée par défaut (bouton « + Ajouter un commentaire ») |
 | L4  | 🟡 Low       | Habits — pas de raccourci habit → tâche/event | ✅ Corrigé   | HabitActionsMenu (« ... ») entre Edit2 et Trash2 — 2 actions (Créer tâche / Planifier dans agenda) + EventModal `lockedFields` |
-| §14 | 🟡 À plan.   | `console.error` conservés en prod              | ✅ Corrigé   | Drop dans `vite.config.ts` (`pure: console.error/warn`) + monitoring Sentry React SDK (EU region, `VITE_SENTRY_DSN`) branché sur `AppErrorBoundary` (tag `mode: demo|prod`) |
+| §14 | 🟡 À plan.   | `console.error` conservés en prod              | ✅ Corrigé   | Drop dans `vite.config.ts` (`pure: console.error/warn`) + monitoring Sentry React SDK (EU region, `VITE_SENTRY_DSN`) branché sur `AppErrorBoundary` (tag `mode: demo\|prod`) |
 | V1  | 🟠 High      | Mass-assignment `user_id` (tasks/habits)       | ✅ Corrigé   | `d545808` + `010` trigger |
 | V2  | 🟡 Medium    | Pending invites email leak (collaborators)     | ✅ Corrigé   | `010` view restreinte |
 | V5  | 🟡 Medium    | Avatar upload sans validation                  | ✅ Corrigé   | `d545808` SettingsPage |
@@ -71,6 +71,16 @@ Légende :
 | F-3 | 🟡 Low/Med | `resolve_profiles_by_emails` = oracle d'existence de compte en batch (1000 emails/appel, tout authentifié, sans lien d'amitié ni rate-limit) | ✅ Corrigé | `080_security_audit_fable_2026_07_18.sql` — batch borné 1000 → 50. Contrôle relationnel toujours volontairement absent (design N12). Voir [F-3](#f-3--oracle-dénumération-de-comptes-en-batch) |
 | F-4 | 🟡 Low | `can_access_team_okr` (mig. 073) + 6 fonctions trigger `validate_*` exécutables par `anon` — non couvertes par le REVOKE anon des mig. 064/069 (fonction née après) | ✅ Corrigé | `080_security_audit_fable_2026_07_18.sql` — REVOKE FROM anon appliqué aux 7 fonctions. Vérifié live (`has_function_privilege('anon', …) = false`). Voir [F-4](#f-4--hardening-anon-résiduel-régression-de-064069) |
 | F-5 | 🟡 Low | `events.created_by` forgeable via insert direct (le mapper `mapEventToDb` est propre, mais aucune contrainte serveur) → usurpation d'auteur d'événement | ✅ Corrigé | `080_security_audit_fable_2026_07_18.sql` — trigger `events_enforce_created_by` (figé à `auth.uid()`, immuable en UPDATE) + `credit_premium_token_from_ad` repassée en `search_path = ''`. Vérifié live (trigger attaché). HaveIBeenPwned toujours off (réglage Dashboard, hors SQL). Voir [F-5](#f-5--divers-hardening) |
+| G-1 | 🔴 High (CVSS 8.1) | **Usurpation d'identité via `profiles.email`** — la RLS est *row-level* et ne filtre pas les colonnes ; les GRANT laissaient `authenticated` réécrire son propre email, clé d'identité du flux d'invitation. Pré-réservation de l'email d'un non-inscrit → détournement d'invitations. `UNIQUE(email)` contournable par la casse | ✅ Corrigé | `083_security_audit_2026_07_26.sql` — `REVOKE UPDATE` + `GRANT UPDATE (display_name, avatar_url)`, trigger `enforce_profile_integrity` (**SECURITY INVOKER**), index unique `lower(email)`, sync `auth.users.email → profiles.email`. PoC rejoué après fix : bloqué. Voir [G-1](#g-1--usurpation-didentité-via-profilesemail-h-1) |
+| G-2 | 🟠 Medium | `resolve_profile_by_email` : `LIMIT 1` sans `ORDER BY` → résolution d'identité non déterministe en cas de collision de casse | ✅ Corrigé | `083` — `ORDER BY id` + index unique sur `lower(email)` (cause racine) |
+| G-3 | 🟠 Medium | `record_demo_visit` exécutable par `anon` sans borne → primitive d'écriture non authentifiée illimitée (saturation disque / facturation) | ✅ Corrigé | `083` — plafond 500 insertions/heure, absorbé silencieusement. Testé : `537 → 537` |
+| G-4 | 🟠 Medium | Énumération d'emails sans limite de débit (complète [F-3](#f-3--oracle-dénumération-de-comptes-en-batch), qui n'avait borné que la *taille* des lots, pas le *nombre d'appels*) | ✅ Corrigé | `083` — table `email_lookup_quota` + `consume_email_lookup_quota`, 200 résolutions **hors contacts**/24 h. Les emails déjà contacts coûtent 0 → `friends.getAll()` non impacté |
+| G-5 | 🟠 Medium | TOCTOU dans `credit_premium_token_from_ad` : `SELECT` sans verrou puis `UPDATE` → N appels concurrents franchissent tous le plafond de 20/24 h | ✅ Corrigé | `083` — `SELECT … FOR UPDATE`. ⚠️ Validation multi-connexions restante (cf. section G) |
+| G-6 | 🟠 Medium | Code d'invitation organisation : 6 caractères (~29,7 bits) + **biais modulo** (`byte % 31` sur 256 valeurs → A–H ~12,5 % plus probables, CWE-331) | ✅ Corrigé | `083` — 10 caractères (~49,5 bits) + tirage par rejet (octets ≥ 248). Mesuré sur 3 000 codes : A–H 965,4 vs autres 968,6. Regex client `{6}` → `(?:{6}\|{10})` (codes hérités toujours valides) |
+| G-7 | 🟡 Low | `profiles.display_name` : `sanitize_display_name()` contournable par PATCH direct (aucun trigger) → usurpation d'affichage, longueur illimitée | ✅ Corrigé | `083` — sanitisation appliquée dans le trigger. Bug fonctionnel corrigé au passage : la classe `[<>"'\` -]` retirait aussi **espaces et tirets** (« Jean Dupont » → « JeanDupont ») |
+| G-8 | 🟡 Low | 7 fonctions trigger `validate_*` de nouveau exécutables par `anon` via `/rest/v1/rpc/` (récidive de [F-4](#f-4--hardening-anon-résiduel-régression-de-064069) : la 080 avait traité les fonctions d'alors, pas le motif) | ✅ Corrigé | `083` — boucle `REVOKE` **générique** sur toutes les fonctions `RETURNS trigger` du schéma `public`, donc immunisée aux prochaines. Advisors : 7 → 0 |
+| G-9 | 🟠 Medium | `react-router` 6.x — open redirect via antislash dans `<Link>`/`useNavigate` (GHSA-wrjc-x8rr-h8h6) | ⚠️ **Non corrigé — assumé** | **Aucune version corrigée n'existe en v6** (6.30.4 = dernière v6, toujours affectée) ; le fix exige v7.17.1+, majeur cassant. Exploitabilité **vérifiée nulle** : aucun `navigate()`/`<Link>` alimenté par un paramètre d'URL, pas de SSR. À traiter en migration v7 dédiée. `postcss` → 8.5.23 (corrigé) |
+| G-10 | 🟡 Low | Jetons de session en `localStorage` + `style-src 'unsafe-inline'` | 🟢 Partiel | `frame-ancestors 'none'` ajouté à la CSP. `'unsafe-inline'` **conservé volontairement** : le retirer casse Framer Motion et Radix (styles inline). `localStorage` = compromis standard Supabase SPA |
 
 ---
 
@@ -182,6 +192,20 @@ limiter côté RPC (compteur par `auth.uid()` sur fenêtre glissante, pattern
 `credit_premium_token_from_ad`). Faible priorité (auth requis, données
 limitées) mais à traiter si l'énumération d'utilisateurs devient un vecteur.
 
+> **✅ Complété le 2026-07-26 par [G-4](#g-2--g-8--détail-dans-le-rapport)** — la 080
+> n'avait borné que la *taille* des lots (1000 → 50), pas le *nombre d'appels* :
+> l'énumération restait possible à 50 emails par requête, sans limite. La mig. `083`
+> ajoute le rate-limit recommandé ci-dessus (table `email_lookup_quota` +
+> `consume_email_lookup_quota`, pattern `credit_premium_token_from_ad` comme suggéré),
+> appliqué aux **deux** RPC.
+>
+> Nuance de conception qui a rendu la chose applicable sans casser l'app : seules
+> les résolutions portant sur un email qui **n'est pas déjà un contact** de
+> l'appelant sont décomptées. `friends.getAll()` résout un email **par ami à chaque
+> chargement** — un plafond global aurait cassé les comptes à beaucoup d'amis.
+> Le contrôle relationnel reste volontairement absent du *résultat* (design N12 :
+> nécessaire pour inviter par email quelqu'un qu'on ne connaît pas encore).
+
 ### F-4 — Hardening anon résiduel (régression de 064/069)
 
 **Sévérité** : 🟡 Low. **Statut** : à planifier (1 micro-migration).
@@ -243,6 +267,127 @@ REVOKE EXECUTE ON FUNCTION public.validate_org_manager() FROM anon;
 
 ---
 
+## 🔎 Audit sécurité 2026-07-26 — passe complète (commit `a9016ff`)
+
+Audit exhaustif demandé en posture paranoïaque (architecture, auth, autz, API,
+DB, front, back, uploads, stockage, secrets, cloud, crypto, logique métier,
+paiement, RGPD, dépendances, config, headers, observabilité, OWASP).
+Rapport détaillé : [`AUDIT-SECURITE-2026-07-26.md`](./AUDIT-SECURITE-2026-07-26.md).
+
+Méthode : revue de code + interrogation du **catalogue PostgreSQL en prod**
+(`ykeugqfgklejcdbrmawy`) + **PoC exécutés sous RLS réelle**, en se faisant passer
+pour un rôle `authenticated` (`set_config('role',…)` + `request.jwt.claims`),
+chaque PoC terminé par `RAISE EXCEPTION` → rollback total, aucune donnée touchée.
+
+> **Correspondance des identifiants** : le rapport utilise H-1 / M-1…M-7 / L-1…L-5.
+> Ici on préfixe en **G-n** pour ne pas collider avec les IDs M-x/N-x de l'audit
+> Deepsec 2026-05-15. Mapping : G-1=H-1, G-2=M-1, G-3=M-2, G-4=M-3, G-5=M-4,
+> G-6=M-7, G-7=L-1, G-8=L-3, G-9=M-5, G-10=L-2.
+
+**Socle confirmé sain** (vérifié live, pas déduit des migrations) : 0 lint ERROR,
+0 table sans RLS, **76 fonctions `SECURITY DEFINER` toutes à `search_path` figé**,
+0 vue `SECURITY DEFINER`, 0 bucket Storage (sections uploads/stockage sans objet),
+aucune surface d'injection SQL, aucun secret dans le bundle, aucun sink XSS
+alimenté par des données utilisateur (les 3 `dangerouslySetInnerHTML` = contenu
+de build `src/content/blog/*.mjs` + CSS de graphique). Auto-approbation de demande
+d'ami **impossible** (le `WITH CHECK` de `friend_requests` interdit à l'émetteur
+de passer son propre statut à `accepted`) — chaîne spécifiquement recherchée.
+
+### G-1 — Usurpation d'identité via `profiles.email` (H-1)
+
+**Sévérité** : 🔴 High, CVSS 8.1 (`AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:N`).
+**Statut** : ✅ Corrigé (mig. `083`, appliquée en prod le 2026-07-26).
+
+**Cause racine — le point aveugle du modèle Supabase** : la RLS de PostgreSQL est
+*row-level*. Elle **ne filtre pas les colonnes**. Les policies de `profiles`
+étaient correctes (`auth.uid() = id` en `USING` et `WITH CHECK`), mais les
+`GRANT` au niveau colonne autorisaient `authenticated` à écrire `email`,
+`account_type`, `id`, `last_seen_at` — et **aucun trigger** ne protégeait la table
+(contrairement à `prevent_user_id_change` ailleurs).
+
+Or `profiles.email` est la **clé d'identité** de tout le flux d'invitation
+(`resolve_profile_by_email` / `resolve_profiles_by_emails`).
+
+Attaque (compte gratuit suffisant) :
+
+```bash
+curl -X PATCH "https://<ref>.supabase.co/rest/v1/profiles?id=eq.<son_uid>" \
+  -H "apikey: <anon_key>" -H "Authorization: Bearer <son_jwt>" \
+  -d '{"email":"cfo@target-corp.com"}'
+```
+
+Puis un collègue invite ce DAF (pas encore inscrit) → la RPC renvoie l'UUID de
+**l'attaquant** → tâche/liste/organisation partagée avec lui.
+
+**Preuve** (PoC en prod, rollback garanti) :
+
+```
+POC2 >>> update_rows=1 | attacker_owns_identity=t | batch_rows_returned=1
+```
+
+`UNIQUE(email)` ne protégeait pas : la contrainte est **sensible à la casse**
+alors que les lookups sont en `lower(email)` → `VICTIM@x.com` et `victim@x.com`
+coexistaient en matchant la même requête (`spoof_casing_accepted=t`).
+
+**Correctif** (mig. `083`) :
+1. `REVOKE UPDATE ON profiles FROM authenticated, anon` puis
+   `GRANT UPDATE (display_name, avatar_url) TO authenticated` — frontière principale ;
+2. trigger `enforce_profile_integrity` — défense en profondeur ;
+3. index unique sur `lower(email)` — supprime la collision de casse ;
+4. trigger `sync_profile_email` sur `auth.users` : `profiles.email` devenant
+   non modifiable par le client, il **doit** être alimenté par la source de
+   vérité. Le trigger existant faisait `ON CONFLICT DO NOTHING` et ne propageait
+   **pas** un changement d'email — sans ce point, l'email serait resté figé.
+
+> ⚠️ **Piège rencontré, à retenir** : le trigger avait d'abord été écrit en
+> `SECURITY DEFINER`. Dans ce mode `current_user` vaut **toujours** le
+> propriétaire (`postgres`), donc le garde
+> `current_user NOT IN ('authenticated','anon')` était systématiquement vrai :
+> le trigger sortait immédiatement et **ne faisait rien**. Les attaques étaient
+> bien bloquées, mais uniquement par les GRANT — la défense en profondeur était
+> inopérante. Révélé par le test de `display_name` (valeur revenue brute), corrigé
+> en repassant le trigger en **`SECURITY INVOKER`**, seul mode qui distingue
+> `authenticated` (PATCH client) de `postgres` (corps `SECURITY DEFINER`).
+> C'est aussi ce qui permet à `create_organization`, `respond_join_request`,
+> `remove_member` et `leave_organization` de continuer à écrire `account_type`.
+
+**Validation** — PoC rejoués après correction :
+
+| Test | Avant | Après |
+|---|---|---|
+| Pré-réservation d'un email non inscrit | `attacker_owns_identity=t` | `preclaim_blocked=t` ✅ |
+| Collision de casse sur un email existant | `casing_accepted=t` | `casing_blocked=t` ✅ |
+| Élévation `account_type` → `business` | possible | `account_type_blocked=t` ✅ |
+| Écriture sur la ligne d'autrui | bloquée (RLS) | `other_row_blocked=t` ✅ |
+| **Non-régression** `create_organization` | — | OK, `acct=business` ✅ |
+
+### G-2 → G-8 — Détail dans le rapport
+
+Tous corrigés par la mig. `083` et validés par test. Résultats clés :
+
+- **G-3** `record_demo_visit` : au-delà du plafond, `537 → 537` (absorbé).
+- **G-4** quota : 3 résolutions d'un **contact** = **0** consommé ; un inconnu = 1 ;
+  plafond appliqué ; et **un contact reste résolvable au plafond**
+  (`contact_still_ok=t`) → pas de déni de service métier. C'est la propriété qui
+  rend le quota compatible avec `friends.getAll()`, qui résout un email **par ami
+  à chaque chargement** — un plafond global naïf aurait cassé l'app.
+- **G-6** join codes : 3 000 tirages, `bad_format=0`, 31 symboles distincts,
+  A–H **965,4** vs autres **968,6** (biais éliminé).
+- **G-7** `display_name` : `<script>` retiré, **espace et tiret préservés**.
+- **G-8** fonctions trigger exécutables par `anon` : 7 → **0**.
+
+### Actions manuelles restantes (hors SQL)
+
+| # | Action | Pourquoi |
+|---|---|---|
+| 1 | **Activer HaveIBeenPwned** (Dashboard → Auth → Policies) | Seul point « 7 jours » restant. Toujours signalé par `get_advisors`. |
+| 2 | Vérifier que le mot de passe `DATABASE_URL` de l'historique git n'est **pas réutilisé** | Cf. [§1](#1-secrets-dans-lhistorique-git--projet-supprimé-pas-la-prod-) — le projet fuité est supprimé, mais un mot de passe réutilisé resterait valide ailleurs. |
+| 3 | Activer *Secret scanning* + *Push protection* sur GitHub | Le dépôt est **public**. |
+| 4 | Valider **G-5** en multi-connexions | `FOR UPDATE` vérifié présent, mais une vraie course exige des connexions parallèles (impossible via MCP, session unique) : `seq 30 \| xargs -P30 -I{} curl -s -X POST ".../rpc/credit_premium_token_from_ad" -H "apikey: <anon>" -H "Authorization: Bearer <jwt>"` → attendu **20 succès / 10 `check_violation`**. |
+| 5 | Mise à jour outillage dédiée (`vitest` 3→4, `eslint` 9→10, `vite`) | CVE **dev-only**, jamais servies au navigateur. `npm audit fix --force` casserait le peer `eslint-plugin-react-hooks` — refusé volontairement dans une passe sécurité. |
+
+---
+
 ## 🟢 CLOS / NON BLOQUANTS
 
 ### §1. Secrets dans l'historique git — projet supprimé, PAS la prod ✅
@@ -268,6 +413,28 @@ Postgres), `ANON_KEY` et `BETTER_AUTH_SECRET`.
 qui n'existe plus. La base de données de production n'a jamais été exposée.
 `BETTER_AUTH_SECRET` est également mort (better-auth n'est pas utilisé — l'auth
 passe par Supabase). Aucune rotation de la prod n'était requise pour cette fuite.
+
+> **Re-vérifié indépendamment le 2026-07-26** (audit G, sans partir de cette
+> conclusion) — confirmé sur tous les points, avec 2 précisions :
+> - Le JWT fuité est bien `role=service_role`, `ref=pzrpwyqwultyenvqfyhg`,
+>   `exp=2084938178` (**an 2036** — il n'expirera jamais de lui-même). Ce qui le
+>   neutralise est **uniquement** la suppression du projet : `pzrpwyqwultyenvqfyhg.supabase.co`
+>   → **NXDOMAIN**, et absent de `list_projects`.
+> - Le `.env` local ne contient plus que `VITE_SENTRY_DSN` ; `VITE_SUPABASE_URL`
+>   et `VITE_SUPABASE_ANON_KEY` sont **vides** (0 caractère) → le dev local tourne
+>   en mode démo, les credentials prod vivent dans Vercel. `.env` est bien
+>   gitignored (`.gitignore:89`) et absent du staging.
+>
+> **Deux actions restent malgré tout ouvertes** (le dépôt est **public**) :
+> 1. **Confirmer que le mot de passe Postgres de `DATABASE_URL` n'a pas été
+>    réutilisé** ailleurs (projet actuel, autre service). Un projet supprimé rend
+>    la *chaîne* inerte, pas le *mot de passe* s'il a été recyclé.
+> 2. Activer **Secret scanning + Push protection** sur GitHub, pour que le prochain
+>    `.env` committé soit bloqué au push plutôt que détecté six mois plus tard.
+>
+> Ces secrets doivent être considérés comme **définitivement brûlés** (GitHub
+> conserve les objets orphelins, des miroirs ont pu les capter) — ce qui est déjà
+> le cas ici.
 
 > ℹ️ Reste une bonne hygiène (optionnelle, non bloquante) : purger le `.env` de
 > l'historique public pour ne pas laisser traîner des secrets même morts —
@@ -352,6 +519,20 @@ Defense-in-depth conservée : `WITH CHECK` + trigger `prevent_user_id_change` (0
 ### §7. Vulnérabilités npm résiduelles
 `npm audit` → 2 modérées sur esbuild via `vite < 6.4.1` (dev seulement).
 **Correctif** : `npm audit fix --force` (passe vite v8, breaking) en PR dédiée.
+
+> **État au 2026-07-26** (cf. [G-9](#-tableau-récapitulatif)) :
+> - **Production** : `postcss` → 8.5.23 ✅. Reste `react-router` 6.x — **aucune
+>   version corrigée n'existe en v6** (6.30.4 est la dernière et reste affectée),
+>   le fix impose v7.17.1+, un majeur cassant. Exploitabilité **vérifiée nulle** :
+>   aucun `navigate()`/`<Link to>` alimenté par un paramètre d'URL (`redirect`,
+>   `next`, `returnTo` : 0 occurrence), les seules redirections externes sont
+>   l'URL Stripe renvoyée par l'Edge Function et des `redirectTo` construits sur
+>   `window.location.origin`. Le 2ᵉ avis (`deserializeErrors`, hydratation SSR)
+>   **ne s'applique pas** : SPA sans SSR. → migration v7 planifiée à part.
+> - **Dev-only** (`vitest`, `eslint`, `vite`, `glob`/`minimatch`) : jamais servies
+>   au navigateur. `npm audit fix --force` imposerait vitest 3→4 et eslint 9→10 et
+>   **casserait** le peer `eslint-plugin-react-hooks` (vérifié en `--dry-run`).
+>   Refusé volontairement dans une passe sécurité → mise à jour outillage dédiée.
 
 ### §8. Drift DB ↔ migrations (`friend_requests`)
 La table `friend_requests` en prod utilise `sender_id` / `receiver_id` / `sender_email`, alors que `007_friends.sql` utilise `user_id`. Plusieurs objets DB existent uniquement en prod :
@@ -497,7 +678,22 @@ Vérification finale par re-audit indépendant :
 
 ---
 
-## Ordre de priorité avant déploiement prod (à jour 2026-06-11)
+## Ordre de priorité avant déploiement prod (à jour 2026-07-26)
+
+> **Mise à jour 2026-07-26** — la mig. `083` (audit G) est **appliquée en prod** et
+> validée par rejeu des PoC. Il ne reste **aucun finding High ou Critical
+> exploitable**. Risque global : **MOYEN → FAIBLE**. Les points ouverts sont soit
+> des réglages de console, soit des dépendances non exploitables en l'état.
+>
+> | # | Action | Effort | Bloque déploiement ? |
+> |---|---|---|---|
+> | 1 | **Activer HaveIBeenPwned** (Dashboard → Auth → Policies) | 2 min | Non — recommandé (inchangé depuis 2026-06-11) |
+> | 2 | Vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique + secret scanning GitHub (dépôt **public**) | 15 min | Non |
+> | 3 | Valider G-5 (TOCTOU) en multi-connexions | 10 min | Non — `FOR UPDATE` en place |
+> | 4 | Migration `react-router` v7 (G-9) | PR dédiée | Non — exploitabilité vérifiée nulle |
+> | 5 | Mise à jour outillage dev (vitest/eslint/vite) | PR dédiée | Non — CVE dev-only |
+
+### Ancien tableau (2026-06-11, conservé pour historique)
 
 | # | Action | Effort | Bloque déploiement ? |
 |---|---|---|---|
