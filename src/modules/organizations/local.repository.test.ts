@@ -153,7 +153,8 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
 
   it('regenerateJoinCode : nouveau code valide, admin only', async () => {
     const code = await repo.regenerateJoinCode(DEMO_ORG_ID);
-    expect(code).toMatch(/^COSMO-[A-HJ-KM-NP-Z2-9]{6}$/);
+    // Depuis la mig. 083 (faille M-7) : 10 caractères (~49,5 bits) au lieu de 6.
+    expect(code).toMatch(/^COSMO-[A-HJ-KM-NP-Z2-9]{10}$/);
     const orgs = await repo.getMyOrganizations();
     expect(orgs.find((o) => o.id === DEMO_ORG_ID)?.joinCode).toBe(code);
     // Membre simple sur Atelier Lune → refus.
