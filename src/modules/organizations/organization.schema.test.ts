@@ -47,4 +47,13 @@ describe('joinCodeSchema', () => {
     expect(safeValidate(joinCodeSchema, { code: 'COSMO-ABC' }).success).toBe(false);
     expect(safeValidate(joinCodeSchema, { code: 'COSMO-ABCDEFG' }).success).toBe(false);
   });
+
+  // Mig. 083 (faille M-7) : les codes passent de 6 à 10 caractères. Les codes
+  // à 6 caractères déjà émis doivent rester valides, sinon les entreprises
+  // existantes ne peuvent plus recruter.
+  it('accepte 6 (héritage) ET 10 (nouveau) caractères, mais rien entre les deux', () => {
+    expect(safeValidate(joinCodeSchema, { code: 'COSMO-ABCDEF' }).success).toBe(true);
+    expect(safeValidate(joinCodeSchema, { code: 'COSMO-ABCDEFGHJK' }).success).toBe(true);
+    expect(safeValidate(joinCodeSchema, { code: 'COSMO-ABCDEFGH' }).success).toBe(false);
+  });
 });

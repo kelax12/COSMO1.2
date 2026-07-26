@@ -213,7 +213,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             onKeyDown={(e) => e.key === 'Enter' && code.trim() && consent && handleJoin()}
-            placeholder="COSMO-XXXXXX"
+            placeholder="COSMO-XXXXXXXXXX"
             className={`${inputClasses} tracking-widest font-mono`}
             maxLength={12}
             autoFocus

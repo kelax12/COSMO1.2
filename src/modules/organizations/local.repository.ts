@@ -25,6 +25,23 @@ export const DEMO_ORG_2_ID = 'org-demo-2';
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
+// Miroir démo de `public.generate_join_code()` (mig. 083, faille M-7).
+// 10 caractères (~49,5 bits) tirés par rejet des octets >= 248 : comme 256
+// n'est pas multiple de 31, un simple `% 31` rendrait les lettres A..H
+// ~12,5 % plus probables (biais modulo, CWE-331).
+const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // 31 symboles
+
+export const generateDemoJoinCode = (): string => {
+  let code = 'COSMO-';
+  const buf = new Uint8Array(1);
+  while (code.length < 'COSMO-'.length + 10) {
+    crypto.getRandomValues(buf);
+    if (buf[0] >= 248) continue; // rejet → distribution uniforme
+    code += JOIN_CODE_ALPHABET[buf[0] % 31];
+  }
+  return code;
+};
+
 const DEMO_ORGS: Organization[] = [
   {
     id: DEMO_ORG_ID,
@@ -152,7 +169,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     const org: Organization = {
       id: crypto.randomUUID(),
       name,
-      joinCode: `COSMO-${crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`,
+      joinCode: generateDemoJoinCode(),
       ownerId: DEMO_USER_ID,
       createdAt: new Date().toISOString(),
     };
@@ -414,11 +431,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     if (!org) throw new Error('Entreprise introuvable');
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
     if (me?.role !== 'admin') throw new Error('Seul un administrateur peut régénérer le code');
-    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    let code = 'COSMO-';
-    const bytes = new Uint8Array(6);
-    crypto.getRandomValues(bytes);
-    for (const b of bytes) code += alphabet[b % 31];
+    const code = generateDemoJoinCode();
     org.joinCode = code;
     this.saveOrgs(orgs);
     return code;
