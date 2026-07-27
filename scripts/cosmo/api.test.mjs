@@ -15,8 +15,9 @@ import { CosmoValidationError } from './errors.mjs';
  * et le résultat final est `await`-able via then(). Enregistre les appels
  * pour qu'on puisse asserter les filtres envoyés.
  */
-function makeFakeClient(result = { data: [], error: null }) {
+function makeFakeClient(result = { data: [], error: null }, byTable = {}) {
   const calls = [];
+  let currentTable = null;
   const chain = {
     select: (...a) => (calls.push(['select', ...a]), chain),
     eq: (...a) => (calls.push(['eq', ...a]), chain),
@@ -28,14 +29,32 @@ function makeFakeClient(result = { data: [], error: null }) {
     update: (...a) => (calls.push(['update', ...a]), chain),
     delete: (...a) => (calls.push(['delete', ...a]), chain),
     single: (...a) => (calls.push(['single', ...a]), chain),
-    then: (resolve) => resolve(result),
+    // Le résultat peut dépendre de la table : createTask lit `categories`
+    // avant d'écrire dans `tasks`, les deux n'ont pas la même forme.
+    then: (resolve) => resolve(byTable[currentTable] ?? result),
   };
   return {
     calls,
-    from: (table) => (calls.push(['from', table]), chain),
+    from: (table) => {
+      currentTable = table;
+      calls.push(['from', table]);
+      return chain;
+    },
     rpc: (...a) => (calls.push(['rpc', ...a]), chain),
   };
 }
+
+/** Catégories de référence pour les tests d'écriture de tâche. */
+const CATS = {
+  categories: {
+    data: [
+      { id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa', name: 'Perso', color: '#fff' },
+      { id: 'bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb', name: 'Travail', color: '#000' },
+    ],
+    error: null,
+  },
+};
+const PERSO_ID = 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa';
 
 describe('TASK_COLUMNS — garde anti-derive', () => {
   it('correspond exactement a TASK_LIST_COLUMNS du repository applicatif', () => {
@@ -107,11 +126,34 @@ describe('createTask', () => {
     expect(client.calls).toHaveLength(0);
   });
 
+  // tasks.category stocke un UUID de categories.id, jamais un nom : ecrire un
+  // nom produit une tache orpheline, visible en base mais rattachee a rien.
+  it('resout la categorie vers son ID, pas son nom', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
+    await createTask(client, { name: 'X', category: 'Perso' }, { userId: 'u1' });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1].category).toBe(PERSO_ID);
+  });
+
+  it('accepte un UUID de categorie tel quel', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
+    await createTask(client, { name: 'X', category: PERSO_ID }, { userId: 'u1' });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1].category).toBe(PERSO_ID);
+  });
+
+  it('rejette un nom de categorie inconnu en listant les valides', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
+    await expect(
+      createTask(client, { name: 'X', category: 'NexistePas' }, { userId: 'u1' })
+    ).rejects.toThrow(/Perso, Travail/);
+  });
+
   it('retombe sur la premiere categorie de l utilisateur quand aucune n est fournie', async () => {
-    const client = makeFakeClient({ data: [{ id: 'c1', name: 'Perso' }], error: null });
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
     await createTask(client, { name: 'X' }, { userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
-    expect(insert[1].category).toBe('Perso');
+    expect(insert[1].category).toBe(PERSO_ID);
   });
 
   it('leve une erreur explicite si l utilisateur n a aucune categorie', async () => {
@@ -120,12 +162,12 @@ describe('createTask', () => {
   });
 
   it('applique les defauts documentes', async () => {
-    const client = makeFakeClient({ data: { id: 'n1', name: 'X' }, error: null });
+    const client = makeFakeClient({ data: { id: 'n1', name: 'X' }, error: null }, CATS);
     await createTask(client, { name: 'X', category: 'Perso' }, { now: new Date(2026, 6, 27), userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
     expect(insert[1]).toMatchObject({
       name: 'X',
-      category: 'Perso',
+      category: PERSO_ID,
       priority: DEFAULT_TASK.priority,
       estimated_time: DEFAULT_TASK.estimatedTime,
       deadline: '2026-07-27',
@@ -141,7 +183,7 @@ describe('createTask', () => {
   // verifiee, jamais de l'entree appelante » — comme le fait le repository
   // applicatif (supabase.repository.ts:206).
   it('pose le user_id de la session et ignore celui fourni en entree', async () => {
-    const client = makeFakeClient({ data: { id: 'n1' }, error: null });
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
     await createTask(
       client,
       { name: 'X', category: 'Perso', userId: 'pirate' },
@@ -158,7 +200,7 @@ describe('createTask', () => {
   });
 
   it('transforme une echeance vide en NULL (colonne timestamp)', async () => {
-    const client = makeFakeClient({ data: { id: 'n1' }, error: null });
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
     await createTask(client, { name: 'X', category: 'Perso', deadline: '' }, { userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
     expect(insert[1].deadline).toBeNull();
@@ -294,6 +336,13 @@ describe('updateTask', () => {
     await updateTask(client, 't1', { name: 'Nouveau', estimatedTime: 90, priority: 5 });
     const update = client.calls.find(([m]) => m === 'update');
     expect(update[1]).toEqual({ name: 'Nouveau', estimated_time: 90, priority: 5 });
+  });
+
+  it('resout aussi la categorie vers son ID a la modification', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null }, CATS);
+    await updateTask(client, 't1', { category: 'Travail' });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1].category).toBe('bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb');
   });
 
   it('ignore les champs hors whitelist, dont user_id', async () => {

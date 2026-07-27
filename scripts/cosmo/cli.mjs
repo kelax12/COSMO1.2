@@ -3,6 +3,7 @@
 import { createCosmoClient, requireSession } from './client.mjs';
 import {
   listTasks, createTask, completeTask, reopenTask, updateTask, deleteTask,
+  listCategories,
   listHabitsToday, markHabitDone,
   listUpcomingEvents, listOkrs, listKeyResults,
   todayLocal,
@@ -20,6 +21,7 @@ Taches (lecture + ecriture complete)
   tasks delete <id> --confirm      (irreversible)
 
 Autres domaines
+  categories                       liste les categories (nom + id)
   habits today
   habits done <id>
   agenda [--days <n>]
@@ -36,6 +38,7 @@ Priorites : 1 = tres basse ... 5 = critique.
  *  frappe ne doit pas produire « session expiree ». */
 const KNOWN = {
   tasks: ['list', 'add', 'update', 'done', 'reopen', 'delete', undefined],
+  categories: [undefined],
   habits: ['today', 'done', undefined],
   agenda: [undefined],
   okr: [undefined],
@@ -82,6 +85,11 @@ function parseArgs(argv) {
 }
 
 function formatLine(item) {
+  // Categorie : {id, name, color} — pas de champ discriminant plus tardif, on
+  // teste `color` qui n'existe que la.
+  if (item.color !== undefined && item.name !== undefined && item.doneToday === undefined) {
+    return `${item.name}  (${item.id})`;
+  }
   if (item.doneToday !== undefined) {
     return `${item.doneToday ? '[x]' : '[ ]'} ${item.name}  (${item.id})`;
   }
@@ -227,6 +235,11 @@ async function run(argv) {
     const removed = await deleteTask(client, id);
     if (!flags.json) console.log('Supprimee :');
     output(removed, flags);
+    return;
+  }
+
+  if (domain === 'categories') {
+    output(await listCategories(client), flags);
     return;
   }
 
