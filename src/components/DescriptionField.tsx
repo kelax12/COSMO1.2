@@ -87,7 +87,7 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
             <button
               type="button"
               onClick={() => setIsExpanded(false)}
-              aria-label="Fermer et revenir à la tâche"
+              aria-label="Fermer et revenir au formulaire"
               className="p-2 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >

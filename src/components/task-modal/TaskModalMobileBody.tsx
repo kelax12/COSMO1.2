@@ -20,7 +20,7 @@ import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
 import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
-import DescriptionField from './DescriptionField';
+import DescriptionField from '@/components/DescriptionField';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
 
 export interface MobileBodyProps {

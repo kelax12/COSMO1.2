@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import AddCategoryButton from '@/components/AddCategoryButton';
+import DescriptionField from '@/components/DescriptionField';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_LABELS, formatEventDuration } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
@@ -357,10 +358,10 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                 >
                   Description
                 </label>
-                <textarea
+                <DescriptionField
                   value={notes}
-                  onChange={(e) =>
-                    handleFieldChange("notes", setNotes, e.target.value)
+                  onChange={(value) =>
+                    handleFieldChange("notes", setNotes, value)
                   }
                   rows={6}
                   autoFocus={!notes}
@@ -381,6 +382,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                           : "rgb(var(--color-border))",
                     }}
                     placeholder="description de l'événement"
+                    expandedTitle="Description de l'événement"
                 />
               </div>
             ) : (
