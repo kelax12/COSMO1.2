@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { TASK_COLUMNS, todayLocal, listTasks } from './api.mjs';
+import {
+  TASK_COLUMNS, todayLocal, listTasks,
+  createTask, completeTask, DEFAULT_TASK,
+} from './api.mjs';
+import { CosmoValidationError } from './errors.mjs';
 
 /**
  * Faux client Supabase : chaque méthode de chaînage se retourne elle-même,
@@ -89,5 +93,70 @@ describe('listTasks', () => {
     expect(tasks[0]).toMatchObject({
       id: 't1', name: 'Ecrire le plan', estimatedTime: 45, completed: false, recurrence: 'none',
     });
+  });
+});
+
+describe('createTask', () => {
+  it('refuse un nom vide sans appeler le reseau', async () => {
+    const client = makeFakeClient();
+    await expect(createTask(client, { name: '   ' })).rejects.toThrow(CosmoValidationError);
+    expect(client.calls).toHaveLength(0);
+  });
+
+  it('retombe sur la premiere categorie de l utilisateur quand aucune n est fournie', async () => {
+    const client = makeFakeClient({ data: [{ id: 'c1', name: 'Perso' }], error: null });
+    await createTask(client, { name: 'X' });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1].category).toBe('Perso');
+  });
+
+  it('leve une erreur explicite si l utilisateur n a aucune categorie', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await expect(createTask(client, { name: 'X' })).rejects.toThrow(/categorie/i);
+  });
+
+  it('applique les defauts documentes', async () => {
+    const client = makeFakeClient({ data: { id: 'n1', name: 'X' }, error: null });
+    await createTask(client, { name: 'X', category: 'Perso' }, { now: new Date(2026, 6, 27) });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1]).toMatchObject({
+      name: 'X',
+      category: 'Perso',
+      priority: DEFAULT_TASK.priority,
+      estimated_time: DEFAULT_TASK.estimatedTime,
+      deadline: '2026-07-27',
+      bookmarked: false,
+      completed: false,
+      recurrence: 'none',
+    });
+  });
+
+  it('n envoie JAMAIS user_id (frontiere anti-mass-assignment)', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null });
+    await createTask(client, { name: 'X', category: 'Perso', userId: 'pirate' });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1]).not.toHaveProperty('user_id');
+  });
+
+  it('transforme une echeance vide en NULL (colonne timestamp)', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null });
+    await createTask(client, { name: 'X', category: 'Perso', deadline: '' });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1].deadline).toBeNull();
+  });
+});
+
+describe('completeTask', () => {
+  it('pose completed ET completed_at', async () => {
+    const client = makeFakeClient({ data: { id: 't1', completed: true }, error: null });
+    await completeTask(client, 't1', { now: new Date(2026, 6, 27) });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toMatchObject({ completed: true, completed_at: '2026-07-27' });
+  });
+
+  it('cible bien la tache demandee', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await completeTask(client, 't1');
+    expect(client.calls).toContainEqual(['eq', 'id', 't1']);
   });
 });
