@@ -89,6 +89,10 @@ vite.config.ts.timestamp-*
 .env
 .env.local
 .env.production
+# Config du CLI agent COSMO (scripts/cosmo/) — contient l'URL + la clé
+# publishable du projet Supabase. Volontairement distinct de .env, dont le
+# VITE_SUPABASE_URL vide maintient l'app locale en mode démo.
+.env.cosmo-cli
 
 # Deepsec scanner workspace — local-only, contains ANTHROPIC_API_KEY
 .deepsec/
