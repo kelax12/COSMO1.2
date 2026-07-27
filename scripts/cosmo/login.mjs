@@ -5,7 +5,7 @@
 // ~/.cosmo/session.json et rafraîchie automatiquement ensuite.
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
-import { createCosmoClient, SESSION_PATH } from './client.mjs';
+import { createCosmoClient, SESSION_PATH, parseVerificationInput } from './client.mjs';
 
 async function main() {
   const rl = readline.createInterface({ input, output });
@@ -34,12 +34,26 @@ async function main() {
       return;
     }
 
-    console.log(`Code envoye a ${email}.`);
-    const token = (await rl.question('Colle le code recu : ')).trim();
+    console.log(`Email envoye a ${email}.`);
+    console.log('Selon le template Supabase, tu recois soit un code a 6 chiffres,');
+    console.log('soit un lien « Log In ». Dans le second cas : copie le LIEN sans le');
+    console.log('cliquer (appui long > Copier l adresse du lien) et colle-le ici.');
 
-    const { data, error } = await client.auth.verifyOtp({ email, token, type: 'email' });
+    const answer = await rl.question('Code ou lien : ');
+
+    // parseVerificationInput lève une CosmoAuthError explicite si la saisie
+    // n'est ni un code ni une URL — inutile de deviner ici.
+    const parsed = parseVerificationInput(answer);
+
+    const { data, error } =
+      parsed.kind === 'otp'
+        ? await client.auth.verifyOtp({ email, token: parsed.token, type: 'email' })
+        : await client.auth.verifyOtp({ token_hash: parsed.tokenHash, type: parsed.type });
+
     if (error) {
-      console.error(`Code refuse : ${error.message}`);
+      console.error(`Verification refusee : ${error.message}`);
+      console.error('Un lien deja ouvert dans un navigateur est consomme : relance la commande');
+      console.error('pour en recevoir un nouveau, et copie-le sans le cliquer.');
       process.exitCode = 1;
       return;
     }

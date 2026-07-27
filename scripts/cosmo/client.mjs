@@ -85,6 +85,48 @@ export function createCosmoClient({ config = loadConfig(), storage = createFileS
 }
 
 /**
+ * Interprète ce que l'utilisateur colle à l'étape de vérification.
+ *
+ * Le template d'email Supabase par défaut n'envoie qu'un lien (il faudrait y
+ * ajouter `{{ .Token }}` pour obtenir un code). Plutôt que d'imposer une
+ * modification de template en production, on accepte les deux formes :
+ *   - un code à 6 chiffres        → verifyOtp({ email, token, type: 'email' })
+ *   - le lien magique collé tel quel → verifyOtp({ token_hash, type })
+ *
+ * Fonction pure : aucune I/O, testable isolément.
+ */
+export function parseVerificationInput(raw) {
+  const value = (raw ?? '').trim();
+  if (!value) {
+    throw new CosmoAuthError('Saisie vide : colle le code a 6 chiffres ou le lien recu par email.');
+  }
+
+  if (/^\d{6}$/.test(value)) {
+    return { kind: 'otp', token: value };
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    let url;
+    try {
+      url = new URL(value);
+    } catch {
+      throw new CosmoAuthError('Lien illisible : verifie que tu as colle l URL complete.');
+    }
+    const tokenHash = url.searchParams.get('token');
+    if (!tokenHash) {
+      throw new CosmoAuthError(
+        'Ce lien ne contient pas de parametre `token` : ce n est pas le lien de connexion Supabase.'
+      );
+    }
+    return { kind: 'magiclink', tokenHash, type: url.searchParams.get('type') || 'magiclink' };
+  }
+
+  throw new CosmoAuthError(
+    'Saisie non reconnue : attendu un code a 6 chiffres, ou le lien complet recu par email.'
+  );
+}
+
+/**
  * Garantit une session utilisable. Ne tente JAMAIS de se ré-authentifier :
  * le login est une action humaine (voir login.mjs).
  */
