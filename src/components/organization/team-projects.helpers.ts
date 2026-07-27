@@ -36,11 +36,11 @@ export const projectColor = (color: string): ProjectColorDef =>
 // ─── Priorités (1..5) ────────────────────────────────────────────────
 
 export const PRIORITY_META: Record<number, { dot: string; label: string }> = {
-  1: { dot: 'bg-slate-400', label: 'P1 · Très basse' },
-  2: { dot: 'bg-sky-400', label: 'P2 · Basse' },
+  1: { dot: 'bg-red-500', label: 'P1 · Critique' },
+  2: { dot: 'bg-amber-500', label: 'P2 · Haute' },
   3: { dot: 'bg-blue-500', label: 'P3 · Normale' },
-  4: { dot: 'bg-amber-500', label: 'P4 · Haute' },
-  5: { dot: 'bg-red-500', label: 'P5 · Critique' },
+  4: { dot: 'bg-sky-400', label: 'P4 · Basse' },
+  5: { dot: 'bg-slate-400', label: 'P5 · Très basse' },
 };
 
 // ─── Tâches : retard, tri, stats ─────────────────────────────────────
@@ -53,14 +53,14 @@ export const isTaskOverdue = (task: TeamTask): boolean => {
 
 /**
  * Tri des tâches ouvertes : deadline croissante (sans deadline en dernier),
- * puis priorité décroissante, puis date de création.
+ * puis priorité croissante (P1 = plus prioritaire d'abord), puis date de création.
  */
 export const sortOpenTasks = (tasks: TeamTask[]): TeamTask[] =>
   [...tasks].sort((a, b) => {
     const da = a.deadline || '9999-99-99';
     const db = b.deadline || '9999-99-99';
     if (da !== db) return da < db ? -1 : 1;
-    if (a.priority !== b.priority) return b.priority - a.priority;
+    if (a.priority !== b.priority) return a.priority - b.priority;
     return a.createdAt < b.createdAt ? -1 : 1;
   });
 

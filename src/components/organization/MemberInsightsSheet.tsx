@@ -9,10 +9,12 @@ import {
   CheckCircle2,
   Circle,
   AlertTriangle,
+  Plus,
 } from 'lucide-react';
-import { useTeamTasks, type TeamTask } from '@/modules/team-projects';
-import type { OrgMember } from '@/modules/organizations';
+import { useTeamTasks, useTeamProjects, useCreateTeamTask, type TeamTask } from '@/modules/team-projects';
+import { useOrgMembers, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import TeamTaskModal from './TeamTaskModal';
 
 export type InsightsTab = 'tasks' | 'agenda' | 'contribution';
 
@@ -48,6 +50,11 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
   // 'agenda' a désormais son propre écran plein page — on retombe sur 'tasks'.
   const [tab, setTab] = useState<InsightsTab>(initialTab === 'agenda' ? 'tasks' : initialTab);
   const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: orgMembers = [] } = useOrgMembers(orgId);
+  const createTask = useCreateTeamTask(orgId);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
 
   const myTasks = useMemo(
     () => allTasks.filter((t) => t.assigneeIds.includes(member.userId)),
@@ -68,11 +75,13 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
     [open],
   );
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
-    >
+  return (
+    <>
+      {createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+          onClick={onClose}
+        >
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -122,7 +131,7 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
           {isLoading ? (
             <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">Chargement…</p>
           ) : tab === 'tasks' ? (
-            <TasksView open={open} done={done} />
+            <TasksView open={open} done={done} onAddTask={() => setCreatingTask(true)} />
           ) : tab === 'agenda' ? (
             <AgendaView scheduled={scheduled} />
           ) : (
@@ -135,9 +144,22 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
             />
           )}
         </div>
-      </div>
-    </div>,
-    document.body,
+        </div>
+        </div>,
+        document.body,
+      )}
+      {creatingTask && (
+        <TeamTaskModal
+          isCreating
+          projects={activeProjects.length > 0 ? activeProjects : projects}
+          members={orgMembers}
+          defaultProjectId={(activeProjects[0] ?? projects[0])?.id}
+          defaultAssigneeIds={[member.userId]}
+          onCreate={(input) => createTask.mutateAsync(input)}
+          onClose={() => setCreatingTask(false)}
+        />
+      )}
+    </>
   );
 };
 
@@ -162,12 +184,28 @@ const TaskRow = ({ t }: { t: TeamTask }) => (
   </li>
 );
 
-const TasksView = ({ open, done }: { open: TeamTask[]; done: TeamTask[] }) => {
+const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => (
+  <button
+    type="button"
+    onClick={onAddTask}
+    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-sm font-semibold text-[rgb(var(--color-text-secondary))]"
+  >
+    <Plus size={14} aria-hidden="true" /> Ajouter une tâche
+  </button>
+);
+
+const TasksView = ({ open, done, onAddTask }: { open: TeamTask[]; done: TeamTask[]; onAddTask: () => void }) => {
   if (open.length === 0 && done.length === 0) {
-    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">Aucune tâche d'équipe assignée.</p>;
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-[rgb(var(--color-text-muted))] py-2 text-center">Aucune tâche d'équipe assignée.</p>
+        <AddTaskButton onAddTask={onAddTask} />
+      </div>
+    );
   }
   return (
     <div className="space-y-4">
+      <AddTaskButton onAddTask={onAddTask} />
       <section>
         <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
           En cours ({open.length})

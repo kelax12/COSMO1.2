@@ -15,8 +15,9 @@ import {
   getMasterId,
   type CalendarEvent,
 } from '@/modules/events';
-import { useTeamTasks, useTeamProjects, type TeamTask } from '@/modules/team-projects';
+import { useTeamTasks, useTeamProjects, useCreateTeamTask, type TeamTask } from '@/modules/team-projects';
 import { useOrgTeamMembers } from '@/modules/org-teams';
+import { useOrgMembers } from '@/modules/organizations';
 import EventModal, { type EventModalMode } from '@/components/EventModal';
 import {
   buildCalendarEvents,
@@ -28,6 +29,7 @@ import {
 import { PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import TeamTaskModal from './TeamTaskModal';
 
 interface MemberAgendaSheetProps {
   member: OrgMember;
@@ -75,6 +77,10 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
   const { data: allTeamTasks = [] } = useTeamTasks(member.orgId);
   const { data: projects = [] } = useTeamProjects(member.orgId);
   const { data: teamMembers = [] } = useOrgTeamMembers(member.orgId);
+  const { data: orgMembers = [] } = useOrgMembers(member.orgId);
+  const createTask = useCreateTeamTask(member.orgId);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
   const projectColorHex = useCallback(
     (projectId: string) => PROJECT_HEX[projects.find((p) => p.id === projectId)?.color ?? 'blue'] ?? PROJECT_HEX.blue,
     [projects],
@@ -223,7 +229,9 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
     else api.today();
   };
 
-  return createPortal(
+  return (
+    <>
+      {createPortal(
     <div className="fixed inset-0 z-[9998] bg-[rgb(var(--color-background))] flex flex-col">
       {/* En-tête */}
       <header className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">
@@ -314,11 +322,22 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             className="w-60 lg:w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex flex-col"
             style={{ backgroundColor: 'rgb(var(--nav-bg))' }}
           >
-            <div className="p-4 border-b border-[rgb(var(--color-border))]">
-              <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Tâches d'équipe</h3>
-              <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                Glissez une tâche sur le calendrier pour la planifier.
-              </p>
+            <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-start justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Tâches d'équipe</h3>
+                <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
+                  Glissez une tâche sur le calendrier pour la planifier.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCreatingTask(true)}
+                aria-label={`Ajouter une tâche pour ${member.displayName}`}
+                title="Ajouter une tâche"
+                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
+              >
+                <Plus size={15} aria-hidden="true" />
+              </button>
             </div>
             <div id="member-external-events" className="flex-1 overflow-y-auto p-3 space-y-2">
               {memberTasks.length === 0 ? (
@@ -432,7 +451,20 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
         />
       )}
     </div>,
-    document.body,
+        document.body,
+      )}
+      {creatingTask && (
+        <TeamTaskModal
+          isCreating
+          projects={activeProjects.length > 0 ? activeProjects : projects}
+          members={orgMembers}
+          defaultProjectId={(activeProjects[0] ?? projects[0])?.id}
+          defaultAssigneeIds={[member.userId]}
+          onCreate={(input) => createTask.mutateAsync(input)}
+          onClose={() => setCreatingTask(false)}
+        />
+      )}
+    </>
   );
 };
 
