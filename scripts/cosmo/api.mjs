@@ -48,20 +48,43 @@ function mapTaskFromRow(row) {
 /** Défauts documentés dans le spec §4. */
 export const DEFAULT_TASK = { priority: 3, estimatedTime: 30 };
 
-/**
- * Catégorie par défaut = la première de l'utilisateur. On refuse de créer une
- * tâche sans catégorie : `category` est non-optionnel dans le modèle domaine,
- * et une chaîne vide produirait des tâches non classables dans l'app.
- */
-async function defaultCategoryName(client) {
+/** Catégories de l'utilisateur (id + nom), triées par nom. */
+export async function listCategories(client) {
   const rows =
     unwrap(await client.from('categories').select('*').order('name', { ascending: true })) ?? [];
-  if (rows.length === 0) {
+  return rows.map((row) => ({ id: row.id, name: row.name, color: row.color }));
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Résout ce que l'appelant donne comme catégorie vers l'IDENTIFIANT attendu
+ * par la colonne `tasks.category`.
+ *
+ * ⚠️ `tasks.category` stocke un UUID de `categories.id`, PAS un nom. Écrire un
+ * nom y produit une tâche orpheline : elle existe en base mais n'est rattachée
+ * à aucune catégorie dans l'app. On accepte donc les deux en entrée (un UUID
+ * passe tel quel, un nom est résolu), et on échoue avec la liste des noms
+ * valides plutôt que d'écrire une valeur qui ne correspond à rien.
+ */
+async function resolveCategoryId(client, wanted) {
+  const categories = await listCategories(client);
+  if (categories.length === 0) {
     throw new CosmoValidationError(
-      'Aucune categorie sur ce compte : precise --category, ou cree une categorie dans l app.'
+      'Aucune categorie sur ce compte : cree-en une dans l app avant d ajouter une tache.'
     );
   }
-  return rows[0].name;
+
+  if (wanted === undefined || wanted === null || wanted === '') return categories[0].id;
+  if (UUID_PATTERN.test(wanted)) return wanted;
+
+  const match = categories.find((c) => c.name.toLowerCase() === String(wanted).trim().toLowerCase());
+  if (!match) {
+    throw new CosmoValidationError(
+      `Categorie inconnue : « ${wanted} ». Valeurs possibles : ${categories.map((c) => c.name).join(', ')}.`
+    );
+  }
+  return match.id;
 }
 
 /**
@@ -98,7 +121,7 @@ export async function createTask(client, input, { now = new Date(), userId } = {
     );
   }
 
-  const category = input.category ?? (await defaultCategoryName(client));
+  const category = await resolveCategoryId(client, input.category);
   const deadline = input.deadline === undefined ? todayLocal(now) : input.deadline;
   const row = {
     name,
@@ -181,6 +204,13 @@ const UPDATABLE_FIELDS = {
  */
 export async function updateTask(client, taskId, patch = {}) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
+
+  // Même piège qu'à la création : la colonne attend un UUID de categories.id.
+  const resolved = { ...patch };
+  if (resolved.category !== undefined) {
+    resolved.category = await resolveCategoryId(client, resolved.category);
+  }
+  patch = resolved;
 
   const row = {};
   for (const [key, value] of Object.entries(patch)) {
