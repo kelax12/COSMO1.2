@@ -30,8 +30,13 @@ export interface MobileBodyProps {
     krId: string;
     recurrence: import('@/modules/tasks').TaskRecurrence;
     subtasks?: import('@/modules/tasks').Subtask[];
+    description?: string;
   };
   handleInputChange: (field: string, value: string | number | boolean) => void;
+  /** Section Description masquée par défaut — même système que le corps
+   *  desktop et EventModal (cf. task-modal/DesktopDetailsStep.tsx). */
+  showDescription: boolean;
+  setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
   /** Création : remonte les sous-tâches saisies vers le formData parent (#12). */
   onSubtasksChange?: (subtasks: import('@/modules/tasks').Subtask[]) => void;
   categories: Array<{ id: string; name: string; color: string }>;
@@ -73,6 +78,7 @@ export interface MobileBodyProps {
 
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   formData, handleInputChange, onSubtasksChange,
+  showDescription, setShowDescription,
   categories, lists, selectedListIds, listColorOptions,
   collaborators, pendingInvitesLocal: _pendingInvitesLocal, emailInput, setEmailInput, inputError,
   friends: _friends, filteredFriends, sentRequests: _sentRequests, collabIdOf, displayInfo,
@@ -317,6 +323,37 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             </div>
           </SectionCard>
           </div>
+
+          {/* ── Section DESCRIPTION ── masquée par défaut, même système que
+              le corps desktop et EventModal (bouton « + Ajouter » tant que
+              vide, textarea auto-affiché si la tâche en a déjà une — cf.
+              useTaskModal.ts, effet de sync sur `fullTask`). */}
+          <SectionTitle>Description</SectionTitle>
+          <SectionCard>
+            {showDescription ? (
+              <div className="px-4 py-3">
+                <textarea
+                  value={formData.description ?? ''}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  rows={4}
+                  autoFocus={!formData.description}
+                  placeholder="Description de la tâche"
+                  className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
+                  style={{ border: 'none' }}
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDescription(true)}
+                className="flex items-center px-4 min-h-11 w-full"
+              >
+                <span className="text-[15px] text-blue-600 dark:text-blue-400">
+                  + Ajouter une description
+                </span>
+              </button>
+            )}
+          </SectionCard>
 
           {/* ── Section ORGANISATION ── */}
           <SectionTitle>Organisation</SectionTitle>

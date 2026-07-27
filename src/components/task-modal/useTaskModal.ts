@@ -12,6 +12,7 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
+  useTask,
   Task,
   Subtask,
   TaskRecurrence,
@@ -73,6 +74,15 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const [createdTask, setCreatedTask] = useState<Task | null>(null);
   const effectiveTask: Task | undefined = task ?? createdTask ?? undefined;
   const effectiveIsCreating = isCreating && !createdTask;
+
+  // `task` arrive toujours via TASK_LIST_COLUMNS (liste allégée — cf.
+  // supabase.repository.ts), qui exclut volontairement `description` pour la
+  // perf. Sans ce fetch complémentaire (getById, select('*')), une tâche qui a
+  // pourtant une description ne l'affiche jamais : la section reste repliée
+  // avec « + Ajouter une description » comme si elle était vide.
+  const { data: fullTask } = useTask(effectiveTask?.id ?? '', {
+    enabled: !effectiveIsCreating && !!effectiveTask?.id,
+  });
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
@@ -335,6 +345,17 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, task?.id, isCreating, collaboratorsDirty, seedCollaboratorIds.join(',')]);
 
+  // Complète `formData.description` une fois le détail complet chargé
+  // (`fullTask`, cf. plus haut). Gardé sur `!hasChanges` : si l'utilisateur a
+  // déjà commencé à éditer avant que la requête ne résolve, on ne doit pas
+  // écraser sa frappe en cours.
+  useEffect(() => {
+    if (!isOpen || effectiveIsCreating || hasChanges) return;
+    if (fullTask?.description === undefined) return;
+    setFormData(prev => ({ ...prev, description: fullTask.description ?? '' }));
+    setShowDescription(prev => prev || Boolean(fullTask.description && fullTask.description.length > 0));
+  }, [isOpen, effectiveTask?.id, effectiveIsCreating, fullTask?.description, hasChanges]);
+
   // Auto-promote pending invites that have since become friends
   useEffect(() => {
     if (!isOpen || !task || isCreating || !friends.length) return;
@@ -386,9 +407,17 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     const taskListIds = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id).sort();
     const selectedSorted = [...selectedListIds].sort();
 
+    // `task.description` vaut toujours undefined (TASK_LIST_COLUMNS, cf. plus
+    // haut) : comparer formData.description à `task.description ?? ''` la
+    // faisait paraître "modifiée" dès que `fullTask` arrivait et remplissait
+    // formData — hasChanges passait à true sans qu'aucune édition n'ait eu
+    // lieu, déclenchant à tort la confirmation "changements non sauvegardés"
+    // à la simple ouverture d'une tâche qui a déjà une description.
+    const baselineDescription = (fullTask?.id === task.id ? fullTask.description : task.description) ?? '';
+
     const hasFormChanges =
       formData.name !== task.name ||
-      formData.description !== (task.description ?? '') ||
+      formData.description !== baselineDescription ||
       formData.priority !== task.priority ||
       formData.category !== task.category ||
       formData.deadline !== (task.deadline ? task.deadline.split('T')[0] : '') ||
@@ -401,7 +430,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       JSON.stringify(collaborators) !== JSON.stringify(seedCollaboratorIds);
 
     setHasChanges(hasFormChanges);
-  }, [formData, collaborators, task, seedCollaboratorIds, selectedListIds, lists]);
+  }, [formData, collaborators, task, fullTask?.id, fullTask?.description, seedCollaboratorIds, selectedListIds, lists]);
 
   // Validation rules — déléguées au module pur task-modal/validation.ts.
   const computeValidationErrors = (): { [key: string]: string } =>

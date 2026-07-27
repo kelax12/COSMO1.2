@@ -55,6 +55,8 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
             formData={formData}
             handleInputChange={handleInputChange}
             onSubtasksChange={(subtasks) => setFormData(prev => ({ ...prev, subtasks }))}
+            showDescription={showDescription}
+            setShowDescription={setShowDescription}
             categories={categories}
             lists={lists}
             selectedListIds={selectedListIds}
