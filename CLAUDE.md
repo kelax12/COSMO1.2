@@ -32,6 +32,44 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 
 ---
 
+## ✅ Tu peux écrire dans le vrai compte COSMO d'Axel
+
+Un CLI local (`scripts/cosmo/`) donne accès à ses **données de production** :
+lecture tâches / habitudes / agenda / OKR, et **écriture complète sur les tâches**.
+Authentifié par sa session, filtré par la RLS — jamais de `service_role`.
+
+```bash
+npm run cosmo -- tasks add --input '{"name":"Ma tache","description":"Contexte detaille.","category":"SEO","priority":4}'
+```
+
+| Commande | Effet |
+|---|---|
+| `tasks list [--full] [--all] [--limit n]` | Lister (`--full` inclut la description) |
+| `tasks show <id>` | Détail complet d'une tâche |
+| `tasks add … / tasks update <id> …` | Créer / modifier (`--input` JSON accepté) |
+| `tasks done <id>` / `tasks reopen <id>` | Cocher / ré-ouvrir |
+| `tasks delete <id> --confirm` | Supprimer (**irréversible**) |
+| `categories` | Noms de catégories valides |
+
+**Règles non négociables :**
+
+- 🔴 **Toujours quoter une valeur contenant des espaces**, ou passer par
+  `--input '<json>'`. Sans guillemets, les mots suivants sont rattachés au nom
+  de la tâche et la valeur est tronquée au premier mot. Le CLI refuse ce cas,
+  mais la forme JSON l'évite complètement — **c'est la forme à préférer**.
+- 🔴 **`tasks list` ne renvoie pas `description`** (liste allégée, parité avec
+  l'app). Ce n'est pas un échec d'écriture : relis avec `tasks show <id>`.
+- 🔴 **Ne jamais lancer `npm run cosmo:login`** — il est interactif et attend un
+  code reçu par email. Si la session a expiré, **demande à Axel** de le lancer.
+- 🔴 **Ne jamais écrire via le MCP Supabase** (`execute_sql` contourne la RLS et
+  est bloqué de toute façon). Le CLI est le seul chemin d'écriture.
+- 🔴 **Confirmer avant toute suppression** qu'Axel n'a pas explicitement demandée.
+
+Détails : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) (mémo court) ·
+[`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) (complet).
+
+---
+
 ## Stack technique
 
 | Couche | Technologie |

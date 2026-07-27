@@ -95,8 +95,11 @@ async function resolveCategoryId(client, wanted) {
  * Liste les tâches. La RLS restreint déjà à l'utilisateur courant : pas de
  * filtre user_id nécessaire ici (contrairement à `events`, voir listEvents).
  */
-export async function listTasks(client, { completed, category, deadlineBefore, limit } = {}) {
-  let query = client.from('tasks').select(TASK_COLUMNS);
+export async function listTasks(client, { completed, category, deadlineBefore, limit, full } = {}) {
+  // `full` : select('*') au lieu de la liste allegee, pour que `description`
+  // remonte. Sans ca un agent qui relit son travail ne voit jamais le champ
+  // qu'il vient d'ecrire et en conclut que l'ecriture a echoue.
+  let query = client.from('tasks').select(full ? '*' : TASK_COLUMNS);
   if (completed !== undefined) query = query.eq('completed', completed);
   // Un nom passe par la meme resolution qu'a la creation (categories.name ->
   // UUID) : sans ca, `--category claude` comparait le nom brut a la colonne
@@ -110,6 +113,21 @@ export async function listTasks(client, { completed, category, deadlineBefore, l
   if (limit) query = query.limit(limit);
   const rows = unwrap(await query) ?? [];
   return rows.map(mapTaskFromRow);
+}
+
+/**
+ * Une tâche complète, `description` incluse.
+ *
+ * `select('*')` et non TASK_COLUMNS : la liste allégée existe pour la parité
+ * avec l'app, mais elle rend la description invisible — c'est ce qui empêchait
+ * un agent de vérifier qu'il l'avait bien écrite.
+ */
+export async function getTask(client, taskId) {
+  if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
+  const rows = unwrap(await client.from('tasks').select('*').eq('id', taskId));
+  const row = Array.isArray(rows) ? rows[0] : rows;
+  if (!row) throw new CosmoNotFoundError(`Tache introuvable : ${taskId}`);
+  return mapTaskFromRow(row);
 }
 
 /**

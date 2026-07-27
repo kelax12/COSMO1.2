@@ -50,6 +50,8 @@ Conception : [`docs/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./s
 |---|---|
 | `npm run cosmo -- tasks list` | Tâches non terminées |
 | `npm run cosmo -- tasks list --all` | Toutes les tâches |
+| `npm run cosmo -- tasks list --full` | Idem, avec la `description` |
+| `npm run cosmo -- tasks show <id>` | Détail complet d'une tâche |
 | `npm run cosmo -- tasks add "<nom>" --category Perso` | Crée une tâche |
 | `npm run cosmo -- tasks update <id> --priority 5 --time 90` | Modifie une tâche |
 | `npm run cosmo -- tasks done <id>` | Coche une tâche |
@@ -74,6 +76,27 @@ Priorités : 1 = très basse … 5 = critique.
 
 **`delete` exige `--confirm`.** C'est la seule opération sans retour du CLI ;
 tout le reste est réversible. `--dry-run` permet de vérifier la cible avant.
+
+### Entrée JSON — la forme robuste pour un agent
+
+```bash
+npm run cosmo -- tasks add --input '{"name":"Ma tache","description":"Contexte multi-mots."}'
+npm run cosmo -- tasks update <id> --input '{"description":"Nouveau contexte"}'
+npm run cosmo -- tasks add --input -    # lit le JSON sur stdin
+```
+
+Pourquoi elle existe : une valeur en prose non quotée était découpée par le
+shell. `--description Contexte complet de la tache` ne transmettait que
+« Contexte » au drapeau, et « complet de la tache » se retrouvait **collé au nom
+de la tâche** — deux champs corrompus, sans le moindre message. Le CLI refuse
+maintenant ce cas, mais la forme JSON le rend structurellement impossible.
+
+### Lire une description
+
+`description` n'est **pas** dans `TASK_COLUMNS` : la liste est allégée, par
+parité avec celle de l'app. Une description écrite n'apparaît donc pas dans
+`tasks list` — ce n'est pas un échec d'écriture. Utiliser `tasks show <id>` ou
+`tasks list --full`.
 
 Si la session a expiré, toutes les commandes s'arrêtent sur
 `CosmoAuthError : Session COSMO absente ou expiree.` — relancer `npm run cosmo:login`.

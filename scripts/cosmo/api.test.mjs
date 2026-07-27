@@ -6,7 +6,7 @@ import {
   createTask, completeTask, DEFAULT_TASK,
   listHabitsToday, markHabitDone,
   listUpcomingEvents, listOkrs,
-  reopenTask, updateTask, deleteTask,
+  reopenTask, updateTask, deleteTask, getTask,
 } from './api.mjs';
 import { CosmoValidationError } from './errors.mjs';
 
@@ -373,6 +373,49 @@ describe('updateTask', () => {
   it('ignore les valeurs undefined sans les compter comme un patch', async () => {
     const client = makeFakeClient({ data: { id: 't1' }, error: null });
     await expect(updateTask(client, 't1', { name: undefined })).rejects.toThrow(CosmoValidationError);
+  });
+});
+
+// La description ne fait pas partie de TASK_COLUMNS (parite avec la liste
+// allegee de l'app). Sans un chemin de relecture dedie, un agent qui ecrit une
+// description ne peut jamais verifier qu'elle a bien ete enregistree.
+describe('description — lisibilite', () => {
+  it('getTask lit toutes les colonnes, description incluse', async () => {
+    const client = makeFakeClient({ data: [{ id: 't1', name: 'X', description: 'Contexte' }], error: null });
+    const task = await getTask(client, 't1');
+    expect(client.calls).toContainEqual(['select', '*']);
+    expect(task.description).toBe('Contexte');
+  });
+
+  it('getTask leve CosmoNotFoundError sur un id inconnu', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await expect(getTask(client, 'inconnu')).rejects.toThrow(/introuvable/i);
+  });
+
+  it('listTasks({full}) bascule sur select(*) pour exposer la description', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await listTasks(client, { full: true });
+    expect(client.calls).toContainEqual(['select', '*']);
+  });
+
+  it('listTasks sans full garde la liste allegee', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await listTasks(client, {});
+    expect(client.calls).toContainEqual(['select', TASK_COLUMNS]);
+  });
+
+  it('createTask transmet la description telle quelle', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
+    await createTask(client, { name: 'X', description: 'Prose avec espaces' }, { userId: 'u1' });
+    const insert = client.calls.find(([m]) => m === 'insert');
+    expect(insert[1].description).toBe('Prose avec espaces');
+  });
+
+  it('updateTask sait modifier la seule description', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await updateTask(client, 't1', { description: 'Nouveau contexte' });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toEqual({ description: 'Nouveau contexte' });
   });
 });
 

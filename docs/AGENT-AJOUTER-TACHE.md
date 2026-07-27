@@ -3,10 +3,20 @@
 Tu peux écrire dans le vrai compte COSMO d'Axel depuis ce dépôt. Doc complète :
 [`docs/COSMO-CLI.md`](./COSMO-CLI.md).
 
-## La commande
+## La commande — préfère la forme JSON
 
 ```bash
-npm run cosmo -- tasks add "Nom de la tache" --category SEO --priority 4 --time 60
+npm run cosmo -- tasks add --input '{"name":"Nom de la tache","description":"Contexte detaille, multi-mots.","category":"SEO","priority":4}'
+```
+
+**C'est la forme recommandée pour un agent.** Un seul argument, aucun risque
+que le shell découpe la prose, et une erreur de syntaxe est bruyante.
+
+La forme à drapeaux marche aussi, mais **chaque valeur contenant des espaces
+doit être entre guillemets** :
+
+```bash
+npm run cosmo -- tasks add "Nom de la tache" --description "Contexte detaille" --category SEO --priority 4
 ```
 
 Toutes les options sont facultatives sauf le nom.
@@ -22,6 +32,18 @@ Toutes les options sont facultatives sauf le nom.
 Ajoute `--json` pour récupérer la ligne créée avec son `id`, et `--dry-run`
 pour vérifier sans rien écrire.
 
+## Vérifier une description
+
+`tasks list` **ne renvoie pas** la description : c'est une liste allégée,
+alignée sur celle de l'app. Ne conclus pas que l'écriture a échoué. Pour la
+relire :
+
+```bash
+npm run cosmo -- tasks show <id> --json
+```
+
+ou `npm run cosmo -- tasks list --full --json` pour l'avoir sur toute la liste.
+
 ## Catégories valides
 
 Vérifie-les, ne les devine pas — elles changent :
@@ -32,8 +54,13 @@ npm run cosmo -- categories
 
 Au 2026-07-27 : `marketing`, `mobile`, `Perso`, `Produit`, `SEO`.
 
-## Trois pièges à connaître
+## Quatre pièges à connaître
 
+0. **La prose non quotée est refusée.** `--description Contexte complet` sans
+   guillemets ne donnait que « Contexte » au drapeau, et « complet » finissait
+   collé au *nom* de la tâche — deux champs corrompus en silence. Le CLI refuse
+   désormais ce cas et te dit quoi faire. Utilise `--input` en JSON et le
+   problème n'existe pas.
 1. **Un nom de catégorie inconnu est refusé**, avec la liste des valeurs
    possibles. C'est voulu : la colonne `tasks.category` stocke un **UUID**, pas
    un nom. Y écrire un nom crée une tâche orpheline — elle existe en base mais
