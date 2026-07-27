@@ -516,6 +516,17 @@ body {
       box-shadow: 0 0 0 1px rgb(var(--color-accent)) !important;
     }
 
+    /* Textarea plein écran (DescriptionField) : il occupe déjà toute la
+       popup, la bordure + le liseré d'accent au focus des styles globaux
+       ci-dessus n'y ont aucun sens — on les neutralise. */
+    textarea.no-input-chrome,
+    textarea.no-input-chrome:hover,
+    textarea.no-input-chrome:focus {
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
     /* Suppress focus styling only on time inputs inside desktop wrapper */
     .time-input-wrapper input[type="time"],
     .time-input-wrapper input[type="time"]:focus,

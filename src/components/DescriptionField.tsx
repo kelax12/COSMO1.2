@@ -99,7 +99,7 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="flex-1 w-full px-5 py-4 text-base leading-relaxed bg-transparent resize-none focus:outline-none"
+            className="no-input-chrome flex-1 w-full px-5 py-4 text-base leading-relaxed bg-transparent resize-none focus:outline-none"
             style={{ color: 'rgb(var(--color-text-primary))' }}
           />
         </DialogContent>
