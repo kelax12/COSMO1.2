@@ -107,19 +107,19 @@ describe('createTask', () => {
 
   it('retombe sur la premiere categorie de l utilisateur quand aucune n est fournie', async () => {
     const client = makeFakeClient({ data: [{ id: 'c1', name: 'Perso' }], error: null });
-    await createTask(client, { name: 'X' });
+    await createTask(client, { name: 'X' }, { userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
     expect(insert[1].category).toBe('Perso');
   });
 
   it('leve une erreur explicite si l utilisateur n a aucune categorie', async () => {
     const client = makeFakeClient({ data: [], error: null });
-    await expect(createTask(client, { name: 'X' })).rejects.toThrow(/categorie/i);
+    await expect(createTask(client, { name: 'X' }, { userId: 'u1' })).rejects.toThrow(/categorie/i);
   });
 
   it('applique les defauts documentes', async () => {
     const client = makeFakeClient({ data: { id: 'n1', name: 'X' }, error: null });
-    await createTask(client, { name: 'X', category: 'Perso' }, { now: new Date(2026, 6, 27) });
+    await createTask(client, { name: 'X', category: 'Perso' }, { now: new Date(2026, 6, 27), userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
     expect(insert[1]).toMatchObject({
       name: 'X',
@@ -133,16 +133,31 @@ describe('createTask', () => {
     });
   });
 
-  it('n envoie JAMAIS user_id (frontiere anti-mass-assignment)', async () => {
+  // La policy RLS `tasks` a un WITH CHECK (auth.uid() = user_id) et la colonne
+  // n'a pas de DEFAULT : il FAUT envoyer user_id. La frontiere de securite
+  // n'est donc pas « ne jamais l'envoyer » mais « le prendre de la session
+  // verifiee, jamais de l'entree appelante » — comme le fait le repository
+  // applicatif (supabase.repository.ts:206).
+  it('pose le user_id de la session et ignore celui fourni en entree', async () => {
     const client = makeFakeClient({ data: { id: 'n1' }, error: null });
-    await createTask(client, { name: 'X', category: 'Perso', userId: 'pirate' });
+    await createTask(
+      client,
+      { name: 'X', category: 'Perso', userId: 'pirate' },
+      { userId: 'session-user' }
+    );
     const insert = client.calls.find(([m]) => m === 'insert');
-    expect(insert[1]).not.toHaveProperty('user_id');
+    expect(insert[1].user_id).toBe('session-user');
+  });
+
+  it('refuse d ecrire sans userId de session plutot que d envoyer un NULL', async () => {
+    const client = makeFakeClient({ data: { id: 'n1' }, error: null });
+    await expect(createTask(client, { name: 'X', category: 'Perso' })).rejects.toThrow(/session/i);
+    expect(client.calls.some(([m]) => m === 'insert')).toBe(false);
   });
 
   it('transforme une echeance vide en NULL (colonne timestamp)', async () => {
     const client = makeFakeClient({ data: { id: 'n1' }, error: null });
-    await createTask(client, { name: 'X', category: 'Perso', deadline: '' });
+    await createTask(client, { name: 'X', category: 'Perso', deadline: '' }, { userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
     expect(insert[1].deadline).toBeNull();
   });

@@ -80,12 +80,23 @@ export async function listTasks(client, { completed, category, deadlineBefore, l
 }
 
 /**
- * Crée une tâche. N'émet jamais `user_id` : la colonne est posée côté serveur
- * depuis auth.uid(). C'est la même frontière de sécurité que mapTaskToDb.
+ * Crée une tâche.
+ *
+ * `user_id` DOIT être envoyé : la policy RLS de `tasks` porte un
+ * `WITH CHECK (auth.uid() = user_id)` et la colonne n'a pas de DEFAULT — un
+ * insert sans user_id est rejeté. La frontière de sécurité n'est donc pas
+ * « ne jamais l'émettre » mais « le prendre de la session vérifiée, jamais de
+ * `input` », exactement comme le repository applicatif
+ * (src/modules/tasks/supabase.repository.ts:206).
  */
-export async function createTask(client, input, { now = new Date() } = {}) {
+export async function createTask(client, input, { now = new Date(), userId } = {}) {
   const name = (input?.name ?? '').trim();
   if (!name) throw new CosmoValidationError('Le nom de la tache est obligatoire.');
+  if (!userId) {
+    throw new CosmoValidationError(
+      'userId de session manquant : impossible de creer une tache (RLS tasks).'
+    );
+  }
 
   const category = input.category ?? (await defaultCategoryName(client));
   const deadline = input.deadline === undefined ? todayLocal(now) : input.deadline;
@@ -98,6 +109,9 @@ export async function createTask(client, input, { now = new Date() } = {}) {
     bookmarked: false,
     completed: false,
     recurrence: input.recurrence ?? 'none',
+    // Depuis la session, jamais depuis `input` : c'est ça, la garde
+    // anti-mass-assignment.
+    user_id: userId,
   };
   if (input.description !== undefined) row.description = input.description;
   if (input.krId) row.kr_id = input.krId;
