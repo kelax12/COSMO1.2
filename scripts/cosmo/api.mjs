@@ -45,6 +45,25 @@ function mapTaskFromRow(row) {
   };
 }
 
+/** Défauts documentés dans le spec §4. */
+export const DEFAULT_TASK = { priority: 3, estimatedTime: 30 };
+
+/**
+ * Catégorie par défaut = la première de l'utilisateur. On refuse de créer une
+ * tâche sans catégorie : `category` est non-optionnel dans le modèle domaine,
+ * et une chaîne vide produirait des tâches non classables dans l'app.
+ */
+async function defaultCategoryName(client) {
+  const rows =
+    unwrap(await client.from('categories').select('*').order('name', { ascending: true })) ?? [];
+  if (rows.length === 0) {
+    throw new CosmoValidationError(
+      'Aucune categorie sur ce compte : precise --category, ou cree une categorie dans l app.'
+    );
+  }
+  return rows[0].name;
+}
+
 /**
  * Liste les tâches. La RLS restreint déjà à l'utilisateur courant : pas de
  * filtre user_id nécessaire ici (contrairement à `events`, voir listEvents).
@@ -58,4 +77,48 @@ export async function listTasks(client, { completed, category, deadlineBefore, l
   if (limit) query = query.limit(limit);
   const rows = unwrap(await query) ?? [];
   return rows.map(mapTaskFromRow);
+}
+
+/**
+ * Crée une tâche. N'émet jamais `user_id` : la colonne est posée côté serveur
+ * depuis auth.uid(). C'est la même frontière de sécurité que mapTaskToDb.
+ */
+export async function createTask(client, input, { now = new Date() } = {}) {
+  const name = (input?.name ?? '').trim();
+  if (!name) throw new CosmoValidationError('Le nom de la tache est obligatoire.');
+
+  const category = input.category ?? (await defaultCategoryName(client));
+  const deadline = input.deadline === undefined ? todayLocal(now) : input.deadline;
+  const row = {
+    name,
+    priority: input.priority ?? DEFAULT_TASK.priority,
+    category,
+    deadline: deadline ? deadline : null,
+    estimated_time: input.estimatedTime ?? DEFAULT_TASK.estimatedTime,
+    bookmarked: false,
+    completed: false,
+    recurrence: input.recurrence ?? 'none',
+  };
+  if (input.description !== undefined) row.description = input.description;
+  if (input.krId) row.kr_id = input.krId;
+
+  const data = unwrap(await client.from('tasks').insert(row).select(TASK_COLUMNS).single());
+  return mapTaskFromRow(data);
+}
+
+/**
+ * Coche une tâche. Pose `completed_at` en plus de `completed` : ne poser que
+ * le booléen fausserait les statistiques et le dashboard.
+ */
+export async function completeTask(client, taskId, { now = new Date() } = {}) {
+  if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
+  const data = unwrap(
+    await client
+      .from('tasks')
+      .update({ completed: true, completed_at: todayLocal(now) })
+      .eq('id', taskId)
+      .select(TASK_COLUMNS)
+      .single()
+  );
+  return mapTaskFromRow(data);
 }
