@@ -5,6 +5,7 @@ import {
   TASK_COLUMNS, todayLocal, listTasks,
   createTask, completeTask, DEFAULT_TASK,
   listHabitsToday, markHabitDone,
+  listUpcomingEvents, listOkrs,
 } from './api.mjs';
 import { CosmoValidationError } from './errors.mjs';
 
@@ -206,5 +207,43 @@ describe('markHabitDone', () => {
     const client = makeFakeClient({ data: [{ id: 'h1', completions: {} }], error: null });
     await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
     expect(client.calls.some(([m]) => m === 'update')).toBe(false);
+  });
+});
+
+describe('listUpcomingEvents', () => {
+  it('filtre explicitement sur user_id (RLS mig. 077 renvoie aussi l equipe)', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await listUpcomingEvents(client, { userId: 'me-123', now: new Date(2026, 6, 27) });
+    expect(client.calls).toContainEqual(['eq', 'user_id', 'me-123']);
+  });
+
+  it('refuse de requeter sans userId plutot que de tout renvoyer', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await expect(listUpcomingEvents(client, {})).rejects.toThrow(CosmoValidationError);
+    expect(client.calls).toHaveLength(0);
+  });
+
+  it('borne la fenetre a partir de maintenant et trie par start_time', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await listUpcomingEvents(client, { userId: 'me', now: new Date(2026, 6, 27, 9, 0) });
+    expect(client.calls.some(([m, col]) => m === 'gte' && col === 'start_time')).toBe(true);
+    expect(client.calls.some(([m, col]) => m === 'order' && col === 'start_time')).toBe(true);
+  });
+});
+
+describe('listOkrs', () => {
+  it('lit les okrs et leurs key results', async () => {
+    const client = makeFakeClient({
+      data: [{ id: 'o1', title: 'Lancer COSMO', progress: 40, completed: false }],
+      error: null,
+    });
+    const okrs = await listOkrs(client);
+    expect(okrs[0]).toMatchObject({ id: 'o1', title: 'Lancer COSMO', progress: 40 });
+  });
+
+  it('n effectue aucune ecriture (OKR en lecture seule, journal kr_completions)', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await listOkrs(client);
+    expect(client.calls.some(([m]) => m === 'insert' || m === 'update' || m === 'rpc')).toBe(false);
   });
 });

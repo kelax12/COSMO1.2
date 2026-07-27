@@ -168,3 +168,67 @@ export async function markHabitDone(client, habitId, { now = new Date() } = {}) 
   );
   return { ...mapHabitFromRow(data, dayKey), alreadyDone: false };
 }
+
+/**
+ * Événements à venir de l'utilisateur.
+ *
+ * Le filtre `user_id` est OBLIGATOIRE : depuis la mig. 077 la policy RLS de
+ * `events` expose aussi l'agenda des membres de l'équipe. S'en remettre à la
+ * seule RLS mélangerait l'agenda perso et celui des collègues.
+ */
+export async function listUpcomingEvents(client, { userId, now = new Date(), days = 7 } = {}) {
+  if (!userId) {
+    throw new CosmoValidationError(
+      'userId requis : la RLS events expose aussi l agenda de l equipe (mig. 077).'
+    );
+  }
+  const until = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  const rows =
+    unwrap(
+      await client
+        .from('events')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('start_time', now.toISOString())
+        .lte('start_time', until.toISOString())
+        .order('start_time', { ascending: true })
+    ) ?? [];
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    allDay: row.all_day ?? false,
+  }));
+}
+
+/**
+ * OKR en LECTURE SEULE. Faire progresser un KR imposerait d'insérer
+ * atomiquement dans le journal append-only `kr_completions` (sinon le
+ * graphique « KR réalisés » du dashboard reste à 0). Cette logique vit dans
+ * les repositories applicatifs et ne doit pas être dupliquée ici.
+ */
+export async function listOkrs(client) {
+  const okrRows = unwrap(await client.from('okrs').select('*').order('created_at', { ascending: false })) ?? [];
+  return okrRows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    progress: row.progress,
+    completed: row.completed,
+  }));
+}
+
+/** Key results d'un OKR, pour rattacher une tâche via kr_id. */
+export async function listKeyResults(client, okrId) {
+  if (!okrId) throw new CosmoValidationError('Identifiant d OKR manquant.');
+  const rows = unwrap(await client.from('key_results').select('*').eq('okr_id', okrId)) ?? [];
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    unit: row.unit,
+    currentValue: row.current_value,
+    targetValue: row.target_value,
+    completed: row.completed,
+  }));
+}
