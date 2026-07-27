@@ -193,12 +193,15 @@ export async function listUpcomingEvents(client, { userId, now = new Date(), day
         .lte('start_time', until.toISOString())
         .order('start_time', { ascending: true })
     ) ?? [];
+  // Champs alignés sur EventRow (src/modules/events/mappers.ts). Pas de
+  // `all_day` : cette colonne n'existe pas sur `events`.
   return rows.map((row) => ({
     id: row.id,
     title: row.title,
     startTime: row.start_time,
     endTime: row.end_time,
-    allDay: row.all_day ?? false,
+    description: row.description,
+    taskId: row.task_id,
   }));
 }
 
