@@ -121,20 +121,108 @@ export async function createTask(client, input, { now = new Date(), userId } = {
 }
 
 /**
- * Coche une tâche. Pose `completed_at` en plus de `completed` : ne poser que
- * le booléen fausserait les statistiques et le dashboard.
+ * Coche une tâche.
+ *
+ * `completed_at` reçoit un INSTANT complet (`toISOString`), pas une date seule :
+ * c'est ce que fait l'app (src/modules/tasks/hooks.ts:338), et `sortCompletedTasks`
+ * trie les tâches terminées en comparant cette chaîne. Une date seule est
+ * coercee a minuit, ce qui melangeait l'ordre des taches cochees via le CLI.
  */
 export async function completeTask(client, taskId, { now = new Date() } = {}) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
   const data = unwrap(
     await client
       .from('tasks')
-      .update({ completed: true, completed_at: todayLocal(now) })
+      .update({ completed: true, completed_at: now.toISOString() })
       .eq('id', taskId)
       .select(TASK_COLUMNS)
       .single()
   );
   return mapTaskFromRow(data);
+}
+
+/** Ré-ouvre une tâche terminée. Efface `completed_at`, sinon elle resterait
+ *  datée dans les statistiques alors qu'elle est de nouveau ouverte. */
+export async function reopenTask(client, taskId) {
+  if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
+  const data = unwrap(
+    await client
+      .from('tasks')
+      .update({ completed: false, completed_at: null })
+      .eq('id', taskId)
+      .select(TASK_COLUMNS)
+      .single()
+  );
+  return mapTaskFromRow(data);
+}
+
+/**
+ * Champs modifiables via le CLI. Whitelist explicite : tout ce qui n'est pas
+ * ici est ignoré. `user_id` en est absent par construction — c'est la même
+ * frontière anti-mass-assignment que `mapTaskToDb`.
+ */
+const UPDATABLE_FIELDS = {
+  name: (v) => ['name', String(v).trim()],
+  description: (v) => ['description', v],
+  priority: (v) => ['priority', v],
+  category: (v) => ['category', v],
+  // Chaîne vide = « pas d'échéance » → NULL (la colonne est un timestamp).
+  deadline: (v) => ['deadline', v ? v : null],
+  estimatedTime: (v) => ['estimated_time', v],
+  bookmarked: (v) => ['bookmarked', v],
+  recurrence: (v) => ['recurrence', v],
+  krId: (v) => ['kr_id', v ? v : null],
+};
+
+/**
+ * Modifie une tâche existante. Refuse un patch vide plutôt que d'envoyer un
+ * UPDATE sans effet, et refuse un nom vidé — `name` est non-optionnel dans le
+ * modèle domaine.
+ */
+export async function updateTask(client, taskId, patch = {}) {
+  if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
+
+  const row = {};
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue;
+    const mapper = UPDATABLE_FIELDS[key];
+    if (!mapper) continue;
+    const [column, mapped] = mapper(value);
+    row[column] = mapped;
+  }
+
+  if (Object.keys(row).length === 0) {
+    throw new CosmoValidationError(
+      `Aucun champ modifiable fourni. Champs acceptes : ${Object.keys(UPDATABLE_FIELDS).join(', ')}.`
+    );
+  }
+  if (row.name !== undefined && row.name === '') {
+    throw new CosmoValidationError('Le nom d une tache ne peut pas etre vide.');
+  }
+
+  const data = unwrap(
+    await client.from('tasks').update(row).eq('id', taskId).select(TASK_COLUMNS).single()
+  );
+  return mapTaskFromRow(data);
+}
+
+/**
+ * Supprime définitivement une tâche.
+ *
+ * Irréversible : la RLS empêche de toucher aux tâches d'autrui, mais rien ne
+ * rattrape une suppression de la sienne. Le garde-fou vit dans cli.mjs, qui
+ * exige `--confirm`. On renvoie la tâche telle qu'elle était pour que
+ * l'appelant puisse afficher ce qui a disparu.
+ */
+export async function deleteTask(client, taskId) {
+  if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
+
+  const existing = unwrap(await client.from('tasks').select(TASK_COLUMNS).eq('id', taskId));
+  const row = Array.isArray(existing) ? existing[0] : existing;
+  if (!row) throw new CosmoNotFoundError(`Tache introuvable : ${taskId}`);
+
+  unwrap(await client.from('tasks').delete().eq('id', taskId));
+  return mapTaskFromRow(row);
 }
 
 function mapHabitFromRow(row, dayKey) {

@@ -44,12 +44,26 @@ Conception : [`docs/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./s
 
 ## Commandes
 
+### Tâches — lecture et écriture complète
+
 | Commande | Effet |
 |---|---|
 | `npm run cosmo -- tasks list` | Tâches non terminées |
 | `npm run cosmo -- tasks list --all` | Toutes les tâches |
 | `npm run cosmo -- tasks add "<nom>" --category Perso` | Crée une tâche |
+| `npm run cosmo -- tasks update <id> --priority 5 --time 90` | Modifie une tâche |
 | `npm run cosmo -- tasks done <id>` | Coche une tâche |
+| `npm run cosmo -- tasks reopen <id>` | Ré-ouvre une tâche terminée |
+| `npm run cosmo -- tasks delete <id> --confirm` | **Supprime définitivement** |
+
+Champs modifiables via `update` : `--name`, `--priority`, `--category`,
+`--deadline` (`""` efface l'échéance), `--time`, `--bookmark` / `--no-bookmark`.
+Priorités : 1 = très basse … 5 = critique.
+
+### Autres domaines
+
+| Commande | Effet |
+|---|---|
 | `npm run cosmo -- habits today` | Habitudes et état du jour |
 | `npm run cosmo -- habits done <id>` | Marque une habitude faite (idempotent) |
 | `npm run cosmo -- agenda --days 7` | Événements à venir |
@@ -58,17 +72,33 @@ Conception : [`docs/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./s
 
 `--json` sur toute commande, `--dry-run` sur toute écriture.
 
+**`delete` exige `--confirm`.** C'est la seule opération sans retour du CLI ;
+tout le reste est réversible. `--dry-run` permet de vérifier la cible avant.
+
 Si la session a expiré, toutes les commandes s'arrêtent sur
 `CosmoAuthError : Session COSMO absente ou expiree.` — relancer `npm run cosmo:login`.
 
 ## Ce que le CLI ne fait pas, volontairement
 
-- **Aucune suppression.** Créer et cocher sont réversibles, supprimer non.
 - **Aucune écriture OKR.** Faire progresser un KR impose une insertion atomique
   dans le journal append-only `kr_completions` ; dupliquer cette logique ici
   casserait silencieusement le graphique « KR réalisés » du dashboard.
+- **Aucune suppression d'habitude ni d'événement.** Seules les tâches ont un
+  chemin de suppression, et il exige `--confirm`.
 - **Aucun accès `service_role`.** Le CLI utilise la clé publishable et ta
   session : la RLS fait le filtrage, exactement comme dans le navigateur.
+
+## Session permanente
+
+La session vit dans `~/.cosmo/session.json` et se rafraîchit toute seule : tu ne
+devrais pas avoir à te reconnecter. `requireSession` force un `refreshSession()`
+explicite si `getSession()` ne trouve rien, et **distingue une panne réseau d'une
+session morte** — une coupure wifi affiche « Reseau indisponible, session
+conservee, reessaie », pas une demande de relogin.
+
+Un vrai relogin n'est nécessaire que si le refresh token est révoqué (changement
+de mot de passe, déconnexion de toutes les sessions, ou expiration configurée
+dans Supabase → *Authentication → Sessions*).
 
 ## Contraintes d'implémentation à respecter
 
