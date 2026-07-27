@@ -21,6 +21,7 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
 | [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) | Montée en charge, limites Supabase/localStorage |
 | [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
+| [`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) | Accès agent aux données COSMO réelles (`scripts/cosmo/`) : lecture tâches/habitudes/agenda/OKR, écriture limitée |
 | [`faille.md`](./faille.md) | Failles de sécurité (archive + roadmap, **source de vérité**) |
 | [`a-faire.md`](./a-faire.md) | Bugs/régressions mobile non résolus |
 
