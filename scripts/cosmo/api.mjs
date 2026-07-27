@@ -42,6 +42,10 @@ function mapTaskFromRow(row) {
     krId: row.kr_id ?? undefined,
     recurrence: row.recurrence ?? 'none',
     createdAt: row.created_at,
+    // Absente de TASK_COLUMNS (liste allegee, cf. commentaire sur TASK_COLUMNS) :
+    // `undefined` pour listTasks/completeTask/reopenTask, peuplee uniquement
+    // quand la ligne source vient d'un `select('*')` (createTask/updateTask).
+    description: row.description ?? undefined,
   };
 }
 
@@ -145,7 +149,10 @@ export async function createTask(client, input, { now = new Date(), userId } = {
   if (input.description !== undefined) row.description = input.description;
   if (input.krId) row.kr_id = input.krId;
 
-  const data = unwrap(await client.from('tasks').insert(row).select(TASK_COLUMNS).single());
+  // `select('*')`, pas TASK_COLUMNS : meme choix que `getById` cote app
+  // (src/modules/tasks/supabase.repository.ts) — la confirmation de creation
+  // doit montrer `description`, qu'une liste n'a pas besoin d'afficher.
+  const data = unwrap(await client.from('tasks').insert(row).select('*').single());
   return mapTaskFromRow(data);
 }
 
@@ -236,8 +243,9 @@ export async function updateTask(client, taskId, patch = {}) {
     throw new CosmoValidationError('Le nom d une tache ne peut pas etre vide.');
   }
 
+  // `select('*')`, pas TASK_COLUMNS : meme raison que createTask ci-dessus.
   const data = unwrap(
-    await client.from('tasks').update(row).eq('id', taskId).select(TASK_COLUMNS).single()
+    await client.from('tasks').update(row).eq('id', taskId).select('*').single()
   );
   return mapTaskFromRow(data);
 }
