@@ -23,9 +23,21 @@ Conception : [`docs/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./s
    npm run cosmo:login
    ```
 
-   Le compte étant Google-only, il n'y a pas de mot de passe : un code arrive
-   par email, tu le colles. La session est stockée dans `~/.cosmo/session.json`
-   (hors du dépôt) et se rafraîchit toute seule ensuite.
+   Le compte étant Google-only, il n'y a pas de mot de passe : la vérification
+   passe par email. La session est stockée dans `~/.cosmo/session.json` (hors du
+   dépôt) et se rafraîchit toute seule ensuite.
+
+   Le script accepte **deux formes** de vérification, selon le template d'email
+   configuré côté Supabase :
+
+   - un **code à 6 chiffres** — nécessite que le template Magic Link contienne
+     `{{ .Token }}` ;
+   - le **lien « Log In » collé tel quel** — c'est le cas avec le template
+     Supabase par défaut, qui n'expose que `{{ .ConfirmationURL }}`.
+
+   > ⚠️ Si tu colles un lien, **copie-le sans le cliquer** (appui long → *Copier
+   > l'adresse du lien*). Ouvrir le lien dans un navigateur le consomme : il
+   > faudra en redemander un.
 
    > Prérequis : le provider **Email** doit être activé dans Supabase
    > (*Authentication → Providers → Email*). Sans lui, `signInWithOtp` échoue.
