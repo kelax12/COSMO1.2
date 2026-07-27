@@ -13,9 +13,9 @@ const USAGE = `Usage : npm run cosmo -- <commande> [options]
 
 Taches (lecture + ecriture complete)
   tasks list [--all] [--category <c>] [--before <YYYY-MM-DD>] [--limit <n>]
-  tasks add <nom> [--priority <1-5>] [--category <c>] [--deadline <YYYY-MM-DD>] [--time <min>]
+  tasks add <nom> [--priority <1-5>] [--category <c>] [--deadline <YYYY-MM-DD>] [--time <min>] [--description <texte>]
   tasks update <id> [--name <n>] [--priority <1-5>] [--category <c>]
-                    [--deadline <YYYY-MM-DD>|""] [--time <min>] [--bookmark|--no-bookmark]
+                    [--deadline <YYYY-MM-DD>|""] [--time <min>] [--bookmark|--no-bookmark] [--description <texte>]
   tasks done <id>
   tasks reopen <id>
   tasks delete <id> --confirm      (irreversible)
@@ -166,6 +166,7 @@ async function run(argv) {
       category: stringFlag(flags, 'category'),
       deadline: flags.deadline === '' ? '' : stringFlag(flags, 'deadline'),
       estimatedTime: numberFlag(flags, 'time'),
+      description: stringFlag(flags, 'description'),
     };
     if (flags['dry-run']) {
       output({ dryRun: true, wouldCreate: { ...input, deadline: input.deadline ?? todayLocal() } }, flags);
@@ -189,6 +190,7 @@ async function run(argv) {
       deadline: flags.deadline === '' ? '' : stringFlag(flags, 'deadline'),
       estimatedTime: numberFlag(flags, 'time'),
       bookmarked: flags.bookmark ? true : flags['no-bookmark'] ? false : undefined,
+      description: stringFlag(flags, 'description'),
     };
     if (flags['dry-run']) {
       output({ dryRun: true, wouldUpdate: id, patch }, flags);

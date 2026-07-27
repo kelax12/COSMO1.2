@@ -94,7 +94,13 @@ async function resolveCategoryId(client, wanted) {
 export async function listTasks(client, { completed, category, deadlineBefore, limit } = {}) {
   let query = client.from('tasks').select(TASK_COLUMNS);
   if (completed !== undefined) query = query.eq('completed', completed);
-  if (category) query = query.eq('category', category);
+  // Un nom passe par la meme resolution qu'a la creation (categories.name ->
+  // UUID) : sans ca, `--category claude` comparait le nom brut a la colonne
+  // UUID et ne matchait jamais rien, silencieusement (liste vide, pas d'erreur).
+  // `resolveCategoryId(undefined)` retournerait la categorie par defaut, ce qui
+  // filtrerait alors qu'aucun filtre n'a ete demande — donc on ne resout que
+  // si `category` a ete explicitement fourni.
+  if (category) query = query.eq('category', await resolveCategoryId(client, category));
   if (deadlineBefore) query = query.lte('deadline', deadlineBefore);
   query = query.order('deadline', { ascending: true }).order('priority', { ascending: false });
   if (limit) query = query.limit(limit);

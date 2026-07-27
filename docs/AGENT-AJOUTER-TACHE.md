@@ -17,6 +17,7 @@ Toutes les options sont facultatives sauf le nom.
 | `--priority <1-5>` | `3` — **1 = très basse, 5 = critique** |
 | `--deadline <YYYY-MM-DD>` | aujourd'hui (`""` = pas d'échéance) |
 | `--time <minutes>` | `30` |
+| `--description <texte>` | vide — c'est le champ « commentaire » visible en ouvrant la tâche dans l'app |
 
 Ajoute `--json` pour récupérer la ligne créée avec son `id`, et `--dry-run`
 pour vérifier sans rien écrire.
