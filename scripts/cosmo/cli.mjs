@@ -64,7 +64,9 @@ function formatLine(item) {
 }
 
 function output(value, flags) {
-  if (flags.json) {
+  // Un objet dry-run n'a aucun des champs que formatLine sait rendre : le
+  // passer dans le formateur produisait « [ ] Pundefined undefined ».
+  if (flags.json || value?.dryRun) {
     console.log(JSON.stringify(value, null, 2));
     return;
   }
@@ -115,7 +117,7 @@ async function run(argv) {
       output({ dryRun: true, wouldCreate: { ...input, deadline: input.deadline ?? todayLocal() } }, flags);
       return;
     }
-    const created = await createTask(client, input);
+    const created = await createTask(client, input, { userId: session.user.id });
     // Ré-affiche la ligne telle que la base l'a renvoyée, pas la charge utile
     // envoyée : ça rend visibles les defaults et triggers serveur.
     output(created, flags);
