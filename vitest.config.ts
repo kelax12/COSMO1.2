@@ -16,7 +16,9 @@ export default defineConfig({
     // déclarent `// @vitest-environment jsdom` en tête de fichier.
     environment: 'node',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // `scripts/**` : tests du CLI COSMO (scripts/cosmo/), en .mjs. Sans cette
+    // entrée ils ne seraient jamais ramassés et passeraient pour « verts ».
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'scripts/**/*.{test,spec}.mjs'],
     // L'ancien dossier Vitest jamais activé + les E2E Playwright ne doivent
     // pas être ramassés par Vitest.
     exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'src/__test__/**'],

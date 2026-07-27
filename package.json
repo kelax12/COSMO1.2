@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "validate:migrations": "node scripts/validate-migrations.mjs",
+    "cosmo": "node scripts/cosmo/cli.mjs",
+    "cosmo:login": "node scripts/cosmo/login.mjs",
     "test:rls": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
