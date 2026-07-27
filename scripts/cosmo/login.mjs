@@ -35,7 +35,7 @@ async function main() {
     }
 
     console.log(`Email envoye a ${email}.`);
-    console.log('Selon le template Supabase, tu recois soit un code a 6 chiffres,');
+    console.log('Selon le template Supabase, tu recois soit un code numerique,');
     console.log('soit un lien « Log In ». Dans le second cas : copie le LIEN sans le');
     console.log('cliquer (appui long > Copier l adresse du lien) et colle-le ici.');
 
