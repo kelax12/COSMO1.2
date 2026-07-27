@@ -6,6 +6,7 @@ import {
   createTask, completeTask, DEFAULT_TASK,
   listHabitsToday, markHabitDone,
   listUpcomingEvents, listOkrs,
+  reopenTask, updateTask, deleteTask,
 } from './api.mjs';
 import { CosmoValidationError } from './errors.mjs';
 
@@ -25,6 +26,7 @@ function makeFakeClient(result = { data: [], error: null }) {
     limit: (...a) => (calls.push(['limit', ...a]), chain),
     insert: (...a) => (calls.push(['insert', ...a]), chain),
     update: (...a) => (calls.push(['update', ...a]), chain),
+    delete: (...a) => (calls.push(['delete', ...a]), chain),
     single: (...a) => (calls.push(['single', ...a]), chain),
     then: (resolve) => resolve(result),
   };
@@ -166,9 +168,11 @@ describe('createTask', () => {
 describe('completeTask', () => {
   it('pose completed ET completed_at', async () => {
     const client = makeFakeClient({ data: { id: 't1', completed: true }, error: null });
-    await completeTask(client, 't1', { now: new Date(2026, 6, 27) });
+    const now = new Date(2026, 6, 27, 19, 12);
+    await completeTask(client, 't1', { now });
     const update = client.calls.find(([m]) => m === 'update');
-    expect(update[1]).toMatchObject({ completed: true, completed_at: '2026-07-27' });
+    // completed_at est un instant complet (cf. describe « horodatage »).
+    expect(update[1]).toMatchObject({ completed: true, completed_at: now.toISOString() });
   });
 
   it('cible bien la tache demandee', async () => {
@@ -260,5 +264,81 @@ describe('listOkrs', () => {
     const client = makeFakeClient({ data: [], error: null });
     await listOkrs(client);
     expect(client.calls.some(([m]) => m === 'insert' || m === 'update' || m === 'rpc')).toBe(false);
+  });
+});
+
+describe('completeTask — horodatage', () => {
+  it('pose un INSTANT complet, pas une date seule', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await completeTask(client, 't1', { now: new Date(Date.UTC(2026, 6, 27, 19, 12, 0)) });
+    const update = client.calls.find(([m]) => m === 'update');
+    // Une date seule ('2026-07-27') serait coercee a minuit et casserait
+    // l'ordre de sortCompletedTasks cote app.
+    expect(update[1].completed_at).toBe('2026-07-27T19:12:00.000Z');
+    expect(update[1].completed_at).not.toBe('2026-07-27');
+  });
+});
+
+describe('reopenTask', () => {
+  it('remet completed a false ET efface completed_at', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await reopenTask(client, 't1');
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toEqual({ completed: false, completed_at: null });
+  });
+});
+
+describe('updateTask', () => {
+  it('mappe les champs domaine vers les colonnes snake_case', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await updateTask(client, 't1', { name: 'Nouveau', estimatedTime: 90, priority: 5 });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toEqual({ name: 'Nouveau', estimated_time: 90, priority: 5 });
+  });
+
+  it('ignore les champs hors whitelist, dont user_id', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await updateTask(client, 't1', { name: 'X', userId: 'pirate', user_id: 'pirate', id: 'autre' });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toEqual({ name: 'X' });
+  });
+
+  it('transforme une echeance videe en NULL', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await updateTask(client, 't1', { deadline: '' });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1].deadline).toBeNull();
+  });
+
+  it('refuse un patch vide au lieu d envoyer un UPDATE sans effet', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await expect(updateTask(client, 't1', {})).rejects.toThrow(CosmoValidationError);
+    expect(client.calls.some(([m]) => m === 'update')).toBe(false);
+  });
+
+  it('refuse de vider le nom', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await expect(updateTask(client, 't1', { name: '   ' })).rejects.toThrow(/nom/i);
+  });
+
+  it('ignore les valeurs undefined sans les compter comme un patch', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
+    await expect(updateTask(client, 't1', { name: undefined })).rejects.toThrow(CosmoValidationError);
+  });
+});
+
+describe('deleteTask', () => {
+  it('lit la tache avant de la supprimer, pour pouvoir l afficher', async () => {
+    const client = makeFakeClient({ data: [{ id: 't1', name: 'A jeter' }], error: null });
+    const removed = await deleteTask(client, 't1');
+    const order = client.calls.map(([m]) => m);
+    expect(order.indexOf('select')).toBeLessThan(order.indexOf('delete'));
+    expect(removed.name).toBe('A jeter');
+  });
+
+  it('leve CosmoNotFoundError sans rien supprimer si la tache n existe pas', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await expect(deleteTask(client, 'inconnu')).rejects.toThrow(/introuvable/i);
+    expect(client.calls.some(([m]) => m === 'delete')).toBe(false);
   });
 });

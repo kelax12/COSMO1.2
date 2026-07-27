@@ -2,7 +2,7 @@
 // Aucune requête directe — tout passe par api.mjs.
 import { createCosmoClient, requireSession } from './client.mjs';
 import {
-  listTasks, createTask, completeTask,
+  listTasks, createTask, completeTask, reopenTask, updateTask, deleteTask,
   listHabitsToday, markHabitDone,
   listUpcomingEvents, listOkrs, listKeyResults,
   todayLocal,
@@ -10,10 +10,16 @@ import {
 
 const USAGE = `Usage : npm run cosmo -- <commande> [options]
 
-Commandes
+Taches (lecture + ecriture complete)
   tasks list [--all] [--category <c>] [--before <YYYY-MM-DD>] [--limit <n>]
   tasks add <nom> [--priority <1-5>] [--category <c>] [--deadline <YYYY-MM-DD>] [--time <min>]
+  tasks update <id> [--name <n>] [--priority <1-5>] [--category <c>]
+                    [--deadline <YYYY-MM-DD>|""] [--time <min>] [--bookmark|--no-bookmark]
   tasks done <id>
+  tasks reopen <id>
+  tasks delete <id> --confirm      (irreversible)
+
+Autres domaines
   habits today
   habits done <id>
   agenda [--days <n>]
@@ -22,7 +28,37 @@ Commandes
 Options globales
   --json      sortie JSON brute
   --dry-run   n'ecrit rien, affiche ce qui serait envoye
+
+Priorites : 1 = tres basse ... 5 = critique.
 `;
+
+/** Commandes valides, verifiees AVANT toute authentification : une faute de
+ *  frappe ne doit pas produire « session expiree ». */
+const KNOWN = {
+  tasks: ['list', 'add', 'update', 'done', 'reopen', 'delete', undefined],
+  habits: ['today', 'done', undefined],
+  agenda: [undefined],
+  okr: [undefined],
+};
+
+/** Un drapeau numerique sans valeur (`--limit` seul) vaut `true`, que Number()
+ *  convertit silencieusement en 1. On refuse explicitement. */
+function numberFlag(flags, key) {
+  const raw = flags[key];
+  if (raw === undefined) return undefined;
+  const value = Number(raw);
+  if (raw === true || Number.isNaN(value)) {
+    throw new Error(`--${key} attend une valeur numerique (recu : ${raw === true ? 'rien' : raw}).`);
+  }
+  return value;
+}
+
+function stringFlag(flags, key) {
+  const raw = flags[key];
+  if (raw === undefined) return undefined;
+  if (raw === true) throw new Error(`--${key} attend une valeur.`);
+  return raw;
+}
 
 function parseArgs(argv) {
   const positional = [];
@@ -90,15 +126,25 @@ async function run(argv) {
     return;
   }
 
+  // Validation AVANT authentification : sinon une commande mal tapee remontait
+  // « session expiree », message trompeur qui envoie chercher le probleme au
+  // mauvais endroit.
+  if (!KNOWN[domain] || !KNOWN[domain].includes(action)) {
+    console.error(`Commande inconnue : ${positional.join(' ') || '(vide)'}\n`);
+    console.log(USAGE);
+    process.exitCode = 1;
+    return;
+  }
+
   const client = createCosmoClient();
   const session = await requireSession(client);
 
   if (domain === 'tasks' && (action === 'list' || action === undefined)) {
     const tasks = await listTasks(client, {
       completed: flags.all ? undefined : false,
-      category: typeof flags.category === 'string' ? flags.category : undefined,
-      deadlineBefore: typeof flags.before === 'string' ? flags.before : undefined,
-      limit: flags.limit ? Number(flags.limit) : undefined,
+      category: stringFlag(flags, 'category'),
+      deadlineBefore: stringFlag(flags, 'before'),
+      limit: numberFlag(flags, 'limit'),
     });
     output(tasks, flags);
     return;
@@ -108,10 +154,10 @@ async function run(argv) {
     const name = rest.join(' ');
     const input = {
       name,
-      priority: flags.priority ? Number(flags.priority) : undefined,
-      category: typeof flags.category === 'string' ? flags.category : undefined,
-      deadline: typeof flags.deadline === 'string' ? flags.deadline : undefined,
-      estimatedTime: flags.time ? Number(flags.time) : undefined,
+      priority: numberFlag(flags, 'priority'),
+      category: stringFlag(flags, 'category'),
+      deadline: flags.deadline === '' ? '' : stringFlag(flags, 'deadline'),
+      estimatedTime: numberFlag(flags, 'time'),
     };
     if (flags['dry-run']) {
       output({ dryRun: true, wouldCreate: { ...input, deadline: input.deadline ?? todayLocal() } }, flags);
@@ -124,6 +170,26 @@ async function run(argv) {
     return;
   }
 
+  if (domain === 'tasks' && action === 'update') {
+    const id = rest[0];
+    const patch = {
+      name: rest.length > 1 ? rest.slice(1).join(' ') : stringFlag(flags, 'name'),
+      priority: numberFlag(flags, 'priority'),
+      category: stringFlag(flags, 'category'),
+      // `--deadline ""` doit pouvoir effacer l'echeance : on distingue la
+      // chaine vide (effacer) de l'absence de drapeau (ne pas toucher).
+      deadline: flags.deadline === '' ? '' : stringFlag(flags, 'deadline'),
+      estimatedTime: numberFlag(flags, 'time'),
+      bookmarked: flags.bookmark ? true : flags['no-bookmark'] ? false : undefined,
+    };
+    if (flags['dry-run']) {
+      output({ dryRun: true, wouldUpdate: id, patch }, flags);
+      return;
+    }
+    output(await updateTask(client, id, patch), flags);
+    return;
+  }
+
   if (domain === 'tasks' && action === 'done') {
     const id = rest[0];
     if (flags['dry-run']) {
@@ -131,6 +197,36 @@ async function run(argv) {
       return;
     }
     output(await completeTask(client, id), flags);
+    return;
+  }
+
+  if (domain === 'tasks' && action === 'reopen') {
+    const id = rest[0];
+    if (flags['dry-run']) {
+      output({ dryRun: true, wouldReopen: id }, flags);
+      return;
+    }
+    output(await reopenTask(client, id), flags);
+    return;
+  }
+
+  if (domain === 'tasks' && action === 'delete') {
+    const id = rest[0];
+    if (flags['dry-run']) {
+      output({ dryRun: true, wouldDelete: id }, flags);
+      return;
+    }
+    // Suppression irreversible : on exige un geste explicite. Le reste du CLI
+    // n'ecrit que du reversible, celle-ci est la seule sortie sans retour.
+    if (!flags.confirm) {
+      console.error(`Suppression IRREVERSIBLE de la tache ${id}.`);
+      console.error('Relance avec --confirm pour l executer, ou --dry-run pour verifier la cible.');
+      process.exitCode = 1;
+      return;
+    }
+    const removed = await deleteTask(client, id);
+    if (!flags.json) console.log('Supprimee :');
+    output(removed, flags);
     return;
   }
 
@@ -154,24 +250,17 @@ async function run(argv) {
   if (domain === 'agenda') {
     const events = await listUpcomingEvents(client, {
       userId: session.user.id,
-      days: flags.days ? Number(flags.days) : 7,
+      days: numberFlag(flags, 'days') ?? 7,
     });
     output(events, flags);
     return;
   }
 
   if (domain === 'okr') {
-    if (typeof flags.kr === 'string') {
-      output(await listKeyResults(client, flags.kr), flags);
-      return;
-    }
-    output(await listOkrs(client), flags);
+    const krId = stringFlag(flags, 'kr');
+    output(krId ? await listKeyResults(client, krId) : await listOkrs(client), flags);
     return;
   }
-
-  console.error(`Commande inconnue : ${positional.join(' ')}\n`);
-  console.log(USAGE);
-  process.exitCode = 1;
 }
 
 run(process.argv.slice(2)).catch((err) => {

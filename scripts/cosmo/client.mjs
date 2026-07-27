@@ -134,16 +134,51 @@ export function parseVerificationInput(raw) {
   );
 }
 
+/** Une panne réseau ne doit jamais être présentée comme une session invalide. */
+function isTransient(error) {
+  const msg = (error?.message ?? '').toLowerCase();
+  return (
+    msg.includes('fetch failed') ||
+    msg.includes('network') ||
+    msg.includes('timeout') ||
+    msg.includes('econn') ||
+    msg.includes('enotfound') ||
+    msg.includes('socket')
+  );
+}
+
 /**
- * Garantit une session utilisable. Ne tente JAMAIS de se ré-authentifier :
- * le login est une action humaine (voir login.mjs).
+ * Garantit une session utilisable, sans jamais redemander de login tant que le
+ * refresh token reste valide.
+ *
+ * `getSession()` rafraîchit déjà le jeton expiré au démarrage du client, mais
+ * dans un process CLI court cette récupération peut échouer silencieusement.
+ * On force donc un `refreshSession()` explicite avant d'abandonner, et on
+ * distingue une panne réseau d'une session réellement morte : renvoyer
+ * « relance cosmo:login » sur un wifi coupé est un faux négatif pénible.
+ *
+ * Ne tente JAMAIS de se ré-authentifier : le login est une action humaine.
  */
 export async function requireSession(client) {
   const { data, error } = await client.auth.getSession();
-  if (error || !data?.session) {
+  if (data?.session) return data.session;
+
+  if (error && isTransient(error)) {
+    throw new CosmoAuthError(`Reseau indisponible : ${error.message}. Session conservee, reessaie.`);
+  }
+
+  // Dernière chance : le storage contient peut-être un refresh token encore
+  // valide que getSession n'a pas su exploiter.
+  const refreshed = await client.auth.refreshSession();
+  if (refreshed.data?.session) return refreshed.data.session;
+
+  if (refreshed.error && isTransient(refreshed.error)) {
     throw new CosmoAuthError(
-      'Session COSMO absente ou expiree. Lance `npm run cosmo:login` dans ton terminal.'
+      `Reseau indisponible : ${refreshed.error.message}. Session conservee, reessaie.`
     );
   }
-  return data.session;
+
+  throw new CosmoAuthError(
+    'Session COSMO absente ou expiree. Lance `npm run cosmo:login` dans ton terminal.'
+  );
 }

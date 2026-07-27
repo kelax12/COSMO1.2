@@ -48,18 +48,50 @@ describe('createFileStorage', () => {
 });
 
 describe('requireSession', () => {
-  it('leve CosmoAuthError quand il n y a pas de session', async () => {
-    const client = { auth: { getSession: async () => ({ data: { session: null }, error: null }) } };
+  it('leve CosmoAuthError quand il n y a pas de session et que le refresh echoue', async () => {
+    const client = {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+        refreshSession: async () => ({ data: { session: null }, error: { message: 'invalid refresh token' } }),
+      },
+    };
     await expect(requireSession(client)).rejects.toThrow(CosmoAuthError);
   });
 
-  it('leve CosmoAuthError quand le refresh echoue', async () => {
+  it('leve CosmoAuthError quand le refresh token est revoque', async () => {
     const client = {
       auth: {
         getSession: async () => ({ data: { session: null }, error: { message: 'refresh_token_not_found' } }),
+        refreshSession: async () => ({ data: { session: null }, error: { message: 'refresh_token_not_found' } }),
       },
     };
     await expect(requireSession(client)).rejects.toThrow(/cosmo:login/);
+  });
+
+  // Le point de la demande « auth constante » : ne jamais renvoyer l'utilisateur
+  // vers un login alors que sa session est encore bonne.
+  it('rattrape la session via refreshSession quand getSession ne la trouve pas', async () => {
+    const session = { user: { id: 'u1' } };
+    const client = {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+        refreshSession: async () => ({ data: { session }, error: null }),
+      },
+    };
+    await expect(requireSession(client)).resolves.toBe(session);
+  });
+
+  it('ne demande PAS de relogin sur une panne reseau', async () => {
+    const client = {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: { message: 'fetch failed' } }),
+        refreshSession: async () => {
+          throw new Error('refreshSession ne doit pas etre appele sur panne reseau');
+        },
+      },
+    };
+    await expect(requireSession(client)).rejects.toThrow(/Reseau indisponible/);
+    await expect(requireSession(client)).rejects.not.toThrow(/cosmo:login/);
   });
 
   it('retourne la session quand elle est valide', async () => {
