@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   TASK_COLUMNS, todayLocal, listTasks,
   createTask, completeTask, DEFAULT_TASK,
+  listHabitsToday, markHabitDone,
 } from './api.mjs';
 import { CosmoValidationError } from './errors.mjs';
 
@@ -158,5 +159,52 @@ describe('completeTask', () => {
     const client = makeFakeClient({ data: { id: 't1' }, error: null });
     await completeTask(client, 't1');
     expect(client.calls).toContainEqual(['eq', 'id', 't1']);
+  });
+});
+
+describe('listHabitsToday', () => {
+  it('annote chaque habitude avec doneToday', async () => {
+    const client = makeFakeClient({
+      data: [
+        { id: 'h1', name: 'Sport', completions: { '2026-07-27': true }, estimated_time: 30 },
+        { id: 'h2', name: 'Lecture', completions: {}, estimated_time: 20 },
+      ],
+      error: null,
+    });
+    const habits = await listHabitsToday(client, { now: new Date(2026, 6, 27) });
+    expect(habits[0]).toMatchObject({ id: 'h1', name: 'Sport', doneToday: true });
+    expect(habits[1]).toMatchObject({ id: 'h2', name: 'Lecture', doneToday: false });
+  });
+
+  it('tolere completions absent', async () => {
+    const client = makeFakeClient({ data: [{ id: 'h1', name: 'X' }], error: null });
+    const habits = await listHabitsToday(client, { now: new Date(2026, 6, 27) });
+    expect(habits[0].doneToday).toBe(false);
+  });
+});
+
+describe('markHabitDone', () => {
+  it('appelle la RPC toggle_habit_completion quand l habitude n est pas faite', async () => {
+    const client = makeFakeClient({ data: [{ id: 'h1', name: 'Sport', completions: {} }], error: null });
+    await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
+    expect(client.calls).toContainEqual([
+      'rpc', 'toggle_habit_completion', { p_habit_id: 'h1', p_date: '2026-07-27' },
+    ]);
+  });
+
+  it('est idempotent : n appelle PAS la RPC si deja faite (sinon elle decocherait)', async () => {
+    const client = makeFakeClient({
+      data: [{ id: 'h1', name: 'Sport', completions: { '2026-07-27': true } }],
+      error: null,
+    });
+    const result = await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
+    expect(client.calls.some(([m]) => m === 'rpc')).toBe(false);
+    expect(result.alreadyDone).toBe(true);
+  });
+
+  it('ne fait jamais de update direct sur completions (TOCTOU-1)', async () => {
+    const client = makeFakeClient({ data: [{ id: 'h1', completions: {} }], error: null });
+    await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
+    expect(client.calls.some(([m]) => m === 'update')).toBe(false);
   });
 });

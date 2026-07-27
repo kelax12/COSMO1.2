@@ -122,3 +122,49 @@ export async function completeTask(client, taskId, { now = new Date() } = {}) {
   );
   return mapTaskFromRow(data);
 }
+
+function mapHabitFromRow(row, dayKey) {
+  const completions = row.completions || {};
+  return {
+    id: row.id,
+    name: row.name,
+    estimatedTime: row.estimated_time,
+    color: row.color,
+    icon: row.icon,
+    completions,
+    doneToday: completions[dayKey] === true,
+  };
+}
+
+/** Habitudes de l'utilisateur, annotées de leur état du jour. */
+export async function listHabitsToday(client, { now = new Date() } = {}) {
+  const dayKey = todayLocal(now);
+  const rows = unwrap(await client.from('habits').select('*').order('name', { ascending: true })) ?? [];
+  return rows.map((row) => mapHabitFromRow(row, dayKey));
+}
+
+/**
+ * Marque une habitude comme faite aujourd'hui.
+ *
+ * Passe par la RPC atomique `toggle_habit_completion` (mig. 023, TOCTOU-1) :
+ * jamais de SELECT→mutate→UPDATE, qui perdrait les écritures concurrentes.
+ * Comme la RPC est un *toggle*, on lit d'abord l'état : sans ce garde, appeler
+ * la commande deux fois décocherait l'habitude.
+ */
+export async function markHabitDone(client, habitId, { now = new Date() } = {}) {
+  if (!habitId) throw new CosmoValidationError('Identifiant d habitude manquant.');
+  const dayKey = todayLocal(now);
+
+  const rows = unwrap(await client.from('habits').select('*').eq('id', habitId)) ?? [];
+  const current = rows[0];
+  if (!current) throw new CosmoNotFoundError(`Habitude introuvable : ${habitId}`);
+
+  if ((current.completions || {})[dayKey] === true) {
+    return { ...mapHabitFromRow(current, dayKey), alreadyDone: true };
+  }
+
+  const data = unwrap(
+    await client.rpc('toggle_habit_completion', { p_habit_id: habitId, p_date: dayKey })
+  );
+  return { ...mapHabitFromRow(data, dayKey), alreadyDone: false };
+}
