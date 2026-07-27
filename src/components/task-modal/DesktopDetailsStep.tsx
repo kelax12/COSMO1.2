@@ -18,7 +18,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import SubtaskChecklist from './SubtaskChecklist';
-import DescriptionField from './DescriptionField';
+import DescriptionField from '@/components/DescriptionField';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 

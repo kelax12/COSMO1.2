@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { EventRecurrence } from '@/modules/events';
+import DescriptionField from '@/components/DescriptionField';
 import { DAY_LABELS } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
 
@@ -271,12 +272,13 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
         {showDescription ? (
           <div className="px-4 py-3">
-            <textarea
+            <DescriptionField
               value={notes}
-              onChange={(e) => handleFieldChange("notes", setNotes, e.target.value)}
+              onChange={(value) => handleFieldChange("notes", setNotes, value)}
               rows={4}
               autoFocus={!notes}
               placeholder="Description de l'événement"
+              expandedTitle="Description de l'événement"
               className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
               style={{ border: 'none' }}
             />
