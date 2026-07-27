@@ -45,15 +45,36 @@ async function main() {
     // n'est ni un code ni une URL — inutile de deviner ici.
     const parsed = parseVerificationInput(answer);
 
-    const { data, error } =
+    // Ambiguïté réelle de GoTrue : pour un utilisateur EXISTANT, signInWithOtp
+    // enregistre le jeton avec le type `magiclink`, alors que la doc du flux
+    // « code a 6 chiffres » documente `email`. Selon la version deployee, l'un
+    // des deux est refuse. On essaie donc les deux avant d'abandonner.
+    const attempts =
       parsed.kind === 'otp'
-        ? await client.auth.verifyOtp({ email, token: parsed.token, type: 'email' })
-        : await client.auth.verifyOtp({ token_hash: parsed.tokenHash, type: parsed.type });
+        ? [
+            { email, token: parsed.token, type: 'email' },
+            { email, token: parsed.token, type: 'magiclink' },
+          ]
+        : [{ token_hash: parsed.tokenHash, type: parsed.type }];
+
+    let data = null;
+    let error = null;
+    for (const payload of attempts) {
+      ({ data, error } = await client.auth.verifyOtp(payload));
+      if (!error) break;
+      console.error(`  (essai type=${payload.type} refuse : ${error.message})`);
+    }
 
     if (error) {
+      console.error('');
       console.error(`Verification refusee : ${error.message}`);
-      console.error('Un lien deja ouvert dans un navigateur est consomme : relance la commande');
-      console.error('pour en recevoir un nouveau, et copie-le sans le cliquer.');
+      console.error(`  name=${error.name ?? '?'} status=${error.status ?? '?'} code=${error.code ?? '?'}`);
+      console.error('');
+      console.error('Causes frequentes :');
+      console.error(' - le code vient d un email plus ancien : seul le DERNIER envoi est valide ;');
+      console.error(' - le lien a deja ete ouvert dans un navigateur, donc consomme ;');
+      console.error(' - le code a expire (1 h par defaut).');
+      console.error('Relance la commande pour recevoir un nouvel email, et utilise CELUI-LA.');
       process.exitCode = 1;
       return;
     }
