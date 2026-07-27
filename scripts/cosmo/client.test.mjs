@@ -74,6 +74,24 @@ describe('parseVerificationInput', () => {
     expect(parseVerificationInput('123456')).toEqual({ kind: 'otp', token: '123456' });
   });
 
+  // La longueur de l'OTP est configurable dans Supabase (6 a 10). Le projet
+  // COSMO est configure sur 8 : coder 6 en dur rejetait le code avant meme
+  // d'appeler l'API.
+  it('reconnait un code OTP a 8 chiffres (config du projet COSMO)', () => {
+    expect(parseVerificationInput('25019578')).toEqual({ kind: 'otp', token: '25019578' });
+  });
+
+  it('accepte toute la plage Supabase, de 6 a 10 chiffres', () => {
+    for (const code of ['123456', '1234567', '12345678', '123456789', '1234567890']) {
+      expect(parseVerificationInput(code)).toEqual({ kind: 'otp', token: code });
+    }
+  });
+
+  it('rejette un code trop court ou trop long', () => {
+    expect(() => parseVerificationInput('12345')).toThrow();
+    expect(() => parseVerificationInput('12345678901')).toThrow();
+  });
+
   it('tolere les espaces autour du code', () => {
     expect(parseVerificationInput('  123456  ')).toEqual({ kind: 'otp', token: '123456' });
   });
@@ -100,7 +118,7 @@ describe('parseVerificationInput', () => {
   });
 
   it('rejette une saisie qui n est ni un code ni une URL', () => {
-    expect(() => parseVerificationInput('bonjour')).toThrow(/code a 6 chiffres|lien/i);
+    expect(() => parseVerificationInput('bonjour')).toThrow(/chiffres|lien/i);
   });
 
   it('rejette une saisie vide', () => {

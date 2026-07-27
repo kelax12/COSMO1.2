@@ -90,18 +90,25 @@ export function createCosmoClient({ config = loadConfig(), storage = createFileS
  * Le template d'email Supabase par défaut n'envoie qu'un lien (il faudrait y
  * ajouter `{{ .Token }}` pour obtenir un code). Plutôt que d'imposer une
  * modification de template en production, on accepte les deux formes :
- *   - un code à 6 chiffres        → verifyOtp({ email, token, type: 'email' })
+ *   - un code numérique            → verifyOtp({ email, token, type: 'email' })
  *   - le lien magique collé tel quel → verifyOtp({ token_hash, type })
+ *
+ * La longueur de l'OTP est CONFIGURABLE dans Supabase (Authentication >
+ * Providers > Email > OTP length), de 6 à 10 chiffres. Le projet COSMO est
+ * réglé sur 8 : coder 6 en dur rejetait le code localement, avant tout appel
+ * réseau, ce qui rendait l'échec incompréhensible côté logs Supabase.
  *
  * Fonction pure : aucune I/O, testable isolément.
  */
+const OTP_PATTERN = /^\d{6,10}$/;
+
 export function parseVerificationInput(raw) {
   const value = (raw ?? '').trim();
   if (!value) {
-    throw new CosmoAuthError('Saisie vide : colle le code a 6 chiffres ou le lien recu par email.');
+    throw new CosmoAuthError('Saisie vide : colle le code recu par email, ou le lien complet.');
   }
 
-  if (/^\d{6}$/.test(value)) {
+  if (OTP_PATTERN.test(value)) {
     return { kind: 'otp', token: value };
   }
 
@@ -122,7 +129,8 @@ export function parseVerificationInput(raw) {
   }
 
   throw new CosmoAuthError(
-    'Saisie non reconnue : attendu un code a 6 chiffres, ou le lien complet recu par email.'
+    `Saisie non reconnue (${value.length} caracteres) : attendu un code de 6 a 10 chiffres, ` +
+      'ou le lien complet recu par email (commencant par https://).'
   );
 }
 
