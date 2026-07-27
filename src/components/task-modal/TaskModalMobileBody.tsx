@@ -20,6 +20,7 @@ import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
 import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
+import DescriptionField from './DescriptionField';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
 
 export interface MobileBodyProps {
@@ -332,9 +333,9 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           <SectionCard>
             {showDescription ? (
               <div className="px-4 py-3">
-                <textarea
+                <DescriptionField
                   value={formData.description ?? ''}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(value) => handleInputChange('description', value)}
                   rows={4}
                   autoFocus={!formData.description}
                   placeholder="Description de la tâche"

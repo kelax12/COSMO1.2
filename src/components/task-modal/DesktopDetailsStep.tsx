@@ -18,6 +18,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import SubtaskChecklist from './SubtaskChecklist';
+import DescriptionField from './DescriptionField';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 
@@ -486,10 +487,10 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Description <span className="normal-case font-normal opacity-60">(Facultatif)</span>
                       </label>
-                      <textarea
+                      <DescriptionField
                         id="task-description"
                         value={formData.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        onChange={(value) => handleInputChange('description', value)}
                         rows={3}
                         autoFocus={!formData.description}
                         placeholder="Détails de la tâche…"
