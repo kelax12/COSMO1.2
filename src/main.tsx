@@ -122,8 +122,12 @@ if (supabaseUrl) {
     .catch(() => { /* expected to sometimes fail — we don't care */ });
 }
 
+// `future` — on adopte les comportements v7 AVANT de bumper la version, pour
+// que le bump lui-meme soit un non-evenement (ces flags y sont les defauts).
+// Ces deux-la sont les seuls applicables au mode declaratif (pas de data
+// router ici) : cf. FutureConfig dans react-router/dist/lib/components.d.ts.
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
+  <BrowserRouter future={{ v7_relativeSplatPath: true }}>
     <App />
   </BrowserRouter>
 );
