@@ -2,6 +2,7 @@
 // Aucune requête directe — tout passe par api.mjs.
 import fs from 'node:fs';
 import { createCosmoClient, requireSession } from './client.mjs';
+import { formatLine, formatTaskDetail } from './format.mjs';
 import {
   listTasks, getTask, createTask, completeTask, reopenTask, updateTask, deleteTask,
   listCategories,
@@ -108,34 +109,19 @@ function parseArgs(argv) {
   return { positional, flags, stray, lastFlagKey };
 }
 
-function formatLine(item) {
-  // Categorie : {id, name, color} — pas de champ discriminant plus tardif, on
-  // teste `color` qui n'existe que la.
-  if (item.color !== undefined && item.name !== undefined && item.doneToday === undefined) {
-    return `${item.name}  (${item.id})`;
-  }
-  if (item.doneToday !== undefined) {
-    return `${item.doneToday ? '[x]' : '[ ]'} ${item.name}  (${item.id})`;
-  }
-  if (item.startTime !== undefined) {
-    return `${item.startTime}  ${item.title}  (${item.id})`;
-  }
-  if (item.targetValue !== undefined) {
-    return `${item.title} : ${item.currentValue}/${item.targetValue} ${item.unit ?? ''}  (${item.id})`;
-  }
-  if (item.progress !== undefined) {
-    return `${item.completed ? '[x]' : '[ ]'} ${item.title} — ${item.progress}%  (${item.id})`;
-  }
-  const mark = item.completed ? '[x]' : '[ ]';
-  const deadline = item.deadline ? ` echeance ${item.deadline.slice(0, 10)}` : '';
-  return `${mark} P${item.priority} ${item.name}${deadline}  (${item.id})`;
-}
-
-function output(value, flags) {
+/**
+ * Rend une valeur. `detail: true` bascule sur le rendu complet d'une tache
+ * (description incluse) au lieu de la ligne compacte des listes.
+ */
+function output(value, flags, { detail = false } = {}) {
   // Un objet dry-run n'a aucun des champs que formatLine sait rendre : le
   // passer dans le formateur produisait « [ ] Pundefined undefined ».
   if (flags.json || value?.dryRun) {
     console.log(JSON.stringify(value, null, 2));
+    return;
+  }
+  if (detail && !Array.isArray(value)) {
+    console.log(formatTaskDetail(value));
     return;
   }
   if (Array.isArray(value)) {
@@ -222,7 +208,7 @@ async function run(argv) {
   }
 
   if (domain === 'tasks' && action === 'show') {
-    output(await getTask(client, rest[0]), flags);
+    output(await getTask(client, rest[0]), flags, { detail: true });
     return;
   }
 
