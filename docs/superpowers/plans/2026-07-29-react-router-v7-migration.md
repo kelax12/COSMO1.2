@@ -92,7 +92,16 @@ Run:
 npm test
 ```
 
-Attendu : **3 échecs pré-existants** sur `lists` et `team-stats`. Ils sont cassés sur `main` avant ce chantier — ne pas les imputer à la migration, ne pas les corriger ici. Noter le nombre exact de tests passants ; c'est la référence pour toute la suite.
+Attendu : **849 passants / 4 échecs pré-existants** (mesuré le 2026-07-29 sur `main` @ `8a8dee0`). Ils sont cassés avant ce chantier — ne pas les imputer à la migration, ne pas les corriger ici :
+
+| Fichier | Test |
+|---|---|
+| `src/design-system.guard.test.ts` | budget de tailles Tailwind arbitraires (203 > 202) |
+| `src/components/organization/team-stats.helpers.test.ts` | `isOverdue` |
+| `src/components/organization/team-stats.helpers.test.ts` | `overdueByMember` |
+| `src/modules/lists/supabase.repository.test.ts` | `warnIfTruncated(...).map is not a function` |
+
+> Corrigé en cours d'exécution : la note mémoire `tests-preexistants-casses.md` ne mentionnait que 3 échecs (`lists` + `team-stats`). Le 4ᵉ (`design-system.guard.test.ts`, un compteur de budget Tailwind sans rapport avec le routage) a dérivé depuis. **Après cette tâche la référence devient 853 passants / 4 échecs** (les 4 tests de garde ajoutés ici).
 
 - [ ] **Step 2 : Écrire le test de navigation entre routes lazy**
 
