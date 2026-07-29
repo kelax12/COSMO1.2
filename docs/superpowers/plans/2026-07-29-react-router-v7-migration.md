@@ -678,18 +678,23 @@ Attendu : **2 high, sur un seul avis — [GHSA-qwww-vcr4-c8h2](https://github.co
 
 Les autres vulnérabilités (`vite`, `vitest`, `esbuild`, `eslint`, `minimatch`) sont dev-only et hors périmètre — elles ont leur propre entrée dans `faille.md` §7.
 
-- [ ] **Step 2 : Confirmer que react-router a disparu de l'audit complet**
+- [ ] **Step 2 : Confirmer que les 3 avis visés ont bien disparu**
+
+> ⚠️ **Corrigé en cours d'exécution.** Cette étape vérifiait auparavant que `react-router` disparaissait entièrement de l'audit. C'est faux depuis la découverte de l'avis RSC (cf. Step 1) : le paquet **reste** listé. Ce qu'il faut vérifier, c'est la disparition des **3 avis ciblés**, pas du paquet.
 
 Run:
 ```bash
-npm audit --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const v=JSON.parse(s).vulnerabilities;console.log('react-router:',v['react-router']?'ENCORE PRESENT':'absent');console.log('react-router-dom:',v['react-router-dom']?'ENCORE PRESENT':'absent')})"
+npm audit --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const u=[];for(const v of Object.values(j.vulnerabilities||{}))for(const a of v.via)if(typeof a!=='string')u.push(a.url);for(const g of ['GHSA-wrjc-x8rr-h8h6','GHSA-jjmj-jmhj-qwj2','GHSA-337j-9hxr-rhxg'])console.log(g,':',u.some(x=>x&&x.includes(g))?'ENCORE PRESENT':'RESOLU')})"
 ```
 
 Attendu :
 ```
-react-router: absent
-react-router-dom: absent
+GHSA-wrjc-x8rr-h8h6 : RESOLU
+GHSA-jjmj-jmhj-qwj2 : RESOLU
+GHSA-337j-9hxr-rhxg : RESOLU
 ```
+
+`react-router` et `react-router-dom` **restent** présents dans `npm audit` au titre de `GHSA-qwww-vcr4-c8h2` (G-11). C'est attendu, ce n'est pas une régression.
 
 - [ ] **Step 3 : Mettre à jour la ligne G-9 du tableau récapitulatif**
 

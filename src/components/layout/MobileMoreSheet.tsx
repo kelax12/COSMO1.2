@@ -93,6 +93,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
               <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                 <button
                   type="button"
+                  onPointerDown={() => prefetchRoute('/settings')}
                   onClick={() => handleNav('/settings')}
                   className="w-full flex items-center gap-3.5 px-4 min-h-[72px] active:bg-[rgb(var(--color-hover))] transition-colors"
                   aria-label="Aller aux paramètres"
