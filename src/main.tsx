@@ -122,12 +122,11 @@ if (supabaseUrl) {
     .catch(() => { /* expected to sometimes fail — we don't care */ });
 }
 
-// `future` — on adopte les comportements v7 AVANT de bumper la version, pour
-// que le bump lui-meme soit un non-evenement (ces flags y sont les defauts).
-// Ces deux-la sont les seuls applicables au mode declaratif (pas de data
-// router ici) : cf. FutureConfig dans react-router/dist/lib/components.d.ts.
+// Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
+// depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
+// par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+  <BrowserRouter>
     <App />
   </BrowserRouter>
 );
