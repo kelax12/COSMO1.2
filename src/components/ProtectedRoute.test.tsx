@@ -10,7 +10,7 @@ import ProtectedRoute from './ProtectedRoute';
 
 function renderAt(path = '/tasks') {
   return render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[path]} future={{ v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<div>PUBLIC LANDING</div>} />
         <Route element={<ProtectedRoute />}>
