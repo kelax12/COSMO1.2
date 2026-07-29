@@ -7,7 +7,7 @@ export const USE_CASES = [
     title: "L'application de productivité pensée pour les freelances",
     metaTitle: 'App de productivité pour freelance : tâches, temps, objectifs',
     description:
-      'Freelance : gérez clients, deadlines, habitudes de prospection et objectifs trimestriels dans une seule app gratuite. Time-blocking natif, démo sans inscription.',
+      'Freelance : gérez clients, deadlines, prospection et objectifs trimestriels dans une seule app gratuite. Time-blocking natif, démo sans inscription.',
     lead: "Être freelance, c'est porter tous les rôles à la fois : la production, la prospection, l'administratif, la stratégie. Votre outil d'organisation doit suivre — sans vous coûter un abonnement de plus.",
     html: `
 <h2>Le problème du freelance organisé</h2>

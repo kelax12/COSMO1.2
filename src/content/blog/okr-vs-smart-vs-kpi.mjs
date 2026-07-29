@@ -2,7 +2,7 @@
 export const article = {
   slug: 'okr-vs-smart-vs-kpi',
   title: 'OKR vs objectifs SMART vs KPI : quelle méthode choisir (et quand) ?',
-  metaTitle: 'OKR vs SMART vs KPI : différences et quand utiliser chaque méthode',
+  metaTitle: 'OKR vs SMART vs KPI : quelle méthode choisir ?',
   description:
     "OKR, SMART et KPI ne répondent pas à la même question. Différences concrètes, tableau comparatif et règle simple pour savoir quand utiliser chaque méthode.",
   datePublished: '2026-07-18',
