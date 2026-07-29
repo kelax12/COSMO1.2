@@ -4,7 +4,7 @@ export const article = {
   title: 'La matrice Eisenhower : prioriser ses tâches en 4 cases (+ exemples)',
   metaTitle: 'Matrice Eisenhower : méthode, exemples et limites (guide)',
   description:
-    "Urgent ou important ? La matrice Eisenhower classe vos tâches en 4 quadrants pour décider quoi faire, planifier, déléguer ou supprimer. Méthode complète avec exemples.",
+    "Urgent ou important ? La matrice Eisenhower classe vos tâches en 4 quadrants : faire, planifier, déléguer ou supprimer. Méthode complète avec exemples.",
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 7,
