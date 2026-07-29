@@ -79,8 +79,9 @@ Légende :
 | G-6 | 🟠 Medium | Code d'invitation organisation : 6 caractères (~29,7 bits) + **biais modulo** (`byte % 31` sur 256 valeurs → A–H ~12,5 % plus probables, CWE-331) | ✅ Corrigé | `083` — 10 caractères (~49,5 bits) + tirage par rejet (octets ≥ 248). Mesuré sur 3 000 codes : A–H 965,4 vs autres 968,6. Regex client `{6}` → `(?:{6}\|{10})` (codes hérités toujours valides) |
 | G-7 | 🟡 Low | `profiles.display_name` : `sanitize_display_name()` contournable par PATCH direct (aucun trigger) → usurpation d'affichage, longueur illimitée | ✅ Corrigé | `083` — sanitisation appliquée dans le trigger. Bug fonctionnel corrigé au passage : la classe `[<>"'\` -]` retirait aussi **espaces et tirets** (« Jean Dupont » → « JeanDupont ») |
 | G-8 | 🟡 Low | 7 fonctions trigger `validate_*` de nouveau exécutables par `anon` via `/rest/v1/rpc/` (récidive de [F-4](#f-4--hardening-anon-résiduel-régression-de-064069) : la 080 avait traité les fonctions d'alors, pas le motif) | ✅ Corrigé | `083` — boucle `REVOKE` **générique** sur toutes les fonctions `RETURNS trigger` du schéma `public`, donc immunisée aux prochaines. Advisors : 7 → 0 |
-| G-9 | 🟠 Medium | `react-router` 6.x — open redirect via antislash dans `<Link>`/`useNavigate` (GHSA-wrjc-x8rr-h8h6) | ⚠️ **Non corrigé — assumé** | **Aucune version corrigée n'existe en v6** (6.30.4 = dernière v6, toujours affectée) ; le fix exige v7.17.1+, majeur cassant. Exploitabilité **vérifiée nulle** : aucun `navigate()`/`<Link>` alimenté par un paramètre d'URL, pas de SSR. À traiter en migration v7 dédiée. `postcss` → 8.5.23 (corrigé) |
+| G-9 | 🟠 Medium | `react-router` 6.x — open redirect via antislash dans `<Link>`/`useNavigate` (GHSA-wrjc-x8rr-h8h6) | ✅ Corrigé | **Migration `react-router-dom` 6.30.4 → 7.18.2** le 2026-07-29 (plan : `docs/superpowers/plans/2026-07-29-react-router-v7-migration.md`). Clôt d'un coup les 3 avis : celui-ci, `GHSA-jjmj-jmhj-qwj2` (open redirect → XSS) et `GHSA-337j-9hxr-rhxg` (`deserializeErrors`) — vérifié, les 3 ont disparu de `npm audit`. Migration en mode déclaratif pur : seuls `v7_relativeSplatPath` et `v7_startTransition` s'appliquaient, adoptés par étapes sur la 6.30 **avant** le bump pour que celui-ci soit un non-évènement. L'invariant qui rendait la faille inexploitable est désormais **verrouillé par un test** (`src/lib/no-open-redirect.test.ts`) au lieu de reposer sur une revue ponctuelle. **Contrepartie assumée → [G-11](#-tableau-récapitulatif)** |
 | G-10 | 🟡 Low | Jetons de session en `localStorage` + `style-src 'unsafe-inline'` | 🟢 Partiel | `frame-ancestors 'none'` ajouté à la CSP. `'unsafe-inline'` **conservé volontairement** : le retirer casse Framer Motion et Radix (styles inline). `localStorage` = compromis standard Supabase SPA |
+| G-11 | 🟠 High (théorique) | `react-router` ≥ 7.12 — CSRF en **mode RSC** : exécution d'une action avant la réponse 400 (GHSA-qwww-vcr4-c8h2, plage `>=7.12.0 <8.3.0`) | ⚠️ **Non corrigé — assumé** | Hérité de la migration [G-9](#-tableau-récapitulatif) du 2026-07-29. **Aucune version ne clôt les deux familles d'avis en React 18** : 7.11.0 **réintroduirait l'open redirect** (régression), 8.3.0 exige React ≥ 19.2.7 + Node ≥ 22. 🔴 **Ne PAS lancer `npm audit fix`** : il propose précisément 7.11.0. Exploitabilité **nulle par construction** — SPA Vite sans React Server Components : `grep -rE "react-router/rsc\|matchRSCServerRequest\|createCallServer\|ServerRouter\|createStaticHandler" src prerender.mjs vite.config.ts` → 0 occurrence. Ni serveur, ni `action`, ni requête RSC à contourner. Sortie prévue : migration React 19 + react-router 8 |
 
 ---
 
@@ -520,15 +521,21 @@ Defense-in-depth conservée : `WITH CHECK` + trigger `prevent_user_id_change` (0
 `npm audit` → 2 modérées sur esbuild via `vite < 6.4.1` (dev seulement).
 **Correctif** : `npm audit fix --force` (passe vite v8, breaking) en PR dédiée.
 
-> **État au 2026-07-26** (cf. [G-9](#-tableau-récapitulatif)) :
-> - **Production** : `postcss` → 8.5.23 ✅. Reste `react-router` 6.x — **aucune
->   version corrigée n'existe en v6** (6.30.4 est la dernière et reste affectée),
->   le fix impose v7.17.1+, un majeur cassant. Exploitabilité **vérifiée nulle** :
->   aucun `navigate()`/`<Link to>` alimenté par un paramètre d'URL (`redirect`,
->   `next`, `returnTo` : 0 occurrence), les seules redirections externes sont
->   l'URL Stripe renvoyée par l'Edge Function et des `redirectTo` construits sur
->   `window.location.origin`. Le 2ᵉ avis (`deserializeErrors`, hydratation SSR)
->   **ne s'applique pas** : SPA sans SSR. → migration v7 planifiée à part.
+> **État au 2026-07-29** (cf. [G-9](#-tableau-récapitulatif) et [G-11](#-tableau-récapitulatif)) :
+> - **Production** : `postcss` → 8.5.23 ✅. `react-router-dom` 6.30.4 → **7.18.2** ✅ —
+>   clôt les 3 avis d'un coup (`GHSA-wrjc-x8rr-h8h6` open redirect,
+>   `GHSA-jjmj-jmhj-qwj2` open redirect → XSS, `GHSA-337j-9hxr-rhxg`
+>   `deserializeErrors`), tous vérifiés absents de l'audit après bump.
+>   **Il reste 1 avis** (`GHSA-qwww-vcr4-c8h2`, CSRF **mode RSC**, `>=7.12.0 <8.3.0`)
+>   → détaillé en [G-11](#-tableau-récapitulatif) : inapplicable (aucun RSC dans
+>   une SPA Vite), et **aucune version ne clôt les deux familles à la fois en
+>   React 18**. 🔴 `npm audit fix` propose 7.11.0, qui **réintroduirait
+>   l'open redirect** — ne pas l'appliquer.
+> - **Note de méthode** : la propriété qui rendait l'open redirect inexploitable
+>   (aucune navigation alimentée par un paramètre d'URL) était une propriété du
+>   *code*, revérifiée à la main à chaque audit. Elle est désormais **verrouillée
+>   par un test** (`src/lib/no-open-redirect.test.ts`), donc elle ne peut plus se
+>   perdre en silence au prochain flux « retour après login ».
 > - **Dev-only** (`vitest`, `eslint`, `vite`, `glob`/`minimatch`) : jamais servies
 >   au navigateur. `npm audit fix --force` imposerait vitest 3→4 et eslint 9→10 et
 >   **casserait** le peer `eslint-plugin-react-hooks` (vérifié en `--dry-run`).
