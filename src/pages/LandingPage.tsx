@@ -446,12 +446,13 @@ const LandingPage: React.FC = () => {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleLoginClick}
+              <a
+                href="/login"
+                onClick={(e) => { e.preventDefault(); handleLoginClick(); }}
                 className="hidden sm:block px-3 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
               >
                 Se connecter
-              </button>
+              </a>
               <button
                 ref={magneticNavCta}
                 onClick={handleRegisterClick}
@@ -498,12 +499,13 @@ const LandingPage: React.FC = () => {
                       {label}
                     </a>
                   ))}
-                  <button
-                    onClick={() => { handleLoginClick(); setShowMobileMenu(false); }}
+                  <a
+                    href="/login"
+                    onClick={(e) => { e.preventDefault(); handleLoginClick(); setShowMobileMenu(false); }}
                     className="text-slate-300 hover:text-white hover:bg-white/[0.06] font-medium transition-colors px-3 py-2.5 rounded-lg text-left"
                   >
                     Se connecter
-                  </button>
+                  </a>
                 </nav>
               </motion.div>
             )}

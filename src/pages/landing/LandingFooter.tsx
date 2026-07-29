@@ -22,6 +22,7 @@ const LandingFooter: React.FC = () => (
               <a href="/a-propos" className="hover:text-white transition-colors">À propos</a>
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
               <a href="/signup" className="hover:text-white transition-colors">Inscription gratuite</a>
+              <a href="/login" className="hover:text-white transition-colors">Connexion</a>
               <a href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</a>
               <a href="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</a>
               <a href="/cgu" className="hover:text-white transition-colors">CGU</a>

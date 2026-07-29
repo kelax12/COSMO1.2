@@ -69,6 +69,7 @@ const guideArticle = {
   '@type': 'TechArticle',
   headline: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
   description: "Guide complet pour utiliser Cosmo : gestion de tâches, suivi d'habitudes avec heatmap, agenda time-blocking et méthode OKR.",
+  image: `${BASE}/og-card.png`,
   url: `${BASE}/guide`,
   inLanguage: 'fr-FR',
   datePublished: '2025-01-01',
@@ -86,7 +87,7 @@ const ROUTES = [
   {
     path: '/guide',
     title: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
-    description: "Apprenez à utiliser Cosmo : créer des tâches, suivre vos habitudes avec heatmap, planifier votre agenda avec time-blocking et gérer vos OKR. Guide complet en français.",
+    description: "Apprenez à utiliser Cosmo : tâches, habitudes avec heatmap, agenda en time-blocking et gestion des OKR. Guide complet en français.",
     extraLd: [
       { obj: breadcrumb("Guide d'utilisation", '/guide'), id: 'guide-breadcrumb' },
       { obj: guideArticle, id: 'guide-article' },
@@ -112,7 +113,7 @@ const ROUTES = [
   {
     path: '/login',
     title: 'Connexion – Cosmo, application de productivité',
-    description: 'Connectez-vous à Cosmo pour accéder à vos tâches, habitudes, agenda et OKR.',
+    description: 'Connectez-vous à Cosmo pour retrouver vos tâches, habitudes, agenda et OKR. Accès rapide via email/mot de passe ou connexion Google, en quelques secondes.',
     noscript: `<h1>Connexion à Cosmo</h1>
         <p>Connectez-vous pour retrouver vos tâches, habitudes, agenda et objectifs OKR.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
@@ -145,6 +146,7 @@ const ROUTES = [
           blogPost: ARTICLES.map((a) => ({
             '@type': 'BlogPosting',
             headline: a.title,
+            image: `${BASE}/og-card.png`,
             url: `${BASE}/blog/${a.slug}`,
             datePublished: a.datePublished,
           })),
@@ -183,6 +185,7 @@ const ROUTES = [
           '@type': 'BlogPosting',
           headline: a.title,
           description: a.description,
+          image: `${BASE}/og-card.png`,
           url: `${BASE}/blog/${a.slug}`,
           inLanguage: 'fr-FR',
           datePublished: a.datePublished,
@@ -269,6 +272,13 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
         </ul>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`;
 
+// Maillage interne statique commun, ajouté au bas de #seo-fallback sur TOUTES
+// les routes (y compris la home) — Ahrefs (et les crawlers sans JS) ne suivent
+// que ces liens-là pour établir les entrantes. Sans ce bloc, /a-propos, les 3
+// pages use-case, les 3 pages légales et /login n'ont aucun lien entrant
+// statique (page "orpheline" ou lien dofollow unique dans Ahrefs Site Audit).
+const STATIC_FOOTER_NAV = `<p><a href="/guide">Guide d'utilisation</a> · <a href="/blog">Blog</a> · <a href="/pour-freelances">Pour les freelances</a> · <a href="/pour-etudiants">Pour les étudiants</a> · <a href="/pour-managers">Pour les managers</a> · <a href="/a-propos">À propos</a> · <a href="/signup">Inscription gratuite</a> · <a href="/login">Connexion</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/politique-confidentialite">Confidentialité</a> · <a href="/cgu">CGU</a></p>`;
+
 // Injecte le contenu indexable dans <div id="root">, AVANT #boot-screen.
 //
 // Il est présent dans le balisage — donc lu par les crawlers qui n'exécutent
@@ -292,7 +302,7 @@ function injectStaticContent(out, content) {
     console.warn('  ⚠ marqueur <div id="root"> introuvable — contenu statique non injecté');
     return out;
   }
-  out = out.replace(marker, `${marker}\n      <div id="seo-fallback">\n        ${content}\n      </div>`);
+  out = out.replace(marker, `${marker}\n      <div id="seo-fallback">\n        ${content}\n        ${STATIC_FOOTER_NAV}\n      </div>`);
   out = out.replace(/<noscript id="seo-noscript">[\s\S]*?<\/noscript>\s*/, '');
   return out;
 }
@@ -304,7 +314,6 @@ function buildPage(route) {
   out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${route.title}</title>`);
   out = out.replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${esc(route.description)}" />`);
   out = out.replace(/<link rel="canonical" href="[\s\S]*?" \/>/, `<link rel="canonical" href="${url}" />`);
-  out = out.replace(/<link rel="alternate" hreflang="fr" href="[\s\S]*?" \/>/, `<link rel="alternate" hreflang="fr" href="${url}" />`);
   out = out.replace(/<meta property="og:url" content="[\s\S]*?" \/>/, `<meta property="og:url" content="${url}" />`);
   out = out.replace(/<meta property="og:title" content="[\s\S]*?" \/>/, `<meta property="og:title" content="${esc(route.title)}" />`);
   out = out.replace(/<meta property="og:description" content="[\s\S]*?" \/>/, `<meta property="og:description" content="${esc(route.description)}" />`);

@@ -25,6 +25,13 @@ Compagnon de la Priorité 3 de l'audit SEO ([AUDIT-SEO-2026-07-18.md](../AUDIT-S
 
 **Description longue FR** : reprendre le bloc « Fonctionnalités » de `public/llms.txt`.
 
+**Description longue EN** :
+> Cosmo is a productivity platform that brings together the four pillars of personal organization — tasks, habits, calendar, and OKRs — replacing four separate apps with one.
+>
+> The task module organizes work with customizable priorities, color-coded categories, and deadlines, plus smart filters and lists to cut through the noise. The calendar adds drag-and-drop time-blocking: drop a task onto a slot and it becomes a synced event, with day, week, and month views. Habit tracking uses a 26-week GitHub-style heatmap and streak counters to make consistency visible, alongside completion-rate and time-invested stats. The OKR module turns quarterly objectives into measurable key results with real-time progress, no spreadsheet required. A cross-module statistics view breaks down time spent across tasks, habits, calendar, and OKRs.
+>
+> Everything above is free, with no seat limits. A fully preloaded demo — 100 tasks, 100 habits, and a year of realistic data — lets anyone explore the whole app in two minutes, no sign-up required.
+
 **Arguments différenciants** (à placer selon la plateforme) :
 1. Seule app qui connecte tâches + habitudes + time-blocking + OKR (les concurrents n'en couvrent qu'1 ou 2).
 2. Fonctionnalités principales gratuites sans limite (vs Todoist : 5 projets en gratuit).

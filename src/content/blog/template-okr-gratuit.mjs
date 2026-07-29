@@ -4,9 +4,9 @@
 export const article = {
   slug: 'template-okr-gratuit',
   title: 'Template OKR gratuit (Excel) : personnel et équipe, prêt à remplir',
-  metaTitle: 'Template OKR gratuit à télécharger (Excel) : perso + équipe',
+  metaTitle: 'Template OKR gratuit à télécharger (Excel)',
   description:
-    'Téléchargez notre template OKR gratuit au format Excel : exemples pré-remplis, progression calculée automatiquement, versions personnelle et équipe/startup. Sans email.',
+    'Téléchargez notre template OKR gratuit au format Excel : exemples pré-remplis, progression automatique, versions perso et équipe. Sans email.',
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 5,
