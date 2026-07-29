@@ -60,9 +60,11 @@ const MobileTabBar: React.FC = () => {
                 end={end}
                 // `pointerdown` se declenche des la pose du doigt, ~100 ms avant
                 // que le tap ne se termine : le chunk de la page a une longueur
-                // d'avance. Sans ca, `v7_startTransition` fige visuellement la
-                // tab bar pendant le telechargement (l'onglet actif ne bouge
-                // qu'une fois le chunk arrive).
+                // d'avance. Sans ca, le comportement startTransition de React
+                // Router (defaut depuis la v7) fige visuellement la tab bar
+                // pendant le telechargement : l'onglet actif ne bouge qu'une
+                // fois le chunk arrive, car `useLocation` est mis a jour dans
+                // la transition.
                 onPointerDown={() => prefetchRoute(to!)}
                 className={({ isActive }) =>
                   cn(
