@@ -127,7 +127,7 @@ if (supabaseUrl) {
 // Ces deux-la sont les seuls applicables au mode declaratif (pas de data
 // router ici) : cf. FutureConfig dans react-router/dist/lib/components.d.ts.
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+  <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
     <App />
   </BrowserRouter>
 );
