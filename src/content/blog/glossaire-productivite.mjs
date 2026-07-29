@@ -2,7 +2,7 @@
 export const article = {
   slug: 'glossaire-productivite',
   title: 'Glossaire de la productivité : 20 termes enfin définis clairement',
-  metaTitle: 'Glossaire productivité : OKR, time-blocking, deep work… (20 défs)',
+  metaTitle: 'Glossaire productivité : OKR, time-blocking, deep work',
   description:
     'OKR, time-blocking, deep work, habit stacking, loi de Parkinson… 20 termes de la productivité définis en français, clairement, avec leur usage concret.',
   datePublished: '2026-07-18',

@@ -2,7 +2,7 @@
 export const article = {
   slug: 'combien-de-temps-prendre-habitude',
   title: "Combien de temps faut-il vraiment pour prendre une habitude ? (ce que dit la science)",
-  metaTitle: 'Combien de temps pour prendre une habitude ? La vraie réponse',
+  metaTitle: 'Combien de temps pour une habitude ? La vraie réponse',
   description:
     "21 jours ? 66 jours ? La vraie réponse de la science est plus nuancée, et plus utile. Ce que montre l'étude de référence, et comment s'en servir concrètement.",
   datePublished: '2026-07-18',
