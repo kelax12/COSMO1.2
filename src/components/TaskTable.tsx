@@ -407,8 +407,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <>
-      {!addToListMode && <PendingSharedTasks />}
-      {!addToListMode && <PendingSharedLists />}
+      {/* Mobile : ces bandeaux sont regroupés dans TasksInboxMenu (en-tête). */}
+      {!addToListMode && (
+        <div className="hidden md:block">
+          <PendingSharedTasks />
+        </div>
+      )}
+      {!addToListMode && (
+        <div className="hidden md:block">
+          <PendingSharedLists />
+        </div>
+      )}
       <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
         <div className="flex flex-wrap items-center gap-2">
           <Button

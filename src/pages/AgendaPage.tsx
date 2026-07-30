@@ -501,6 +501,17 @@ const AgendaPage: React.FC = () => {
     api.gotoDate(date);
   };
 
+  // Vue Mois : un clic sur un jour bascule en vue Jour sur cette date, au lieu
+  // d'ouvrir la carte de création rapide (comportement `handleDateSelect`).
+  const handleMobileDateSelect = (selectInfo: DateSelectArg) => {
+    if (mobileViewMode === 'dayGridMonth') {
+      mobileCalendarRef.current?.getApi().unselect();
+      handleMobileSelectDate(selectInfo.start);
+      return;
+    }
+    handleDateSelect(selectInfo);
+  };
+
   const handleMobileMonthPrev = () => { mobileCalendarRef.current?.getApi().prev(); };
   const handleMobileMonthNext = () => { mobileCalendarRef.current?.getApi().next(); };
 
@@ -658,7 +669,7 @@ const AgendaPage: React.FC = () => {
               slotLabelInterval="01:00:00"
               snapDuration="00:15:00"
               slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-              select={handleDateSelect}
+              select={handleMobileDateSelect}
               eventClick={handleEventClick}
               eventDragStart={handleEventDragStart}
               eventDragStop={handleEventDragStop}
