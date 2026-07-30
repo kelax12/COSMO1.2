@@ -7,6 +7,7 @@ import { applyTheme, resolveInitialTheme } from './lib/theme';
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
 import { applyLocale, resolveInitialLocale } from './i18n/locale';
+import { resolveRouterBootstrap } from './i18n/bootstrap';
 import './index.css';
 
 // Sentry — error monitoring prod (faille §14 / I3). Init synchrone, AVANT le
@@ -90,14 +91,38 @@ try {
   applyTheme(document.documentElement, resolveInitialTheme());
 } catch { /* localStorage/matchMedia inaccessibles (navigation privée stricte) */ }
 
-// Locale posée sur <html lang> AVANT le premier paint, pour la même raison que
-// le thème : le lecteur d'écran et les moteurs lisent l'attribut au chargement,
-// et un `lang` corrigé après coup par React aurait déjà été mal interprété.
-// Même module que le store React (src/i18n/locale.ts) pour interdire toute
-// divergence entre la locale appliquée et la locale rendue.
+// ──────────────────────────────────────────────────────────────────
+// Amorçage i18n — locale, canonicalisation d'URL et `basename` du routeur.
+//
+// Fait AVANT le premier paint pour deux raisons distinctes :
+//   - `<html lang>` est lu au chargement par les lecteurs d'écran et les
+//     moteurs ; le corriger après coup arrive trop tard.
+//   - `replaceState` doit précéder le montage du routeur, sinon React Router
+//     lit l'ancienne URL et rend une première page pour rien.
+//
+// `basename` est ce qui permet aux 162 `Link`/`navigate` absolus déjà présents
+// dans l'app de se préfixer automatiquement — cf. l'en-tête de
+// src/i18n/bootstrap.ts.
+// ──────────────────────────────────────────────────────────────────
+let routerBasename = '/';
 try {
-  applyLocale(document.documentElement, resolveInitialLocale());
-} catch { /* localStorage/navigator inaccessibles (navigation privée stricte) */ }
+  const bootstrap = resolveRouterBootstrap({
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+  });
+  routerBasename = bootstrap.basename;
+  applyLocale(document.documentElement, bootstrap.locale);
+  if (bootstrap.replaceUrl && bootstrap.replaceUrl !== window.location.pathname + window.location.search + window.location.hash) {
+    window.history.replaceState(null, '', bootstrap.replaceUrl);
+  }
+} catch {
+  /* localStorage/navigator inaccessibles (navigation privée stricte) — on reste
+     sur la locale par défaut à la racine, ce qui est toujours servable. */
+  try {
+    applyLocale(document.documentElement, resolveInitialLocale());
+  } catch { /* rien de plus à tenter */ }
+}
 
 // iOS Safari has a well-known WebKit bug where the *very first* cross-origin
 // fetch made during page load can fail silently with "Load failed" / DOMException
@@ -139,7 +164,7 @@ if (supabaseUrl) {
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
 // par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
+  <BrowserRouter basename={routerBasename}>
     <App />
   </BrowserRouter>
 );

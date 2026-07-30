@@ -36,6 +36,26 @@
       ]
     },
     {
+      "//": "i18n — variantes préfixées des règles noindex ci-dessus. Les sources Vercel ne sont pas préfixe-agnostiques : sans ces entrées, /en/invite/<token> perdrait son noindex et des tokens d'invitation deviendraient indexables. C'est une fuite, pas un détail SEO. Ces entrées doivent survivre au retrait du noindex global /en/ en phase 3.",
+      "source": "/(en|es)/(invite|org-invite)/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/(en|es)/(forgot-password|reset-password)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "//": "TEMPORAIRE (phase 2) — l'anglais est servi mais ses catalogues sont partiels : les pages /en/ affichent encore beaucoup de français. Les laisser indexer produirait du duplicate content FR sur des URLs anglaises. À RETIRER en phase 3, quand les traductions réelles et les hreflang seront en place.",
+      "source": "/en/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }

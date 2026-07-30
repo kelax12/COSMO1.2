@@ -76,16 +76,14 @@ describe('pluralSuffix', () => {
   it('dégrade proprement sans ICU complet', () => {
     // Certains runtimes légers livrent un Intl amputé. La dégradation doit
     // rester un pluriel plausible, pas une exception qui casse le rendu.
-    const original = Intl.PluralRules;
+    // Le spy est défait par le `vi.restoreAllMocks()` de l'`afterEach` —
+    // `Intl.PluralRules` est en lecture seule, on ne peut pas le réassigner.
     vi.spyOn(Intl, 'PluralRules').mockImplementation((() => {
       throw new Error('ICU absent');
     }) as unknown as typeof Intl.PluralRules);
-    try {
-      expect(pluralSuffix('fr', 1)).toBe('one');
-      expect(pluralSuffix('fr', 7)).toBe('other');
-    } finally {
-      Intl.PluralRules = original;
-    }
+
+    expect(pluralSuffix('fr', 1)).toBe('one');
+    expect(pluralSuffix('fr', 7)).toBe('other');
   });
 });
 

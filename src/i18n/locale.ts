@@ -19,10 +19,12 @@ export const ALL_LOCALES: readonly Locale[] = ['fr', 'en', 'es'];
  * Locales réellement servies. La locale par défaut est TOUJOURS la première et
  * n'est jamais préfixée dans l'URL (cf. src/i18n/routes.ts).
  *
- * Phase 1 (socle) : `fr` seule — le comportement de l'app est inchangé.
- * Phase 2 ouvrira `en`, phase 6 `es`.
+ * Phase 2 : `fr` + `en`. L'anglais est servi mais ses catalogues sont encore
+ * partiels — le moteur retombe sur le français clé par clé, et `vercel.json`
+ * pose un `noindex` sur `/en/*` le temps que la phase 3 livre les traductions
+ * réelles et les `hreflang`. Phase 6 ouvrira `es`.
  */
-export const SUPPORTED_LOCALES: readonly Locale[] = ['fr'];
+export const SUPPORTED_LOCALES: readonly Locale[] = ['fr', 'en'];
 
 export const DEFAULT_LOCALE: Locale = 'fr';
 
