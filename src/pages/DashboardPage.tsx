@@ -1,5 +1,5 @@
 import React, { useMemo, useState, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { motion, type Variants } from 'framer-motion';

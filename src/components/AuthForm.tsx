@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, UserRound, Building2 } from 'lucide-react';
 import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';

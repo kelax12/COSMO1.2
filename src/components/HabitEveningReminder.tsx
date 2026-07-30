@@ -2,7 +2,7 @@
 // Affiché après 18 h quand des habitudes du jour ne sont pas cochées, une
 // seule fois par jour (flag localStorage daté), jamais en pause.
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Repeat, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits } from '@/modules/habits';

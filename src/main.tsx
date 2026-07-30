@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { applyTheme, resolveInitialTheme } from './lib/theme';

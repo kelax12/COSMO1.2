@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 /**
  * Raccourcis de navigation séquentiels « g puis lettre » (amélioration UX n°44),

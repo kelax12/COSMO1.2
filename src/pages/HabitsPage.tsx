@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeading } from '@/components/ui/typography';

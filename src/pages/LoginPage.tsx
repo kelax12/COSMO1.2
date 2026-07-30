@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import AuthForm from '@/components/AuthForm';
 import Logo from '@/components/Logo';

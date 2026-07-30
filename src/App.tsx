@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';

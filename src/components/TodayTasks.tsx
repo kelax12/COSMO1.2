@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
 import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
