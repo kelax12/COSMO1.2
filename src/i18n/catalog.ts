@@ -15,6 +15,8 @@ import { lookup, type CatalogNode } from './translate';
 
 import frCommon from '@/locales/fr/common.json';
 import frErrors from '@/locales/fr/errors.json';
+import enCommon from '@/locales/en/common.json';
+import enErrors from '@/locales/en/errors.json';
 
 /**
  * Espaces de noms, alignés sur le découpage en chunks de l'app (une page lazy
@@ -72,6 +74,12 @@ const registry: Registry = emptyRegistry();
 // `CatalogNode`, mais TypeScript infère un type littéral plus étroit.
 registry.fr.common = frCommon as CatalogNode;
 registry.fr.errors = frErrors as CatalogNode;
+
+// `common` et `errors` servent avant tout rendu de page : ils restent chargés
+// avec l'entrée pour chaque locale servie. Les namespaces volumineux (`tasks`,
+// `landing`…) passeront par `registerCatalog` en chargement paresseux.
+registry.en.common = enCommon as CatalogNode;
+registry.en.errors = enErrors as CatalogNode;
 
 /** Catalogue chargé pour cette locale et ce namespace, `null` si absent. */
 export function getCatalog(locale: Locale, namespace: Namespace): CatalogNode | null {

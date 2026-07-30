@@ -1,0 +1,38 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "add": "Add",
+    "search": "Search",
+    "retry": "Try again",
+    "back": "Back"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "agenda": "Calendar",
+    "habits": "Habits",
+    "okr": "OKRs",
+    "statistics": "Statistics",
+    "settings": "Settings"
+  },
+  "states": {
+    "loading": "Loading…",
+    "empty": "Nothing here",
+    "error": "Something went wrong"
+  },
+  "language": {
+    "label": "Language",
+    "description": "Interface language"
+  },
+  "count": {
+    "task_one": "{{count}} task",
+    "task_other": "{{count}} tasks",
+    "day_one": "{{count}} day",
+    "day_other": "{{count}} days"
+  }
+}

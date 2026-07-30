@@ -144,10 +144,15 @@ describe('resolveInitialLocale', () => {
 
   it('ignore un préfixe connu mais non servi', () => {
     // `/es/…` avant l'ouverture de l'espagnol : l'app ne sait pas rendre cette
-    // locale, on retombe sur la préférence (le routeur répondra 404).
+    // locale. On n'affirme PAS un repli sur `fr` — la chaîne normale
+    // (préférence puis navigateur) reprend la main, et elle peut légitimement
+    // donner une autre langue servie. Ce qui compte est de ne jamais ADOPTER la
+    // locale non ouverte. Le routeur, lui, répondra 404 sur ce chemin.
     const unsupported = ALL_LOCALES.find((l) => !SUPPORTED_LOCALES.includes(l));
     if (!unsupported) return; // toutes les locales sont ouvertes : rien à tester
-    expect(resolveInitialLocale(`/${unsupported}/tasks`)).toBe(DEFAULT_LOCALE);
+    const resolved = resolveInitialLocale(`/${unsupported}/tasks`);
+    expect(resolved).not.toBe(unsupported);
+    expect(SUPPORTED_LOCALES).toContain(resolved);
   });
 
   it('utilise la préférence persistée sans préfixe d’URL', () => {
