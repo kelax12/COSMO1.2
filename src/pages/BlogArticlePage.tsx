@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { ARTICLES, getArticle } from '@/content/blog/index.mjs';

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import CreateOrJoinOrganization from '@/components/organization/CreateOrJoinOrganization';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';

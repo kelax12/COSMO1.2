@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, Link } from 'react-router';
 import { Suspense, lazy } from 'react';
 
 // Reproduit le montage de App.tsx : chaque page est lazy + enveloppée de

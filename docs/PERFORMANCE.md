@@ -7,7 +7,7 @@
 | Chunk | Contenu | Taille (gzip) | Quand chargé |
 |---|---|---|---|
 | `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | Toujours (entry) |
-| `vendor-router` | react-router-dom | 22 kB (8 kB) | Toujours (entry, split pour parallel HTTP/2) |
+| `vendor-router` | react-router | 22 kB (8 kB) | Toujours (entry, split pour parallel HTTP/2) |
 | `vendor-radix` | @radix-ui/* | 101 kB (31 kB) | Toujours |
 | `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | Toujours (entry — extrait pour cache CDN) |
 | `vendor-sentry` | @sentry/react | 82 kB (28 kB) | Toujours (entry — extrait pour cache CDN) |

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {

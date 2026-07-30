@@ -9,7 +9,7 @@ import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '../components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useUpdateUserSettings } from '../modules/user';
 import ThemeToggle from '../components/ThemeToggle';

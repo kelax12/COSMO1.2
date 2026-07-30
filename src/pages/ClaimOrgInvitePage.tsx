@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router';
 import { Building2, AlertCircle, ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import OrgConsentNotice from '@/components/organization/OrgConsentNotice';

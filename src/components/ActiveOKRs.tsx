@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Target, TrendingUp, Clock } from 'lucide-react';
 import { useOkrs, KeyResult } from '@/modules/okrs';
 import { DashboardCardSkeleton } from '@/components/skeletons';

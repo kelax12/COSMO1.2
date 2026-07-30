@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Building2, ArrowRight } from 'lucide-react';
 import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';

@@ -3,7 +3,7 @@
 // admin) ; ici le Navigate n'est que de l'UX. Jamais d'error.message
 // rendu (règle V7) : tout échec redirige silencieusement vers /dashboard.
 import React, { Suspense, useEffect, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PageHeading } from '@/components/ui/typography';
