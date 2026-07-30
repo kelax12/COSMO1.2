@@ -11,8 +11,12 @@ import {
   AlertTriangle,
   Plus,
 } from 'lucide-react';
-import { useTeamTasks, useTeamProjects, useCreateTeamTask, type TeamTask } from '@/modules/team-projects';
+import {
+  useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
+  type TeamTask,
+} from '@/modules/team-projects';
 import { useOrgMembers, type OrgMember } from '@/modules/organizations';
+import { showUndoToast } from '@/lib/undo-toast';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskModal from './TeamTaskModal';
 
@@ -22,6 +26,8 @@ interface MemberInsightsSheetProps {
   orgId: string;
   member: OrgMember;
   initialTab: InsightsTab;
+  /** Le viewer est-il un supérieur hiérarchique (admin ou manager du sous-arbre) ? Autorise l'édition des tâches. */
+  canEdit?: boolean;
   onClose: () => void;
 }
 
@@ -46,15 +52,36 @@ const isOverdue = (t: TeamTask): boolean => {
  *    pas partagé entre membres — hors périmètre RLS actuel).
  *  - Contribution : synthèse de son activité (complétées, taux, retards).
  */
-const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsightsSheetProps) => {
+const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClose }: MemberInsightsSheetProps) => {
   // 'agenda' a désormais son propre écran plein page — on retombe sur 'tasks'.
   const [tab, setTab] = useState<InsightsTab>(initialTab === 'agenda' ? 'tasks' : initialTab);
   const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: orgMembers = [] } = useOrgMembers(orgId);
   const createTask = useCreateTeamTask(orgId);
+  const updateTask = useUpdateTeamTask(orgId);
+  const deleteTask = useDeleteTeamTask(orgId);
   const [creatingTask, setCreatingTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
   const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
+
+  // Suppression avec « Annuler » : la tâche est recréée à l'identique (même pattern que TeamProjectsTab).
+  const removeWithUndo = (task: TeamTask) =>
+    deleteTask.mutate(task.id, {
+      onSuccess: () => {
+        showUndoToast('Tâche supprimée', () =>
+          createTask.mutate({
+            projectId: task.projectId,
+            name: task.name,
+            description: task.description,
+            priority: task.priority,
+            deadline: task.deadline,
+            estimatedTime: task.estimatedTime,
+            assigneeIds: task.assigneeIds,
+          }),
+        );
+      },
+    });
 
   const myTasks = useMemo(
     () => allTasks.filter((t) => t.assigneeIds.includes(member.userId)),
@@ -131,7 +158,13 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
           {isLoading ? (
             <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">Chargement…</p>
           ) : tab === 'tasks' ? (
-            <TasksView open={open} done={done} onAddTask={() => setCreatingTask(true)} />
+            <TasksView
+              open={open}
+              done={done}
+              canEdit={canEdit}
+              onAddTask={() => setCreatingTask(true)}
+              onEditTask={setEditingTask}
+            />
           ) : tab === 'agenda' ? (
             <AgendaView scheduled={scheduled} />
           ) : (
@@ -159,30 +192,61 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, onClose }: MemberInsig
           onClose={() => setCreatingTask(false)}
         />
       )}
+      {editingTask && (
+        <TeamTaskModal
+          task={editingTask}
+          projects={activeProjects.length > 0 ? activeProjects : projects}
+          members={orgMembers}
+          onUpdate={(taskId, input) => updateTask.mutateAsync({ taskId, input })}
+          onDelete={removeWithUndo}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
     </>
   );
 };
 
 const priorityLabel = (p: number) => `P${Math.min(5, Math.max(1, Math.round(p)))}`;
 
-const TaskRow = ({ t }: { t: TeamTask }) => (
-  <li className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))]">
-    {t.completed ? (
-      <CheckCircle2 size={16} className="text-green-500 shrink-0" aria-hidden="true" />
-    ) : (
-      <Circle size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-    )}
-    <span className={`text-sm flex-1 truncate ${t.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
-      {t.name}
-    </span>
-    {!t.completed && isOverdue(t) && (
-      <span className="text-[10px] font-semibold text-red-500 shrink-0">En retard</span>
-    )}
-    <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] shrink-0">
-      {priorityLabel(t.priority)}
-    </span>
-  </li>
-);
+const TaskRow = ({ t, canEdit, onEdit }: { t: TeamTask; canEdit: boolean; onEdit: (t: TeamTask) => void }) => {
+  const content = (
+    <>
+      {t.completed ? (
+        <CheckCircle2 size={16} className="text-green-500 shrink-0" aria-hidden="true" />
+      ) : (
+        <Circle size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+      )}
+      <span className={`text-sm flex-1 truncate ${t.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
+        {t.name}
+      </span>
+      {!t.completed && isOverdue(t) && (
+        <span className="text-[10px] font-semibold text-red-500 shrink-0">En retard</span>
+      )}
+      <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] shrink-0">
+        {priorityLabel(t.priority)}
+      </span>
+    </>
+  );
+  if (!canEdit) {
+    return (
+      <li className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))]">
+        {content}
+      </li>
+    );
+  }
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onEdit(t)}
+        aria-label={`Modifier la tâche ${t.name}`}
+        className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+      >
+        {content}
+      </button>
+    </li>
+  );
+};
 
 const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => (
   <button
@@ -194,7 +258,11 @@ const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => (
   </button>
 );
 
-const TasksView = ({ open, done, onAddTask }: { open: TeamTask[]; done: TeamTask[]; onAddTask: () => void }) => {
+const TasksView = ({
+  open, done, canEdit, onAddTask, onEditTask,
+}: {
+  open: TeamTask[]; done: TeamTask[]; canEdit: boolean; onAddTask: () => void; onEditTask: (t: TeamTask) => void;
+}) => {
   if (open.length === 0 && done.length === 0) {
     return (
       <div className="space-y-3">
@@ -214,7 +282,7 @@ const TasksView = ({ open, done, onAddTask }: { open: TeamTask[]; done: TeamTask
           <p className="text-xs text-[rgb(var(--color-text-muted))]">Aucune tâche en cours.</p>
         ) : (
           <ul className="space-y-1.5">
-            {open.map((t) => <TaskRow key={t.id} t={t} />)}
+            {open.map((t) => <TaskRow key={t.id} t={t} canEdit={canEdit} onEdit={onEditTask} />)}
           </ul>
         )}
       </section>
@@ -224,7 +292,7 @@ const TasksView = ({ open, done, onAddTask }: { open: TeamTask[]; done: TeamTask
             Terminées ({done.length})
           </h3>
           <ul className="space-y-1.5">
-            {done.slice(0, 20).map((t) => <TaskRow key={t.id} t={t} />)}
+            {done.slice(0, 20).map((t) => <TaskRow key={t.id} t={t} canEdit={canEdit} onEdit={onEditTask} />)}
           </ul>
         </section>
       )}
