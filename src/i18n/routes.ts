@@ -18,24 +18,24 @@ import {
   type Locale,
 } from './locale';
 
+import routeSlugs from './route-slugs.json';
+
 export { localeFromPathname };
 
 /**
  * Slugs publics traduits, par identifiant de route.
  *
+ * La table vit dans un `.json` et non ici : `prerender.mjs` (Node brut, sans
+ * bundler) doit lire EXACTEMENT les mêmes slugs pour produire `canonical` et
+ * `hreflang`. Deux tables tenues à la main finiraient par diverger, et une
+ * divergence entre l'URL servie par l'app et l'URL déclarée canonique est
+ * précisément le genre de bug SEO qu'on ne voit qu'en Search Console, des
+ * semaines plus tard.
+ *
  * Ajouter une entrée ici ne suffit pas : la route doit aussi être déclarée dans
- * `src/App.tsx` et listée dans `prerender.mjs`. Le garde-fou
- * `npm run i18n:check` vérifie la cohérence des trois.
+ * `src/App.tsx`. `npm run i18n:check` vérifie la cohérence.
  */
-export const ROUTE_SLUGS = {
-  about: { fr: 'a-propos', en: 'about', es: 'acerca-de' },
-  freelancers: { fr: 'pour-freelances', en: 'for-freelancers', es: 'para-freelancers' },
-  students: { fr: 'pour-etudiants', en: 'for-students', es: 'para-estudiantes' },
-  managers: { fr: 'pour-managers', en: 'for-managers', es: 'para-managers' },
-  legalNotice: { fr: 'mentions-legales', en: 'legal-notice', es: 'aviso-legal' },
-  privacy: { fr: 'politique-confidentialite', en: 'privacy-policy', es: 'politica-privacidad' },
-  terms: { fr: 'cgu', en: 'terms', es: 'condiciones' },
-} as const satisfies Record<string, Record<Locale, string>>;
+export const ROUTE_SLUGS = routeSlugs satisfies Record<string, Record<Locale, string>>;
 
 export type RouteId = keyof typeof ROUTE_SLUGS;
 

@@ -1,4 +1,8 @@
 import { useEffect } from 'react';
+import { resolveMessage } from '@/i18n/catalog';
+import { BCP47_TAG, OG_LOCALE } from '@/i18n/locale';
+import { canonicalUrl } from '@/i18n/routes';
+import { localeStore } from '@/i18n/store';
 
 interface SeoMeta {
   title: string;
@@ -8,9 +12,23 @@ interface SeoMeta {
   ogDescription?: string;
 }
 
-const ROOT_TITLE = 'Cosmo — Tâches, habitudes et OKR dans une seule app gratuite';
-const ROOT_DESC = 'Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription, avec 12 mois de données pré-remplies.';
-const ROOT_CANONICAL = 'https://thecosmo.app/';
+/**
+ * Méta de la racine, restaurées au démontage.
+ *
+ * Lues dans `src/locales/<locale>/seo.json` — le MÊME fichier que
+ * `prerender.mjs`. C'est ce qui garantit qu'une page prérendue et la même page
+ * rendue côté client annoncent exactement le même titre : une divergence entre
+ * les deux ferait osciller le titre indexé par Google.
+ */
+function rootMeta() {
+  const locale = localeStore.locale;
+  return {
+    title: resolveMessage('seo', 'root.title', locale) ?? '',
+    description: resolveMessage('seo', 'root.description', locale) ?? '',
+    canonical: canonicalUrl('/', locale),
+    locale,
+  };
+}
 
 function setMeta(name: string, content: string) {
   const el = document.querySelector(`meta[name="${name}"]`);
@@ -29,6 +47,8 @@ function setCanonical(href: string) {
 
 export function useSeoMeta({ title, description, canonical, ogTitle, ogDescription }: SeoMeta) {
   useEffect(() => {
+    const root = rootMeta();
+
     document.title = title;
     if (description) {
       setMeta('description', description);
@@ -41,14 +61,24 @@ export function useSeoMeta({ title, description, canonical, ogTitle, ogDescripti
     }
     if (canonical) setCanonical(canonical);
 
+    // La locale du document peut différer de celle d'index.html quand l'app est
+    // servie sous un préfixe (`/en/...`) : les balises Open Graph doivent suivre.
+    setOgMeta('og:locale', OG_LOCALE[root.locale]);
+    document.documentElement.setAttribute('lang', root.locale);
+
     return () => {
-      document.title = ROOT_TITLE;
-      setMeta('description', ROOT_DESC);
-      setOgMeta('og:description', ROOT_DESC);
-      setOgMeta('og:title', ROOT_TITLE);
-      document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', ROOT_TITLE);
-      document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', ROOT_DESC);
-      setCanonical(ROOT_CANONICAL);
+      document.title = root.title;
+      setMeta('description', root.description);
+      setOgMeta('og:description', root.description);
+      setOgMeta('og:title', root.title);
+      document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', root.title);
+      document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', root.description);
+      setCanonical(root.canonical);
     };
   }, [title, description, canonical, ogTitle, ogDescription]);
+}
+
+/** Étiquette BCP 47 de la locale courante — pour les JSON-LD construits côté client. */
+export function currentInLanguage(): string {
+  return BCP47_TAG[localeStore.locale];
 }

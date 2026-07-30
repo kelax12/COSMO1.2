@@ -1,0 +1,38 @@
+{
+  "root": {
+    "title": "Cosmo — Tâches, habitudes et OKR dans une seule app gratuite",
+    "description": "Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription, avec 12 mois de données pré-remplies."
+  },
+  "guide": {
+    "title": "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
+    "description": "Apprenez à utiliser Cosmo : tâches, habitudes avec heatmap, agenda en time-blocking et gestion des OKR. Guide complet en français."
+  },
+  "signup": {
+    "title": "Inscription gratuite – Cosmo, app productivité tâches et OKR",
+    "description": "Créez votre compte Cosmo gratuitement. Gérez vos tâches, habitudes, agenda et objectifs OKR. Connexion possible via Google."
+  },
+  "login": {
+    "title": "Connexion – Cosmo, application de productivité",
+    "description": "Connectez-vous à Cosmo pour retrouver vos tâches, habitudes, agenda et OKR. Accès rapide via email/mot de passe ou connexion Google, en quelques secondes."
+  },
+  "about": {
+    "title": "À propos de Cosmo — qui sommes-nous ?",
+    "description": "Pourquoi Cosmo existe : une application de productivité française, gratuite, qui réunit tâches, habitudes, agenda et OKR dans un seul écosystème."
+  },
+  "blog": {
+    "title": "Blog Cosmo — Productivité, OKR, habitudes et time-blocking",
+    "description": "Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo."
+  },
+  "terms": {
+    "title": "Conditions Générales d'Utilisation – Cosmo App",
+    "description": "Conditions générales d'utilisation de Cosmo, application de gestion de tâches, habitudes et OKR. Accès gratuit, règles d'utilisation et responsabilités."
+  },
+  "legalNotice": {
+    "title": "Mentions légales – Cosmo App",
+    "description": "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités."
+  },
+  "privacy": {
+    "title": "Politique de confidentialité – Cosmo App",
+    "description": "Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact."
+  }
+}
