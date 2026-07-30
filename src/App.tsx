@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
+import { isTimeoutError } from '@/lib/withTimeout';
 import { getLastVisitedPage } from '@/modules/ui-states';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
@@ -107,7 +108,10 @@ const queryClient = new QueryClient({
         if (failureCount >= 1) return false;
         const msg = error instanceof Error ? error.message : '';
         if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
-        if (msg.includes('timeout') || msg.includes('Timeout') || msg.includes('aborted') || msg.includes('Délai')) return false;
+        // i18n — identification par code stable, pas par sous-chaîne du message
+        // FR (`includes('Délai')` mourait dès la traduction du message de
+        // withTimeout, faisant silencieusement retomber iOS sur ~17 s perçues).
+        if (isTimeoutError(error)) return false;
         return true;
       },
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),

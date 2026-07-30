@@ -1,0 +1,40 @@
+{
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "retry": "Réessayer",
+    "back": "Retour"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "tasks": "Tâches",
+    "agenda": "Agenda",
+    "habits": "Habitudes",
+    "okr": "OKR",
+    "statistics": "Statistiques",
+    "settings": "Réglages"
+  },
+  "states": {
+    "loading": "Chargement…",
+    "empty": "Aucun élément",
+    "error": "Une erreur est survenue"
+  },
+  "language": {
+    "label": "Langue",
+    "description": "Langue de l'interface"
+  },
+  "count": {
+    "task_one": "{{count}} tâche",
+    "task_many": "{{count}} de tâches",
+    "task_other": "{{count}} tâches",
+    "day_one": "{{count}} jour",
+    "day_many": "{{count}} de jours",
+    "day_other": "{{count}} jours"
+  }
+}
