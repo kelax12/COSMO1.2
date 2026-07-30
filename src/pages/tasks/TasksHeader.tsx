@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CalendarDays } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, TouchTarget } from '@/components/mobile';
+import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
 
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
@@ -35,6 +36,9 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
             {/* Loupe retirée du header mobile : redondante avec la barre de
                 recherche visible juste en dessous. La recherche globale reste
                 accessible via la palette (Cmd/Ctrl+K) et l'onglet « Plus ». */}
+            {/* Tâches/listes partagées en attente, regroupées ici plutôt
+                qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
+            <TasksInboxMenu />
             <TouchTarget
               aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
               aria-pressed={showDeadlineCalendar}
