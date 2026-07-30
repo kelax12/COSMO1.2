@@ -18,7 +18,14 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     // `scripts/**` : tests du CLI COSMO (scripts/cosmo/), en .mjs. Sans cette
     // entrée ils ne seraient jamais ramassés et passeraient pour « verts ».
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'scripts/**/*.{test,spec}.mjs'],
+    // `src/**/*.mjs` : les helpers partagés avec `prerender.mjs` (Node brut,
+    // sans bundler) sont en .mjs et leurs tests aussi — dont le test de parité
+    // entre le calcul d'URL du prérendu et celui de l'app.
+    include: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'src/**/*.{test,spec}.mjs',
+      'scripts/**/*.{test,spec}.mjs',
+    ],
     // L'ancien dossier Vitest jamais activé + les E2E Playwright ne doivent
     // pas être ramassés par Vitest.
     exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'src/__test__/**'],

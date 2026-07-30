@@ -122,6 +122,73 @@ if (existsSync(INDEX_HTML)) {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// (4 bis) Cohérence indexation : INDEXABLE_LOCALES ⇄ vercel.json
+//
+// « Servie » et « indexable » sont deux choses différentes : une locale peut
+// répondre alors que le corps de ses pages est encore dans une autre langue.
+// Tant qu'elle n'est pas indexable, `vercel.json` doit la mettre en `noindex`,
+// sinon Google indexe du duplicate content. Et une fois indexable, la règle
+// `noindex` doit disparaître, sinon tout le travail de traduction reste
+// invisible. Les deux moitiés de la bascule doivent aller ensemble.
+// ──────────────────────────────────────────────────────────────────
+
+const SEO_URLS_MODULE = 'src/i18n/seo-urls.mjs';
+const VERCEL_JSON = 'vercel.json';
+
+if (existsSync(SEO_URLS_MODULE) && existsSync(VERCEL_JSON)) {
+  const seoSource = readFileSync(SEO_URLS_MODULE, 'utf8');
+  const indexable = extractLocaleList(seoSource, 'INDEXABLE_LOCALES');
+
+  if (!indexable) {
+    err(SEO_URLS_MODULE, 'INDEXABLE_LOCALES illisible (la forme du tableau a changé ?)');
+  } else {
+    for (const locale of indexable) {
+      if (!supportedLocales.includes(locale)) {
+        err(SEO_URLS_MODULE, `\`${locale}\` est indexable mais pas servie — Google irait sur des 404`);
+      }
+    }
+
+    let vercel = null;
+    try {
+      vercel = JSON.parse(readFileSync(VERCEL_JSON, 'utf8'));
+    } catch (e) {
+      err(VERCEL_JSON, `JSON invalide — ${e.message}`);
+    }
+
+    if (vercel) {
+      /** Locales couvertes par une règle noindex « pleine » (`/xx/(.*)`). */
+      const noindexed = new Set();
+      for (const entry of vercel.headers ?? []) {
+        const isNoindex = (entry.headers ?? []).some(
+          (h) => h.key?.toLowerCase() === 'x-robots-tag' && /noindex/i.test(h.value ?? '')
+        );
+        if (!isNoindex) continue;
+        const match = /^\/([a-z]{2})\/\(\.\*\)$/.exec(entry.source ?? '');
+        if (match) noindexed.add(match[1]);
+      }
+
+      for (const locale of supportedLocales) {
+        if (locale === REFERENCE_LOCALE) continue;
+        const isIndexable = indexable.includes(locale);
+        if (isIndexable && noindexed.has(locale)) {
+          err(
+            VERCEL_JSON,
+            `\`${locale}\` est indexable mais garde un noindex sur /${locale}/(.*) — retirer la règle`
+          );
+        }
+        if (!isIndexable && !noindexed.has(locale)) {
+          err(
+            VERCEL_JSON,
+            `\`${locale}\` est servie sans être indexable et SANS noindex sur /${locale}/(.*) — ` +
+              `Google indexerait du contenu non traduit`
+          );
+        }
+      }
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
 // (1)(2)(3) Parité des catalogues
 // ──────────────────────────────────────────────────────────────────
 

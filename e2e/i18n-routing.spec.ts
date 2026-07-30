@@ -79,6 +79,12 @@ test.describe('préfixe de locale', () => {
 
     expect(new URL(page.url()).pathname).toBe('/a-propos');
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    // ⚠ Assertion indispensable : sans elle, ce test passait alors que la page
+    // tombait en 404. `App.tsx` déclare les slugs publics d'après la locale du
+    // store ; si celui-ci répondait `en` sur une URL non préfixée, il cherchait
+    // le slug `about` et `/a-propos` ne matchait plus aucune route.
+    await expect(notFoundHeading(page)).toHaveCount(0);
+    await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('une préférence enregistrée oriente la racine', async ({ page }) => {

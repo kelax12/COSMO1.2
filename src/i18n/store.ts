@@ -9,11 +9,12 @@
 // `useSyncExternalStore`.
 
 import { useSyncExternalStore } from 'react';
+import { resolveRouterBootstrap } from './bootstrap';
 import {
+  DEFAULT_LOCALE,
   applyLocale,
   isSupportedLocale,
   persistLocale,
-  resolveInitialLocale,
   type Locale,
 } from './locale';
 
@@ -55,7 +56,38 @@ class LocaleStore {
   }
 }
 
-export const localeStore = new LocaleStore(resolveInitialLocale());
+/**
+ * Locale initiale du store — DOIT être calculée par le même amorçage que le
+ * routeur (`src/main.tsx`), et non par `resolveInitialLocale`.
+ *
+ * Les deux ne disent pas la même chose : `resolveInitialLocale` applique la
+ * chaîne « URL > préférence > navigateur », alors que l'amorçage applique
+ * l'invariant de la phase 2 — **pas de préfixe ⇒ locale par défaut**. Sur
+ * `/a-propos` avec un navigateur anglais, le premier répondait `en` et le
+ * second `fr`.
+ *
+ * Cette divergence n'était pas cosmétique : `App.tsx` déclare les slugs publics
+ * d'après `useLocale()`, donc le store en `en` faisait chercher le slug
+ * `about` — et `/a-propos` tombait en 404 chez tout visiteur anglophone.
+ *
+ * L'ordre d'évaluation est sûr : les imports d'un module sont évalués avant son
+ * corps, donc ce calcul lit l'URL d'origine, exactement comme `main.tsx` juste
+ * après. Les deux ne peuvent pas diverger.
+ */
+function initialLocale(): Locale {
+  if (typeof window === 'undefined') return DEFAULT_LOCALE;
+  try {
+    return resolveRouterBootstrap({
+      pathname: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+    }).locale;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
+export const localeStore = new LocaleStore(initialLocale());
 
 /** Locale courante, réactive. */
 export function useLocale(): Locale {
