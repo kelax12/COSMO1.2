@@ -1334,6 +1334,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           orgId={orgId}
           member={insights.member}
           initialTab={insights.tab}
+          canEdit={canManage(insights.member, members, currentUserId, isAdmin)}
           onClose={() => setInsights(null)}
         />
       )}
