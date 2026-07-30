@@ -13,6 +13,19 @@
 // bornes) sans durcir des flux aujourd'hui acceptés.
 
 import { z } from 'zod';
+import { resolveMessage } from '@/i18n/catalog';
+import { localeStore } from '@/i18n/store';
+
+/**
+ * Message de repli quand zod ne fournit aucune issue exploitable.
+ *
+ * Résolu à l'appel et non au niveau du module : les messages des schémas eux-
+ * mêmes sont des constantes évaluées à l'import (`task.schema.ts` etc.), et
+ * c'est précisément le piège que la phase 4 corrigera en les passant en
+ * factories. Ne pas reproduire ce piège ici.
+ */
+const fallbackMessage = (): string =>
+  resolveMessage('errors', 'validation.fallback', localeStore.locale) ?? 'validation.fallback';
 
 /**
  * Erreur de validation porteuse des messages par champ (pour un affichage
@@ -45,7 +58,7 @@ export function validateOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {
     const fieldErrors = collectFieldErrors(result.error);
-    const message = result.error.issues[0]?.message ?? 'Données invalides';
+    const message = result.error.issues[0]?.message ?? fallbackMessage();
     throw new ValidationError(message, fieldErrors);
   }
   return result.data;
@@ -64,7 +77,7 @@ export function safeValidate<T>(schema: z.ZodType<T>, data: unknown): Validation
   if (result.success) return { success: true, data: result.data };
   return {
     success: false,
-    message: result.error.issues[0]?.message ?? 'Données invalides',
+    message: result.error.issues[0]?.message ?? fallbackMessage(),
     fieldErrors: collectFieldErrors(result.error),
   };
 }

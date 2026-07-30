@@ -44,6 +44,12 @@ jobs:
       - name: Validate SQL migrations
         run: npm run validate:migrations
 
+      # Le moteur de traduction retombe sur le français clé par clé : un
+      # catalogue traduit incomplet ne casse rien visiblement et partirait donc
+      # en prod à moitié traduit. Ce check est la seule protection réelle.
+      - name: Validate i18n catalogs
+        run: npm run i18n:check
+
       - name: Unit tests + coverage (enforced thresholds)
         run: npm run test:coverage
 

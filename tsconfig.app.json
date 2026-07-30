@@ -11,6 +11,10 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    /* Catalogues i18n : src/locales/<locale>/*.json sont importés comme des
+       modules typés. Le format JSON (et non .ts) est imposé par prerender.mjs,
+       du Node brut sans bundler, qui doit lire les mêmes fichiers. */
+    "resolveJsonModule": true,
     "noEmit": true,
     "jsx": "react-jsx",
 

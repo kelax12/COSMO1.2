@@ -1,23 +1,25 @@
+import { resolveMessage } from '@/i18n/catalog';
+import { localeStore } from '@/i18n/store';
+
 export type NormalizedError = {
   code: string;
   message: string;
   originalMessage?: string; // server-side detail — for logging, never for UI
 };
 
-const ERROR_MESSAGES: Record<string, string> = {
-  '23505': 'Cette ressource existe déjà.',
-  '23503': 'Action impossible en raison de dépendances existantes.',
-  '42P01': 'Erreur de configuration de la base de données.',
-  // RLS : insert/update rejeté par une policy (droits insuffisants).
-  '42501': "Vous n'avez pas les droits nécessaires pour cette action.",
-  'PGRST116': 'La ressource demandée est introuvable.',
-  'insufficient_quota': 'Quota AI épuisé. Veuillez vérifier votre abonnement.',
-  'rate_limit_exceeded': 'Trop de requêtes. Veuillez patienter un instant.',
-  'context_length_exceeded': 'Le contenu est trop long pour être traité.',
-  'invalid_api_key': 'Erreur de connexion aux services AI.',
-  'NETWORK_ERROR': 'Connexion réseau perdue ou instable.',
-  'GENERIC_ERROR': 'Une erreur inattendue est survenue.',
-};
+/**
+ * Message utilisateur associé à un code d'erreur, `null` si le code n'est pas
+ * whitelisté (`src/locales/<locale>/errors.json`, section `api`).
+ *
+ * La locale est lue à CHAQUE appel, jamais mémorisée au niveau du module : une
+ * table figée à l'import garderait la langue du premier rendu même après un
+ * changement de langue.
+ */
+const messageForCode = (code: string): string | null =>
+  resolveMessage('errors', `api.${code}`, localeStore.locale);
+
+/** Message de repli — toujours défini dans le catalogue de référence. */
+const genericMessage = (): string => messageForCode('GENERIC_ERROR') ?? 'GENERIC_ERROR';
 
 interface ApiErrorLike {
   code?: string;
@@ -39,23 +41,23 @@ interface ApiErrorLike {
 // `message` is what the UI may render. `originalMessage` is for logs only.
 export const normalizeApiError = (error: ApiErrorLike | Error | string): NormalizedError => {
   let code = 'GENERIC_ERROR';
-  let message = ERROR_MESSAGES.GENERIC_ERROR;
+  let message = genericMessage();
   let originalMessage: string | undefined;
 
   if (typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string') {
     code = error.code;
     originalMessage = error.message;
     // Only use the whitelisted message; never the raw server message.
-    if (ERROR_MESSAGES[code]) message = ERROR_MESSAGES[code];
+    message = messageForCode(code) ?? message;
   } else if (typeof error === 'object' && error !== null && 'error' in error && error.error?.code) {
     code = error.error.code;
     originalMessage = error.error.message;
-    if (ERROR_MESSAGES[code]) message = ERROR_MESSAGES[code];
+    message = messageForCode(code) ?? message;
   } else if (error instanceof Error) {
     originalMessage = error.message;
     if (error.message.toLowerCase().includes('fetch')) {
       code = 'NETWORK_ERROR';
-      message = ERROR_MESSAGES.NETWORK_ERROR;
+      message = messageForCode('NETWORK_ERROR') ?? message;
     }
     // Otherwise: keep the generic message, do not echo error.message to UI.
   } else if (typeof error === 'string') {

@@ -1,6 +1,43 @@
 /**
+ * Code d'erreur stable d'un dépassement de délai.
+ *
+ * i18n — le prédicat `retry` de React Query (src/App.tsx) identifiait un
+ * timeout par `msg.includes('Délai')`, c'est-à-dire par une sous-chaîne du
+ * message FR. Traduire ce message aurait cassé silencieusement le fail-fast
+ * iOS (retour aux ~17 s de chargement perçu). L'identification passe
+ * désormais par ce code, indépendant de la langue.
+ */
+export const TIMEOUT_ERROR_CODE = 'TIMEOUT';
+
+/** Erreur levée par `withTimeout` — porte `code = 'TIMEOUT'`. */
+export class TimeoutError extends Error {
+  readonly code = TIMEOUT_ERROR_CODE;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+/**
+ * `true` si l'erreur est un dépassement de délai, quelle que soit la langue
+ * du message. Reconnaît aussi les abandons produits par le navigateur
+ * (AbortController de src/lib/supabase.ts), dont les messages sont en anglais
+ * et hors de notre contrôle — eux peuvent rester matchés par sous-chaîne.
+ */
+export function isTimeoutError(error: unknown): boolean {
+  if (error instanceof TimeoutError) return true;
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    if ((error as { code?: unknown }).code === TIMEOUT_ERROR_CODE) return true;
+  }
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  const msg = error instanceof Error ? error.message : '';
+  return /timeout|aborted/i.test(msg);
+}
+
+/**
  * Wraps a promise with a hard timeout. If the promise doesn't resolve or
- * reject within `ms`, it rejects with a clear error message.
+ * reject within `ms`, it rejects with a `TimeoutError`.
  *
  * Belt-and-suspenders with the fetch-level AbortController in
  * `src/lib/supabase.ts` (8 s per HTTP request). That inner timeout trips
@@ -16,7 +53,7 @@ export function withTimeout<T>(
 ): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(message)), ms);
+    timer = setTimeout(() => reject(new TimeoutError(message)), ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) clearTimeout(timer);

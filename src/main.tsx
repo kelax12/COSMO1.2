@@ -3,6 +3,10 @@ import { BrowserRouter } from 'react-router';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
+// Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
+// ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
+// alourdirait le chunk d'entrée.
+import { applyLocale, resolveInitialLocale } from './i18n/locale';
 import './index.css';
 
 // Sentry — error monitoring prod (faille §14 / I3). Init synchrone, AVANT le
@@ -85,6 +89,15 @@ performance.mark('cosmo:boot');
 try {
   applyTheme(document.documentElement, resolveInitialTheme());
 } catch { /* localStorage/matchMedia inaccessibles (navigation privée stricte) */ }
+
+// Locale posée sur <html lang> AVANT le premier paint, pour la même raison que
+// le thème : le lecteur d'écran et les moteurs lisent l'attribut au chargement,
+// et un `lang` corrigé après coup par React aurait déjà été mal interprété.
+// Même module que le store React (src/i18n/locale.ts) pour interdire toute
+// divergence entre la locale appliquée et la locale rendue.
+try {
+  applyLocale(document.documentElement, resolveInitialLocale());
+} catch { /* localStorage/navigator inaccessibles (navigation privée stricte) */ }
 
 // iOS Safari has a well-known WebKit bug where the *very first* cross-origin
 // fetch made during page load can fail silently with "Load failed" / DOMException
