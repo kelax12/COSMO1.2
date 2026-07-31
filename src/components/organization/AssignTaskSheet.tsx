@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Search, CalendarClock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor, PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
@@ -138,7 +138,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                       {task.deadline && (
                         <span className={`ml-auto text-[10px] inline-flex items-center gap-0.5 shrink-0 ${overdue ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
                           <CalendarClock size={10} aria-hidden="true" />
-                          {format(parseISO(task.deadline), 'd MMM', { locale: fr })}
+                          {format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() })}
                         </span>
                       )}
                     </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, CalendarClock, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { formatTimeInTz, toDisplayISO, type TimezonePref } from '@/lib/timezone';
 import type { OverdueTaskSlot } from './overdue-slots';
 
@@ -76,7 +76,7 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
               </p>
               <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-1">
                 {(() => {
-                  const dayLabel = format(new Date(toDisplayISO(slot.event.start, tzPref)), 'EEEE d MMMM', { locale: fr });
+                  const dayLabel = format(new Date(toDisplayISO(slot.event.start, tzPref)), 'EEEE d MMMM', { locale: getDateLocale() });
                   const cap = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
                   return `${cap} · ${formatTimeInTz(slot.event.start, tzPref)} – ${formatTimeInTz(slot.event.end, tzPref)}`;
                 })()}

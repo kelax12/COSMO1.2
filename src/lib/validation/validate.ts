@@ -28,6 +28,23 @@ const fallbackMessage = (): string =>
   resolveMessage('errors', 'validation.fallback', localeStore.locale) ?? 'validation.fallback';
 
 /**
+ * Traduit un message d'issue zod.
+ *
+ * Les schémas portent des CLÉS (`validation.task.nameRequired`) et non du texte :
+ * ce sont des constantes évaluées à l'import, donc y appeler `t()` figerait la
+ * langue au premier import du module. La traduction a lieu ici, à chaque
+ * validation, avec la locale courante.
+ *
+ * Un message qui n'est pas une clé du catalogue (les messages internes de zod,
+ * par exemple « Expected string, received number ») passe tel quel : c'est ce
+ * qui permet de convertir les schémas progressivement.
+ */
+const translateIssue = (message: string): string => {
+  if (!message.startsWith('validation.')) return message;
+  return resolveMessage('errors', message, localeStore.locale) ?? message;
+};
+
+/**
  * Erreur de validation porteuse des messages par champ (pour un affichage
  * inline éventuel) + un message principal (pour un toast).
  */
@@ -45,7 +62,7 @@ const collectFieldErrors = (error: z.ZodError): Record<string, string> => {
   for (const issue of error.issues) {
     const key = issue.path.length ? issue.path.join('.') : '_';
     // Premier message par champ (le plus pertinent).
-    if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+    if (!fieldErrors[key]) fieldErrors[key] = translateIssue(issue.message);
   }
   return fieldErrors;
 };
@@ -58,7 +75,7 @@ export function validateOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {
     const fieldErrors = collectFieldErrors(result.error);
-    const message = result.error.issues[0]?.message ?? fallbackMessage();
+    const message = translateIssue(result.error.issues[0]?.message ?? '') || fallbackMessage();
     throw new ValidationError(message, fieldErrors);
   }
   return result.data;
@@ -77,7 +94,7 @@ export function safeValidate<T>(schema: z.ZodType<T>, data: unknown): Validation
   if (result.success) return { success: true, data: result.data };
   return {
     success: false,
-    message: result.error.issues[0]?.message ?? fallbackMessage(),
+    message: translateIssue(result.error.issues[0]?.message ?? '') || fallbackMessage(),
     fieldErrors: collectFieldErrors(result.error),
   };
 }

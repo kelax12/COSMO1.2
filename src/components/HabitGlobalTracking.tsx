@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatDate } from '@/i18n/format';
 
 type PeriodType = 'week' | 'month' | 'all';
 
@@ -126,9 +127,9 @@ const HabitGlobalTracking: React.FC = () => {
 
   const getPeriodLabel = (): string => {
     if (period === 'week')
-      return `Semaine du ${currentDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+      return `Semaine du ${formatDate(currentDate, { day: 'numeric', month: 'short' })}`;
     if (period === 'month')
-      return currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      return formatDate(currentDate, { month: 'long', year: 'numeric' });
     return 'Depuis la création';
   };
 

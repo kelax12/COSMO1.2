@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { fr } from 'date-fns/locale';
+import { formatDate, getDateLocale } from '@/i18n/format';
 import { usePendingTasks, type Task } from '@/modules/tasks';
 import { useCategoryLookup } from '@/modules/categories';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
@@ -74,7 +74,7 @@ const DeadlineCalendar: React.FC = () => {
     <div className="border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] grid gap-6 rounded-xl border p-4 md:grid-cols-[auto_1fr]">
       <Calendar
         mode="single"
-        locale={fr}
+        locale={getDateLocale()}
         selected={selected}
         onSelect={setSelected}
         showOutsideDays
@@ -84,7 +84,7 @@ const DeadlineCalendar: React.FC = () => {
       <div className="min-w-0">
         <h3 className="mb-3 text-sm font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
           {selected
-            ? selected.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+            ? formatDate(selected, { weekday: 'long', day: 'numeric', month: 'long' })
             : 'Sélectionne un jour'}
         </h3>
         {dayTasks.length === 0 ? (

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { Send, Trash2, MessageSquare } from 'lucide-react';
 import {
   useTeamTaskComments,
@@ -89,7 +89,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
                       {author?.displayName ?? 'Ancien membre'}
                     </span>
                     <span className="text-[10px] shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: fr })}
+                      {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: getDateLocale() })}
                     </span>
                   </div>
                   <p className="text-sm whitespace-pre-wrap break-words" style={{ color: 'rgb(var(--color-text-primary))' }}>

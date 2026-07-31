@@ -6,7 +6,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import type { EventRecurrence } from '@/modules/events';
 import DescriptionField from '@/components/DescriptionField';
 import { DAY_LABELS } from './helpers';
@@ -94,7 +94,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Date</span>
           <span className={`text-[15px] ${startDate ? 'text-blue-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
             {startDate
-              ? format(new Date(startDate + "T12:00:00"), "d MMM yyyy", { locale: fr })
+              ? format(new Date(startDate + "T12:00:00"), "d MMM yyyy", { locale: getDateLocale() })
               : 'Aucune'}
           </span>
           {!lockedSet.has('startDate') && (

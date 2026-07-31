@@ -6,6 +6,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import type { Habit } from '@/modules/habits';
 import { getLocalDateString } from '../../lib/workTimeCalculator';
+import { formatDate } from '@/i18n/format';
 
 type HeatmapCell = { date: Date; dateStr: string; completed: number; total: number; rate: number; isFuture: boolean };
 
@@ -73,7 +74,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     for (let w = 0; w < WEEKS; w++) {
       const firstOfMonth = result[w].find(c => c.date.getDate() === 1);
       if (firstOfMonth) {
-        mMap.set(w, firstOfMonth.date.toLocaleDateString('fr-FR', { month: 'short' }));
+        mMap.set(w, formatDate(firstOfMonth.date, { month: 'short' }));
       }
     }
     return { weeks: result, monthLabelMap: mMap };
@@ -114,7 +115,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     >
       <div className="text-[10px] font-bold text-center">{hovered.cell.completed}/{hovered.cell.total}</div>
       <div className="text-[9px] font-normal text-center mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        {hovered.cell.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+        {formatDate(hovered.cell.date, { day: 'numeric', month: 'short' })}
       </div>
     </div>,
     document.body

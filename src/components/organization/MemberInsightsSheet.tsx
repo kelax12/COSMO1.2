@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { isPast, isToday, parseISO, format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import {
   X,
   ListTodo,
@@ -325,8 +325,8 @@ const AgendaView = ({ scheduled }: { scheduled: TeamTask[] }) => {
             }`}
           >
             <div className={`flex flex-col items-center justify-center w-11 shrink-0 ${late ? 'text-red-500' : today ? 'text-indigo-500' : 'text-[rgb(var(--color-text-secondary))]'}`}>
-              <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: fr })}</span>
-              <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: fr })}</span>
+              <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: getDateLocale() })}</span>
+              <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: getDateLocale() })}</span>
             </div>
             <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{t.name}</span>
             {late && <AlertTriangle size={14} className="text-red-500 shrink-0" aria-hidden="true" />}
