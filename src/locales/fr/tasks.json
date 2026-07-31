@@ -1,0 +1,78 @@
+{
+  "header": {
+    "title": "Tâches",
+    "subtitle": "Gérez vos tâches efficacement",
+    "calendar": "Calendrier",
+    "showCalendar": "Afficher le calendrier",
+    "hideCalendar": "Masquer le calendrier"
+  },
+  "error": {
+    "title": "Impossible de charger les tâches",
+    "fallback": "Vérifie ta connexion internet, puis réessaie.",
+    "retry": "Réessayer"
+  },
+  "actions": {
+    "newTask": "Nouvelle tâche",
+    "newTaskAria": "Créer une nouvelle tâche",
+    "clearListFilter": "Retirer le filtre de liste",
+    "clearCategoryFilter": "Retirer le filtre de catégories",
+    "clearSearch": "Effacer la recherche"
+  },
+  "filters": {
+    "list": "Liste",
+    "today": "Aujourd'hui",
+    "allTasks": "Toutes les tâches",
+    "all": "Tout",
+    "category": "Catégorie",
+    "categoriesCount": "Catégories : {{count}}",
+    "listPrefix": "Liste : {{name}}",
+    "searchPrefix": "Recherche : « {{term}} »",
+    "shown_one": "{{shown}} / {{count}} tâche affichée",
+    "shown_many": "{{shown}} / {{count}} de tâches affichées",
+    "shown_other": "{{shown}} / {{count}} tâches affichées"
+  },
+  "lists": {
+    "sectionTitle": "Accès rapide aux listes",
+    "newList": "Nouvelle liste",
+    "manualListTitle": "Nouvelle liste manuelle",
+    "chipLabel": "Liste",
+    "namePlaceholder": "Nom de la liste…",
+    "create": "Créer",
+    "cancel": "Annuler",
+    "validate": "Valider",
+    "deleted": "Liste supprimée",
+    "addTasks": "Ajouter des tâches",
+    "edit": "Modifier la liste",
+    "share": "Partager la liste",
+    "delete": "Supprimer la liste",
+    "defaultOnTitle": "Liste par défaut (cliquez pour désépingler)",
+    "defaultOffTitle": "Définir comme liste par défaut",
+    "defaultOnAria": "Liste par défaut",
+    "defaultOffAria": "Épingler comme liste par défaut",
+    "colorCycleTitle": "Clic : cycle couleurs · Shift+clic : palette hex",
+    "customColorAria": "Choisir une couleur personnalisée",
+    "changeColor": "Changer la couleur",
+    "todayAddTitle": "Ajouter des tâches à aujourd'hui (pose leur échéance à aujourd'hui)",
+    "todayAddAria": "Ajouter des tâches à aujourd'hui",
+    "todayHideTitle": "Masquer la chip Aujourd'hui (réactivable depuis ✨)",
+    "todayHideAria": "Masquer la chip Aujourd'hui",
+    "todayChipTitle": "Tâches dont l'échéance est aujourd'hui",
+    "selectPromptToday": "Sélectionnez des tâches : leur échéance sera fixée à aujourd'hui",
+    "selectPromptList": "Sélectionnez des tâches à ajouter dans « {{list}} »",
+    "selected_one": "{{count}} tâche sélectionnée",
+    "selected_many": "{{count}} de tâches sélectionnées",
+    "selected_other": "{{count}} tâches sélectionnées"
+  },
+  "team": {
+    "sectionTitle": "Mes tâches d'équipe",
+    "enterpriseSpace": "Espace entreprise",
+    "badge": "Équipe",
+    "count_one": "{{count}} tâche",
+    "count_many": "{{count}} de tâches",
+    "count_other": "{{count}} tâches",
+    "completeAria": "Marquer « {{name}} » comme terminée",
+    "editAria": "Modifier la tâche {{name}}",
+    "overdue": "en retard",
+    "sharedTitle": "Tâche partagée avec d'autres membres"
+  }
+}

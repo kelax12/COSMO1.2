@@ -16,16 +16,18 @@ import { lookup, type CatalogNode } from './translate';
 import frCommon from '@/locales/fr/common.json';
 import frErrors from '@/locales/fr/errors.json';
 import frSeo from '@/locales/fr/seo.json';
+import frTasks from '@/locales/fr/tasks.json';
 import enCommon from '@/locales/en/common.json';
 import enErrors from '@/locales/en/errors.json';
 import enSeo from '@/locales/en/seo.json';
+import enTasks from '@/locales/en/tasks.json';
 
 /**
  * Espaces de noms, alignés sur le découpage en chunks de l'app (une page lazy
  * = un namespace). `common` et `errors` sont chargés avec l'entrée car ils
  * servent avant tout rendu de page.
  */
-export type Namespace = 'common' | 'errors' | 'seo';
+export type Namespace = 'common' | 'errors' | 'seo' | 'tasks';
 
 /** Forme du catalogue de référence, par namespace — base du typage des clés. */
 interface CatalogShapes {
@@ -33,6 +35,8 @@ interface CatalogShapes {
   errors: typeof frErrors;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: typeof frSeo;
+  /** Page Tâches — en-tête, filtres, barre de listes, section équipe. */
+  tasks: typeof frTasks;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -79,6 +83,7 @@ const registry: Registry = emptyRegistry();
 registry.fr.common = frCommon as CatalogNode;
 registry.fr.errors = frErrors as CatalogNode;
 registry.fr.seo = frSeo as CatalogNode;
+registry.fr.tasks = frTasks as CatalogNode;
 
 // `common` et `errors` servent avant tout rendu de page : ils restent chargés
 // avec l'entrée pour chaque locale servie. Les namespaces volumineux (`tasks`,
@@ -86,6 +91,7 @@ registry.fr.seo = frSeo as CatalogNode;
 registry.en.common = enCommon as CatalogNode;
 registry.en.errors = enErrors as CatalogNode;
 registry.en.seo = enSeo as CatalogNode;
+registry.en.tasks = enTasks as CatalogNode;
 
 /** Catalogue chargé pour cette locale et ce namespace, `null` si absent. */
 export function getCatalog(locale: Locale, namespace: Namespace): CatalogNode | null {
