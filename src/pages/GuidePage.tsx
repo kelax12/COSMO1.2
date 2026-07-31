@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
   Rocket, Star, ArrowRight, ChevronRight,

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ArrowRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { ARTICLES } from '@/content/blog/index.mjs';
+import { formatDate } from '@/i18n/format';
 
-const formatDate = (iso: string) =>
-  new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const formatArticleDate = (iso: string) =>
+  formatDate(new Date(iso + 'T00:00:00'), { day: 'numeric', month: 'long', year: 'numeric' });
 
 const BlogIndexPage: React.FC = () => {
   useSeoMeta({
@@ -48,7 +49,7 @@ const BlogIndexPage: React.FC = () => {
               </h2>
               <p className="text-slate-400 text-sm leading-relaxed mb-4">{article.description}</p>
               <div className="flex items-center gap-4 text-xs text-slate-500">
-                <time dateTime={article.datePublished}>{formatDate(article.datePublished)}</time>
+                <time dateTime={article.datePublished}>{formatArticleDate(article.datePublished)}</time>
                 <span className="flex items-center gap-1">
                   <Clock size={12} />
                   {article.readingMinutes} min de lecture

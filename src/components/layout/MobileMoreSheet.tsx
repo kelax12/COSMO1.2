@@ -1,8 +1,9 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router';
 import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { prefetchRoute } from '@/lib/route-prefetch';
 import { useBilling } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useActiveOrganization } from '@/modules/organizations';
@@ -92,6 +93,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
               <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                 <button
                   type="button"
+                  onPointerDown={() => prefetchRoute('/settings')}
                   onClick={() => handleNav('/settings')}
                   className="w-full flex items-center gap-3.5 px-4 min-h-[72px] active:bg-[rgb(var(--color-hover))] transition-colors"
                   aria-label="Aller aux paramètres"
@@ -143,6 +145,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                     )}
                     <button
                       type="button"
+                      onPointerDown={() => prefetchRoute(to)}
                       onClick={() => handleNav(to)}
                       className={[
                         'w-full flex items-center gap-3.5 px-4 min-h-[60px] text-left transition-colors',

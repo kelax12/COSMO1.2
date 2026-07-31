@@ -3,6 +3,7 @@ import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-re
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 import { calculateStreak } from '@/modules/habits/streak';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/i18n/format';
 
 const colorOptions = [
 { value: 'blue', color: '#3B82F6' },
@@ -109,9 +110,9 @@ const HabitTable: React.FC = () => {
 
       days.push({
         date: date.toLocaleDateString('en-CA'),
-        dayName: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+        dayName: formatDate(date, { weekday: 'short' }),
         dayNumber: date.getDate(),
-        monthName: date.toLocaleDateString('fr-FR', { month: 'short' }),
+        monthName: formatDate(date, { month: 'short' }),
         isToday: date.toDateString() === today.toDateString(),
         isPast: date < today,
         isFuture: date > today
@@ -173,13 +174,13 @@ const HabitTable: React.FC = () => {
   const getCurrentPeriodLabel = () => {
     switch (period) {
       case 'week':
-        return `Semaine du ${currentDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+        return `Semaine du ${formatDate(currentDate, { day: 'numeric', month: 'short' })}`;
       case 'month':
-        return currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        return formatDate(currentDate, { month: 'long', year: 'numeric' });
       case '3months': {
         const endDate = new Date(currentDate);
         endDate.setMonth(currentDate.getMonth() + 2);
-        return `${currentDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}`;
+        return `${formatDate(currentDate, { month: 'short', year: 'numeric' })} - ${formatDate(endDate, { month: 'short', year: 'numeric' })}`;
       }
       case 'all':
         return 'Depuis la création';

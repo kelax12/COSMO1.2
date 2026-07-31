@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router';
 import { useLastVisitedPage } from '@/modules/ui-states';
 import { useTasks } from '@/modules/tasks';
 import { prefetchRoute } from '@/lib/route-prefetch';

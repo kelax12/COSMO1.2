@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import {
   ListTodo, AlertTriangle, CalendarDays, Check, Target, CircleCheck, ChevronRight,
 } from 'lucide-react';
@@ -46,8 +46,8 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
   return (
     <div className="flex flex-col items-center max-w-[130px]">
       <div className={`flex flex-col items-center leading-none ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}>
-        <span className="text-xl font-bold">{format(d, 'd', { locale: fr })}</span>
-        <span className="text-[10px] uppercase mt-0.5">{format(d, 'MMM', { locale: fr })}</span>
+        <span className="text-xl font-bold">{format(d, 'd', { locale: getDateLocale() })}</span>
+        <span className="text-[10px] uppercase mt-0.5">{format(d, 'MMM', { locale: getDateLocale() })}</span>
       </div>
       <span className="text-xs text-[rgb(var(--color-text-primary))] mt-2 text-center truncate max-w-full">{task.name}</span>
       <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">Prochaine échéance</span>
@@ -240,7 +240,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       )}
                       {t.deadline && (
                         <span className={`text-[10px] shrink-0 ${late ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
-                          {format(parseISO(t.deadline), 'd MMM', { locale: fr })}
+                          {format(parseISO(t.deadline), 'd MMM', { locale: getDateLocale() })}
                         </span>
                       )}
                     </li>
@@ -271,8 +271,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       }`}
                     >
                       <div className={`flex flex-col items-center justify-center w-10 shrink-0 ${late ? 'text-red-500' : today ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`}>
-                        <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: fr })}</span>
-                        <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: fr })}</span>
+                        <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: getDateLocale() })}</span>
+                        <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: getDateLocale() })}</span>
                       </div>
                       <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{t.name}</span>
                       {late && <AlertTriangle size={14} className="text-red-500 shrink-0" aria-hidden="true" />}
@@ -299,8 +299,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
             {orgDeadlines.map((item) => (
               <li key={item.id} className="flex items-center gap-3 p-2 rounded-xl border border-[rgb(var(--color-border))]">
                 <div className="flex flex-col items-center justify-center w-10 shrink-0 text-[rgb(var(--color-text-secondary))]">
-                  <span className="text-sm font-bold leading-none">{format(item.date, 'd', { locale: fr })}</span>
-                  <span className="text-[10px] uppercase">{format(item.date, 'MMM', { locale: fr })}</span>
+                  <span className="text-sm font-bold leading-none">{format(item.date, 'd', { locale: getDateLocale() })}</span>
+                  <span className="text-[10px] uppercase">{format(item.date, 'MMM', { locale: getDateLocale() })}</span>
                 </div>
                 <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{item.name}</span>
                 {item.kind === 'okr' ? (

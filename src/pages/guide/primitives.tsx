@@ -4,6 +4,7 @@
 // présentationnel/statique, aucun état de page.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useEffect } from 'react';
+import { currentInLanguage } from '@/lib/useSeoMeta';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
   Rocket, Star, Lightbulb, CircleDot, List,
@@ -104,7 +105,7 @@ export function useGuideSchemas() {
       headline: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
       description: "Guide complet pour utiliser Cosmo : gestion de tâches, suivi d'habitudes avec heatmap, agenda time-blocking et méthode OKR.",
       url: 'https://thecosmo.app/guide',
-      inLanguage: 'fr-FR',
+      inLanguage: currentInLanguage(),
       datePublished: '2025-01-01',
       dateModified: '2026-05-31',
       author: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },

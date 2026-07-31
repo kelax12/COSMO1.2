@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarClock, UserRound, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
@@ -176,7 +176,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                       {task.deadline && (
                         <span className={`ml-auto text-[10px] inline-flex items-center gap-0.5 shrink-0 ${overdueTask ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
                           <CalendarClock size={10} aria-hidden="true" />
-                          {format(parseISO(task.deadline), 'd MMM', { locale: fr })}
+                          {format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() })}
                         </span>
                       )}
                     </div>

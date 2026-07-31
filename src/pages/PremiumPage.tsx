@@ -6,6 +6,8 @@ import { useAuth } from '../modules/auth/AuthContext';
 import AdModal from '../components/AdModal';
 import { useBilling } from '@/modules/billing/billing.context';
 import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
+import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
+import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { containerVariants, itemVariants, features, COMPARISON_ROWS } from './premium/data';
@@ -233,7 +235,7 @@ export function PremiumPage() {
                         Souscrivez pour 30 jours de statut Premium complet.
                       </p>
                       <div className="text-center mb-4">
-                        <div className="text-4xl font-bold text-[rgb(var(--color-accent))] mb-1">3,50€</div>
+                        <div className="text-4xl font-bold text-[rgb(var(--color-accent))] mb-1">{formatCurrency(PREMIUM_MONTHLY_EUR)}</div>
                         <div className="text-sm text-[rgb(var(--color-text-secondary))]">par mois</div>
                       </div>
                         <motion.button
@@ -541,7 +543,7 @@ export function PremiumPage() {
             <div>
               <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">S'abonner</p>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
-                3,50 € / mois · 30 jours Premium
+                {formatCurrency(PREMIUM_MONTHLY_EUR)} / mois · 30 jours Premium
               </p>
             </div>
           </motion.button>

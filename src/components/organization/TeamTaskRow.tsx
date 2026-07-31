@@ -1,6 +1,6 @@
 import { Check, Trash2, CalendarClock, AlignLeft } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
@@ -66,7 +66,7 @@ const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, on
         {deadlineDate && (
           <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
             <CalendarClock size={11} aria-hidden="true" />
-            {format(deadlineDate, 'd MMM', { locale: fr })}
+            {format(deadlineDate, 'd MMM', { locale: getDateLocale() })}
             {overdue && ' · en retard'}
           </span>
         )}

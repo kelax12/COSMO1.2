@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { CheckCircle2, PlusCircle } from 'lucide-react';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
@@ -102,7 +102,7 @@ const TeamActivityFeed = ({ tasks, projects, members }: TeamActivityFeedProps) =
               )}
             </p>
             <span className="text-[10px] shrink-0 text-[rgb(var(--color-text-muted))] mt-0.5">
-              {formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: fr })}
+              {formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: getDateLocale() })}
             </span>
           </li>
         ))}

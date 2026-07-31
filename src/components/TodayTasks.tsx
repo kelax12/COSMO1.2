@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
 import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
@@ -14,6 +14,7 @@ import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, 
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { useFriends, useSharesByTask } from '@/modules/friends';
+import { formatDate } from '@/i18n/format';
 
 const TodayTasks: React.FC = () => {
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
@@ -219,7 +220,7 @@ const TodayTasks: React.FC = () => {
                         </div>
                       )}
                       <div className="text-caption sm:text-xs whitespace-nowrap">
-                        {task.deadline ? new Date(task.deadline).toLocaleDateString('fr-FR') : "Pas d'échéance"}
+                        {task.deadline ? formatDate(new Date(task.deadline)) : "Pas d'échéance"}
                       </div>
                     </div>
                   </div>

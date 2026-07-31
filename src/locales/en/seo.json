@@ -1,0 +1,38 @@
+{
+  "root": {
+    "title": "Cosmo — Tasks, habits and OKRs in one free app",
+    "description": "Tasks, habits, calendar and OKRs together in one free app. Try the demo without signing up, preloaded with 12 months of data."
+  },
+  "guide": {
+    "title": "Cosmo user guide – Tasks, habits, OKRs and calendar",
+    "description": "Learn how to use Cosmo: tasks, habits with a heatmap, time-blocking calendar and OKR tracking. The complete guide."
+  },
+  "signup": {
+    "title": "Sign up free – Cosmo, productivity app for tasks and OKRs",
+    "description": "Create your Cosmo account for free. Manage your tasks, habits, calendar and OKR goals. Google sign-in available."
+  },
+  "login": {
+    "title": "Log in – Cosmo, productivity app",
+    "description": "Log in to Cosmo to pick up your tasks, habits, calendar and OKRs. Quick access with email and password or Google sign-in."
+  },
+  "about": {
+    "title": "About Cosmo — who we are",
+    "description": "Why Cosmo exists: a free, independent productivity app bringing tasks, habits, calendar and OKRs into a single ecosystem."
+  },
+  "blog": {
+    "title": "Cosmo blog — Productivity, OKRs, habits and time-blocking",
+    "description": "Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. From the Cosmo team."
+  },
+  "terms": {
+    "title": "Terms of Service – Cosmo App",
+    "description": "Terms of service for Cosmo, the app for managing tasks, habits and OKRs. Free access, usage rules and responsibilities."
+  },
+  "legalNotice": {
+    "title": "Legal notice – Cosmo App",
+    "description": "Legal notice for the Cosmo productivity app: publisher, host, intellectual property and liability."
+  },
+  "privacy": {
+    "title": "Privacy policy – Cosmo App",
+    "description": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact details."
+  }
+}

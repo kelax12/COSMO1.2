@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import type FullCalendar from '@fullcalendar/react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -115,7 +115,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                           calendarRef.current?.getApi().gotoDate(d);
                           setShowDatePicker(false);
                         }}
-                        locale={fr}
+                        locale={getDateLocale()}
                         initialFocus
                       />
                     </PopoverContent>

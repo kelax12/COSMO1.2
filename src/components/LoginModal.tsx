@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import AuthForm from '@/components/AuthForm';

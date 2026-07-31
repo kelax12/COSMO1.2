@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { isValidInviteToken, PENDING_INVITE_STORAGE_KEY } from '@/modules/friends';

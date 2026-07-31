@@ -6,8 +6,8 @@ export const createOrganizationSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Le nom de l'entreprise doit faire au moins 2 caractères")
-    .max(80, "Nom d'entreprise trop long (80 caractères max)"),
+    .min(2, "validation.organization.nameTooShort")
+    .max(80, "validation.organization.nameTooLong"),
 });
 
 // Code permanent : 'COSMO-' + 10 chars, alphabet sans ambiguïté (pas de 0/O/1/I/L).
@@ -22,5 +22,5 @@ export const joinCodeSchema = z.object({
     .string()
     .trim()
     .transform((v) => v.toUpperCase())
-    .pipe(z.string().regex(JOIN_CODE_REGEX, 'Code invalide (format attendu : COSMO-XXXXXXXXXX)')),
+    .pipe(z.string().regex(JOIN_CODE_REGEX, 'validation.organization.joinCodeInvalid')),
 });

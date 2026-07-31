@@ -1,11 +1,14 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
+import { isTimeoutError } from '@/lib/withTimeout';
+import { useLocale } from '@/i18n/store';
+import { routeSlug } from '@/i18n/routes';
 import { getLastVisitedPage } from '@/modules/ui-states';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
@@ -107,7 +110,10 @@ const queryClient = new QueryClient({
         if (failureCount >= 1) return false;
         const msg = error instanceof Error ? error.message : '';
         if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
-        if (msg.includes('timeout') || msg.includes('Timeout') || msg.includes('aborted') || msg.includes('Délai')) return false;
+        // i18n — identification par code stable, pas par sous-chaîne du message
+        // FR (`includes('Délai')` mourait dès la traduction du message de
+        // withTimeout, faisant silencieusement retomber iOS sur ~17 s perçues).
+        if (isTimeoutError(error)) return false;
         return true;
       },
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
@@ -171,7 +177,14 @@ const RootRoute = () => {
   return <PageWithSuspense><LandingPage /></PageWithSuspense>;
 };
 
-const AppRoutes = () => (
+const AppRoutes = () => {
+  // Locale servie pour ce montage. `basename` étant figé au montage du routeur,
+  // elle ne change pas sans rechargement complet (cf. src/i18n/bootstrap.ts) —
+  // il n'y a donc jamais de désynchronisation entre le préfixe de l'URL et les
+  // slugs déclarés ici.
+  const activeLocale = useLocale();
+
+  return (
   <Routes>
     {/* Racine — LandingPage publique, redirect /dashboard si connecté */}
     <Route index element={<RootRoute />} />
@@ -185,13 +198,18 @@ const AppRoutes = () => (
     <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
     <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
     <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
-    <Route path="a-propos" element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
-    <Route path="pour-freelances" element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path="pour-etudiants" element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path="pour-managers" element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path="mentions-legales" element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
-    <Route path="politique-confidentialite" element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
-    <Route path="cgu" element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
+    {/* Slugs publics localisés — cf. src/i18n/routes.ts.
+        `basename` retire déjà le préfixe de locale, donc ces chemins restent
+        relatifs ; seul le SLUG change selon la langue servie. Conséquence
+        voulue : `/en/about` répond, `/en/a-propos` tombe en 404 — une seule URL
+        canonique par langue et par page. */}
+    <Route path={routeSlug('about', activeLocale)} element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
+    <Route path={routeSlug('freelancers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
+    <Route path={routeSlug('students', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
+    <Route path={routeSlug('managers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
+    <Route path={routeSlug('legalNotice', activeLocale)} element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
+    <Route path={routeSlug('privacy', activeLocale)} element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
+    <Route path={routeSlug('terms', activeLocale)} element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
     {/* Lien d'invitation de partage — public : pose le token puis redirige
         (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
     <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
@@ -225,7 +243,8 @@ const AppRoutes = () => (
     {/* Fallback */}
     <Route path="*" element={<PageWithSuspense><NotFoundPage /></PageWithSuspense>} />
   </Routes>
-);
+  );
+};
 
 const App: React.FC = () => {
   return (

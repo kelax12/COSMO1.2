@@ -10,6 +10,7 @@ import type { CalendarEvent } from '@/modules/events';
 import type { OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate } from '../../lib/workTimeCalculator';
 import type { WorkTimePeriodData, KeyResultHistory } from './types';
+import { formatDate } from '@/i18n/format';
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPOSANT MÉMOÏSÉ — Habit Stat Item
@@ -342,7 +343,7 @@ export const AgendaStatistics: React.FC<{
                     <p className="font-semibold text-sm truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{event.title}</p>
                     <p className="text-caption md:text-[10px] uppercase tracking-wider font-bold truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       {categories.find(c => c.color.toLowerCase() === event.color?.toLowerCase())?.name || event.color}
-                      <span className="hidden sm:inline"> · {new Date(event.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="hidden sm:inline"> · {formatDate(new Date(event.start), { day: 'numeric', month: 'short' })}</span>
                     </p>
                   </div>
                 </div>

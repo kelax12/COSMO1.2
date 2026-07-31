@@ -1,5 +1,5 @@
 import { Building2, Check, ChevronsUpDown, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   DropdownMenu,
   DropdownMenuTrigger,

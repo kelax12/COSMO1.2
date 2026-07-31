@@ -8,7 +8,7 @@ import ListActionsSheet from '../components/ListActionsSheet';
 import ShareListSheet from '../components/ShareListSheet';
 import { Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)

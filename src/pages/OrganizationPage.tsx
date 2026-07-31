@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router';
 import { markOrgSeen } from '@/lib/hooks/use-org-notifications';
 import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';

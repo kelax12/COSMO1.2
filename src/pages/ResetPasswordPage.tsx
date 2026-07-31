@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { supabase } from '@/lib/supabase';

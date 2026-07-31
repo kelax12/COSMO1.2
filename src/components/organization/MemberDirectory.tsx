@@ -288,6 +288,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           orgId={orgId}
           member={insights.member}
           initialTab={insights.tab}
+          canEdit={
+            insights.member.userId !== currentUserId &&
+            (isAdmin || (!!currentUserId && subtreeOf(members, currentUserId).has(insights.member.userId)))
+          }
           onClose={() => setInsights(null)}
         />
       )}
