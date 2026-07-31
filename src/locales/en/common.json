@@ -1,38 +1,52 @@
 {
-  "actions": {
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "close": "Close",
-    "confirm": "Confirm",
-    "add": "Add",
-    "search": "Search",
-    "retry": "Try again",
-    "back": "Back"
-  },
-  "nav": {
-    "dashboard": "Dashboard",
-    "tasks": "Tasks",
-    "agenda": "Calendar",
-    "habits": "Habits",
-    "okr": "OKRs",
-    "statistics": "Statistics",
-    "settings": "Settings"
-  },
-  "states": {
-    "loading": "Loading…",
-    "empty": "Nothing here",
-    "error": "Something went wrong"
-  },
   "language": {
     "label": "Language",
     "description": "Interface language"
   },
-  "count": {
-    "task_one": "{{count}} task",
-    "task_other": "{{count}} tasks",
-    "day_one": "{{count}} day",
-    "day_other": "{{count}} days"
+  "nav": {
+    "dashboard": "Home",
+    "tasks": "Tasks",
+    "agenda": "Calendar",
+    "okr": "OKRs",
+    "habits": "Habits",
+    "statistics": "Statistics",
+    "enterprise": "Company",
+    "premium": "Premium",
+    "settings": "Settings",
+    "admin": "Admin",
+    "more": "More",
+    "moreOptions": "More options",
+    "sectionOther": "OTHER",
+    "mobileNavLabel": "Mobile navigation",
+    "documentTitle": "{{page}} – Cosmo",
+    "createTask": "Create a task",
+    "goToSettings": "Go to settings",
+    "logout": "Sign out",
+    "premiumActive": "Active",
+    "userFallback": "User",
+    "sidebar": {
+      "toggleTitle": "Collapse/expand ( [ )",
+      "expand": "Expand the sidebar",
+      "collapse": "Collapse the sidebar"
+    },
+    "search": {
+      "ariaLabel": "Search ({{shortcut}})",
+      "title": "Search ({{shortcut}})"
+    },
+    "badge": {
+      "pendingRequest_one": "{{count}} pending request",
+      "pendingRequest_other": "{{count}} pending requests",
+      "taskDueToday_one": "{{count}} task due today",
+      "taskDueToday_other": "{{count}} tasks due today",
+      "orgNotification_one": "{{count}} company notification",
+      "orgNotification_other": "{{count}} company notifications"
+    },
+    "descriptions": {
+      "okr": "Objectives & key results",
+      "statistics": "Progress tracking",
+      "premium": "Unlock every feature",
+      "settings": "Account & preferences",
+      "enterprise": "Team & collaboration"
+    }
   }
 }

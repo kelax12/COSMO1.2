@@ -13,19 +13,26 @@ import { prefetchRoute } from '@/lib/route-prefetch';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useTasks } from '@/modules/tasks';
 import MobileMoreSheet from './MobileMoreSheet';
+import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 interface TabConfig {
   to?: string;
-  label: string;
+  /**
+   * Clé de catalogue, pas du texte : `TABS` est une constante de module,
+   * évaluée à l'import. Y appeler `t()` figerait la langue au premier
+   * chargement du chunk.
+   */
+  labelKey: KeyOf<'common'>;
   icon: LucideIcon;
   end?: boolean;
 }
 
 const TABS: TabConfig[] = [
-  { to: '/dashboard', label: 'Accueil',   icon: LayoutDashboard, end: true },
-  { to: '/tasks',     label: 'Tâches',    icon: CheckSquare },
-  { to: '/agenda',    label: 'Agenda',    icon: Calendar },
-  { to: '/habits',    label: 'Habitudes', icon: Repeat },
+  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, end: true },
+  { to: '/tasks',     labelKey: 'nav.tasks',     icon: CheckSquare },
+  { to: '/agenda',    labelKey: 'nav.agenda',    icon: Calendar },
+  { to: '/habits',    labelKey: 'nav.habits',    icon: Repeat },
 ];
 
 // `min-h-touch` sur toute la surface de l'onglet (et pas seulement sur le lien) :
@@ -36,6 +43,7 @@ const tabBaseClasses =
   'flex flex-col items-center justify-center gap-0.5 flex-1 min-h-touch text-caption font-medium transition-colors active:scale-95 transform-gpu';
 
 const MobileTabBar: React.FC = () => {
+  const { t, tp } = useT('common');
   const [moreOpen, setMoreOpen] = useState(false);
   const pendingRequestCount = usePendingRequestCount();
   // Badge neutre « tâches restantes aujourd'hui » sur l'onglet Tâches (#49).
@@ -48,12 +56,12 @@ const MobileTabBar: React.FC = () => {
   return (
     <>
       <nav
-        aria-label="Navigation mobile"
+        aria-label={t('nav.mobileNavLabel')}
         className="fixed bottom-0 inset-x-0 z-40 bg-[rgb(var(--color-surface))] border-t border-[rgb(var(--color-border))] pb-safe"
         style={{ boxShadow: '0 -1px 3px rgba(0,0,0,0.04)' }}
       >
         <ul className="flex items-stretch h-16">
-          {TABS.map(({ to, label, icon: Icon, end }) => (
+          {TABS.map(({ to, labelKey, icon: Icon, end }) => (
             <li key={to} className="flex-1 flex">
               <NavLink
                 to={to!}
@@ -88,7 +96,7 @@ const MobileTabBar: React.FC = () => {
                       />
                       {end && pendingRequestCount > 0 && (
                         <span
-                          aria-label={`${pendingRequestCount} demandes en attente`}
+                          aria-label={tp('nav.badge.pendingRequest', pendingRequestCount)}
                           className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
                         >
                           {pendingRequestCount}
@@ -96,14 +104,14 @@ const MobileTabBar: React.FC = () => {
                       )}
                       {to === '/tasks' && tasksDueTodayCount > 0 && (
                         <span
-                          aria-label={`${tasksDueTodayCount} tâches pour aujourd'hui`}
+                          aria-label={tp('nav.badge.taskDueToday', tasksDueTodayCount)}
                           className="absolute -top-1.5 -right-1.5 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
                         >
                           {tasksDueTodayCount}
                         </span>
                       )}
                     </span>
-                    <span className="leading-tight">{label}</span>
+                    <span className="leading-tight">{t(labelKey)}</span>
                   </>
                 )}
               </NavLink>
@@ -114,7 +122,7 @@ const MobileTabBar: React.FC = () => {
             <button
               type="button"
               onClick={() => setMoreOpen(true)}
-              aria-label="Plus d'options"
+              aria-label={t('nav.moreOptions')}
               className={cn(
                 tabBaseClasses,
                 moreOpen
@@ -123,7 +131,7 @@ const MobileTabBar: React.FC = () => {
               )}
             >
               <MoreHorizontal size={24} />
-              <span className="leading-tight">Plus</span>
+              <span className="leading-tight">{t('nav.more')}</span>
             </button>
           </li>
         </ul>

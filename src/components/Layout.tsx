@@ -23,6 +23,8 @@ import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
@@ -70,7 +72,15 @@ interface NavItemLinkProps {
   badge?: number;
   /** 'alert' = pastille rouge (notifications) ; 'neutral' = compteur sobre (#49). */
   badgeVariant?: 'alert' | 'neutral';
-  badgeLabel?: string;
+  /**
+   * Libellé accessible COMPLET du badge, compte inclus.
+   *
+   * i18n — l'appelant fournit la chaîne entière (via `tp()`) plutôt qu'un
+   * fragment que ce composant concaténerait à `badge`. Un `${n} ${label}` codé
+   * ici imposerait l'ordre « nombre puis texte » à toutes les langues et
+   * empêcherait tout accord au pluriel.
+   */
+  badgeAriaLabel?: string;
   end?: boolean;
 }
 
@@ -83,7 +93,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   onMouseEnterExtra,
   badge,
   badgeVariant = 'alert',
-  badgeLabel,
+  badgeAriaLabel,
   end,
 }) => {
   const [iconHovered, setIconHovered] = useState(false);
@@ -117,7 +127,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         {icon}
         {badge !== undefined && badge > 0 && (
           <span
-            aria-label={badgeLabel ? `${badge} ${badgeLabel}` : undefined}
+            aria-label={badgeAriaLabel}
             className={`absolute ${collapsed ? '-top-1 -right-1' : '-top-2 -right-2'} ${
               badgeVariant === 'alert'
                 ? 'bg-red-500 text-white'
@@ -135,20 +145,28 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
 
 // Titres d'onglet par route (#15) — « Tâches – Cosmo » plutôt qu'un titre
 // statique : retrouvable parmi les onglets du navigateur.
-const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Accueil',
-  '/tasks': 'Tâches',
-  '/agenda': 'Agenda',
-  '/habits': 'Habitudes',
-  '/okr': 'OKR',
-  '/statistics': 'Statistiques',
-  '/settings': 'Paramètres',
-  '/premium': 'Premium',
-  '/admin': 'Admin',
-  '/entreprise': 'Entreprise',
+//
+// Les valeurs sont des CLÉS, pas du texte : ce sont exactement les libellés de
+// la navigation, et les dupliquer les ferait diverger à la première retouche.
+//
+// Les chemins n'ont pas de préfixe de locale : `basename` (cf. src/main.tsx) le
+// retire déjà de `location.pathname`. C'est ce qui permet à cette table de
+// rester identique dans toutes les langues.
+const PAGE_TITLE_KEYS: Record<string, KeyOf<'common'>> = {
+  '/dashboard': 'nav.dashboard',
+  '/tasks': 'nav.tasks',
+  '/agenda': 'nav.agenda',
+  '/habits': 'nav.habits',
+  '/okr': 'nav.okr',
+  '/statistics': 'nav.statistics',
+  '/settings': 'nav.settings',
+  '/premium': 'nav.premium',
+  '/admin': 'nav.admin',
+  '/entreprise': 'nav.enterprise',
 };
 
 const Layout: React.FC = () => {
+  const { t, tp } = useT('common');
   const isMobile = useIsMobile();
   const pendingRequestCount = usePendingRequestCount();
   const orgNotificationCount = useOrgNotificationCount();
@@ -192,37 +210,39 @@ const Layout: React.FC = () => {
 
   // Titre d'onglet par page (#15).
   useEffect(() => {
-    const pageTitle = PAGE_TITLES[location.pathname];
-    document.title = pageTitle ? `${pageTitle} – Cosmo` : 'Cosmo';
-  }, [location.pathname]);
+    const key = PAGE_TITLE_KEYS[location.pathname];
+    document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
+  }, [location.pathname, t]);
 
 const NavItems = () =>
   <>
-      <NavItemLink to="/dashboard" label="Accueil" icon={<LayoutDashboard size={20} aria-hidden="true" />}
+      <NavItemLink to="/dashboard" label={t('nav.dashboard')} icon={<LayoutDashboard size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount}
-        badgeLabel="demandes en attente" end />
+        badgeAriaLabel={tp('nav.badge.pendingRequest', pendingRequestCount)} end />
 
-      <NavItemLink to="/tasks" label="Tâches" icon={<CheckSquare size={20} aria-hidden="true" />}
+      <NavItemLink to="/tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed}
-        badge={tasksDueTodayCount} badgeVariant="neutral" badgeLabel="tâches pour aujourd'hui" />
+        badge={tasksDueTodayCount} badgeVariant="neutral"
+        badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
-      <NavItemLink to="/agenda" label="Agenda" icon={<Calendar size={20} aria-hidden="true" />}
+      <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
 
-      <NavItemLink to="/okr" label="OKR" icon={<Target size={20} aria-hidden="true" />}
+      <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
 
-      <NavItemLink to="/habits" label="Habitudes" icon={<Repeat size={20} aria-hidden="true" />}
+      <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
 
-      <NavItemLink to="/statistics" label="Statistiques" icon={<BarChart2 size={20} aria-hidden="true" />}
+      <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
         hoverColor="#8b5cf6" collapsed={isCollapsed} />
 
       {myOrg && (
         <>
-          <NavItemLink to="/entreprise" label="Entreprise" icon={<Building2 size={20} aria-hidden="true" />}
+          <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
             hoverColor="#6366f1" collapsed={isCollapsed}
-            badge={orgNotificationCount} badgeLabel="notifications entreprise" />
+            badge={orgNotificationCount}
+            badgeAriaLabel={tp('nav.badge.orgNotification', orgNotificationCount)} />
           {/* Switcher multi-org — affiché seulement si plusieurs entreprises */}
           {organizations.length > 1 && <OrgSwitcher collapsed={isCollapsed} />}
         </>
@@ -235,11 +255,11 @@ const NavItems = () =>
       {/* Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
           Lien + page conservés, réapparaissent dès qu'on réactive le flag. */}
       {PREMIUM_ENFORCED && (
-        <NavItemLink to="/premium" label="Premium" icon={<Crown size={20} aria-hidden="true" />}
+        <NavItemLink to="/premium" label={t('nav.premium')} icon={<Crown size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
       )}
 
-      <NavItemLink to="/settings" label="Paramètres" icon={<Settings size={20} aria-hidden="true" />}
+      <NavItemLink to="/settings" label={t('nav.settings')} icon={<Settings size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} />
     </>;
 
@@ -311,7 +331,7 @@ const NavItems = () =>
               window.dispatchEvent(new CustomEvent(evt));
             }}
             data-tutorial-id="global-quick-add-fab"
-            aria-label="Créer une tâche"
+            aria-label={t('nav.createTask')}
             className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform"
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
@@ -336,8 +356,8 @@ const NavItems = () =>
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
-          title="Réduire/agrandir ( [ )"
-          aria-label={isCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}
+          title={t('nav.sidebar.toggleTitle')}
+          aria-label={isCollapsed ? t('nav.sidebar.expand') : t('nav.sidebar.collapse')}
         >
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </Button>
@@ -353,8 +373,8 @@ const NavItems = () =>
               <button
                 type="button"
                 onClick={openCommandPalette}
-                aria-label={`Rechercher (${IS_MAC ? 'Cmd' : 'Ctrl'}+K)`}
-                title={`Rechercher (${IS_MAC ? '⌘K' : 'Ctrl K'})`}
+                aria-label={t('nav.search.ariaLabel', { shortcut: IS_MAC ? 'Cmd+K' : 'Ctrl+K' })}
+                title={t('nav.search.title', { shortcut: IS_MAC ? '⌘K' : 'Ctrl K' })}
                 className="p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
               >
                 <Search size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
@@ -368,7 +388,7 @@ const NavItems = () =>
 
         {/* Section Company */}
         <div className={`border-t ${isCollapsed ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
-          {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>AUTRE</div>}
+          {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('nav.sectionOther')}</div>}
           {CompanyItems()}
           {/* État de synchronisation (#37) */}
           <div className={`mt-3 ${isCollapsed ? 'flex justify-center' : 'px-2'}`}>
