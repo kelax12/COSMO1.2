@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -19,7 +19,7 @@ import AgendaEventToTaskConfirm from './agenda/AgendaEventToTaskConfirm';
 import ColorSettingsModal from '../components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
@@ -501,6 +501,17 @@ const AgendaPage: React.FC = () => {
     api.gotoDate(date);
   };
 
+  // Vue Mois : un clic sur un jour bascule en vue Jour sur cette date, au lieu
+  // d'ouvrir la carte de création rapide (comportement `handleDateSelect`).
+  const handleMobileDateSelect = (selectInfo: DateSelectArg) => {
+    if (mobileViewMode === 'dayGridMonth') {
+      mobileCalendarRef.current?.getApi().unselect();
+      handleMobileSelectDate(selectInfo.start);
+      return;
+    }
+    handleDateSelect(selectInfo);
+  };
+
   const handleMobileMonthPrev = () => { mobileCalendarRef.current?.getApi().prev(); };
   const handleMobileMonthNext = () => { mobileCalendarRef.current?.getApi().next(); };
 
@@ -523,7 +534,7 @@ const AgendaPage: React.FC = () => {
 
   // Label du jour sélectionné
   const mobileDayLabel = (() => {
-    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: fr });
+    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: getDateLocale() });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   })();
 
@@ -658,7 +669,7 @@ const AgendaPage: React.FC = () => {
               slotLabelInterval="01:00:00"
               snapDuration="00:15:00"
               slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-              select={handleDateSelect}
+              select={handleMobileDateSelect}
               eventClick={handleEventClick}
               eventDragStart={handleEventDragStart}
               eventDragStop={handleEventDragStop}

@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatTimeInTz, toDisplayISO, getTimezonePref, type TimezonePref } from '@/lib/timezone';
+import { formatDate } from '@/i18n/format';
 
 // Valeur factice interceptée par onValueChange pour ouvrir le gestionnaire de
 // catégories au lieu de sélectionner une catégorie (#option "+ Ajouter").
@@ -63,7 +64,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
         style={{ left, top }}
       >
         <div className="text-muted-foreground mb-2 text-xs">
-          {start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })} · {fmt(slot.start)} – {fmt(slot.end)}
+          {formatDate(start, { weekday: 'short', day: 'numeric' })} · {fmt(slot.start)} – {fmt(slot.end)}
         </div>
         <Input
           autoFocus

@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { X, Edit2, CheckCircle2, Calendar } from 'lucide-react';
 import type { OKR } from '@/modules/okrs';
+// Alias : un helper local `formatDate` (tolérant aux dates invalides) existe
+// déjà dans ce composant.
+import { formatDate as formatDateIntl } from '@/i18n/format';
 
 type Category = { id: string; name: string; color: string };
 
@@ -38,7 +41,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
   const categoryById = (id: string) => categories.find(c => c.id === id);
 
   const formatDate = (iso: string) => {
-    try { return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    try { return formatDateIntl(new Date(iso), { day: '2-digit', month: 'short', year: 'numeric' }); }
     catch { return ''; }
   };
 

@@ -5,6 +5,7 @@ import { Edit2, Trash2, Clock, CheckCircle, Calendar } from 'lucide-react';
 import type { KeyResult } from '@/modules/okrs';
 import { useTasks } from '@/modules/tasks';
 import { getProgress, type Objective } from './okr-page-logic';
+import { formatDate } from '@/i18n/format';
 
 interface OKRCardProps {
   objective: Objective;
@@ -62,9 +63,9 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     </span>
 
                     <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      <span>{new Date(objective.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <span>{formatDate(new Date(objective.startDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                       <span>→</span>
-                      <span>{new Date(objective.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <span>{formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     </div>
 
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">

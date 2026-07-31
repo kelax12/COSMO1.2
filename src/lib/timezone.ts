@@ -15,6 +15,7 @@
 // pour ne pas ré-introduire la classe de bugs de fuseau déjà éradiquée.
 
 import { useCallback, useSyncExternalStore } from 'react';
+import { getIntlTag } from '@/i18n/format';
 
 export type TimezoneMode = 'default' | 'manual';
 
@@ -83,8 +84,12 @@ export function displayNow(pref: TimezonePref, now: Date = new Date()): Date {
 }
 
 /**
- * Formate l'heure d'un instant dans le fuseau choisi (fr-FR, HH:mm par défaut).
+ * Formate l'heure d'un instant dans le fuseau choisi (HH:mm par défaut).
  * En mode défaut c'est l'heure locale, comme avant.
+ *
+ * i18n — l'étiquette suit la locale de l'utilisateur : le français affiche
+ * « 14:30 », l'anglais « 2:30 PM ». Seule la PRÉSENTATION change ; le fuseau
+ * appliqué reste celui choisi dans les réglages.
  */
 export function formatTimeInTz(
   iso: string | Date,
@@ -93,7 +98,7 @@ export function formatTimeInTz(
 ): string {
   const src = typeof iso === 'string' ? iso : iso.toISOString();
   const shifted = new Date(toDisplayISO(src, pref));
-  return shifted.toLocaleTimeString('fr-FR', options);
+  return shifted.toLocaleTimeString(getIntlTag(), options);
 }
 
 /** Libellé court du fuseau actif (ex. « UTC+2 », « UTC-5 » ou « Heure locale »). */

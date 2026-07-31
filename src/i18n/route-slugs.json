@@ -1,0 +1,9 @@
+{
+  "about": { "fr": "a-propos", "en": "about", "es": "acerca-de" },
+  "freelancers": { "fr": "pour-freelances", "en": "for-freelancers", "es": "para-freelancers" },
+  "students": { "fr": "pour-etudiants", "en": "for-students", "es": "para-estudiantes" },
+  "managers": { "fr": "pour-managers", "en": "for-managers", "es": "para-managers" },
+  "legalNotice": { "fr": "mentions-legales", "en": "legal-notice", "es": "aviso-legal" },
+  "privacy": { "fr": "politique-confidentialite", "en": "privacy-policy", "es": "politica-privacidad" },
+  "terms": { "fr": "cgu", "en": "terms", "es": "condiciones" }
+}

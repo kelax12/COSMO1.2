@@ -38,6 +38,7 @@ import {
   HabitsStatistics,
 } from './statistics/sections';
 import type { StatSection, TimePeriod, WorkTimePeriodData } from './statistics/types';
+import { formatDate } from '@/i18n/format';
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -78,7 +79,7 @@ export default function StatisticsPage() {
         for (let i = 9; i >= 0; i--) {
           const date = new Date(now); date.setDate(date.getDate() - i);
           const day = getLocalDateString(date);
-          defs.push({ label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), range: { start: day, end: day } });
+          defs.push({ label: formatDate(date, { day: '2-digit', month: '2-digit' }), range: { start: day, end: day } });
         }
         break;
       case 'week':
@@ -87,8 +88,8 @@ export default function StatisticsPage() {
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
           const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-          const label = weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-          const tooltipLabel = `du ${weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} au ${weekEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+          const label = formatDate(weekStart, { day: 'numeric', month: 'short' });
+          const tooltipLabel = `du ${formatDate(weekStart, { day: 'numeric', month: 'long' })} au ${formatDate(weekEnd, { day: 'numeric', month: 'long' })}`;
           defs.push({ label, tooltipLabel, range: { start: getLocalDateString(weekStart), end: getLocalDateString(weekEnd) } });
         }
         break;
@@ -97,7 +98,7 @@ export default function StatisticsPage() {
           const date = new Date(now); date.setMonth(date.getMonth() - i);
           const first = new Date(date.getFullYear(), date.getMonth(), 1);
           const last = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-          defs.push({ label: date.toLocaleDateString('fr-FR', { month: 'short' }), range: { start: getLocalDateString(first), end: getLocalDateString(last) } });
+          defs.push({ label: formatDate(date, { month: 'short' }), range: { start: getLocalDateString(first), end: getLocalDateString(last) } });
         }
         break;
       case 'year':

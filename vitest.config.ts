@@ -18,7 +18,14 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     // `scripts/**` : tests du CLI COSMO (scripts/cosmo/), en .mjs. Sans cette
     // entrée ils ne seraient jamais ramassés et passeraient pour « verts ».
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'scripts/**/*.{test,spec}.mjs'],
+    // `src/**/*.mjs` : les helpers partagés avec `prerender.mjs` (Node brut,
+    // sans bundler) sont en .mjs et leurs tests aussi — dont le test de parité
+    // entre le calcul d'URL du prérendu et celui de l'app.
+    include: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'src/**/*.{test,spec}.mjs',
+      'scripts/**/*.{test,spec}.mjs',
+    ],
     // L'ancien dossier Vitest jamais activé + les E2E Playwright ne doivent
     // pas être ramassés par Vitest.
     exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'src/__test__/**'],
@@ -79,6 +86,16 @@ export default defineConfig({
         'src/lib/workTimeCalculator.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
         'src/lib/pagination.warning.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
         'src/lib/acknowledged-shares.ts': { lines: 90, functions: 100, statements: 90, branches: 80 },
+        // Socle i18n — traverse toute l'app (chaque libellé, chaque date, chaque
+        // URL localisée). Une régression y est invisible en dev (le moteur
+        // retombe sur le français) mais casse EN/ES en prod. Les catalogues
+        // .json ne sont pas concernés : `include` ne prend que .ts/.tsx.
+        // Seuils posés SOUS le réel mesuré (100/100/100 lignes-fonctions-
+        // statements ; branches 94 / 100 / 93), même convention que le plancher
+        // global : on interdit la régression sans exiger l'inatteignable.
+        'src/i18n/locale.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
+        'src/i18n/translate.ts': { lines: 100, functions: 100, statements: 100, branches: 100 },
+        'src/i18n/routes.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
       },
     },
   },

@@ -1,9 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Target, TrendingUp, Clock } from 'lucide-react';
 import { useOkrs, KeyResult } from '@/modules/okrs';
 import { DashboardCardSkeleton } from '@/components/skeletons';
 import EmptyState from '@/components/EmptyState';
+import { formatDate } from '@/i18n/format';
 
 const ActiveOKRs: React.FC = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const ActiveOKRs: React.FC = () => {
                       </span>
                     </div>
                     <p className="mb-1">{okr.keyResults.length} résultats clés</p>
-                    <p>Échéance: {new Date(okr.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    <p>Échéance: {formatDate(new Date(okr.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                   </div>
                 </div>
               );

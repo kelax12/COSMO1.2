@@ -3,16 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Clock,
+  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Clock, Languages,
 } from 'lucide-react';
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '../components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../modules/auth/AuthContext';
 import { useUpdateUserSettings } from '../modules/user';
 import ThemeToggle from '../components/ThemeToggle';
+import LocaleToggle from '../components/LocaleToggle';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
@@ -630,6 +631,22 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                   <ThemeToggle showLabel />
+                </div>
+
+                {/* Langue de l'interface — le sélecteur ne s'affiche que si
+                    plusieurs langues sont servies (cf. SUPPORTED_LOCALES). */}
+                <div style={{ minHeight: '72px' }}
+                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
+                  <div className="flex items-center gap-3.5">
+                    <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform">
+                      <Languages size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Langue</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">La page est rechargée pour appliquer la langue partout</p>
+                    </div>
+                  </div>
+                  <LocaleToggle />
                 </div>
 
                 {/* Rappel habitudes du soir (#24) — opt-in */}

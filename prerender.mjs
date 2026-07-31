@@ -20,10 +20,34 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
+import {
+  BCP47_TAG,
+  DEFAULT_LOCALE,
+  INDEXABLE_LOCALES,
+  OG_LOCALE,
+  canonicalUrl,
+  hreflangLinks,
+  localizePath,
+  sitemapAlternates,
+} from './src/i18n/seo-urls.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
 const BASE = 'https://thecosmo.app';
+
+// ── Catalogues SEO par locale ─────────────────────────────────────────────
+// Mêmes fichiers que ceux consommés par l'app (src/lib/useSeoMeta.ts) : le
+// titre d'une page ne peut donc pas différer entre le prérendu et le rendu
+// client.
+const SEO = Object.fromEntries(
+  INDEXABLE_LOCALES.map((locale) => [
+    locale,
+    JSON.parse(readFileSync(join(__dirname, 'src/locales', locale, 'seo.json'), 'utf8')),
+  ])
+);
+
+/** Méta d'une route dans une locale, ou `null` si non traduite. */
+const seoFor = (routeId, locale) => SEO[locale]?.[routeId] ?? null;
 // Date de build (YYYY-MM-DD) — injectée dans les JSON-LD (dateModified) et le
 // sitemap (lastmod) pour ne plus figer une date stale codée en dur.
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -55,44 +79,71 @@ const faqSchema = {
   })),
 };
 
-const breadcrumb = (name, path) => ({
+/** Libellé de la racine dans le fil d'Ariane, par locale. */
+const HOME_LABEL = { fr: 'Accueil', en: 'Home', es: 'Inicio' };
+
+const breadcrumb = (name, path, locale) => ({
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${BASE}/` },
-    { '@type': 'ListItem', position: 2, name, item: `${BASE}${path}` },
+    { '@type': 'ListItem', position: 1, name: HOME_LABEL[locale], item: canonicalUrl('/', locale) },
+    { '@type': 'ListItem', position: 2, name, item: canonicalUrl(path, locale) },
   ],
 });
 
-const guideArticle = {
+const guideArticle = (locale) => ({
   '@context': 'https://schema.org',
   '@type': 'TechArticle',
-  headline: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
-  description: "Guide complet pour utiliser Cosmo : gestion de tâches, suivi d'habitudes avec heatmap, agenda time-blocking et méthode OKR.",
+  headline: seoFor('guide', locale).title,
+  description: seoFor('guide', locale).description,
   image: `${BASE}/og-card.png`,
-  url: `${BASE}/guide`,
-  inLanguage: 'fr-FR',
+  url: canonicalUrl('/guide', locale),
+  inLanguage: BCP47_TAG[locale],
   datePublished: '2025-01-01',
   dateModified: '2026-05-31',
   author: { '@type': 'Organization', name: 'Cosmo', url: BASE },
   publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
-  mainEntityOfPage: `${BASE}/guide`,
+  mainEntityOfPage: canonicalUrl('/guide', locale),
   articleSection: ['Prise en main', 'Tâches', 'Habitudes', 'Agenda', 'OKR', 'Statistiques'],
-};
+});
 
 const ld = (obj, id) => `<script type="application/ld+json"${id ? ` id="${id}"` : ''}>${JSON.stringify(obj)}</script>`;
 
 // ── Définition des routes ──────────────────────────────────────────────────
+//
+// Chaque route porte :
+//   - `path`    : le chemin FRANÇAIS canonique. Les autres langues en sont
+//                 dérivées par `localizePath` (préfixe + slug traduit), donc il
+//                 n'y a jamais deux tables de chemins à tenir synchronisées.
+//   - `meta`    : { locale → { title, description } }.
+//   - `content` : { locale → HTML indexable injecté dans #seo-fallback }.
+//   - `extraLd` : (locale) => [{ obj, id }].
+//
+// Une locale n'est prérendue pour une route QUE si `meta` et `content` la
+// fournissent tous les deux. C'est volontairement contraignant : il devient
+// impossible de publier une page anglaise dont le corps serait resté français,
+// ce qui est exactement le duplicate content qu'on cherche à éviter. Les
+// `hreflang` sont dérivés de la même liste, donc ils ne peuvent pas annoncer
+// une page qui n'a pas été écrite.
+
+/** Métadonnées tirées des catalogues `src/locales/<locale>/seo.json`. */
+const fromCatalog = (routeId) =>
+  Object.fromEntries(
+    INDEXABLE_LOCALES.map((locale) => [locale, seoFor(routeId, locale)]).filter(
+      ([, meta]) => meta
+    )
+  );
+
 const ROUTES = [
   {
     path: '/guide',
-    title: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
-    description: "Apprenez à utiliser Cosmo : tâches, habitudes avec heatmap, agenda en time-blocking et gestion des OKR. Guide complet en français.",
-    extraLd: [
-      { obj: breadcrumb("Guide d'utilisation", '/guide'), id: 'guide-breadcrumb' },
-      { obj: guideArticle, id: 'guide-article' },
+    meta: fromCatalog('guide'),
+    extraLd: (locale) => [
+      { obj: breadcrumb("Guide d'utilisation", '/guide', locale), id: 'guide-breadcrumb' },
+      { obj: guideArticle(locale), id: 'guide-article' },
     ],
-    noscript: `<h1>Guide d'utilisation de Cosmo</h1>
+    content: {
+      fr: `<h1>Guide d'utilisation de Cosmo</h1>
         <p>Découvrez comment tirer le meilleur de Cosmo, l'application de productivité tout-en-un.</p>
         <h2>Prise en main</h2><p>Créez un compte gratuit ou essayez le mode démo sans inscription.</p>
         <h2>Tâches</h2><p>Créez des tâches avec priorités, catégories, deadlines et listes.</p>
@@ -101,47 +152,55 @@ const ROUTES = [
         <h2>OKR</h2><p>Définissez des objectifs ambitieux et mesurez vos résultats clés.</p>
         <h2>Statistiques</h2><p>Analysez votre temps sur tous vos modules.</p>
         <p><a href="/">Retour à l'accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+    },
   },
   {
     path: '/signup',
-    title: 'Inscription gratuite – Cosmo, app productivité tâches et OKR',
-    description: "Créez votre compte Cosmo gratuitement. Gérez vos tâches, habitudes, agenda et objectifs OKR. Connexion possible via Google.",
-    noscript: `<h1>Créer un compte Cosmo gratuit</h1>
+    meta: fromCatalog('signup'),
+    content: {
+      fr: `<h1>Créer un compte Cosmo gratuit</h1>
         <p>Inscrivez-vous gratuitement pour gérer vos tâches, habitudes, agenda et OKR dans une seule application. Connexion possible via Google.</p>
         <p><a href="/">Accueil</a> · <a href="/login">J'ai déjà un compte</a></p>`,
+    },
   },
   {
     path: '/login',
-    title: 'Connexion – Cosmo, application de productivité',
-    description: 'Connectez-vous à Cosmo pour retrouver vos tâches, habitudes, agenda et OKR. Accès rapide via email/mot de passe ou connexion Google, en quelques secondes.',
-    noscript: `<h1>Connexion à Cosmo</h1>
+    meta: fromCatalog('login'),
+    content: {
+      fr: `<h1>Connexion à Cosmo</h1>
         <p>Connectez-vous pour retrouver vos tâches, habitudes, agenda et objectifs OKR.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+    },
   },
   {
     path: '/a-propos',
-    title: 'À propos de Cosmo — qui sommes-nous ?',
-    description: "Pourquoi Cosmo existe : une application de productivité française, gratuite, qui réunit tâches, habitudes, agenda et OKR dans un seul écosystème.",
-    extraLd: [{ obj: breadcrumb('À propos', '/a-propos'), id: 'apropos-breadcrumb' }],
-    noscript: `<h1>À propos de Cosmo</h1>
+    meta: fromCatalog('about'),
+    extraLd: (locale) => [
+      { obj: breadcrumb('À propos', '/a-propos', locale), id: 'apropos-breadcrumb' },
+    ],
+    content: {
+      fr: `<h1>À propos de Cosmo</h1>
         <p>Cosmo est une application de productivité française, gratuite et tout-en-un : tâches, habitudes, agenda avec time-blocking et OKR connectés dans un seul écosystème. Produit indépendant, développé en France.</p>
         <h2>Cosmo, The Cosmo App ou thecosmo ?</h2>
         <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app » — c'est toujours nous. Cosmo est une application web sans téléchargement ; son seul site officiel est thecosmo.app.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a></p>`,
+    },
   },
   {
     path: '/blog',
-    title: 'Blog Cosmo — Productivité, OKR, habitudes et time-blocking',
-    description: "Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.",
-    extraLd: [
-      { obj: breadcrumb('Blog', '/blog'), id: 'blog-breadcrumb' },
+    meta: fromCatalog('blog'),
+    // Les ARTICLES restent français : le schéma Blog reste donc en fr-FR quelle
+    // que soit la locale de l'index, sinon on déclarerait des BlogPosting
+    // anglais qui n'existent pas.
+    extraLd: (locale) => [
+      { obj: breadcrumb('Blog', '/blog', locale), id: 'blog-breadcrumb' },
       {
         obj: {
           '@context': 'https://schema.org',
           '@type': 'Blog',
           name: 'Blog Cosmo',
           url: `${BASE}/blog`,
-          inLanguage: 'fr-FR',
+          inLanguage: BCP47_TAG[DEFAULT_LOCALE],
           publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
           blogPost: ARTICLES.map((a) => ({
             '@type': 'BlogPosting',
@@ -154,19 +213,23 @@ const ROUTES = [
         id: 'blog-schema',
       },
     ],
-    noscript: `<h1>Le blog Cosmo</h1>
+    content: {
+      fr: `<h1>Le blog Cosmo</h1>
         <p>Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité personnelle.</p>
         <ul>
           ${ARTICLES.map((a) => `<li><a href="/blog/${a.slug}">${a.title}</a> — ${a.description}</li>`).join('\n          ')}
         </ul>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+    },
   },
-  // Articles de blog — contenu complet visible (src/content/blog/*.mjs)
+  // Articles de blog — contenu complet visible (src/content/blog/*.mjs).
+  // Français uniquement (phase 3) : ils ne reçoivent donc que `x-default`, et
+  // aucune alternate `en`/`es` — déclarer une alternate vers une page qui
+  // n'existe pas est une erreur Search Console.
   ...ARTICLES.map((a) => ({
     path: `/blog/${a.slug}`,
-    title: `${a.metaTitle} | Blog Cosmo`,
-    description: a.description,
-    extraLd: [
+    meta: { fr: { title: `${a.metaTitle} | Blog Cosmo`, description: a.description } },
+    extraLd: () => [
       {
         obj: {
           '@context': 'https://schema.org',
@@ -212,7 +275,8 @@ const ROUTES = [
           }]
         : []),
     ],
-    noscript: `<p><a href="/">Accueil</a> › <a href="/blog">Blog</a></p>
+    content: {
+      fr: `<p><a href="/">Accueil</a> › <a href="/blog">Blog</a></p>
         <h1>${a.title}</h1>
         ${a.html}
         <h2>À lire ensuite</h2>
@@ -220,38 +284,46 @@ const ROUTES = [
           ${ARTICLES.filter((o) => o.slug !== a.slug).slice(0, 3).map((o) => `<li><a href="/blog/${o.slug}">${o.title}</a></li>`).join('\n          ')}
         </ul>
         <p><a href="/blog">← Tous les articles</a> · <a href="/signup">Essayer Cosmo gratuitement</a></p>`,
+    },
   })),
-  // Pages use-case commerciales — contenu complet visible (src/content/use-cases.mjs)
+  // Pages use-case commerciales — contenu complet visible
+  // (src/content/use-cases.mjs). Français uniquement, comme les articles.
   ...USE_CASES.map((u) => ({
     path: `/${u.slug}`,
-    title: `${u.metaTitle} | Cosmo`,
-    description: u.description,
-    extraLd: [{ obj: breadcrumb(u.title, `/${u.slug}`), id: `usecase-${u.slug}-breadcrumb` }],
-    noscript: `<h1>${u.title}</h1>
+    meta: { fr: { title: `${u.metaTitle} | Cosmo`, description: u.description } },
+    extraLd: (locale) => [
+      { obj: breadcrumb(u.title, `/${u.slug}`, locale), id: `usecase-${u.slug}-breadcrumb` },
+    ],
+    content: {
+      fr: `<h1>${u.title}</h1>
         <p>${u.lead}</p>
         ${u.html}
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`,
+    },
   })),
   {
     path: '/cgu',
-    title: "Conditions Générales d'Utilisation – Cosmo App",
-    description: "Conditions générales d'utilisation de Cosmo, application de gestion de tâches, habitudes et OKR. Accès gratuit, règles d'utilisation et responsabilités.",
-    noscript: `<h1>Conditions Générales d'Utilisation</h1>
+    meta: fromCatalog('terms'),
+    content: {
+      fr: `<h1>Conditions Générales d'Utilisation</h1>
         <p>Conditions générales d'utilisation de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
+    },
   },
   {
     path: '/mentions-legales',
-    title: 'Mentions légales – Cosmo App',
-    description: "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
-    noscript: `<h1>Mentions légales</h1>
+    meta: fromCatalog('legalNotice'),
+    content: {
+      fr: `<h1>Mentions légales</h1>
         <p>Mentions légales de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
+    },
   },
   {
     path: '/politique-confidentialite',
-    title: 'Politique de confidentialité – Cosmo App',
-    description: 'Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact.',
-    noscript: `<h1>Politique de confidentialité</h1>
+    meta: fromCatalog('privacy'),
+    content: {
+      fr: `<h1>Politique de confidentialité</h1>
         <p>Politique de confidentialité de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
+    },
   },
 ];
 
@@ -277,7 +349,26 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
 // que ces liens-là pour établir les entrantes. Sans ce bloc, /a-propos, les 3
 // pages use-case, les 3 pages légales et /login n'ont aucun lien entrant
 // statique (page "orpheline" ou lien dofollow unique dans Ahrefs Site Audit).
-const STATIC_FOOTER_NAV = `<p><a href="/guide">Guide d'utilisation</a> · <a href="/blog">Blog</a> · <a href="/pour-freelances">Pour les freelances</a> · <a href="/pour-etudiants">Pour les étudiants</a> · <a href="/pour-managers">Pour les managers</a> · <a href="/a-propos">À propos</a> · <a href="/signup">Inscription gratuite</a> · <a href="/login">Connexion</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/politique-confidentialite">Confidentialité</a> · <a href="/cgu">CGU</a></p>`;
+//
+// Les `href` sont localisés : sous `/en/`, pointer vers `/a-propos` enverrait
+// le crawler sur la version française et casserait le cloisonnement des langues
+// (Google suit ces liens pour établir la structure du site).
+const staticFooterNav = (locale) => {
+  const link = (path, label) => `<a href="${localizePath(path, locale)}">${label}</a>`;
+  return `<p>${[
+    link('/guide', "Guide d'utilisation"),
+    link('/blog', 'Blog'),
+    link('/pour-freelances', 'Pour les freelances'),
+    link('/pour-etudiants', 'Pour les étudiants'),
+    link('/pour-managers', 'Pour les managers'),
+    link('/a-propos', 'À propos'),
+    link('/signup', 'Inscription gratuite'),
+    link('/login', 'Connexion'),
+    link('/mentions-legales', 'Mentions légales'),
+    link('/politique-confidentialite', 'Confidentialité'),
+    link('/cgu', 'CGU'),
+  ].join(' · ')}</p>`;
+};
 
 // Injecte le contenu indexable dans <div id="root">, AVANT #boot-screen.
 //
@@ -296,37 +387,59 @@ const STATIC_FOOTER_NAV = `<p><a href="/guide">Guide d'utilisation</a> · <a hre
 // Le <noscript> d'origine devient redondant (le <noscript><style> du <head>
 // réaffiche #seo-fallback quand le JS est coupé) et est retiré : ciblage par
 // son id pour ne pas emporter celui du <head>.
-function injectStaticContent(out, content) {
+function injectStaticContent(out, content, locale) {
   const marker = '<div id="root">';
   if (!out.includes(marker)) {
     console.warn('  ⚠ marqueur <div id="root"> introuvable — contenu statique non injecté');
     return out;
   }
-  out = out.replace(marker, `${marker}\n      <div id="seo-fallback">\n        ${content}\n        ${STATIC_FOOTER_NAV}\n      </div>`);
+  out = out.replace(marker, `${marker}\n      <div id="seo-fallback">\n        ${content}\n        ${staticFooterNav(locale)}\n      </div>`);
   out = out.replace(/<noscript id="seo-noscript">[\s\S]*?<\/noscript>\s*/, '');
   return out;
 }
 
-function buildPage(route) {
-  let out = html;
-  const url = `${BASE}${route.path}`;
+/**
+ * Locales réellement publiables pour une route : celles qui ont À LA FOIS des
+ * méta et du contenu. Voir le commentaire de `ROUTES` — c'est ce qui rend
+ * impossible la publication d'une page anglaise au corps français.
+ */
+function availableLocales(route) {
+  return INDEXABLE_LOCALES.filter((locale) => route.meta?.[locale] && route.content?.[locale]);
+}
 
-  out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${route.title}</title>`);
-  out = out.replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${esc(route.description)}" />`);
+function buildPage(route, locale, alternates) {
+  let out = html;
+  const { title, description } = route.meta[locale];
+  const url = canonicalUrl(route.path, locale);
+
+  // Langue du document — lue par les lecteurs d'écran et les moteurs.
+  out = out.replace(/<html([^>]*)\slang="[^"]*"/, `<html$1 lang="${locale}"`);
+
+  out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`);
+  out = out.replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${esc(description)}" />`);
   out = out.replace(/<link rel="canonical" href="[\s\S]*?" \/>/, `<link rel="canonical" href="${url}" />`);
   out = out.replace(/<meta property="og:url" content="[\s\S]*?" \/>/, `<meta property="og:url" content="${url}" />`);
-  out = out.replace(/<meta property="og:title" content="[\s\S]*?" \/>/, `<meta property="og:title" content="${esc(route.title)}" />`);
-  out = out.replace(/<meta property="og:description" content="[\s\S]*?" \/>/, `<meta property="og:description" content="${esc(route.description)}" />`);
-  out = out.replace(/<meta name="twitter:title" content="[\s\S]*?" \/>/, `<meta name="twitter:title" content="${esc(route.title)}" />`);
-  out = out.replace(/<meta name="twitter:description" content="[\s\S]*?" \/>/, `<meta name="twitter:description" content="${esc(route.description)}" />`);
+  out = out.replace(/<meta property="og:title" content="[\s\S]*?" \/>/, `<meta property="og:title" content="${esc(title)}" />`);
+  out = out.replace(/<meta property="og:description" content="[\s\S]*?" \/>/, `<meta property="og:description" content="${esc(description)}" />`);
+  out = out.replace(/<meta property="og:locale" content="[\s\S]*?" \/>/, `<meta property="og:locale" content="${OG_LOCALE[locale]}" />`);
+  out = out.replace(/<meta name="twitter:title" content="[\s\S]*?" \/>/, `<meta name="twitter:title" content="${esc(title)}" />`);
+  out = out.replace(/<meta name="twitter:description" content="[\s\S]*?" \/>/, `<meta name="twitter:description" content="${esc(description)}" />`);
+
+  // `inLanguage` des JSON-LD génériques d'index.html (Organization, WebSite…).
+  out = out.replace(/"inLanguage":\s*"[^"]*"/g, `"inLanguage": "${BCP47_TAG[locale]}"`);
+
+  // hreflang — alternates réciproques + x-default.
+  const links = hreflangLinks(route.path, alternates);
+  if (links) out = out.replace('</head>', `    ${links}\n  </head>`);
 
   // JSON-LD spécifique à la route, injecté avant </head>
-  if (route.extraLd?.length) {
-    out = out.replace('</head>', `    ${route.extraLd.map(({ obj, id }) => ld(obj, id)).join('\n    ')}\n  </head>`);
+  const extra = route.extraLd?.(locale) ?? [];
+  if (extra.length) {
+    out = out.replace('</head>', `    ${extra.map(({ obj, id }) => ld(obj, id)).join('\n    ')}\n  </head>`);
   }
 
   // Contenu indexable visible de la route, injecté dans #root
-  out = injectStaticContent(out, route.noscript);
+  out = injectStaticContent(out, route.content[locale], locale);
 
   return out;
 }
@@ -334,39 +447,91 @@ function buildPage(route) {
 // ── Génération ──────────────────────────────────────────────────────────
 let count = 0;
 for (const route of ROUTES) {
-  const dir = join(DIST, route.path);
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'index.html'), buildPage(route), 'utf8');
-  count++;
-  console.log(`  prerendered ${route.path}/index.html`);
+  const alternates = availableLocales(route);
+  if (alternates.length === 0) {
+    console.warn(`  ⚠ ${route.path} — aucune locale complète (méta + contenu), route ignorée`);
+    continue;
+  }
+  for (const locale of alternates) {
+    const path = localizePath(route.path, locale);
+    const dir = join(DIST, path);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'index.html'), buildPage(route, locale, alternates), 'utf8');
+    count++;
+    console.log(`  prerendered ${path}/index.html`);
+  }
 }
 
 // ── Home : FAQPage JSON-LD statique + contenu visible dans #root ──────────
-let home = html;
-if (!home.includes('"FAQPage"')) {
-  home = home.replace('</head>', `    ${ld(faqSchema, 'faq-schema')}\n  </head>`);
-  console.log('  injected FAQPage JSON-LD into index.html');
+// La FAQ reste française tant que la home n'est pas traduite (phase 5) : la
+// home n'est donc publiée que dans la locale par défaut.
+const homeRoute = {
+  path: '/',
+  meta: fromCatalog('root'),
+  content: { fr: HOME_STATIC },
+};
+for (const locale of availableLocales(homeRoute)) {
+  let home = buildPage(homeRoute, locale, availableLocales(homeRoute));
+  if (!home.includes('"FAQPage"')) {
+    home = home.replace('</head>', `    ${ld(faqSchema, 'faq-schema')}\n  </head>`);
+    console.log('  injected FAQPage JSON-LD into index.html');
+  }
+  writeFileSync(join(DIST, localizePath('/', locale), 'index.html'), home, 'utf8');
 }
-home = injectStaticContent(home, HOME_STATIC);
-writeFileSync(join(DIST, 'index.html'), home, 'utf8');
 
 // ── Sitemap : lastmod = date de build + URLs blog/à-propos générées ───────
 const sitemapPath = join(DIST, 'sitemap.xml');
-const sitemapEntry = (loc, lastmod, changefreq, priority) =>
-  `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
+//
+// Une entrée par (chemin × locale publiée), chacune portant les `xhtml:link`
+// de TOUTES les versions du groupe, elle-même comprise. Google exige cette
+// réciprocité aussi dans le sitemap : un groupe déclaré à sens unique est
+// ignoré en entier, silencieusement.
+const sitemapEntry = (path, locale, alternates, lastmod, changefreq, priority) => {
+  const alt = sitemapAlternates(path, alternates);
+  return (
+    `  <url>\n    <loc>${canonicalUrl(path, locale)}</loc>\n` +
+    (alt ? `${alt}\n` : '') +
+    `    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`
+  );
+};
+
+/** Développe un chemin sur toutes ses locales publiées. */
+const sitemapGroup = (path, alternates, lastmod, changefreq, priority) =>
+  alternates.map((locale) => sitemapEntry(path, locale, alternates, lastmod, changefreq, priority)).join('');
+
 try {
   let sitemap = readFileSync(sitemapPath, 'utf8');
   sitemap = sitemap.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${TODAY}</lastmod>`);
+
+  // Déclaration du namespace xhtml, requise dès qu'on émet des `xhtml:link`.
+  if (!sitemap.includes('xmlns:xhtml')) {
+    sitemap = sitemap.replace(
+      /<urlset([^>]*)>/,
+      '<urlset$1 xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+    );
+  }
+
+  const localesOf = (routePath) => {
+    const route = ROUTES.find((r) => r.path === routePath);
+    return route ? availableLocales(route) : [DEFAULT_LOCALE];
+  };
+
   const generated =
-    sitemapEntry(`${BASE}/a-propos`, TODAY, 'yearly', '0.5') +
-    sitemapEntry(`${BASE}/blog`, TODAY, 'weekly', '0.8') +
-    ARTICLES.map((a) => sitemapEntry(`${BASE}/blog/${a.slug}`, a.dateModified, 'monthly', '0.7')).join('') +
-    USE_CASES.map((u) => sitemapEntry(`${BASE}/${u.slug}`, TODAY, 'monthly', '0.7')).join('');
+    sitemapGroup('/a-propos', localesOf('/a-propos'), TODAY, 'yearly', '0.5') +
+    sitemapGroup('/blog', localesOf('/blog'), TODAY, 'weekly', '0.8') +
+    ARTICLES.map((a) =>
+      sitemapGroup(`/blog/${a.slug}`, localesOf(`/blog/${a.slug}`), a.dateModified, 'monthly', '0.7')
+    ).join('') +
+    USE_CASES.map((u) =>
+      sitemapGroup(`/${u.slug}`, localesOf(`/${u.slug}`), TODAY, 'monthly', '0.7')
+    ).join('');
+
   sitemap = sitemap.replace('</urlset>', `${generated}</urlset>`);
   writeFileSync(sitemapPath, sitemap, 'utf8');
-  console.log(`  sitemap → lastmod ${TODAY} + ${2 + ARTICLES.length + USE_CASES.length} URLs générées (blog, à-propos, use-cases)`);
-} catch {
-  console.warn('  ⚠ dist/sitemap.xml introuvable — sitemap non enrichi');
+  const urlCount = (generated.match(/<loc>/g) ?? []).length;
+  console.log(`  sitemap → lastmod ${TODAY} + ${urlCount} URLs générées (blog, à-propos, use-cases)`);
+} catch (err) {
+  console.warn(`  ⚠ dist/sitemap.xml non enrichi — ${err.message}`);
 }
 
 // ── RSS : flux du blog généré depuis ARTICLES (autodiscovery dans <head>) ──

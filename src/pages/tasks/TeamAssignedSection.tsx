@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Check, CalendarClock, UsersRound, ArrowUpRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import {
@@ -128,7 +128,7 @@ const TeamAssignedSection = () => {
                         {task.deadline && (
                           <span className={`text-caption sm:text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
                             <CalendarClock size={11} aria-hidden="true" />
-                            {format(parseISO(task.deadline), 'd MMM', { locale: fr })}
+                            {format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() })}
                             {overdue && ' · en retard'}
                           </span>
                         )}

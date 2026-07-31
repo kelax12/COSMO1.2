@@ -6,23 +6,23 @@ import { z } from 'zod';
 
 export const keyResultSchema = z.object({
   id: z.string().optional(),
-  title: z.string().trim().min(1, 'Le titre du résultat clé est requis').max(500, 'Titre trop long'),
-  currentValue: z.coerce.number().min(0, 'La valeur actuelle ne peut pas être négative'),
-  targetValue: z.coerce.number().min(0, 'La cible ne peut pas être négative'),
+  title: z.string().trim().min(1, 'validation.okr.krTitleRequired').max(500, 'validation.okr.titleTooLong'),
+  currentValue: z.coerce.number().min(0, 'validation.okr.currentValueNegative'),
+  targetValue: z.coerce.number().min(0, 'validation.okr.targetNegative'),
   unit: z.string(),
   completed: z.boolean(),
-  estimatedTime: z.coerce.number().min(0, 'La durée ne peut pas être négative'),
+  estimatedTime: z.coerce.number().min(0, 'validation.okr.durationNegative'),
   completedAt: z.string().nullable().optional(),
   // Coefficient d'importance 1–10 (défaut 1). Optionnel : les KR antérieurs
   // sans poids restent valides et sont traités comme 1 par recalcProgress.
-  weight: z.coerce.number().int().min(1, 'Le coefficient doit être au moins 1').max(10, 'Le coefficient ne peut pas dépasser 10').optional(),
+  weight: z.coerce.number().int().min(1, 'validation.okr.weightMin').max(10, 'validation.okr.weightMax').optional(),
 });
 
 export const createOKRSchema = z.object({
-  title: z.string().trim().min(1, 'Le titre de l’objectif est requis').max(500, 'Titre trop long'),
-  description: z.string().max(5000, 'Description trop longue'),
+  title: z.string().trim().min(1, 'validation.okr.objectiveTitleRequired').max(500, 'validation.okr.titleTooLong'),
+  description: z.string().max(5000, 'validation.okr.descriptionTooLong'),
   category: z.string(),
-  progress: z.coerce.number().min(0).max(100, 'La progression doit être entre 0 et 100'),
+  progress: z.coerce.number().min(0).max(100, 'validation.okr.progressRange'),
   completed: z.boolean(),
   keyResults: z.array(keyResultSchema),
   startDate: z.string(),

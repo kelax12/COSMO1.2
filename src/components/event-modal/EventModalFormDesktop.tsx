@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Clock, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -171,7 +171,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       >
                         <span>
                           {startDate
-                            ? format(new Date(startDate + "T12:00:00"), "dd MMMM yyyy", { locale: fr })
+                            ? format(new Date(startDate + "T12:00:00"), "dd MMMM yyyy", { locale: getDateLocale() })
                             : "Choisir une date"}
                         </span>
                         <CalendarIcon size={16} />
@@ -187,7 +187,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                           handleFieldChange("startDate", setStartDate, formatted);
                           handleFieldChange("endDate", setEndDate, formatted);
                         }}
-                        locale={fr}
+                        locale={getDateLocale()}
                         initialFocus
                       />
                     </PopoverContent>

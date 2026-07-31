@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -407,8 +407,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <>
-      {!addToListMode && <PendingSharedTasks />}
-      {!addToListMode && <PendingSharedLists />}
+      {/* Mobile : ces bandeaux sont regroupés dans TasksInboxMenu (en-tête). */}
+      {!addToListMode && (
+        <div className="hidden md:block">
+          <PendingSharedTasks />
+        </div>
+      )}
+      {!addToListMode && (
+        <div className="hidden md:block">
+          <PendingSharedLists />
+        </div>
+      )}
       <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
         <div className="flex flex-wrap items-center gap-2">
           <Button

@@ -6,6 +6,7 @@ import { parseQuickAdd } from '@/lib/quick-add-parser';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { formatDate } from '@/i18n/format';
 
 /**
  * Quick-add global (#1) — capture une tâche en langage naturel depuis
@@ -124,7 +125,7 @@ const QuickAddBar = () => {
 
   const formatDeadline = (d: string) => {
     const [y, m, day] = d.split('-').map(Number);
-    return new Date(y, m - 1, day).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    return formatDate(new Date(y, m - 1, day), { weekday: 'short', day: 'numeric', month: 'short' });
   };
 
   return (

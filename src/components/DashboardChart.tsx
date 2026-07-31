@@ -16,6 +16,7 @@ import { useEvents } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+import { formatDate } from '@/i18n/format';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
@@ -137,7 +138,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
         d.setDate(d.getDate() - i);
         const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
         const end   = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-        const label = d.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+        const label = formatDate(d, { weekday: 'short' }).toUpperCase().replace('.', '');
         points.push({ label, ...calcPeriod(start, end) });
       }
       return points;
@@ -165,7 +166,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       ref.setMonth(ref.getMonth() - i);
       const start = new Date(ref.getFullYear(), ref.getMonth(), 1, 0, 0, 0, 0);
       const end   = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59, 999);
-      const label = ref.toLocaleDateString('fr-FR', { month: 'short' });
+      const label = formatDate(ref, { month: 'short' });
       points.push({ label, ...calcPeriod(start, end) });
     }
     return points;

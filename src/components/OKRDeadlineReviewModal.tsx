@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
+import { formatDate } from '@/i18n/format';
 
 type Category = { id: string; name: string; color: string };
 
@@ -185,9 +186,9 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                   </span>
                 </div>
                 <div className="flex items-center justify-center gap-2 mb-2 text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  <span>{new Date(draft.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  <span>{formatDate(new Date(draft.startDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                   <span>→</span>
-                  <span>{new Date(draft.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  <span>{formatDate(new Date(draft.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
                 <h3 className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
                 <p className="text-xs sm:text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{draft.description}</p>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { format, addDays, isSameDay, isToday } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
@@ -46,7 +46,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onNextMonth,
   onToday,
 }) => {
-  const monthYear = format(currentDate, 'MMMM yyyy', { locale: fr });
+  const monthYear = format(currentDate, 'MMMM yyyy', { locale: getDateLocale() });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
   const isMonthView = viewMode === 'dayGridMonth';
 
@@ -168,7 +168,7 @@ const MobileDayStripBase: React.FC<MobileDayStripProps> = ({ selectedDate, onSel
         const key = format(day, 'yyyy-MM-dd');
         const selected = isSameDay(day, selectedDate);
         const today = isToday(day);
-        const initial = format(day, 'EEEEE', { locale: fr }).toUpperCase();
+        const initial = format(day, 'EEEEE', { locale: getDateLocale() }).toUpperCase();
         const num = format(day, 'd');
 
         return (

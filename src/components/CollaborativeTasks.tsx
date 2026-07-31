@@ -20,6 +20,7 @@ import { useCategories } from '@/modules/categories';
 
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useFriends, useSharesByTask } from '@/modules/friends';
+import { formatDate } from '@/i18n/format';
 
 // « il y a 2 h » / « à l'instant » — fraîcheur d'une tâche partagée (#40).
 const formatRelativeTime = (iso: string): string => {
@@ -31,7 +32,7 @@ const formatRelativeTime = (iso: string): string => {
   if (hours < 24) return `il y a ${hours} h`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `il y a ${days} j`;
-  return `le ${new Date(iso).toLocaleDateString('fr-FR')}`;
+  return `le ${formatDate(new Date(iso))}`;
 };
 
 const CollaborativeTasks: React.FC = () => {

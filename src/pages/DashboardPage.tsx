@@ -1,5 +1,5 @@
 import React, { useMemo, useState, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { motion, type Variants } from 'framer-motion';
@@ -22,6 +22,7 @@ import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 import MobileCollapsible from '../components/MobileCollapsible';
 import WeeklyCheckinModal, { useWeeklyCheckin } from '../components/WeeklyCheckinModal';
+import { formatDate, formatTime } from '@/i18n/format';
 // SocialRequests retiré du corps de page : les demandes d'amis ET les tâches
 // partagées à accepter sont désormais regroupées dans InboxMenu (bouton boîte
 // de réception en haut de page, avec pastille de notification).
@@ -254,7 +255,7 @@ const DashboardPage: React.FC = () => {
       const d = new Date();
       d.setDate(1);
       d.setMonth(d.getMonth() - i);
-      months.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
+      months.push({ year: d.getFullYear(), month: d.getMonth(), label: formatDate(d, { month: 'short' }) });
     }
     const thisMonth = months[months.length - 1];
     const monthRange = (m: { year: number; month: number }) => {
@@ -384,7 +385,7 @@ const DashboardPage: React.FC = () => {
                   if (nextEvent) {
                     parts.push(
                       <Link key="event" to="/agenda" className="hover:underline underline-offset-2">
-                        « {nextEvent.title} » à {new Date(nextEvent.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        « {nextEvent.title} » à {formatTime(new Date(nextEvent.start), { hour: '2-digit', minute: '2-digit' })}
                       </Link>
                     );
                   }

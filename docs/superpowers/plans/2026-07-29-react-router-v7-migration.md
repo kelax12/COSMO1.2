@@ -92,7 +92,16 @@ Run:
 npm test
 ```
 
-Attendu : **3 échecs pré-existants** sur `lists` et `team-stats`. Ils sont cassés sur `main` avant ce chantier — ne pas les imputer à la migration, ne pas les corriger ici. Noter le nombre exact de tests passants ; c'est la référence pour toute la suite.
+Attendu : **849 passants / 4 échecs pré-existants** (mesuré le 2026-07-29 sur `main` @ `8a8dee0`). Ils sont cassés avant ce chantier — ne pas les imputer à la migration, ne pas les corriger ici :
+
+| Fichier | Test |
+|---|---|
+| `src/design-system.guard.test.ts` | budget de tailles Tailwind arbitraires (203 > 202) |
+| `src/components/organization/team-stats.helpers.test.ts` | `isOverdue` |
+| `src/components/organization/team-stats.helpers.test.ts` | `overdueByMember` |
+| `src/modules/lists/supabase.repository.test.ts` | `warnIfTruncated(...).map is not a function` |
+
+> Corrigé en cours d'exécution : la note mémoire `tests-preexistants-casses.md` ne mentionnait que 3 échecs (`lists` + `team-stats`). Le 4ᵉ (`design-system.guard.test.ts`, un compteur de budget Tailwind sans rapport avec le routage) a dérivé depuis. **Après cette tâche la référence devient 853 passants / 4 échecs** (les 4 tests de garde ajoutés ici).
 
 - [ ] **Step 2 : Écrire le test de navigation entre routes lazy**
 
@@ -641,29 +650,51 @@ git commit -m "refactor(router): imports react-router-dom -> react-router (v7)"
 **Files:**
 - Modify: `faille.md` (ligne 82 — tableau récapitulatif G-9 ; et le bloc §7 vers la ligne 523)
 
-- [ ] **Step 1 : Confirmer que l'audit production est propre**
-
-C'est la preuve que le chantier a atteint son but.
+- [ ] **Step 1 : Confirmer l'état de l'audit production**
 
 Run:
 ```bash
 npm audit --omit=dev
 ```
 
-Attendu : **0 vulnérabilité**. Les vulnérabilités restantes (`vite`, `vitest`, `esbuild`, `eslint`, `minimatch`) sont dev-only et hors périmètre de ce plan — elles ont leur propre entrée dans `faille.md` §7.
+Attendu : **2 high, sur un seul avis — [GHSA-qwww-vcr4-c8h2](https://github.com/advisories/GHSA-qwww-vcr4-c8h2)**, « RSC Mode CSRF Bypass Allows Action Execution Before 400 Response » (`>=7.12.0 <8.3.0`).
 
-- [ ] **Step 2 : Confirmer que react-router a disparu de l'audit complet**
+> ⚠️ **Correction apportée en cours d'exécution.** Ce plan annonçait « 0 vulnérabilité » après le bump. C'est faux, et la raison est instructive : la 7.18.2 **résout bien les 3 avis visés** (vérifié — `GHSA-wrjc-x8rr-h8h6`, `GHSA-jjmj-jmhj-qwj2`, `GHSA-337j-9hxr-rhxg` ont tous disparu de l'audit, donc **G-9 est corrigé**), mais toute version `>= 7.12.0` porte un avis plus récent sur le **mode RSC**.
+>
+> **Il n'existe aucune version simultanément exempte des deux familles d'avis et compatible React 18 :**
+>
+> | Version | Open redirect (G-9) | RSC CSRF | React 18 ? |
+> |---|---|---|---|
+> | 6.30.4 (avant) | ❌ affecté | ✅ non affecté | ✅ |
+> | **7.18.2 (choisi)** | ✅ **corrigé** | ⚠️ signalé, inapplicable | ✅ |
+> | 7.11.0 (« fix » proposé par npm) | ❌ **réintroduit** | ✅ non affecté | ✅ |
+> | 8.3.0 | ✅ | ✅ | ❌ exige React ≥ 19.2.7 |
+>
+> **Ne pas suivre la suggestion de `npm audit fix`** : redescendre en 7.11.0 remettrait l'open redirect, c'est-à-dire exactement la faille que ce chantier corrige. Strictement pire.
+>
+> L'avis RSC est **structurellement inapplicable** ici, au même titre que `deserializeErrors` l'était pour le SSR : COSMO est une SPA Vite sans React Server Components. Vérifié — `grep -rE "react-router/rsc|matchRSCServerRequest|createCallServer|ServerRouter|createStaticHandler|react-router/server" src prerender.mjs vite.config.ts` ne renvoie **aucune** occurrence. Il n'y a ni serveur, ni `action`, ni requête RSC à contourner.
+>
+> Conclusion : on assume cet avis résiduel et on le documente dans `faille.md`, exactement comme l'était G-9 avant ce chantier — mais cette fois avec un plan de sortie connu (la migration React 19 + react-router 8).
+
+Les autres vulnérabilités (`vite`, `vitest`, `esbuild`, `eslint`, `minimatch`) sont dev-only et hors périmètre — elles ont leur propre entrée dans `faille.md` §7.
+
+- [ ] **Step 2 : Confirmer que les 3 avis visés ont bien disparu**
+
+> ⚠️ **Corrigé en cours d'exécution.** Cette étape vérifiait auparavant que `react-router` disparaissait entièrement de l'audit. C'est faux depuis la découverte de l'avis RSC (cf. Step 1) : le paquet **reste** listé. Ce qu'il faut vérifier, c'est la disparition des **3 avis ciblés**, pas du paquet.
 
 Run:
 ```bash
-npm audit --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const v=JSON.parse(s).vulnerabilities;console.log('react-router:',v['react-router']?'ENCORE PRESENT':'absent');console.log('react-router-dom:',v['react-router-dom']?'ENCORE PRESENT':'absent')})"
+npm audit --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const u=[];for(const v of Object.values(j.vulnerabilities||{}))for(const a of v.via)if(typeof a!=='string')u.push(a.url);for(const g of ['GHSA-wrjc-x8rr-h8h6','GHSA-jjmj-jmhj-qwj2','GHSA-337j-9hxr-rhxg'])console.log(g,':',u.some(x=>x&&x.includes(g))?'ENCORE PRESENT':'RESOLU')})"
 ```
 
 Attendu :
 ```
-react-router: absent
-react-router-dom: absent
+GHSA-wrjc-x8rr-h8h6 : RESOLU
+GHSA-jjmj-jmhj-qwj2 : RESOLU
+GHSA-337j-9hxr-rhxg : RESOLU
 ```
+
+`react-router` et `react-router-dom` **restent** présents dans `npm audit` au titre de `GHSA-qwww-vcr4-c8h2` (G-11). C'est attendu, ce n'est pas une régression.
 
 - [ ] **Step 3 : Mettre à jour la ligne G-9 du tableau récapitulatif**
 
@@ -676,7 +707,13 @@ Dans `faille.md`, remplacer la ligne 82 :
 par :
 
 ```markdown
-| G-9 | 🟠 Medium | `react-router` 6.x — open redirect via antislash dans `<Link>`/`useNavigate` (GHSA-wrjc-x8rr-h8h6) | ✅ Corrigé | Migration `react-router-dom` 6.30.4 → **7.18.2** le 2026-07-29 (cf. `docs/superpowers/plans/2026-07-29-react-router-v7-migration.md`). Clôt aussi GHSA-jjmj-jmhj-qwj2 (open redirect → XSS) et GHSA-337j-9hxr-rhxg (`deserializeErrors`). `npm audit --omit=dev` → **0 vulnérabilité**. Invariant « aucune navigation alimentée par un paramètre d'URL » désormais verrouillé par `src/lib/no-open-redirect.test.ts`. Cible 7.18.2 et non `latest` : la v8 exige React ≥ 19 |
+| G-9 | 🟠 Medium | `react-router` 6.x — open redirect via antislash dans `<Link>`/`useNavigate` (GHSA-wrjc-x8rr-h8h6) | ✅ Corrigé | Migration `react-router-dom` 6.30.4 → **7.18.2** le 2026-07-29 (cf. `docs/superpowers/plans/2026-07-29-react-router-v7-migration.md`). Clôt aussi GHSA-jjmj-jmhj-qwj2 (open redirect → XSS) et GHSA-337j-9hxr-rhxg (`deserializeErrors`) — les 3 ont disparu de `npm audit`. Invariant « aucune navigation alimentée par un paramètre d'URL » désormais verrouillé par `src/lib/no-open-redirect.test.ts`. Cible 7.18.2 et non `latest` : la v8 exige React ≥ 19. **Contrepartie assumée → voir G-11** |
+```
+
+Ajouter juste en dessous une nouvelle ligne G-11 :
+
+```markdown
+| G-11 | 🟠 High (théorique) | `react-router` ≥ 7.12 — CSRF en **mode RSC** : exécution d'une action avant la réponse 400 (GHSA-qwww-vcr4-c8h2) | ⚠️ **Non corrigé — assumé** | Hérité de la migration v7 ([G-9](#-tableau-récapitulatif)). **Aucune version ne clôt les deux familles d'avis en React 18** : 7.11.0 réintroduirait l'open redirect, 8.3.0 exige React ≥ 19.2.7. **Ne PAS suivre `npm audit fix`** (il propose 7.11.0 = régression de sécurité). Exploitabilité **nulle par construction** : SPA Vite sans React Server Components — `grep -rE "react-router/rsc\|matchRSCServerRequest\|createCallServer\|ServerRouter\|createStaticHandler" src prerender.mjs vite.config.ts` → 0 occurrence. Ni serveur, ni `action`, ni requête RSC. Sortie : migration React 19 + react-router 8 |
 ```
 
 - [ ] **Step 4 : Mettre à jour le bloc §7 (« Vulnérabilités npm résiduelles »)**

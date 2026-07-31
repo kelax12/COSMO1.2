@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { getUseCase } from '@/content/use-cases.mjs';

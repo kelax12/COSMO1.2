@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDate } from '@/i18n/format';
 import {
   Bookmark, BookmarkCheck, Calendar, MoreHorizontal,
   Trash2, UserPlus, AlertTriangle, CheckCircle2, Users
@@ -17,7 +18,7 @@ const today = new Date();
 const d = (n: number) => {
   const dt = new Date(today);
   dt.setDate(dt.getDate() + n);
-  return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return formatDate(dt, { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 const TASKS = [

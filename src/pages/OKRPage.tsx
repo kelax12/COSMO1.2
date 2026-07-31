@@ -4,7 +4,7 @@ import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
 import { showUndoToast } from '@/lib/undo-toast';

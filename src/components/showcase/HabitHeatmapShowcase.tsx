@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatDate } from '@/i18n/format';
 
 // ─── Static demo data (Habit Table replication) ─────────────────────
 type Habit = {
@@ -39,7 +40,7 @@ const days = (() => {
     d.setDate(start.getDate() + i);
     arr.push({
       date: toIso(d),
-      dayName: d.toLocaleDateString('fr-FR', { weekday: 'short' }),
+      dayName: formatDate(d, { weekday: 'short' }),
       dayNumber: d.getDate(),
       isToday: d.toDateString() === TODAY.toDateString(),
       isFuture: d > TODAY,

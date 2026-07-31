@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Pause } from 'lucide-react';
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDate, getDateLocale } from '@/i18n/format';
 import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
 import { calculateStreak } from '@/modules/habits/streak';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -49,7 +49,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
       date.setDate(today.getDate() - (count - 1 - i));
       return {
         date: date.toLocaleDateString('en-CA'),
-        dayName: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+        dayName: formatDate(date, { weekday: 'short' }),
         dayNumber: date.getDate(),
         isToday: i === count - 1,
       };
@@ -124,7 +124,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                 {paused && pausedUntil && (
                   <div
                     className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-caption font-medium"
-                    title={`En pause jusqu'au ${format(pausedUntil, "d MMMM yyyy", { locale: fr })}`}
+                    title={`En pause jusqu'au ${format(pausedUntil, "d MMMM yyyy", { locale: getDateLocale() })}`}
                   >
                     <Pause size={10} />
                     <span>En pause</span>

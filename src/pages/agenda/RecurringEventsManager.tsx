@@ -3,6 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X as CloseIcon, Pencil, Trash2 } from 'lucide-react';
 import { useUpdateEvent, type CalendarEvent } from '@/modules/events';
+import { formatDate, formatTime } from '@/i18n/format';
 
 interface RecurringEventsManagerProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{ev.title}</p>
                               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                                {label} · démarre le {startDate.toLocaleDateString('fr-FR')} à {startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                {label} · démarre le {formatDate(startDate)} à {formatTime(startDate, { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">

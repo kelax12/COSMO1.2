@@ -1,0 +1,62 @@
+{
+  "api": {
+    "23505": "This resource already exists.",
+    "23503": "Action blocked by existing dependencies.",
+    "42P01": "Database configuration error.",
+    "42501": "You don't have the required permissions for this action.",
+    "PGRST116": "The requested resource could not be found.",
+    "insufficient_quota": "AI quota exhausted. Please check your subscription.",
+    "rate_limit_exceeded": "Too many requests. Please wait a moment.",
+    "context_length_exceeded": "The content is too long to process.",
+    "invalid_api_key": "Could not connect to the AI services.",
+    "NETWORK_ERROR": "Network connection lost or unstable.",
+    "TIMEOUT": "Request timed out. Check your connection.",
+    "GENERIC_ERROR": "Something went wrong."
+  },
+  "validation": {
+    "fallback": "Invalid data",
+    "task": {
+      "nameRequired": "Task name is required",
+      "nameTooLong": "Name too long (500 characters max)",
+      "descriptionTooLong": "Description too long",
+      "priorityInteger": "Priority must be a whole number",
+      "priorityRange": "Invalid priority (0 to 5)",
+      "durationNegative": "Duration cannot be negative",
+      "durationUnrealistic": "Unrealistic duration",
+      "subtaskTooLong": "Subtask name too long",
+      "tooManySubtasks": "Too many subtasks (50 max)"
+    },
+    "okr": {
+      "krTitleRequired": "Key result title is required",
+      "titleTooLong": "Title too long",
+      "currentValueNegative": "Current value cannot be negative",
+      "targetNegative": "Target cannot be negative",
+      "targetPositive": "Target must be greater than 0",
+      "durationNegative": "Duration cannot be negative",
+      "weightMin": "Weight must be at least 1",
+      "weightMax": "Weight cannot exceed 10",
+      "objectiveTitleRequired": "Objective title is required",
+      "descriptionTooLong": "Description too long",
+      "progressRange": "Progress must be between 0 and 100",
+      "teamKrTitleRequired": "Key result title is required",
+      "atLeastOneKr": "Add at least one key result",
+      "tooManyKrs": "10 key results max"
+    },
+    "teamProject": {
+      "nameRequired": "Project name is required",
+      "nameTooLong": "Name too long (120 max)",
+      "projectRequired": "Project is required",
+      "taskNameRequired": "Task name is required",
+      "taskNameTooLong": "Name too long (500 max)",
+      "descriptionTooLong": "Description too long",
+      "priorityRange": "Invalid priority (1 to 5)",
+      "durationNegative": "Negative duration",
+      "tooManyAssignees": "20 assignees maximum"
+    },
+    "organization": {
+      "nameTooShort": "Company name must be at least 2 characters",
+      "nameTooLong": "Company name too long (80 characters max)",
+      "joinCodeInvalid": "Invalid code (expected format: COSMO-XXXXXXXXXX)"
+    }
+  }
+}
