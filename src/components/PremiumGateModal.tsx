@@ -4,6 +4,8 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { Crown, Play, X, Zap, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
 import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
+import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
+import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdModal from './AdModal';
@@ -175,7 +177,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
                       <div className="text-blue-600 dark:text-blue-400/80 text-xs">30 jours Premium complet sans pub</div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="font-black text-blue-700 dark:text-blue-300 text-base leading-none">3,50€</div>
+                      <div className="font-black text-blue-700 dark:text-blue-300 text-base leading-none">{formatCurrency(PREMIUM_MONTHLY_EUR)}</div>
                       <div className="text-blue-500 text-xs">/mois</div>
                     </div>
                   </motion.button>

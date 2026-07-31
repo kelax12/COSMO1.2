@@ -23,6 +23,7 @@ import { useCategories } from '@/modules/categories';
 import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
 import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { formatDate } from '@/i18n/format';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -396,7 +397,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 
                 <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   {task.deadline
-                    ? `Deadline: ${new Date(task.deadline).toLocaleDateString('fr-FR')}`
+                    ? `Deadline: ${formatDate(new Date(task.deadline))}`
                     : 'Pas d\'échéance'}
                 </div>
                 

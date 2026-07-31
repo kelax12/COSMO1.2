@@ -14,6 +14,7 @@ import { useEvents } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+import { formatDate } from '@/i18n/format';
 
 type ViewMode = 'jour' | 'semaine' | 'mois';
 
@@ -84,7 +85,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
         const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
         const end   = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
         return {
-          label: d.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', ''),
+          label: formatDate(d, { weekday: 'short' }).toUpperCase().replace('.', ''),
           ...calcPeriod(start, end),
         };
       });
@@ -114,7 +115,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       const start = new Date(ref.getFullYear(), ref.getMonth(), 1, 0, 0, 0, 0);
       const end   = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59, 999);
       return {
-        label: ref.toLocaleDateString('fr-FR', { month: 'short' }),
+        label: formatDate(ref, { month: 'short' }),
         ...calcPeriod(start, end),
       };
     });

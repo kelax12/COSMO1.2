@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
+import { getDateLocale } from '@/i18n/format';
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -61,7 +61,7 @@ export function DatePicker({
         >
           <span>
             {selectedDate
-              ? format(selectedDate, displayFormat, { locale: fr })
+              ? format(selectedDate, displayFormat, { locale: getDateLocale() })
               : placeholder}
           </span>
           <CalendarIcon size={16} />
@@ -100,7 +100,7 @@ export function DatePicker({
           mode="single"
           selected={selectedDate}
           onSelect={handleSelect}
-          locale={fr}
+          locale={getDateLocale()}
           initialFocus
           className="w-full p-3 [--cell-size:2.5rem]"
           classNames={{

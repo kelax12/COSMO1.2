@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Sparkles, Play, X, Crown, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
 import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
+import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
+import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdModal from './AdModal';
@@ -99,7 +101,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             <button
               onClick={handleCheckout}
               disabled={isCheckoutLoading}
-              aria-label="Passer Premium — 3,50 € par mois"
+              aria-label={`Passer Premium — ${formatCurrency(PREMIUM_MONTHLY_EUR)} par mois`}
               className="shrink-0 min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-60"
             >
               {isCheckoutLoading ? (

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import {
   useFriendRequests,
   useAcceptFriendRequest,
@@ -425,7 +425,7 @@ const InboxMenu: React.FC = () => {
             <div className="space-y-2">
               {incomingRequests.map((req: PendingFriendRequest) => {
                 const timeAgo = req.sentAt
-                  ? formatDistanceToNow(new Date(req.sentAt), { locale: fr, addSuffix: true })
+                  ? formatDistanceToNow(new Date(req.sentAt), { locale: getDateLocale(), addSuffix: true })
                   : '';
                 return (
                   <div
@@ -604,7 +604,7 @@ const InboxMenu: React.FC = () => {
             <div className="space-y-2">
               {pendingJoinRequests.map((req) => {
                 const timeAgo = req.requestedAt
-                  ? formatDistanceToNow(new Date(req.requestedAt), { locale: fr, addSuffix: true })
+                  ? formatDistanceToNow(new Date(req.requestedAt), { locale: getDateLocale(), addSuffix: true })
                   : '';
                 return (
                   <div

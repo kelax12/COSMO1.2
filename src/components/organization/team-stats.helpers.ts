@@ -7,7 +7,7 @@ import {
   parseISO, isValid, isPast, isToday, subDays, startOfDay,
   startOfWeek, addWeeks, isWithinInterval, format,
 } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import type { TeamTask } from '@/modules/team-projects';
 import type { TeamProject } from '@/modules/team-projects';
 import type { TeamOKR, TeamKeyResult } from '@/modules/team-okrs';
@@ -224,8 +224,14 @@ export function projectBreakdown(tasks: TeamTask[], projects: TeamProject[]): Pr
 interface WeekBucket { start: Date; end: Date; label: string; }
 
 /**
- * Découpe [start, now] en semaines (lundi→dimanche, locale fr). Si start est
- * null (« Tout »), on remonte de `maxWeeks` semaines pour garder un graphe lisible.
+ * Découpe [start, now] en semaines (lundi→dimanche). Si start est null
+ * (« Tout »), on remonte de `maxWeeks` semaines pour garder un graphe lisible.
+ *
+ * i18n — `weekStartsOn: 1` reste codé en dur, volontairement : seul le LIBELLÉ
+ * suit la locale. Dériver le début de semaine de la locale ferait démarrer les
+ * semaines le dimanche en anglais (règle CLDR en-US) et changerait donc les
+ * chiffres eux-mêmes d'un utilisateur à l'autre — une statistique d'équipe doit
+ * découper le temps de la même façon pour tout le monde.
  */
 export function weekBuckets(start: Date | null, now: Date = new Date(), maxWeeks = 12): WeekBucket[] {
   const from = startOfWeek(start ?? subDays(now, maxWeeks * 7), { weekStartsOn: 1 });
@@ -234,7 +240,7 @@ export function weekBuckets(start: Date | null, now: Date = new Date(), maxWeeks
   // Borne dure pour éviter toute boucle infinie sur des dates aberrantes.
   for (let i = 0; i < 60 && cursor <= now; i++) {
     const end = addWeeks(cursor, 1);
-    buckets.push({ start: cursor, end, label: format(cursor, 'd MMM', { locale: fr }) });
+    buckets.push({ start: cursor, end, label: format(cursor, 'd MMM', { locale: getDateLocale() }) });
     cursor = end;
   }
   // Limite à la fenêtre la plus récente si « Tout » explose le nombre de semaines.

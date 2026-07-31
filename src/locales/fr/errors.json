@@ -14,6 +14,49 @@
     "GENERIC_ERROR": "Une erreur inattendue est survenue."
   },
   "validation": {
-    "fallback": "Données invalides"
+    "fallback": "Données invalides",
+    "task": {
+      "nameRequired": "Le nom de la tâche est requis",
+      "nameTooLong": "Nom trop long (500 caractères max)",
+      "descriptionTooLong": "Description trop longue",
+      "priorityInteger": "La priorité doit être un entier",
+      "priorityRange": "Priorité invalide (0 à 5)",
+      "durationNegative": "La durée ne peut pas être négative",
+      "durationUnrealistic": "Durée irréaliste",
+      "subtaskTooLong": "Sous-tâche trop longue",
+      "tooManySubtasks": "Trop de sous-tâches (50 max)"
+    },
+    "okr": {
+      "krTitleRequired": "Le titre du résultat clé est requis",
+      "titleTooLong": "Titre trop long",
+      "currentValueNegative": "La valeur actuelle ne peut pas être négative",
+      "targetNegative": "La cible ne peut pas être négative",
+      "targetPositive": "La cible doit être supérieure à 0",
+      "durationNegative": "La durée ne peut pas être négative",
+      "weightMin": "Le coefficient doit être au moins 1",
+      "weightMax": "Le coefficient ne peut pas dépasser 10",
+      "objectiveTitleRequired": "Le titre de l’objectif est requis",
+      "descriptionTooLong": "Description trop longue",
+      "progressRange": "La progression doit être entre 0 et 100",
+      "teamKrTitleRequired": "Le titre du KR est requis",
+      "atLeastOneKr": "Ajoutez au moins un résultat clé",
+      "tooManyKrs": "10 KR max"
+    },
+    "teamProject": {
+      "nameRequired": "Le nom du projet est requis",
+      "nameTooLong": "Nom trop long (120 max)",
+      "projectRequired": "Projet requis",
+      "taskNameRequired": "Le nom de la tâche est requis",
+      "taskNameTooLong": "Nom trop long (500 max)",
+      "descriptionTooLong": "Description trop longue",
+      "priorityRange": "Priorité invalide (1 à 5)",
+      "durationNegative": "Durée négative",
+      "tooManyAssignees": "20 assignés maximum"
+    },
+    "organization": {
+      "nameTooShort": "Le nom de l'entreprise doit faire au moins 2 caractères",
+      "nameTooLong": "Nom d'entreprise trop long (80 caractères max)",
+      "joinCodeInvalid": "Code invalide (format attendu : COSMO-XXXXXXXXXX)"
+    }
   }
 }

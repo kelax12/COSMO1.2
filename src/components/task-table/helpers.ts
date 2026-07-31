@@ -3,12 +3,14 @@
 // et TaskRow (desktop). Aucune logique métier (filtrage/tri = task-filtering.ts).
 // ═══════════════════════════════════════════════════════════════════
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+// Alias : ce module exporte déjà son propre `formatDate` (helper métier qui
+// accepte une chaîne et gère l'absence de date).
+import { formatDate as formatDateIntl, getDateLocale } from '@/i18n/format';
 
 export const formatDate = (dateString: string | undefined) => {
   try {
     if (!dateString) return '—';
-    return format(new Date(dateString), 'dd/MM/yyyy', { locale: fr });
+    return format(new Date(dateString), 'dd/MM/yyyy', { locale: getDateLocale() });
   } catch {
     return '—';
   }
@@ -30,9 +32,9 @@ export const formatDeadlineSmart = (dateString: string | undefined): string => {
   if (diffDays < 0 && diffDays > -7) return `il y a ${-diffDays} j`;
   // 2–6 jours : jour de la semaine, sans ambiguïté dans cette fenêtre.
   if (diffDays > 1 && diffDays < 7) {
-    return format(d, 'EEEE', { locale: fr });
+    return format(d, 'EEEE', { locale: getDateLocale() });
   }
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  return formatDateIntl(d, { day: 'numeric', month: 'long' });
 };
 
 // Durée « x h xx min » / « 45 min » / « 2 h ».

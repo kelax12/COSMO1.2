@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { Bookmark, Check, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -206,7 +206,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               label="Échéance"
               value={
                 formData.deadline
-                  ? <span className="text-blue-500">{format(new Date(formData.deadline + 'T12:00:00'), 'd MMM', { locale: fr })}</span>
+                  ? <span className="text-blue-500">{format(new Date(formData.deadline + 'T12:00:00'), 'd MMM', { locale: getDateLocale() })}</span>
                   : <span className="text-[rgb(var(--color-text-muted))]">Aucune</span>
               }
               onTap={() => setShowDeadlinePicker(prev => !prev)}
@@ -243,7 +243,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                           handleInputChange('deadline', format(date, 'yyyy-MM-dd'));
                           setShowDeadlinePicker(false);
                         }}
-                        locale={fr}
+                        locale={getDateLocale()}
                         disabled={{ before: new Date() }}
                         initialFocus
                         className="w-full [--cell-size:2.25rem]"

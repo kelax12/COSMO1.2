@@ -13,6 +13,19 @@
 // ═══════════════════════════════════════════════════════════════════
 export const PREMIUM_ENFORCED = false;
 
+// ─── Tarifs, en euros ────────────────────────────────────────────────
+//
+// Source de vérité unique des MONTANTS. Le prix était auparavant écrit en dur
+// et déjà formaté (« 3,50€ ») à quatre endroits ; l'afficher passe désormais
+// par `formatCurrency()` (src/i18n/format.ts), qui rend « 3,50 € » en français
+// et « €3.50 » en anglais.
+//
+// La devise reste l'EUR dans toutes les langues : la facturation est en euros,
+// il n'y a aucune conversion. Seule la PRÉSENTATION change.
+export const PREMIUM_MONTHLY_EUR = 3.5;
+export const ENTERPRISE_TIER_1_EUR = 20;
+export const ENTERPRISE_TIER_2_EUR = 100;
+
 // ─── Facturation entreprise (v2 — dormante, Stripe non finalisé) ─────
 //
 // Pricing décidé 2026-07-10 : FORFAIT PAR ENTREPRISE — gratuit < 5

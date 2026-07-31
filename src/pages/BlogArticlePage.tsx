@@ -3,9 +3,10 @@ import { Link, Navigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { ARTICLES, getArticle } from '@/content/blog/index.mjs';
+import { formatDate } from '@/i18n/format';
 
-const formatDate = (iso: string) =>
-  new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const formatArticleDate = (iso: string) =>
+  formatDate(new Date(iso + 'T00:00:00'), { day: 'numeric', month: 'long', year: 'numeric' });
 
 const BlogArticlePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -47,7 +48,7 @@ const BlogArticlePage: React.FC = () => {
               {article.title}
             </h1>
             <div className="flex items-center gap-4 text-sm text-slate-500">
-              <time dateTime={article.datePublished}>{formatDate(article.datePublished)}</time>
+              <time dateTime={article.datePublished}>{formatArticleDate(article.datePublished)}</time>
               <span className="flex items-center gap-1">
                 <Clock size={14} />
                 {article.readingMinutes} min de lecture

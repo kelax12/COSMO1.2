@@ -5,7 +5,7 @@
 import React, { Suspense, useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { PageHeading } from '@/components/ui/typography';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -46,8 +46,8 @@ const toLocalDate = (day: string): Date => {
 const formatLabel = (day: string, granularity: Granularity): string => {
   const date = toLocalDate(day);
   return granularity === 'week'
-    ? `sem. ${format(date, 'd MMM', { locale: fr })}`
-    : format(date, 'd MMM', { locale: fr });
+    ? `sem. ${format(date, 'd MMM', { locale: getDateLocale() })}`
+    : format(date, 'd MMM', { locale: getDateLocale() });
 };
 
 /** Zéro-fill jusqu'à aujourd'hui puis bucket jour/semaine selon le span. */
@@ -194,7 +194,7 @@ const AdminPage: React.FC = () => {
 
   // Cohortes rétention : les 12 dernières semaines, ordre chronologique.
   const retentionData: LabeledValue[] = data.retentionJ7.slice(-12).map((c) => ({
-    label: format(toLocalDate(c.week), 'd MMM', { locale: fr }),
+    label: format(toLocalDate(c.week), 'd MMM', { locale: getDateLocale() }),
     value: pctNum(c.retained, c.signups),
     hint: `${c.retained}/${c.signups} inscrits encore actifs J+7`,
   }));
@@ -207,7 +207,7 @@ const AdminPage: React.FC = () => {
       <div className="mb-8">
         <PageHeading variant="standard" className="mb-2">Stats COSMO</PageHeading>
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          Croissance et activité — généré le {format(new Date(data.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+          Croissance et activité — généré le {format(new Date(data.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: getDateLocale() })}
         </p>
       </div>
 

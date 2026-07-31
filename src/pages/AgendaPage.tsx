@@ -19,7 +19,7 @@ import AgendaEventToTaskConfirm from './agenda/AgendaEventToTaskConfirm';
 import ColorSettingsModal from '../components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '@/i18n/format';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
@@ -534,7 +534,7 @@ const AgendaPage: React.FC = () => {
 
   // Label du jour sélectionné
   const mobileDayLabel = (() => {
-    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: fr });
+    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: getDateLocale() });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   })();
 

@@ -30,6 +30,7 @@ import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { formatDate } from '@/i18n/format';
 
 interface PaletteCommand {
   id: string;
@@ -126,7 +127,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
               <Calendar size={16} aria-hidden="true" />
               <span className="flex-1">{e.title}</span>
               <span className="text-xs text-[rgb(var(--color-text-muted))]">
-                {new Date(e.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                {formatDate(new Date(e.start), { day: 'numeric', month: 'short' })}
               </span>
             </CommandItem>
           ))}
