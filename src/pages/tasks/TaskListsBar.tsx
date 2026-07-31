@@ -6,6 +6,7 @@ import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-r
 import SmartListMenu from '../../components/SmartListMenu';
 import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
+import { useT } from '@/i18n/useT';
 
 interface ColorOption { value: string; color: string; name: string }
 
@@ -72,7 +73,10 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists, commitReorderLists,
   handleCreateSmartList, startChipLongPress, cancelChipLongPress,
   onShareList,
-}) => (
+}) => {
+  const { t, tp } = useT('tasks');
+
+  return (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -82,11 +86,11 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                 >
                   <div className="mb-2 sm:mb-4">
                     <div className="flex items-center justify-between mb-1 sm:mb-4">
-                      <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Accès rapide aux listes</h2>
+                      <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">{t('lists.sectionTitle')}</h2>
                       {!showCreateList && (
                         <button
                           onClick={() => setShowCreateList(true)}
-                          aria-label="Nouvelle liste"
+                          aria-label={t('lists.newList')}
                           className="sm:hidden flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
                         >
                           <Plus size={20} />
@@ -113,8 +117,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
                         }`}
                       >
-                        <span className="hidden sm:inline">Toutes les tâches</span>
-                        <span className="sm:hidden">Tout</span>
+                        <span className="hidden sm:inline">{t('filters.allTasks')}</span>
+                        <span className="sm:hidden">{t('filters.all')}</span>
                       </motion.button>
 
                       {/* Chip virtuelle "Aujourd'hui" — visible par défaut, masquable.
@@ -141,16 +145,16 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               <button
                                 onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}
                                 className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-emerald-200 dark:border-emerald-600 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 shadow-sm transition-colors"
-                                title="Ajouter des tâches à aujourd'hui (pose leur échéance à aujourd'hui)"
-                                aria-label="Ajouter des tâches à aujourd'hui"
+                                title={t('lists.todayAddTitle')}
+                                aria-label={t('lists.todayAddAria')}
                               >
                                 <Plus size={15} />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setTodayHidden(true); }}
                                 className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-colors"
-                                title="Masquer la chip Aujourd'hui (réactivable depuis ✨)"
-                                aria-label="Masquer la chip Aujourd'hui"
+                                title={t('lists.todayHideTitle')}
+                                aria-label={t('lists.todayHideAria')}
                               >
                                 <Trash2 size={15} />
                               </button>
@@ -166,10 +170,10 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
                               : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
                           }`}
-                          title="Tâches dont l'échéance est aujourd'hui"
+                          title={t('lists.todayChipTitle')}
                         >
                           <Sparkles size={13} />
-                          <span>Aujourd'hui</span>
+                          <span>{t('filters.today')}</span>
                           <span className="text-caption sm:text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
                         </motion.button>
                       </div>
@@ -229,8 +233,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                         ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300'
                                         : 'bg-white dark:bg-slate-700 border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400'
                                     }`}
-                                    title={list.isDefault ? 'Liste par défaut (cliquez pour désépingler)' : 'Définir comme liste par défaut'}
-                                    aria-label={list.isDefault ? 'Liste par défaut' : 'Épingler comme liste par défaut'}
+                                    title={list.isDefault ? t('lists.defaultOnTitle') : t('lists.defaultOffTitle')}
+                                    aria-label={list.isDefault ? t('lists.defaultOnAria') : t('lists.defaultOffAria')}
                                   >
                                     {list.isDefault ? <Pin size={15} fill="currentColor" /> : <PinOff size={15} />}
                                   </button>
@@ -239,8 +243,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
                                       className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                      title="Ajouter des tâches"
-                                      aria-label="Ajouter des tâches"
+                                      title={t('lists.addTasks')}
+                                      aria-label={t('lists.addTasks')}
                                     >
                                       <Plus size={15} />
                                     </button>
@@ -250,8 +254,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     <button
                                       onClick={(e) => { e.stopPropagation(); startEditList(list); }}
                                       className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                      title="Modifier la liste"
-                                      aria-label="Modifier la liste"
+                                      title={t('lists.edit')}
+                                      aria-label={t('lists.edit')}
                                     >
                                       <Pencil size={15} />
                                     </button>
@@ -261,8 +265,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onShareList(list); }}
                                       className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
-                                      title="Partager la liste"
-                                      aria-label="Partager la liste"
+                                      title={t('lists.share')}
+                                      aria-label={t('lists.share')}
                                     >
                                       <Share2 size={15} />
                                     </button>
@@ -270,8 +274,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
                                     className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
-                                    title="Supprimer la liste"
-                                    aria-label="Supprimer la liste"
+                                    title={t('lists.delete')}
+                                    aria-label={t('lists.delete')}
                                   >
                                     <Trash2 size={15} />
                                   </button>
@@ -296,14 +300,14 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   }}
                                   className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                                   style={{ backgroundColor: resolveListColor(editListColor) }}
-                                  title="Clic : cycle couleurs · Shift+clic : palette hex"
+                                  title={t('lists.colorCycleTitle')}
                                 />
                                 <input
                                   type="color"
                                   value={resolveListColor(editListColor)}
                                   onChange={(e) => setEditListColor(e.target.value)}
                                   className="sr-only"
-                                  aria-label="Choisir une couleur personnalisée"
+                                  aria-label={t('lists.customColorAria')}
                                   tabIndex={-1}
                                 />
                                 <input
@@ -421,9 +425,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               exit={{ opacity: 0, scale: 0.9 }}
                               onClick={() => setShowCreateList(true)}
                               className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
-                              title="Nouvelle liste manuelle"
+                              title={t('lists.manualListTitle')}
                             >
-                              <Plus size={16} /> Liste
+                              <Plus size={16} /> {t('lists.chipLabel')}
                             </motion.button>
                           ) : (
                             <motion.form
@@ -459,7 +463,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 }}
                                 className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                                 style={{ backgroundColor: resolveListColor(newListColor) }}
-                                title="Clic : cycle couleurs · Shift+clic : palette hex"
+                                title={t('lists.colorCycleTitle')}
                               />
                               {/* Color picker hex caché — déclenché par Shift+clic sur la pastille */}
                               <input
@@ -467,7 +471,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 value={resolveListColor(newListColor)}
                                 onChange={(e) => setNewListColor(e.target.value)}
                                 className="sr-only"
-                                aria-label="Choisir une couleur personnalisée"
+                                aria-label={t('lists.customColorAria')}
                                 tabIndex={-1}
                               />
                               <input
@@ -475,7 +479,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 type="text"
                                 value={newListName}
                                 onChange={(e) => setNewListName(e.target.value)}
-                                placeholder="Nom de la liste…"
+                                placeholder={t('lists.namePlaceholder')}
                                 size={Math.max(newListName.length + 2, 14)}
                                 className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
                                 style={{
@@ -491,7 +495,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 disabled={!newListName.trim()}
                                 className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                               >
-                                Créer
+                                {t('lists.create')}
                               </button>
                               <button
                                 type="button"
@@ -536,14 +540,14 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               }}
                               className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                               style={{ backgroundColor: colorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                              title="Changer la couleur"
+                              title={t('lists.changeColor')}
                             />
                             <input
                               autoFocus
                               type="text"
                               value={newListName}
                               onChange={(e) => setNewListName(e.target.value)}
-                              placeholder="Nom de la liste…"
+                              placeholder={t('lists.namePlaceholder')}
                               className="flex-1 px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
                               style={{
                                 backgroundColor: 'rgb(var(--color-surface))',
@@ -557,7 +561,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               disabled={!newListName.trim()}
                               className="px-3 py-2 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                             >
-                              Créer
+                              {t('lists.create')}
                             </button>
                             <button
                               type="button"
@@ -582,16 +586,16 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           <span className="text-sm text-blue-700 dark:text-blue-300 font-medium flex-1">
                             {selectedTasksForList.length === 0
                               ? selectingTasksForListId === VIRTUAL_TODAY_ID
-                                ? `Sélectionnez des tâches : leur échéance sera fixée à aujourd'hui`
-                                : `Sélectionnez des tâches à ajouter dans "${lists.find(l => l.id === selectingTasksForListId)?.name}"`
-                              : `${selectedTasksForList.length} tâche${selectedTasksForList.length > 1 ? 's' : ''} sélectionnée${selectedTasksForList.length > 1 ? 's' : ''}`}
+                                ? t('lists.selectPromptToday')
+                                : t('lists.selectPromptList', { list: lists.find(l => l.id === selectingTasksForListId)?.name ?? '' })
+                              : tp('lists.selected', selectedTasksForList.length)}
                           </span>
                           <button
                             onClick={confirmAddTasksToList}
                             disabled={selectedTasksForList.length === 0}
                             className="px-5 py-2.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold disabled:opacity-40 transition-all"
                           >
-                            Valider
+                            {t('lists.validate')}
                           </button>
                           <button
                             onClick={cancelSelectingTasks}
@@ -605,6 +609,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
 
                   </div>
                 </motion.div>
-);
+  );
+};
 
 export default TaskListsBar;

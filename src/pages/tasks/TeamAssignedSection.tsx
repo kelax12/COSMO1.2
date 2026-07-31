@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Check, CalendarClock, UsersRound, ArrowUpRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import {
@@ -25,6 +26,7 @@ import TeamTaskModal from '@/components/organization/TeamTaskModal';
  * Aucune donnée dupliquée : lecture directe du module team-projects.
  */
 const TeamAssignedSection = () => {
+  const { t, tp } = useT('tasks');
   const { user } = useAuth();
   const { activeOrg } = useActiveOrganization();
   const orgId = activeOrg?.id;
@@ -58,18 +60,18 @@ const TeamAssignedSection = () => {
     updateTask.mutateAsync({ taskId, input });
 
   return (
-    <section className="mt-8" aria-label="Mes tâches d'équipe">
+    <section className="mt-8" aria-label={t('team.sectionTitle')}>
       {/* En-tête de section — marque la frontière avec les tâches perso */}
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))]">
-          Mes tâches d'équipe
+          {t('team.sectionTitle')}
         </h2>
         <span className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))]">· {activeOrg.name}</span>
         <Link
           to="/entreprise"
           className="ml-auto inline-flex items-center gap-1 min-h-touch sm:min-h-0 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
         >
-          Espace entreprise <ArrowUpRight size={12} aria-hidden="true" />
+          {t('team.enterpriseSpace')} <ArrowUpRight size={12} aria-hidden="true" />
         </Link>
       </div>
 
@@ -88,10 +90,13 @@ const TeamAssignedSection = () => {
                   {project.name}
                 </span>
                 <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
-                  <UsersRound size={10} aria-hidden="true" /> Équipe
+                  <UsersRound size={10} aria-hidden="true" /> {t('team.badge')}
                 </span>
                 <span className="ml-auto text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
-                  {tasks.length} tâche{tasks.length > 1 ? 's' : ''}
+                  {/* `tp()` plutôt qu'un `> 1 ? 's' : ''` : la règle de pluriel
+                      diffère par langue (0 est singulier en français, pluriel
+                      en anglais) — `Intl.PluralRules` la connaît, pas nous. */}
+                  {tp('team.count', tasks.length)}
                 </span>
               </div>
 
@@ -107,7 +112,7 @@ const TeamAssignedSection = () => {
                       <button
                         type="button"
                         onClick={() => toggleComplete(task)}
-                        aria-label={`Marquer « ${task.name} » comme terminée`}
+                        aria-label={t('team.completeAria', { name: task.name })}
                         // La case reste visuellement à 20px, mais la ZONE
                         // tactile fait 44px (marges négatives pour ne pas
                         // déformer la ligne). Cf. docs/MOBILE.md § cibles.
@@ -121,7 +126,7 @@ const TeamAssignedSection = () => {
                       <button
                         type="button"
                         onClick={() => setEditingTask(task)}
-                        aria-label={`Modifier la tâche ${task.name}`}
+                        aria-label={t('team.editAria', { name: task.name })}
                         className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
                       >
                         <span className="block text-body sm:text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
@@ -129,14 +134,14 @@ const TeamAssignedSection = () => {
                           <span className={`text-caption sm:text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
                             <CalendarClock size={11} aria-hidden="true" />
                             {format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() })}
-                            {overdue && ' · en retard'}
+                            {overdue && ` · ${t('team.overdue')}`}
                           </span>
                         )}
                       </button>
                       {task.assigneeIds.length > 1 && (
                         <span
                           className="text-caption font-semibold text-[rgb(var(--color-text-muted))] shrink-0"
-                          title="Tâche partagée avec d'autres membres"
+                          title={t('team.sharedTitle')}
                         >
                           +{task.assigneeIds.length - 1}
                         </span>

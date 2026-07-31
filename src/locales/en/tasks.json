@@ -1,0 +1,75 @@
+{
+  "header": {
+    "title": "Tasks",
+    "subtitle": "Manage your tasks efficiently",
+    "calendar": "Calendar",
+    "showCalendar": "Show the calendar",
+    "hideCalendar": "Hide the calendar"
+  },
+  "error": {
+    "title": "Could not load your tasks",
+    "fallback": "Check your internet connection, then try again.",
+    "retry": "Try again"
+  },
+  "actions": {
+    "newTask": "New task",
+    "newTaskAria": "Create a new task",
+    "clearListFilter": "Clear the list filter",
+    "clearCategoryFilter": "Clear the category filter",
+    "clearSearch": "Clear the search"
+  },
+  "filters": {
+    "list": "List",
+    "today": "Today",
+    "allTasks": "All tasks",
+    "all": "All",
+    "category": "Category",
+    "categoriesCount": "Categories: {{count}}",
+    "listPrefix": "List: {{name}}",
+    "searchPrefix": "Search: “{{term}}”",
+    "shown_one": "{{shown}} / {{count}} task shown",
+    "shown_other": "{{shown}} / {{count}} tasks shown"
+  },
+  "lists": {
+    "sectionTitle": "Quick access to lists",
+    "newList": "New list",
+    "manualListTitle": "New manual list",
+    "chipLabel": "List",
+    "namePlaceholder": "List name…",
+    "create": "Create",
+    "cancel": "Cancel",
+    "validate": "Confirm",
+    "deleted": "List deleted",
+    "addTasks": "Add tasks",
+    "edit": "Edit the list",
+    "share": "Share the list",
+    "delete": "Delete the list",
+    "defaultOnTitle": "Default list (click to unpin)",
+    "defaultOffTitle": "Set as default list",
+    "defaultOnAria": "Default list",
+    "defaultOffAria": "Pin as default list",
+    "colorCycleTitle": "Click: cycle colours · Shift+click: hex palette",
+    "customColorAria": "Pick a custom colour",
+    "changeColor": "Change the colour",
+    "todayAddTitle": "Add tasks to today (sets their deadline to today)",
+    "todayAddAria": "Add tasks to today",
+    "todayHideTitle": "Hide the Today chip (re-enable from ✨)",
+    "todayHideAria": "Hide the Today chip",
+    "todayChipTitle": "Tasks due today",
+    "selectPromptToday": "Select tasks: their deadline will be set to today",
+    "selectPromptList": "Select tasks to add to “{{list}}”",
+    "selected_one": "{{count}} task selected",
+    "selected_other": "{{count}} tasks selected"
+  },
+  "team": {
+    "sectionTitle": "My team tasks",
+    "enterpriseSpace": "Company space",
+    "badge": "Team",
+    "count_one": "{{count}} task",
+    "count_other": "{{count}} tasks",
+    "completeAria": "Mark “{{name}}” as done",
+    "editAria": "Edit task {{name}}",
+    "overdue": "overdue",
+    "sharedTitle": "Task shared with other members"
+  }
+}

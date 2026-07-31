@@ -4,6 +4,7 @@ import { CalendarDays } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, TouchTarget } from '@/components/mobile';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
+import { useT } from '@/i18n/useT';
 
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
@@ -26,11 +27,12 @@ interface TasksHeaderProps {
  * (page-tutorial-helpers) sélectionne celui qui est réellement visible.
  */
 const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggleCalendar }) => {
+  const { t } = useT('tasks');
   return (
     <>
       {/* ── Mobile ── */}
       <MobileHeader
-        title="Tâches"
+        title={t('header.title')}
         actions={
           <>
             {/* Loupe retirée du header mobile : redondante avec la barre de
@@ -40,7 +42,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
                 qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
             <TasksInboxMenu />
             <TouchTarget
-              aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
+              aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
               aria-pressed={showDeadlineCalendar}
               onClick={onToggleCalendar}
               data-tutorial-id="tasks-calendar-toggle"
@@ -66,7 +68,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <PageHeading as="h1" variant="compact">
-              Tâches
+              {t('header.title')}
             </PageHeading>
             <motion.p
               initial={{ x: -20, opacity: 0 }}
@@ -74,7 +76,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
               transition={{ delay: 0.3 }}
               className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-base"
             >
-              Gérez vos tâches efficacement
+              {t('header.subtitle')}
             </motion.p>
           </div>
 
@@ -89,7 +91,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
               whileTap={{ scale: 0.95 }}
               onClick={onToggleCalendar}
               data-tutorial-id="tasks-calendar-toggle"
-              aria-label={showDeadlineCalendar ? 'Masquer le calendrier' : 'Afficher le calendrier'}
+              aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
               className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
                 showDeadlineCalendar
                   ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
@@ -104,7 +106,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
                     : 'text-blue-600'
                 }
               />
-              <span className="hidden sm:inline">Calendrier</span>
+              <span className="hidden sm:inline">{t('header.calendar')}</span>
             </motion.button>
           </motion.div>
         </div>

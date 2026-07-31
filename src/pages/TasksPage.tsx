@@ -49,8 +49,10 @@ import TasksHeader from './tasks/TasksHeader';
 import TasksErrorState from './tasks/TasksErrorState';
 import TeamAssignedSection from './tasks/TeamAssignedSection';
 import { useChipLongPress } from './tasks/useChipLongPress';
+import { useT } from '@/i18n/useT';
 
 const TasksPage: React.FC = () => {
+  const { t, tp } = useT('tasks');
   const isMobile = useIsMobile();
   // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
   // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
@@ -266,7 +268,7 @@ const TasksPage: React.FC = () => {
       onSuccess: () => {
         if (selectedListId === listId) setSelectedListId(null);
         if (snapshot) {
-          showUndoToast('Liste supprimée', () => {
+          showUndoToast(t('lists.deleted'), () => {
             const { id: _id, taskIds, ...rest } = snapshot;
             createListMutation.mutate(rest, {
               onSuccess: (newList) => {
@@ -530,10 +532,10 @@ const TasksPage: React.FC = () => {
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
                       className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
-                      aria-label="Créer une nouvelle tâche"
+                      aria-label={t('actions.newTaskAria')}
                     >
                       <Plus size={20} />
-                      <span>Nouvelle tâche</span>
+                      <span>{t('actions.newTask')}</span>
                     </motion.button>
                   )}
                 </motion.div>
@@ -549,11 +551,13 @@ const TasksPage: React.FC = () => {
                       type="button"
                       onClick={clearListFilter}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label="Retirer le filtre de liste"
+                      aria-label={t('actions.clearListFilter')}
                     >
-                      Liste : {selectedListId === VIRTUAL_TODAY_ID
-                        ? "Aujourd'hui"
-                        : lists.find(l => l.id === selectedListId)?.name ?? 'Liste'}
+                      {t('filters.listPrefix', {
+                        name: selectedListId === VIRTUAL_TODAY_ID
+                          ? t('filters.today')
+                          : lists.find(l => l.id === selectedListId)?.name ?? t('filters.list'),
+                      })}
                       <X size={14} aria-hidden="true" />
                     </button>
                   )}
@@ -562,9 +566,11 @@ const TasksPage: React.FC = () => {
                       type="button"
                       onClick={() => setSelectedCategories([])}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label="Retirer le filtre de catégories"
+                      aria-label={t('actions.clearCategoryFilter')}
                     >
-                      {selectedCategories.length === 1 ? 'Catégorie' : `Catégories : ${selectedCategories.length}`}
+                      {selectedCategories.length === 1
+                        ? t('filters.category')
+                        : t('filters.categoriesCount', { count: selectedCategories.length })}
                       <X size={14} aria-hidden="true" />
                     </button>
                   )}
@@ -573,14 +579,14 @@ const TasksPage: React.FC = () => {
                       type="button"
                       onClick={() => setSearchTerm('')}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label="Effacer la recherche"
+                      aria-label={t('actions.clearSearch')}
                     >
-                      Recherche : « {searchTerm.trim()} »
+                      {t('filters.searchPrefix', { term: searchTerm.trim() })}
                       <X size={14} aria-hidden="true" />
                     </button>
                   )}
                   <span className="text-sm text-[rgb(var(--color-text-secondary))]">
-                    {filteredTasks.length} / {tasks.length} tâches affichées
+                    {tp('filters.shown', tasks.length, { shown: filteredTasks.length })}
                   </span>
                 </div>
               )}
