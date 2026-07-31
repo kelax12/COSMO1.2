@@ -9,20 +9,32 @@ import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useActiveOrganization } from '@/modules/organizations';
 import OrgSwitcher from '@/components/organization/OrgSwitcher';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 interface MobileMoreSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const links = [
-  { to: '/okr',        label: 'OKR',          icon: Target,    iconBg: 'bg-green-500',  description: 'Objectifs & résultats' },
-  { to: '/statistics', label: 'Statistiques', icon: BarChart2, iconBg: 'bg-violet-500', description: 'Suivi de progression'  },
-  { to: '/premium',    label: 'Premium',       icon: Crown,     iconBg: 'bg-amber-400',  description: 'Débloquer toutes les fonctions' },
-  { to: '/settings',   label: 'Paramètres',   icon: Settings,  iconBg: 'bg-gray-500',   description: 'Compte & préférences'  },
+interface SheetLink {
+  to: string;
+  /** Clés de catalogue — `links` est une constante de module (cf. MobileTabBar). */
+  labelKey: KeyOf<'common'>;
+  descriptionKey: KeyOf<'common'>;
+  icon: typeof Target;
+  iconBg: string;
+}
+
+const links: SheetLink[] = [
+  { to: '/okr',        labelKey: 'nav.okr',        descriptionKey: 'nav.descriptions.okr',        icon: Target,    iconBg: 'bg-green-500'  },
+  { to: '/statistics', labelKey: 'nav.statistics', descriptionKey: 'nav.descriptions.statistics', icon: BarChart2, iconBg: 'bg-violet-500' },
+  { to: '/premium',    labelKey: 'nav.premium',    descriptionKey: 'nav.descriptions.premium',    icon: Crown,     iconBg: 'bg-amber-400'  },
+  { to: '/settings',   labelKey: 'nav.settings',   descriptionKey: 'nav.descriptions.settings',   icon: Settings,  iconBg: 'bg-gray-500'   },
 ];
 
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
+  const { t } = useT('common');
   const { user, logout } = useAuth();
   const { isPremium } = useBilling();
   const { activeOrg: myOrg, organizations } = useActiveOrganization();
@@ -31,10 +43,16 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
   // Premium masqué tant que PREMIUM_ENFORCED=false (gratuit pour tous).
   // Entrée « Entreprise » ajoutée uniquement pour les membres d'une org.
-  const visibleLinks = [
+  const visibleLinks: SheetLink[] = [
     ...(PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium')),
     ...(myOrg
-      ? [{ to: '/entreprise', label: 'Entreprise', icon: Building2, iconBg: 'bg-indigo-500', description: 'Équipe & collaboration' }]
+      ? [{
+          to: '/entreprise',
+          labelKey: 'nav.enterprise' as const,
+          descriptionKey: 'nav.descriptions.enterprise' as const,
+          icon: Building2,
+          iconBg: 'bg-indigo-500',
+        }]
       : []),
   ];
 
@@ -96,7 +114,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                   onPointerDown={() => prefetchRoute('/settings')}
                   onClick={() => handleNav('/settings')}
                   className="w-full flex items-center gap-3.5 px-4 min-h-[72px] active:bg-[rgb(var(--color-hover))] transition-colors"
-                  aria-label="Aller aux paramètres"
+                  aria-label={t('nav.goToSettings')}
                 >
                   {/* Avatar */}
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0 overflow-hidden">
@@ -110,7 +128,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                   {/* Name + email */}
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))] truncate leading-snug">
-                      {user?.name ?? 'Utilisateur'}
+                      {user?.name ?? t('nav.userFallback')}
                     </p>
                     <p className="text-[13px] text-[rgb(var(--color-text-muted))] truncate mt-0.5 leading-snug">
                       {user?.email ?? ''}
@@ -121,7 +139,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                   <div className="flex items-center gap-2 shrink-0">
                     {PREMIUM_ENFORCED && isPremium() && (
                       <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[11px] font-semibold uppercase tracking-wide">
-                        Premium
+                        {t('nav.premium')}
                       </span>
                     )}
                     <ChevronRight size={18} className="text-[rgb(var(--color-text-muted))]" />
@@ -138,7 +156,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
               {/* — Navigation links — */}
               <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-                {visibleLinks.map(({ to, label, icon: Icon, iconBg, description }, idx) => (
+                {visibleLinks.map(({ to, labelKey, icon: Icon, iconBg, descriptionKey }, idx) => (
                   <React.Fragment key={to}>
                     {idx > 0 && (
                       <div className="h-px bg-[rgb(var(--color-border))] ml-[68px]" />
@@ -162,13 +180,13 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                       {/* Label + description */}
                       <div className="flex-1 min-w-0">
                         <p className="text-[15px] font-medium text-[rgb(var(--color-text-primary))] leading-snug">
-                          {label}
+                          {t(labelKey)}
                           {to === '/premium' && isPremium() && (
-                            <span className="ml-2 text-[11px] font-semibold text-amber-500 uppercase tracking-wide">Actif</span>
+                            <span className="ml-2 text-[11px] font-semibold text-amber-500 uppercase tracking-wide">{t('nav.premiumActive')}</span>
                           )}
                         </p>
                         <p className="text-[12px] text-[rgb(var(--color-text-muted))] mt-0.5 truncate">
-                          {description}
+                          {t(descriptionKey)}
                         </p>
                       </div>
 
@@ -189,7 +207,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                     <LogOut size={20} className="text-white" aria-hidden="true" />
                   </div>
                   <p className="flex-1 text-[15px] font-medium text-red-500">
-                    Déconnexion
+                    {t('nav.logout')}
                   </p>
                   <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
                 </button>

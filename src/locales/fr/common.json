@@ -1,40 +1,55 @@
 {
-  "actions": {
-    "save": "Enregistrer",
-    "cancel": "Annuler",
-    "delete": "Supprimer",
-    "edit": "Modifier",
-    "close": "Fermer",
-    "confirm": "Confirmer",
-    "add": "Ajouter",
-    "search": "Rechercher",
-    "retry": "Réessayer",
-    "back": "Retour"
-  },
-  "nav": {
-    "dashboard": "Tableau de bord",
-    "tasks": "Tâches",
-    "agenda": "Agenda",
-    "habits": "Habitudes",
-    "okr": "OKR",
-    "statistics": "Statistiques",
-    "settings": "Réglages"
-  },
-  "states": {
-    "loading": "Chargement…",
-    "empty": "Aucun élément",
-    "error": "Une erreur est survenue"
-  },
   "language": {
     "label": "Langue",
     "description": "Langue de l'interface"
   },
-  "count": {
-    "task_one": "{{count}} tâche",
-    "task_many": "{{count}} de tâches",
-    "task_other": "{{count}} tâches",
-    "day_one": "{{count}} jour",
-    "day_many": "{{count}} de jours",
-    "day_other": "{{count}} jours"
+  "nav": {
+    "dashboard": "Accueil",
+    "tasks": "Tâches",
+    "agenda": "Agenda",
+    "okr": "OKR",
+    "habits": "Habitudes",
+    "statistics": "Statistiques",
+    "enterprise": "Entreprise",
+    "premium": "Premium",
+    "settings": "Paramètres",
+    "admin": "Admin",
+    "more": "Plus",
+    "moreOptions": "Plus d'options",
+    "sectionOther": "AUTRE",
+    "mobileNavLabel": "Navigation mobile",
+    "documentTitle": "{{page}} – Cosmo",
+    "createTask": "Créer une tâche",
+    "goToSettings": "Aller aux paramètres",
+    "logout": "Déconnexion",
+    "premiumActive": "Actif",
+    "userFallback": "Utilisateur",
+    "sidebar": {
+      "toggleTitle": "Réduire/agrandir ( [ )",
+      "expand": "Agrandir la barre latérale",
+      "collapse": "Réduire la barre latérale"
+    },
+    "search": {
+      "ariaLabel": "Rechercher ({{shortcut}})",
+      "title": "Rechercher ({{shortcut}})"
+    },
+    "badge": {
+      "pendingRequest_one": "{{count}} demande en attente",
+      "pendingRequest_many": "{{count}} de demandes en attente",
+      "pendingRequest_other": "{{count}} demandes en attente",
+      "taskDueToday_one": "{{count}} tâche pour aujourd'hui",
+      "taskDueToday_many": "{{count}} de tâches pour aujourd'hui",
+      "taskDueToday_other": "{{count}} tâches pour aujourd'hui",
+      "orgNotification_one": "{{count}} notification entreprise",
+      "orgNotification_many": "{{count}} de notifications entreprise",
+      "orgNotification_other": "{{count}} notifications entreprise"
+    },
+    "descriptions": {
+      "okr": "Objectifs & résultats",
+      "statistics": "Suivi de progression",
+      "premium": "Débloquer toutes les fonctions",
+      "settings": "Compte & préférences",
+      "enterprise": "Équipe & collaboration"
+    }
   }
 }
