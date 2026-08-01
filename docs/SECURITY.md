@@ -98,6 +98,29 @@ Pour tout `<input type="file">` :
 - ✅ Tous les headers de sécurité Vercel doivent rester (HSTS, X-Frame-Options, etc.)
 - ✅ CSP **présente** dans `vercel.json` (faille §6 CLOSE) : `default-src 'self'` + Stripe (`js.stripe.com`/`api.stripe.com`) + Supabase (`*.supabase.co`) + Sentry (`*.ingest.de.sentry.io`) + Google Fonts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`. Toute nouvelle origine externe (CDN, AdSense, etc.) doit y être whitelistée explicitement, sinon elle sera bloquée.
 
+#### 🚫 Jamais de clé `"//"` (commentaire) dans `vercel.json`
+
+Le schéma Vercel est **strict** : une entrée de `headers[]` n'accepte que `source`,
+`headers`, `has`, `missing`. Toute propriété additionnelle — dont la convention
+`"//"` utilisée comme commentaire — fait **échouer le déploiement** à la validation,
+sur *toutes* les branches à la fois. `npm run build` ne valide PAS `vercel.json` :
+le build reste vert en local pendant que chaque déploiement Vercel est rouge
+(vécu du 2026-07-31 au 2026-08-01, ~13 déploiements perdus). Le JSON n'ayant pas
+de commentaires, toute justification se documente **ici**, jamais dans le fichier.
+
+#### noindex — variantes préfixées par locale (i18n)
+
+Les `source` Vercel ne sont **pas** préfixe-agnostiques. Sans les entrées
+`/(en|es)/(invite|org-invite)/(.*)` et `/(en|es)/(forgot-password|reset-password)`,
+une URL comme `/en/invite/<token>` **perdrait son `noindex`** et des tokens
+d'invitation deviendraient indexables — c'est une fuite, pas un détail SEO.
+Ces entrées doivent survivre au retrait du `noindex` global sur `/en/*`, et toute
+nouvelle locale servie doit être ajoutée à ces deux `source`.
+
+> Le `noindex` global `/en/(.*)` est **temporaire** (posé en phase 2, catalogues
+> anglais alors partiels → duplicate content FR sur des URLs anglaises). À retirer
+> quand les traductions `/en/` sont jugées complètes — décision SEO, pas technique.
+
 ### Pagination cursor-based — `assertValidCursor`
 
 Tous les `getPage(params)` des repos qui utilisent un filtre PostgREST `.or()` avec `params.cursor`/`params.cursorDate` **doivent** appeler :
