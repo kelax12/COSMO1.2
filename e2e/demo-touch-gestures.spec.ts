@@ -1,4 +1,4 @@
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, TASK_TOGGLE_UNCHECKED } from './fixtures';
 
 /**
  * Interactions tactiles mobile (a-faire.md #4) — swipe, long-press, bottom-sheet.
@@ -19,18 +19,45 @@ import { test, expect, navTo } from './fixtures';
 async function firstCardGestureStart(page: import('@playwright/test').Page) {
   const list = page.locator('[data-tutorial-id="tasks-list"]');
   await expect(list).toBeVisible({ timeout: 15_000 });
-  const unchecked = list.locator('[role="checkbox"][aria-checked="false"]').filter({ visible: true });
-  await expect(unchecked.first()).toBeVisible({ timeout: 10_000 });
-  const box = await unchecked.first().boundingBox();
-  if (!box) throw new Error('checkbox sans bounding box');
-  // ~90 px à droite de la checkbox = milieu du titre, dans la card draggable.
+  // TASK_TOGGLE_UNCHECKED : la TaskCard mobile est un <button aria-pressed>,
+  // pas une checkbox ARIA (cf. fixtures.ts).
+  const unchecked = list.locator(TASK_TOGGLE_UNCHECKED).filter({ visible: true });
+  const target = unchecked.first();
+  await expect(target).toBeVisible({ timeout: 10_000 });
+
+  // ⚠️ `filter({ visible: true })` ne veut PAS dire « dans le viewport » : la
+  // 1ʳᵉ tâche non complétée se trouvait à y≈1031 dans un viewport de 664 px
+  // (filtres + cartes de synthèse au-dessus). Or `page.mouse` ne scrolle pas,
+  // contrairement à `locator.click()` — le geste partait donc hors écran et
+  // n'atteignait aucun élément (`document.elementFromPoint()` → null), ce qui
+  // faisait échouer swipe ET long-press sans erreur explicite.
+  await target.scrollIntoViewIfNeeded();
+  const box = await target.boundingBox();
+  if (!box) throw new Error('case de complétion sans bounding box');
+  // ~90 px à droite de la case = milieu du titre, dans la card draggable.
   return { x: box.x + box.width + 90, y: box.y + box.height / 2, unchecked };
 }
 
-test('mobile : swipe droit sur une TaskCard la complète', async ({ demoPage: page }) => {
-  const vw = page.viewportSize();
-  test.skip(!vw || vw.width >= 768, 'gestes tactiles — viewport mobile uniquement');
+// Skip au niveau du describe, PAS dans le corps de chaque test : un
+// `test.skip()` dans le corps du test s'évalue APRÈS que les fixtures
+// destructurées dans les paramètres (ici `demoPage`) aient déjà tourné — la
+// condition sur `page.viewportSize()` ne peut de toute façon être lue qu'une
+// fois la page créée. Résultat sur chromium : les 3 tests payaient le login
+// démo complet (jusqu'à 120 s sous charge) pour finalement skip.
+//
+// ⚠️ Piège vérifié : `test.skip()` appelé directement dans le corps d'un
+// `describe` (pas dans un test/hook) ne reçoit qu'UN seul argument — les
+// fixtures. `testInfo` y est `undefined` (« Cannot read properties of
+// undefined (reading 'project') », confirmé en pratique — a fait planter TOUT
+// le fichier : 2 tests en erreur + 4 « did not run »). `browserName` est un
+// fixture standard disponible à ce stade sans coût (config, pas de page) ; le
+// project chromium utilise le moteur chromium et mobile-safari le moteur
+// webkit, donc l'équivalence tient pour cette config à 2 projects.
+test.describe('gestes tactiles (mobile uniquement)', () => {
+  test.skip(({ browserName }) => browserName === 'chromium',
+    'gestes tactiles — viewport mobile uniquement (project mobile-safari)');
 
+test('mobile : swipe droit sur une TaskCard la complète', async ({ demoPage: page }) => {
   await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
   const { x, y, unchecked } = await firstCardGestureStart(page);
   const before = await unchecked.count();
@@ -51,9 +78,6 @@ test('mobile : swipe droit sur une TaskCard la complète', async ({ demoPage: pa
 });
 
 test('mobile : long-press sur une TaskCard révèle la rangée d\'actions', async ({ demoPage: page }) => {
-  const vw = page.viewportSize();
-  test.skip(!vw || vw.width >= 768, 'gestes tactiles — viewport mobile uniquement');
-
   await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
   const { x, y } = await firstCardGestureStart(page);
 
@@ -72,13 +96,32 @@ test('mobile : long-press sur une TaskCard révèle la rangée d\'actions', asyn
 
 test('mobile : le bottom-sheet « Plus » s\'ouvre et se ferme au tap backdrop', async ({ demoPage: page }) => {
   const vw = page.viewportSize();
-  test.skip(!vw || vw.width >= 768, 'gestes tactiles — viewport mobile uniquement');
-
   await page.getByRole('button', { name: /plus d'options/i }).click();
   const logout = page.getByRole('button', { name: /déconnexion/i });
   await expect(logout).toBeVisible({ timeout: 5_000 });
 
-  // Tap sur le backdrop (haut de l'écran, hors du sheet ancré en bas).
-  await page.mouse.click(vw!.width / 2, 80);
+  const sheet = page.locator('[data-mobile-more-sheet]');
+  await expect(sheet).toBeVisible({ timeout: 5_000 });
+
+  // Tap sur le backdrop, entre le bas des toasts et le haut du sheet.
+  //
+  // ⚠️ Le point fixe (width/2, 80) tombait sur le TOASTER Sonner : le rappel
+  // « N en retard — Touchez pour voir vos tâches » s'affiche ~3 s après
+  // l'arrivée sur le dashboard, occupe y≈16→90 sur toute la largeur, porte un
+  // z-index de 999999999 et NE se ferme PAS tout seul (toast à action). Le tap
+  // atterrissait donc sur lui — ni la souris ni `touchscreen.tap()` ne
+  // fermaient le sheet. On calcule maintenant la zone libre dynamiquement.
+  const sheetBox = await sheet.boundingBox();
+  if (!sheetBox) throw new Error('sheet sans bounding box');
+  const toastBottom = await page.evaluate(() =>
+    [...document.querySelectorAll('li[data-sonner-toast]')]
+      .reduce((max, t) => Math.max(max, t.getBoundingClientRect().bottom), 0)
+  );
+  const y = (toastBottom + sheetBox.y) / 2;
+  expect(y, 'aucune bande libre entre les toasts et le sheet').toBeGreaterThan(toastBottom);
+
+  await page.mouse.click(vw!.width / 2, y);
   await expect(logout).toBeHidden({ timeout: 5_000 });
 });
+
+}); // fin test.describe('gestes tactiles (mobile uniquement)')

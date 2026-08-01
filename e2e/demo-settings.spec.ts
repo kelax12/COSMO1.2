@@ -2,7 +2,9 @@
 import { test, expect, navTo } from './fixtures';
 
 test.describe('settings (demo)', () => {
-  test.describe.configure({ timeout: 60_000 });
+  // Pas d'override ici : 60 s était PLUS COURT que le timeout global (120 s,
+  // cf. playwright.config.ts) et le réduisait silencieusement pour ce fichier
+  // — le cold-start Vite y expirait dans la fixture.
 
   test('navigue vers les paramètres et affiche le profil pré-rempli', async ({ demoPage }) => {
     // Settings est accessible depuis la sidebar desktop ou le sheet "Plus" mobile

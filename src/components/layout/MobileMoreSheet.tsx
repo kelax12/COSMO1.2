@@ -88,6 +88,12 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
           {/* Sheet */}
           <motion.div
             ref={sheetRef}
+            // Point d'ancrage stable pour les E2E (navTo dans e2e/fixtures.ts) :
+            // sans scope, `getByRole('button', { name: /okr/i })` matchait aussi
+            // les MobileCollapsible de la page RESTÉE derrière la feuille (le
+            // Dashboard en a un dont le titre contient « OKR »), et `.first()`
+            // cliquait un élément recouvert par la feuille → timeout.
+            data-mobile-more-sheet
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

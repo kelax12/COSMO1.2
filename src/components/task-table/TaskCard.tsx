@@ -139,6 +139,10 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   return (
     <motion.div
       ref={ref}
+      // Point d'ancrage stable pour les E2E (e2e/demo-collaboration.spec.ts) :
+      // la <table> desktop reste dans le DOM en `hidden md:block`, donc un
+      // sélecteur `table tbody tr` résout une ligne INVISIBLE sur mobile.
+      data-testid="task-card"
       className="relative mb-1.5"
       layout
       animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}

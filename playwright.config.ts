@@ -14,10 +14,13 @@ export default defineConfig({
   // Uniquement les *.spec.ts : e2e/rls/*.test.ts sont des tests Vitest
   // (vitest.integration.config.ts) que Playwright ne doit pas collecter.
   testMatch: '**/*.spec.ts',
-  // 60 s : le tout premier `page.goto('/')` déclenche la compilation Vite à
-  // froid de l'app (≈46k LOC) qui peut dépasser 30 s sur un dev server neuf
-  // (cold start). Les navigations suivantes (serveur chaud) sont rapides.
-  timeout: 60_000,
+  // 120 s : le tout premier test paie la compilation Vite à froid de l'app
+  // (≈46k LOC : LandingPage + GSAP, puis DashboardPage + recharts, lazy tous
+  // les deux). 60 s ne suffisaient plus — le clic sur le CTA démo lui-même
+  // restait bloqué pendant la compilation et le test expirait DANS la fixture,
+  // ce qui donnait un faux « sélecteur cassé ». Les tests suivants (serveur
+  // chaud) tournent en 3-10 s, donc ce plafond ne masque aucune lenteur réelle.
+  timeout: 120_000,
   expect: { timeout: 5_000 },
   fullyParallel: false, // mode démo partage localStorage → exécution séquentielle
   forbidOnly: !!process.env.CI,
