@@ -23,24 +23,46 @@ export const test = base.extend<{ demoPage: Page }>({
         sessionStorage.clear();
       } catch { /* ignore */ }
     });
+    // 1bis. Neutraliser la bannière cookies AVANT le rendu de la landing.
+    //    `localStorage.clear()` ci-dessus la fait réapparaître à chaque test ;
+    //    or sur mobile elle est ancrée en bas sur TOUTE la largeur
+    //    (`left-4 right-4`, z-[200]) et recouvre le CTA démo → le clic était
+    //    intercepté par son sous-arbre et les 27 tests mobile-safari
+    //    échouaient dans la fixture (« <aside aria-label="Bannière cookies">
+    //    subtree intercepts pointer events »). Sur desktop elle est réduite à
+    //    une carte en bas à droite (`sm:left-auto sm:max-w-sm`) et ne gênait
+    //    pas — d'où un échec 100 % mobile.
+    //    'refused' = option la plus respectueuse (aucun cookie non essentiel).
+    //    Cette clé est préservée par clearDemoStorage() (PRESERVE_KEYS), elle
+    //    survit donc au loginDemo() qui balaye le reste des clés cosmo_*.
+    await page.evaluate(() => {
+      try {
+        localStorage.setItem('cosmo_cookie_consent', 'refused');
+      } catch { /* ignore */ }
+    });
+
     // Reload pour repartir d'une LandingPage propre
     await page.goto('/');
 
     // 2. Cliquer le CTA démo principal
     //    Le bouton a aria-label "Essayer la démo sans inscription"
     //    et un texte visible "Essayer maintenant — sans inscription"
+    //    30 s : la LandingPage est lazy-loadée et animée par GSAP ; au premier
+    //    test d'un serveur Vite froid son rendu dépasse largement 10 s.
     const demoBtn = page.getByRole('button', { name: /essayer.*sans inscription/i }).first();
-    await demoBtn.waitFor({ state: 'visible', timeout: 10_000 });
+    await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
     await demoBtn.click();
 
     // 3. Attendre le dashboard
-    await page.waitForURL(/\/dashboard/, { timeout: 10_000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 20_000 });
     // Le dashboard est lazy-loadé et son h1 « Bonjour » a une animation d'opacité
     // (cf. audit-a11y A-9). Au tout premier test (démarrage à froid du serveur
     // Vite), le rendu peut dépasser le timeout par défaut de 5 s → flake. 20 s
     // absorbent le cold start sans masquer un vrai problème (les autres tests,
     // serveur chaud, passent bien en dessous).
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/bonjour/i, { timeout: 20_000 });
+    //    45 s : au tout premier test d'un serveur froid, Vite compile encore
+    //    le DashboardPage lazy (+ recharts) pendant que l'animation joue.
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/bonjour/i, { timeout: 45_000 });
 
     // 4. Skip onboarding général + tutoriels par page
     //    L'overlay onboarding est posé 500ms après loginDemo() et bloque
@@ -78,11 +100,36 @@ export const test = base.extend<{ demoPage: Page }>({
 export { expect };
 
 /**
+ * Case de complétion d'une tâche — sélecteurs valables sur les DEUX viewports.
+ *
+ * Les deux implémentations ont divergé sémantiquement lors de la refonte
+ * mobile et n'ont plus AUCUN rôle ARIA commun :
+ *   - desktop (`task-table/list.tsx`)  : role="checkbox" + aria-checked
+ *   - mobile  (`task-table/TaskCard.tsx`) : <button> + aria-pressed
+ * En revanche elles partagent le même `aria-label` — c'est donc le seul
+ * contrat stable commun, et il est sémantique (pas un hook de test).
+ *
+ * ⚠️ Ne PAS revenir à `[role="checkbox"]` pour les tâches : ce sélecteur ne
+ * matche que la <table> desktop (qui reste dans le DOM en `hidden md:block`),
+ * d'où des « element(s) not found » sur mobile. Les HABITUDES, elles, portent
+ * bien role="checkbox" sur les deux viewports.
+ */
+export const TASK_TOGGLE = '[aria-label^="Marquer comme"]';
+/** Tâche NON complétée (le clic la compléterait). */
+export const TASK_TOGGLE_UNCHECKED = '[aria-label="Marquer comme complétée"]';
+/** Tâche complétée (le clic la ré-ouvrirait). */
+export const TASK_TOGGLE_CHECKED = '[aria-label="Marquer comme non complétée"]';
+
+/**
  * Navigation SPA viewport-aware : clique le lien VISIBLE (sidebar desktop ou
  * tab bar mobile). `.first()` seul peut résoudre un lien caché par le CSS
  * responsive (sidebar `hidden` sur mobile) → timeout. Sur mobile, les sections
  * absentes de la tab bar (OKR, Statistiques…) vivent dans le sheet « Plus » —
- * on l'ouvre d'abord. Jamais de page.goto() (full reload = perte du mode démo).
+ * on l'ouvre d'abord. On privilégie le clic (il teste au passage que le lien de
+ * nav existe et pointe au bon endroit) plutôt que page.goto().
+ * NB : le mode démo SURVIT à un full reload (`cosmo_demo_active`, cf.
+ * app-mode.store.ts) — l'ancien avertissement « goto = perte du mode démo »
+ * était périmé ; goto reste utilisable pour une route sans lien de nav.
  */
 export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promise<void> {
   const visibleLink = page.getByRole('link', { name }).filter({ visible: true }).first();
@@ -99,12 +146,19 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
     // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
     // Les items du sheet sont des <button> (navigate()), pas des <a>.
     await page.getByRole('button', { name: /plus d'options/i }).click();
-    const sheetItem = page
+    // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
+    // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
+    // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
+    // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
+    // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
+    const sheet = page.locator('[data-mobile-more-sheet]');
+    await sheet.waitFor({ state: 'visible', timeout: 10_000 });
+    const sheetItem = sheet
       .getByRole('link', { name })
-      .or(page.getByRole('button', { name }))
+      .or(sheet.getByRole('button', { name }))
       .filter({ visible: true })
       .first();
-    await sheetItem.click({ timeout: 5_000 });
+    await sheetItem.click({ timeout: 10_000 });
   }
   await page.waitForURL(urlPattern);
 }

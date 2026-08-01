@@ -207,12 +207,13 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Tâches disponibles</h2>
           {onClose && (
-            <button 
+            <button
               onClick={onClose}
+              aria-label="Fermer le panneau des tâches"
               className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >
-              <X size={20} />
+              <X size={20} aria-hidden="true" />
             </button>
           )}
         </div>
@@ -240,6 +241,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
+              aria-label="Filtrer par catégorie"
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer pr-8"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
@@ -259,6 +261,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
+              aria-label="Filtrer par priorité"
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer pr-8"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',

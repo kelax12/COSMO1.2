@@ -424,9 +424,13 @@ const SettingsPage: React.FC = () => {
                       {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                         : <span>{initials}</span>}
                     </div>
+                    {/* Overlay icon-only : sans aria-label, axe-core le remonte
+                        en violation `button-name` d'impact CRITICAL (WCAG 4.1.2)
+                        et le guard a11y CI casse. */}
                     <button onClick={() => fileInputRef.current?.click()}
+                      aria-label="Changer la photo de profil"
                       className="absolute inset-0 rounded-2xl bg-black/45 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
-                      <Camera size={18} className="text-white" />
+                      <Camera size={18} className="text-white" aria-hidden="true" />
                     </button>
                   </div>
                   <div className="flex-1 text-center sm:text-left">

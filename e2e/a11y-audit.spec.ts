@@ -82,8 +82,14 @@ test.describe('a11y audit', () => {
     assertNoCritical(violations, 'Dashboard');
   });
 
-  // SPA navigation only — `goto()` reloads, which resets the in-memory
-  // demo flag and bounces back to Landing (false negatives in audit).
+  // Navigation SPA par défaut : elle vérifie au passage que le lien de nav
+  // existe et pointe au bon endroit.
+  //
+  // NB : le commentaire historique « goto() casse le mode démo » est PÉRIMÉ.
+  // Le mode démo est persisté dans localStorage (`cosmo_demo_active`, cf.
+  // src/lib/app-mode.store.ts → wasDemoPersisted) et AuthContext restaure le
+  // compte démo au rechargement. `goto()` est donc sûr après login — on s'en
+  // sert pour les routes sans lien de nav (cf. Premium plus bas).
   test('Tasks (demo)', async ({ demoPage }) => {
     await navTo(demoPage, /to ?do|tâches|tasks/i, /\/tasks/);
     await demoPage.waitForLoadState('networkidle');
@@ -145,8 +151,17 @@ test.describe('a11y audit', () => {
   });
 
   test('Premium (demo)', async ({ demoPage }) => {
-    await navTo(demoPage, /premium/i, /\/premium/);
+    // Pas de navTo ici : le lien « Premium » de la sidebar desktop est rendu
+    // sous condition `PREMIUM_ENFORCED` (= false depuis 2026-06-21, premium
+    // gratuit pour tous — cf. src/modules/billing/premium-config.ts). Sans lien
+    // visible, navTo basculait sur la branche mobile et cherchait un bouton
+    // « Plus d'options » inexistant sur desktop → timeout de 120 s.
+    // La route et la page existent toujours : on y va par URL (le mode démo
+    // survit au rechargement, cf. commentaire plus haut) afin que le scan a11y
+    // de la page Premium reste actif quel que soit l'état du kill-switch.
+    await demoPage.goto('/premium');
     await demoPage.waitForLoadState('networkidle');
+    await expect(demoPage.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 });
     const violations = await scan(demoPage, 'premium');
     console.log(`[a11y] Premium: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Premium');

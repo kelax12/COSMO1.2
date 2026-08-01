@@ -60,13 +60,15 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomIn}
                     disabled={zoomLevel === 0}
+                    aria-label="Zoomer le calendrier"
                     className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
-                    <ZoomIn size={18} />
+                    <ZoomIn size={18} aria-hidden="true" />
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomOut}
                     disabled={zoomLevel === zoomDurations.length - 1}
+                    aria-label="Dézoomer le calendrier"
                     className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
-                    <ZoomOut size={18} />
+                    <ZoomOut size={18} aria-hidden="true" />
                   </motion.button>
                 </div>
 
@@ -88,9 +90,10 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 <div className="flex items-center gap-1">
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => calendarRef.current?.getApi().prev()}
+                    aria-label="Période précédente"
                     className="p-2 rounded-lg transition-colors hover:text-blue-600"
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={18} aria-hidden="true" />
                   </motion.button>
                   {/* Retour à aujourd'hui (#16) — si aujourd'hui est déjà
                       affiché, ouvre plutôt un sélecteur pour aller ailleurs. */}
@@ -122,9 +125,10 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                   </Popover>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => calendarRef.current?.getApi().next()}
+                    aria-label="Période suivante"
                     className="p-2 rounded-lg transition-colors hover:text-blue-600"
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    <ChevronRight size={18} />
+                    <ChevronRight size={18} aria-hidden="true" />
                   </motion.button>
                 </div>
               </div>

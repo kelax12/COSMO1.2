@@ -1,4 +1,4 @@
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, TASK_TOGGLE_UNCHECKED } from './fixtures';
 
 /**
  * Parcours approfondis (audit 9/10 phase 4) — vont au-delà des smoke tests :
@@ -28,8 +28,11 @@ test('démo : compléter une tâche décrémente les tâches non cochées', asyn
 
   // filter({ visible: true }) : desktop (table) et mobile (cards) coexistent
   // dans le DOM, masqués par CSS responsive — sans le filtre, `.first()` peut
-  // résoudre une checkbox cachée et le compte inclut les doublons invisibles.
-  const unchecked = list.locator('[role="checkbox"][aria-checked="false"]').filter({ visible: true });
+  // résoudre une case cachée et le compte inclut les doublons invisibles.
+  // TASK_TOGGLE_UNCHECKED plutôt que [role="checkbox"][aria-checked="false"] :
+  // la TaskCard mobile est un <button aria-pressed>, pas une checkbox ARIA
+  // (cf. fixtures.ts) — l'ancien sélecteur ne matchait que le desktop.
+  const unchecked = list.locator(TASK_TOGGLE_UNCHECKED).filter({ visible: true });
   await expect(unchecked.first()).toBeVisible({ timeout: 10_000 });
   const before = await unchecked.count();
   expect(before).toBeGreaterThan(0);

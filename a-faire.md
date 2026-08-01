@@ -1,6 +1,6 @@
 # À faire — bugs & points en suspens (mobile)
 
-> **Statut** : 2 résolus (#1, #5) · 3 points mineurs ouverts (#2, #3, #4) · **Origine** : refonte mobile page Tâches
+> **Statut** : 4 résolus (#1, #3, #4, #5) · 1 limitation plateforme (#2) · **Origine** : refonte mobile page Tâches
 > **Lié depuis CLAUDE.md** : oui (lignes 7 et 745, §Mobile-first). ⚠️ Ces lignes décrivent encore le
 > « panneau de couleur swipe TaskCard » comme **non résolu** — c'est **périmé** : le bug est corrigé (voir §Résolu).
 > Je ne modifie pas CLAUDE.md ; ce fichier reflète l'état réel.
@@ -10,11 +10,7 @@
 
 ## ⏳ Ouvert / actionnable
 
-### #4 — Aucun test E2E pour les interactions tactiles
-- **Symptôme** : swipe / long-press / bottom-sheet ne sont couverts par aucun test. La simulation via
-  `preview_eval` ne reproduit pas fidèlement les `PointerEvent` attendus par Framer Motion (la card bouge
-  visuellement via CSS transform mais `useMotionValue` ne se met pas à jour → `useTransform` ne fire pas).
-- **Piste** : Playwright `page.touchscreen.tap()` / `page.touchscreen.swipe()` pour valider les flows critiques.
+_(rien d'ouvert dans cette liste — voir §Résolu)_
 
 ---
 
@@ -30,6 +26,33 @@
 ---
 
 ## ✅ Résolu
+
+### #4 — Tests E2E des interactions tactiles — COUVERT (2026-07-30)
+`e2e/demo-touch-gestures.spec.ts` couvre les 3 flows sur le project
+`mobile-safari` (iPhone 12) : **swipe droit** → complétion, **long-press 650 ms**
+→ rangée d'actions, **bottom-sheet « Plus »** → ouverture + fermeture au tap
+backdrop. Ils sont `skip` sur chromium (viewport ≥ 768 px).
+
+La crainte d'origine (« `page.mouse` ne pilote pas `useMotionValue` ») s'est
+révélée **infondée** : `page.mouse.down/move/up` produit bien de vrais
+`PointerEvent` et Framer Motion réagit. Les deux vrais pièges, tous deux
+diagnostiqués et corrigés le 2026-07-30, étaient ailleurs :
+
+1. **Geste hors écran.** `filter({ visible: true })` ne signifie pas « dans le
+   viewport » : la 1ʳᵉ tâche non complétée était à y≈1031 dans un viewport de
+   664 px. `locator.click()` scrolle, **`page.mouse` non** → le geste partait
+   dans le vide (`document.elementFromPoint()` → `null`) et échouait sans erreur
+   explicite. Corrigé par `scrollIntoViewIfNeeded()` avant de lire la
+   `boundingBox()`.
+2. **Toaster Sonner par-dessus le backdrop.** Le tap de fermeture visait un
+   point fixe `(width/2, 80)` qui tombait sur le rappel « N en retard — Touchez
+   pour voir vos tâches » : `z-index: 999999999`, y≈16→90 pleine largeur, et
+   **pas d'auto-dismiss** (toast à action). Ni la souris ni
+   `touchscreen.tap()` ne fermaient le sheet. La zone libre est désormais
+   calculée entre le bas des toasts et le haut du sheet.
+
+> ⚠️ À retenir pour tout futur test de geste : scroller avant de lire des
+> coordonnées, et ne jamais cliquer un point fixe en haut de l'écran mobile.
 
 ### #3 — Long-press desktop (souris) — vérifié, pas de régression possible
 Vérifié par revue de code le 2026-06-11 (`src/components/task-table/list.tsx`) :

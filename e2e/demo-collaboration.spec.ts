@@ -1,75 +1,115 @@
-// E2E — Flux collaboration : ouvrir TaskModal → aller à l'étape Collaborateurs.
-// Vérifie que le step 2 est accessible, que les collaborateurs démo sont
-// affichés et qu'aucune erreur console n'apparaît.
-import { test, expect, navTo } from './fixtures';
+// E2E — Flux collaboration : ouvrir TaskModal → ouvrir la section Collaborateurs.
+//
+// ⚠️ Historique : cette spec cherchait un `heading` /collaborat|partager|amis/i
+// dans le modal. Il n'y en a jamais eu — « Collaborateurs » est un <label>
+// (desktop, DesktopCollaboratorsStep) ou un <p> (feuille mobile). L'assertion
+// échouait donc systématiquement sur chromium. Elle avait aussi deux défauts
+// qui la rendaient quasi-vacante :
+//   1. un `if/else` qui passait sans rien vérifier si le bouton n'était pas
+//      trouvé (masquait une vraie régression) ;
+//   2. `window.__consoleErrors` n'est alimenté par PERSONNE dans l'app → le
+//      `expect(errors).toHaveLength(0)` final passait toujours.
+// On assert désormais un élément FONCTIONNEL de la section (le champ de
+// recherche de collaborateur) et on écoute réellement la console.
+import { test, expect, navTo, TASK_TOGGLE } from './fixtures';
+
+/**
+ * Erreurs console réelles (hors bruit connu non actionnable).
+ *
+ * Les `Warning:` sont écartés : React les émet via console.error en mode DEV
+ * uniquement (le build prod ne les contient pas) et ils proviennent ici de
+ * framer-motion, pas du code COSMO — `PopChild`/`AnimatePresence` déclenchent
+ * « `ref` is not a prop » une fois par enfant animé (38 occurrences sur la
+ * liste de tâches). Les filtrer garde l'assertion utile sans la rendre
+ * ininterprétable ; les `pageerror` (exceptions non capturées) ne sont, eux,
+ * JAMAIS filtrés — c'est le signal fort qu'on veut voir échouer.
+ */
+function watchConsoleErrors(page: import('@playwright/test').Page): string[] {
+  const errors: string[] = [];
+  page.on('console', msg => {
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    if (text.startsWith('Warning:')) return;
+    if (text.includes('ResizeObserver') || text.includes('Non-Error')) return;
+    errors.push(text);
+  });
+  page.on('pageerror', err => errors.push(err.message));
+  return errors;
+}
 
 test.describe('collaboration (demo)', () => {
-  test.describe.configure({ timeout: 60_000 });
+  // Pas d'override ici : 60 s était PLUS COURT que le timeout global (120 s,
+  // cf. playwright.config.ts) et le réduisait silencieusement pour ce fichier
+  // — le cold-start Vite y expirait dans la fixture (« Test timeout of 60000ms
+  // exceeded while setting up "demoPage" »).
 
-  test("ouvre TaskModal et navigue vers l'étape Collaborateurs", async ({ demoPage }) => {
-    // Naviguer vers la page Tâches via la sidebar (SPA — pas de goto)
+  test("ouvre TaskModal et affiche la section Collaborateurs", async ({ demoPage }) => {
+    // Écoute AVANT toute action, sinon les erreurs du rendu sont manquées.
+    const errors = watchConsoleErrors(demoPage);
+
     await navTo(demoPage, /to ?do|tâches|tasks/i, /\/tasks/);
-    await demoPage.waitForLoadState('networkidle');
 
-    // Ouvrir la première tâche de la liste
-    const firstTask = demoPage
-      .locator('table tbody tr, [data-testid="task-card"]')
+    // Ouvrir la première tâche. Desktop = <table> (`hidden md:block`), mobile =
+    // TaskCard (`md:hidden`) : les DEUX cohabitent dans le DOM, d'où
+    // filter({ visible: true }) — sans lui, `table tbody tr` résolvait une
+    // ligne invisible sur mobile et le clic partait en timeout.
+    const list = demoPage.locator('[data-tutorial-id="tasks-list"]');
+    await expect(list).toBeVisible({ timeout: 15_000 });
+    const firstTask = list
+      .locator('[data-testid="task-card"], table tbody tr')
+      .filter({ visible: true })
       .first();
-    await firstTask.waitFor({ state: 'visible', timeout: 10_000 });
+    await firstTask.waitFor({ state: 'visible', timeout: 15_000 });
+    // scrollIntoViewIfNeeded : la liste a un `layout` Framer Motion (positions
+    // qui se réajustent après le rendu initial). Sans lui, le clic auto-scroll
+    // de Playwright vise la position D'AVANT le réajustement et atterrit sous
+    // la tab bar mobile fixe (« <nav aria-label="Navigation mobile"> subtree
+    // intercepts pointer events »).
+    await firstTask.scrollIntoViewIfNeeded();
     await firstTask.click();
 
-    // Attendre l'ouverture du modal TaskModal
     const modal = demoPage.getByRole('dialog');
-    await modal.waitFor({ state: 'visible', timeout: 8_000 });
+    await expect(modal).toBeVisible({ timeout: 10_000 });
 
-    // Chercher le bouton step 2 (Collaborateurs / Étape 2)
-    // Le wizard TaskModal a 2 étapes : Step 1 (détails) → Step 2 (collaborateurs)
-    const collabTab = modal.getByRole('button', {
-      name: /collaborat|partage|étape\s*2/i,
-    });
+    // Ouvrir la section collaborateurs :
+    //  - desktop : bouton disclosure « Partager la tâche » (step 2 inline) ;
+    //  - mobile  : Cell « Collaborateurs » (primitives.tsx rend un <button>)
+    //              qui ouvre une action sheet.
+    await modal
+      .getByRole('button', { name: /partager la tâche|collaborateurs/i })
+      .filter({ visible: true })
+      .first()
+      .click();
 
-    if (await collabTab.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await collabTab.click();
-      // Vérifier que la section collaborateurs est affichée
-      const collabSection = modal.getByRole('heading', {
-        name: /collaborat|partager|amis/i,
-      }).or(modal.locator('[data-slot="collab"], [data-testid="collab-section"]'));
-      await expect(collabSection.first()).toBeVisible({ timeout: 5_000 });
-    } else {
-      // Sur certains viewports / configs le modal n'a pas de step 2 visible
-      // → on vérifie simplement que le modal est ouvert et fonctionnel
-      await expect(modal).toBeVisible();
-    }
+    // Assertion FONCTIONNELLE : le champ de recherche de collaborateur.
+    // Desktop « Email, nom ou identifiant... » / mobile « Email ou nom… ».
+    await expect(
+      modal.getByPlaceholder(/email.*nom/i).filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 10_000 });
 
-    // Fermer le modal et vérifier l'absence d'erreur console
+    // Fermer le modal.
     await demoPage.keyboard.press('Escape');
-    await modal.waitFor({ state: 'hidden', timeout: 5_000 });
+    await expect(modal).toBeHidden({ timeout: 10_000 });
 
-    const errors = await demoPage.evaluate(() =>
-      (window as Window & { __consoleErrors?: string[] }).__consoleErrors ?? [],
-    );
-    expect(errors).toHaveLength(0);
+    await expect(demoPage.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
+    expect(errors).toEqual([]);
   });
 
-  test('le bouton de partage est accessible depuis la liste des tâches', async ({ demoPage }) => {
+  test('la liste des tâches se charge sans erreur console', async ({ demoPage }) => {
+    const errors = watchConsoleErrors(demoPage);
+
     await navTo(demoPage, /to ?do|tâches|tasks/i, /\/tasks/);
-    await demoPage.waitForLoadState('networkidle');
+    await expect(demoPage.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 });
 
-    // Vérifier que la page Tâches charge sans erreur
-    await expect(demoPage.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 8_000 });
+    // La liste doit être réellement peuplée (seed démo = 100 tâches) : sans
+    // cette assertion, le test passerait sur une page vide.
+    const list = demoPage.locator('[data-tutorial-id="tasks-list"]');
+    await expect(list).toBeVisible({ timeout: 15_000 });
+    await expect(
+      list.locator(TASK_TOGGLE).filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 15_000 });
 
-    // Capture erreurs console pendant la navigation
-    const consoleErrors: string[] = [];
-    demoPage.on('console', msg => {
-      if (msg.type() === 'error') consoleErrors.push(msg.text());
-    });
-
-    // Pause courte pour laisser les mutations asynchrones se stabiliser
-    await demoPage.waitForTimeout(1_000);
-
-    const criticalErrors = consoleErrors.filter(
-      e => !e.includes('ResizeObserver') && !e.includes('Non-Error'),
-    );
-    expect(criticalErrors).toHaveLength(0);
+    await expect(demoPage.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
+    expect(errors).toEqual([]);
   });
 });
