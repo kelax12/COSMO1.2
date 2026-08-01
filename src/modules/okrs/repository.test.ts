@@ -77,7 +77,7 @@ describe('lecture & seed', () => {
 });
 
 describe('create — journal append-only', () => {
-  it('génère un id et journalise les reps initiales (currentValue>0)', async () => {
+  it("génère un id et NE journalise PAS la valeur initiale (état de base, pas des reps du jour)", async () => {
     seedOkrs([]);
     const created = await repo.create({
       title: 'Nouveau', description: '', category: 'cat-1', progress: 0, completed: false,
@@ -85,9 +85,10 @@ describe('create — journal append-only', () => {
       keyResults: [kr({ id: 'k1', currentValue: 3, targetValue: 5 }), kr({ id: 'k2', currentValue: 0 })],
     });
     expect(created.id).toBeTruthy();
-    // 3 reps journalisées pour k1, 0 pour k2.
+    // Aucune rep journalisée à la création — seuls les incréments ultérieurs
+    // (update/updateKeyResult) le sont (cf. repository.ts:273-277).
     const j = journal();
-    expect(j.filter((c) => c.krId === 'k1')).toHaveLength(3);
+    expect(j.filter((c) => c.krId === 'k1')).toHaveLength(0);
     expect(j.filter((c) => c.krId === 'k2')).toHaveLength(0);
   });
 });
