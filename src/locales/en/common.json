@@ -1,7 +1,9 @@
 {
   "language": {
     "label": "Language",
-    "description": "Interface language"
+    "description": "Interface language",
+    "sectionSubtitle": "Choose the language the app is displayed in.",
+    "reloadNotice": "The page reloads to apply the language everywhere — including dates and number formats."
   },
   "nav": {
     "dashboard": "Home",

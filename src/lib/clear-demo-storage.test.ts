@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
 import { clearDemoStorage } from './repository.factory';
+import { LOCALE_STORAGE_KEY } from '@/i18n/locale';
 
 // Garde B21 : clearDemoStorage doit balayer TOUTES les clés cosmo-namespacées
 // (cosmo_*, cosmo-*) — une whitelist manuelle oublierait les nouvelles clés
@@ -36,6 +37,19 @@ describe('clearDemoStorage (B21 prefix sweep)', () => {
 
     expect(localStorage.getItem('cosmo_cookie_consent')).toBe('accepted');
     expect(localStorage.getItem('cosmo_demo_device_id')).toBe('f47ac10b-58cc-4372-a567-0e02b2c3d479');
+    expect(localStorage.getItem('cosmo_demo_tasks')).toBeNull();
+  });
+
+  it('préserve la langue choisie (i18n)', () => {
+    // La langue est un réglage d'INTERFACE, pas une donnée de démo. Le balayage
+    // `cosmo_*` l'effaçait : un utilisateur qui passait l'app en anglais puis
+    // entrait en démo se retrouvait en français sans comprendre pourquoi.
+    localStorage.setItem(LOCALE_STORAGE_KEY, 'en');
+    localStorage.setItem('cosmo_demo_tasks', '[]');
+
+    clearDemoStorage();
+
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('en');
     expect(localStorage.getItem('cosmo_demo_tasks')).toBeNull();
   });
 

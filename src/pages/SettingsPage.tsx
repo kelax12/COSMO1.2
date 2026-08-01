@@ -14,6 +14,8 @@ import { useAuth } from '../modules/auth/AuthContext';
 import { useUpdateUserSettings } from '../modules/user';
 import ThemeToggle from '../components/ThemeToggle';
 import LocaleToggle from '../components/LocaleToggle';
+import { SUPPORTED_LOCALES } from '@/i18n/locale';
+import { useT } from '@/i18n/useT';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
@@ -46,6 +48,9 @@ import { PageHeading } from '@/components/ui/typography';
 const SettingsPage: React.FC = () => {
   const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
 
+  // `tCommon` et non `t` : le reste de cette page n'est pas encore extrait,
+  // le nom explicite évite toute ambiguïté quand elle le sera.
+  const { t: tCommon } = useT('common');
   const { user, logout, isDemo } = useAuth();
   const { pref: tzPref, setMode: setTzMode, setOffsetHours: setTzOffset } = useTimezonePref();
   const isAdmin = useIsAdmin();
@@ -633,22 +638,6 @@ const SettingsPage: React.FC = () => {
                   <ThemeToggle showLabel />
                 </div>
 
-                {/* Langue de l'interface — le sélecteur ne s'affiche que si
-                    plusieurs langues sont servies (cf. SUPPORTED_LOCALES). */}
-                <div style={{ minHeight: '72px' }}
-                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform">
-                      <Languages size={18} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Langue</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">La page est rechargée pour appliquer la langue partout</p>
-                    </div>
-                  </div>
-                  <LocaleToggle />
-                </div>
-
                 {/* Rappel habitudes du soir (#24) — opt-in */}
                 <div style={{ minHeight: '72px' }}
                   className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
@@ -678,6 +667,40 @@ const SettingsPage: React.FC = () => {
                   </button>
                 </div>
               </SectionCard>
+
+              {/* ── Langue ──────────────────────────────────────────────
+                  Section à part entière, et non une ligne de la carte
+                  « Thème » : la langue n'est pas un réglage d'apparence, et
+                  elle y était introuvable.
+
+                  Masquée tant qu'une seule langue est servie — un radiogroup
+                  à une option n'est pas un choix. La condition porte sur la
+                  SECTION et pas seulement sur `LocaleToggle` (qui rend `null`
+                  seul), sinon on afficherait un titre au-dessus du vide. */}
+              {SUPPORTED_LOCALES.length > 1 && (
+                <SectionCard className="mt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Languages size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                    <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{tCommon('language.label')}</h2>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
+                    {tCommon('language.sectionSubtitle')}
+                  </p>
+                  <div style={{ minHeight: '72px' }}
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform shrink-0">
+                        <Languages size={18} aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tCommon('language.description')}</p>
+                        <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{tCommon('language.reloadNotice')}</p>
+                      </div>
+                    </div>
+                    <LocaleToggle />
+                  </div>
+                </SectionCard>
+              )}
 
               {/* Raccourcis clavier — copie du contenu du popup « ? »,
                   consultable sans avoir à ouvrir la palette. Source partagée
