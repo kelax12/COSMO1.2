@@ -6,8 +6,9 @@ import { applyTheme, resolveInitialTheme } from './lib/theme';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
-import { applyLocale, resolveInitialLocale } from './i18n/locale';
+import { DEFAULT_LOCALE, applyLocale, resolveInitialLocale, type Locale } from './i18n/locale';
 import { resolveRouterBootstrap } from './i18n/bootstrap';
+import { loadCatalogs } from './i18n/catalog';
 import './index.css';
 
 // Sentry — error monitoring prod (faille §14 / I3). Init synchrone, AVANT le
@@ -105,6 +106,7 @@ try {
 // src/i18n/bootstrap.ts.
 // ──────────────────────────────────────────────────────────────────
 let routerBasename = '/';
+let activeLocale: Locale = DEFAULT_LOCALE;
 try {
   const bootstrap = resolveRouterBootstrap({
     pathname: window.location.pathname,
@@ -112,6 +114,7 @@ try {
     hash: window.location.hash,
   });
   routerBasename = bootstrap.basename;
+  activeLocale = bootstrap.locale;
   applyLocale(document.documentElement, bootstrap.locale);
   if (bootstrap.replaceUrl && bootstrap.replaceUrl !== window.location.pathname + window.location.search + window.location.hash) {
     window.history.replaceState(null, '', bootstrap.replaceUrl);
@@ -163,8 +166,24 @@ if (supabaseUrl) {
 // Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
 // par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
-createRoot(document.getElementById('root')!).render(
-  <BrowserRouter basename={routerBasename}>
-    <App />
-  </BrowserRouter>
-);
+function mount(): void {
+  createRoot(document.getElementById('root')!).render(
+    <BrowserRouter basename={routerBasename}>
+      <App />
+    </BrowserRouter>
+  );
+}
+
+// Catalogues de la langue active chargés AVANT le premier rendu — sinon le
+// repli `fr` s'appliquerait le temps du chargement et l'utilisateur verrait un
+// flash de français avant que sa langue n'apparaisse.
+//
+// En français (cas majoritaire) `loadCatalogs` résout de façon synchrone-
+// équivalente : aucun fichier à chercher, donc un simple tour de microtask —
+// pas de retard mesurable au premier paint. C'est ce qui permet d'attendre
+// inconditionnellement plutôt que de brancher sur la locale.
+//
+// `catch` et non `finally` sur l'échec : on monte l'app quoi qu'il arrive. Une
+// langue dont les catalogues n'ont pas pu être chargés rend en français, ce qui
+// reste infiniment préférable à une page blanche.
+loadCatalogs(activeLocale).catch(() => undefined).then(mount);
