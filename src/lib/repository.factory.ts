@@ -18,6 +18,7 @@ import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
 import { IEventsRepository } from '@/modules/events/repository';
 import { LocalStorageEventsRepository } from '@/modules/events/repository';
 import { SupabaseEventsRepository } from '@/modules/events/supabase.repository';
+import { LOCALE_STORAGE_KEY } from '@/i18n/locale';
 
 // Categories
 import { ICategoriesRepository } from '@/modules/categories/repository';
@@ -347,7 +348,15 @@ export function clearDemoStorage(): void {
   // cosmo_demo_device_id : identifiant anonyme du compteur de visiteurs démo
   // (migration 055, src/lib/demo-metrics.ts) — doit survivre aux resets pour
   // compter chaque appareil une seule fois.
-  const PRESERVE_KEYS = new Set(['cosmo_cookie_consent', 'cosmo_demo_device_id']);
+  // cosmo_locale : la langue est un réglage d'INTERFACE, pas une donnée de
+  // démo. Sans cette entrée, le balayage `cosmo_*` l'effaçait — un utilisateur
+  // qui passait l'app en anglais puis entrait en démo se retrouvait en
+  // français, sans comprendre pourquoi.
+  const PRESERVE_KEYS = new Set([
+    'cosmo_cookie_consent',
+    'cosmo_demo_device_id',
+    LOCALE_STORAGE_KEY,
+  ]);
   LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
   // Sweep every cosmo-namespaced key so newly-added demo modules are covered
   // without having to remember to update this list.
