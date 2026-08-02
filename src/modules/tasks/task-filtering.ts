@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { Task } from './types';
 
-export type TaskQuickFilter = 'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration';
+export type TaskQuickFilter = 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
 export type SortDirection = 'asc' | 'desc';
 
 /** Filtre « accès rapide » (chips Favoris / Terminées / Retard / Collaboration). */
@@ -16,11 +16,11 @@ export function applyQuickFilter(
   now: Date,
 ): Task[] {
   switch (quickFilter) {
-    case 'favoris':
+    case 'bookmarked':
       return tasks.filter((task) => task.bookmarked && !task.completed);
-    case 'terminées':
+    case 'completed':
       return tasks.filter((task) => task.completed);
-    case 'retard':
+    case 'overdue':
       return tasks.filter((task) => !task.completed && new Date(task.deadline) < now);
     case 'collaboration':
       return tasks.filter((task) => task.isCollaborative && !task.completed);

@@ -9,6 +9,7 @@ import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 
 import { useCategories } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
+import { useT } from '@/i18n/useT';
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
@@ -43,6 +44,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   showQuickFilters = false,
   onShowQuickFiltersChange,
 }) => {
+  const { t } = useT('tasks');
   const { data: categories = [] } = useCategories();
   const { priorityRange, setPriorityRange } = usePriorityRange();
 
@@ -115,7 +117,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
-            <label htmlFor="task-filter" className="sr-only">Trier par</label>
+            <label htmlFor="task-filter" className="sr-only">{t('sort.label')}</label>
             <div className="relative w-40 sm:w-52 shrink-0">
               <select
                 id="task-filter"
@@ -141,11 +143,11 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 value={showCompleted ? 'completed' : currentFilter}
                 aria-label="Trier les tâches par"
               >
-                <option value="priority">Par priorité</option>
-                <option value="deadline">Par échéance</option>
-                <option value="createdAt">Par date de création</option>
-                <option value="name">Par nom</option>
-                <option value="category">Par catégorie</option>
+                <option value="priority">{t('sort.priority')}</option>
+                <option value="deadline">{t('sort.deadline')}</option>
+                <option value="createdAt">{t('sort.createdAt')}</option>
+                <option value="name">{t('sort.name')}</option>
+                <option value="category">{t('sort.category')}</option>
               </select>
               {/* Flèche du select (indicateur, non cliquable) */}
               <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
@@ -156,8 +158,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 <button
                   type="button"
                   onClick={onToggleSortDirection}
-                  aria-label={sortDirection === 'asc' ? 'Tri croissant — cliquer pour décroissant' : 'Tri décroissant — cliquer pour croissant'}
-                  title={sortDirection === 'asc' ? 'Ordre croissant' : 'Ordre décroissant'}
+                  aria-label={sortDirection === 'asc' ? t('sort.asc') : t('sort.desc')}
+                  title={sortDirection === 'asc' ? t('sort.ascTitle') : t('sort.descTitle')}
                   className="absolute inset-y-0 right-1 my-auto z-10 flex h-11 w-11 sm:h-7 sm:w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
                 >
@@ -179,10 +181,10 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                   variant="outline"
                   onClick={clearAllFilters}
                   className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 border-red-200 dark:border-red-800/50 shrink-0"
-                  aria-label="Réinitialiser tous les filtres"
+                  aria-label={t('sort.resetAria')}
                 >
                   <X size={16} data-icon="inline-start" aria-hidden="true" />
-                  <span>Réinitialiser</span>
+                  <span>{t('sort.reset')}</span>
                 </Button>
               </motion.div>
             )}
@@ -198,11 +200,11 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))]'
                     : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
-                aria-label="Afficher les filtres avancés"
+                aria-label={t('sort.advanced')}
                 aria-expanded={showAdvancedFilters}
               >
                 <SlidersHorizontal size={18} aria-hidden="true" />
-                <span>Filtres</span>
+                <span>{t('sort.filters')}</span>
                 {hasActiveFilters && (
                   <span className="bg-white dark:bg-[rgb(var(--color-accent-solid))] text-blue-600 dark:text-[rgb(var(--color-accent-solid-foreground))] text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                     {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}

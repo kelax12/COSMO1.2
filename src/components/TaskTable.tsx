@@ -44,6 +44,7 @@ import { useCategories } from '@/modules/categories';
 import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useUnshareTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useIsDemo } from '@/lib/app-mode.store';
+import { useT } from '@/i18n/useT';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -73,6 +74,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
   onToggleTaskForList,
   showQuickFilters = true,
 }) => {
+  const { t, tp } = useT('tasks');
+  const { t: tCommon } = useT('common');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -139,9 +142,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [bulkMenuView, setBulkMenuView] = useState<'root' | 'category'>('root');
 
   const exitSelectMode = () => { setSelectMode(false); setSelectedIds([]); setBulkMenuOpen(false); };
-  const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration'>('none');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration'>('none');
 
-  const toggleQuickFilter = (filter: 'favoris' | 'terminées' | 'retard' | 'collaboration') => {
+  const toggleQuickFilter = (filter: 'bookmarked' | 'completed' | 'overdue' | 'collaboration') => {
     setActiveQuickFilter(prev => prev === filter ? 'none' : filter);
   };
 
@@ -246,7 +249,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onSuccess: () => {
             setTaskToDelete(null);
             queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-            toast.success('Vous avez quitté la tâche partagée');
+            toast.success(t('toast.leftShared'));
           },
           onError: (err) => console.error('Leave shared task failed', err),
         }
@@ -258,7 +261,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       onSuccess: () => {
         setTaskToDelete(null);
         if (taskSnapshot) {
-          showUndoToast('Tâche supprimée', () => {
+          showUndoToast(t('toast.deleted'), () => {
             // Recrée la tâche avec les mêmes champs (nouvel id généré côté repo)
             const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
             createMutation.mutate(rest);
@@ -296,7 +299,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // Snooze (#8) : reporte la deadline (mutation optimiste → effet immédiat).
   const handleSnooze = useCallback((taskId: string, deadline: string) => {
     updateMutation.mutate({ id: taskId, updates: { deadline } });
-    toast.success('Tâche reportée');
+    toast.success(t('toast.postponed'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -308,7 +311,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const handleSnoozeAllOverdue = (deadline: string) => {
     overdueTasks.forEach(t => updateMutation.mutate({ id: t.id, updates: { deadline } }));
-    toast.success(`${overdueTasks.length} tâche${overdueTasks.length > 1 ? 's' : ''} replanifiée${overdueTasks.length > 1 ? 's' : ''}`);
+    toast.success(tp('toast.rescheduled', overdueTasks.length));
   };
 
   // « Choisir une date… » : input date natif hors du menu (le menu Radix se
@@ -327,14 +330,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const bulkComplete = () => {
     const toComplete = tasks.filter(t => selectedIds.includes(t.id) && !t.completed);
     toComplete.forEach(t => toggleCompleteMutation.mutate(t.id));
-    toast.success(`${toComplete.length} tâche${toComplete.length > 1 ? 's' : ''} complétée${toComplete.length > 1 ? 's' : ''}`);
+    toast.success(tp('toast.completedCount', toComplete.length));
     exitSelectMode();
   };
 
   const bulkAddToList = (listId: string) => {
     selectedIds.forEach(taskId => addTaskToListMutation.mutate({ taskId, listId }));
     const listName = allLists.find(l => l.id === listId)?.name ?? 'la liste';
-    toast.success(`${selectedIds.length} tâche${selectedIds.length > 1 ? 's' : ''} ajoutée${selectedIds.length > 1 ? 's' : ''} à ${listName}`);
+    toast.success(tp('toast.addedToList', selectedIds.length, { list: listName }));
     exitSelectMode();
   };
 
@@ -356,14 +359,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
     ownedSnapshots.forEach(t => deleteMutation.mutate(t.id));
 
     if (ownedSnapshots.length > 0) {
-      showUndoToast(`${ownedSnapshots.length} tâche${ownedSnapshots.length > 1 ? 's' : ''} supprimée${ownedSnapshots.length > 1 ? 's' : ''}`, () => {
+      showUndoToast(tp('toast.deletedCount', ownedSnapshots.length), () => {
         ownedSnapshots.forEach(s => {
           const { id: _id, createdAt: _ca, ...rest } = s;
           createMutation.mutate(rest);
         });
       });
     } else if (received.length > 0) {
-      toast.success(`Vous avez quitté ${received.length} tâche${received.length > 1 ? 's' : ''} partagée${received.length > 1 ? 's' : ''}`);
+      toast.success(tp('toast.leftSharedCount', received.length));
     }
 
     setShowBulkDeleteConfirm(false);
@@ -375,13 +378,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // + useCategoryLookup, qui indexe par id) — jamais le nom affiché.
   const bulkSetCategory = (categoryId: string, categoryName: string) => {
     selectedIds.forEach(id => updateMutation.mutate({ id, updates: { category: categoryId } }));
-    toast.success(`${selectedIds.length} tâche${selectedIds.length > 1 ? 's' : ''} déplacée${selectedIds.length > 1 ? 's' : ''} vers ${categoryName}`);
+    toast.success(tp('toast.movedToCategory', selectedIds.length, { category: categoryName }));
     exitSelectMode();
   };
 
   const bulkSetDeadline = (deadline: string) => {
     selectedIds.forEach(id => updateMutation.mutate({ id, updates: { deadline } }));
-    toast.success(`Deadline mise à jour pour ${selectedIds.length} tâche${selectedIds.length > 1 ? 's' : ''}`);
+    toast.success(tp('toast.deadlineUpdated', selectedIds.length));
     exitSelectMode();
   };
 
@@ -422,32 +425,32 @@ const TaskTable: React.FC<TaskTableProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => toggleQuickFilter('favoris')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'favoris' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            onClick={() => toggleQuickFilter('bookmarked')}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'bookmarked' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
-            {activeQuickFilter === 'favoris' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
-            <span className="hidden sm:inline">{activeQuickFilter === 'favoris' ? 'Tous' : 'Favoris'}</span>
-            <span className="sm:hidden">Favoris</span>
+            {activeQuickFilter === 'bookmarked' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
+            <span className="hidden sm:inline">{activeQuickFilter === 'bookmarked' ? tCommon('actions.all') : t('table.quickFilter.bookmarked')}</span>
+            <span className="sm:hidden">{t('table.quickFilter.bookmarked')}</span>
           </Button>
 
           <Button
             variant="outline"
-            onClick={() => toggleQuickFilter('terminées')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'terminées' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            onClick={() => toggleQuickFilter('completed')}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'completed' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <CheckCircle2 size={20} data-icon="inline-start" />
-            <span className="hidden sm:inline">Terminées</span>
-            <span className="sm:hidden">Fait</span>
+            <span className="hidden sm:inline">{t('table.quickFilter.completed')}</span>
+            <span className="sm:hidden">{t('table.quickFilter.completedShort')}</span>
           </Button>
 
           <Button
             variant="outline"
-            onClick={() => toggleQuickFilter('retard')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'retard' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            onClick={() => toggleQuickFilter('overdue')}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'overdue' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <AlertTriangle size={20} data-icon="inline-start" />
-            <span className="hidden sm:inline">Retard</span>
-            <span className="sm:hidden">Retard</span>
+            <span className="hidden sm:inline">{t('table.quickFilter.overdue')}</span>
+            <span className="sm:hidden">{t('table.quickFilter.overdue')}</span>
           </Button>
 
           <Button
@@ -456,8 +459,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
             className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <Users size={20} data-icon="inline-start" />
-            <span className="hidden sm:inline">Collaboration</span>
-            <span className="sm:hidden">Collab</span>
+            <span className="hidden sm:inline">{t('table.quickFilter.collaboration')}</span>
+            <span className="sm:hidden">{t('table.quickFilter.collaborationShort')}</span>
           </Button>
 
           {!addToListMode && (
@@ -467,7 +470,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               className={`flex items-center gap-2 ${selectMode ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
             >
               <CheckSquare size={20} data-icon="inline-start" />
-              <span>{selectMode ? 'Annuler' : 'Sélectionner'}</span>
+              <span>{selectMode ? t('table.cancelSelect') : t('table.select')}</span>
             </Button>
           )}
         </div>
@@ -479,7 +482,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10">
           <AlertTriangle size={18} className="text-red-500 shrink-0" aria-hidden="true" />
           <span className="flex-1 text-label sm:text-sm font-medium text-red-700 dark:text-red-300">
-            {overdueTasks.length} tâche{overdueTasks.length > 1 ? 's' : ''} en retard
+            {tp('table.overdueCount', overdueTasks.length)}
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -487,7 +490,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 type="button"
                 className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
               >
-                Tout replanifier
+                {t('table.rescheduleAllBtn')}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -510,7 +513,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               handleSnoozeAllOverdue(e.target.value);
               e.target.value = '';
             }}
-            aria-label="Replanifier toutes les tâches en retard à une date précise"
+            aria-label={t('table.rescheduleAll')}
             tabIndex={-1}
             className="absolute w-px h-px p-0 opacity-0 pointer-events-none"
           />
@@ -523,24 +526,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <thead>
             <tr className="">
               {/* A11y: empty <th> need a label for screen readers. */}
-              <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">Compléter</span></th>
-              <th className="px-2 py-3" style={{ width: '48px' }}><span className="sr-only">Catégorie (couleur)</span></th>
+              <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">{t('table.colComplete')}</span></th>
+              <th className="px-2 py-3" style={{ width: '48px' }}><span className="sr-only">{t('table.colCategoryColor')}</span></th>
               <th
                 className="cursor-pointer px-2 py-3"
                 onClick={() => handleSort('name')}
               >
-                Nom de la tache
+                {t('table.colName')}
                 {localSortField === 'name' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
-              <th className="px-2 py-3" style={{ width: '150px' }}>Catégorie</th>
+              <th className="px-2 py-3" style={{ width: '150px' }}>{t('table.colCategory')}</th>
               <th 
                 className="cursor-pointer text-center px-1 py-3"
                 onClick={() => handleSort('priority')}
                 style={{ width: '70px' }}
               >
-                Priorité
+                {t('table.colPriority')}
                 {localSortField === 'priority' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
@@ -550,7 +553,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 onClick={() => handleSort('deadline')}
                 style={{ width: '100px' }}
               >
-                {activeQuickFilter === 'terminées' ? 'Date de validation' : 'Dead line'}
+                {activeQuickFilter === 'completed' ? t('table.colValidationDate') : t('table.colDeadline')}
                 {localSortField === 'deadline' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
@@ -560,12 +563,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   onClick={() => handleSort('estimatedTime')}
                   style={{ width: '70px' }}
                 >
-                  Durée
+                  {t('table.colDuration')}
                   {localSortField === 'estimatedTime' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
-              <th className="text-center px-1 py-3" style={{ width: '70px' }}>Actions</th>
+              <th className="text-center px-1 py-3" style={{ width: '70px' }}>{t('table.colActions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -606,7 +609,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           >
             <span className="flex-1 flex items-center gap-1.5">
               <Lightbulb size={14} className="shrink-0" aria-hidden="true" />
-              Glissez à droite pour valider · maintenez (ou « ⋯ ») pour les options
+              {t('table.gestureHint')}
             </span>
             <button
               type="button"
@@ -650,10 +653,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {sortedTasks.length === 0 && !isLoadingTasks && (
         <div className="text-center py-12" style={{ color: 'rgb(var(--color-text-muted))' }}>
           <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {showCompleted ? 'Aucune tâche complétée' : 'Aucune tâche'}
+            {showCompleted ? t('table.emptyCompleted') : t('table.empty')}
           </h3>
           <p className="text-sm">
-            {showCompleted ? 'Complétez des tâches pour les voir ici' : 'Créez votre première tâche pour commencer'}
+            {showCompleted ? t('table.emptyCompletedHint') : t('table.emptyHint')}
           </p>
           {!showCompleted && !addToListMode && (
             <button
@@ -661,7 +664,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               onClick={() => setShowCreateFromEmpty(true)}
               className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold transition-colors shadow-sm"
             >
-              Créer une tâche
+              {t('table.createTask')}
             </button>
           )}
         </div>
@@ -683,11 +686,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
             }}
           >
             <span className="text-sm font-semibold whitespace-nowrap" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {selectedIds.length} sélectionnée{selectedIds.length > 1 ? 's' : ''}
+              {tp('table.selected', selectedIds.length)}
             </span>
             <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]">
               <CheckCircle2 size={16} data-icon="inline-start" />
-              <span className="hidden sm:inline">Compléter</span>
+              <span className="hidden sm:inline">{t('table.complete')}</span>
             </Button>
             {/* Ouvre le modal d'ajout à une liste (#23) — toujours cliquable,
                 même sans liste manuelle (le modal permet d'en créer une). */}
@@ -698,11 +701,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
               onClick={() => { setBulkModalCount(selectedIds.length); setShowBulkListModal(true); }}
             >
               <ListPlus size={16} data-icon="inline-start" />
-              <span className="hidden sm:inline">Liste</span>
+              <span className="hidden sm:inline">{t('table.list')}</span>
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowBulkDeleteConfirm(true)} disabled={selectedIds.length === 0} className="!text-red-500 hover:!bg-red-500/10">
               <Trash2 size={16} data-icon="inline-start" />
-              <span className="hidden sm:inline">Supprimer</span>
+              <span className="hidden sm:inline">{t('table.delete')}</span>
             </Button>
             {/* « ⋯ » — actions supplémentaires : catégorie / deadline */}
             <div className="relative">
@@ -733,7 +736,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         borderColor: 'rgb(var(--color-border))',
                       }}
                       role="menu"
-                      aria-label="Actions supplémentaires"
+                      aria-label={t('table.moreActions')}
                     >
                       {bulkMenuView === 'root' ? (
                         <>
@@ -745,7 +748,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                             style={{ color: 'rgb(var(--color-text-primary))' }}
                           >
                             <Tag size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
-                            Modifier la catégorie
+                            {t('table.editCategory')}
                           </button>
                           <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
                           <button
@@ -768,13 +771,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                             style={{ color: 'rgb(var(--color-text-muted))' }}
                             aria-label="Retour aux actions"
                           >
-                            <ArrowLeft size={13} aria-hidden="true" /> Catégorie
+                            <ArrowLeft size={13} aria-hidden="true" /> {t('table.categoryBack')}
                           </button>
                           <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
                           <div className="max-h-56 overflow-y-auto">
                             {categories.length === 0 ? (
                               <p className="px-3.5 py-3 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                                Aucune catégorie.
+                                {t('table.noCategory')}
                               </p>
                             ) : (
                               categories.map((cat) => (
@@ -811,7 +814,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   bulkSetDeadline(e.target.value);
                   e.target.value = '';
                 }}
-                aria-label="Nouvelle deadline pour les tâches sélectionnées"
+                aria-label={t('table.newDeadline')}
                 tabIndex={-1}
                 className="absolute w-px h-px p-0 opacity-0 pointer-events-none"
               />
@@ -819,7 +822,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <button
               type="button"
               onClick={exitSelectMode}
-              aria-label="Quitter la sélection"
+              aria-label={t('table.exitSelection')}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
               style={{ color: 'rgb(var(--color-text-muted))' }}
             >
@@ -894,9 +897,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                   <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">{t('table.deleteTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                  Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+                  {t('table.deleteBody')}
                 </p>
                 <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                   <button
@@ -948,7 +951,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   Supprimer {selectedIds.length} tâche{selectedIds.length > 1 ? 's' : ''}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                  Êtes-vous sûr de vouloir supprimer {selectedIds.length > 1 ? 'ces' : 'cette'} {selectedIds.length} tâche{selectedIds.length > 1 ? 's' : ''} ? Vous pourrez annuler juste après.
+                  {tp('table.bulkDeleteBody', selectedIds.length)}
                 </p>
                 <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                   <button

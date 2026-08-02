@@ -26,6 +26,7 @@ import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
 import { isTaskOverdue, formatDeadlineSmart, formatDuration } from "./helpers";
+import { useT } from '@/i18n/useT';
 
 // Re-export des formatters pour compat avec d'éventuels imports existants.
 export { formatDate, formatDeadlineSmart, formatDuration } from "./helpers";
@@ -146,7 +147,7 @@ interface TaskRowProps {
   task: Task;
   addToListMode: boolean;
   selectedForListIds: string[];
-  activeQuickFilter: 'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration';
+  activeQuickFilter: 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
   showCompleted: boolean;
   onSelectTask: (id: string) => void;
   onToggleTaskForList?: (id: string) => void;
@@ -182,6 +183,7 @@ export const TaskRow = React.memo(({
   pendingCollaboratorTaskIds,
   friends,
 }: TaskRowProps) => {
+  const { t } = useT('tasks');
   const getCategoryById = useCategoryLookup();
   const category = getCategoryById(task.category);
   const categoryColor = category?.color || '#94a3b8';
@@ -230,12 +232,12 @@ export const TaskRow = React.memo(({
       style={{
         backgroundColor: addToListMode
           ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
-          : (activeQuickFilter === 'retard'
+          : (activeQuickFilter === 'overdue'
               ? 'rgb(var(--color-error) / 0.3)'
               : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent')),
         borderLeft: addToListMode
           ? (selectedForListIds.includes(task.id) ? '4px solid #3B82F6' : '3px solid transparent')
-          : (activeQuickFilter === 'retard'
+          : (activeQuickFilter === 'overdue'
               ? '4px solid rgb(var(--color-error))'
               : (task.bookmarked ? '4px solid #EAB308' : '3px solid transparent'))
       }}
@@ -283,7 +285,7 @@ export const TaskRow = React.memo(({
             onClick={handleToggle}
             role="checkbox"
             aria-checked={showChecked}
-            aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+            aria-label={task.completed ? t('card.markUndone') : t('card.markDone')}
             animate={isValidating ? { scale: [1, 1.25, 1] } : {}}
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
@@ -323,7 +325,7 @@ export const TaskRow = React.memo(({
             <span
               className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md shrink-0"
               style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
-              title="Sous-tâches complétées"
+              title={t('card.subtasksDone')}
             >
               <ListChecks size={12} aria-hidden="true" />
               {task.subtasks!.filter(s => s.completed).length}/{task.subtasks!.length}
@@ -371,8 +373,8 @@ export const TaskRow = React.memo(({
           <span
             className="inline-flex justify-center items-center w-8 h-8 text-base font-medium"
             style={{ color: 'rgb(var(--color-text-muted))' }}
-            title="Aucune priorité"
-            aria-label="Aucune priorité"
+            title={t('card.noPriority')}
+            aria-label={t('card.noPriority')}
           >
             —
           </span>
@@ -383,11 +385,11 @@ export const TaskRow = React.memo(({
         )}
       </td>
       <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
-        {activeQuickFilter === 'terminées'
+        {activeQuickFilter === 'completed'
           ? (task.completedAt ? formatDeadlineSmart(task.completedAt) : '—')
           : (task.deadline
               ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
-              : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Pas d'échéance</span>)}
+              : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>)}
       </td>
       <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>
       <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap text-center">
@@ -409,7 +411,7 @@ export const TaskRow = React.memo(({
               <Bookmark aria-hidden="true" /> {task.bookmarked ? 'Retirer le favori' : 'Favori'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAddToList(task.id)}>
-              <ListPlus aria-hidden="true" /> Ajouter à une liste
+              <ListPlus aria-hidden="true" /> {t('card.addToList')}
             </DropdownMenuItem>
             {!task.completed && (
               <DropdownMenuItem onClick={() => onScheduleTask(task)}>
