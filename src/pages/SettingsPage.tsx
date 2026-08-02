@@ -58,6 +58,7 @@ const SettingsPage: React.FC = () => {
   // `tCommon` et non `t` : le reste de cette page n'est pas encore extrait,
   // le nom explicite évite toute ambiguïté quand elle le sera.
   const { t: tCommon } = useT('common');
+  const { t } = useT('settings');
   const { user, logout, isDemo } = useAuth();
   const { pref: tzPref, setMode: setTzMode, setOffsetHours: setTzOffset } = useTimezonePref();
   const isAdmin = useIsAdmin();
@@ -102,8 +103,8 @@ const SettingsPage: React.FC = () => {
     // sanitizeEmail strips copy-paste invisible chars (zero-width, NBSP, BOM)
     // that would otherwise make a visually-correct address fail validation.
     const email = sanitizeEmail(profileDraft.email);
-    if (!name) { toast.error('Le nom ne peut pas être vide'); return; }
-    if (!email) { toast.error("L'email ne peut pas être vide"); return; }
+    if (!name) { toast.error(t('profile.nameEmpty')); return; }
+    if (!email) { toast.error(t('profile.emailEmpty')); return; }
     // Validate the format before the round-trip when the email is actually
     // changing, so the user gets an instant, explicit message instead of a
     // generic failure coming back from Supabase (error_code email_address_invalid).
@@ -117,7 +118,7 @@ const SettingsPage: React.FC = () => {
         // Demo mode: persist locally so the UI reflects the change for the
         // session. Real users go through Supabase.
         updateUserSettings({ name, email });
-        toast.success('Profil mis à jour (mode démo)');
+        toast.success(t('profile.updatedDemo'));
         return;
       }
       const payload: { data: { name: string }; email?: string } = { data: { name } };
@@ -131,21 +132,21 @@ const SettingsPage: React.FC = () => {
         // We never surface the raw error.message in the UI (faille V7).
         const code = (error as { code?: string }).code;
         const status = (error as { status?: number }).status;
-        let message = 'Impossible de mettre à jour le profil';
+        let message = t('profile.updateFailed');
         if (code === 'email_exists' || status === 422) {
-          message = 'Cette adresse email est déjà utilisée par un autre compte.';
+          message = t('profile.emailTaken');
         } else if (code === 'email_address_invalid') {
           message = "Cette adresse email n'est pas valide.";
         } else if (code === 'over_email_send_rate_limit' || status === 429) {
-          message = 'Trop de tentatives. Réessayez dans quelques minutes.';
+          message = t('profile.tooManyAttempts');
         }
         toast.error(message);
         return;
       }
       if (payload.email) {
-        toast.success('Profil mis à jour — vérifiez votre boîte mail pour confirmer le changement d\'email.');
+        toast.success(t('profile.updatedCheckMail'));
       } else {
-        toast.success('Profil mis à jour !');
+        toast.success(t('profile.updated'));
       }
     } catch { toast.error('Une erreur inattendue est survenue'); }
     finally { setSavingProfile(false); }
@@ -155,12 +156,12 @@ const SettingsPage: React.FC = () => {
     e.preventDefault();
     if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error('Veuillez remplir tous les champs'); return; }
     if (passwords.new !== passwords.confirm) { toast.error('Les nouveaux mots de passe ne correspondent pas'); return; }
-    if (passwords.new.length < 8) { toast.error('Le mot de passe doit contenir au moins 8 caractères'); return; }
-    if (passwords.current === passwords.new) { toast.error('Le nouveau mot de passe doit différer de l\'actuel'); return; }
+    if (passwords.new.length < 8) { toast.error(t('security.tooShort')); return; }
+    if (passwords.current === passwords.new) { toast.error(t('security.mustDiffer')); return; }
     setSavingPassword(true);
     try {
       if (!supabase) { toast.error('Service non disponible'); return; }
-      if (isDemo) { toast.info('Changement de mot de passe désactivé en mode démo'); return; }
+      if (isDemo) { toast.info(t('security.demoDisabled')); return; }
       // Verify the current password before rotating. supabase.auth.updateUser
       // does NOT enforce knowledge of the current password — without this step
       // anyone with a hijacked session can lock the user out. Faille B8.
@@ -173,8 +174,8 @@ const SettingsPage: React.FC = () => {
         return;
       }
       const { error } = await supabase.auth.updateUser({ password: passwords.new });
-      if (error) { console.error('[SettingsPage] password update:', error); toast.error('Erreur lors de la mise à jour du mot de passe'); return; }
-      toast.success('Mot de passe mis à jour !');
+      if (error) { console.error('[SettingsPage] password update:', error); toast.error(t('security.updateError')); return; }
+      toast.success(t('security.updated'));
       setPasswords({ current: '', new: '', confirm: '' });
     } catch { toast.error('Une erreur inattendue est survenue'); }
     finally { setSavingPassword(false); }
@@ -182,14 +183,14 @@ const SettingsPage: React.FC = () => {
 
   const handleDeleteAccount = () => {
     setConfirmConfig({
-      isOpen: true, title: 'Supprimer le compte ?',
-      description: 'Cette action est irréversible. Toutes vos données (tâches, habitudes, OKRs, événements, amis) seront supprimées définitivement. Tapez "DELETE" pour confirmer.',
+      isOpen: true, title: t('security.deleteAccountTitle'),
+      description: t('security.deleteAccountBody'),
       variant: 'destructive', showInput: true, confirmationText: 'DELETE',
       onConfirm: async () => {
         setDeletingAccount(true);
         try {
           if (isDemo) {
-            toast.success('Compte démo effacé');
+            toast.success(t('security.demoAccountCleared'));
             await logout();
             navigate('/');
             return;
@@ -200,17 +201,17 @@ const SettingsPage: React.FC = () => {
           // honest copy rather than silently doing nothing. Faille B9.
           const { error } = await supabase.functions.invoke('delete-account');
           if (error) {
-            toast.error('La suppression automatique a échoué', {
-              description: 'Contactez axellongattepro@gmail.com — votre demande sera traitée manuellement.',
+            toast.error(t('security.deleteFailed'), {
+              description: t('security.deleteFailedHint'),
             });
             return;
           }
-          toast.success('Compte supprimé');
+          toast.success(t('security.accountDeleted'));
           await logout();
           navigate('/');
         } catch {
-          toast.error('Erreur réseau', {
-            description: 'Réessayez ou contactez axellongattepro@gmail.com.',
+          toast.error(t('security.networkError'), {
+            description: t('security.networkErrorHint'),
           });
         } finally {
           setDeletingAccount(false);
@@ -228,7 +229,7 @@ const SettingsPage: React.FC = () => {
     const verdict = validateAvatarFile(file);
     if (!verdict.ok) {
       if (verdict.reason === 'type') {
-        toast.error('Format non supporté', { description: 'Utilisez JPEG, PNG, WebP ou GIF.' });
+        toast.error(t('profile.unsupportedFormat'), { description: t('profile.unsupportedFormatHint') });
       } else {
         toast.error('Image trop grande', { description: 'Taille maximale : 500 Ko.' });
       }
@@ -261,7 +262,7 @@ const SettingsPage: React.FC = () => {
           updateUserSettings({ avatar: dataUrl });
         } else {
           const { error } = await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
-          if (error) { toast.error('Impossible de mettre à jour la photo'); return; }
+          if (error) { toast.error(t('profile.photoUpdateFailed')); return; }
           // Mirror to `profiles` so other users can see the updated avatar
           // (auth.user_metadata is private and not visible to other users).
           // `profiles.id` / `.email` / `.account_type` sont verrouillés côté
@@ -274,7 +275,7 @@ const SettingsPage: React.FC = () => {
               .eq('id', authUser.id);
           }
         }
-        toast.success('Photo de profil mise à jour');
+        toast.success(t('profile.photoUpdated'));
       };
       img.onerror = () => toast.error('Image illisible');
       img.src = result;
@@ -284,8 +285,8 @@ const SettingsPage: React.FC = () => {
 
   const handleRemoveAvatar = () => {
     setConfirmConfig({
-      isOpen: true, title: 'Supprimer la photo ?',
-      description: 'Êtes-vous sûr de vouloir supprimer votre photo de profil ?',
+      isOpen: true, title: t('profile.deletePhotoTitle'),
+      description: t('profile.deletePhotoBody'),
       variant: 'destructive',
       onConfirm: async () => {
         if (isDemo) {
@@ -302,16 +303,16 @@ const SettingsPage: React.FC = () => {
               .eq('id', authUser.id);
           }
         }
-        toast.success('Photo supprimée');
+        toast.success(t('profile.photoDeleted'));
       },
     });
   };
 
   const handleLogout = () => {
     setConfirmConfig({
-      isOpen: true, title: 'Déconnexion ?', description: 'Voulez-vous vraiment vous déconnecter ?',
+      isOpen: true, title: t('logout.title'), description: t('logout.body'),
       variant: 'default',
-      onConfirm: () => { logout(); toast.success('Déconnexion réussie'); navigate('/'); },
+      onConfirm: () => { logout(); toast.success(t('logout.success')); navigate('/'); },
     });
   };
 
@@ -356,8 +357,8 @@ const SettingsPage: React.FC = () => {
 
         <nav className="flex-1 p-3 flex flex-col gap-5">
           {NAV_GROUPS.map((group) => (
-            <div key={group.label}>
-              <p className="px-3 mb-1.5 text-caption font-bold uppercase tracking-[0.18em] text-[rgb(var(--color-text-secondary))]">{group.label}</p>
+            <div key={group.labelKey}>
+              <p className="px-3 mb-1.5 text-caption font-bold uppercase tracking-[0.18em] text-[rgb(var(--color-text-secondary))]">{t(group.labelKey)}</p>
               <div className="flex flex-col gap-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
@@ -368,7 +369,7 @@ const SettingsPage: React.FC = () => {
                         active ? 'bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))]'
                           : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))]'}`}>
                       <Icon size={15} className={active ? 'text-[rgb(var(--color-accent))]' : ''} strokeWidth={active ? 2.5 : 2} />
-                      {item.label}
+                      {t(item.labelKey)}
                       {active && (
                         <motion.span layoutId="pill"
                           className="absolute inset-0 rounded-xl bg-[rgb(var(--color-accent))]/10"
@@ -386,7 +387,7 @@ const SettingsPage: React.FC = () => {
           <button onClick={handleLogout} style={{ minHeight: '44px' }}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-red-500/8 hover:text-red-500 transition-all duration-150 group">
             <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
-            Déconnexion
+            {t('page.logout')}
           </button>
         </div>
       </motion.aside>
@@ -395,10 +396,10 @@ const SettingsPage: React.FC = () => {
       <main className="flex-1 min-w-0 py-10 px-5 sm:px-8 lg:px-12">
         <div className="mb-8 max-w-3xl">
           <PageHeading variant="standard" className="tracking-tight">
-            Paramètres
+            {t('page.title')}
           </PageHeading>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            Gérez votre compte, sécurité et préférences.
+            {t('page.subtitle')}
           </p>
         </div>
 
@@ -413,7 +414,7 @@ const SettingsPage: React.FC = () => {
                   active ? 'bg-[#1f6feb] text-white shadow-sm' // #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
                 <Icon size={13} />
-                {item.label}
+                {t(item.labelKey)}
               </button>
             );
           })}
@@ -459,10 +460,10 @@ const SettingsPage: React.FC = () => {
                 </div>
               </SectionCard>
               <SectionCard>
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">Informations personnelles</h2>
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">{t('profile.heading')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
-                  <LabeledInput label="Adresse email" type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder="votre@email.com" disabled={isThirdParty} hint={isThirdParty ? 'Email géré par votre connexion externe — non modifiable ici.' : undefined} />
+                  <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
                 </div>
                 <div className="flex justify-end mt-5">
                   <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
@@ -473,10 +474,10 @@ const SettingsPage: React.FC = () => {
               <SectionCard>
                 <div className="flex items-center gap-2 mb-1">
                   <Clock size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Fuseau horaire</h2>
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('timezone.heading')}</h2>
                 </div>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
-                  Choisissez le fuseau utilisé pour afficher les heures de l'agenda et de vos événements.
+                  {t('timezone.description')}
                 </p>
                 <div className="flex flex-col gap-2.5">
                   {/* Option : heure par défaut (locale) */}
@@ -492,8 +493,8 @@ const SettingsPage: React.FC = () => {
                     aria-pressed={tzPref.mode === 'default'}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure par défaut</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">Fuseau automatique de votre appareil</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('timezone.defaultTitle')}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('timezone.defaultHint')}</p>
                     </div>
                     <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
                       tzPref.mode === 'default'
@@ -515,8 +516,8 @@ const SettingsPage: React.FC = () => {
                     aria-pressed={tzPref.mode === 'manual'}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Heure personnalisée</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">Fixez un décalage UTC</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('timezone.customTitle')}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('timezone.customHint')}</p>
                     </div>
                     <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
                       tzPref.mode === 'manual'
@@ -538,10 +539,10 @@ const SettingsPage: React.FC = () => {
                       setTzOffset(clampOffsetHours(sign === '-' ? -nextMagnitude : nextMagnitude));
                     return (
                       <div className="flex items-center gap-2 pl-1 pt-1">
-                        <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">Décalage :</label>
+                        <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">{t('timezone.offsetLabel')}</label>
 
                         {/* Toggle du signe : UTC+ (est de Greenwich) / UTC- (ouest) */}
-                        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label="Signe du décalage">
+                        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('timezone.offsetSign')}>
                           <button
                             type="button"
                             onClick={() => applySign('+')}
@@ -601,8 +602,8 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'security' && (
             <motion.div key="security" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
               <SectionCard>
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Changer le mot de passe</h2>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">Minimum 8 caractères. Utilisez un mélange de lettres, chiffres et symboles.</p>
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('security.heading')}</h2>
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('security.hint')}</p>
                 <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
                   <LabeledInput label="Mot de passe actuel" showToggle value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -610,15 +611,15 @@ const SettingsPage: React.FC = () => {
                     <LabeledInput label="Confirmer" showToggle value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
                   </div>
                   <div className="flex justify-end pt-1">
-                    <PrimaryButton type="submit" loading={savingPassword}>{savingPassword ? 'Mise à jour…' : 'Mettre à jour'}</PrimaryButton>
+                    <PrimaryButton type="submit" loading={savingPassword}>{savingPassword ? t('security.updating') : t('security.update')}</PrimaryButton>
                   </div>
                 </form>
               </SectionCard>
               <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-sm font-bold text-red-600 dark:text-red-500">Zone de danger</h2>
-                    <p className="text-xs text-red-500/70 mt-1">Supprimer définitivement votre compte et toutes vos données.</p>
+                    <h2 className="text-sm font-bold text-red-600 dark:text-red-500">{t('security.dangerZone')}</h2>
+                    <p className="text-xs text-red-500/70 mt-1">{t('security.dangerHint')}</p>
                   </div>
                   <button onClick={handleDeleteAccount} style={{ minHeight: '44px' }}
                     className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 active:scale-[0.97] transition-all duration-150">
@@ -633,8 +634,8 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'appearance' && (
             <motion.div key="appearance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
               <SectionCard>
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Thème de l'interface</h2>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">Choisissez l'apparence qui vous convient le mieux.</p>
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.heading')}</h2>
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('appearance.hint')}</p>
                 <div style={{ minHeight: '72px' }}
                   className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
                   <div className="flex items-center gap-3.5">
@@ -642,7 +643,7 @@ const SettingsPage: React.FC = () => {
                       <Monitor size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Mode d'affichage</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
                       <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
                     </div>
                   </div>
@@ -657,8 +658,8 @@ const SettingsPage: React.FC = () => {
                       <Repeat size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Rappel habitudes du soir</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">Après 18 h, un bandeau signale les habitudes non cochées</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.eveningReminder')}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('appearance.eveningReminderHint')}</p>
                     </div>
                   </div>
                   <button
@@ -719,10 +720,10 @@ const SettingsPage: React.FC = () => {
               <SectionCard className="mt-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Keyboard size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">Raccourcis clavier</h2>
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('appearance.shortcuts')}</h2>
                 </div>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
-                  Aussi accessibles à tout moment avec la touche <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
+                  {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
                 </p>
                 <ShortcutsList compact />
               </SectionCard>
@@ -744,7 +745,7 @@ const SettingsPage: React.FC = () => {
                   Guide d'utilisation
                 </h2>
                 <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                  Tout ce qu'il faut savoir pour maîtriser chaque fonctionnalité de Cosmo.
+                  {t('help.intro')}
                 </p>
               </div>
 
@@ -753,8 +754,8 @@ const SettingsPage: React.FC = () => {
                 style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 60%)' }}
               >
                 <div>
-                  <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">Guide complet</p>
-                  <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">Tâches, Agenda, Habitudes, OKR, Statistiques, Premium — tout y est.</p>
+                  <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('help.guideTitle')}</p>
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">{t('help.guideHint')}</p>
                 </div>
                 <button
                   onClick={() => navigate('/guide')}
@@ -772,8 +773,8 @@ const SettingsPage: React.FC = () => {
                     <HelpCircle size={15} className="text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Besoin d'aide ?</p>
-                    <p className="text-xs text-[rgb(var(--color-text-secondary))]">Notre équipe répond sous 24h.</p>
+                    <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('help.supportTitle')}</p>
+                    <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('help.supportHint')}</p>
                   </div>
                 </div>
                 <button onClick={handleOpenSupport}
@@ -791,8 +792,8 @@ const SettingsPage: React.FC = () => {
                       <BarChart3 size={15} className="text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Stats COSMO</p>
-                      <p className="text-xs text-[rgb(var(--color-text-secondary))]">Croissance, activité et conversion — réservé admin.</p>
+                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('help.adminTitle')}</p>
+                      <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('help.adminHint')}</p>
                     </div>
                   </div>
                   <button onClick={() => navigate('/admin')}
@@ -823,7 +824,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">{t('page.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={
                 deletingAccount ||
@@ -851,16 +852,17 @@ const MODULE_META: Record<ModuleKey, { label: string; description: string; icon:
 };
 
 function ModulesTab({ isDemo }: { isDemo: boolean }) {
+  const { t } = useT('settings');
   const activeModules = useActiveModules();
 
   const toggle = (key: ModuleKey) => {
     if (isDemo) {
-      toast.info('Les modules sont tous actifs en mode démo');
+      toast.info(t('modules.demoToast'));
       return;
     }
     const next = !activeModules[key];
     activeModulesStore.setModule(key, next);
-    toast.success(next ? `${MODULE_META[key].label} activé` : `${MODULE_META[key].label} masqué`);
+    toast.success(next ? t('modules.enabled', { module: t(`modules.${key}.label`) }) : t('modules.hidden', { module: t(`modules.${key}.label`) }));
   };
 
   return (
@@ -878,7 +880,7 @@ function ModulesTab({ isDemo }: { isDemo: boolean }) {
             Modules de l'application
           </h3>
           <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            Activez uniquement ce dont vous avez besoin. Les modules masqués disparaissent de la navigation ; vos données sont conservées. Tâches &amp; Dashboard sont toujours présents.
+            {t('modules.hint')}
           </p>
         </div>
 
@@ -899,14 +901,14 @@ function ModulesTab({ isDemo }: { isDemo: boolean }) {
                   <Icon size={18} className={isOn ? 'text-white' : 'text-[rgb(var(--color-text-muted))]'} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{meta.label}</p>
+                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t(`modules.${key}.label`)}</p>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{meta.description}</p>
                 </div>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={isOn}
-                  aria-label={`${isOn ? 'Masquer' : 'Activer'} le module ${meta.label}`}
+                  aria-label={isOn ? t('modules.hidden', { module: t(`modules.${key}.label`) }) : t('modules.enabled', { module: t(`modules.${key}.label`) })}
                   onClick={() => toggle(key)}
                   disabled={isDemo}
                   className={`relative w-11 h-6 rounded-full shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/50 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -926,7 +928,7 @@ function ModulesTab({ isDemo }: { isDemo: boolean }) {
 
         {isDemo && (
           <p className="text-[11px] text-[rgb(var(--color-text-muted))]">
-            En mode démo, tous les modules restent actifs.
+            {t('modules.demoNotice')}
           </p>
         )}
       </SectionCard>

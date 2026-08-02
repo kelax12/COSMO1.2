@@ -39,12 +39,14 @@ import {
 } from './statistics/sections';
 import type { StatSection, TimePeriod, WorkTimePeriodData } from './statistics/types';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 
 // ═══════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
 // ═══════════════════════════════════════════════════════════════════
 export default function StatisticsPage() {
+  const { t } = useT('statistics');
   const isMobile = useIsMobile();
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
@@ -89,7 +91,7 @@ export default function StatisticsPage() {
           weekStart.setDate(date.getDate() - (date.getDay() === 0 ? 6 : date.getDay() - 1));
           const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
           const label = formatDate(weekStart, { day: 'numeric', month: 'short' });
-          const tooltipLabel = `du ${formatDate(weekStart, { day: 'numeric', month: 'long' })} au ${formatDate(weekEnd, { day: 'numeric', month: 'long' })}`;
+          const tooltipLabel = t('chart.weekRange', { start: formatDate(weekStart, { day: 'numeric', month: 'long' }), end: formatDate(weekEnd, { day: 'numeric', month: 'long' }) });
           defs.push({ label, tooltipLabel, range: { start: getLocalDateString(weekStart), end: getLocalDateString(weekEnd) } });
         }
         break;
@@ -109,7 +111,7 @@ export default function StatisticsPage() {
         break;
     }
     return defs;
-  }, [selectedPeriod, now]);
+  }, [selectedPeriod, now, t]);
 
   // Plages fixes de la synthèse (Aujourd'hui / 7 j / 30 j / 365 j).
   const fixedRanges = useMemo<WorkTimeRange[]>(() => {
@@ -224,18 +226,18 @@ export default function StatisticsPage() {
   };
 
   const sections = [
-    { id: 'all', label: "Vue d'ensemble", icon: BarChart3, color: '#8B5CF6' },
-    { id: 'tasks', label: 'Tâches', icon: CheckSquare, color: '#3B82F6' },
-    { id: 'agenda', label: 'Agenda', icon: CalendarDays, color: '#ef4444' },
-    { id: 'okr', label: 'OKR', icon: Target, color: '#22C55E' },
-    { id: 'habits', label: 'Habitudes', icon: Repeat, color: '#EAB308' },
+    { id: 'all', label: t('sections.all'), icon: BarChart3, color: '#8B5CF6' },
+    { id: 'tasks', label: t('sections.tasks'), icon: CheckSquare, color: '#3B82F6' },
+    { id: 'agenda', label: t('sections.agenda'), icon: CalendarDays, color: '#ef4444' },
+    { id: 'okr', label: t('sections.okr'), icon: Target, color: '#22C55E' },
+    { id: 'habits', label: t('sections.habits'), icon: Repeat, color: '#EAB308' },
   ];
 
   const periods = [
-    { id: 'day', label: 'Jour' },
-    { id: 'week', label: 'Semaine' },
-    { id: 'month', label: 'Mois' },
-    { id: 'year', label: 'Année' },
+    { id: 'day', label: t('periods.day') },
+    { id: 'week', label: t('periods.week') },
+    { id: 'month', label: t('periods.month') },
+    { id: 'year', label: t('periods.year') },
   ];
 
   const sectionColor =
@@ -246,15 +248,17 @@ export default function StatisticsPage() {
 
   const areaChartData = workTimeData.map(d => ({ label: d.label, tooltipLabel: d.tooltipLabel ?? d.label, minutes: d.totalTime }));
 
+  // `t` en dépendance : le libellé de la série est traduit ici, il doit suivre
+  // la langue au même titre que la couleur suit la section.
   const areaChartConfig = useMemo<ChartConfig>(() => ({
-    minutes: { label: 'Temps (min)', color: sectionColor },
-  }), [sectionColor]);
+    minutes: { label: t('chart.timeSeries'), color: sectionColor },
+  }), [sectionColor, t]);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       <div className="mb-8">
-        <PageHeading variant="standard" className="mb-2">Statistiques</PageHeading>
-        <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Analysez votre productivité et vos performances</p>
+        <PageHeading variant="standard" className="mb-2">{t('page.title')}</PageHeading>
+        <p style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.subtitle')}</p>
       </div>
 
       {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}
@@ -275,10 +279,10 @@ export default function StatisticsPage() {
           // Libellés courts : la colonne fait 84-120px — « 365 derniers jours »
           // était tronqué en « 365 derniers jo… » sur mobile.
           const rows = [
-            { label: "Aujourd'hui", val: fixedStats.today },
-            { label: '7 jours', val: fixedStats.week },
-            { label: '30 jours', val: fixedStats.month },
-            { label: '365 jours', val: fixedStats.year },
+            { label: t('summary.today'), val: fixedStats.today },
+            { label: t('summary.days7'), val: fixedStats.week },
+            { label: t('summary.days30'), val: fixedStats.month },
+            { label: t('summary.days365'), val: fixedStats.year },
           ];
           const max = Math.max(rows[0].val, rows[1].val, rows[2].val, rows[3].val);
           return rows.map((r, idx) => {
@@ -327,15 +331,15 @@ export default function StatisticsPage() {
               <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <BarChart3 size={24} className="text-amber-600 dark:text-amber-400" />
               </div>
-              <h3 className="font-bold text-[rgb(var(--color-text-primary))] mb-1">Analyses détaillées</h3>
+              <h3 className="font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('gate.title')}</h3>
               <p className="text-[rgb(var(--color-text-muted))] text-sm mb-4">
-                Accédez aux graphiques et aux statistiques avancées avec un compte Premium.
+                {t('gate.description')}
               </p>
               <button
                 onClick={() => setShowPremiumGate(true)}
                 className="w-full px-4 py-2.5 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/30"
               >
-                Débloquer — pub ou abonnement
+                {t('gate.cta')}
               </button>
             </div>
           </div>
@@ -345,7 +349,7 @@ export default function StatisticsPage() {
       <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
         {/* Sélecteur de section */}
         <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-          <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Analyser :</span>
+          <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.analyse')}</span>
           <div className="flex rounded-xl p-1 overflow-x-auto flex-nowrap flex-1 md:flex-none" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
             {sections.map(section => {
               const Icon = section.icon;
@@ -418,7 +422,7 @@ export default function StatisticsPage() {
                 color: overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
               }}
             >
-              Voir le détail
+              {t('page.seeDetail')}
             </button>
           </div>
         </div>
@@ -440,10 +444,10 @@ export default function StatisticsPage() {
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {selectedSection === 'agenda' ? 'Durée totale des événements' : 'Temps investi'}
+              {selectedSection === 'agenda' ? t('chart.eventsDuration') : t('chart.timeInvested')}
             </h2>
             <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Moyenne : {formatTime(avgWorkTime)} · Total : {formatTime(totalWorkTime)}
+              {t('chart.averageAndTotal', { average: formatTime(avgWorkTime), total: formatTime(totalWorkTime) })}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -455,7 +459,7 @@ export default function StatisticsPage() {
                 className="w-4 h-4 rounded"
                 style={{ accentColor: '#3B82F6' }}
               />
-              <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>Objectif</span>
+              <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('chart.goal')}</span>
             </label>
             {showReferenceBar && (
               <div className="flex items-center gap-2">
@@ -471,7 +475,7 @@ export default function StatisticsPage() {
                     color: 'rgb(var(--color-text-primary))',
                   }}
                 />
-                <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>min</span>
+                <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('chart.minutes')}</span>
               </div>
             )}
           </div>
@@ -534,7 +538,7 @@ export default function StatisticsPage() {
         {!isMobile && selectedSection === 'habits' && (
           <div className="absolute top-0 right-0 bottom-0 border-l pl-5 flex flex-col overflow-hidden"
             style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
-            <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>Calendrier</p>
+            <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.calendar')}</p>
             <div className="flex-1 min-h-0 flex flex-col">
               <HabitHeatmap habits={habits} now={now} embedded />
             </div>
@@ -569,7 +573,7 @@ export default function StatisticsPage() {
       <PremiumGateModal
         isOpen={showPremiumGate}
         onClose={() => setShowPremiumGate(false)}
-        featureName="les analyses détaillées"
+        featureName={t('gate.featureName')}
       />
     </div>
   );

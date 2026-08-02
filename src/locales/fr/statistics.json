@@ -1,0 +1,69 @@
+{
+  "page": {
+    "title": "Statistiques",
+    "subtitle": "Analysez votre productivité et vos performances",
+    "analyse": "Analyser :",
+    "seeDetail": "Voir le détail",
+    "calendar": "Calendrier"
+  },
+  "sections": {
+    "all": "Vue d'ensemble",
+    "tasks": "Tâches",
+    "agenda": "Agenda",
+    "okr": "OKR",
+    "habits": "Habitudes"
+  },
+  "periods": {
+    "day": "Jour",
+    "week": "Semaine",
+    "month": "Mois",
+    "year": "Année"
+  },
+  "summary": {
+    "today": "Aujourd'hui",
+    "days7": "7 jours",
+    "days30": "30 jours",
+    "days365": "365 jours"
+  },
+  "chart": {
+    "eventsDuration": "Durée totale des événements",
+    "timeInvested": "Temps investi",
+    "averageAndTotal": "Moyenne : {{average}} · Total : {{total}}",
+    "goal": "Objectif",
+    "minutes": "min",
+    "timeSeries": "Temps (min)",
+    "weekRange": "du {{start}} au {{end}}"
+  },
+  "gate": {
+    "title": "Analyses détaillées",
+    "description": "Accédez aux graphiques et aux statistiques avancées avec un compte Premium.",
+    "cta": "Débloquer — pub ou abonnement",
+    "featureName": "les analyses détaillées"
+  },
+  "details": {
+    "globalTimeSplit": "Répartition globale du temps",
+    "total": "Total",
+    "byColor": "Répartition par couleur",
+    "byPriority": "Répartition par priorité",
+    "priority": "Priorité {{level}}",
+    "byCategory": "Répartition par catégorie",
+    "eventsByWorkTime": "Événements par temps de travail",
+    "noEvent": "Aucun événement",
+    "totalObjectives": "Total Objectifs",
+    "workedObjectives": "Objectifs travaillés",
+    "totalRealTime": "Temps total réel",
+    "effortByOkr": "Répartition de l'effort par OKR",
+    "noEffort": "Aucun effort enregistré.",
+    "byHabit": "Détail par habitude {{period}}",
+    "noHabit": "Aucune habitude complétée ou active sur cette période.",
+    "periodDay": "aujourd'hui",
+    "periodWeek": "(7 j)",
+    "periodMonth": "(30 j)",
+    "periodYear": "(365 j)"
+  },
+  "heatmap": {
+    "less": "Moins",
+    "more": "Plus",
+    "title": "Calendrier de complétion"
+  }
+}

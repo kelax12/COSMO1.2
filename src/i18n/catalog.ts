@@ -52,6 +52,8 @@ import frErrors from '@/locales/fr/errors.json';
 import frHabits from '@/locales/fr/habits.json';
 import frOkr from '@/locales/fr/okr.json';
 import frSeo from '@/locales/fr/seo.json';
+import frSettings from '@/locales/fr/settings.json';
+import frStatistics from '@/locales/fr/statistics.json';
 import frTasks from '@/locales/fr/tasks.json';
 
 /** Forme du catalogue de référence, par namespace — base du typage des clés. */
@@ -70,6 +72,10 @@ interface CatalogShapes {
   okr: typeof frOkr;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: typeof frSeo;
+  /** Réglages — profil, sécurité, apparence, modules, données, aide. */
+  settings: typeof frSettings;
+  /** Statistiques — sections, périodes, graphique, détails, heatmap. */
+  statistics: typeof frStatistics;
   /** Page Tâches — en-tête, filtres, barre de listes, section équipe. */
   tasks: typeof frTasks;
 }
@@ -123,6 +129,8 @@ registry[DEFAULT_LOCALE] = {
   habits: frHabits as CatalogNode,
   okr: frOkr as CatalogNode,
   seo: frSeo as CatalogNode,
+  settings: frSettings as CatalogNode,
+  statistics: frStatistics as CatalogNode,
   tasks: frTasks as CatalogNode,
 };
 
