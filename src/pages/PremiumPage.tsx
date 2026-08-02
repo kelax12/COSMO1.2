@@ -12,8 +12,10 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { containerVariants, itemVariants, features, COMPARISON_ROWS } from './premium/data';
 import { BottomSheet } from '@/components/mobile';
+import { useT } from '@/i18n/useT';
 
 export function PremiumPage() {
+  const { t } = useT('premium');
   const { user } = useAuth();
   const { isPremium, addTokens, subscription, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
@@ -25,19 +27,21 @@ export function PremiumPage() {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('checkout');
     if (status === 'success') {
-      toast.success('Abonnement activé ! Bienvenue chez Cosmo Premium.');
+      toast.success(t('page.subscribed'));
       // Refresh billing immediately then once more after a short delay
       // to account for webhook processing time
       refreshBillingStatus();
-      const t = setTimeout(() => refreshBillingStatus(), 3000);
+      // `timer` et non `t` : `t` est désormais le traducteur du composant, le
+      // masquer ici casserait les appels suivants dans le même effet.
+      const timer = setTimeout(() => refreshBillingStatus(), 3000);
       window.history.replaceState({}, '', '/premium');
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
     if (status === 'cancelled') {
-      toast.info('Paiement annulé.');
+      toast.info(t('page.paymentCancelled'));
       window.history.replaceState({}, '', '/premium');
     }
-  }, [refreshBillingStatus]);
+  }, [refreshBillingStatus, t]);
 
   if (!user) return null;
 
@@ -59,7 +63,7 @@ export function PremiumPage() {
       if (error) throw error;
 
       if (data?.error === 'already_subscribed') {
-        toast.info('Vous avez déjà un abonnement actif.');
+        toast.info(t('page.alreadySubscribed'));
         await refreshBillingStatus();
         return;
       }
@@ -70,7 +74,7 @@ export function PremiumPage() {
         throw new Error('No checkout URL returned');
       }
     } catch {
-      toast.error("Erreur lors de la création du paiement. Réessayez.");
+      toast.error(t('page.paymentError'));
     } finally {
       setIsCheckoutLoading(false);
     }
@@ -79,12 +83,12 @@ export function PremiumPage() {
   const handleAdComplete = async () => {
     try {
       await addTokens(1);
-      toast.success('+1 jour Premium crédité !');
+      toast.success(t('page.dayCredited'));
     } catch (err) {
       if (isDailyAdLimitError(err)) {
         toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
       } else {
-        toast.error('Erreur lors du crédit du jour');
+        toast.error(t('page.creditError'));
       }
     }
     setShowAdModal(false);
@@ -108,7 +112,7 @@ export function PremiumPage() {
               </PageHeading>
             </motion.div>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-blue-200/80 mb-12">
-            Débloquez tout le potentiel de votre productivité
+            {t('page.subtitle')}
           </p>
 
           <motion.div
@@ -120,7 +124,7 @@ export function PremiumPage() {
               <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-3 flex items-center gap-2">
                 {premium ? (
                   <>
-                    Vous êtes Premium !
+                    {t('page.youArePremium')}
                   </>
                 ) : (
                   <>
@@ -131,18 +135,18 @@ export function PremiumPage() {
               </h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Jours Premium:</span>
+                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">{t('page.premiumDays')}</span>
                   <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-400/30">
                     <Zap size={18} className="text-amber-500" />
                     <span className="font-bold text-xl text-amber-600 dark:text-amber-300">{subscription?.premiumTokens ?? 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Win Streak:</span>
+                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">{t('page.winStreak')}</span>
                   <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-400/30">
                     <span className="text-lg">🔥</span>
                     <span className="font-bold text-xl text-orange-600 dark:text-orange-300">{subscription?.winStreak ?? 0}</span>
-                    <span className="text-orange-500 dark:text-orange-400/70 text-sm font-medium">jours</span>
+                    <span className="text-orange-500 dark:text-orange-400/70 text-sm font-medium">{t('page.days')}</span>
                   </div>
                 </div>
               </div>
@@ -181,7 +185,7 @@ export function PremiumPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Crown size={24} />
-                  <span>Passer Premium</span>
+                  <span>{t('page.goPremium')}</span>
                 </motion.button>
               )}
             </div>
@@ -202,14 +206,14 @@ export function PremiumPage() {
                   >
                     <div className="relative">
                       <div className="flex items-center gap-3 mb-4">
-                        <h4 className="font-bold text-emerald-700 dark:text-emerald-300">Regarder une publicité</h4>
+                        <h4 className="font-bold text-emerald-700 dark:text-emerald-300">{t('page.watchAdTitle')}</h4>
                       </div>
                       <p className="text-emerald-600 dark:text-emerald-400/80 mb-4 text-sm font-medium">
-                        Regardez une courte vidéo pour gagner 1 jour Premium.
+                        {t('page.watchAdDesc')}
                       </p>
                       <div className="text-center mb-4">
                         <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">+1</div>
-                        <div className="text-sm text-emerald-500">jour Premium</div>
+                        <div className="text-sm text-emerald-500">{t('page.premiumDay')}</div>
                       </div>
                         <motion.button
                           onClick={() => setShowAdModal(true)}
@@ -218,7 +222,7 @@ export function PremiumPage() {
                           whileTap={{ scale: 0.98 }}
                         >
                         <Play size={18} />
-                        <span>Regarder pub (+1 jour)</span>
+                        <span>{t('page.watchAdCta')}</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -229,14 +233,14 @@ export function PremiumPage() {
                   >
                     <div className="relative">
                       <div className="flex items-center gap-3 mb-4">
-                        <h4 className="font-bold text-[rgb(var(--color-text-primary))]">Abonnement mensuel</h4>
+                        <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{t('page.monthlyTitle')}</h4>
                       </div>
                       <p className="text-[rgb(var(--color-text-secondary))] mb-4 text-sm font-medium">
                         Souscrivez pour 30 jours de statut Premium complet.
                       </p>
                       <div className="text-center mb-4">
                         <div className="text-4xl font-bold text-[rgb(var(--color-accent))] mb-1">{formatCurrency(PREMIUM_MONTHLY_EUR)}</div>
-                        <div className="text-sm text-[rgb(var(--color-text-secondary))]">par mois</div>
+                        <div className="text-sm text-[rgb(var(--color-text-secondary))]">{t('page.perMonth')}</div>
                       </div>
                         <motion.button
                           onClick={handleCheckout}
@@ -248,7 +252,7 @@ export function PremiumPage() {
                         {isCheckoutLoading ? (
                           <Loader2 size={18} className="animate-spin" />
                         ) : null}
-                        <span>S'abonner maintenant</span>
+                        <span>{t('page.subscribeNow')}</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -260,7 +264,7 @@ export function PremiumPage() {
           variants={itemVariants}
         >
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">
-            Fonctionnalités Premium
+            {t('page.featuresTitle')}
           </h3>
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -318,7 +322,7 @@ export function PremiumPage() {
                 variants={itemVariants}
               >
                 <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white text-center tracking-tight leading-tight">
-                  Comment ça <span className="text-transparent bg-clip-text bg-[rgb(var(--color-accent-solid))] to-sky-600 dark:from-blue-400 dark:to-sky-400">marche</span> ?
+                  {t('page.howItWorks')} <span className="text-transparent bg-clip-text bg-[rgb(var(--color-accent-solid))] to-sky-600 dark:from-blue-400 dark:to-sky-400">{t('page.howItWorksAccent')}</span> ?
                 </h3>
               </motion.div>
 
@@ -348,7 +352,7 @@ export function PremiumPage() {
                     {
                       icon: Zap,
                       title: 'Activation',
-                      desc: '1 jour premium est consommé chaque jour pour maintenir votre statut Premium',
+                      desc: t('page.consumeDesc'),
                       color: 'bg-[rgb(var(--color-accent-solid))] to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
                       glow: 'group-hover:shadow-blue-500/40',
                       iconColor: 'text-blue-50',
@@ -359,8 +363,8 @@ export function PremiumPage() {
                     },
                     {
                       icon: Crown,
-                      title: 'Liberté',
-                      desc: 'Accédez à toutes les fonctionnalités Premium tant que vous avez des jours',
+                      title: t('page.freedomTitle'),
+                      desc: t('page.freedomDesc'),
                       color: 'from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600',
                       glow: 'group-hover:shadow-purple-500/40',
                       iconColor: 'text-purple-50',
@@ -414,7 +418,7 @@ export function PremiumPage() {
             Gratuit ou Premium ?
           </h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
-            Tout ce dont vous avez besoin reste gratuit, partage de tâches inclus. Premium retire la pub des habitudes et débloque les analyses avancées.
+            {t('page.freeNotice')}
           </p>
 
           {(() => {
@@ -434,8 +438,8 @@ export function PremiumPage() {
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="border-b border-[rgb(var(--color-border))]">
-                      <th className="text-left py-3 px-2 font-semibold text-[rgb(var(--color-text-secondary))]">Fonctionnalité</th>
-                      <th className="py-3 px-2 sm:px-4 font-semibold text-[rgb(var(--color-text-secondary))] text-center w-24 sm:w-32">Gratuit</th>
+                      <th className="text-left py-3 px-2 font-semibold text-[rgb(var(--color-text-secondary))]">{t('page.colFeature')}</th>
+                      <th className="py-3 px-2 sm:px-4 font-semibold text-[rgb(var(--color-text-secondary))] text-center w-24 sm:w-32">{t('page.colFree')}</th>
                       <th className="py-3 px-2 sm:px-4 font-bold text-amber-600 dark:text-amber-400 text-center w-24 sm:w-32">
                         <span className="inline-flex items-center gap-1.5">
                           <Crown size={14} />
@@ -515,7 +519,7 @@ export function PremiumPage() {
               <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">Regarder une pub</p>
+              <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">{t('page.watchAdShort')}</p>
               <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
                 Gratuit · Gagne +1 jour Premium
               </p>
@@ -541,7 +545,7 @@ export function PremiumPage() {
               )}
             </div>
             <div>
-              <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">S'abonner</p>
+              <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">{t('page.subscribeShort')}</p>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
                 {formatCurrency(PREMIUM_MONTHLY_EUR)} / mois · 30 jours Premium
               </p>

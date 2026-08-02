@@ -9,6 +9,7 @@ import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdModal from './AdModal';
+import { useT } from '@/i18n/useT';
 
 interface PremiumGateModalProps {
   isOpen: boolean;
@@ -17,7 +18,11 @@ interface PremiumGateModalProps {
   featureName?: string;
 }
 
-export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctionnalité' }: PremiumGateModalProps) {
+export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateModalProps) {
+  const { t } = useT('premium');
+  // Valeur par défaut résolue ICI et non dans la signature : un défaut de
+  // paramètre est évalué à l'appel, mais `t` n'existe pas au niveau du module.
+  const feature = featureName ?? t('gate.defaultFeature');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { addTokens, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
@@ -26,13 +31,13 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
   const handleAdComplete = async () => {
     try {
       await addTokens(1);
-      toast.success('+1 jour Premium crédité ! Vous pouvez maintenant accéder à ' + featureName + '.');
+      toast.success(t('gate.creditedFor', { feature }));
       await refreshBillingStatus();
     } catch (err) {
       if (isDailyAdLimitError(err)) {
         toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
       } else {
-        toast.error('Erreur lors du crédit — réessayez.');
+        toast.error(t('gate.creditError'));
       }
     }
     setShowAdModal(false);
@@ -51,7 +56,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
 
       if (error) throw error;
       if (data?.error === 'already_subscribed') {
-        toast.info('Vous avez déjà un abonnement actif.');
+        toast.info(t('gate.alreadySubscribed'));
         await refreshBillingStatus();
         onClose();
         return;
@@ -62,7 +67,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
         throw new Error('No checkout URL');
       }
     } catch {
-      toast.error('Erreur paiement — réessayez.');
+      toast.error(t('gate.paymentError'));
     } finally {
       setIsCheckoutLoading(false);
     }
@@ -112,7 +117,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-sm">
                     <Crown size={18} className="text-amber-900" />
                   </div>
-                  <span className="font-bold text-amber-900 dark:text-amber-100 text-lg">Fonctionnalité Premium</span>
+                  <span className="font-bold text-amber-900 dark:text-amber-100 text-lg">{t('gate.title')}</span>
                 </div>
                 <button
                   onClick={onClose}
@@ -126,7 +131,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
               {/* Body */}
               <div className="p-6">
                 <p className="text-[rgb(var(--color-text-secondary))] text-sm mb-6 text-center">
-                  Débloquez <span className="font-semibold text-[rgb(var(--color-text-primary))]">{featureName}</span> en regardant une pub gratuite ou en souscrivant.
+                  Débloquez <span className="font-semibold text-[rgb(var(--color-text-primary))]">{feature}</span> en regardant une pub gratuite ou en souscrivant.
                 </p>
 
                 <div className="space-y-3">
@@ -141,8 +146,8 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
                       <Play size={18} className="text-white" />
                     </div>
                     <div className="text-left flex-1">
-                      <div className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">Regarder une pub</div>
-                      <div className="text-emerald-600 dark:text-emerald-400/80 text-xs">15 secondes → +1 jour Premium gratuit</div>
+                      <div className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">{t('gate.watchAd')}</div>
+                      <div className="text-emerald-600 dark:text-emerald-400/80 text-xs">{t('gate.watchAdHint')}</div>
                     </div>
                     <div className="flex items-center gap-1 bg-emerald-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shrink-0">
                       <Zap size={11} />
@@ -153,7 +158,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
                   {/* Séparateur */}
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                    <span className="text-xs text-slate-400 font-medium">ou</span>
+                    <span className="text-xs text-slate-400 font-medium">{t('gate.or')}</span>
                     <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
                   </div>
 
@@ -173,12 +178,12 @@ export function PremiumGateModal({ isOpen, onClose, featureName = 'cette fonctio
                       )}
                     </div>
                     <div className="text-left flex-1">
-                      <div className="font-bold text-blue-800 dark:text-blue-300 text-sm">S'abonner</div>
-                      <div className="text-blue-600 dark:text-blue-400/80 text-xs">30 jours Premium complet sans pub</div>
+                      <div className="font-bold text-blue-800 dark:text-blue-300 text-sm">{t('gate.subscribe')}</div>
+                      <div className="text-blue-600 dark:text-blue-400/80 text-xs">{t('gate.subscribeHint')}</div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="font-black text-blue-700 dark:text-blue-300 text-base leading-none">{formatCurrency(PREMIUM_MONTHLY_EUR)}</div>
-                      <div className="text-blue-500 text-xs">/mois</div>
+                      <div className="text-blue-500 text-xs">{t('gate.perMonth')}</div>
                     </div>
                   </motion.button>
                 </div>
