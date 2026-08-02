@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '@/i18n/useT';
 
 interface PageErrorStateProps {
   /** Ce qui n'a pas pu charger : « les tâches », « l'agenda », « les OKR »… */
@@ -13,6 +14,7 @@ interface PageErrorStateProps {
  * l'utilisateur croit avoir perdu ses données, ce qui est pire qu'une erreur.
  */
 const PageErrorState: React.FC<PageErrorStateProps> = ({ subject, error, onRetry }) => {
+  const { t } = useT('common');
   return (
     <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
       <div className="text-5xl" aria-hidden="true">⚠️</div>
@@ -20,13 +22,13 @@ const PageErrorState: React.FC<PageErrorStateProps> = ({ subject, error, onRetry
         Impossible de charger {subject}
       </h2>
       <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
-        {error?.message || 'Vérifie ta connexion internet, puis réessaie.'}
+        {error?.message || t('pageError.hint')}
       </p>
       <button
         onClick={onRetry}
         className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold text-sm"
       >
-        Réessayer
+        {t('pageError.retry')}
       </button>
     </div>
   );

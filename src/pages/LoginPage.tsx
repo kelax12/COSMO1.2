@@ -2,8 +2,10 @@ import { Link, useNavigate } from 'react-router';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import AuthForm from '@/components/AuthForm';
 import Logo from '@/components/Logo';
+import { useT } from '@/i18n/useT';
 
 const LoginPage = () => {
+  const { t } = useT('common');
   useSeoMeta({
     title: 'Connexion – Cosmo, application de productivité',
     description: 'Connectez-vous à Cosmo pour accéder à vos tâches, habitudes, agenda et OKR.',
@@ -16,7 +18,7 @@ const LoginPage = () => {
       className="min-h-[100dvh] flex flex-col items-center justify-center p-4 gap-6"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
-      <Link to="/" aria-label="Retour à l'accueil Cosmo" className="shrink-0">
+      <Link to="/" aria-label={t('auth.backHome')} className="shrink-0">
         <Logo showText />
       </Link>
       <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl">

@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Cookie, X, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
+import { useT } from '@/i18n/useT';
 
 type CookieConsent = 'accepted' | 'refused' | null;
 
 const STORAGE_KEY = 'cosmo_cookie_consent';
 
 const CookieBanner: React.FC = () => {
+  const { t } = useT('common');
   const [consent, setConsent] = useState<CookieConsent>(null);
   const [visible, setVisible] = useState(false);
 
@@ -38,7 +40,7 @@ const CookieBanner: React.FC = () => {
     <AnimatePresence>
       {visible && (
         <motion.aside
-          aria-label="Bannière cookies"
+          aria-label={t('cookies.banner')}
           initial={{ y: 120, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
@@ -60,7 +62,7 @@ const CookieBanner: React.FC = () => {
                   <Cookie size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
                 </div>
                 <span className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))]">
-                  Cookies
+                  {t('cookies.title')}
                 </span>
               </div>
               <button
@@ -83,14 +85,14 @@ const CookieBanner: React.FC = () => {
                 {/* A11y: text-green-600 (#16a34a) on white = 3.29:1 (WCAG AA fails).
                     text-green-700 (#15803d) = 4.78:1 → passes 4.5:1. */}
                 <span className="text-[11px] font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
-                  Aucun tracking publicitaire
+                  {t('cookies.noTracking')}
                 </span>
               </div>
 
               <p className="text-[13px] text-[rgb(var(--color-text-muted))] leading-relaxed">
-                Uniquement des cookies{' '}
-                <strong className="text-[rgb(var(--color-text-primary))] font-semibold">strictement nécessaires</strong>
-                {' '}au fonctionnement (session, préférences).{' '}
+                {t('cookies.onlyCookies')}
+                <strong className="text-[rgb(var(--color-text-primary))] font-semibold">{t('cookies.strictlyNecessary')}</strong>
+                {t('cookies.purpose')}
                 {/* A11y: links inside text blocks need a non-color affordance
                     (WCAG 1.4.1). underline is always on, not only :hover. */}
                 <Link
@@ -98,7 +100,7 @@ const CookieBanner: React.FC = () => {
                   className="text-blue-700 dark:text-blue-300 underline underline-offset-2"
                   onClick={handleRefuse}
                 >
-                  En savoir plus
+                  {t('cookies.learnMore')}
                 </Link>.
               </p>
             </div>
@@ -116,7 +118,7 @@ const CookieBanner: React.FC = () => {
                   transition-colors active:scale-[0.97] transform-gpu
                 "
               >
-                Refuser
+                {t('cookies.decline')}
               </button>
               <button
                 onClick={handleAccept}
@@ -129,7 +131,7 @@ const CookieBanner: React.FC = () => {
                   shadow-sm shadow-blue-500/30
                 "
               >
-                Accepter
+                {t('cookies.accept')}
               </button>
             </div>
 

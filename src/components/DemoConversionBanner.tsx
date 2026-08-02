@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { X, CloudUpload } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useT } from '@/i18n/useT';
 
 const DISMISS_KEY = 'cosmo_demo_banner_dismissed';
 
@@ -15,6 +16,7 @@ const DISMISS_KEY = 'cosmo_demo_banner_dismissed';
  * pas à chaque page.
  */
 const DemoConversionBanner: React.FC = () => {
+  const { t } = useT('common');
   const { isDemo } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<boolean>(() => {
@@ -31,26 +33,26 @@ const DemoConversionBanner: React.FC = () => {
   return (
     <div
       role="region"
-      aria-label="Mode démo"
+      aria-label={t('demoBanner.aria')}
       className="flex items-center gap-3 px-4 py-2.5 bg-[rgb(var(--color-accent-solid))]/10 border-b border-[rgb(var(--color-accent-solid))]/20 text-label md:text-sm"
     >
       <CloudUpload size={16} className="shrink-0 text-blue-400" aria-hidden="true" />
       <p className="flex-1 text-[rgb(var(--color-text-secondary))] leading-snug">
-        <span className="font-medium text-[rgb(var(--color-text-primary))]">Mode démo</span>
-        {' '}— données d'exemple, locales à cet appareil.{' '}
+        <span className="font-medium text-[rgb(var(--color-text-primary))]">{t('demoBanner.label')}</span>
+        {t('demoBanner.text')}
         <button
           type="button"
           onClick={() => navigate('/signup')}
           className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
         >
-          Créez un compte
+          {t('demoBanner.createAccount')}
         </button>
-        {' '}pour démarrer avec vos vraies données, synchronisées partout.
+        {t('demoBanner.rest')}
       </p>
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Masquer la bannière démo"
+        aria-label={t('demoBanner.hide')}
         className="shrink-0 min-w-touch min-h-touch md:min-w-0 md:min-h-0 md:p-1.5 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <X size={16} aria-hidden="true" />
