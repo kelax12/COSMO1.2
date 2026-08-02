@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Play, X, Zap, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useT } from '@/i18n/useT';
 
 declare global {
   interface Window {
@@ -35,6 +36,7 @@ interface AdModalProps {
 }
 
 const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
+  const { t } = useT('premium');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const [adState, setAdState] = useState<'loading' | 'playing' | 'completed'>('loading');
   const [countdown, setCountdown] = useState(15);
@@ -129,7 +131,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
         <div className="border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Play size={24} />
-            <span className="font-bold">Publicité Sponsorisée</span>
+            <span className="font-bold">{t('ad.sponsored')}</span>
           </div>
           <button onClick={onClose} aria-label="Fermer" className="min-w-touch min-h-touch flex items-center justify-center hover:bg-[rgb(var(--color-hover))] rounded-lg transition-colors">
             <X size={20} />
@@ -142,7 +144,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
           {adState === 'loading' && (
             <div className="text-center text-white py-12">
               <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4" />
-              <p className="text-lg">Chargement de la publicité...</p>
+              <p className="text-lg">{t('ad.loading')}</p>
             </div>
           )}
 
@@ -179,14 +181,14 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
           {adState === 'completed' && (
             <div className="text-center text-white py-10">
               <div className="text-6xl mb-4">✅</div>
-              <h2 className="text-2xl font-bold mb-4">Publicité terminée !</h2>
-              <p className="text-lg mb-6">Vous avez gagné 1 jeton Premium</p>
+              <h2 className="text-2xl font-bold mb-4">{t('ad.finished')}</h2>
+              <p className="text-lg mb-6">{t('ad.earned')}</p>
               <button
                 onClick={handleComplete}
                 className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition-colors flex items-center gap-2 mx-auto"
               >
                 <Zap size={20} />
-                Récupérer le jeton
+                {t('ad.claim')}
               </button>
             </div>
           )}
@@ -194,7 +196,7 @@ const AdModal: React.FC<AdModalProps> = ({ isOpen, onClose, onAdComplete }) => {
 
         {/* Footer */}
         <div className="p-4 bg-[rgb(var(--color-background))] text-center text-sm text-[rgb(var(--color-text-secondary))] transition-colors">
-          <p>En regardant cette publicité, vous soutenez le développement de Cosmo</p>
+          <p>{t('ad.support')}</p>
         </div>
       </motion.div>
     </motion.div>
