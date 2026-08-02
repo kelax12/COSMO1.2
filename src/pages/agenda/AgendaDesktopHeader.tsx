@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 import type FullCalendar from '@fullcalendar/react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -29,6 +30,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
   handleViewChange, currentView, calendarRef, setShowRecurringManager, handleOpenAddModal,
   isTodayVisible,
 }) => {
+  const { t } = useT('agenda');
   // Aujourd'hui est déjà affiché : le bouton « Aujourd'hui » ne ferait rien —
   // il ouvre plutôt un sélecteur pour naviguer vers une autre date.
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,20 +55,20 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 }}
               >
                 <CalendarIcon size={18} />
-                <span className="font-medium text-sm lg:text-base">Tâches</span>
+                <span className="font-medium text-sm lg:text-base">{t('nav.tasks')}</span>
               </motion.button>
 
               <div className="flex items-center gap-2 lg:gap-3">
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomIn}
                     disabled={zoomLevel === 0}
-                    aria-label="Zoomer le calendrier"
+                    aria-label={t('nav.zoomIn')}
                     className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
                     <ZoomIn size={18} aria-hidden="true" />
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomOut}
                     disabled={zoomLevel === zoomDurations.length - 1}
-                    aria-label="Dézoomer le calendrier"
+                    aria-label={t('nav.zoomOut')}
                     className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
                     <ZoomOut size={18} aria-hidden="true" />
                   </motion.button>
@@ -82,7 +84,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                           ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                           : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                       }`}>
-                      {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
+                      {view === 'timeGridDay' ? t('view.day') : view === 'timeGridWeek' ? t('view.week') : t('view.month')}
                     </button>
                   ))}
                 </div>
@@ -90,7 +92,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 <div className="flex items-center gap-1">
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => calendarRef.current?.getApi().prev()}
-                    aria-label="Période précédente"
+                    aria-label={t('nav.prevPeriod')}
                     className="p-2 rounded-lg transition-colors hover:text-blue-600"
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <ChevronLeft size={18} aria-hidden="true" />
@@ -106,7 +108,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                         }}
                         className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:text-blue-600 hover:border-[rgb(var(--color-accent-solid-hover))]/60"
                         style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}>
-                        Aujourd'hui
+                        {t('nav.today')}
                       </motion.button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 z-[100]" align="center" sideOffset={8}>
@@ -125,7 +127,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                   </Popover>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => calendarRef.current?.getApi().next()}
-                    aria-label="Période suivante"
+                    aria-label={t('nav.nextPeriod')}
                     className="p-2 rounded-lg transition-colors hover:text-blue-600"
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <ChevronRight size={18} aria-hidden="true" />
@@ -138,13 +140,13 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                   onClick={() => setShowRecurringManager(true)}
                   className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-all border shrink-0 whitespace-nowrap"
                   style={{ backgroundColor: 'rgb(var(--color-chip-bg))', borderColor: 'rgb(var(--color-chip-border))', color: 'rgb(var(--color-text-primary))' }}>
-                  <span className="text-sm lg:text-base">Récurrences</span>
+                  <span className="text-sm lg:text-base">{t('nav.recurrences')}</span>
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={handleOpenAddModal}
                   className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0 whitespace-nowrap">
                   <Plus size={18} />
-                  <span className="font-medium text-sm lg:text-base">Nouveau</span>
+                  <span className="font-medium text-sm lg:text-base">{t('nav.new')}</span>
                 </motion.button>
               </div>
             </div>

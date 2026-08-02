@@ -11,6 +11,7 @@ import {
   getCatalog,
   getFallbackCatalog,
   hasCatalog,
+  listLazyLocales,
   listNamespaces,
   loadCatalogs,
   registerCatalog,
@@ -33,6 +34,19 @@ describe('découverte automatique des catalogues', () => {
           `catalogue ${locale}/${namespace}.json introuvable ou non enregistré`
         ).toBe(true);
       }
+    }
+  });
+
+  it('exclut la locale de référence du chargement paresseux, et elle seule', () => {
+    // Le motif du glob exclut `fr` en dur. Si `DEFAULT_LOCALE` change sans que
+    // le motif suive, l'ancienne référence serait chargée deux fois (statique +
+    // dynamique) et la nouvelle n'aurait aucun chargeur. Rien ne casserait
+    // visiblement — d'où ce test.
+    const lazy = listLazyLocales();
+    expect(lazy).not.toContain(DEFAULT_LOCALE);
+    for (const locale of SUPPORTED_LOCALES) {
+      if (locale === DEFAULT_LOCALE) continue;
+      expect(lazy, `\`${locale}\` est servie mais n'a aucun chargeur`).toContain(locale);
     }
   });
 

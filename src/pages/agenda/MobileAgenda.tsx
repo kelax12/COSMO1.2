@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { format, addDays, isSameDay, isToday } from 'date-fns';
+import { useT } from '@/i18n/useT';
 import { getDateLocale } from '@/i18n/format';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -46,15 +47,16 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onNextMonth,
   onToday,
 }) => {
+  const { t } = useT('agenda');
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: getDateLocale() });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
   const isMonthView = viewMode === 'dayGridMonth';
 
   // Segmented view selector
   const views: { key: MobileView; label: string }[] = [
-    { key: 'timeGridDay', label: 'Jour' },
-    { key: 'timeGrid2Day', label: '2J' },
-    { key: 'dayGridMonth', label: 'Mois' },
+    { key: 'timeGridDay', label: t('view.day') },
+    { key: 'timeGrid2Day', label: t('view.twoDays') },
+    { key: 'dayGridMonth', label: t('view.month') },
   ];
 
   return (
@@ -76,7 +78,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           }}
         >
           <Calendar size={15} />
-          <span>Tâches</span>
+          <span>{t('nav.tasks')}</span>
         </button>
 
         {/* Right */}
@@ -106,7 +108,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           {/* Aujourd'hui (#16) */}
           <button
             onClick={onToday}
-            aria-label="Revenir à aujourd'hui"
+            aria-label={t('nav.backToToday')}
             className="px-2 min-h-touch min-w-touch flex items-center justify-center rounded-lg text-xs font-semibold border"
             style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
           >

@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "tasks": "Tasks",
+    "recurrences": "Recurring",
+    "new": "New",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "prevPeriod": "Previous period",
+    "nextPeriod": "Next period",
+    "backToToday": "Back to today",
+    "today": "Today"
+  },
+  "view": {
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "twoDays": "2D"
+  },
+  "event": {
+    "uncategorized": "Uncategorized",
+    "addedBy": "Added by {{name}}",
+    "occurrenceDeleted": "Occurrence deleted",
+    "eventDeleted": "Event deleted"
+  },
+  "quickCreate": {
+    "titlePlaceholder": "Event title",
+    "categoryPlaceholder": "Category",
+    "addCategory": "Add a category",
+    "cancel": "Cancel",
+    "create": "Create"
+  },
+  "eventToTask": {
+    "title": "What should happen to this event?",
+    "subtitle": "It isn't linked to any task",
+    "close": "Close",
+    "delete": "Delete",
+    "convert": "Turn into a task"
+  },
+  "slotReview": {
+    "title": "Time slot finished",
+    "question": "Did you get this task done?",
+    "snooze": "Later",
+    "remaining_one": "{{count}} slot left to review",
+    "remaining_other": "{{count}} slots left to review",
+    "validate": "Yes, complete the task",
+    "postpone": "Reschedule",
+    "delete": "Delete"
+  },
+  "sidebar": {
+    "title": "Available tasks",
+    "close": "Close the task panel",
+    "search": "Search a task...",
+    "filterCategory": "Filter by category",
+    "allCategories": "All categories",
+    "filterPriority": "Filter by priority",
+    "allPriorities": "All priorities",
+    "priority": "Priority {{level}}",
+    "noResults": "No tasks found",
+    "uncategorized": "Uncategorized",
+    "noDeadline": "No due date",
+    "deadline": "Due: {{date}}",
+    "dragHint": "↗ Drag onto the calendar",
+    "taskOptions": "Task options",
+    "editTask": "Edit task",
+    "duplicateTask": "Duplicate task",
+    "deleteLinkedEvent": "Delete the linked event",
+    "deleteTask": "Delete task",
+    "taskDeleted": "Task deleted",
+    "copySuffix": "{{name}} (copy)",
+    "help": {
+      "closeTutorial": "Close the tips",
+      "showGuide": "Show the guide",
+      "showGuideAria": "Show the usage guide",
+      "heading": "How to use:",
+      "step1": "• Drag a task onto the calendar",
+      "step2": "• Its properties carry over automatically",
+      "step3": "• The duration sets the event length"
+    }
+  },
+  "recurrence": {
+    "title": "Recurring events",
+    "empty": "No recurring events yet.",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "generic": "Recurring",
+    "edit": "Edit",
+    "editAria": "Edit recurrence",
+    "deleteAria": "Delete recurrence",
+    "deleteLabel": "Recurrence"
+  }
+}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X as CloseIcon, Pencil, Trash2 } from 'lucide-react';
 import { useUpdateEvent, type CalendarEvent } from '@/modules/events';
 import { formatDate, formatTime } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 interface RecurringEventsManagerProps {
   isOpen: boolean;
@@ -18,7 +19,9 @@ interface RecurringEventsManagerProps {
 const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
   isOpen, setShowRecurringManager, events, updateEventMutation,
   setSelectedEvent, setSelectedInstanceDate, setShowEditEventModal,
-}) => (
+}) => {
+  const { t } = useT('agenda');
+  return (
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -35,7 +38,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
               style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', maxWidth: 'calc(32rem * 1.08)' }}
             >
               <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                <h3 className="text-base font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements récurrents</h3>
+                <h3 className="text-base font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('recurrence.title')}</h3>
                 <button onClick={() => setShowRecurringManager(false)}
                   className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -48,7 +51,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
                   if (recurring.length === 0) {
                     return (
                       <div className="px-6 py-10 text-center">
-                        <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Aucun événement récurrent pour le moment.</p>
+                        <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('recurrence.empty')}</p>
                       </div>
                     );
                   }
@@ -56,7 +59,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
                     <ul className="divide-y" style={{ borderColor: 'rgb(var(--color-border))' }}>
                       {recurring.map(ev => {
                         const startDate = new Date(ev.start);
-                        const label = ev.recurrence === 'daily' ? 'Quotidien' : ev.recurrence === 'weekly' ? 'Hebdomadaire' : 'Récurrent';
+                        const label = ev.recurrence === 'daily' ? t('recurrence.daily') : ev.recurrence === 'weekly' ? t('recurrence.weekly') : t('recurrence.generic');
                         return (
                           <li key={ev.id} className="px-6 py-3 flex items-center gap-3" style={{ borderColor: 'rgb(var(--color-border))' }}>
                             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ev.color || 'rgb(var(--color-accent))' }} />
@@ -77,18 +80,18 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
                                   setShowRecurringManager(false);
                                 }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-blue-600 hover:text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] border border-blue-200 dark:border-blue-800/40 transition-colors"
-                                aria-label="Modifier la récurrence"
+                                aria-label={t('recurrence.editAria')}
                               >
                                 <Pencil size={13} />
-                                <span>Modifier</span>
+                                <span>{t('recurrence.edit')}</span>
                               </button>
                               <button
                                 onClick={() => updateEventMutation.mutate({ id: ev.id, updates: { recurrence: 'none' } })}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 border border-red-200 dark:border-red-800/40 transition-colors"
-                                aria-label="Supprimer la récurrence"
+                                aria-label={t('recurrence.deleteAria')}
                               >
                                 <Trash2 size={13} />
-                                <span>Récurrence</span>
+                                <span>{t('recurrence.deleteLabel')}</span>
                               </button>
                             </div>
                           </li>
@@ -102,6 +105,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-);
+  );
+};
 
 export default RecurringEventsManager;

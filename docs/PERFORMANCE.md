@@ -15,7 +15,7 @@
 | `vendor-utils` | date-fns + lucide-react | 48 kB (15 kB) | Toujours |
 | `vendor-query` | @tanstack/* | 55 kB (16 kB) | Toujours |
 | `vendor-charts` | **recharts + d3-* + victory-vendor** | 374 kB (110 kB) | **Lazy** (StatisticsPage, DashboardChart, scroll bottom Landing) |
-| `vendor-calendar` | @fullcalendar/* | 263 kB (76 kB) | **Lazy** (`/agenda` uniquement) |
+| `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
 
 ## Règles non négociables
 
@@ -29,7 +29,15 @@
 ## Budget bundle (objectif)
 
 - Entry chunk : **< 150 kB gzip** (actuellement ~50 kB — large marge).
-- Chaque chunk lazy : **< 80 kB gzip** (exception documentée : `vendor-charts` 110 kB gzip, `vendor-calendar` 76 kB gzip).
+- Chaque chunk lazy : **< 80 kB gzip** (exception documentée : `vendor-charts` 110 kB gzip, `vendor-calendar` 85 kB gzip).
+
+> **`vendor-calendar` : 76 → 85 kB gzip (2026-08-02, i18n Agenda).** `AgendaPage`
+> importe `@fullcalendar/core/locales-all` (+9 kB gzip). Sans données de locale,
+> FullCalendar retombe sur les défauts anglais pour `firstDay` et l'agenda
+> français commençait la semaine le dimanche. L'alternative — un import par
+> langue (~1 kB) — obligerait à éditer `AgendaPage.tsx` à chaque nouvelle
+> langue, ce que le socle i18n évite partout ailleurs (cf. `src/i18n/catalog.ts`).
+> Coût assumé : le chunk est lazy et ne concerne que `/agenda`.
 - Si `npm run build` warning ré-apparaît sur `index` > 400 kB → audit P-2/P-3 régressé.
 
 ## Limites de requêtes
