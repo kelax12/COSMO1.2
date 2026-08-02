@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, CalendarClock, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 import { formatTimeInTz, toDisplayISO, type TimezonePref } from '@/lib/timezone';
 import type { OverdueTaskSlot } from './overdue-slots';
 
@@ -28,6 +29,7 @@ interface AgendaSlotReviewModalProps {
 const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
   slot, remaining, tzPref, onValidate, onPostpone, onDelete, onSnooze,
 }) => {
+  const { t, tp } = useT('agenda');
   return (
     <AnimatePresence>
       {slot && (
@@ -53,16 +55,16 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
               <div className="flex items-center gap-3">
                 <div>
                   <h3 id="slot-review-title" className="text-base font-bold text-[rgb(var(--color-text-primary))] leading-tight">
-                    Créneau terminé
+                    {t('slotReview.title')}
                   </h3>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                    Cette tâche a-t-elle été réalisée&nbsp;?
+                    {t('slotReview.question')}
                   </p>
                 </div>
               </div>
               <button
                 onClick={onSnooze}
-                aria-label="Plus tard"
+                aria-label={t('slotReview.snooze')}
                 className="shrink-0 p-1.5 rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
               >
                 <X size={18} />
@@ -85,7 +87,7 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
 
             {remaining > 1 && (
               <p className="text-caption text-[rgb(var(--color-text-muted))] mb-3 text-center">
-                {remaining} créneaux à passer en revue
+                {tp('slotReview.remaining', remaining)}
               </p>
             )}
 
@@ -96,7 +98,7 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
                 style={{ minHeight: '48px' }}
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold active:scale-[0.98] transition-all duration-150"
               >
-                <CheckCircle2 size={17} /> Oui, valider la tâche
+                <CheckCircle2 size={17} /> {t('slotReview.validate')}
               </button>
 
               <div className="grid grid-cols-2 gap-2.5">
@@ -106,7 +108,7 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
                   style={{ minHeight: '48px' }}
                   className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-sm font-semibold hover:bg-[rgb(var(--color-hover))] active:scale-[0.98] transition-all duration-150"
                 >
-                  <CalendarClock size={16} /> Reporter
+                  <CalendarClock size={16} /> {t('slotReview.postpone')}
                 </button>
 
                 {/* Supprimer : abandonne la tâche + son créneau */}
@@ -115,7 +117,7 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
                   style={{ minHeight: '48px' }}
                   className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 text-red-500 text-sm font-semibold hover:bg-red-500 hover:text-white hover:border-red-500 active:scale-[0.98] transition-all duration-150"
                 >
-                  <Trash2 size={16} /> Supprimer
+                  <Trash2 size={16} /> {t('slotReview.delete')}
                 </button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CalendarEvent } from '@/modules/events';
+import { useT } from '@/i18n/useT';
 
 interface AgendaEventToTaskConfirmProps {
   event: CalendarEvent | null;
@@ -20,6 +21,7 @@ interface AgendaEventToTaskConfirmProps {
 const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
   event, onCancel, onDelete, onConvertToTask,
 }) => {
+  const { t } = useT('agenda');
   return (
     <AnimatePresence>
       {event && (
@@ -44,15 +46,15 @@ const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <h3 id="event-to-task-title" className="text-base font-bold text-[rgb(var(--color-text-primary))] leading-tight">
-                  Que faire de cet événement ?
+                  {t('eventToTask.title')}
                 </h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  Il n'est rattaché à aucune tâche
+                  {t('eventToTask.subtitle')}
                 </p>
               </div>
               <button
                 onClick={onCancel}
-                aria-label="Fermer"
+                aria-label={t('eventToTask.close')}
                 className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-lg leading-none"
               >
                 &times;
@@ -71,7 +73,7 @@ const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
                 style={{ minHeight: '48px' }}
                 className="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold active:scale-[0.98] transition-all duration-150"
               >
-                Supprimer
+                {t('eventToTask.delete')}
               </button>
 
               <button
@@ -79,7 +81,7 @@ const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
                 style={{ minHeight: '48px' }}
                 className="flex-1 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold active:scale-[0.98] transition-all duration-150"
               >
-                Transformer en tâche
+                {t('eventToTask.convert')}
               </button>
             </div>
           </motion.div>

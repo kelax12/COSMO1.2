@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "tasks": "Tâches",
+    "recurrences": "Récurrences",
+    "new": "Nouveau",
+    "zoomIn": "Zoomer le calendrier",
+    "zoomOut": "Dézoomer le calendrier",
+    "prevPeriod": "Période précédente",
+    "nextPeriod": "Période suivante",
+    "backToToday": "Revenir à aujourd'hui",
+    "today": "Aujourd'hui"
+  },
+  "view": {
+    "day": "Jour",
+    "week": "Semaine",
+    "month": "Mois",
+    "twoDays": "2J"
+  },
+  "event": {
+    "uncategorized": "Sans catégorie",
+    "addedBy": "Ajouté par {{name}}",
+    "occurrenceDeleted": "Occurrence supprimée",
+    "eventDeleted": "Événement supprimé"
+  },
+  "quickCreate": {
+    "titlePlaceholder": "Titre de l'événement",
+    "categoryPlaceholder": "Catégorie",
+    "addCategory": "Ajouter une catégorie",
+    "cancel": "Annuler",
+    "create": "Créer"
+  },
+  "eventToTask": {
+    "title": "Que faire de cet événement ?",
+    "subtitle": "Il n'est rattaché à aucune tâche",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "convert": "Transformer en tâche"
+  },
+  "slotReview": {
+    "title": "Créneau terminé",
+    "question": "Cette tâche a-t-elle été réalisée ?",
+    "snooze": "Plus tard",
+    "remaining_one": "{{count}} créneau à passer en revue",
+    "remaining_many": "{{count}} de créneaux à passer en revue",
+    "remaining_other": "{{count}} créneaux à passer en revue",
+    "validate": "Oui, valider la tâche",
+    "postpone": "Reporter",
+    "delete": "Supprimer"
+  },
+  "sidebar": {
+    "title": "Tâches disponibles",
+    "close": "Fermer le panneau des tâches",
+    "search": "Rechercher une tâche...",
+    "filterCategory": "Filtrer par catégorie",
+    "allCategories": "Toutes catégories",
+    "filterPriority": "Filtrer par priorité",
+    "allPriorities": "Toutes priorités",
+    "priority": "Priorité {{level}}",
+    "noResults": "Aucune tâche trouvée",
+    "uncategorized": "Sans catégorie",
+    "noDeadline": "Pas d'échéance",
+    "deadline": "Échéance : {{date}}",
+    "dragHint": "↗ Glisser vers le calendrier",
+    "taskOptions": "Options de la tâche",
+    "editTask": "Modifier la tâche",
+    "duplicateTask": "Dupliquer la tâche",
+    "deleteLinkedEvent": "Supprimer l'événement associé",
+    "deleteTask": "Supprimer la tâche",
+    "taskDeleted": "Tâche supprimée",
+    "copySuffix": "{{name}} (copie)",
+    "help": {
+      "closeTutorial": "Fermer le tutoriel",
+      "showGuide": "Afficher le guide",
+      "showGuideAria": "Afficher le guide d'utilisation",
+      "heading": "Comment utiliser :",
+      "step1": "• Glissez une tâche vers le calendrier",
+      "step2": "• Les propriétés se transfèrent automatiquement",
+      "step3": "• La durée définit la longueur de l'événement"
+    }
+  },
+  "recurrence": {
+    "title": "Événements récurrents",
+    "empty": "Aucun événement récurrent pour le moment.",
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "generic": "Récurrent",
+    "edit": "Modifier",
+    "editAria": "Modifier la récurrence",
+    "deleteAria": "Supprimer la récurrence",
+    "deleteLabel": "Récurrence"
+  }
+}

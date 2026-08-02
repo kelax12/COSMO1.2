@@ -45,6 +45,7 @@
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locale';
 import { lookup, type CatalogNode } from './translate';
 
+import frAgenda from '@/locales/fr/agenda.json';
 import frCommon from '@/locales/fr/common.json';
 import frDashboard from '@/locales/fr/dashboard.json';
 import frErrors from '@/locales/fr/errors.json';
@@ -53,6 +54,8 @@ import frTasks from '@/locales/fr/tasks.json';
 
 /** Forme du catalogue de référence, par namespace — base du typage des clés. */
 interface CatalogShapes {
+  /** Agenda — calendrier, création rapide, revue de créneaux, récurrences. */
+  agenda: typeof frAgenda;
   /** Chrome de l'app : navigation, actions, libellés partagés. */
   common: typeof frCommon;
   /** Tableau de bord — salutation, résumé du jour, cartes de stats, sections. */
@@ -107,6 +110,7 @@ const registry: Registry = {};
 // Le cast est sûr — un objet JSON importé EST un `CatalogNode`, mais TypeScript
 // en infère un type littéral plus étroit.
 registry[DEFAULT_LOCALE] = {
+  agenda: frAgenda as CatalogNode,
   common: frCommon as CatalogNode,
   dashboard: frDashboard as CatalogNode,
   errors: frErrors as CatalogNode,
@@ -133,13 +137,21 @@ function isNamespace(value: string): value is Namespace {
 // ──────────────────────────────────────────────────────────────────
 
 /**
- * Tous les catalogues présents sur le disque, en imports paresseux.
+ * Catalogues à charger paresseusement — toutes les locales SAUF la référence.
  *
  * Le motif DOIT être un littéral : Vite l'analyse statiquement à la
  * compilation, il ne peut pas être construit à partir de `SUPPORTED_LOCALES`.
- * C'est sans conséquence — le motif couvre déjà toute locale à venir.
+ * C'est sans conséquence — `*` couvre déjà toute locale à venir.
+ *
+ * L'exclusion `!../locales/fr/*` code en dur la locale de RÉFÉRENCE, pas une
+ * langue de la liste : `fr` est importé statiquement plus haut (il est le
+ * repli), et le laisser dans le glob le rendait à la fois statique et
+ * dynamique — Rollup émettait alors un avertissement par namespace, et le
+ * chargeur aurait ré-enregistré des catalogues déjà en mémoire. Ajouter une
+ * langue ne touche jamais cette ligne ; seul un changement de `DEFAULT_LOCALE`
+ * le ferait (et `catalog.test.ts` échouerait alors).
  */
-const CATALOG_LOADERS = import.meta.glob('../locales/*/*.json', {
+const CATALOG_LOADERS = import.meta.glob(['../locales/*/*.json', '!../locales/fr/*.json'], {
   import: 'default',
 }) as Record<string, () => Promise<CatalogNode>>;
 
@@ -230,6 +242,23 @@ export function hasCatalog(locale: Locale, namespace: Namespace): boolean {
 /** Namespaces connus — exposé pour les tests et les outils de diagnostic. */
 export function listNamespaces(): readonly Namespace[] {
   return NAMESPACES;
+}
+
+/**
+ * Locales réellement couvertes par le chargement paresseux.
+ *
+ * Exposé pour que `catalog.test.ts` puisse vérifier que l'exclusion codée dans
+ * le motif du glob correspond bien à `DEFAULT_LOCALE`. Sans ce garde-fou, un
+ * changement de locale de référence laisserait l'ancienne en double (statique
+ * + dynamique) et la nouvelle sans chargeur — deux bugs silencieux.
+ */
+export function listLazyLocales(): readonly Locale[] {
+  const found = new Set<Locale>();
+  for (const path of Object.keys(CATALOG_LOADERS)) {
+    const parsed = parseCatalogPath(path);
+    if (parsed) found.add(parsed.locale);
+  }
+  return [...found];
 }
 
 /**

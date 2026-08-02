@@ -5,6 +5,16 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
+// Données de locale FullCalendar. SANS elles, une locale non enregistrée
+// retombe sur les défauts anglais pour `firstDay` : l'agenda français
+// commençait la semaine le DIMANCHE. (Le bug pré-existait — `locale="fr"` sans
+// ces données ne valait pas mieux.)
+//
+// `locales-all` (3,3 kB, dans le chunk lazy `vendor-calendar`) plutôt qu'un
+// import par langue : importer `locales/fr` + `locales/en` + `locales/es`
+// obligerait à éditer ce fichier à chaque nouvelle langue — exactement ce que
+// le reste du socle i18n évite. Ici, toute langue future fonctionne sans code.
+import allCalendarLocales from '@fullcalendar/core/locales-all';
 import { findNextFreeSlot } from './agenda/free-slot';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent } from '@/modules/events';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -19,7 +29,8 @@ import AgendaEventToTaskConfirm from './agenda/AgendaEventToTaskConfirm';
 import ColorSettingsModal from '../components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { getDateLocale } from '@/i18n/format';
+import { getDateLocale, getIntlTag } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
@@ -40,6 +51,15 @@ import PageErrorState from '@/components/PageErrorState';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
+  const { t } = useT('agenda');
+  // Locale FullCalendar — était figée à `"fr"` sur les DEUX calendriers, donc
+  // les en-têtes de jour et le format d'heure restaient français quelle que
+  // soit la langue de l'app. L'étiquette BCP 47 pilote aussi le PREMIER JOUR
+  // de la semaine (lundi en `fr-FR`, dimanche en `en-US`) : c'est voulu, une
+  // semaine qui commence le mauvais jour est une erreur de localisation à part
+  // entière. `headerToolbar` étant à `false`, aucun `buttonText` n'est à
+  // traduire — les boutons sont les nôtres (`AgendaDesktopHeader`).
+  const calendarLocale = getIntlTag();
   const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800);
   const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
@@ -83,7 +103,7 @@ const AgendaPage: React.FC = () => {
     return (
       <div className={`h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
         {author && (
-          <span className="shrink-0 rounded-full ring-1 ring-white/70" title={`Ajouté par ${author.displayName}`}>
+          <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
             <MemberAvatar avatar={author.avatar} name={author.displayName} size={16} />
           </span>
         )}
@@ -131,6 +151,11 @@ const AgendaPage: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const categoriesRef = useRef(categories);
+  // Même raison que `categoriesRef` : le callback `eventData` du `Draggable`
+  // est créé UNE fois et vit aussi longtemps que lui. Le mettre en dépendance
+  // de l'effet reconstruirait le Draggable à chaque changement de `t`, alors
+  // qu'un ref lui donne simplement la valeur fraîche au moment de l'appel.
+  const tRef = useRef(t);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -149,6 +174,7 @@ const AgendaPage: React.FC = () => {
   };
 
   useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  useEffect(() => { tRef.current = t; }, [t]);
 
   // Draggable init (desktop + mobile sidebar)
   useEffect(() => {
@@ -179,7 +205,7 @@ const AgendaPage: React.FC = () => {
                 priority: taskData.priority,
                 category: taskData.category,
                 estimatedTime: taskData.estimatedTime,
-                categoryName: categoriesRef.current.find(c => c.id === taskData.category)?.name || 'Sans catégorie',
+                categoryName: categoriesRef.current.find(c => c.id === taskData.category)?.name || tRef.current('event.uncategorized'),
               },
             };
           },
@@ -388,14 +414,14 @@ const AgendaPage: React.FC = () => {
       // Suppression d'une seule occurrence : ajouter la date dans les exceptions du master
       const prevExceptions = master.exceptions ?? [];
       updateEventMutation.mutate({ id: eventId, updates: { exceptions: [...prevExceptions, instanceDate] } });
-      showUndoToast('Occurrence supprimée', () => {
+      showUndoToast(t('event.occurrenceDeleted'), () => {
         // Annulation : retire la date des exceptions → l'occurrence réapparaît.
         updateEventMutation.mutate({ id: eventId, updates: { exceptions: prevExceptions } });
       });
     } else if (master) {
       const { id: _id, ...rest } = master;
       deleteEventMutation.mutate(eventId);
-      showUndoToast('Événement supprimé', () => {
+      showUndoToast(t('event.eventDeleted'), () => {
         createEventMutation.mutate(rest as CreateEventInput);
       });
     }
@@ -655,7 +681,8 @@ const AgendaPage: React.FC = () => {
               selectable={true}
               selectMirror={true}
               height="100%"
-              locale="fr"
+              locales={allCalendarLocales}
+              locale={calendarLocale}
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
               scrollTime={calendarScrollTime}
@@ -716,7 +743,8 @@ const AgendaPage: React.FC = () => {
                 dayMaxEvents={false}
                 weekends={true}
                 height="100%"
-                locale="fr"
+                locales={allCalendarLocales}
+              locale={calendarLocale}
                 slotMinTime="00:00:00"
                 slotMaxTime="24:00:00"
                 scrollTime={calendarScrollTime}

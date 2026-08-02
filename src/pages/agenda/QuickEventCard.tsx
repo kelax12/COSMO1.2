@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { formatTimeInTz, toDisplayISO, getTimezonePref, type TimezonePref } from '@/lib/timezone';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 // Valeur factice interceptée par onValueChange pour ouvrir le gestionnaire de
 // catégories au lieu de sélectionner une catégorie (#option "+ Ajouter").
@@ -30,6 +31,7 @@ interface QuickEventCardProps {
 }
 
 const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPref, onCreate, onClose, onAddCategory }) => {
+  const { t } = useT('agenda');
   const [title, setTitle] = useState('');
   const [cat, setCat] = useState(categories[0]?.id ?? '');
   const pref = tzPref ?? getTimezonePref();
@@ -69,7 +71,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
         <Input
           autoFocus
           value={title}
-          placeholder="Titre de l'événement"
+          placeholder={t('quickCreate.titlePlaceholder')}
           className="mb-2 h-8"
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose(); }}
@@ -82,7 +84,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
               setCat(value);
             }}
           >
-            <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+            <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder={t('quickCreate.categoryPlaceholder')} /></SelectTrigger>
             <SelectContent className="z-[70]">
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
@@ -98,7 +100,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
                   <SelectItem value={ADD_CATEGORY_VALUE} className="group">
                     <span className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 group-focus:text-inherit font-medium">
                       <Plus size={12} aria-hidden="true" />
-                      Ajouter une catégorie
+                      {t('quickCreate.addCategory')}
                     </span>
                   </SelectItem>
                 </>
@@ -107,7 +109,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
           </Select>
         )}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>Annuler</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>{t('quickCreate.cancel')}</Button>
           <Button
             type="button"
             size="sm"
@@ -119,7 +121,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
                 : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
             }`}
           >
-            Créer
+            {t('quickCreate.create')}
           </Button>
         </div>
       </div>

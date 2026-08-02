@@ -24,6 +24,7 @@ import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
 import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -44,6 +45,7 @@ const formatDuration = (minutes: number | undefined): string => {
 const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
 
 const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
+  const { t } = useT('agenda');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -142,7 +144,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     deleteTaskMutation.mutate(task.id, {
       onSuccess: () => {
         const { id: _id, createdAt: _ca, ...rest } = task;
-        showUndoToast('Tâche supprimée', () => { createTaskMutation.mutate(rest); });
+        showUndoToast(t('sidebar.taskDeleted'), () => { createTaskMutation.mutate(rest); });
       },
     });
   };
@@ -157,7 +159,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const handleDuplicateTask = (task: Task) => {
     setContextMenu(null);
     createTaskMutation.mutate({
-      name: `${task.name} (copie)`,
+      name: t('sidebar.copySuffix', { name: task.name }),
       priority: task.priority,
       category: task.category,
       deadline: task.deadline,
@@ -205,11 +207,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         {/* Sidebar Header */}
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--nav-border))' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Tâches disponibles</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('sidebar.title')}</h2>
           {onClose && (
             <button
               onClick={onClose}
-              aria-label="Fermer le panneau des tâches"
+              aria-label={t('sidebar.close')}
               className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >
@@ -223,7 +225,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
           <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: 'rgb(var(--color-text-muted))' }} />
           <input
             type="text"
-            placeholder="Rechercher une tâche..."
+            placeholder={t('sidebar.search')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
@@ -241,7 +243,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              aria-label="Filtrer par catégorie"
+              aria-label={t('sidebar.filterCategory')}
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer pr-8"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
@@ -249,7 +251,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 color: 'rgb(var(--color-text-primary))'
               }}
             >
-              <option value="">Toutes catégories</option>
+              <option value="">{t('sidebar.allCategories')}</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
@@ -261,7 +263,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
-              aria-label="Filtrer par priorité"
+              aria-label={t('sidebar.filterPriority')}
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer pr-8"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
@@ -269,12 +271,12 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 color: 'rgb(var(--color-text-primary))'
               }}
             >
-              <option value="">Toutes priorités</option>
-              <option value="1">Priorité 1</option>
-              <option value="2">Priorité 2</option>
-              <option value="3">Priorité 3</option>
-              <option value="4">Priorité 4</option>
-              <option value="5">Priorité 5</option>
+              <option value="">{t('sidebar.allPriorities')}</option>
+              <option value="1">{t('sidebar.priority', { level: 1 })}</option>
+              <option value="2">{t('sidebar.priority', { level: 2 })}</option>
+              <option value="3">{t('sidebar.priority', { level: 3 })}</option>
+              <option value="4">{t('sidebar.priority', { level: 4 })}</option>
+              <option value="5">{t('sidebar.priority', { level: 5 })}</option>
             </select>
             <ChevronDown size={16} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
           </div>
@@ -286,7 +288,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         {availableTasks.length === 0 ? (
           <div className="text-center py-8" style={{ color: 'rgb(var(--color-text-muted))' }}>
             <Filter size={48} className="mx-auto mb-2" style={{ color: 'rgb(var(--color-text-muted))' }} />
-            <p>Aucune tâche trouvée</p>
+            <p>{t('sidebar.noResults')}</p>
           </div>
         ) : (
           availableTasks.map((task, idx) => {
@@ -374,13 +376,13 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                       borderColor: 'rgb(var(--color-border))',
                       color: 'rgb(var(--color-text-secondary))'
                     }}>
-                      {colorSettings[task.category] || 'Sans catégorie'}
+                      {colorSettings[task.category] || t('sidebar.uncategorized')}
                     </span>
                     {/* Point d'entrée VISIBLE vers le menu d'options (= long-press / clic droit).
                         Toujours visible sur mobile, au survol sur desktop. */}
                     <button
                       type="button"
-                      aria-label="Options de la tâche"
+                      aria-label={t('sidebar.taskOptions')}
                       onPointerDown={(e) => { e.stopPropagation(); }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -400,8 +402,8 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 
                 <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   {task.deadline
-                    ? `Deadline: ${formatDate(new Date(task.deadline))}`
-                    : 'Pas d\'échéance'}
+                    ? t('sidebar.deadline', { date: formatDate(new Date(task.deadline)) })
+                    : t('sidebar.noDeadline')}
                 </div>
                 
                 {/* Drag indicator — masqué par défaut (n'occupe aucune place) et
@@ -416,7 +418,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                         className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-150 group-hover:delay-75"
                         style={{ color: 'rgb(var(--color-accent))' }}
                       >
-                        ↗ Glisser vers le calendrier
+                        {t('sidebar.dragHint')}
                       </div>
                     </div>
                   </div>
@@ -438,19 +440,19 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             onClick={() => setShowTutorial(false)}
             className="absolute top-2 right-2 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-60 hover:opacity-100"
             style={{ color: 'rgb(var(--color-text-muted))' }}
-            title="Fermer le tutoriel"
+            title={t('sidebar.help.closeTutorial')}
           >
             <X size={14} />
           </button>
           <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
             <p className="font-medium mb-1 flex items-center gap-1.5 md:block">
               <Lightbulb size={13} className="shrink-0 md:hidden" aria-hidden="true" />
-              <span className="md:hidden">Comment utiliser :</span>
-              <span className="hidden md:inline">💡 Comment utiliser :</span>
+              <span className="md:hidden">{t('sidebar.help.heading')}</span>
+              <span className="hidden md:inline">💡 {t('sidebar.help.heading')}</span>
             </p>
-            <p>• Glissez une tâche vers le calendrier</p>
-            <p>• Les propriétés se transfèrent automatiquement</p>
-            <p>• La durée définit la longueur de l'événement</p>
+            <p>{t('sidebar.help.step1')}</p>
+            <p>{t('sidebar.help.step2')}</p>
+            <p>{t('sidebar.help.step3')}</p>
           </div>
         </div>
       ) : (
@@ -458,8 +460,8 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
           <button
             onClick={() => setShowTutorial(true)}
             className="min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-            title="Afficher le guide"
-            aria-label="Afficher le guide d'utilisation"
+            title={t('sidebar.help.showGuide')}
+            aria-label={t('sidebar.help.showGuideAria')}
           >
             <span
               className="w-7 h-7 flex items-center justify-center rounded-full border"
@@ -490,7 +492,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
               <Pencil size={16} className="text-blue-500 shrink-0" />
-              Modifier la tâche
+              {t('sidebar.editTask')}
             </button>
             <button
               type="button"
@@ -499,7 +501,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
               <Copy size={16} className="text-blue-500 shrink-0" />
-              Dupliquer la tâche
+              {t('sidebar.duplicateTask')}
             </button>
             {isTaskPlacedInCalendar(contextMenu.task.id) && (
               <button
@@ -509,7 +511,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 style={{ color: 'rgb(var(--color-text-primary))' }}
               >
                 <CalendarX size={16} className="text-orange-500 shrink-0" />
-                Supprimer l'événement associé
+                {t('sidebar.deleteLinkedEvent')}
               </button>
             )}
             <button
@@ -518,7 +520,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
             >
               <Trash2 size={16} className="shrink-0" />
-              Supprimer la tâche
+              {t('sidebar.deleteTask')}
             </button>
           </div>,
           document.body
