@@ -21,6 +21,7 @@ import SubtaskChecklist from './SubtaskChecklist';
 import DescriptionField from '@/components/DescriptionField';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
+import { useT } from '@/i18n/useT';
 
 type TaskFormState = {
   name: string;
@@ -74,6 +75,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   isCreating, isLoading, handleDelete, task,
   showDescription, setShowDescription,
 }) => {
+  const { t } = useT('taskModal');
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
 
@@ -139,7 +141,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       style={{ color: 'rgb(var(--color-text-secondary))' }}
                     >
                       <ChevronDown size={16} aria-hidden="true" />
-                      Plus d'options — échéance, catégorie, priorité, durée, listes
+                      {t('fields.moreOptions')}
                     </button>
                   )}
 
@@ -148,7 +150,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div ref={dRegister('priority')}>
                         <label htmlFor="task-priority" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Priorité
+                          {t('fields.priority')}
                         </label>
                         <div className="relative">
                           <select
@@ -163,14 +165,14 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               color: formData.priority === 0 ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
                               borderColor: dInvalid('priority') ? '#ef4444' : undefined,
                             }}
-                            aria-label="Sélectionner la priorité de la tâche"
+                            aria-label={t('fields.prioritySelect')}
                           >
-                            <option value="0" disabled hidden>Choisir une priorité</option>
-                            <option value="1" style={{ color: 'rgb(var(--color-text-primary))' }}>1 (Très haute)</option>
-                            <option value="2" style={{ color: 'rgb(var(--color-text-primary))' }}>2 (Haute)</option>
-                            <option value="3" style={{ color: 'rgb(var(--color-text-primary))' }}>3 (Moyenne)</option>
-                            <option value="4" style={{ color: 'rgb(var(--color-text-primary))' }}>4 (Basse)</option>
-                            <option value="5" style={{ color: 'rgb(var(--color-text-primary))' }}>5 (Très basse)</option>
+                            <option value="0" disabled hidden>{t('fields.priorityPlaceholder')}</option>
+                            <option value="1" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority1')}</option>
+                            <option value="2" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority2')}</option>
+                            <option value="3" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority3')}</option>
+                            <option value="4" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority4')}</option>
+                            <option value="5" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority5')}</option>
                           </select>
                           <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
                         </div>
@@ -185,7 +187,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     <div ref={dRegister('category')}>
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Catégorie
+                          {t('fields.category')}
                         </label>
                         {/* Créer une catégorie sans quitter le modal — bouton au-dessus
                             de l'input (pattern unifié avec les modals OKR). */}
@@ -203,7 +205,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             borderColor: errors.category ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))',
                           }}
                         >
-                          <option value="">Choisir...</option>
+                          <option value="">{t('common.chooseDots')}</option>
                           {categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
@@ -289,7 +291,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 e.preventDefault();
                                 const name = newCategoryName.trim();
                                 if (name.length < 2) {
-                                  toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+                                  toast.error(t('fields.categoryNameTooShort'));
                                   return;
                                 }
                                 createCategoryMutation.mutate(
@@ -309,7 +311,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 setNewCategoryColor('blue');
                               }
                             }}
-                            placeholder="Nom de la catégorie..."
+                            placeholder={t('fields.categoryNamePlaceholder')}
                             className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                           />
@@ -336,7 +338,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             }}
                             className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                           >
-                            {createCategoryMutation.isPending ? 'Création...' : 'Créer'}
+                            {createCategoryMutation.isPending ? t('common.creating') : t('common.create')}
                           </button>
                           <button
                             type="button"
@@ -362,12 +364,12 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div ref={dRegister('deadline')}>
                         <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Échéance <span className="normal-case font-normal opacity-60">(Facultatif)</span>
+                          {t('fields.deadline')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
                         </label>
                         <DatePicker
                           value={formData.deadline}
                           onChange={(date) => handleInputChange('deadline', date)}
-                          placeholder="Sélectionner une date"
+                          placeholder={t('fields.deadlinePlaceholder')}
                           className={`h-12 w-full ${errors.deadline || dInvalid('deadline') ? 'border-[rgb(var(--color-error))]' : ''}`}
                         />
 
@@ -381,7 +383,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         {/* Récurrence (#26) — visible dès qu'une échéance est posée */}
                         {formData.deadline && (
                           <div className="mt-2">
-                            <label htmlFor="task-recurrence" className="sr-only">Récurrence</label>
+                            <label htmlFor="task-recurrence" className="sr-only">{t('fields.recurrence')}</label>
                             <select
                               id="task-recurrence"
                               value={formData.recurrence}
@@ -393,10 +395,10 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 borderColor: 'rgb(var(--color-border))',
                               }}
                             >
-                              <option value="none">Ne se répète pas</option>
-                              <option value="daily">Tous les jours</option>
-                              <option value="weekly">Toutes les semaines</option>
-                              <option value="monthly">Tous les mois</option>
+                              <option value="none">{t('fields.recurrenceNone')}</option>
+                              <option value="daily">{t('fields.recurrenceDaily')}</option>
+                              <option value="weekly">{t('fields.recurrenceWeekly')}</option>
+                              <option value="monthly">{t('fields.recurrenceMonthly')}</option>
                             </select>
                           </div>
                         )}
@@ -404,7 +406,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
 
                       <div>
                         <label htmlFor="task-time" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Durée (min) <span className="normal-case font-normal opacity-60">(Facultatif)</span>
+                          {t('fields.durationMin')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
                         </label>
                           <div className="flex items-stretch gap-2">
                             <input
@@ -435,7 +437,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               }}
                               className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-border-strong))] transition-colors shrink-0"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
-                              aria-label="Diminuer le temps estimé de 5 minutes"
+                              aria-label={t('fields.decrease5')}
                             >
                               <Minus size={18} />
                             </button>
@@ -450,7 +452,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               }}
                               className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-border-strong))] transition-colors shrink-0"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
-                              aria-label="Augmenter le temps estimé de 5 minutes"
+                              aria-label={t('fields.increase5')}
                             >
                               <Plus size={18} />
                             </button>
@@ -485,7 +487,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                   {showDescription ? (
                     <div>
                       <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Description <span className="normal-case font-normal opacity-60">(Facultatif)</span>
+                        {t('fields.description')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
                       </label>
                       <DescriptionField
                         id="task-description"
@@ -493,7 +495,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         onChange={(value) => handleInputChange('description', value)}
                         rows={3}
                         autoFocus={!formData.description}
-                        placeholder="Détails de la tâche…"
+                        placeholder={t('fields.descriptionPlaceholder')}
                         className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base resize-none border-[rgb(var(--color-border))]"
                         style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                       />
@@ -552,7 +554,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             }}
                           >
                             <List size={16} className="text-blue-500" />
-                            Ajouter à une liste
+                            {t('fields.addToList')}
                             <ChevronDown size={14} className="text-blue-500" />
                           </button>
                         </DropdownMenuTrigger>
@@ -599,7 +601,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               onClick={() => { setShowNewListInput(true); setNewListName(''); }}
                             >
                               <Plus size={15} />
-                              Créer une liste
+                              {t('fields.createList')}
                             </button>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -668,7 +670,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             }}
                             className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                           >
-                            {createListMutation.isPending ? 'Création...' : 'Créer'}
+                            {createListMutation.isPending ? t('common.creating') : t('common.create')}
                           </button>
                           <button
                             type="button"

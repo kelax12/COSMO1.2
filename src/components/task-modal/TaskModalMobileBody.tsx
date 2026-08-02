@@ -22,6 +22,7 @@ import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
 import DescriptionField from '@/components/DescriptionField';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
+import { useT } from '@/i18n/useT';
 
 export interface MobileBodyProps {
   formData: {
@@ -88,6 +89,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
   taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds, onGenerateShareLink,
 }) => {
+  const { t } = useT('taskModal');
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const [showListsModal, setShowListsModal] = useState(false);
@@ -140,7 +142,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             disabled={isLoading}
             className={`text-[15px] font-semibold min-w-[64px] text-right transition-colors ${isValid ? 'text-blue-500' : 'text-blue-300 dark:text-blue-700'}`}
           >
-            {isLoading ? '…' : isCreating ? 'Créer' : 'OK'}
+            {isLoading ? '…' : isCreating ? t('common.create') : t('common.ok')}
           </button>
         </div>
       </div>
@@ -171,26 +173,26 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           </div>
 
           {/* ── Section DÉTAILS ── */}
-          <SectionTitle>Détails</SectionTitle>
+          <SectionTitle>{t('sections.details')}</SectionTitle>
           <div ref={register('details')} className={`rounded-2xl transition-[box-shadow] ${isInvalid('details') ? 'ring-2 ring-red-500' : ''}`}>
           <SectionCard>
             {/* Priorité */}
             <Cell
-              label={<span className={cellErrors.priority ? 'text-red-500' : ''}>Priorité</span>}
+              label={<span className={cellErrors.priority ? 'text-red-500' : ''}>{t('fields.priority')}</span>}
               value={
                 formData.priority !== 0
                   ? <span className={priorityColor(formData.priority)}>P{formData.priority}</span>
-                  : <span className="text-[rgb(var(--color-text-muted))]">Choisir</span>
+                  : <span className="text-[rgb(var(--color-text-muted))]">{t('common.choose')}</span>
               }
               onTap={() => setShowPrioritySheet(true)}
             />
             <CellSeparator />
             {/* Catégorie */}
             <Cell
-              label={<span className={cellErrors.category ? 'text-red-500' : ''}>Catégorie</span>}
+              label={<span className={cellErrors.category ? 'text-red-500' : ''}>{t('fields.category')}</span>}
               value={(() => {
                 const cat = categories.find(c => c.id === formData.category);
-                if (!cat) return <span className="text-[rgb(var(--color-text-muted))]">Choisir</span>;
+                if (!cat) return <span className="text-[rgb(var(--color-text-muted))]">{t('common.choose')}</span>;
                 return (
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: cat.color }} />
@@ -203,11 +205,11 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <CellSeparator />
             {/* Échéance */}
             <Cell
-              label="Échéance"
+              label={t('fields.deadline')}
               value={
                 formData.deadline
                   ? <span className="text-blue-500">{format(new Date(formData.deadline + 'T12:00:00'), 'd MMM', { locale: getDateLocale() })}</span>
-                  : <span className="text-[rgb(var(--color-text-muted))]">Aucune</span>
+                  : <span className="text-[rgb(var(--color-text-muted))]">{t('common.none')}</span>
               }
               onTap={() => setShowDeadlinePicker(prev => !prev)}
             />
@@ -267,17 +269,17 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               <>
                 <CellSeparator />
                 <div className="flex items-center justify-between px-4 min-h-11 gap-3">
-                  <span className="text-[15px] text-[rgb(var(--color-text-primary))]">Répéter</span>
+                  <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.repeat')}</span>
                   <select
                     value={formData.recurrence}
                     onChange={(e) => handleInputChange('recurrence', e.target.value)}
-                    aria-label="Récurrence de la tâche"
+                    aria-label={t('fields.recurrenceAria')}
                     className="text-[15px] bg-transparent text-right text-blue-500 focus:outline-none"
                   >
-                    <option value="none">Jamais</option>
-                    <option value="daily">Tous les jours</option>
-                    <option value="weekly">Toutes les semaines</option>
-                    <option value="monthly">Tous les mois</option>
+                    <option value="none">{t('fields.recurrenceNever')}</option>
+                    <option value="daily">{t('fields.recurrenceDaily')}</option>
+                    <option value="weekly">{t('fields.recurrenceWeekly')}</option>
+                    <option value="monthly">{t('fields.recurrenceMonthly')}</option>
                   </select>
                 </div>
               </>
@@ -285,7 +287,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <CellSeparator />
             {/* Durée */}
             <div className="flex items-center justify-between px-4 min-h-11">
-              <span className="text-[15px] text-[rgb(var(--color-text-primary))]">Durée</span>
+              <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.duration')}</span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -329,7 +331,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               le corps desktop et EventModal (bouton « + Ajouter » tant que
               vide, textarea auto-affiché si la tâche en a déjà une — cf.
               useTaskModal.ts, effet de sync sur `fullTask`). */}
-          <SectionTitle>Description</SectionTitle>
+          <SectionTitle>{t('sections.description')}</SectionTitle>
           <SectionCard>
             {showDescription ? (
               <div className="px-4 py-3">
@@ -357,14 +359,14 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           </SectionCard>
 
           {/* ── Section ORGANISATION ── */}
-          <SectionTitle>Organisation</SectionTitle>
+          <SectionTitle>{t('sections.organisation')}</SectionTitle>
           <SectionCard>
             {/* Listes */}
             <Cell
               label="Listes"
               value={(() => {
                 const inLists = taskId ? lists.filter(l => l.taskIds.includes(taskId)) : lists.filter(l => selectedListIds.includes(l.id));
-                if (inLists.length === 0) return <span className="text-[rgb(var(--color-text-muted))]">Aucune</span>;
+                if (inLists.length === 0) return <span className="text-[rgb(var(--color-text-muted))]">{t('common.none')}</span>;
                 if (inLists.length === 1) return <span className="text-blue-500">{inLists[0].name}</span>;
                 return <span className="text-blue-500">{inLists.length} listes</span>;
               })()}
@@ -404,7 +406,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 création : contrôlé, incluses dans le payload createTask. ── */}
           {((!isCreating && taskId) || (isCreating && onSubtasksChange)) && (
             <>
-              <SectionTitle>Sous-tâches</SectionTitle>
+              <SectionTitle>{t('sections.subtasks')}</SectionTitle>
               <SectionCard>
                 <div className="px-4 py-3">
                   {!isCreating && taskId ? (
@@ -418,7 +420,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           )}
 
           {/* ── Section COLLABORATION ── */}
-          <SectionTitle>Collaboration</SectionTitle>
+          <SectionTitle>{t('sections.collaboration')}</SectionTitle>
           <SectionCard>
             <Cell
               label="Collaborateurs"
@@ -468,10 +470,10 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 size={18} className="animate-spin" />
-              {isCreating ? 'Création…' : 'Sauvegarde…'}
+              {isCreating ? t('common.creatingEllipsis') : t('common.saving')}
             </span>
           ) : (
-            isCreating ? 'Créer la tâche' : 'Sauvegarder'
+            isCreating ? t('mobile.createTask') : t('common.save')
           )}
         </button>
       </div>
@@ -492,7 +494,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="flex justify-center pt-3 pb-2"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2">Priorité</p>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2">{t('fields.priority')}</p>
               {PRIORITY_OPTIONS.map((opt, i) => (
                 <React.Fragment key={opt.value}>
                   {i > 0 && <CellSeparator />}
@@ -528,7 +530,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">Catégorie</p>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">{t('fields.category')}</p>
               <div className="flex-1 overflow-y-auto">
                 {categories.map((cat, i) => (
                   <React.Fragment key={cat.id}>
@@ -549,7 +551,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 {categories.length > 0 && <CellSeparator />}
                 {!showNewCatInput ? (
                   <button type="button" onClick={() => setShowNewCatInput(true)} className="w-full flex items-center gap-2 px-4 min-h-11 text-blue-500">
-                    <Plus size={16} /><span className="text-[15px]">Créer une catégorie</span>
+                    <Plus size={16} /><span className="text-[15px]">{t('fields.createCategory')}</span>
                   </button>
                 ) : (
                   <div className="px-4 py-3 flex items-center gap-2">
@@ -561,7 +563,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     />
                     <input
                       autoFocus type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
-                      placeholder="Nom de la catégorie…"
+                      placeholder={t('fields.categoryNamePlaceholder')}
                       className="flex-1 text-[15px] bg-transparent focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                     />
                     <button
@@ -577,7 +579,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                       }}
                       className="text-[15px] text-blue-500 font-semibold disabled:text-blue-300"
                     >
-                      {createCategoryMutation.isPending ? '…' : 'Créer'}
+                      {createCategoryMutation.isPending ? '…' : t('common.create')}
                     </button>
                   </div>
                 )}
@@ -613,10 +615,10 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">Collaborateurs</p>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">{t('mobile.collaborators')}</p>
               {!isTaskOwner && (
                 <p className="px-4 pb-2 text-[13px] text-[rgb(var(--color-text-muted))] shrink-0">
-                  Cette tâche t'a été partagée. Seul le propriétaire peut gérer les collaborateurs.
+                  {t('mobile.notOwner')}
                 </p>
               )}
               {isTaskOwner && (
@@ -643,17 +645,17 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               )}
               {collaborators.length > 0 && (
                 <div className="px-4 pb-2 shrink-0 border-b border-[rgb(var(--color-border))]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] pb-1">{isTaskOwner ? `Sélectionnés (${collaborators.length})` : 'Participants'}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] pb-1">{isTaskOwner ? t('mobile.selected', { count: collaborators.length }) : t('mobile.participants')}</p>
                   {collaborators.map((id) => {
                     const info = displayInfo(id);
                     const isSent = isTaskOwner && !info.isPending && pendingShareIds.has(id);
                     return (
                       <div key={id} className="flex items-center justify-between py-1.5 gap-2">
                         <span className="text-[14px] text-[rgb(var(--color-text-primary))] truncate flex-1">
-                          {info.name}{!isTaskOwner && id === ownerId ? ' · Propriétaire' : ''}
+                          {info.name}{!isTaskOwner && id === ownerId ? t('mobile.owner') : ''}
                         </span>
                         {isSent && (
-                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Envoyé</span>
+                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('mobile.sent')}</span>
                         )}
                         {isTaskOwner && (
                           <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
@@ -679,7 +681,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     );
                   })}
                   {filteredFriends.length === 0 && (
-                    <p className="text-center py-6 text-[14px] text-[rgb(var(--color-text-muted))]">Aucun ami à ajouter</p>
+                    <p className="text-center py-6 text-[14px] text-[rgb(var(--color-text-muted))]">{t('mobile.noFriend')}</p>
                   )}
                 </div>
               )}

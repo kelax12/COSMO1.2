@@ -54,6 +54,7 @@ import frOkr from '@/locales/fr/okr.json';
 import frSeo from '@/locales/fr/seo.json';
 import frSettings from '@/locales/fr/settings.json';
 import frStatistics from '@/locales/fr/statistics.json';
+import frTaskModal from '@/locales/fr/taskModal.json';
 import frTasks from '@/locales/fr/tasks.json';
 
 /** Forme du catalogue de référence, par namespace — base du typage des clés. */
@@ -76,6 +77,8 @@ interface CatalogShapes {
   settings: typeof frSettings;
   /** Statistiques — sections, périodes, graphique, détails, heatmap. */
   statistics: typeof frStatistics;
+  /** Modale de tâche — champs, sections, feuilles d'action mobiles. */
+  taskModal: typeof frTaskModal;
   /** Page Tâches — en-tête, filtres, barre de listes, section équipe. */
   tasks: typeof frTasks;
 }
@@ -131,6 +134,7 @@ registry[DEFAULT_LOCALE] = {
   seo: frSeo as CatalogNode,
   settings: frSettings as CatalogNode,
   statistics: frStatistics as CatalogNode,
+  taskModal: frTaskModal as CatalogNode,
   tasks: frTasks as CatalogNode,
 };
 
