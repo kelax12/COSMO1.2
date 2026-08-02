@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useEffect } from 'react';
 import { currentInLanguage } from '@/lib/useSeoMeta';
+import type { KeyOf } from '@/i18n/catalog';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
   Rocket, Star, Lightbulb, CircleDot, List,
@@ -15,21 +16,27 @@ export type SectionId = 'demarrage' | 'taches' | 'listes' | 'agenda' | 'habitude
 
 interface NavItem {
   id: SectionId;
-  label: string;
+  /** Clé du catalogue `guide`, résolue au rendu — cf. NAV_ITEMS. */
+  labelKey: KeyOf<'guide'>;
   icon: React.ReactNode;
   color: string;
 }
 
 // Couleurs identiques à Layout.tsx (CHART_COLORS + hoverColor)
+//
+// Les libellés sont des CLÉS : cette constante est évaluée au premier import,
+// y écrire « Prise en main » figerait le sommaire en français pour toute la
+// session. Les `id` restent en français — ce sont les ancres `#taches` des URL
+// partagées et indexées, les changer casserait les liens existants.
 export const NAV_ITEMS: NavItem[] = [
-  { id: 'demarrage',    label: 'Prise en main',  icon: <Rocket size={16} />,      color: '#94a3b8' },
-  { id: 'taches',       label: 'Tâches',          icon: <CheckSquare size={16} />, color: '#3b82f6' },
-  { id: 'listes',       label: 'Listes',           icon: <List size={16} />,        color: '#3b82f6' },
-  { id: 'agenda',       label: 'Agenda',           icon: <Calendar size={16} />,    color: '#ef4444' },
-  { id: 'habitudes',    label: 'Habitudes',        icon: <Repeat size={16} />,      color: '#eab308' },
-  { id: 'okr',          label: 'OKR',              icon: <Target size={16} />,      color: '#22c55e' },
-  { id: 'statistiques', label: 'Statistiques',     icon: <BarChart2 size={16} />,   color: '#8b5cf6' },
-  { id: 'premium',      label: 'Premium',          icon: <Star size={16} />,        color: '#eab308' },
+  { id: 'demarrage',    labelKey: 'nav.demarrage',    icon: <Rocket size={16} />,      color: '#94a3b8' },
+  { id: 'taches',       labelKey: 'nav.taches',       icon: <CheckSquare size={16} />, color: '#3b82f6' },
+  { id: 'listes',       labelKey: 'nav.listes',       icon: <List size={16} />,        color: '#3b82f6' },
+  { id: 'agenda',       labelKey: 'nav.agenda',       icon: <Calendar size={16} />,    color: '#ef4444' },
+  { id: 'habitudes',    labelKey: 'nav.habitudes',    icon: <Repeat size={16} />,      color: '#eab308' },
+  { id: 'okr',          labelKey: 'nav.okr',          icon: <Target size={16} />,      color: '#22c55e' },
+  { id: 'statistiques', labelKey: 'nav.statistiques', icon: <BarChart2 size={16} />,   color: '#8b5cf6' },
+  { id: 'premium',      labelKey: 'nav.premium',      icon: <Star size={16} />,        color: '#eab308' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────

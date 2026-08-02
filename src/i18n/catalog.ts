@@ -49,6 +49,7 @@ import frAgenda from '@/locales/fr/agenda.json';
 import frCommon from '@/locales/fr/common.json';
 import frDashboard from '@/locales/fr/dashboard.json';
 import frErrors from '@/locales/fr/errors.json';
+import frGuide from '@/locales/fr/guide.json';
 import frHabits from '@/locales/fr/habits.json';
 import frOkr from '@/locales/fr/okr.json';
 import frPremium from '@/locales/fr/premium.json';
@@ -68,6 +69,8 @@ interface CatalogShapes {
   dashboard: typeof frDashboard;
   /** Messages d'erreur — lus aussi par `normalizeApiError`. */
   errors: typeof frErrors;
+  /** Guide d'utilisation — sommaire, sections, étapes, encarts. */
+  guide: typeof frGuide;
   /** Habitudes — liste, tableau de suivi, modale, actions, mur-pub. */
   habits: typeof frHabits;
   /** OKR — page, cartes, catégories, modales, check-in hebdo. */
@@ -132,6 +135,7 @@ registry[DEFAULT_LOCALE] = {
   common: frCommon as CatalogNode,
   dashboard: frDashboard as CatalogNode,
   errors: frErrors as CatalogNode,
+  guide: frGuide as CatalogNode,
   habits: frHabits as CatalogNode,
   okr: frOkr as CatalogNode,
   premium: frPremium as CatalogNode,
