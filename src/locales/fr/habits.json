@@ -1,0 +1,73 @@
+{
+  "page": {
+    "new": "Nouvelle",
+    "newHabit": "Nouvelle habitude",
+    "errorTitle": "Impossible de charger les habitudes",
+    "errorHint": "Vérifie ta connexion internet, puis réessaie."
+  },
+  "card": {
+    "paused": "En pause",
+    "pausedUntil": "En pause jusqu'au {{date}}",
+    "history": "Historique",
+    "deleted": "Habitude supprimée"
+  },
+  "table": {
+    "title": "Tableau de suivi",
+    "subtitle": "Vue d'ensemble de toutes vos habitudes",
+    "streak": "Série",
+    "prevPeriod": "Période précédente",
+    "nextPeriod": "Période suivante",
+    "sinceCreation": "Depuis la création",
+    "weekOf": "Semaine du {{date}}",
+    "dayCell": "{{name}} — {{date}}",
+    "dayCellDone": "{{name}} — {{date}} (complétée)"
+  },
+  "modal": {
+    "namePlaceholder": "Nom de l'habitude",
+    "descriptionPlaceholder": "Ex: Lire 30 minutes...",
+    "duration": "Durée",
+    "decreaseDuration": "Réduire la durée",
+    "increaseDuration": "Augmenter la durée",
+    "customizeColors": "Personnaliser les couleurs",
+    "close": "Fermer",
+    "create": "Créer",
+    "edit": "Modifier",
+    "newHabit": "Nouvelle habitude",
+    "ok": "OK",
+    "save": "Sauvegarder",
+    "createHabit": "Créer l'habitude",
+    "editHabit": "Modifier l'habitude"
+  },
+  "actions": {
+    "more": "Plus d'actions",
+    "resume": "Réactiver le suivi",
+    "pauseHint": "Vacances, maladie… streak conservé",
+    "pauseKeepsStreak": "Le streak reste intact jusqu'à reprise",
+    "indefinite": "indéfinie",
+    "duplicated": "Habitude « {{name}} » dupliquée",
+    "scheduled": "Habitude « {{name}} » planifiée",
+    "taskCreated": "Tâche « {{name}} » créée",
+    "resumed": "« {{name}} » a repris",
+    "paused": "« {{name}} » en pause",
+    "resumeHabit": "Reprendre l'habitude",
+    "pauseHabit": "Mettre en pause"
+  },
+  "tracking": {
+    "averageCompletion": "Complétion moyenne par jour",
+    "allHabits": "Toutes les habitudes",
+    "prevPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "globalTracking": "Suivi Global",
+    "trackingFor": "Suivi pour : {{name}}"
+  },
+  "adGate": {
+    "support": "Soutenir Cosmo",
+    "hideForToday": "Masquer pour aujourd'hui",
+    "credited": "+1 jour Premium crédité ! Bonne journée.",
+    "dailyLimit": "Limite quotidienne de pubs atteinte — accès accordé pour aujourd'hui.",
+    "creditError": "Erreur lors du crédit — accès accordé tout de même.",
+    "reconnect": "Veuillez vous reconnecter.",
+    "alreadySubscribed": "Vous avez déjà un abonnement actif.",
+    "paymentError": "Erreur paiement — réessayez."
+  }
+}

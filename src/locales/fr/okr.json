@@ -1,0 +1,113 @@
+{
+  "page": {
+    "title": "OKR - Objectifs & Résultats Clés",
+    "subtitle": "Définissez et suivez vos objectifs avec des résultats mesurables",
+    "completedOkrs": "OKR terminés",
+    "seeCompleted": "Voir la liste des OKR terminés",
+    "weeklyCheckin": "Check-in hebdo",
+    "openWeeklyCheckin": "Ouvrir le check-in hebdo",
+    "newObjective": "Nouvel Objectif",
+    "createObjective": "Créer un nouvel objectif",
+    "createOkr": "Créer un OKR",
+    "okrDeleted": "OKR supprimé",
+    "okrValidated": "OKR validé et déplacé dans « OKR terminés »",
+    "categoryDeleted": "Catégorie supprimée",
+    "categoryNameTooShort": "Le nom de la catégorie doit contenir au moins 2 caractères",
+    "empty": {
+      "noneTitle": "Aucun OKR complété",
+      "filteredTitle": "Aucun OKR dans cette catégorie",
+      "noneDescription": "Créez votre premier objectif pour structurer vos résultats clés et suivre votre progression.",
+      "filteredDescription": "Modifiez votre filtre ou créez un nouvel objectif dans cette catégorie.",
+      "allTitle": "Aucun OKR pour le moment"
+    }
+  },
+  "card": {
+    "uncategorized": "Sans catégorie",
+    "timeElapsed": "{{percent}}% du temps écoulé",
+    "overallProgress": "Progression globale",
+    "keyResults": "Résultats Clés",
+    "timeSpent": "Temps effectué",
+    "editObjective": "Modifier l'objectif",
+    "deleteObjective": "Supprimer l'objectif",
+    "createTask": "Créer une tâche",
+    "scheduleEvent": "Planifier un événement",
+    "linkedTasks": "Tâches en cours liées à ce résultat clé",
+    "weight": "Coefficient d'importance ×{{weight}}",
+    "decrease": "Diminuer {{title}}",
+    "increase": "Augmenter {{title}}",
+    "progressOf": "Avancement de {{title}} sur {{target}}"
+  },
+  "categories": {
+    "edit": "Modifier la catégorie",
+    "delete": "Supprimer la catégorie",
+    "new": "Nouvelle catégorie",
+    "namePlaceholder": "Nom de la catégorie…",
+    "create": "Créer",
+    "cancel": "Annuler",
+    "changeColor": "Changer la couleur",
+    "customColor": "Choisir une couleur personnalisée",
+    "colorHint": "Clic : cycle couleurs · Shift+clic : palette hex"
+  },
+  "deleteCategory": {
+    "title": "Confirmer la suppression",
+    "cancel": "Annuler",
+    "confirm": "Supprimer",
+    "body": "Êtes-vous sûr de vouloir supprimer la catégorie « {{name}} » ? Les OKR associés conserveront leur catégorie mais ne seront plus filtrables."
+  },
+  "deleteObjective": {
+    "title": "Supprimer l'objectif",
+    "body": "Êtes-vous sûr de vouloir supprimer cet objectif ? Tous les résultats clés associés seront également supprimés.",
+    "cancel": "Annuler",
+    "confirm": "Supprimer"
+  },
+  "modal": {
+    "description": "Définis un objectif et ses résultats clés mesurables.",
+    "objective": "Objectif",
+    "category": "Catégorie",
+    "deadline": "Échéance",
+    "descriptionLabel": "Description",
+    "keyResults": "Résultats clés",
+    "keyResultPlaceholder": "Résultat clé mesurable",
+    "moveUp": "Faire remonter le résultat clé",
+    "progress": "Avancement",
+    "target": "Cible",
+    "unit": "Unité",
+    "duration": "Durée",
+    "optional": "(Facultatif)",
+    "weight": "Coef. (1–10)",
+    "weightHint": "Importance du KR dans la progression globale",
+    "needOneKr": "Ajoute au moins 1 résultat clé pour créer l'objectif.",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "create": "Créer"
+  },
+  "completed": {
+    "title": "OKR terminés",
+    "count_one": "{{count}} objectif clôturé",
+    "count_many": "{{count}} d'objectifs clôturés",
+    "count_other": "{{count}} objectifs clôturés",
+    "empty": "Aucun OKR terminé pour le moment",
+    "emptyHint": "Vos objectifs clôturés apparaîtront ici.",
+    "done": "Terminé",
+    "close": "Fermer",
+    "edit": "Modifier",
+    "editOkr": "Modifier l'OKR {{title}}"
+  },
+  "deadlineReview": {
+    "close": "Fermer",
+    "validate": "Valider"
+  },
+  "checkin": {
+    "close": "Fermer",
+    "question": "Où en es-tu ?",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "saved": "Check-in enregistré ! Bonne semaine 🚀",
+    "savedCount_one": "{{count}} KR mis à jour",
+    "savedCount_many": "{{count}} de KR mis à jour",
+    "savedCount_other": "{{count}} KR mis à jour",
+    "error": "Erreur lors de la mise à jour",
+    "saving": "Enregistrement…"
+  }
+}

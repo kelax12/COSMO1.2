@@ -10,6 +10,7 @@ import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/i18n/useT';
 
 interface HabitModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface HabitModalProps {
 }
 
 const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
+  const { t } = useT('habits');
   const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
   const createHabitMutation = useCreateHabit();
@@ -141,7 +143,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       Annuler
                     </button>
                     <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
-                      {isEditing ? 'Modifier' : 'Nouvelle habitude'}
+                      {isEditing ? t('modal.edit') : t('modal.newHabit')}
                     </span>
                     <button
                       type="button"
@@ -150,7 +152,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         formData.name.trim() ? 'text-blue-500' : 'text-blue-300'
                       }`}
                     >
-                      {isEditing ? 'OK' : 'Créer'}
+                      {isEditing ? t('modal.ok') : t('modal.create')}
                     </button>
                   </div>
 
@@ -168,7 +170,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         type="text"
                         value={formData.name}
                         onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
-                        placeholder="Nom de l'habitude"
+                        placeholder={t('modal.namePlaceholder')}
                         autoFocus
                         className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                         style={{ border: 'none' }}
@@ -181,14 +183,14 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                       <div className="flex items-center px-4 min-h-11">
-                        <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Durée</span>
+                        <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.duration')}</span>
                         <div className="flex items-center gap-2.5">
                           <button
                             type="button"
                             onClick={() =>
                               setFormData({ ...formData, estimatedTime: Math.max(5, formData.estimatedTime - 5) })
                             }
-                            aria-label="Réduire la durée"
+                            aria-label={t('modal.decreaseDuration')}
                             className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
                           >
                             −
@@ -201,7 +203,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                             onClick={() =>
                               setFormData({ ...formData, estimatedTime: formData.estimatedTime + 5 })
                             }
-                            aria-label="Augmenter la durée"
+                            aria-label={t('modal.increaseDuration')}
                             className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
                           >
                             +
@@ -316,9 +318,9 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
                     <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                      {isEditing ? "Modifier l'habitude" : 'Nouvelle habitude'}
+                      {isEditing ? t('modal.editHabit') : t('modal.newHabit')}
                     </h2>
-                    <Button variant="ghost" size="icon" onClick={guardedClose} aria-label="Fermer">
+                    <Button variant="ghost" size="icon" onClick={guardedClose} aria-label={t('modal.close')}>
                       <X size={18} />
                     </Button>
                   </div>
@@ -342,7 +344,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                             color: 'rgb(var(--color-text-primary))',
                             borderColor: isInvalid('name') ? '#ef4444' : 'rgb(var(--color-border))',
                           }}
-                          placeholder="Ex: Lire 30 minutes..."
+                          placeholder={t('modal.descriptionPlaceholder')}
                           autoFocus
                         />
                       </div>

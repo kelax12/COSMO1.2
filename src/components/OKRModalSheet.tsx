@@ -31,6 +31,7 @@ import {
 import type { Category } from '@/modules/categories';
 import type { KeyResult } from '@/modules/okrs';
 import { getProgress, type Objective } from '@/pages/okr/okr-page-logic';
+import { useT } from '@/i18n/useT';
 
 interface OKRModalSheetProps {
   isOpen: boolean;
@@ -69,6 +70,7 @@ const toDateInput = (iso: string) => (iso ? new Date(iso).toISOString().slice(0,
 const fromDateInput = (v: string) => (v ? new Date(v + 'T00:00:00').toISOString() : '');
 
 export default function OKRModalSheet({ isOpen, onClose, categories, editingObjective, onSubmit }: OKRModalSheetProps) {
+  const { t } = useT('okr');
   const isEdit = !!editingObjective;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -154,7 +156,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader>
           <SheetTitle>{isEdit ? "Modifier l'objectif" : 'Nouvel objectif'}</SheetTitle>
-          <SheetDescription>Définis un objectif et ses résultats clés mesurables.</SheetDescription>
+          <SheetDescription>{t('modal.description')}</SheetDescription>
         </SheetHeader>
 
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
@@ -162,14 +164,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         <ScrollArea className="flex-1 min-h-0">
           <div className="grid gap-4 px-4 pb-4">
             <div className="grid gap-2">
-              <Label htmlFor="okr-title">Objectif</Label>
+              <Label htmlFor="okr-title">{t('modal.objective')}</Label>
               <Input id="okr-title" value={title} autoFocus placeholder="Ex. Lancer la v2 du produit" onChange={(e) => setTitle(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="okr-cat">Catégorie</Label>
+                  <Label htmlFor="okr-cat">{t('modal.category')}</Label>
                   {/* Créer une catégorie sans quitter le modal (pattern unifié). */}
                   <AddCategoryButton onClick={() => setShowColorSettings(true)} />
                 </div>
@@ -185,7 +187,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label>Échéance</Label>
+                <Label>{t('modal.deadline')}</Label>
                 <DatePicker
                   value={endDate}
                   onChange={setEndDate}
@@ -196,14 +198,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="okr-desc">Description</Label>
+              <Label htmlFor="okr-desc">{t('modal.descriptionLabel')}</Label>
               <Textarea id="okr-desc" rows={2} value={description} placeholder="Facultatif…" onChange={(e) => setDescription(e.target.value)} />
             </div>
 
             <Separator />
 
             <div className="flex items-center justify-between">
-              <Label>Résultats clés</Label>
+              <Label>{t('modal.keyResults')}</Label>
               <Button
                 type="button"
                 size="sm"
@@ -218,13 +220,13 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               {keyResults.map((kr, index) => (
                 <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
                   <div className="flex items-center gap-2">
-                    <Input value={kr.title} placeholder="Résultat clé mesurable" className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
                     {index > 0 && (
                       <Button
                         type="button"
                         variant="outline"
                         size="icon-sm"
-                        aria-label="Faire remonter le résultat clé"
+                        aria-label={t('modal.moveUp')}
                         title="Faire remonter"
                         onClick={() => moveKR(index, index - 1)}
                       >
@@ -239,7 +241,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                   </div>
                   <div className="grid gap-1.5">
                     <div className="text-muted-foreground flex items-center justify-between text-xs">
-                      <span>Avancement</span>
+                      <span>{t('modal.progress')}</span>
                       <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
                     </div>
                     <Slider
@@ -253,15 +255,15 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Cible</Label>
+                      <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
                       <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Unité</Label>
+                      <Label className="text-muted-foreground text-xs">{t('modal.unit')}</Label>
                       <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs whitespace-nowrap">Durée <span className="normal-case font-normal opacity-70">(Facultatif)</span></Label>
+                      <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
                       <Input
                         type="number"
                         className="h-8"
@@ -271,7 +273,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs" title="Importance du KR dans la progression globale">Coef. (1–10)</Label>
+                      <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
                       <Input
                         type="number"
                         min={1}
@@ -292,10 +294,10 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
           {!hasKeyResult && (
             <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
-              Ajoute au moins 1 résultat clé pour créer l'objectif.
+              {t('modal.needOneKr')}
             </span>
           )}
-          <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{t('modal.cancel')}</Button>
           <Button
             type="button"
             disabled={!canSave}
@@ -306,7 +308,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
             }`}
           >
-            {isEdit ? 'Enregistrer' : 'Créer'}
+            {isEdit ? t('modal.save') : t('modal.create')}
           </Button>
         </SheetFooter>
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, Edit2, X, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useT } from '@/i18n/useT';
 
 interface CategoryLite {
   id: string;
@@ -78,6 +79,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   large = false,
   accentAllActive = false,
 }) => {
+  const { t } = useT('okr');
   // Taille des chips — la page OKR perso les agrandit (~+20%) via `large`.
   const chipCls = large
     ? 'inline-flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-full text-sm font-medium border transition-colors'
@@ -129,8 +131,8 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                           type="button"
                           onClick={(e) => { e.stopPropagation(); startEditCategory(category); }}
                           className="p-1 rounded bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                          title="Modifier la catégorie"
-                          aria-label="Modifier la catégorie"
+                          title={t('categories.edit')}
+                          aria-label={t('categories.edit')}
                         >
                           <Edit2 size={14} />
                         </button>
@@ -139,8 +141,8 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setCategoryToDeleteId(category.id); }}
                           className="p-1 rounded bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
-                          title="Supprimer la catégorie"
-                          aria-label="Supprimer la catégorie"
+                          title={t('categories.delete')}
+                          aria-label={t('categories.delete')}
                         >
                           <Trash size={14} />
                         </button>
@@ -168,7 +170,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         }}
                         className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                         style={{ backgroundColor: resolveColor(editCategoryColor) }}
-                        title="Clic : cycle couleurs · Shift+clic : palette hex"
+                        title={t('categories.colorHint')}
                       />
                       {/* Color picker hex caché — déclenché par Shift+clic sur la pastille */}
                       <input
@@ -176,7 +178,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         value={resolveColor(editCategoryColor)}
                         onChange={(e) => setEditCategoryColor(e.target.value)}
                         className="sr-only"
-                        aria-label="Choisir une couleur personnalisée"
+                        aria-label={t('categories.customColor')}
                         tabIndex={-1}
                       />
                       <input
@@ -207,7 +209,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                         type="button"
                         onClick={cancelEditCategory}
                         className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                        title="Annuler"
+                        title={t('categories.cancel')}
                       >
                         <X size={12} />
                       </button>
@@ -243,9 +245,9 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 exit={{ opacity: 0, scale: 0.9 }}
                 onClick={() => setShowCreateCategory(true)}
                 className={addChipCls}
-                title="Nouvelle catégorie"
+                title={t('categories.new')}
               >
-                <Plus size={12} /> Nouvelle catégorie
+                <Plus size={12} /> {t('categories.new')}
               </motion.button>
             ) : (
               <motion.form
@@ -258,7 +260,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   e.preventDefault();
                   const name = newCategoryName.trim();
                   if (name.length < 2) {
-                    toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+                    toast.error(t('page.categoryNameTooShort'));
                     return;
                   }
                   createCategoryMutation.mutate({ name, color: newCategoryColor }, {
@@ -278,14 +280,14 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   }}
                   className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                   style={{ backgroundColor: colorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
-                  title="Changer la couleur"
+                  title={t('categories.changeColor')}
                 />
                 <input
                   autoFocus
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Nom de la catégorie…"
+                  placeholder={t('categories.namePlaceholder')}
                   className="px-3 py-1 text-sm rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
                   style={{
                     backgroundColor: 'rgb(var(--color-surface))',
@@ -299,7 +301,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                   disabled={newCategoryName.trim().length < 2}
                   className="px-3 py-1 text-sm rounded-full bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
                 >
-                  Créer
+                  {t('categories.create')}
                 </button>
                 <button
                   type="button"

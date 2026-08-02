@@ -9,6 +9,7 @@ import { useCategories } from '@/modules/categories';
 import { useCreateEvent, type CreateEventInput } from '@/modules/events';
 import { type Habit, useCreateHabit } from '@/modules/habits';
 import EventModal from './EventModal';
+import { useT } from '@/i18n/useT';
 
 interface HabitActionsMenuProps {
   habit: Habit;
@@ -27,6 +28,7 @@ interface HabitActionsMenuProps {
  * overflows parents et z-index conflicts.
  */
 const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
+  const { t } = useT('habits');
   const [open, setOpen] = useState(false);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -104,7 +106,7 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
       },
       {
         onSuccess: (newTask) => {
-          toast.success(`Tâche « ${habit.name} » créée`, {
+          toast.success(t('actions.taskCreated', { name: habit.name }), {
             description: `Échéance aujourd'hui · ${habit.estimatedTime} min`,
             duration: 4000,
           });
@@ -205,7 +207,7 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                   const { id: _id, createdAt: _ca, completions: _c, ...rest } = habit;
                   createHabitMutation.mutate(
                     { ...rest, name: `${habit.name} (copie)`, completions: {} },
-                    { onSuccess: () => toast.success(`Habitude « ${habit.name} » dupliquée`) }
+                    { onSuccess: () => toast.success(t('actions.duplicated', { name: habit.name })) }
                   );
                   setOpen(false);
                 }}
@@ -233,11 +235,11 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 onClick={() => {
                   if (paused) {
                     resume(habit.id);
-                    toast.success(`« ${habit.name} » a repris`);
+                    toast.success(t('actions.resumed', { name: habit.name }));
                   } else {
                     pauseUntil(habit.id, INDEFINITE_PAUSE_DATE);
-                    toast.success(`« ${habit.name} » en pause`, {
-                      description: 'Le streak reste intact jusqu\'à reprise',
+                    toast.success(t('actions.paused', { name: habit.name }), {
+                      description: t('actions.pauseKeepsStreak'),
                     });
                   }
                   setOpen(false);
@@ -251,10 +253,10 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-[rgb(var(--color-text-primary))]">
-                    {paused ? 'Reprendre l\'habitude' : 'Mettre en pause'}
+                    {paused ? t('actions.resumeHabit') : t('actions.pauseHabit')}
                   </div>
                   <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
-                    {paused ? 'Réactiver le suivi' : 'Vacances, maladie… streak conservé'}
+                    {paused ? t('actions.resume') : t('actions.pauseHint')}
                   </p>
                 </div>
                 {paused && (
@@ -275,8 +277,8 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
         type="button"
         onClick={() => setOpen(v => !v)}
         className="h-11 w-11 sm:h-9 sm:w-9 flex items-center justify-center rounded-md text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        title="Plus d'actions"
-        aria-label="Plus d'actions"
+        title={t('actions.more')}
+        aria-label={t('actions.more')}
         aria-expanded={open}
       >
         <MoreHorizontal size={18} className="md:w-4 md:h-4" />
@@ -298,7 +300,7 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
           onAddEvent={(eventData) => {
             createEventMutation.mutate(eventData as CreateEventInput, {
               onSuccess: () => {
-                toast.success(`Habitude « ${habit.name} » planifiée`);
+                toast.success(t('actions.scheduled', { name: habit.name }));
               },
             });
             setEventModalOpen(false);

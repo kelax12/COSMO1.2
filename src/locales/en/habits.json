@@ -1,0 +1,73 @@
+{
+  "page": {
+    "new": "New",
+    "newHabit": "New habit",
+    "errorTitle": "Couldn't load your habits",
+    "errorHint": "Check your internet connection, then try again."
+  },
+  "card": {
+    "paused": "Paused",
+    "pausedUntil": "Paused until {{date}}",
+    "history": "History",
+    "deleted": "Habit deleted"
+  },
+  "table": {
+    "title": "Tracking board",
+    "subtitle": "An overview of all your habits",
+    "streak": "Streak",
+    "prevPeriod": "Previous period",
+    "nextPeriod": "Next period",
+    "sinceCreation": "Since the start",
+    "weekOf": "Week of {{date}}",
+    "dayCell": "{{name}} — {{date}}",
+    "dayCellDone": "{{name}} — {{date}} (done)"
+  },
+  "modal": {
+    "namePlaceholder": "Habit name",
+    "descriptionPlaceholder": "e.g. Read for 30 minutes...",
+    "duration": "Duration",
+    "decreaseDuration": "Decrease duration",
+    "increaseDuration": "Increase duration",
+    "customizeColors": "Customise colours",
+    "close": "Close",
+    "create": "Create",
+    "edit": "Edit",
+    "newHabit": "New habit",
+    "ok": "OK",
+    "save": "Save",
+    "createHabit": "Create habit",
+    "editHabit": "Edit habit"
+  },
+  "actions": {
+    "more": "More actions",
+    "resume": "Resume tracking",
+    "pauseHint": "Holidays, illness… streak preserved",
+    "pauseKeepsStreak": "Your streak stays intact until you resume",
+    "indefinite": "open-ended",
+    "duplicated": "Habit “{{name}}” duplicated",
+    "scheduled": "Habit “{{name}}” scheduled",
+    "taskCreated": "Task “{{name}}” created",
+    "resumed": "“{{name}}” resumed",
+    "paused": "“{{name}}” paused",
+    "resumeHabit": "Resume habit",
+    "pauseHabit": "Pause"
+  },
+  "tracking": {
+    "averageCompletion": "Average completion per day",
+    "allHabits": "All habits",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "globalTracking": "Overall tracking",
+    "trackingFor": "Tracking: {{name}}"
+  },
+  "adGate": {
+    "support": "Support Cosmo",
+    "hideForToday": "Hide for today",
+    "credited": "+1 Premium day credited! Enjoy your day.",
+    "dailyLimit": "Daily ad limit reached — access granted for today.",
+    "creditError": "Couldn't credit your day — access granted anyway.",
+    "reconnect": "Please sign in again.",
+    "alreadySubscribed": "You already have an active subscription.",
+    "paymentError": "Payment error — please try again."
+  }
+}

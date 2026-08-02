@@ -4,6 +4,7 @@ import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { formatDate, getDateLocale } from '@/i18n/format';
 import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
+import { useT } from '@/i18n/useT';
 import { calculateStreak } from '@/modules/habits/streak';
 import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ interface HabitCardProps {
 }
 
 const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
+  const { t } = useT('habits');
   const deleteHabitMutation = useDeleteHabit();
   const createHabitMutation = useCreateHabit();
   const toggleCompletionMutation = useToggleHabitCompletion();
@@ -35,7 +37,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
         // Raccourci d'annulation (barre de progression 5 s, haut à droite).
         // On recrée l'habitude avec son historique de complétions.
         const { id: _id, createdAt: _ca, ...rest } = snapshot;
-        showUndoToast("Habitude supprimée", () => {
+        showUndoToast(t('card.deleted'), () => {
           createHabitMutation.mutate(rest);
         });
       },
@@ -124,10 +126,10 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                 {paused && pausedUntil && (
                   <div
                     className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-caption font-medium"
-                    title={`En pause jusqu'au ${format(pausedUntil, "d MMMM yyyy", { locale: getDateLocale() })}`}
+                    title={t('card.pausedUntil', { date: format(pausedUntil, 'd MMMM yyyy', { locale: getDateLocale() }) })}
                   >
                     <Pause size={10} />
-                    <span>En pause</span>
+                    <span>{t('card.paused')}</span>
                   </div>
                 )}
               </div>
@@ -145,7 +147,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               }`}
             >
               <Calendar size={16} />
-              <span className="text-xs font-medium md:hidden">Historique</span>
+              <span className="text-xs font-medium md:hidden">{t('card.history')}</span>
             </Button>
             {/* Ordre demandé : crayon (édition) → « ... » (actions) → corbeille (suppression) */}
             <div className="flex items-center gap-1">

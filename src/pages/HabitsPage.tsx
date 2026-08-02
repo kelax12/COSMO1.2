@@ -21,6 +21,7 @@ import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
+import { useT } from '@/i18n/useT';
 import { habitsTutorialStepsDesktop } from '@/tutorials/habits.desktop';
 import { habitsTutorialStepsMobile } from '@/tutorials/habits.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -34,6 +35,7 @@ import HabitsAdGate from '@/components/HabitsAdGate';
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
+  const { t } = useT('habits');
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
@@ -85,10 +87,10 @@ const HabitsPage: React.FC = () => {
       <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
         <div className="text-5xl">⚠️</div>
         <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">
-          Impossible de charger les habitudes
+          {t('page.errorTitle')}
         </h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
-          {(error as Error)?.message || 'Vérifie ta connexion internet, puis réessaie.'}
+          {(error as Error)?.message || t('page.errorHint')}
         </p>
         <button
           onClick={() => refetch()}
@@ -156,7 +158,7 @@ const HabitsPage: React.FC = () => {
             className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
           >
             <Plus size={18} />
-            <span>Nouvelle</span>
+            <span>{t('page.new')}</span>
           </motion.button>
         </div>
       </div>
@@ -265,7 +267,7 @@ const HabitsPage: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowModal(true)}
         data-tutorial-id="habits-fab"
-        aria-label="Nouvelle habitude"
+        aria-label={t('page.newHabit')}
         className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={26} />

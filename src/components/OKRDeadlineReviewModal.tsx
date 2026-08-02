@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 type Category = { id: string; name: string; color: string };
 
@@ -26,6 +27,7 @@ type Props = {
  * qui anime la carte vers le bouton "OKR terminés".
  */
 const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef, onClose, onValidate, resolveColor }) => {
+  const { t } = useT('okr');
   const [draft, setDraft] = useState<OKR | null>(okr);
   const [phase, setPhase] = useState<'edit' | 'flying'>('edit');
   const [flyTarget, setFlyTarget] = useState<{ x: number; y: number; scale: number } | null>(null);
@@ -161,7 +163,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
           <button
             onClick={onClose}
             className="absolute top-3 right-3 p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors z-10"
-            aria-label="Fermer"
+            aria-label={t('deadlineReview.close')}
           >
             <X size={16} />
           </button>
@@ -216,7 +218,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
 
               <div className="flex-1 w-full">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression globale</span>
+                  <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
                   <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
                 </div>
                 <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
@@ -226,7 +228,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
+              <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.keyResults')}</h4>
               {draft.keyResults.map((keyResult) => {
                 const krProgress = keyResult.targetValue > 0 ? (keyResult.currentValue / keyResult.targetValue) * 100 : 0;
                 return (
@@ -273,7 +275,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
               <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: 'rgb(var(--color-border))' }}>
                 <div className="flex items-center gap-1.5">
                   <Clock size={13} style={{ color: 'rgb(var(--color-text-muted))' }} />
-                  <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Temps effectué</span>
+                  <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.timeSpent')}</span>
                 </div>
                 <span className="text-xs font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                   {formatTime(doneMins)} <span style={{ color: 'rgb(var(--color-text-muted))' }}>/ {formatTime(totalMins)}</span>
@@ -290,7 +292,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
               className="w-full px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 shadow-md shadow-green-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               <CheckCircle2 size={16} />
-              Valider
+              {t('deadlineReview.validate')}
             </button>
           </div>
         </motion.div>
