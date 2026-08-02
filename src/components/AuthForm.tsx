@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, UserRound, Building2 } from 'lucide-react';
 import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { useT } from '@/i18n/useT';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -52,6 +53,7 @@ const inputClasses =
  * (bandeau role="alert" au-dessus du submit), jamais en toast.
  */
 const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, headingAs = 'h2', showDemo = true }) => {
+  const { t } = useT('common');
   const Heading = headingAs;
   const isMobile = useIsMobile();
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +79,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
 
   const validatePassword = (pwd: string): string | null => {
     if (mode === 'register' && pwd.length > 0 && pwd.length < MIN_PASSWORD_LENGTH) {
-      return `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`;
+      return t('auth.passwordTooShort', { count: MIN_PASSWORD_LENGTH });
     }
     return null;
   };
@@ -87,7 +89,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
     setFormError(null);
 
     if (mode === 'register' && formData.password.length < MIN_PASSWORD_LENGTH) {
-      setPasswordError(`Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`);
+      setPasswordError(t('auth.passwordTooShort', { count: MIN_PASSWORD_LENGTH }));
       passwordRef.current?.focus();
       return;
     }
@@ -100,7 +102,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
     const withTimeout = <T,>(promise: Promise<T>): Promise<T> =>
       Promise.race([
         promise,
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Le serveur ne répond pas. Réessayez dans un instant.')), timeout)),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(t('auth.serverTimeout'))), timeout)),
       ]);
 
     try {
@@ -109,22 +111,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         if (result.success) {
           onSuccess();
         } else if (result.error?.includes('Invalid login credentials')) {
-          setFormError('Email ou mot de passe incorrect. Vérifiez votre saisie et réessayez.');
+          setFormError(t('auth.badCredentials'));
           setFormData((prev) => ({ ...prev, password: '' }));
           passwordRef.current?.focus();
         } else {
-          setFormError(result.error || 'Erreur de connexion. Réessayez.');
+          setFormError(result.error || t('auth.loginError'));
         }
       } else {
         const result = await withTimeout(register(formData.name, formData.email, formData.password, accountType));
         if (result.success) {
           onSuccess(accountType);
         } else {
-          setFormError(result.error || 'Erreur lors de la création du compte. Réessayez.');
+          setFormError(result.error || t('auth.registerError'));
         }
       }
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Une erreur est survenue. Réessayez.');
+      setFormError(error instanceof Error ? error.message : t('auth.genericError'));
     } finally {
       clearTimeout(slowTimer);
       setSlowHint(false);
@@ -166,10 +168,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
     <>
       <div className="text-center mb-8">
         <Heading className="text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
-          {mode === 'login' ? 'Bon retour !' : 'Rejoignez Cosmo'}
+          {mode === 'login' ? t('auth.welcomeBack') : t('auth.joinCosmo')}
         </Heading>
         <p className="text-[rgb(var(--color-text-secondary))]">
-          {mode === 'login' ? 'Connectez-vous à votre compte' : 'Créez votre compte gratuitement'}
+          {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
         </p>
       </div>
 
@@ -182,7 +184,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
           className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] border border-[rgb(var(--color-border))] disabled:opacity-60 disabled:cursor-not-allowed rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] transition-colors"
         >
           <GoogleIcon />
-          {isGoogleLoading ? 'Redirection...' : 'Continuer avec Google'}
+          {isGoogleLoading ? t('auth.redirecting') : t('auth.continueGoogle')}
         </button>
 
         <div className="relative">
@@ -190,7 +192,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             <div className="w-full border-t border-[rgb(var(--color-border))]"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-3 bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-muted))]">ou continuer avec un email</span>
+            <span className="px-3 bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-muted))]">{t('auth.orEmail')}</span>
           </div>
         </div>
 
@@ -202,7 +204,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             <div className="grid grid-cols-2 gap-2">
               {([
                 { value: 'personal' as const, label: 'Particulier', desc: 'Usage personnel', Icon: UserRound },
-                { value: 'business' as const, label: 'Entreprise', desc: 'Équipe & collaboration', Icon: Building2 },
+                { value: 'business' as const, label: t('auth.accountBusiness'), desc: t('auth.accountBusinessDesc'), Icon: Building2 },
               ]).map(({ value, label, desc, Icon }) => {
                 const selected = accountType === value;
                 return (
@@ -252,7 +254,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
 
         <div>
           <label htmlFor="auth-email" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-            Email
+            {t('auth.email')}
           </label>
           <div className="relative">
             <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none" aria-hidden="true" />
@@ -274,14 +276,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="auth-password" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-              Mot de passe
+              {t('auth.password')}
             </label>
             {mode === 'login' && (
               <Link
                 to="/forgot-password"
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
-                Mot de passe oublié ?
+                {t('auth.forgotPassword')}
               </Link>
             )}
           </div>
@@ -316,7 +318,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
               {passwordError ? (
                 <p className="text-xs text-red-400" role="alert">{passwordError}</p>
               ) : (
-                <p className="text-xs text-[rgb(var(--color-text-muted))]">{MIN_PASSWORD_LENGTH} caractères minimum</p>
+                <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('auth.minChars', { count: MIN_PASSWORD_LENGTH })}</p>
               )}
               {formData.password.length > 0 && (
                 <div className="mt-1.5 flex items-center gap-2" aria-hidden="true">
@@ -355,9 +357,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         >
           {isLoading
             ? slowHint
-              ? 'Connexion en cours… le serveur met du temps à répondre'
+              ? t('auth.signingInSlow')
               : 'Chargement...'
-            : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+            : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
         </button>
 
         {mode === 'login' && showDemo && (
@@ -366,21 +368,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             onClick={handleDemoMode}
             className="w-full py-3 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] transition-all"
           >
-            Essayer la démo sans compte
+            {t('auth.tryDemo')}
           </button>
         )}
       </form>
 
       <div className="mt-6 pt-6 border-t border-[rgb(var(--color-border))] text-center">
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-          {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}
+          {mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
         </p>
         <button
           type="button"
           onClick={() => onSwitchMode(mode === 'login' ? 'register' : 'login')}
           className="mt-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
         >
-          {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
+          {mode === 'login' ? t('auth.createOne') : t('auth.signIn')}
         </button>
       </div>
     </>

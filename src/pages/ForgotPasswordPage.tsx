@@ -5,6 +5,7 @@ import { useSeoMeta } from '@/lib/useSeoMeta';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import Logo from '@/components/Logo';
+import { useT } from '@/i18n/useT';
 
 /**
  * Demande de réinitialisation de mot de passe (amélioration UX n°1).
@@ -13,6 +14,7 @@ import Logo from '@/components/Logo';
  * non (pas d'énumération de comptes).
  */
 const ForgotPasswordPage = () => {
+  const { t } = useT('common');
   useSeoMeta({
     title: 'Mot de passe oublié – Cosmo',
     description: 'Réinitialisez le mot de passe de votre compte Cosmo.',
@@ -37,12 +39,12 @@ const ForgotPasswordPage = () => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (resetError) {
-        setError("L'envoi a échoué. Réessayez dans un instant.");
+        setError(t('auth.sendFailed'));
         return;
       }
       setSent(true);
     } catch {
-      setError('Une erreur est survenue. Réessayez.');
+      setError(t('auth.genericError'));
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +55,7 @@ const ForgotPasswordPage = () => {
       className="min-h-[100dvh] flex flex-col items-center justify-center p-4 gap-6"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
-      <Link to="/" aria-label="Retour à l'accueil Cosmo" className="shrink-0">
+      <Link to="/" aria-label={t('auth.backHome')} className="shrink-0">
         <Logo showText />
       </Link>
       <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl">
@@ -62,7 +64,7 @@ const ForgotPasswordPage = () => {
             <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-green-500/10 flex items-center justify-center">
               <CheckCircle2 size={28} className="text-green-500" aria-hidden="true" />
             </div>
-            <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Email envoyé</h1>
+            <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.emailSentTitle')}</h1>
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
               Si un compte existe pour <span className="font-medium">{sanitizeEmail(email)}</span>, vous
               recevrez un lien pour choisir un nouveau mot de passe. Pensez à vérifier vos spams.
@@ -77,7 +79,7 @@ const ForgotPasswordPage = () => {
         ) : (
           <>
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Mot de passe oublié</h1>
+              <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.forgotTitle')}</h1>
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">
                 Saisissez votre email : nous vous enverrons un lien pour en choisir un nouveau.
               </p>

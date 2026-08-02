@@ -53,5 +53,79 @@
   },
   "actions": {
     "all": "All"
+  },
+  "auth": {
+    "loginSubtitle": "Sign in to your account",
+    "registerSubtitle": "Create your free account",
+    "orEmail": "or continue with an email",
+    "accountBusiness": "Company",
+    "accountBusinessDesc": "Team & collaboration",
+    "forgotPassword": "Forgot your password?",
+    "minChars": "{{count}} characters minimum",
+    "signingInSlow": "Signing in… the server is taking a while",
+    "signIn": "Sign in",
+    "createAccount": "Create my account",
+    "tryDemo": "Try the demo without an account",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "createOne": "Create an account",
+    "backHome": "Back to the Cosmo home page",
+    "backToLogin": "Back to sign in",
+    "passwordTooShort": "Your password must be at least {{count}} characters long.",
+    "serverTimeout": "The server isn't responding. Try again in a moment.",
+    "badCredentials": "Wrong email or password. Check your details and try again.",
+    "loginError": "Sign-in error. Please try again.",
+    "registerError": "Something went wrong creating your account. Please try again.",
+    "genericError": "Something went wrong. Please try again.",
+    "forgotTitle": "Forgot your password",
+    "emailSentTitle": "Email sent",
+    "sendFailed": "Sending failed. Try again in a moment.",
+    "resetTitle": "New password",
+    "resetLinkInvalid": "This link is invalid or has expired.",
+    "resetFailed": "Couldn't update your password. The link may have expired — request a new one.",
+    "welcomeBack": "Welcome back!",
+    "joinCosmo": "Join Cosmo",
+    "redirecting": "Redirecting...",
+    "continueGoogle": "Continue with Google",
+    "email": "Email",
+    "password": "Password"
+  },
+  "cookies": {
+    "banner": "Cookie banner",
+    "strictlyNecessary": "strictly necessary",
+    "purpose": " for the app to work (session, preferences). ",
+    "title": "Cookies",
+    "noTracking": "No advertising tracking",
+    "onlyCookies": "Only cookies ",
+    "learnMore": "Learn more",
+    "decline": "Decline",
+    "accept": "Accept"
+  },
+  "theme": {
+    "label": "Interface theme",
+    "title": "Theme: {{name}} — click to change",
+    "aria": "Current theme: {{name}}. Click to change."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "body": "Please refresh the page. If the problem persists, contact support.",
+    "refresh": "Refresh the page"
+  },
+  "pageError": {
+    "hint": "Check your internet connection, then try again.",
+    "retry": "Try again"
+  },
+  "demoBanner": {
+    "aria": "Demo mode",
+    "label": "Demo mode",
+    "text": " — sample data, local to this device. ",
+    "createAccount": "Create an account",
+    "rest": " to start with your real data, synced everywhere.",
+    "hide": "Hide the demo banner"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This page doesn't exist or has moved. Check the address, or head back home.",
+    "home": "Back to home"
   }
 }

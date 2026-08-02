@@ -56,5 +56,79 @@
   },
   "actions": {
     "all": "Tous"
+  },
+  "auth": {
+    "loginSubtitle": "Connectez-vous à votre compte",
+    "registerSubtitle": "Créez votre compte gratuitement",
+    "orEmail": "ou continuer avec un email",
+    "accountBusiness": "Entreprise",
+    "accountBusinessDesc": "Équipe & collaboration",
+    "forgotPassword": "Mot de passe oublié ?",
+    "minChars": "{{count}} caractères minimum",
+    "signingInSlow": "Connexion en cours… le serveur met du temps à répondre",
+    "signIn": "Se connecter",
+    "createAccount": "Créer mon compte",
+    "tryDemo": "Essayer la démo sans compte",
+    "noAccount": "Pas encore de compte ?",
+    "haveAccount": "Déjà un compte ?",
+    "createOne": "Créer un compte",
+    "backHome": "Retour à l'accueil Cosmo",
+    "backToLogin": "Retour à la connexion",
+    "passwordTooShort": "Le mot de passe doit contenir au moins {{count}} caractères.",
+    "serverTimeout": "Le serveur ne répond pas. Réessayez dans un instant.",
+    "badCredentials": "Email ou mot de passe incorrect. Vérifiez votre saisie et réessayez.",
+    "loginError": "Erreur de connexion. Réessayez.",
+    "registerError": "Erreur lors de la création du compte. Réessayez.",
+    "genericError": "Une erreur est survenue. Réessayez.",
+    "forgotTitle": "Mot de passe oublié",
+    "emailSentTitle": "Email envoyé",
+    "sendFailed": "L'envoi a échoué. Réessayez dans un instant.",
+    "resetTitle": "Nouveau mot de passe",
+    "resetLinkInvalid": "Ce lien est invalide ou a expiré.",
+    "resetFailed": "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré — refaites une demande.",
+    "welcomeBack": "Bon retour !",
+    "joinCosmo": "Rejoignez Cosmo",
+    "redirecting": "Redirection...",
+    "continueGoogle": "Continuer avec Google",
+    "email": "Email",
+    "password": "Mot de passe"
+  },
+  "cookies": {
+    "banner": "Bannière cookies",
+    "strictlyNecessary": "strictement nécessaires",
+    "purpose": " au fonctionnement (session, préférences). ",
+    "title": "Cookies",
+    "noTracking": "Aucun tracking publicitaire",
+    "onlyCookies": "Uniquement des cookies ",
+    "learnMore": "En savoir plus",
+    "decline": "Refuser",
+    "accept": "Accepter"
+  },
+  "theme": {
+    "label": "Thème de l'interface",
+    "title": "Thème : {{name}} — cliquer pour changer",
+    "aria": "Thème actuel : {{name}}. Cliquer pour changer."
+  },
+  "errorBoundary": {
+    "title": "Une erreur inattendue s'est produite",
+    "body": "Veuillez rafraîchir la page. Si le problème persiste, contactez le support.",
+    "refresh": "Rafraîchir la page"
+  },
+  "pageError": {
+    "hint": "Vérifie ta connexion internet, puis réessaie.",
+    "retry": "Réessayer"
+  },
+  "demoBanner": {
+    "aria": "Mode démo",
+    "label": "Mode démo",
+    "text": " — données d'exemple, locales à cet appareil. ",
+    "createAccount": "Créez un compte",
+    "rest": " pour démarrer avec vos vraies données, synchronisées partout.",
+    "hide": "Masquer la bannière démo"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse, ou repartez de l'accueil.",
+    "home": "Retour à l'accueil"
   }
 }

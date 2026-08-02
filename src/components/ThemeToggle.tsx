@@ -2,6 +2,7 @@ import React from 'react';
 import { Sun, Moon, Circle, MoonStar } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 import type { Theme } from '@/lib/theme';
+import { useT } from '@/i18n/useT';
 
 interface ThemeToggleProps {
   className?: string;
@@ -17,6 +18,7 @@ const THEMES: { id: Theme; icon: React.ElementType; label: string }[] = [
 ];
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {
+  const { t } = useT('common');
   const { theme, setTheme, toggleTheme } = useDarkMode();
   const visibleThemes = THEMES;
 
@@ -28,7 +30,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
         // dans le panneau Réglages — sans ça le 4ᵉ bouton déborde.
         className={`inline-flex flex-wrap items-center gap-0.5 p-1 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl ${className}`}
         role="radiogroup"
-        aria-label="Thème de l'interface"
+        aria-label={t('theme.label')}
       >
         {visibleThemes.map(({ id, icon: Icon, label }) => {
           const active = theme === id;
@@ -72,8 +74,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
   return (
     <button
       onClick={toggleTheme}
-      title={`Thème : ${current.label} — cliquer pour changer`}
-      aria-label={`Thème actuel : ${current.label}. Cliquer pour changer.`}
+      title={t('theme.title', { name: current.label })}
+      aria-label={t('theme.aria', { name: current.label })}
       className={`p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40 ${className}`}
     >
       <Icon

@@ -4,6 +4,7 @@ import { Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { supabase } from '@/lib/supabase';
 import Logo from '@/components/Logo';
+import { useT } from '@/i18n/useT';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -14,6 +15,7 @@ const MIN_PASSWORD_LENGTH = 8;
  * updateUser({ password }).
  */
 const ResetPasswordPage = () => {
+  const { t } = useT('common');
   useSeoMeta({
     title: 'Nouveau mot de passe – Cosmo',
     description: 'Choisissez un nouveau mot de passe pour votre compte Cosmo.',
@@ -52,7 +54,7 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     setError(null);
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`);
+      setError(t('auth.passwordTooShort', { count: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (password !== confirm) {
@@ -63,12 +65,12 @@ const ResetPasswordPage = () => {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
-        setError('Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré — refaites une demande.');
+        setError(t('auth.resetFailed'));
         return;
       }
       navigate('/dashboard');
     } catch {
-      setError('Une erreur est survenue. Réessayez.');
+      setError(t('auth.genericError'));
     } finally {
       setIsLoading(false);
     }
@@ -82,12 +84,12 @@ const ResetPasswordPage = () => {
       className="min-h-[100dvh] flex flex-col items-center justify-center p-4 gap-6"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
-      <Link to="/" aria-label="Retour à l'accueil Cosmo" className="shrink-0">
+      <Link to="/" aria-label={t('auth.backHome')} className="shrink-0">
         <Logo showText />
       </Link>
       <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Nouveau mot de passe</h1>
+          <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.resetTitle')}</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
             Choisissez le nouveau mot de passe de votre compte.
           </p>
@@ -132,7 +134,7 @@ const ResetPasswordPage = () => {
                 {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
             </div>
-            <p className="mt-1.5 text-xs text-[rgb(var(--color-text-muted))]">{MIN_PASSWORD_LENGTH} caractères minimum</p>
+            <p className="mt-1.5 text-xs text-[rgb(var(--color-text-muted))]">{t('auth.minChars', { count: MIN_PASSWORD_LENGTH })}</p>
           </div>
 
           <div>
