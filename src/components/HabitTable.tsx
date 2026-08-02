@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { useT } from '@/i18n/useT';
 import { calculateStreak } from '@/modules/habits/streak';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/i18n/format';
@@ -17,6 +18,7 @@ const colorOptions = [
 type PeriodType = 'week' | 'month' | '3months' | 'all';
 
 const HabitTable: React.FC = () => {
+  const { t } = useT('habits');
   const { data: habits = [] } = useHabits();
   const toggleMutation = useToggleHabitCompletion();
   const [period, setPeriod] = useState<PeriodType>('week');
@@ -174,7 +176,7 @@ const HabitTable: React.FC = () => {
   const getCurrentPeriodLabel = () => {
     switch (period) {
       case 'week':
-        return `Semaine du ${formatDate(currentDate, { day: 'numeric', month: 'short' })}`;
+        return t('table.weekOf', { date: formatDate(currentDate, { day: 'numeric', month: 'short' }) });
       case 'month':
         return formatDate(currentDate, { month: 'long', year: 'numeric' });
       case '3months': {
@@ -183,7 +185,7 @@ const HabitTable: React.FC = () => {
         return `${formatDate(currentDate, { month: 'short', year: 'numeric' })} - ${formatDate(endDate, { month: 'short', year: 'numeric' })}`;
       }
       case 'all':
-        return 'Depuis la création';
+        return t('table.sinceCreation');
       default:
         return '';
     }
@@ -198,8 +200,8 @@ const HabitTable: React.FC = () => {
         }}>
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h2 className="text-lg md:text-xl font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Tableau de suivi</h2>
-            <p className="text-xs md:text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Vue d'ensemble de toutes vos habitudes</p>
+            <h2 className="text-lg md:text-xl font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('table.title')}</h2>
+            <p className="text-xs md:text-sm mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('table.subtitle')}</p>
           </div>
           
             {/* Navigation */}
@@ -209,7 +211,7 @@ const HabitTable: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigatePeriod('prev')}
-                  aria-label="Période précédente"
+                  aria-label={t('table.prevPeriod')}
                   className="min-w-touch min-h-touch md:min-w-0 md:min-h-0 border md:border-0"
                   style={{
                     color: 'rgb(var(--color-text-secondary))',
@@ -226,7 +228,7 @@ const HabitTable: React.FC = () => {
                   size="icon"
                   onClick={() => navigatePeriod('next')}
                   disabled={!canNavigateNext()}
-                  aria-label="Période suivante"
+                  aria-label={t('table.nextPeriod')}
                   className="min-w-touch min-h-touch md:min-w-0 md:min-h-0 border md:border-0"
                   style={{
                     color: canNavigateNext() ? 'rgb(var(--color-text-secondary))' : 'rgb(var(--color-text-muted))',
@@ -303,7 +305,7 @@ const HabitTable: React.FC = () => {
                     borderColor: 'rgb(var(--table-border))'
                   }}>
                     <Flame size={16} className="mx-auto md:hidden" />
-                    <span className="hidden md:inline">Série</span>
+                    <span className="hidden md:inline">{t('table.streak')}</span>
                   </th>
               </tr>
             </thead>
@@ -340,7 +342,7 @@ const HabitTable: React.FC = () => {
                           type="button"
                           role="checkbox"
                           aria-checked={!!isCompleted}
-                          aria-label={`${habit.name} — ${day.date}${isCompleted ? ' (complétée)' : ''}`}
+                          aria-label={isCompleted ? t('table.dayCellDone', { name: habit.name, date: day.date }) : t('table.dayCell', { name: habit.name, date: day.date })}
                           onClick={() => handleDayClick(habit.id, day.date)}
                           disabled={day.isFuture}
                           className="w-11 h-11 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"

@@ -4,6 +4,7 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { X, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
+import { useT } from '@/i18n/useT';
 
 const STORAGE_KEY = 'cosmo:last-checkin-week';
 
@@ -73,6 +74,7 @@ interface WeeklyCheckinModalProps {
  * via `useUpdateKeyResult` (qui insère dans `kr_completions` côté repository).
  */
 export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps) {
+  const { t, tp } = useT('okr');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { data: activeOkrs = [] } = useActiveOkrs();
   const updateKR = useUpdateKeyResult();
@@ -138,12 +140,12 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
           );
         });
       }
-      toast.success('Check-in enregistré ! Bonne semaine 🚀', {
-        description: `${changes.length} KR ${changes.length > 1 ? 'mis à jour' : 'mis à jour'}`,
+      toast.success(t('checkin.saved'), {
+        description: tp('checkin.savedCount', changes.length),
       });
       onClose();
     } catch {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('checkin.error'));
     } finally {
       setIsSaving(false);
     }
@@ -198,7 +200,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 <button
                   onClick={onClose}
                   className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                  aria-label="Fermer"
+                  aria-label={t('checkin.close')}
                 >
                   <X size={18} className="text-[rgb(var(--color-text-muted))]" />
                 </button>
@@ -224,7 +226,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
 
               {/* Input nouvelle valeur */}
               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                Où en es-tu ?
+                {t('checkin.question')}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -275,7 +277,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                   onClick={() => setCurrentIdx(i => i - 1)}
                   className="px-4 py-2.5 text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors"
                 >
-                  Précédent
+                    {t('checkin.previous')}
                 </button>
               )}
               <button
@@ -285,15 +287,15 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSaving ? (
-                  'Enregistrement…'
+                  t('checkin.saving')
                 ) : isLast ? (
                   <>
                     <Check size={16} />
-                    Terminer
+                    {t('checkin.finish')}
                   </>
                 ) : (
                   <>
-                    Suivant
+                    {t('checkin.next')}
                     <ChevronRight size={16} />
                   </>
                 )}

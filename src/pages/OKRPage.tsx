@@ -27,8 +27,10 @@ import { OKRListSkeleton } from '@/components/skeletons';
 import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
 import CategoryFilterBar from './okr/CategoryFilterBar';
 import DeleteCategoryConfirm from './okr/DeleteCategoryConfirm';
+import { useT } from '@/i18n/useT';
 
 const OKRPage: React.FC = () => {
+  const { t } = useT('okr');
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
   const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
@@ -91,7 +93,7 @@ const OKRPage: React.FC = () => {
     if (!editingCategoryId) return;
     const name = editCategoryName.trim();
     if (name.length < 2) {
-      toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+      toast.error(t('page.categoryNameTooShort'));
       return;
     }
     updateCategoryMutation.mutate(
@@ -111,7 +113,7 @@ const OKRPage: React.FC = () => {
         if (selectedCategory === categoryToDeleteId) setSelectedCategory('all');
         setCategoryToDeleteId(null);
         if (snapshot) {
-          showUndoToast('Catégorie supprimée', () => {
+          showUndoToast(t('page.categoryDeleted'), () => {
             const { id: _id, ...rest } = snapshot;
             createCategoryMutation.mutate(rest);
           });
@@ -141,7 +143,7 @@ const OKRPage: React.FC = () => {
     setDeletingObjective(null);
     if (snapshot) {
       const { id: _id, ...rest } = snapshot;
-      showUndoToast('OKR supprimé', () => { createOkrMutation.mutate(rest); });
+      showUndoToast(t('page.okrDeleted'), () => { createOkrMutation.mutate(rest); });
     }
   };
 
@@ -256,7 +258,7 @@ const OKRPage: React.FC = () => {
         completed: true,
       },
     });
-    toast.success('OKR validé et déplacé dans « OKR terminés »');
+    toast.success(t('page.okrValidated'));
     handleCloseDeadlineReview();
   };
 
@@ -272,10 +274,10 @@ const OKRPage: React.FC = () => {
       <div className="mb-8 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <PageHeading variant="standard" className="mb-2">
-            OKR - Objectifs & Résultats Clés
+            {t('page.title')}
           </PageHeading>
           <p className="text-sm sm:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            Définissez et suivez vos objectifs avec des résultats mesurables
+            {t('page.subtitle')}
           </p>
         </div>
 
@@ -285,11 +287,11 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCompletedModal(true)}
-          aria-label="Voir la liste des OKR terminés"
+          aria-label={t('page.seeCompleted')}
           className="shrink-0 flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 dark:hover:bg-emerald-900/20"
         >
           <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden sm:inline">OKR terminés</span>
+          <span className="hidden sm:inline">{t('page.completedOkrs')}</span>
           {completedCount > 0 && (
             <span className="text-caption md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
               {completedCount}
@@ -310,7 +312,7 @@ const OKRPage: React.FC = () => {
           title="Faire le point sur vos OKR — s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
         >
           <CalendarCheck size={15} />
-          <span>Check-in hebdo</span>
+          <span>{t('page.weeklyCheckin')}</span>
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -318,10 +320,10 @@ const OKRPage: React.FC = () => {
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
           className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
-          aria-label="Créer un nouvel objectif"
+          aria-label={t('page.createObjective')}
         >
           <Plus size={15} />
-          <span>Nouvel Objectif</span>
+          <span>{t('page.newObjective')}</span>
         </motion.button>
       </div>
 
@@ -333,7 +335,7 @@ const OKRPage: React.FC = () => {
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))]"
         >
           <CalendarCheck size={18} />
-          <span>Ouvrir le check-in hebdo</span>
+          <span>{t('page.openWeeklyCheckin')}</span>
         </button>
       </div>
 
@@ -385,22 +387,22 @@ const OKRPage: React.FC = () => {
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             {selectedCategory === 'all'
-              ? 'Aucun OKR pour le moment'
+              ? t('page.empty.allTitle')
               : selectedCategory === 'completed'
-              ? 'Aucun OKR complété'
-              : 'Aucun OKR dans cette catégorie'}
+              ? t('page.empty.noneTitle')
+              : t('page.empty.filteredTitle')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
             {selectedCategory === 'all'
-              ? 'Créez votre premier objectif pour structurer vos résultats clés et suivre votre progression.'
-              : 'Modifiez votre filtre ou créez un nouvel objectif dans cette catégorie.'}
+              ? t('page.empty.noneDescription')
+              : t('page.empty.filteredDescription')}
           </p>
           <button
             onClick={() => setShowAddObjective(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            Créer un OKR
+            {t('page.createOkr')}
           </button>
         </motion.div>
       )}

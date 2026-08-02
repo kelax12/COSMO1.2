@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/i18n/useT';
 
 interface DeleteCategoryConfirmProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface DeleteCategoryConfirmProps {
 
 // Dialog de confirmation de suppression d'une catégorie OKR.
 const DeleteCategoryConfirm: React.FC<DeleteCategoryConfirmProps> = ({ open, categoryName, onCancel, onConfirm }) => {
+  const { t } = useT('okr');
   return (
     <AnimatePresence>
       {open && (
@@ -29,16 +31,16 @@ const DeleteCategoryConfirm: React.FC<DeleteCategoryConfirmProps> = ({ open, cat
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Confirmer la suppression</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{t('deleteCategory.title')}</h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-slate-900 dark:text-white">"{categoryName}"</strong> ? Les OKR associés conserveront leur catégorie mais ne seront plus filtrables.
+                {t('deleteCategory.body', { name: categoryName ?? '' })}
               </p>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 min-h-11" onClick={onCancel}>
-                  Annuler
+                  {t('deleteCategory.cancel')}
                 </Button>
                 <Button variant="destructive" className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white" onClick={onConfirm}>
-                  Supprimer
+                  {t('deleteCategory.confirm')}
                 </Button>
               </div>
             </div>

@@ -5,6 +5,7 @@ import { useBilling } from '@/modules/billing/billing.context';
 import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
 import { formatCurrency } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdModal from './AdModal';
@@ -15,6 +16,7 @@ interface HabitsAdGateProps {
 }
 
 export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
+  const { t } = useT('habits');
   const { addTokens, refreshBillingStatus } = useBilling();
   const [showAdModal, setShowAdModal] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -22,13 +24,13 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
   const handleAdComplete = async () => {
     try {
       await addTokens(1);
-      toast.success('+1 jour Premium crédité ! Bonne journée.');
+      toast.success(t('adGate.credited'));
       await refreshBillingStatus();
     } catch (err) {
       if (isDailyAdLimitError(err)) {
-        toast.info('Limite quotidienne de pubs atteinte — accès accordé pour aujourd\'hui.');
+        toast.info(t('adGate.dailyLimit'));
       } else {
-        toast.error('Erreur lors du crédit — accès accordé tout de même.');
+        toast.error(t('adGate.creditError'));
       }
     }
     setShowAdModal(false);
@@ -39,7 +41,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
     setIsCheckoutLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error('Veuillez vous reconnecter.'); return; }
+      if (!session) { toast.error(t('adGate.reconnect')); return; }
 
       const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -47,7 +49,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
 
       if (error) throw error;
       if (data?.error === 'already_subscribed') {
-        toast.info('Vous avez déjà un abonnement actif.');
+        toast.info(t('adGate.alreadySubscribed'));
         await refreshBillingStatus();
         return;
       }
@@ -57,7 +59,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
         throw new Error('No checkout URL');
       }
     } catch {
-      toast.error('Erreur paiement — réessayez.');
+      toast.error(t('adGate.paymentError'));
     } finally {
       setIsCheckoutLoading(false);
     }
@@ -74,7 +76,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
         role="region"
-        aria-label="Soutenir Cosmo"
+        aria-label={t('adGate.support')}
         className="fixed inset-x-2 sm:inset-x-auto sm:right-4 sm:max-w-sm bottom-[calc(64px+env(safe-area-inset-bottom)+8px)] md:bottom-4 z-40"
       >
         <div className="relative bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl overflow-hidden">
@@ -112,7 +114,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             </button>
             <button
               onClick={onDismiss}
-              aria-label="Masquer pour aujourd'hui"
+              aria-label={t('adGate.hideForToday')}
               className="shrink-0 min-w-touch min-h-touch sm:w-8 sm:h-8 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-full text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <X size={14} aria-hidden="true" />

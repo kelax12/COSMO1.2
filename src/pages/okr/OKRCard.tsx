@@ -6,6 +6,7 @@ import type { KeyResult } from '@/modules/okrs';
 import { useTasks } from '@/modules/tasks';
 import { getProgress, type Objective } from './okr-page-logic';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 interface OKRCardProps {
   objective: Objective;
@@ -26,6 +27,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
   setDeletingObjective, setSelectedKeyResultForModal, setShowAddTaskModal, setShowAddEventModal,
   updateKeyResult,
 }) => {
+  const { t } = useT('okr');
               const progress = getProgress(objective.keyResults);
               const category = getCategoryById(objective.category);
 
@@ -59,7 +61,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       {category && (
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: resolveColor(category.color) }} />
                       )}
-                      <span>{category?.name ?? 'Sans catégorie'}</span>
+                      <span>{category?.name ?? t('card.uncategorized')}</span>
                     </span>
 
                     <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
@@ -71,14 +73,14 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                       <button
                         onClick={() => handleEditObjective(objective.id)}
-                        aria-label="Modifier l'objectif"
+                        aria-label={t('card.editObjective')}
                         className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => setDeletingObjective(objective.id)}
-                        aria-label="Supprimer l'objectif"
+                        aria-label={t('card.deleteObjective')}
                         className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Trash2 size={16} />
@@ -109,7 +111,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             color: 'rgb(var(--color-text-secondary))'
                           }}
                         >
-                          <span className="whitespace-nowrap">{Math.round(timeProgress)}% du temps écoulé</span>
+                          <span className="whitespace-nowrap">{t('card.timeElapsed', { percent: Math.round(timeProgress) })}</span>
                         </div>
                       )}
                     </div>
@@ -132,7 +134,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   
                   <div className="flex-1 w-full">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression globale</span>
+                      <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
                       <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
                     </div>
                     <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
@@ -142,7 +144,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h3>
+                  <h3 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.keyResults')}</h3>
                   {objective.keyResults.map((keyResult) => {
                     // Guard targetValue > 0 (B17) : évite NaN quand la cible vaut 0.
                     const krProgress = keyResult.targetValue > 0
@@ -157,7 +159,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             {(keyResult.weight ?? 1) !== 1 && (
                               <span
                                 className="shrink-0 text-caption sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                                title={`Coefficient d'importance ×${keyResult.weight}`}
+                                title={t('card.weight', { weight: keyResult.weight ?? 1 })}
                               >
                                 ×{keyResult.weight}
                               </span>
@@ -170,7 +172,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 setShowAddTaskModal(true);
                               }}
                               className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title="Créer une tâche">
+                              title={t('card.createTask')}>
 
                               <CheckCircle size={14} className="text-[rgb(var(--color-accent-solid))] md:text-blue-500" />
                             </button>
@@ -180,14 +182,14 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 setShowAddEventModal(true);
                               }}
                               className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title="Planifier un événement">
+                              title={t('card.scheduleEvent')}>
 
                               <Calendar size={14} style={{ color: 'rgb(var(--color-text-muted))' }} />
                             </button>
                             {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                               <span
                                 className="text-caption sm:text-xs px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
-                                title="Tâches en cours liées à ce résultat clé"
+                                title={t('card.linkedTasks')}
                               >
                                 {tasksByKr.get(keyResult.id)} tâche{(tasksByKr.get(keyResult.id) ?? 0) > 1 ? 's' : ''}
                               </span>
@@ -206,7 +208,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               type="button"
                               onClick={() => updateKeyResult(objective.id, keyResult.id, Math.max(0, keyResult.currentValue - 1))}
                               disabled={keyResult.currentValue <= 0}
-                              aria-label={`Diminuer ${keyResult.title}`}
+                              aria-label={t('card.decrease', { title: keyResult.title })}
                               className="w-11 h-11 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                             >
@@ -214,7 +216,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             </button>
                             <input
                               type="number"
-                              aria-label={`Avancement de ${keyResult.title} sur ${keyResult.targetValue}`}
+                              aria-label={t('card.progressOf', { title: keyResult.title, target: keyResult.targetValue })}
                               value={keyResult.currentValue}
                               onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
                               className="w-14 sm:w-16 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none text-center"
@@ -222,7 +224,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             <button
                               type="button"
                               onClick={() => updateKeyResult(objective.id, keyResult.id, keyResult.currentValue + 1)}
-                              aria-label={`Augmenter ${keyResult.title}`}
+                              aria-label={t('card.increase', { title: keyResult.title })}
                               className="w-11 h-11 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                             >
@@ -251,7 +253,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: 'rgb(var(--color-border))' }}>
                       <div className="flex items-center gap-1.5">
                         <Clock size={13} style={{ color: 'rgb(var(--color-text-muted))' }} />
-                        <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Temps effectué</span>
+                        <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.timeSpent')}</span>
                       </div>
                       <span className="text-xs font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                         {formatTime(doneMins)} <span style={{ color: 'rgb(var(--color-text-muted))' }}>/ {formatTime(totalMins)}</span>

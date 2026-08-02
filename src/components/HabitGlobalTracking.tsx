@@ -4,6 +4,7 @@ import { useHabits } from '@/modules/habits';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 type PeriodType = 'week' | 'month' | 'all';
 
@@ -28,6 +29,7 @@ const getSuccessColor = (percentage: number): string => {
 };
 
 const HabitGlobalTracking: React.FC = () => {
+  const { t } = useT('habits');
   const { data: habits = [] } = useHabits();
   const [period, setPeriod] = useState<PeriodType>('all');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -130,7 +132,7 @@ const HabitGlobalTracking: React.FC = () => {
       return `Semaine du ${formatDate(currentDate, { day: 'numeric', month: 'short' })}`;
     if (period === 'month')
       return formatDate(currentDate, { month: 'long', year: 'numeric' });
-    return 'Depuis la création';
+    return t('table.sinceCreation');
   };
 
   if (habits.length === 0) {
@@ -160,12 +162,12 @@ const HabitGlobalTracking: React.FC = () => {
       >
         <div>
           <h3 className="text-base md:text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Suivi Global
+            {t('tracking.globalTracking')}
           </h3>
           <p className="text-caption md:text-sm mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             {selectedHabitId === 'all'
-              ? 'Complétion moyenne par jour'
-              : `Suivi pour : ${habits.find((h) => h.id === selectedHabitId)?.name}`}
+              ? t('tracking.averageCompletion')
+              : t('tracking.trackingFor', { name: habits.find((h) => h.id === selectedHabitId)?.name ?? '' })}
           </p>
         </div>
 
@@ -175,7 +177,7 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Période précédente"
+                aria-label={t('table.prevPeriod')}
                 onClick={() => navigatePeriod('prev')}
                 className="border"
                 style={{ color: 'rgb(var(--color-text-secondary))', borderColor: 'rgb(var(--color-border))' }}
@@ -191,7 +193,7 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Période suivante"
+                aria-label={t('table.nextPeriod')}
                 onClick={() => navigatePeriod('next')}
                 disabled={!canNavigateNext()}
                 className="border"
@@ -230,10 +232,10 @@ const HabitGlobalTracking: React.FC = () => {
 
           <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
             <SelectTrigger className="min-h-touch md:!h-9 min-w-[160px] rounded-lg text-xs md:text-sm">
-              <SelectValue placeholder="Toutes les habitudes" />
+              <SelectValue placeholder={t('tracking.allHabits')} />
             </SelectTrigger>
             <SelectContent className="z-[70]">
-              <SelectItem value="all">Toutes les habitudes</SelectItem>
+              <SelectItem value="all">{t('tracking.allHabits')}</SelectItem>
               {habits.map((h) => (
                 <SelectItem key={h.id} value={h.id}>
                   {h.name}
@@ -305,7 +307,7 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Page précédente"
+                aria-label={t('tracking.prevPage')}
                 onClick={() => setGlobalPage((p) => Math.max(0, p - 1))}
                 disabled={globalPage === 0}
                 className="min-w-touch min-h-touch md:min-w-0 md:min-h-0"
@@ -319,7 +321,7 @@ const HabitGlobalTracking: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Page suivante"
+                aria-label={t('tracking.nextPage')}
                 onClick={() => setGlobalPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={globalPage === totalPages - 1}
                 className="min-w-touch min-h-touch md:min-w-0 md:min-h-0"

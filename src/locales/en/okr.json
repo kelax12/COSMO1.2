@@ -1,0 +1,111 @@
+{
+  "page": {
+    "title": "OKRs - Objectives & Key Results",
+    "subtitle": "Set and track your objectives with measurable results",
+    "completedOkrs": "Completed OKRs",
+    "seeCompleted": "See the completed OKRs",
+    "weeklyCheckin": "Weekly check-in",
+    "openWeeklyCheckin": "Open the weekly check-in",
+    "newObjective": "New objective",
+    "createObjective": "Create a new objective",
+    "createOkr": "Create an OKR",
+    "okrDeleted": "OKR deleted",
+    "okrValidated": "OKR completed and moved to “Completed OKRs”",
+    "categoryDeleted": "Category deleted",
+    "categoryNameTooShort": "The category name must be at least 2 characters long",
+    "empty": {
+      "noneTitle": "No completed OKRs",
+      "filteredTitle": "No OKRs in this category",
+      "noneDescription": "Create your first objective to structure your key results and track your progress.",
+      "filteredDescription": "Change your filter, or create a new objective in this category.",
+      "allTitle": "No OKRs yet"
+    }
+  },
+  "card": {
+    "uncategorized": "Uncategorized",
+    "timeElapsed": "{{percent}}% of time elapsed",
+    "overallProgress": "Overall progress",
+    "keyResults": "Key results",
+    "timeSpent": "Time spent",
+    "editObjective": "Edit objective",
+    "deleteObjective": "Delete objective",
+    "createTask": "Create a task",
+    "scheduleEvent": "Schedule an event",
+    "linkedTasks": "Open tasks linked to this key result",
+    "weight": "Importance weight ×{{weight}}",
+    "decrease": "Decrease {{title}}",
+    "increase": "Increase {{title}}",
+    "progressOf": "{{title}} progress out of {{target}}"
+  },
+  "categories": {
+    "edit": "Edit category",
+    "delete": "Delete category",
+    "new": "New category",
+    "namePlaceholder": "Category name…",
+    "create": "Create",
+    "cancel": "Cancel",
+    "changeColor": "Change colour",
+    "customColor": "Pick a custom colour",
+    "colorHint": "Click: cycle colours · Shift+click: hex palette"
+  },
+  "deleteCategory": {
+    "title": "Confirm deletion",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "body": "Are you sure you want to delete the category “{{name}}”? The linked OKRs keep their category but can no longer be filtered."
+  },
+  "deleteObjective": {
+    "title": "Delete objective",
+    "body": "Are you sure you want to delete this objective? All of its key results will be deleted too.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "modal": {
+    "description": "Set an objective and its measurable key results.",
+    "objective": "Objective",
+    "category": "Category",
+    "deadline": "Due date",
+    "descriptionLabel": "Description",
+    "keyResults": "Key results",
+    "keyResultPlaceholder": "Measurable key result",
+    "moveUp": "Move key result up",
+    "progress": "Progress",
+    "target": "Target",
+    "unit": "Unit",
+    "duration": "Duration",
+    "optional": "(Optional)",
+    "weight": "Weight (1–10)",
+    "weightHint": "How much this KR counts towards overall progress",
+    "needOneKr": "Add at least 1 key result to create the objective.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create"
+  },
+  "completed": {
+    "title": "Completed OKRs",
+    "count_one": "{{count}} objective closed",
+    "count_other": "{{count}} objectives closed",
+    "empty": "No completed OKRs yet",
+    "emptyHint": "Your closed objectives will appear here.",
+    "done": "Done",
+    "close": "Close",
+    "edit": "Edit",
+    "editOkr": "Edit OKR {{title}}"
+  },
+  "deadlineReview": {
+    "close": "Close",
+    "validate": "Complete"
+  },
+  "checkin": {
+    "close": "Close",
+    "question": "Where are you at?",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
+    "saved": "Check-in saved! Have a great week 🚀",
+    "savedCount_one": "{{count}} KR updated",
+    "savedCount_other": "{{count}} KRs updated",
+    "error": "Something went wrong while updating",
+    "saving": "Saving…"
+  }
+}

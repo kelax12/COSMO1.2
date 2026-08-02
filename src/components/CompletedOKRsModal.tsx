@@ -7,6 +7,7 @@ import type { OKR } from '@/modules/okrs';
 // Alias : un helper local `formatDate` (tolérant aux dates invalides) existe
 // déjà dans ce composant.
 import { formatDate as formatDateIntl } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 type Category = { id: string; name: string; color: string };
 
@@ -25,6 +26,7 @@ type Props = {
  * l'OKRModal en mode édition.
  */
 const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories, resolveColor, onEdit }) => {
+  const { t, tp } = useT('okr');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   useEffect(() => {
     if (!isOpen) return;
@@ -86,16 +88,16 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">
-                  OKR terminés
+                  {t('completed.title')}
                 </h2>
                 <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                  {okrs.length} objectif{okrs.length > 1 ? 's' : ''} clôturé{okrs.length > 1 ? 's' : ''}
+                  {tp('completed.count', okrs.length)}
                 </p>
               </div>
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-                aria-label="Fermer"
+                aria-label={t('completed.close')}
               >
                 <X size={18} />
               </button>
@@ -109,10 +111,10 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                     <CheckCircle2 size={28} className="text-slate-400" />
                   </div>
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Aucun OKR terminé pour le moment
+                    {t('completed.empty')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Vos objectifs clôturés apparaîtront ici.
+                    {t('completed.emptyHint')}
                   </p>
                 </div>
               ) : (
@@ -141,7 +143,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                               )}
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                                 <CheckCircle2 size={10} />
-                                Terminé
+                                {t('completed.done')}
                               </span>
                               {okr.endDate && (
                                 <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
@@ -162,8 +164,8 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
                           <button
                             onClick={() => { onEdit(okr.id); onClose(); }}
                             className="shrink-0 p-2 rounded-md text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
-                            aria-label={`Modifier l'OKR ${okr.title}`}
-                            title="Modifier"
+                            aria-label={t('completed.editOkr', { title: okr.title })}
+                            title={t('completed.edit')}
                           >
                             <Edit2 size={16} />
                           </button>
