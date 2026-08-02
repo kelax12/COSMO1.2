@@ -17,24 +17,26 @@ import {
   exportAllCSV,
 } from '@/lib/csv-export';
 import { toast } from 'sonner';
+import { useT } from '@/i18n/useT';
 
 export function DataTab() {
+  const { t, tp } = useT('settings');
   const { data: tasks = [] } = useTasks();
   const { data: habits = [] } = useHabits();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
 
   const exports: { label: string; icon: React.ElementType; count: number; run: () => void }[] = [
-    { label: 'Tâches', icon: FileSpreadsheet, count: tasks.length, run: () => { exportTasksCSV(tasks); toast.success(`${tasks.length} tâches exportées`); } },
-    { label: 'Habitudes', icon: FileSpreadsheet, count: habits.length, run: () => { exportHabitsCSV(habits); toast.success(`${habits.length} habitudes exportées`); } },
-    { label: 'Agenda', icon: FileSpreadsheet, count: events.length, run: () => { exportEventsCSV(events); toast.success(`${events.length} événements exportés`); } },
-    { label: 'OKR', icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(`${okrs.length} OKR exportés`); } },
+    { label: t('data.tasks'), icon: FileSpreadsheet, count: tasks.length, run: () => { exportTasksCSV(tasks); toast.success(t('data.tasksExported', { count: tasks.length })); } },
+    { label: t('data.habits'), icon: FileSpreadsheet, count: habits.length, run: () => { exportHabitsCSV(habits); toast.success(t('data.habitsExported', { count: habits.length })); } },
+    { label: t('data.events'), icon: FileSpreadsheet, count: events.length, run: () => { exportEventsCSV(events); toast.success(t('data.eventsExported', { count: events.length })); } },
+    { label: t('data.okrs'), icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(t('data.okrsExported', { count: okrs.length })); } },
   ];
 
   const handleExportAll = () => {
     exportAllCSV({ tasks, habits, events, okrs });
-    toast.success('Export de toutes vos données en cours…', {
-      description: `${tasks.length + habits.length + events.length + okrs.length} éléments répartis dans 4 fichiers CSV`,
+    toast.success(t('data.exportingAll'), {
+      description: t('data.exportingAllHint', { count: tasks.length + habits.length + events.length + okrs.length }),
     });
   };
 
@@ -52,10 +54,10 @@ export function DataTab() {
          
           className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1"
         >
-          Mes données
+          {t('data.title')}
         </h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-          Exportez vos données au format CSV pour les ouvrir dans Excel, Google Sheets ou Numbers.
+          {t('data.description')}
         </p>
       </div>
 
@@ -81,7 +83,7 @@ export function DataTab() {
       {/* Exports individuels */}
       <div>
         <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3 uppercase tracking-wider">
-          Export par catégorie
+          {t('data.byCategory')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {exports.map(ex => {
@@ -102,7 +104,7 @@ export function DataTab() {
                     {ex.label}
                   </div>
                   <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                    {ex.count} élément{ex.count > 1 ? 's' : ''}
+                    {tp('data.item', ex.count)}
                   </p>
                 </div>
                 <Download size={16} className="text-[rgb(var(--color-text-muted))]" />
@@ -115,7 +117,7 @@ export function DataTab() {
       {/* Note import */}
       <div className="p-4 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))]">
         <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          <strong className="text-[rgb(var(--color-text-secondary))]">Import depuis Todoist / Notion / TickTick</strong> — bientôt disponible. En attendant, vous pouvez exporter vos données depuis l'app source en CSV puis nous contacter pour l'import manuel.
+          <strong className="text-[rgb(var(--color-text-secondary))]">{t('data.importNotice')}</strong>{t('data.importNoticeRest')}
         </p>
       </div>
     </motion.div>

@@ -11,6 +11,7 @@ import type { OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate } from '../../lib/workTimeCalculator';
 import type { WorkTimePeriodData, KeyResultHistory } from './types';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPOSANT MÉMOÏSÉ — Habit Stat Item
@@ -74,6 +75,7 @@ export { HabitHeatmap } from './HabitHeatmap';
 // VUE D'ENSEMBLE
 // ═══════════════════════════════════════════════════════════════════
 export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }> = ({ workTimeData }) => {
+  const { t } = useT('statistics');
   const totalDetails = workTimeData.reduce(
     (acc, p) => ({
       tasksTime: acc.tasksTime + p.details.tasksTime,
@@ -104,7 +106,7 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Répartition globale du temps
+            {t('details.globalTimeSplit')}
           </h3>
           <div className="space-y-6">
             {breakdown.map(item => (
@@ -174,6 +176,7 @@ export const TasksStatistics: React.FC<{
   colorSettings: Record<string, string>;
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ tasks, colorSettings, categories }) => {
+  const { t } = useT('statistics');
   const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || '#64748B';
   // Fix dots gris : itérer sur les VRAIES catégories (UUIDs), pas sur colorSettings (clés hardcodées cat-1...).
   // Fallback aux entrées colorSettings si aucune catégorie chargée (mode démo très précoce).
@@ -203,7 +206,7 @@ export const TasksStatistics: React.FC<{
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="card p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Répartition par couleur</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byColor')}</h3>
           <span className="text-sm font-medium px-2 py-1 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">{tasks.length} tâches</span>
         </div>
         <div className="space-y-4">
@@ -226,14 +229,14 @@ export const TasksStatistics: React.FC<{
       </div>
       <div className="card p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Répartition par priorité</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byPriority')}</h3>
           <span className="text-sm font-medium px-2 py-1 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">Moy. {avgPriority}</span>
         </div>
         <div className="space-y-4">
           {priorityDistribution.map((item, idx) => (
             <div key={item.priority} className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>Priorité {item.priority}</span>
+                <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.priority', { level: item.priority })}</span>
                 <span className="text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.count}</span>
               </div>
               <div className="w-full rounded-full h-2.5" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
@@ -255,6 +258,7 @@ export const AgendaStatistics: React.FC<{
   events: CalendarEvent[];
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ events, categories }) => {
+  const { t } = useT('statistics');
   const getColorValue = (hex: string | undefined) => hex || '#64748B';
   const formatTime = (minutes: number) => {
     const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
@@ -287,7 +291,7 @@ export const AgendaStatistics: React.FC<{
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card p-6">
-          <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>Répartition par catégorie</h3>
+          <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byCategory')}</h3>
           <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-16">
             <div className="relative w-44 h-44 sm:w-56 sm:h-56 shrink-0">
               <svg viewBox="-1.1 -1.1 2.2 2.2" className="w-full h-full">
@@ -329,7 +333,7 @@ export const AgendaStatistics: React.FC<{
           </div>
         </div>
         <div className="card p-6">
-          <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>Événements par temps de travail</h3>
+          <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.eventsByWorkTime')}</h3>
           <div className="space-y-2">
             {sortedEvents.length > 0 ? sortedEvents.slice(0, 20).map(event => (
               <div key={event.id} className="flex items-center justify-between p-3 rounded-xl border transition-all hover:bg-muted/30"
@@ -349,7 +353,7 @@ export const AgendaStatistics: React.FC<{
                 </div>
                 <p className="font-black text-sm shrink-0 ml-3" style={{ color: getColorValue(event.color) }}>{formatTime(event.duration)}</p>
               </div>
-            )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">Aucun événement</div>}
+            )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">{t('details.noEvent')}</div>}
           </div>
         </div>
       </div>
@@ -361,6 +365,7 @@ export const AgendaStatistics: React.FC<{
 // OKR
 // ═══════════════════════════════════════════════════════════════════
 export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start: Date; end: Date } }> = ({ objectives, rollingRange }) => {
+  const { t } = useT('statistics');
   const okrWorkTime = objectives.map(okr => {
     let workedTime = 0;
     okr.keyResults.forEach((kr: KeyResult) => {
@@ -386,21 +391,21 @@ export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start:
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">Total Objectifs</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">{t('details.totalObjectives')}</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{objectives.length}</p>
         </div>
         <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">Objectifs travaillés</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">{t('details.workedObjectives')}</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{okrWorkTime.length}</p>
         </div>
         <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">Temps total réel</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">{t('details.totalRealTime')}</p>
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalWorkedTime)}</p>
         </div>
       </div>
       <div className="card p-6">
         <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          Répartition de l'effort par OKR
+          {t('details.effortByOkr')}
         </h3>
         <div className="space-y-6">
           {okrWorkTime.length > 0 ? okrWorkTime.sort((a, b) => b.workedTime - a.workedTime).map(okr => (
@@ -419,7 +424,7 @@ export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start:
                   style={{ width: `${(okr.workedTime / maxWorkedTime) * 100}%` }} />
               </div>
             </div>
-          )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">Aucun effort enregistré.</div>}
+          )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">{t('details.noEffort')}</div>}
         </div>
       </div>
     </div>
@@ -435,6 +440,7 @@ export const HabitsStatistics: React.FC<{
   selectedPeriod: string;
   now: Date;
 }> = ({ habits, rollingRange, selectedPeriod, now }) => {
+  const { t } = useT('statistics');
   const habitsStats = useMemo(() => habits.map(habit => {
     let completionsCount = 0;
     const createdDate = habit.createdAt ? new Date(habit.createdAt) : new Date(0);
@@ -470,22 +476,22 @@ export const HabitsStatistics: React.FC<{
   };
 
   const periodSuffix =
-    selectedPeriod === 'day' ? "aujourd'hui" :
-    selectedPeriod === 'week' ? '(7 j)' :
-    selectedPeriod === 'month' ? '(30 j)' : '(365 j)';
+    selectedPeriod === 'day' ? t('details.periodDay') :
+    selectedPeriod === 'week' ? t('details.periodWeek') :
+    selectedPeriod === 'month' ? t('details.periodMonth') : t('details.periodYear');
 
   return (
     <div className="space-y-6">
       <div className="card p-6">
         <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          Détail par habitude {periodSuffix}
+          {t('details.byHabit', { period: periodSuffix })}
         </h3>
         <div className="space-y-6">
           {sortedRelevantHabits.length > 0
             ? sortedRelevantHabits.map(habit => (
                 <HabitStatItem key={habit.id} habit={habit} formatTime={formatTime} />
               ))
-            : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">Aucune habitude complétée ou active sur cette période.</div>}
+            : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">{t('details.noHabit')}</div>}
         </div>
       </div>
     </div>

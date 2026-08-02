@@ -7,10 +7,12 @@ import { createPortal } from 'react-dom';
 import type { Habit } from '@/modules/habits';
 import { getLocalDateString } from '../../lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 type HeatmapCell = { date: Date; dateStr: string; completed: number; total: number; rate: number; isFuture: boolean };
 
 export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
+  const { t } = useT('statistics');
   const WEEKS = 26;
   const GAP = embedded ? 3 : 2;
   const MONTH_W = embedded ? 24 : 14;
@@ -123,11 +125,11 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
 
   const legend = (
     <div className="flex items-center gap-1.5 mt-3 justify-end flex-shrink-0">
-      <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Moins</span>
+      <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('heatmap.less')}</span>
       {[0, 0.1, 0.3, 0.55, 0.8, 1].map((r, i) => (
         <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: `1px solid ${CELL_BORDER}`, flexShrink: 0 }} />
       ))}
-      <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>Plus</span>
+      <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('heatmap.more')}</span>
     </div>
   );
 
@@ -193,7 +195,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
   return (
     <div className="card p-6">
       <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>
-        Calendrier de complétion
+        {t('heatmap.title')}
       </h3>
       <div ref={wrapperRef}>
         {grid('overflow-y-auto')}

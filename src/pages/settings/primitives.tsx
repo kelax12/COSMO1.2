@@ -5,32 +5,50 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState } from 'react';
 import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2, LayoutGrid } from 'lucide-react';
+import type { KeyOf } from '@/i18n/catalog';
 
 export type SettingsTab = 'profile' | 'appearance' | 'modules' | 'security' | 'data' | 'guide';
 
 /* ─── nav config ───────────────────────────────────────────────── */
-export const NAV_GROUPS = [
+//
+// Les libellés sont des CLÉS, pas du texte. Une constante de module est
+// évaluée au premier import : y écrire « Compte » figeait la navigation en
+// français pour toute la session, quel que soit le changement de langue.
+// `SettingsPage` les résout au rendu via `t()`.
+interface NavItem {
+  id: SettingsTab;
+  icon: React.ElementType;
+  /** Clé du catalogue `settings`, résolue au rendu. */
+  labelKey: KeyOf<'settings'>;
+}
+
+interface NavGroup {
+  labelKey: KeyOf<'settings'>;
+  items: NavItem[];
+}
+
+export const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Compte',
+    labelKey: 'nav.account',
     items: [
-      { id: 'profile' as SettingsTab, icon: User, label: 'Profil' },
-      { id: 'security' as SettingsTab, icon: Shield, label: 'Sécurité' },
+      { id: 'profile' as SettingsTab, icon: User, labelKey: 'nav.profile' },
+      { id: 'security' as SettingsTab, icon: Shield, labelKey: 'nav.security' },
     ],
   },
   {
-    label: 'Préférences',
+    labelKey: 'nav.preferences',
     items: [
-      { id: 'appearance' as SettingsTab, icon: Palette, label: 'Apparence' },
-      { id: 'modules' as SettingsTab, icon: LayoutGrid, label: 'Modules' },
+      { id: 'appearance' as SettingsTab, icon: Palette, labelKey: 'nav.appearance' },
+      { id: 'modules' as SettingsTab, icon: LayoutGrid, labelKey: 'nav.modules' },
     ],
   },
   {
-    label: 'Données',
-    items: [{ id: 'data' as SettingsTab, icon: Database, label: 'Mes données' }],
+    labelKey: 'nav.data',
+    items: [{ id: 'data' as SettingsTab, icon: Database, labelKey: 'nav.myData' }],
   },
   {
-    label: 'Aide',
-    items: [{ id: 'guide' as SettingsTab, icon: BookOpen, label: 'Guide' }],
+    labelKey: 'nav.help',
+    items: [{ id: 'guide' as SettingsTab, icon: BookOpen, labelKey: 'nav.guide' }],
   },
 ];
 
