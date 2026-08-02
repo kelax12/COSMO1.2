@@ -15,8 +15,10 @@ import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { useFriends, useSharesByTask } from '@/modules/friends';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 const TodayTasks: React.FC = () => {
+  const { t, tp } = useT('dashboard');
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
 
   // Modals
@@ -90,9 +92,9 @@ const TodayTasks: React.FC = () => {
         setTaskToDelete(null);
         if (snapshot) {
           const { id: _id, createdAt: _ca, ...rest } = snapshot;
-          showUndoToast('Tâche supprimée', () => {
+          showUndoToast(t('todayTasks.deleted'), () => {
             createMutation.mutate(rest, {
-              onSuccess: () => toast.success('Tâche restaurée'),
+              onSuccess: () => toast.success(t('todayTasks.restored')),
             });
           });
         }
@@ -143,9 +145,11 @@ const TodayTasks: React.FC = () => {
     <>
       <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
         <div className="mb-4 sm:mb-6">
-          <h2 className="text-headline sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">Tâches prioritaires</h2>
+          <h2 className="text-headline sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('sections.priorityTasks')}</h2>
           <p className="text-[rgb(var(--color-text-secondary))] text-label sm:text-sm">
-            {todayTasks.length} tâches • {Math.floor(totalTime / 60)}h{totalTime % 60}min
+            {tp('todayTasks.summary', todayTasks.length, {
+              duration: `${Math.floor(totalTime / 60)}h${totalTime % 60}min`,
+            })}
           </p>
         </div>
 
@@ -171,7 +175,7 @@ const TodayTasks: React.FC = () => {
                     type="button"
                     role="checkbox"
                     aria-checked={task.completed}
-                    aria-label={task.completed ? `Marquer "${task.name}" comme non complétée` : `Marquer "${task.name}" comme complétée`}
+                    aria-label={task.completed ? t('todayTasks.markUndone', { name: task.name }) : t('todayTasks.markDone', { name: task.name })}
                     onClick={(e) => { e.stopPropagation(); handleToggleComplete(task.id); }}
                     className={`w-11 h-11 md:w-5 md:h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                       task.completed
@@ -216,11 +220,11 @@ const TodayTasks: React.FC = () => {
                       {task.priority > 0 && (
                         <div className="flex items-center gap-1">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
-                          <span>Priorité {task.priority}</span>
+                          <span>{t('todayTasks.priority', { level: task.priority })}</span>
                         </div>
                       )}
                       <div className="text-caption sm:text-xs whitespace-nowrap">
-                        {task.deadline ? formatDate(new Date(task.deadline)) : "Pas d'échéance"}
+                        {task.deadline ? formatDate(new Date(task.deadline)) : t('todayTasks.noDeadline')}
                       </div>
                     </div>
                   </div>
@@ -235,10 +239,10 @@ const TodayTasks: React.FC = () => {
                     <button onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Favori">
                       <Bookmark size={15} className={task.bookmarked ? 'text-amber-500 fill-amber-500' : 'text-[rgb(var(--color-text-muted))]'} />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Convertir en événement">
+                    <button onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.convertToEvent')}>
                       <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Ajouter à une liste">
+                    <button onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.addToList')}>
                       <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Collaborateurs">
@@ -256,13 +260,13 @@ const TodayTasks: React.FC = () => {
           {todayTasks.length === 0 && (
             <EmptyState
               icon={CheckSquare}
-              title={tasks.length === 0 ? 'Aucune tâche pour le moment' : 'Tout est sous contrôle 🎯'}
+              title={tasks.length === 0 ? t('todayTasks.empty.noneTitle') : t('todayTasks.empty.clearTitle')}
               description={
                 tasks.length === 0
-                  ? "Créez votre première tâche pour démarrer. Cosmo l'ajoutera à votre planning."
-                  : 'Vos tâches urgentes sont terminées. Profitez-en pour avancer sur le reste.'
+                  ? t('todayTasks.empty.noneDescription')
+                  : t('todayTasks.empty.clearDescription')
               }
-              actionLabel={tasks.length === 0 ? 'Créer ma première tâche' : 'Voir toutes mes tâches'}
+              actionLabel={tasks.length === 0 ? t('todayTasks.empty.noneAction') : t('todayTasks.empty.clearAction')}
               onAction={() => navigate('/tasks')}
               accentColor="#3B82F6"
               compact
@@ -313,22 +317,22 @@ const TodayTasks: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                 <Trash2 className="text-red-600 dark:text-red-400" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('todayTasks.deleteDialog.title')}</h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+                {t('todayTasks.deleteDialog.body')}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setTaskToDelete(null)}
                   className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 >
-                  Annuler
+                  {t('todayTasks.deleteDialog.cancel')}
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
                 >
-                  Supprimer
+                  {t('todayTasks.deleteDialog.confirm')}
                 </button>
               </div>
             </div>

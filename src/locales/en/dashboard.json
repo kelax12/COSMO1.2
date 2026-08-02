@@ -1,0 +1,119 @@
+{
+  "greeting": "Hello, ",
+  "userFallback": "User",
+  "summary": {
+    "allDone": "All wrapped up 🎉 Nothing left for today.",
+    "noTaskLeft": "no tasks left today",
+    "taskLeft_one": "{{count}} task today",
+    "taskLeft_other": "{{count}} tasks today",
+    "nextEvent": "“{{title}}” at {{time}}",
+    "habitLeft_one": "{{count}} habit left",
+    "habitLeft_other": "{{count}} habits left"
+  },
+  "checkin": {
+    "title": "Your week is waiting",
+    "subtitle": "Take stock of your goals — two minutes is enough.",
+    "cta": "Check in",
+    "dismiss": "Skip this week's check-in"
+  },
+  "viewMode": {
+    "day": "Day",
+    "week": "Week",
+    "month": "Month"
+  },
+  "stats": {
+    "tasksToday": "Tasks due today",
+    "tasksCompleted": "Tasks completed",
+    "agenda": "Calendar",
+    "krCompleted": "KRs achieved",
+    "habits": "Habits",
+    "trendLabel": "{{label}}, recent trend"
+  },
+  "chart": {
+    "series": {
+      "tasks": "Tasks",
+      "events": "Calendar",
+      "okrs": "OKRs",
+      "habits": "Habits"
+    },
+    "period": {
+      "day": "Last 7 days",
+      "week": "Last 4 weeks",
+      "month": "Last 6 months"
+    },
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "weekAbbr": "W{{number}}"
+  },
+  "sections": {
+    "priorityTasks": "Priority tasks",
+    "collaborativeTasks": "Shared tasks",
+    "activeOkrs": "Active OKRs",
+    "todayHabits": "Today's habits"
+  },
+  "okrs": {
+    "activeGoal_one": "{{count}} active goal",
+    "activeGoal_other": "{{count}} active goals",
+    "keyResult_one": "{{count}} key result",
+    "keyResult_other": "{{count}} key results",
+    "deadline": "Due: {{date}}",
+    "timeProgress": "{{current}} / {{target}} min",
+    "empty": {
+      "title": "Ready to aim higher?",
+      "description": "Set a goal and its key results to track your progress.",
+      "action": "Create your first goal"
+    }
+  },
+  "todayTasks": {
+    "summary_one": "{{count}} task • {{duration}}",
+    "summary_other": "{{count}} tasks • {{duration}}",
+    "priority": "Priority {{level}}",
+    "noDeadline": "No due date",
+    "markDone": "Mark \"{{name}}\" as done",
+    "markUndone": "Mark \"{{name}}\" as not done",
+    "convertToEvent": "Convert to event",
+    "addToList": "Add to a list",
+    "deleted": "Task deleted",
+    "restored": "Task restored",
+    "empty": {
+      "noneTitle": "No tasks yet",
+      "noneDescription": "Create your first task to get started. Cosmo will add it to your schedule.",
+      "noneAction": "Create my first task",
+      "clearTitle": "Everything under control 🎯",
+      "clearDescription": "Your urgent tasks are done. Good time to get ahead on the rest.",
+      "clearAction": "See all my tasks"
+    },
+    "deleteDialog": {
+      "title": "Delete task",
+      "body": "Are you sure you want to delete this task? This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "collaborative": {
+    "shared_one": "{{count}} shared task",
+    "shared_other": "{{count}} shared tasks",
+    "sharedBy": "Shared by {{name}}",
+    "me": "Me",
+    "modified": "modified {{when}}",
+    "addToAgenda": "Add to calendar",
+    "addToList": "Add to a list",
+    "validated": "Approved",
+    "notValidated": "Not approved",
+    "collaboratorStatus": "{{name}} - {{status}}",
+    "emptyTitle": "No shared tasks",
+    "emptyDescription": "Start sharing tasks with your team"
+  },
+  "habits": {
+    "allDone": "All wrapped up 🎉 {{done}}/{{total}} done",
+    "progress": "{{done}}/{{total}} done • {{duration}}",
+    "create": "+ New habit",
+    "empty": "No habits for today",
+    "minutes": "{{count}} min",
+    "streak_one": "{{count}} day",
+    "streak_other": "{{count}} days",
+    "showLess": "Show less",
+    "showMore_one": "Show more ({{count}} left)",
+    "showMore_other": "Show more ({{count}} left)"
+  }
+}

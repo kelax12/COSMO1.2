@@ -20,22 +20,13 @@ import { useCategories } from '@/modules/categories';
 
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useFriends, useSharesByTask } from '@/modules/friends';
-import { formatDate } from '@/i18n/format';
-
-// « il y a 2 h » / « à l'instant » — fraîcheur d'une tâche partagée (#40).
-const formatRelativeTime = (iso: string): string => {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `il y a ${days} j`;
-  return `le ${formatDate(new Date(iso))}`;
-};
+// Fraîcheur d'une tâche partagée (#40) — délégué à `Intl.RelativeTimeFormat`
+// via `@/i18n/format`, qui gère toutes les langues sans table à maintenir.
+import { formatRelativeTime } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 const CollaborativeTasks: React.FC = () => {
+  const { t, tp } = useT('dashboard');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -108,8 +99,8 @@ const CollaborativeTasks: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div>
-                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Tâches collaboratives</h2>
-                <p className="text-[rgb(var(--color-text-secondary))] text-sm">{collaborativeTasks.length} tâches partagées</p>
+                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('sections.collaborativeTasks')}</h2>
+                <p className="text-[rgb(var(--color-text-secondary))] text-sm">{tp('collaborative.shared', collaborativeTasks.length)}</p>
               </div>
             </div>
         </div>
@@ -136,7 +127,7 @@ const CollaborativeTasks: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-4 mt-1 text-label sm:text-sm text-[rgb(var(--color-text-secondary))]">
                         <div className="flex items-center gap-1.5">
                           <Users size={14} />
-                          <span>Partagé par {task.sharedBy || 'Moi'}</span>
+                          <span>{t('collaborative.sharedBy', { name: task.sharedBy || t('collaborative.me') })}</span>
                         </div>
                         {!owner && (
                           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium">
@@ -147,7 +138,7 @@ const CollaborativeTasks: React.FC = () => {
                         {/* Fraîcheur (#40) : dernière modification de la tâche partagée */}
                         {task.updatedAt && (
                           <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            modifiée {formatRelativeTime(task.updatedAt)}
+                            {t('collaborative.modified', { when: formatRelativeTime(task.updatedAt) })}
                           </span>
                         )}
                       </div>
@@ -167,14 +158,14 @@ const CollaborativeTasks: React.FC = () => {
                       <button
                         onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }}
                         className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title="Ajouter à l'agenda"
+                        title={t('collaborative.addToAgenda')}
                       >
                         <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }}
                         className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title="Ajouter à une liste"
+                        title={t('collaborative.addToList')}
                       >
                         <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
                       </button>
@@ -202,7 +193,7 @@ const CollaborativeTasks: React.FC = () => {
                       const isEmoji = isEmojiAvatar(friend?.avatar);
 
                       return (
-                        <div key={index} className="relative" title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}>
+                        <div key={index} className="relative" title={t('collaborative.collaboratorStatus', { name: collaborator, status: hasValidated ? t('collaborative.validated') : t('collaborative.notValidated') })}>
                           <Avatar className="size-9">
                             {isImageAvatar(friend?.avatar) && (
                               <AvatarImage src={friend?.avatar} alt={collaborator} />
@@ -234,8 +225,8 @@ const CollaborativeTasks: React.FC = () => {
           {collaborativeTasks.length === 0 && (
             <div className="text-center py-8 text-[rgb(var(--color-text-secondary))]">
               <Users size={48} className="mx-auto mb-4 opacity-30" />
-              <p className="text-body sm:text-base">Aucune tâche collaborative</p>
-              <p className="text-label sm:text-sm">Commencez à partager des tâches avec votre équipe</p>
+              <p className="text-body sm:text-base">{t('collaborative.emptyTitle')}</p>
+              <p className="text-label sm:text-sm">{t('collaborative.emptyDescription')}</p>
             </div>
           )}
         </div>
@@ -276,22 +267,22 @@ const CollaborativeTasks: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                 <Trash2 className="text-red-600 dark:text-red-400" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('todayTasks.deleteDialog.title')}</h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+                {t('todayTasks.deleteDialog.body')}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setTaskToDelete(null)}
                   className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 >
-                  Annuler
+                  {t('todayTasks.deleteDialog.cancel')}
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
                 >
-                  Supprimer
+                  {t('todayTasks.deleteDialog.confirm')}
                 </button>
               </div>
             </div>

@@ -49,6 +49,7 @@ export {
   formatCurrency,
   formatDate,
   formatNumber,
+  formatRelativeTime,
   formatTime,
   getDateLocale,
   getIntlTag,

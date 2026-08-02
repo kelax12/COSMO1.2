@@ -5,8 +5,10 @@ import { useOkrs, KeyResult } from '@/modules/okrs';
 import { DashboardCardSkeleton } from '@/components/skeletons';
 import EmptyState from '@/components/EmptyState';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 const ActiveOKRs: React.FC = () => {
+  const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
   const { data: okrs = [], isLoading } = useOkrs();
 
@@ -30,8 +32,8 @@ const ActiveOKRs: React.FC = () => {
         <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div>
-                <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">OKR en cours</h2>
-                <p className="text-[rgb(var(--color-text-secondary))] text-sm">{activeOKRs.length} objectifs actifs</p>
+                <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('sections.activeOkrs')}</h2>
+                <p className="text-[rgb(var(--color-text-secondary))] text-sm">{tp('okrs.activeGoal', activeOKRs.length)}</p>
               </div>
             </div>
     
@@ -63,11 +65,14 @@ const ActiveOKRs: React.FC = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <Clock size={14} className="text-[rgb(var(--color-text-muted))]" />
                       <span>
-                         {okr.keyResults.reduce((sum: number, kr: KeyResult) => sum + (kr.currentValue * kr.estimatedTime), 0)} / {okr.keyResults.reduce((sum: number, kr: KeyResult) => sum + (kr.estimatedTime * kr.targetValue), 0)} min
+                        {t('okrs.timeProgress', {
+                          current: okr.keyResults.reduce((sum: number, kr: KeyResult) => sum + (kr.currentValue * kr.estimatedTime), 0),
+                          target: okr.keyResults.reduce((sum: number, kr: KeyResult) => sum + (kr.estimatedTime * kr.targetValue), 0),
+                        })}
                       </span>
                     </div>
-                    <p className="mb-1">{okr.keyResults.length} résultats clés</p>
-                    <p>Échéance: {formatDate(new Date(okr.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    <p className="mb-1">{tp('okrs.keyResult', okr.keyResults.length)}</p>
+                    <p>{t('okrs.deadline', { date: formatDate(new Date(okr.endDate), { day: 'numeric', month: 'long', year: 'numeric' }) })}</p>
                   </div>
                 </div>
               );
@@ -78,9 +83,9 @@ const ActiveOKRs: React.FC = () => {
                  sur mobile (absents de la tab bar). */
               <EmptyState
                 icon={Target}
-                title="Prêt à viser plus haut ?"
-                description="Définissez un objectif et ses résultats clés pour suivre votre progression."
-                actionLabel="Créer votre premier objectif"
+                title={t('okrs.empty.title')}
+                description={t('okrs.empty.description')}
+                actionLabel={t('okrs.empty.action')}
                 onAction={() => navigate('/okr', { state: { openCreate: true } })}
                 accentColor="#22c55e"
                 compact
