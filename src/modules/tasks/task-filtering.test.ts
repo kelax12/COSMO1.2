@@ -19,13 +19,13 @@ describe('applyQuickFilter', () => {
   ];
 
   it('favoris: bookmarked & not completed', () => {
-    expect(applyQuickFilter(tasks, 'favoris', false, NOW).map(x => x.id)).toEqual(['a']);
+    expect(applyQuickFilter(tasks, 'bookmarked', false, NOW).map(x => x.id)).toEqual(['a']);
   });
   it('terminées: completed only', () => {
-    expect(applyQuickFilter(tasks, 'terminées', false, NOW).map(x => x.id)).toEqual(['b']);
+    expect(applyQuickFilter(tasks, 'completed', false, NOW).map(x => x.id)).toEqual(['b']);
   });
   it('retard: not completed & deadline in past', () => {
-    expect(applyQuickFilter(tasks, 'retard', false, NOW).map(x => x.id)).toEqual(['c']);
+    expect(applyQuickFilter(tasks, 'overdue', false, NOW).map(x => x.id)).toEqual(['c']);
   });
   it('collaboration: collaborative & not completed', () => {
     expect(applyQuickFilter(tasks, 'collaboration', false, NOW).map(x => x.id)).toEqual(['d']);

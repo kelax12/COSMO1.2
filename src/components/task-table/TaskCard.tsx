@@ -12,6 +12,7 @@ import { Task } from "@/modules/tasks";
 import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { formatDate, formatDuration } from "./helpers";
+import { useT } from '@/i18n/useT';
 
 interface TaskCardProps {
   task: Task;
@@ -60,6 +61,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Fallback gris neutre (pas bleu = couleur Travail par défaut) pour
   // signaler une catégorie manquante au lieu de la masquer.
   const categoryColor = category?.color || '#94a3b8';
+  const { t } = useT('tasks');
 
   const [actionsVisible, setActionsVisible] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -178,7 +180,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
             <MoreHorizontal size={22} />
-            <span className="text-label font-bold">Options</span>
+            <span className="text-label font-bold">{t('card.options')}</span>
           </motion.div>
         </motion.div>
       </>
@@ -425,7 +427,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             <button
               onClick={(e) => { e.stopPropagation(); onAddToList(task.id); setActionsVisible(false); }}
               className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label="Ajouter à une liste"
+              aria-label={t('card.addToList')}
             >
               <MoreHorizontal size={18} />
             </button>
@@ -446,7 +448,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                   setActionsVisible(false);
                 }}
                 className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center ${isOverdue ? 'text-amber-500' : 'text-slate-500'}`}
-                aria-label="Reporter à demain"
+                aria-label={t('card.postponeTomorrow')}
               >
                 <Hourglass size={18} />
               </button>

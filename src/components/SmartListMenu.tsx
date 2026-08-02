@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Sparkles, Sun } from 'lucide-react';
 import { SMART_PRESETS, type SmartRulePreset, type TaskList } from '@/modules/lists';
+import { useT } from '@/i18n/useT';
 
 interface SmartListMenuProps {
   /** Liste complète des listes smart existantes (pour pouvoir les supprimer par id) */
@@ -49,6 +50,7 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
   onToggleToday,
   todayCount = 0,
 }) => {
+  const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -105,9 +107,9 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
     <>
       {/* En-tête */}
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] bg-violet-50 dark:bg-violet-900/20">
-        <span className="font-bold text-sm text-[rgb(var(--color-text-primary))]">Listes intelligentes</span>
+        <span className="font-bold text-sm text-[rgb(var(--color-text-primary))]">{t('smartLists.title')}</span>
         <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-1">
-          Le contenu se met à jour automatiquement.
+          {t('smartLists.hint')}
         </p>
       </div>
 
@@ -197,8 +199,8 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
         type="button"
         onClick={() => setOpen(v => !v)}
         className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-violet-300 dark:border-violet-600 bg-transparent text-sm font-medium text-violet-500 dark:text-violet-400 hover:border-violet-500 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-        title="Créer une liste intelligente"
-        aria-label="Créer une liste intelligente"
+        title={t('smartLists.create')}
+        aria-label={t('smartLists.create')}
         aria-expanded={open}
       >
         <Sparkles size={16} /> Smart

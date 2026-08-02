@@ -26,8 +26,10 @@ import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
 import TouchTarget from '@/components/mobile/TouchTarget';
+import { useT } from '@/i18n/useT';
 
 const TasksInboxMenu: React.FC = () => {
+  const { t, tp } = useT('tasks');
   const { user } = useAuth();
   const isDemo = useIsDemo();
   const queryClient = useQueryClient();
@@ -72,10 +74,10 @@ const TasksInboxMenu: React.FC = () => {
     if (isDemo) {
       acknowledgeShare(user?.id, task.id);
       setAckVersion((v) => v + 1);
-      toast.success('Tâche acceptée');
+      toast.success(t('toast.accepted'));
     } else {
       acceptSharedTaskMutation.mutate(task.id, {
-        onSuccess: () => toast.success('Tâche acceptée'),
+        onSuccess: () => toast.success(t('toast.accepted')),
       });
     }
   };
@@ -91,7 +93,7 @@ const TasksInboxMenu: React.FC = () => {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-          toast.success('Tâche refusée');
+          toast.success(t('toast.refused'));
         },
       }
     );
@@ -99,7 +101,7 @@ const TasksInboxMenu: React.FC = () => {
 
   const handleAcceptList = (grant: SharedListGrant) => acceptSharedListMutation.mutate(grant);
   const handleRejectList = (grant: SharedListGrant) =>
-    refuseSharedListMutation.mutate(grant.id, { onSuccess: () => toast.success('Liste refusée') });
+    refuseSharedListMutation.mutate(grant.id, { onSuccess: () => toast.success(t('toast.listRefused')) });
 
   // Mesure la position viewport du trigger → popover en position:fixed.
   useLayoutEffect(() => {
@@ -146,11 +148,11 @@ const TasksInboxMenu: React.FC = () => {
           style={{ position: 'fixed', top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
           className="w-80 max-w-[calc(100vw-16px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
           role="dialog"
-          aria-label="Boîte de réception"
+          aria-label={t('inbox.label')}
         >
           <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center gap-2">
             <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">Boîte de réception</span>
+            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.label')}</span>
             {total > 0 && (
               <span className="ml-auto text-caption font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                 {total} en attente
@@ -164,9 +166,9 @@ const TasksInboxMenu: React.FC = () => {
                 <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
                   <Bell size={18} className="text-slate-400" aria-hidden="true" />
                 </div>
-                <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">Tout est à jour</p>
+                <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{t('inbox.allClear')}</p>
                 <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Aucune tâche ou liste partagée en attente.
+                  {t('inbox.allClearHint')}
                 </p>
               </div>
             )}
@@ -174,7 +176,7 @@ const TasksInboxMenu: React.FC = () => {
             {pendingTasks.length > 0 && (
               <div className="px-3 pt-3 pb-1">
                 <p className="px-1 text-caption sm:text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">
-                  Tâches partagées ({pendingTasks.length})
+                  {t('inbox.sharedTasks', { count: pendingTasks.length })}
                 </p>
                 <div className="space-y-2">
                   {pendingTasks.map((task) => (
@@ -188,7 +190,7 @@ const TasksInboxMenu: React.FC = () => {
                             {task.name}
                           </p>
                           <p className="text-caption sm:text-xs truncate text-amber-700 dark:text-amber-300">
-                            Partagé par {sharerName(task)}
+                            {t('inbox.sharedBy', { name: sharerName(task) })}
                           </p>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
@@ -197,7 +199,7 @@ const TasksInboxMenu: React.FC = () => {
                             onClick={() => handleAcceptTask(task)}
                             disabled={acceptSharedTaskMutation.isPending}
                             className="w-11 h-11 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                            aria-label={`Accepter la tâche partagée ${task.name}`}
+                            aria-label={t('inbox.acceptTask', { name: task.name })}
                           >
                             <Check size={15} aria-hidden="true" />
                           </button>
@@ -206,7 +208,7 @@ const TasksInboxMenu: React.FC = () => {
                             onClick={() => handleRejectTask(task)}
                             disabled={unshareTaskMutation.isPending}
                             className="w-11 h-11 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                            aria-label={`Refuser la tâche partagée ${task.name}`}
+                            aria-label={t('inbox.refuseTask', { name: task.name })}
                           >
                             <X size={15} aria-hidden="true" />
                           </button>
@@ -221,7 +223,7 @@ const TasksInboxMenu: React.FC = () => {
             {incomingLists.length > 0 && (
               <div className="px-3 pt-3 pb-3">
                 <p className="px-1 text-caption sm:text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-2">
-                  Listes partagées ({incomingLists.length})
+                  {t('inbox.sharedLists', { count: incomingLists.length })}
                 </p>
                 <div className="space-y-2">
                   {incomingLists.map((grant) => (
@@ -238,7 +240,7 @@ const TasksInboxMenu: React.FC = () => {
                             {grant.name}
                           </p>
                           <p className="text-caption sm:text-xs truncate text-teal-700 dark:text-teal-300">
-                            Partagé par {grant.sharedByName ?? 'un collaborateur'} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
+                            {tp('inbox.sharedListBy', grant.tasks.length, { name: grant.sharedByName ?? t('inbox.anonymousSharer') })}
                           </p>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
@@ -247,7 +249,7 @@ const TasksInboxMenu: React.FC = () => {
                             onClick={() => handleAcceptList(grant)}
                             disabled={acceptSharedListMutation.isPending}
                             className="w-11 h-11 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                            aria-label={`Accepter la liste partagée ${grant.name}`}
+                            aria-label={t('inbox.acceptList', { name: grant.name })}
                           >
                             <Check size={15} aria-hidden="true" />
                           </button>
@@ -256,7 +258,7 @@ const TasksInboxMenu: React.FC = () => {
                             onClick={() => handleRejectList(grant)}
                             disabled={refuseSharedListMutation.isPending}
                             className="w-11 h-11 rounded-lg border border-teal-300 dark:border-teal-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                            aria-label={`Refuser la liste partagée ${grant.name}`}
+                            aria-label={t('inbox.refuseList', { name: grant.name })}
                           >
                             <X size={15} aria-hidden="true" />
                           </button>
@@ -279,7 +281,7 @@ const TasksInboxMenu: React.FC = () => {
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
         className="relative"
-        aria-label={total > 0 ? `Boîte de réception, ${total} en attente` : 'Boîte de réception'}
+        aria-label={total > 0 ? t('inbox.withCount', { count: total }) : t('inbox.label')}
         aria-haspopup="dialog"
         aria-expanded={open}
         data-tutorial-id="tasks-inbox-toggle"

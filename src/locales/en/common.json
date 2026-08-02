@@ -50,5 +50,8 @@
       "settings": "Account & preferences",
       "enterprise": "Team & collaboration"
     }
+  },
+  "actions": {
+    "all": "All"
   }
 }

@@ -53,5 +53,8 @@
       "settings": "Compte & préférences",
       "enterprise": "Équipe & collaboration"
     }
+  },
+  "actions": {
+    "all": "Tous"
   }
 }

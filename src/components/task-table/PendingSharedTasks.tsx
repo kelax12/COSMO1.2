@@ -19,8 +19,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
+import { useT } from '@/i18n/useT';
 
 const PendingSharedTasks: React.FC = () => {
+  const { t } = useT('tasks');
   const { user } = useAuth();
   const isDemo = useIsDemo();
   const queryClient = useQueryClient();
@@ -58,10 +60,10 @@ const PendingSharedTasks: React.FC = () => {
     if (isDemo) {
       acknowledgeShare(user?.id, task.id);
       setAckVersion((v) => v + 1);
-      toast.success('Tâche acceptée');
+      toast.success(t('toast.accepted'));
     } else {
       acceptSharedTaskMutation.mutate(task.id, {
-        onSuccess: () => toast.success('Tâche acceptée'),
+        onSuccess: () => toast.success(t('toast.accepted')),
       });
     }
   };
@@ -77,7 +79,7 @@ const PendingSharedTasks: React.FC = () => {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-          toast.success('Tâche refusée');
+          toast.success(t('toast.refused'));
         },
       }
     );
@@ -88,7 +90,7 @@ const PendingSharedTasks: React.FC = () => {
   return (
     <div className="mb-6 space-y-2">
       <p className="text-label sm:text-xs font-semibold text-amber-600 dark:text-amber-400">
-        Tâches partagées en attente ({pendingTasks.length})
+        {t('inbox.pendingTitle', { count: pendingTasks.length })}
       </p>
       {pendingTasks.map((task) => (
         <div
@@ -100,7 +102,7 @@ const PendingSharedTasks: React.FC = () => {
               {task.name}
             </p>
             <p className="text-caption sm:text-xs truncate text-amber-700 dark:text-amber-300">
-              Partagé par {sharerName(task)}
+              {t('inbox.sharedBy', { name: sharerName(task) })}
             </p>
           </div>
           <div className="flex gap-1.5 shrink-0">
@@ -109,7 +111,7 @@ const PendingSharedTasks: React.FC = () => {
               onClick={() => handleAccept(task)}
               disabled={acceptSharedTaskMutation.isPending}
               className="min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              aria-label={`Accepter la tâche partagée ${task.name}`}
+              aria-label={t('inbox.acceptTask', { name: task.name })}
             >
               <Check size={15} aria-hidden="true" />
             </button>
@@ -118,7 +120,7 @@ const PendingSharedTasks: React.FC = () => {
               onClick={() => handleReject(task)}
               disabled={unshareTaskMutation.isPending}
               className="min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              aria-label={`Refuser la tâche partagée ${task.name}`}
+              aria-label={t('inbox.refuseTask', { name: task.name })}
             >
               <X size={15} aria-hidden="true" />
             </button>

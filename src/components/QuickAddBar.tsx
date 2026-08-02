@@ -7,6 +7,7 @@ import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 /**
  * Quick-add global (#1) — capture une tâche en langage naturel depuis
@@ -35,6 +36,7 @@ const PLACEHOLDER_EXAMPLES_MOBILE = [
 ];
 
 const QuickAddBar = () => {
+  const { t } = useT('tasks');
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState('');
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
@@ -108,7 +110,7 @@ const QuickAddBar = () => {
       },
       {
         onSuccess: (task) => {
-          toast.success(`Tâche « ${task.name} » créée`);
+          toast.success(t('toast.created', { name: task.name }));
         },
         onError: () => {
           // Restaure la saisie : l'utilisateur ne perd pas son texte si la
@@ -166,7 +168,7 @@ const QuickAddBar = () => {
                   if (e.key === 'Escape') setIsOpen(false);
                 }}
                 placeholder={`Ex : ${(isMobile ? PLACEHOLDER_EXAMPLES_MOBILE : PLACEHOLDER_EXAMPLES)[placeholderIdx]}`}
-                aria-label="Créer une tâche rapidement"
+                aria-label={t('quickAdd.createAria')}
                 className="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-lg font-medium placeholder:font-normal"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
                 enterKeyHint="done"
@@ -178,7 +180,7 @@ const QuickAddBar = () => {
                 className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <CornerDownLeft size={14} aria-hidden="true" />
-                Créer
+                {t('quickAdd.create')}
               </button>
             </div>
 
@@ -186,7 +188,7 @@ const QuickAddBar = () => {
             <div className="flex flex-wrap items-center gap-2 px-4 pb-3 min-h-[30px]">
               {!parsed.deadline && !parsed.categoryToken && parsed.priority === undefined && parsed.estimatedTime === undefined ? (
                 <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  Les champs détectés (date, catégorie, priorité, durée) s'affichent ici.
+                  {t('quickAdd.hint')}
                 </span>
               ) : (
                 <>
@@ -207,7 +209,7 @@ const QuickAddBar = () => {
                   )}
                   {parsed.priority !== undefined && (
                     <span className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border border-red-200/60 dark:border-red-500/20">
-                      <Flag size={13} aria-hidden="true" /> Priorité {parsed.priority}
+                      <Flag size={13} aria-hidden="true" /> {t('quickAdd.priority', { level: parsed.priority })}
                     </span>
                   )}
                   {parsed.estimatedTime !== undefined && (
@@ -232,15 +234,15 @@ const QuickAddBar = () => {
             >
               {([
                 ['demain 10h', 'date'],
-                ['#santé', 'catégorie'],
-                ['!!', 'priorité'],
-                ['~30m', 'durée'],
+                ['#santé', t('quickAdd.tokenCategory')],
+                ['!!', t('quickAdd.tokenPriority')],
+                ['~30m', t('quickAdd.tokenDuration')],
               ] as const).map(([token, label]) => (
                 <span key={token} className="inline-flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => insertToken(token)}
-                    aria-label={`Insérer l'exemple ${token} (${label})`}
+                    aria-label={t('quickAdd.insertExample', { token, label })}
                     className="px-1.5 py-0.5 rounded border font-mono text-[11px] hover:bg-[rgb(var(--color-hover))] transition-colors cursor-pointer"
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
@@ -249,7 +251,7 @@ const QuickAddBar = () => {
                   {label}
                 </span>
               ))}
-              <span className="hidden sm:inline ml-auto opacity-80">Entrée = créer et enchaîner · Échap = fermer</span>
+              <span className="hidden sm:inline ml-auto opacity-80">{t('quickAdd.keyboardHint')}</span>
             </div>
           </motion.div>
         </motion.div>

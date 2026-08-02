@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2, Edit2, Check, LayoutGrid, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/i18n/useT';
 
 export type Category = {
   id: string;
@@ -58,6 +59,7 @@ export const getColorFr = (colorName: string) => {
     onUpdate,
     onDelete
   }) => {
+  const { t } = useT('tasks');
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -147,8 +149,8 @@ export const getColorFr = (colorName: string) => {
                   <LayoutGrid className="text-blue-500" size={24} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Gestion des catégories</h2>
-                  <p className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Organisez vos objectifs et tâches</p>
+                  <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('categoryManager.title')}</h2>
+                  <p className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('categoryManager.subtitle')}</p>
                 </div>
               </div>
               <Button
@@ -186,7 +188,7 @@ export const getColorFr = (colorName: string) => {
                         </button>
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-xs font-bold text-blue-500 uppercase tracking-widest flex items-center">
-                            {editingId ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+                            {editingId ? t('categoryManager.edit') : t('categoryManager.new')}
                           </h3>
                           <div className="px-3 py-1 rounded-full border shadow-sm flex items-center gap-2 mr-8" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                             <div
@@ -214,7 +216,7 @@ export const getColorFr = (colorName: string) => {
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[rgb(var(--color-accent-solid))] transition-all font-semibold shadow-sm border"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-                            placeholder="Nom de la catégorie (ex: Sport, Travail...)"
+                            placeholder={t('categoryManager.namePlaceholder')}
                           />
                         </div>
 
@@ -223,7 +225,7 @@ export const getColorFr = (colorName: string) => {
                           {/* Icons Grid */}
                           <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              <LayoutGrid size={10} /> Icône
+                              <LayoutGrid size={10} /> {t('categoryManager.icon')}
                             </label>
                             <div className="grid grid-cols-6 gap-1.5 p-2 rounded-xl max-h-[140px] overflow-y-auto custom-scrollbar shadow-inner border" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                               {ICONS.map((icon) => (
@@ -246,7 +248,7 @@ export const getColorFr = (colorName: string) => {
                           {/* Colors Grid */}
                           <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              <Palette size={10} /> Couleur : <span style={{ color: getColorHex(formData.color) }} className="lowercase italic">{getColorFr(formData.color)}</span>
+                              <Palette size={10} /> {t('categoryManager.color')} <span style={{ color: getColorHex(formData.color) }} className="lowercase italic">{getColorFr(formData.color)}</span>
                             </label>
                             <div className="grid grid-cols-4 gap-2 p-2 rounded-xl max-h-[140px] overflow-y-auto custom-scrollbar shadow-inner border" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                               {COLORS.map((color) => (
@@ -296,11 +298,11 @@ export const getColorFr = (colorName: string) => {
                 {/* Categories List */}
                 <div className="space-y-3 pb-4">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgb(var(--color-text-muted))' }}>Vos catégories ({categories.length})</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('categoryManager.yours', { count: categories.length })}</h3>
                     <button
                       onClick={() => setIsAdding(true)}
                       className="p-1.5 bg-[rgb(var(--color-accent-solid))]/10 text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/20 rounded-lg transition-all active:scale-90"
-                      title="Ajouter une catégorie"
+                      title={t('categoryManager.add')}
                     >
                       <Plus size={16} />
                     </button>
@@ -310,7 +312,7 @@ export const getColorFr = (colorName: string) => {
                       <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
                         <LayoutGrid size={24} style={{ color: 'rgb(var(--color-text-muted))' }} />
                       </div>
-                      <p className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucune catégorie définie</p>
+                      <p className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('categoryManager.none')}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
@@ -402,9 +404,9 @@ export const getColorFr = (colorName: string) => {
                       <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(239,68,68,0.12)' }}>
                         <Trash2 className="text-red-500" size={24} />
                       </div>
-                      <h3 className="text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Supprimer la catégorie</h3>
+                      <h3 className="text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('categoryManager.deleteTitle')}</h3>
                       <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
+                        {t('categoryManager.deleteBody')}
                       </p>
                       <div className="flex gap-3">
                         <button
