@@ -9,6 +9,7 @@ import { validateOrThrow } from '@/lib/validation/validate';
 import { createOrganizationSchema, joinCodeSchema } from './organization.schema';
 import { orgKeys } from './constants';
 import type { OrgRole } from './types';
+import { translator } from '@/i18n/useT';
 
 const useOrgRepository = () => getOrganizationsRepository();
 
@@ -67,11 +68,11 @@ export const useCreateOrganization = () => {
       return repository.createOrganization(valid);
     },
     onSuccess: () => {
-      toast.success('Entreprise créée');
+      toast.success(translator('errors').t('success.orgCreated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer l'entreprise : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createOrg', { message: error.message }));
     },
   });
 };
@@ -85,7 +86,7 @@ export const useRequestJoinOrganization = () => {
       return repository.requestJoin(valid);
     },
     onSuccess: (result) => {
-      toast.success(`Demande envoyée à ${result.orgName || "l'entreprise"}`);
+      toast.success(translator('errors').t('success.joinRequestSent', { org: result.orgName || translator('errors').t('success.theCompany') }));
       queryClient.invalidateQueries({ queryKey: orgKeys.mySentRequest() });
     },
     onError: (error: Error) => {
@@ -101,7 +102,7 @@ export const useRespondJoinRequest = () => {
     mutationFn: ({ requestId, accept }: { requestId: string; accept: boolean }) =>
       repository.respondJoinRequest(requestId, accept),
     onSuccess: (_data, variables) => {
-      toast.success(variables.accept ? 'Membre ajouté' : 'Demande refusée');
+      toast.success(variables.accept ? translator('errors').t('success.memberAdded') : translator('errors').t('success.requestRefused'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
@@ -133,11 +134,11 @@ export const useSetMemberRole = () => {
     mutationFn: ({ orgId, userId, role }: { orgId: string; userId: string; role: OrgRole }) =>
       repository.setMemberRole(orgId, userId, role),
     onSuccess: () => {
-      toast.success('Rôle mis à jour');
+      toast.success(translator('errors').t('success.roleUpdated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de changer le rôle : ${error.message}`);
+      toast.error(translator('errors').t('mutation.changeRole', { message: error.message }));
     },
   });
 };
@@ -149,7 +150,7 @@ export const useRemoveMember = () => {
     mutationFn: ({ orgId, userId }: { orgId: string; userId: string }) =>
       repository.removeMember(orgId, userId),
     onSuccess: () => {
-      toast.success('Membre retiré');
+      toast.success(translator('errors').t('success.memberRemoved'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
@@ -164,7 +165,7 @@ export const useLeaveOrganization = () => {
   return useMutation({
     mutationFn: (orgId: string) => repository.leaveOrganization(orgId),
     onSuccess: () => {
-      toast.success('Vous avez quitté l\'entreprise');
+      toast.success(translator('errors').t('success.leftOrg'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
@@ -179,7 +180,7 @@ export const useDeleteOrganization = () => {
   return useMutation({
     mutationFn: (orgId: string) => repository.deleteOrganization(orgId),
     onSuccess: () => {
-      toast.success('Entreprise supprimée définitivement');
+      toast.success(translator('errors').t('success.orgDeleted'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
@@ -195,11 +196,11 @@ export const useTransferOwnership = () => {
     mutationFn: ({ orgId, newOwnerId }: { orgId: string; newOwnerId: string }) =>
       repository.transferOwnership(orgId, newOwnerId),
     onSuccess: () => {
-      toast.success('Propriété transférée');
+      toast.success(translator('errors').t('success.ownershipTransferred'));
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de transférer la propriété : ${error.message}`);
+      toast.error(translator('errors').t('mutation.transferOwnership', { message: error.message }));
     },
   });
 };
@@ -212,11 +213,11 @@ export const useSetMemberManager = () => {
       repository.setMemberManager(orgId, userId, managerId),
     onSuccess: (_d, variables) => {
       // silent : l'appelant affiche son propre feedback (ex. toast d'annulation pyramide).
-      if (!variables.silent) toast.success('Position mise à jour');
+      if (!variables.silent) toast.success(translator('errors').t('success.positionUpdated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.members(variables.orgId) });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de déplacer le membre : ${error.message}`);
+      toast.error(translator('errors').t('mutation.moveMember', { message: error.message }));
     },
   });
 };
@@ -229,7 +230,7 @@ export const useCreateInviteLink = () => {
     mutationFn: ({ orgId, managerId }: { orgId: string; managerId: string | null }) =>
       repository.createInviteLink(orgId, managerId),
     onError: (error: Error) => {
-      toast.error(`Impossible de créer le lien : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createLink', { message: error.message }));
     },
   });
 };
@@ -254,11 +255,11 @@ export const useRegenerateJoinCode = () => {
   return useMutation({
     mutationFn: (orgId: string) => repository.regenerateJoinCode(orgId),
     onSuccess: () => {
-      toast.success('Nouveau code généré — l\'ancien ne fonctionne plus');
+      toast.success(translator('errors').t('success.codeRegenerated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de régénérer le code : ${error.message}`);
+      toast.error(translator('errors').t('mutation.regenerateCode', { message: error.message }));
     },
   });
 };
@@ -270,11 +271,11 @@ export const useUpdateOrganization = () => {
     mutationFn: ({ orgId, input }: { orgId: string; input: import('./types').UpdateOrganizationInput }) =>
       repository.updateOrganization(orgId, input),
     onSuccess: () => {
-      toast.success('Profil de l\'entreprise mis à jour');
+      toast.success(translator('errors').t('success.orgProfileUpdated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de mettre à jour le profil : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateOrgProfile', { message: error.message }));
     },
   });
 };

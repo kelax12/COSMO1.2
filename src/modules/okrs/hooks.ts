@@ -13,6 +13,7 @@ import { okrsKeys } from './constants';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createOKRSchema, updateOKRSchema } from './okr.schema';
+import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -133,7 +134,7 @@ export const useCreateOkr = () => {
       invalidateAllOKRQueries(queryClient);
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer l'OKR : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createOkr', { message: error.message }));
     },
   });
 };
@@ -299,7 +300,7 @@ export const useUpdateKeyResult = () => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
-      toast.error(`Impossible de mettre à jour le résultat clé : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateKeyResult', { message: error.message }));
     },
 
     // Refetch caches after mutation completes

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getListsRepository } from '@/lib/repository.factory';
 import type { TaskList, CreateListInput, UpdateListInput } from './types';
 import { listKeys } from './constants';
+import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -53,7 +54,7 @@ export const useCreateList = () => {
       invalidateAllListQueries(queryClient);
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createList', { message: error.message }));
     },
   });
 };
@@ -152,7 +153,7 @@ export const useAddTaskToList = () => {
       if (context?.previousLists) {
         queryClient.setQueryData(listKeys.lists(), context.previousLists);
       }
-      toast.error(`Impossible d'ajouter la tâche à la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.addTaskToList', { message: error.message }));
     },
 
     onSettled: () => {

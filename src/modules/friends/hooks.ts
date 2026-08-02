@@ -14,6 +14,7 @@ import type {
   SharedListGrant,
 } from './types';
 import { friendKeys } from './constants';
+import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -94,7 +95,7 @@ export const useSendFriendRequest = () => {
   return useMutation({
     mutationFn: (input: FriendRequestInput) => repository.sendFriendRequest(input),
     onSuccess: (_data, variables) => {
-      toast.success(`Demande d'ami envoyée à ${variables.email}`);
+      toast.success(translator('errors').t('success.friendRequestSent', { email: variables.email }));
       queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
       queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
@@ -224,7 +225,7 @@ export const useShareList = () => {
   return useMutation({
     mutationFn: (input: ShareListInput) => repository.shareList(input),
     onSuccess: () => {
-      toast.success('Liste partagée');
+      toast.success(translator('errors').t('success.listShared'));
       queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
     },
     onError: (error: Error) => {
@@ -281,7 +282,7 @@ export const useAcceptSharedList = () => {
       await repository.acceptSharedList(grant.id);
     },
     onSuccess: () => {
-      toast.success('Liste acceptée');
+      toast.success(translator('errors').t('success.listAccepted'));
       queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
       queryClient.invalidateQueries({ queryKey: listKeys.lists() });
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });

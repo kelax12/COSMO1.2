@@ -14,6 +14,7 @@ import type {
   UpdateTeamKRInput,
   SyncTeamKRInput,
 } from './types';
+import { translator } from '@/i18n/useT';
 
 const useRepo = () => getTeamOKRsRepository();
 
@@ -39,10 +40,10 @@ export const useCreateTeamOKR = (orgId: string) => {
       return repository.create(orgId, valid as CreateTeamOKRInput);
     },
     onSuccess: () => {
-      toast.success('Objectif créé');
+      toast.success(translator('errors').t('success.objectiveCreated'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de créer l'objectif : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.createObjective', { message: error.message })),
   });
 };
 
@@ -55,10 +56,10 @@ export const useUpdateTeamOKR = (orgId: string) => {
       return repository.update(okrId, valid as UpdateTeamOKRInput);
     },
     onSuccess: () => {
-      toast.success('Objectif mis à jour');
+      toast.success(translator('errors').t('success.objectiveUpdated'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de mettre à jour l'objectif : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateObjective', { message: error.message })),
   });
 };
 
@@ -84,10 +85,10 @@ export const useEditTeamOKR = (orgId: string) => {
       await repository.syncKeyResults(okrId, orgId, keyResults);
     },
     onSuccess: () => {
-      toast.success('Objectif mis à jour');
+      toast.success(translator('errors').t('success.objectiveUpdated'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de mettre à jour l'objectif : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateObjective', { message: error.message })),
   });
 };
 
@@ -108,7 +109,7 @@ export const useReassignTeamOKRCategory = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de réétiqueter les objectifs : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.relabelObjectives', { message: error.message })),
   });
 };
 
@@ -118,7 +119,7 @@ export const useDeleteTeamOKR = (orgId: string) => {
   return useMutation({
     mutationFn: (okrId: string) => repository.remove(okrId),
     onSuccess: () => {
-      toast.success('Objectif supprimé');
+      toast.success(translator('errors').t('success.objectiveDeleted'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
     onError: (error: Error) => toast.error(`Impossible de supprimer l'objectif : ${error.message}`),
@@ -136,6 +137,6 @@ export const useUpdateTeamKR = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de mettre à jour le résultat clé : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateKeyResult', { message: error.message })),
   });
 };
