@@ -29,11 +29,14 @@ import {
   SectionHeader,
   useGuideSchemas,
 } from './guide/primitives';
+import { useT } from '@/i18n/useT';
+import RichText from '@/components/ui/rich-text';
 
 const GuidePage: React.FC = () => {
+  const { t } = useT('guide');
   useSeoMeta({
-    title: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
-    description: "Apprenez à utiliser Cosmo : créer des tâches, suivre vos habitudes avec heatmap, planifier votre agenda avec time-blocking et gérer vos OKR. Guide complet en français.",
+    title: t('meta.title'),
+    description: t('meta.description'),
     canonical: 'https://thecosmo.app/guide',
   });
   useGuideSchemas();
@@ -81,14 +84,14 @@ const GuidePage: React.FC = () => {
                 Tailwind (les headings héritent font-size/weight) */}
             <h1 className="text-sm text-slate-400 flex items-center gap-1.5 font-normal">
               <BookOpen size={14} />
-              Guide d'utilisation
+              {t('chrome.heading')}
             </h1>
           </div>
           <Link
             to="/"
             className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
           >
-            Retour à l'accueil
+            {t('chrome.backHome')}
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -100,9 +103,9 @@ const GuidePage: React.FC = () => {
           {/* ── Sidebar ── */}
           <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-24">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Sommaire</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">{t('chrome.summary')}</p>
               <nav className="space-y-1">
-                {NAV_ITEMS.map(({ id, label, icon, color }) => {
+                {NAV_ITEMS.map(({ id, labelKey, icon, color }) => {
                   const isActive = activeSection === id;
                   return (
                     <button
@@ -115,7 +118,7 @@ const GuidePage: React.FC = () => {
                       }}
                     >
                       <span style={{ color: isActive ? color : '#64748B' }}>{icon}</span>
-                      {label}
+                      {t(labelKey)}
                     </button>
                   );
                 })}
@@ -132,31 +135,31 @@ const GuidePage: React.FC = () => {
                 id="demarrage"
                 icon={<Rocket size={24} />}
                 color="#94a3b8"
-                title="Prise en main"
-                subtitle="Créer votre compte et découvrir l'application en 2 minutes."
+                title={t('start.title')}
+                subtitle={t('start.subtitle')}
               />
 
               <div className="space-y-6">
-                <Step n={1} title="Créer un compte ou essayer la démo">
-                  Rendez-vous sur la page d'accueil. Cliquez sur <strong className="text-white">Commencer gratuitement</strong> pour créer un compte avec votre e-mail, ou sur <strong className="text-white">Essayer la démo</strong> pour accéder immédiatement à une version pré-remplie sans inscription.
+                <Step n={1} title={t('start.step1Title')}>
+                  <RichText>{t('start.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Se connecter via Google">
-                  Depuis la fenêtre de connexion, cliquez sur <strong className="text-white">Continuer avec Google</strong> pour vous authentifier en un clic avec votre compte Google existant.
+                <Step n={2} title={t('start.step2Title')}>
+                  <RichText>{t('start.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Naviguer dans l'application">
-                  La barre latérale gauche donne accès à toutes les fonctionnalités : Dashboard, Tâches, Agenda, Habitudes, OKR, Statistiques. Le menu se réduit automatiquement pour laisser plus de place à votre contenu.
+                <Step n={3} title={t('start.step3Title')}>
+                  <RichText>{t('start.step3')}</RichText>
                 </Step>
               </div>
 
               <Tip>
-                Le <strong>mode démo</strong> est idéal pour explorer toutes les fonctionnalités avec des données réalistes avant de créer votre vrai compte. Vos données de démo ne sont pas sauvegardées.
+                <RichText strongClassName="font-semibold">{t('start.tip')}</RichText>
               </Tip>
 
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { icon: <Layers size={18} />, label: 'Dashboard', desc: 'Vue d\'ensemble de toute votre activité' },
-                  { icon: <Bell size={18} />, label: 'Notifications', desc: 'Alertes sur vos tâches et collaborations' },
-                  { icon: <Flag size={18} />, label: 'Paramètres', desc: 'Thème, compte, préférences' },
+                  { icon: <Layers size={18} />, label: t('start.cardDashboard'), desc: t('start.cardDashboardDesc') },
+                  { icon: <Bell size={18} />, label: t('start.cardNotifications'), desc: t('start.cardNotificationsDesc') },
+                  { icon: <Flag size={18} />, label: t('start.cardSettings'), desc: t('start.cardSettingsDesc') },
                 ].map((item) => (
                   <div key={item.label} className="bg-slate-800/60 border border-white/8 rounded-xl p-4">
                     <div className="text-slate-400 mb-2">{item.icon}</div>
@@ -173,8 +176,8 @@ const GuidePage: React.FC = () => {
                 id="taches"
                 icon={<CheckSquare size={24} />}
                 color="#3b82f6"
-                title="Tâches"
-                subtitle="Organisez, priorisez et suivez tout ce que vous avez à faire."
+                title={t('tasks.title')}
+                subtitle={t('tasks.subtitle')}
               />
 
               <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
@@ -182,23 +185,23 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                <Step n={1} title="Créer une tâche">
-                  Cliquez sur le bouton <strong className="text-white">+ Nouvelle tâche</strong> en haut de la page. Renseignez le nom, la deadline, la durée estimée et la catégorie. La tâche apparaît immédiatement dans le tableau.
+                <Step n={1} title={t('tasks.step1Title')}>
+                  <RichText>{t('tasks.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Définir la priorité">
-                  Chaque tâche reçoit un niveau de priorité de <strong className="text-white">1 (faible)</strong> à <strong className="text-white">5 (critique)</strong>. Les tâches priorité 5 apparaissent en rouge, priorité 4 en orange. Utilisez ce système pour vous concentrer sur ce qui compte vraiment.
+                <Step n={2} title={t('tasks.step2Title')}>
+                  <RichText>{t('tasks.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Marquer comme terminée">
-                  Cochez le cercle à gauche de la tâche. Elle passe en mode barré et est archivée. Vous pouvez filtrer les tâches terminées via le bouton <strong className="text-white">Terminées</strong> dans la barre de filtres.
+                <Step n={3} title={t('tasks.step3Title')}>
+                  <RichText>{t('tasks.step3')}</RichText>
                 </Step>
               </div>
 
               <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<Bookmark size={15} />}   label="Favoris"        desc="Mettez en favori une tâche importante — elle apparaît en surbrillance dorée et dans le filtre Favoris." />
-                <FeatureRow icon={<Clock size={15} />}      label="Durée"  desc="Renseignez la durée pour chaque tâche. Le Dashboard vous affiche votre charge de travail totale." />
-                <FeatureRow icon={<Filter size={15} />}     label="Filtres"        desc="Filtrez par Favoris, Terminées, En retard ou Collaboratives. Les filtres se combinent." />
-                <FeatureRow icon={<Users size={15} />}      label="Collaboration"  desc="Partagez une tâche avec un ami via l'icône de partage. Il peut la voir et la valider depuis son compte." />
-                <FeatureRow icon={<Flag size={15} />}       label="Catégories"     desc="Associez chaque tâche à une catégorie colorée (Travail, Personnel, Santé...) pour mieux visualiser votre temps." />
+                <FeatureRow icon={<Bookmark size={15} />}   label={t('tasks.featBookmark')}   desc={t('tasks.featBookmarkDesc')} />
+                <FeatureRow icon={<Clock size={15} />}      label={t('tasks.featDuration')}   desc={t('tasks.featDurationDesc')} />
+                <FeatureRow icon={<Filter size={15} />}     label={t('tasks.featFilters')}    desc={t('tasks.featFiltersDesc')} />
+                <FeatureRow icon={<Users size={15} />}      label={t('tasks.featCollab')}     desc={t('tasks.featCollabDesc')} />
+                <FeatureRow icon={<Flag size={15} />}       label={t('tasks.featCategories')} desc={t('tasks.featCategoriesDesc')} />
               </div>
             </section>
 
@@ -208,30 +211,30 @@ const GuidePage: React.FC = () => {
                 id="listes"
                 icon={<List size={24} />}
                 color="#3b82f6"
-                title="Listes"
-                subtitle="Regroupez vos tâches par projet ou contexte pour une organisation sans effort."
+                title={t('lists.title')}
+                subtitle={t('lists.subtitle')}
               />
 
               <div className="space-y-6">
-                <Step n={1} title="Créer une liste">
-                  Dans la barre latérale gauche de la page Tâches, cliquez sur <strong className="text-white">+ Nouvelle liste</strong>. Donnez-lui un nom et une couleur. La liste apparaît instantanément dans le panneau de navigation.
+                <Step n={1} title={t('lists.step1Title')}>
+                  <RichText>{t('lists.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Ajouter des tâches à une liste">
-                  Lors de la création ou de l'édition d'une tâche, sélectionnez la liste à laquelle elle appartient dans le champ prévu à cet effet. Une tâche peut appartenir à une seule liste.
+                <Step n={2} title={t('lists.step2Title')}>
+                  <RichText>{t('lists.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Filtrer par liste">
-                  Cliquez sur une liste dans le panneau latéral pour n'afficher que les tâches qu'elle contient. Le compteur à droite du nom indique le nombre de tâches actives dans la liste.
+                <Step n={3} title={t('lists.step3Title')}>
+                  <RichText>{t('lists.step3')}</RichText>
                 </Step>
               </div>
 
               <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<List size={15} />}       label="Vue par liste"    desc="Chaque liste affiche uniquement ses tâches, avec ses propres filtres et tri." />
-                <FeatureRow icon={<Flag size={15} />}       label="Couleur de liste" desc="Attribuez une couleur distinctive à chaque liste pour les différencier visuellement." />
-                <FeatureRow icon={<Filter size={15} />}     label="Toutes les tâches" desc="La vue 'Toutes les tâches' regroupe l'ensemble des tâches toutes listes confondues." />
+                <FeatureRow icon={<List size={15} />}       label={t('lists.featView')}  desc={t('lists.featViewDesc')} />
+                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')} desc={t('lists.featColorDesc')} />
+                <FeatureRow icon={<Filter size={15} />}     label={t('lists.featAll')}   desc={t('lists.featAllDesc')} />
               </div>
 
               <Tip>
-                Utilisez les listes pour séparer vos projets : une liste <strong>Travail</strong>, une liste <strong>Personnel</strong>, une liste par client ou par projet actif. Cela évite de mélanger des contextes différents dans une vue unique.
+                <RichText strongClassName="font-semibold">{t('lists.tip')}</RichText>
               </Tip>
             </section>
 
@@ -241,8 +244,8 @@ const GuidePage: React.FC = () => {
                 id="agenda"
                 icon={<Calendar size={24} />}
                 color="#ef4444"
-                title="Agenda"
-                subtitle="Planifiez vos événements et visualisez votre semaine d'un coup d'œil."
+                title={t('agenda.title')}
+                subtitle={t('agenda.subtitle')}
               />
 
               <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
@@ -250,30 +253,30 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                <Step n={1} title="Créer un événement">
-                  Cliquez sur un créneau horaire dans la vue semaine, ou sur le bouton <strong className="text-white">+ Événement</strong>. Définissez le titre, la date, l'heure de début et de fin, et la catégorie.
+                <Step n={1} title={t('agenda.step1Title')}>
+                  <RichText>{t('agenda.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Déplacer par glisser-déposer">
-                  Saisissez un événement existant et faites-le glisser vers un autre créneau ou une autre journée directement dans la grille. Relâchez pour confirmer le déplacement — la sauvegarde est automatique.
+                <Step n={2} title={t('agenda.step2Title')}>
+                  <RichText>{t('agenda.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Changer de vue">
-                  Basculez entre la vue <strong className="text-white">Jour</strong>, <strong className="text-white">Semaine</strong> ou <strong className="text-white">Mois</strong> via les boutons en haut à droite. La vue Semaine offre le meilleur équilibre entre détail et vue d'ensemble.
+                <Step n={3} title={t('agenda.step3Title')}>
+                  <RichText>{t('agenda.step3')}</RichText>
                 </Step>
               </div>
 
               <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<GripVertical size={15} />} label="Drag & drop"             desc="Glissez-déposez n'importe quel événement pour le reprogrammer en quelques secondes sans ouvrir de formulaire." />
-                <FeatureRow icon={<Repeat size={15} />}       label="Événements récurrents"   desc="Créez un événement hebdomadaire ou quotidien une seule fois — il se répète automatiquement." />
-                <FeatureRow icon={<Flag size={15} />}         label="Catégories couleur"      desc="Chaque catégorie a sa couleur. Votre agenda devient un tableau de bord visuel de votre temps." />
-                <FeatureRow icon={<Clock size={15} />}        label="Vue compressée"          desc="Les créneaux sans événements sont réduits automatiquement pour maximiser la lisibilité." />
+                <FeatureRow icon={<GripVertical size={15} />} label={t('agenda.featDrag')}      desc={t('agenda.featDragDesc')} />
+                <FeatureRow icon={<Repeat size={15} />}       label={t('agenda.featRecurring')} desc={t('agenda.featRecurringDesc')} />
+                <FeatureRow icon={<Flag size={15} />}         label={t('agenda.featColors')}    desc={t('agenda.featColorsDesc')} />
+                <FeatureRow icon={<Clock size={15} />}        label={t('agenda.featCompact')}   desc={t('agenda.featCompactDesc')} />
               </div>
 
               <Tip>
-                Bloquez du temps dans votre agenda pour vos tâches importantes (time blocking). Cela évite la surcharge et rend vos journées plus prévisibles.
+                {t('agenda.tip')}
               </Tip>
 
               <Note>
-                L'agenda et les tâches sont indépendants. Un événement agenda n'est pas une tâche — utilisez les tâches pour les actions à cocher, l'agenda pour les rendez-vous et créneaux de travail.
+                {t('agenda.note')}
               </Note>
             </section>
 
@@ -283,8 +286,8 @@ const GuidePage: React.FC = () => {
                 id="habitudes"
                 icon={<Repeat size={24} />}
                 color="#eab308"
-                title="Habitudes"
-                subtitle="Construisez des routines durables et suivez votre progression jour après jour."
+                title={t('habits.title')}
+                subtitle={t('habits.subtitle')}
               />
 
               <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
@@ -292,14 +295,14 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                <Step n={1} title="Créer une habitude">
-                  Cliquez sur <strong className="text-white">+ Nouvelle habitude</strong>. Donnez-lui un nom, une couleur, une durée estimée et une fréquence (quotidienne, hebdomadaire, jours spécifiques). L'habitude apparaît dans le tableau de suivi.
+                <Step n={1} title={t('habits.step1Title')}>
+                  <RichText>{t('habits.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Valider au quotidien">
-                  Chaque jour, cochez les habitudes réalisées en cliquant sur la case correspondante dans le tableau. La case devient bleue et votre série (streak) s'incrémente.
+                <Step n={2} title={t('habits.step2Title')}>
+                  <RichText>{t('habits.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Lire le tableau de suivi">
-                  Le tableau affiche les 7 derniers jours par défaut. Basculez en vue <strong className="text-white">Mois</strong> ou <strong className="text-white">Tout</strong> pour analyser vos tendances sur le long terme.
+                <Step n={3} title={t('habits.step3Title')}>
+                  <RichText>{t('habits.step3')}</RichText>
                 </Step>
               </div>
 
@@ -307,21 +310,21 @@ const GuidePage: React.FC = () => {
                 <div className="bg-slate-800/40 border border-white/8 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Flame size={16} className="text-orange-400" />
-                    <p className="font-semibold text-white text-sm">Série (streak)</p>
+                    <p className="font-semibold text-white text-sm">{t('habits.streakTitle')}</p>
                   </div>
-                  <p className="text-xs text-slate-400">Le compteur en orange indique le nombre de jours consécutifs où vous avez réalisé l'habitude. La série se remet à zéro si vous manquez un jour.</p>
+                  <p className="text-xs text-slate-400">{t('habits.streakDesc')}</p>
                 </div>
                 <div className="bg-slate-800/40 border border-white/8 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp size={16} className="text-green-400" />
-                    <p className="font-semibold text-white text-sm">Taux de complétion</p>
+                    <p className="font-semibold text-white text-sm">{t('habits.rateTitle')}</p>
                   </div>
-                  <p className="text-xs text-slate-400">Visible dans les statistiques, il mesure le pourcentage de jours où vous avez validé l'habitude sur la période sélectionnée.</p>
+                  <p className="text-xs text-slate-400">{t('habits.rateDesc')}</p>
                 </div>
               </div>
 
               <Tip>
-                Commencez par <strong>2 à 3 habitudes maximum</strong>. Il est plus facile de construire sur des petites victoires régulières que de s'épuiser sur une longue liste dès le départ.
+                <RichText strongClassName="font-semibold">{t('habits.tip')}</RichText>
               </Tip>
             </section>
 
@@ -331,8 +334,8 @@ const GuidePage: React.FC = () => {
                 id="okr"
                 icon={<Target size={24} />}
                 color="#22c55e"
-                title="OKR — Objectifs & Résultats Clés"
-                subtitle="Définissez des objectifs ambitieux et mesurez votre progression avec des indicateurs concrets."
+                title={t('okr.title')}
+                subtitle={t('okr.subtitle')}
               />
 
               <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
@@ -340,39 +343,39 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mb-8 bg-slate-800/40 border border-white/8 rounded-2xl p-5">
-                <p className="text-sm font-semibold text-white mb-3">C'est quoi un OKR ?</p>
+                <p className="text-sm font-semibold text-white mb-3">{t('okr.whatIs')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-green-400 font-medium mb-1">O — Objectif</p>
-                    <p className="text-slate-400">Une ambition qualitative et inspirante. Ex : <em>"Accélérer la croissance produit"</em></p>
+                    <p className="text-green-400 font-medium mb-1">{t('okr.objectiveLabel')}</p>
+                    <p className="text-slate-400">{t('okr.objectiveDesc')} <em>{t('okr.objectiveExample')}</em></p>
                   </div>
                   <div>
-                    <p className="text-blue-400 font-medium mb-1">KR — Résultat Clé</p>
-                    <p className="text-slate-400">Un indicateur mesurable qui prouve que l'objectif est atteint. Ex : <em>"Atteindre 10 000 utilisateurs actifs"</em></p>
+                    <p className="text-blue-400 font-medium mb-1">{t('okr.krLabel')}</p>
+                    <p className="text-slate-400">{t('okr.krDesc')} <em>{t('okr.krExample')}</em></p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <Step n={1} title="Créer un objectif">
-                  Cliquez sur <strong className="text-white">+ Nouvel objectif</strong>. Définissez un titre, une description, une catégorie, une date de début et une date de fin (généralement un trimestre).
+                <Step n={1} title={t('okr.step1Title')}>
+                  <RichText>{t('okr.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Ajouter des résultats clés">
-                  Dans l'objectif, cliquez sur <strong className="text-white">+ Résultat clé</strong>. Donnez-lui un titre et une valeur cible chiffrée. Vous pouvez en ajouter plusieurs par objectif (3 est une bonne pratique).
+                <Step n={2} title={t('okr.step2Title')}>
+                  <RichText>{t('okr.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Mettre à jour la progression">
-                  Chaque fois que vous progressez, mettez à jour la valeur actuelle d'un résultat clé. La progression globale de l'objectif se calcule automatiquement. Quand un KR atteint sa cible, il passe en vert.
+                <Step n={3} title={t('okr.step3Title')}>
+                  <RichText>{t('okr.step3')}</RichText>
                 </Step>
               </div>
 
               <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<TrendingUp size={15} />} label="Indicateur de santé"  desc="Cosmo compare votre progression au temps écoulé. Si vous avancez plus vite que le temps, l'indicateur est vert." />
-                <FeatureRow icon={<Clock size={15} />}      label="Jours restants"       desc="Un badge indique combien de jours il reste avant la date de fin de l'objectif." />
-                <FeatureRow icon={<Flag size={15} />}       label="Catégories"           desc="Classez vos OKR par catégorie (Produit, Personnel, Équipe) pour une meilleure organisation." />
+                <FeatureRow icon={<TrendingUp size={15} />} label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
+                <FeatureRow icon={<Clock size={15} />}      label={t('okr.featDaysLeft')}  desc={t('okr.featDaysLeftDesc')} />
+                <FeatureRow icon={<Flag size={15} />}       label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
               </div>
 
               <Tip>
-                Un bon résultat clé est <strong>binaire ou mesurable</strong> : soit on peut le chiffrer (ex : 10 000 utilisateurs), soit il est atteint ou non. Évitez les formulations vagues comme "Améliorer la qualité".
+                <RichText strongClassName="font-semibold">{t('okr.tip')}</RichText>
               </Tip>
             </section>
 
@@ -382,8 +385,8 @@ const GuidePage: React.FC = () => {
                 id="statistiques"
                 icon={<BarChart2 size={24} />}
                 color="#8b5cf6"
-                title="Statistiques"
-                subtitle="Analysez votre productivité et identifiez vos points d'amélioration."
+                title={t('stats.title')}
+                subtitle={t('stats.subtitle')}
               />
 
               <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
@@ -393,23 +396,23 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                <Step n={1} title="Choisir la période">
-                  En haut de la page, sélectionnez la période d'analyse : <strong className="text-white">7 jours</strong>, <strong className="text-white">30 jours</strong>, <strong className="text-white">90 jours</strong> ou une plage personnalisée. Tous les graphiques se mettent à jour automatiquement.
+                <Step n={1} title={t('stats.step1Title')}>
+                  <RichText>{t('stats.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Lire les graphiques">
-                  Chaque graphique représente une dimension de votre activité — tâches complétées, habitudes respectées, OKR progressés, temps total investi. Passez votre curseur sur les barres pour voir les détails.
+                <Step n={2} title={t('stats.step2Title')}>
+                  <RichText>{t('stats.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Identifier les tendances">
-                  Comparez semaine après semaine. Une baisse régulière dans un domaine est un signal pour ajuster vos objectifs ou vos habitudes.
+                <Step n={3} title={t('stats.step3Title')}>
+                  <RichText>{t('stats.step3')}</RichText>
                 </Step>
               </div>
 
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { color: '#3b82f6', label: 'Tâches',    desc: 'Nombre de tâches complétées par période' },
-                  { color: '#ef4444', label: 'Agenda',    desc: 'Temps passé sur des événements planifiés' },
-                  { color: '#22c55e', label: 'OKR',       desc: 'Résultats clés validés dans la période' },
-                  { color: '#eab308', label: 'Habitudes', desc: 'Taux de complétion moyen des habitudes actives' },
+                  { color: '#3b82f6', label: t('stats.legendTasks'),  desc: t('stats.legendTasksDesc') },
+                  { color: '#ef4444', label: t('stats.legendAgenda'), desc: t('stats.legendAgendaDesc') },
+                  { color: '#22c55e', label: t('stats.legendOkr'),    desc: t('stats.legendOkrDesc') },
+                  { color: '#eab308', label: t('stats.legendHabits'), desc: t('stats.legendHabitsDesc') },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-3 bg-slate-800/40 border border-white/8 rounded-xl p-4">
                     <div className="w-3 h-3 rounded-full mt-1 shrink-0" style={{ backgroundColor: item.color }} />
@@ -422,7 +425,7 @@ const GuidePage: React.FC = () => {
               </div>
 
               <Note>
-                Les statistiques sont calculées en temps réel à partir de vos données. Plus vous utilisez Cosmo régulièrement, plus les graphiques sont représentatifs de vos vraies habitudes de travail.
+                {t('stats.note')}
               </Note>
             </section>
 
@@ -432,28 +435,28 @@ const GuidePage: React.FC = () => {
                 id="premium"
                 icon={<Star size={24} />}
                 color="#eab308"
-                title="Premium"
-                subtitle="Obtenez l'accès Premium gratuitement en quelques secondes."
+                title={t('premium.title')}
+                subtitle={t('premium.subtitle')}
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 {[
                   {
                     icon: <PlayCircle size={18} />,
-                    label: 'Accès par visionnage de publicité',
-                    desc: 'Regardez une courte publicité depuis la page Premium pour obtenir immédiatement une journée d\'accès Premium. Renouvelable à volonté, sans aucun paiement.',
+                    label: t('premium.cardAd'),
+                    desc: t('premium.cardAdDesc'),
                     highlight: true,
                   },
                   {
                     icon: <Users size={18} />,
-                    label: 'Collaboration',
-                    desc: 'Partagez des tâches avec vos amis et travaillez ensemble en temps réel.',
+                    label: t('premium.cardCollab'),
+                    desc: t('premium.cardCollabDesc'),
                     highlight: false,
                   },
                   {
                     icon: <Star size={18} />,
-                    label: 'Priorité au support',
-                    desc: 'Assistance prioritaire en cas de problème.',
+                    label: t('premium.cardSupport'),
+                    desc: t('premium.cardSupportDesc'),
                     highlight: false,
                   },
                 ].map((item) => (
@@ -483,26 +486,26 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                <Step n={1} title="Accéder à la page Premium">
-                  Dans la barre latérale, cliquez sur l'icône <strong className="text-white">Couronne</strong> (Premium). Vous y trouverez les détails de l'offre et le bouton d'activation.
+                <Step n={1} title={t('premium.step1Title')}>
+                  <RichText>{t('premium.step1')}</RichText>
                 </Step>
-                <Step n={2} title="Obtenir une journée Premium gratuitement">
-                  Cliquez sur <strong className="text-white">Obtenir 1 jour Premium</strong> puis regardez la publicité jusqu'à la fin. L'accès Premium est activé immédiatement pour 24 heures. Vous pouvez répéter l'opération autant de fois que vous le souhaitez.
+                <Step n={2} title={t('premium.step2Title')}>
+                  <RichText>{t('premium.step2')}</RichText>
                 </Step>
-                <Step n={3} title="Gérer votre accès">
-                  Depuis la page Premium, vous pouvez consulter votre statut actuel et le temps restant. Renouvelez votre accès à tout moment en visionnant une nouvelle publicité.
+                <Step n={3} title={t('premium.step3Title')}>
+                  <RichText>{t('premium.step3')}</RichText>
                 </Step>
               </div>
             </section>
 
             {/* ── Footer guide ── */}
             <div className="border-t border-white/10 pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-slate-500 text-sm">Une question ? Contactez-nous à <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a></p>
+              <p className="text-slate-500 text-sm">{t('chrome.contact')} <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a></p>
               <Link
                 to="/"
                 className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
               >
-                Commencer gratuitement
+                {t('chrome.cta')}
                 <ArrowRight size={15} />
               </Link>
             </div>
