@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getEventsRepository } from '@/lib/repository.factory';
 import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 import { eventsKeys } from './constants';
+import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -86,10 +87,10 @@ export const useCreateEvent = () => {
       // Réconcilie les fenêtres (un nouvel event hors fenêtre courante sera
       // retiré au refetch ; refetchType none = pas de round-trip immédiat).
       invalidateAllEventQueries(queryClient);
-      toast.success('Événement créé');
+      toast.success(translator('errors').t('success.eventCreated'));
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer l'événement : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createEvent', { message: error.message }));
     },
   });
 };
@@ -115,7 +116,7 @@ export const useUpdateEvent = () => {
     // Rollback on error (useUpdateEvent) — restaure chaque cache snapshoté.
     onError: (error: Error, _variables, context) => {
       context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
-      toast.error(`Impossible de modifier l'événement : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateEvent', { message: error.message }));
     },
 
     onSettled: (updatedEvent) => {
@@ -155,7 +156,7 @@ export const useDeleteEvent = () => {
     // Rollback on error (useDeleteEvent) — restaure chaque cache snapshoté.
     onError: (error: Error, _id, context) => {
       context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
-      toast.error(`Impossible de supprimer l'événement : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteEvent', { message: error.message }));
     },
 
     onSettled: (_result, _error, deletedId, context) => {
@@ -208,9 +209,9 @@ export const useCreateMemberEvent = (userId: string) => {
     onSuccess: (newEvent) => {
       patchMemberWindows(queryClient, userId, (old) => [...old, newEvent]);
       queryClient.invalidateQueries({ queryKey: eventsKeys.member(userId), refetchType: 'none' });
-      toast.success('Événement ajouté à l\'agenda');
+      toast.success(translator('errors').t('success.eventAdded'));
     },
-    onError: (error: Error) => toast.error(`Impossible d'ajouter l'événement : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.addEvent', { message: error.message })),
   });
 };
 
@@ -230,7 +231,7 @@ export const useUpdateMemberEvent = (userId: string) => {
     },
     onError: (error: Error, _v, context) => {
       context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
-      toast.error(`Impossible de modifier l'événement : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateEvent', { message: error.message }));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: eventsKeys.member(userId), refetchType: 'none' });
@@ -251,7 +252,7 @@ export const useDeleteMemberEvent = (userId: string) => {
     },
     onError: (error: Error, _id, context) => {
       context?.previous?.forEach(([key, data]) => queryClient.setQueryData(key, data));
-      toast.error(`Impossible de supprimer l'événement : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteEvent', { message: error.message }));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: eventsKeys.member(userId), refetchType: 'none' });

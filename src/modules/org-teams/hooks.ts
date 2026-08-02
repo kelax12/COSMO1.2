@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { getOrgTeamsRepository } from '@/lib/repository.factory';
 import { orgTeamKeys } from './constants';
 import type { CreateOrgTeamInput } from './types';
+import { translator } from '@/i18n/useT';
 
 const useRepo = () => getOrgTeamsRepository();
 
@@ -36,10 +37,10 @@ export const useCreateOrgTeam = (orgId: string) => {
   return useMutation({
     mutationFn: (input: CreateOrgTeamInput) => repository.createTeam(orgId, input),
     onSuccess: () => {
-      toast.success('Équipe créée');
+      toast.success(translator('errors').t('success.teamCreated'));
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de créer l'équipe : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.createTeam', { message: error.message })),
   });
 };
 
@@ -49,11 +50,11 @@ export const useDeleteOrgTeam = (orgId: string) => {
   return useMutation({
     mutationFn: (teamId: string) => repository.deleteTeam(teamId),
     onSuccess: () => {
-      toast.success('Équipe supprimée');
+      toast.success(translator('errors').t('success.teamDeleted'));
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) });
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer l'équipe : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTeam', { message: error.message })),
   });
 };
 

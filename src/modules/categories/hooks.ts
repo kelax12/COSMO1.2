@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getCategoriesRepository } from '@/lib/repository.factory';
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { categoryKeys } from './constants';
+import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -48,7 +49,7 @@ export const useCreateCategory = () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer la catégorie : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createCategory', { message: error.message }));
     },
   });
 };
@@ -79,7 +80,7 @@ export const useUpdateCategory = () => {
       if (context?.previousCategories) {
         queryClient.setQueryData(categoryKeys.lists(), context.previousCategories);
       }
-      toast.error(`Impossible de modifier la catégorie : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateCategory', { message: error.message }));
     },
 
     onSettled: (updatedCategory) => {
@@ -115,7 +116,7 @@ export const useDeleteCategory = () => {
       if (context?.previousCategories) {
         queryClient.setQueryData(categoryKeys.lists(), context.previousCategories);
       }
-      toast.error(`Impossible de supprimer la catégorie : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteCategory', { message: error.message }));
     },
 
     onSettled: (_result, _error, deletedId) => {

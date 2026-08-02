@@ -9,6 +9,7 @@ import { validateOrThrow } from '@/lib/validation/validate';
 import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
 import { teamProjectKeys } from './constants';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
+import { translator } from '@/i18n/useT';
 
 const useRepo = () => getTeamProjectsRepository();
 
@@ -59,10 +60,10 @@ export const useCreateTeamProject = (orgId: string) => {
       return repository.createProject(orgId, valid);
     },
     onSuccess: () => {
-      toast.success('Projet créé');
+      toast.success(translator('errors').t('success.projectCreated'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de créer le projet : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.createProject', { message: error.message })),
   });
 };
 
@@ -75,8 +76,8 @@ export const useUpdateTeamProject = (orgId: string) => {
       return repository.updateProject(projectId, valid as UpdateTeamProjectInput);
     },
     onSuccess: (_project, { input }) => {
-      if (input.archived === true) toast.success('Projet archivé');
-      else if (input.archived === false) toast.success('Projet restauré');
+      if (input.archived === true) toast.success(translator('errors').t('success.projectArchived'));
+      else if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
     },
     onError: (error: Error) => toast.error(`Impossible de modifier le projet : ${error.message}`),
@@ -89,7 +90,7 @@ export const useArchiveTeamProject = (orgId: string) => {
   return useMutation({
     mutationFn: (projectId: string) => repository.archiveProject(projectId),
     onSuccess: () => {
-      toast.success('Projet archivé');
+      toast.success(translator('errors').t('success.projectArchived'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
     },
@@ -108,7 +109,7 @@ export const useCreateTeamTask = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de créer la tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.createTask', { message: error.message })),
   });
 };
 
@@ -123,7 +124,7 @@ export const useUpdateTeamTask = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de mettre à jour la tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateTask', { message: error.message })),
   });
 };
 

@@ -7,6 +7,7 @@ import { withTimeout } from '@/lib/withTimeout';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
+import { translator } from '@/i18n/useT';
 
 // Repository - Via centralized factory (demo/production mode)
 const useHabitsRepository = (): IHabitsRepository => {
@@ -51,7 +52,7 @@ export const useCreateHabit = () => {
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer l'habitude : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createHabit', { message: error.message }));
     },
   });
 };
@@ -172,7 +173,7 @@ export const useToggleHabitCompletion = () => {
       if (context?.previousHabits) {
         queryClient.setQueryData(habitKeys.lists(), context.previousHabits);
       }
-      toast.error(`Impossible de mettre à jour l'habitude : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateHabit', { message: error.message }));
     },
   });
 };

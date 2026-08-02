@@ -13,6 +13,7 @@ import { friendKeys } from '@/modules/friends/constants';
 import { PaginationParams } from '@/lib/pagination.types';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createTaskSchema, updateTaskSchema } from './task.schema';
+import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
 // Repository - Via centralized factory (demo/production mode)
@@ -171,7 +172,7 @@ export const useCreateTask = () => {
       });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de créer la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.createTask', { message: error.message }));
     },
   });
 };
@@ -290,7 +291,7 @@ export const useToggleTaskComplete = () => {
           .catch(() => { /* best-effort : la complétion reste valide */ });
       }
 
-      showUndoToast('Tâche validée', () => {
+      showUndoToast(translator('errors').t('success.taskValidated'), () => {
         if (spawnedNextId) {
           const idToRemove = spawnedNextId;
           queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
@@ -350,7 +351,7 @@ export const useToggleTaskComplete = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de mettre à jour la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateTask', { message: error.message }));
     },
 
     // Invalidation sélective post-toggle

@@ -21,7 +21,7 @@ export {
 
 export { localeStore, useLocale } from './store';
 
-export { getTranslator, useT, type Translator } from './useT';
+export { getTranslator, translator, useT, type Translator } from './useT';
 
 export {
   getCatalog,

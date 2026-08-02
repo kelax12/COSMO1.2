@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { getOrgOKRCategoriesRepository } from '@/lib/repository.factory';
 import { orgOKRCategoryKeys } from './constants';
 import type { CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
+import { translator } from '@/i18n/useT';
 
 const useRepo = () => getOrgOKRCategoriesRepository();
 
@@ -28,7 +29,7 @@ export const useCreateOrgOKRCategory = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgOKRCategoryKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de créer la catégorie : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.createCategory', { message: error.message })),
   });
 };
 
@@ -41,7 +42,7 @@ export const useUpdateOrgOKRCategory = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgOKRCategoryKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de modifier la catégorie : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateCategory', { message: error.message })),
   });
 };
 
@@ -51,9 +52,9 @@ export const useDeleteOrgOKRCategory = (orgId: string) => {
   return useMutation({
     mutationFn: (categoryId: string) => repository.deleteCategory(categoryId),
     onSuccess: () => {
-      toast.success('Catégorie supprimée');
+      toast.success(translator('errors').t('success.categoryDeleted'));
       queryClient.invalidateQueries({ queryKey: orgOKRCategoryKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer la catégorie : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteCategory', { message: error.message })),
   });
 };
