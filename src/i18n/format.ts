@@ -53,6 +53,35 @@ export function formatTime(
   return date.toLocaleTimeString(getIntlTag(locale), options);
 }
 
+/**
+ * Fraîcheur relative d'un instant passé — « il y a 2 h » / « 2 hours ago ».
+ *
+ * `Intl.RelativeTimeFormat` plutôt qu'un catalogue : les formes relatives sont
+ * des données CLDR, déjà présentes dans le navigateur pour toutes les langues.
+ * Les écrire à la main (ce que faisait `CollaborativeTasks`) revient à
+ * maintenir une table de traduction par unité ET par règle de pluriel, pour un
+ * résultat moins bon — le russe a trois formes, l'arabe six.
+ *
+ * Au-delà de 30 jours on bascule sur une date absolue : « il y a 14 mois » ne
+ * dit rien d'utile, la date oui.
+ */
+export function formatRelativeTime(iso: string, locale?: Locale): string {
+  const date = new Date(iso);
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
+  const rtf = new Intl.RelativeTimeFormat(getIntlTag(locale), { numeric: 'auto' });
+
+  if (minutes < 1) return rtf.format(0, 'minute');
+  if (minutes < 60) return rtf.format(-minutes, 'minute');
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return rtf.format(-hours, 'hour');
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return rtf.format(-days, 'day');
+
+  return formatDate(date, undefined, locale);
+}
+
 /** Nombre localisé (séparateurs de milliers et décimale). */
 export function formatNumber(
   value: number,

@@ -23,27 +23,34 @@ import TextType from '../components/TextType';
 import MobileCollapsible from '../components/MobileCollapsible';
 import WeeklyCheckinModal, { useWeeklyCheckin } from '../components/WeeklyCheckinModal';
 import { formatDate, formatTime } from '@/i18n/format';
+import { useT, type Translator } from '@/i18n/useT';
+import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
 // SocialRequests retiré du corps de page : les demandes d'amis ET les tâches
 // partagées à accepter sont désormais regroupées dans InboxMenu (bouton boîte
 // de réception en haut de page, avec pastille de notification).
 
-type ViewMode = 'jour' | 'semaine' | 'mois';
-
-const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-
-const formatBarDate = (raw: string): string => {
+/**
+ * Étiquette d'une barre du mini-graphique.
+ *
+ * La table `MONTHS_FR` codée en dur qui vivait ici a disparu au profit de
+ * `formatDate` (`Intl` sous le capot) : les noms de mois abrégés existent déjà
+ * dans toutes les locales, les réécrire à la main revenait à maintenir une
+ * traduction de plus — et à la figer en français.
+ */
+const formatBarDate = (raw: string, t: Translator<'dashboard'>['t']): string => {
   // Only format yyyy-mm-dd strings (7 days view)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
   const todayStr = new Date().toLocaleDateString('en-CA');
-  if (raw === todayStr) return "Aujourd'hui";
+  if (raw === todayStr) return t('chart.today');
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  if (raw === yesterday.toLocaleDateString('en-CA')) return 'Hier';
-  const [, m, d] = raw.split('-');
-  return `${d} ${MONTHS_FR[parseInt(m, 10) - 1]}`;
+  if (raw === yesterday.toLocaleDateString('en-CA')) return t('chart.yesterday');
+  const [y, m, d] = raw.split('-').map(Number);
+  return formatDate(new Date(y, m - 1, d), { day: 'numeric', month: 'short' });
 };
 
 const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string; ariaLabel?: string }> = ({ data, color = '#2563EB', ariaLabel }) => {
+  const { t } = useT('dashboard');
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
 
@@ -74,7 +81,7 @@ const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: str
       role="img"
       aria-label={summary}>
       {data.map((d, i) => {
-        const tooltipLabel = d.label ? d.label : d.date ? formatBarDate(d.date) : '';
+        const tooltipLabel = d.label ? d.label : d.date ? formatBarDate(d.date, t) : '';
         return (
           <div
             key={i}
@@ -127,7 +134,8 @@ const shouldPlayTypingToday = (): boolean => {
 };
 
 const DashboardPage: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('jour');
+  const { t, tp } = useT('dashboard');
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const weeklyCheckin = useWeeklyCheckin();
   const [checkinOpen, setCheckinOpen] = useState(false);
   // #31 — plus d'auto-ouverture du modal check-in : une carte inline
@@ -141,7 +149,7 @@ const DashboardPage: React.FC = () => {
   const { user: authUser } = useAuth();
   const { data: habits = [] } = useHabits();
 
-  const displayUser = authUser || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
+  const displayUser = authUser || { id: 'demo', name: t('userFallback'), email: 'demo@cosmo.app' };
 
   // Date LOCALE ('en-CA' → YYYY-MM-DD) — les complétions d'habitudes sont
   // keyées en date locale et les timestamps ISO (completedAt, e.start) sont en
@@ -165,7 +173,7 @@ const DashboardPage: React.FC = () => {
         value: krCompletions.filter(c => localDay(c.completedAt) === date).length,
       }));
 
-    if (viewMode === 'jour') {
+    if (viewMode === 'day') {
       const days: string[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
@@ -181,25 +189,25 @@ const DashboardPage: React.FC = () => {
       const habitsDoneToday = habits.filter(h => h.completions[today]).length;
       return [
         {
-          label: dueToday.length > 0 ? 'Tâches du jour' : 'Tâches complétées',
+          label: dueToday.length > 0 ? t('stats.tasksToday') : t('stats.tasksCompleted'),
           color: '#3b82f6',
           value: dueToday.length > 0 ? `${doneDueToday}/${dueToday.length}` : completedToday,
           chartData: days.map(date => ({ date, value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === date).length })),
         },
         {
-          label: 'Agenda',
+          label: t('stats.agenda'),
           color: '#ef4444',
           value: events.filter(e => localDay(e.start) === today).length,
           chartData: days.map(date => ({ date, value: events.filter(e => localDay(e.start) === date).length })),
         },
         {
-          label: 'KR réalisés',
+          label: t('stats.krCompleted'),
           color: '#22c55e',
           value: krCompletedInPeriod(today, today),
           chartData: krChartByDay(days),
         },
         {
-          label: 'Habitudes',
+          label: t('stats.habits'),
           color: '#eab308',
           value: habits.length > 0 ? `${habitsDoneToday}/${habits.length}` : 0,
           chartData: days.map(date => ({ date, value: habits.filter(h => h.completions[date]).length })),
@@ -207,7 +215,7 @@ const DashboardPage: React.FC = () => {
       ];
     }
 
-    if (viewMode === 'semaine') {
+    if (viewMode === 'week') {
       const weeks: { start: string; end: string; label: string }[] = [];
       for (let i = 3; i >= 0; i--) {
         const end = new Date();
@@ -217,31 +225,33 @@ const DashboardPage: React.FC = () => {
         weeks.push({
           start: start.toLocaleDateString('en-CA'),
           end: end.toLocaleDateString('en-CA'),
-          label: `S${4 - i}`,
+          // « S1 » en français, « W1 » en anglais : l'abréviation de « semaine »
+          // n'est pas universelle, elle appartient au catalogue.
+          label: t('chart.weekAbbr', { number: 4 - i }),
         });
       }
       const thisWeek = weeks[weeks.length - 1];
       return [
         {
-          label: 'Tâches complétées',
+          label: t('stats.tasksCompleted'),
           color: '#3b82f6',
           value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) >= thisWeek.start && localDay(t.completedAt) <= thisWeek.end).length,
           chartData: weeks.map(w => ({ date: w.label, value: tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) >= w.start && localDay(t.completedAt) <= w.end).length })),
         },
         {
-          label: 'Agenda',
+          label: t('stats.agenda'),
           color: '#ef4444',
           value: events.filter(e => { const d = localDay(e.start); return d >= thisWeek.start && d <= thisWeek.end; }).length,
           chartData: weeks.map(w => ({ date: w.label, value: events.filter(e => { const d = localDay(e.start); return d >= w.start && d <= w.end; }).length })),
         },
         {
-          label: 'KR réalisés',
+          label: t('stats.krCompleted'),
           color: '#22c55e',
           value: krCompletedInPeriod(thisWeek.start, thisWeek.end),
           chartData: weeks.map(w => ({ date: w.label, value: krCompletedInPeriod(w.start, w.end) })),
         },
         {
-          label: 'Habitudes',
+          label: t('stats.habits'),
           color: '#eab308',
           value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= thisWeek.start && d <= thisWeek.end).length, 0),
           chartData: weeks.map(w => ({ date: w.label, value: habits.reduce((sum, h) => sum + Object.keys(h.completions).filter(d => d >= w.start && d <= w.end).length, 0) })),
@@ -273,31 +283,35 @@ const DashboardPage: React.FC = () => {
     const { start: thisMonthStart, end: thisMonthEnd } = monthRange(thisMonth);
     return [
       {
-        label: 'Tâches complétées',
+        label: t('stats.tasksCompleted'),
         color: '#3b82f6',
         value: tasksByMonth(thisMonth),
         chartData: months.map(m => ({ date: m.label, value: tasksByMonth(m) })),
       },
       {
-        label: 'Agenda',
+        label: t('stats.agenda'),
         color: '#ef4444',
         value: eventsByMonth(thisMonth),
         chartData: months.map(m => ({ date: m.label, value: eventsByMonth(m) })),
       },
       {
-        label: 'KR réalisés',
+        label: t('stats.krCompleted'),
         color: '#22c55e',
         value: krCompletedInPeriod(thisMonthStart, thisMonthEnd),
         chartData: months.map(m => { const { start, end } = monthRange(m); return { date: m.label, value: krCompletedInPeriod(start, end) }; }),
       },
       {
-        label: 'Habitudes',
+        label: t('stats.habits'),
         color: '#eab308',
         value: habitsByMonth(thisMonth),
         chartData: months.map(m => ({ date: m.label, value: habitsByMonth(m) })),
       },
     ];
-  }, [tasks, events, habits, krCompletions, viewMode, today]);
+    // `t` en dépendance : les libellés des cartes ET les noms de mois abrégés
+    // (`formatDate`) sont calculés ici, donc ce mémo doit être recalculé au
+    // changement de langue — sinon un tableau de bord déjà monté garderait ses
+    // libellés dans l'ancienne langue.
+  }, [tasks, events, habits, krCompletions, viewMode, today, t]);
 
   // Animation variants
   const containerVariants: Variants = {
@@ -338,7 +352,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
                 <PageHeading variant="hero" className="mb-1 sm:mb-2 lg:mb-3">
-                  <span>Bonjour, </span>
+                  <span>{t('greeting')}</span>
                 {playTyping ? (
                   <TextType
                         text={displayUser.name}
@@ -373,26 +387,34 @@ const DashboardPage: React.FC = () => {
                   const remainingHabits = habits.filter(h => !h.completions[today]).length;
 
                   if (remainingTasks === 0 && !nextEvent && remainingHabits === 0 && (tasks.length > 0 || habits.length > 0)) {
-                    return <span className="font-medium text-emerald-600 dark:text-emerald-400">Journée bouclée 🎉 Tout est fait pour aujourd'hui.</span>;
+                    return <span className="font-medium text-emerald-600 dark:text-emerald-400">{t('summary.allDone')}</span>;
                   }
 
                   const parts: React.ReactNode[] = [];
+                  // `tp` et non un `${n > 1 ? 's' : ''}` : la règle codée en dur
+                  // ici était la règle FRANÇAISE (0 au singulier). En anglais
+                  // « 0 task » est faux — il faut « 0 tasks ». `Intl.PluralRules`
+                  // donne la bonne catégorie pour chaque langue, y compris
+                  // celles à plus de deux formes.
                   parts.push(
                     <Link key="tasks" to="/tasks" className="hover:underline underline-offset-2">
-                      {remainingTasks === 0 ? "aucune tâche restante aujourd'hui" : `${remainingTasks} tâche${remainingTasks > 1 ? 's' : ''} aujourd'hui`}
+                      {remainingTasks === 0 ? t('summary.noTaskLeft') : tp('summary.taskLeft', remainingTasks)}
                     </Link>
                   );
                   if (nextEvent) {
                     parts.push(
                       <Link key="event" to="/agenda" className="hover:underline underline-offset-2">
-                        « {nextEvent.title} » à {formatTime(new Date(nextEvent.start), { hour: '2-digit', minute: '2-digit' })}
+                        {t('summary.nextEvent', {
+                          title: nextEvent.title,
+                          time: formatTime(new Date(nextEvent.start), { hour: '2-digit', minute: '2-digit' }),
+                        })}
                       </Link>
                     );
                   }
                   if (remainingHabits > 0) {
                     parts.push(
                       <Link key="habits" to="/habits" className="hover:underline underline-offset-2">
-                        {remainingHabits} habitude{remainingHabits > 1 ? 's' : ''} restante{remainingHabits > 1 ? 's' : ''}
+                        {tp('summary.habitLeft', remainingHabits)}
                       </Link>
                     );
                   }
@@ -412,20 +434,20 @@ const DashboardPage: React.FC = () => {
           <motion.div variants={itemVariants}>
             <div className="flex items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
               <div className="flex-1 min-w-0">
-                <p className="text-label sm:text-sm font-semibold text-[rgb(var(--color-text-primary))]">Votre semaine vous attend</p>
-                <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))]">Faites le point sur vos objectifs — 2 minutes suffisent.</p>
+                <p className="text-label sm:text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('checkin.title')}</p>
+                <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))]">{t('checkin.subtitle')}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setCheckinOpen(true)}
                 className="shrink-0 min-h-touch sm:min-h-0 px-4 py-2 rounded-xl text-label sm:text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
               >
-                Faire le point
+                {t('checkin.cta')}
               </button>
               <button
                 type="button"
                 onClick={() => weeklyCheckin.dismiss()}
-                aria-label="Ignorer le check-in cette semaine"
+                aria-label={t('checkin.dismiss')}
                 className="shrink-0 min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 sm:p-2 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
               >
                 <X size={16} className="md:hidden" aria-hidden="true" />
@@ -439,18 +461,21 @@ const DashboardPage: React.FC = () => {
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-stretch sm:justify-end mb-3 sm:mb-4">
             <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl w-full sm:w-auto">
-              {(['jour', 'semaine', 'mois'] as const).map(mode => (
+              {VIEW_MODES.map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={cn(
-                    'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-medium capitalize transition-all duration-200 outline-none',
+                    'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-medium transition-all duration-200 outline-none',
                     viewMode === mode
                       ? 'bg-[#1f6feb] text-white shadow-sm' // bleu foncé dédié : --color-accent (#58a6ff) ne passe pas le contraste AA (2.5:1) avec du texte blanc
                       : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                   )}
                 >
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  {/* `capitalize` retiré de la classe : la casse d'un libellé
+                      appartient à sa langue (l'allemand capitalise les noms,
+                      l'espagnol non), elle est portée par le catalogue. */}
+                  {t(`viewMode.${mode}`)}
                 </button>
               ))}
             </div>
@@ -481,7 +506,7 @@ const DashboardPage: React.FC = () => {
                       {stat.value}
                     </motion.p>
                   </div>
-                  <MiniBarChart data={stat.chartData} color={stat.color} ariaLabel={`${stat.label}, évolution récente`} />
+                  <MiniBarChart data={stat.chartData} color={stat.color} ariaLabel={t('stats.trendLabel', { label: stat.label })} />
                 </div>
               </motion.div>
             ))}
@@ -498,7 +523,7 @@ const DashboardPage: React.FC = () => {
             className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
-            <MobileCollapsible title="Tâches prioritaires" defaultOpen>
+            <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
               <TodayTasks />
             </MobileCollapsible>
             {/* Graphique "Répartition du temps" masqué (conservé dans le code,
@@ -508,10 +533,10 @@ const DashboardPage: React.FC = () => {
                 <DashboardBarChart viewMode={viewMode} />
               </Suspense>
             )}
-            <MobileCollapsible title="Tâches collaboratives">
+            <MobileCollapsible title={t('sections.collaborativeTasks')}>
               <CollaborativeTasks />
             </MobileCollapsible>
-            <MobileCollapsible title="OKR en cours">
+            <MobileCollapsible title={t('sections.activeOkrs')}>
               <ActiveOKRs />
             </MobileCollapsible>
           </motion.div>
@@ -521,7 +546,7 @@ const DashboardPage: React.FC = () => {
             className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
-            <MobileCollapsible title="Habitudes du jour">
+            <MobileCollapsible title={t('sections.todayHabits')}>
               <TodayHabits />
             </MobileCollapsible>
           </motion.div>

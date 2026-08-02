@@ -428,7 +428,10 @@ export default function StatisticsPage() {
       {selectedSection === 'all' && overviewDetail ? (
         <div className="mb-8">
           <React.Suspense fallback={<div className="card p-6 h-[340px] animate-pulse" />}>
-            <DashboardChart viewMode={selectedPeriod === 'day' ? 'jour' : selectedPeriod === 'week' ? 'semaine' : 'mois'} />
+            {/* `TimePeriod` a un cran de plus que `ViewMode` (`year`), rabattu
+                sur le mois — le graphique ne trace pas l'année. Le reste passe
+                tel quel depuis que `ViewMode` n'est plus en français. */}
+            <DashboardChart viewMode={selectedPeriod === 'year' ? 'month' : selectedPeriod} />
           </React.Suspense>
         </div>
       ) : (

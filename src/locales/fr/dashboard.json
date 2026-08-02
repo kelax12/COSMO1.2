@@ -1,0 +1,127 @@
+{
+  "greeting": "Bonjour, ",
+  "userFallback": "Utilisateur",
+  "summary": {
+    "allDone": "Journée bouclée 🎉 Tout est fait pour aujourd'hui.",
+    "noTaskLeft": "aucune tâche restante aujourd'hui",
+    "taskLeft_one": "{{count}} tâche aujourd'hui",
+    "taskLeft_many": "{{count}} de tâches aujourd'hui",
+    "taskLeft_other": "{{count}} tâches aujourd'hui",
+    "nextEvent": "« {{title}} » à {{time}}",
+    "habitLeft_one": "{{count}} habitude restante",
+    "habitLeft_many": "{{count}} d'habitudes restantes",
+    "habitLeft_other": "{{count}} habitudes restantes"
+  },
+  "checkin": {
+    "title": "Votre semaine vous attend",
+    "subtitle": "Faites le point sur vos objectifs — 2 minutes suffisent.",
+    "cta": "Faire le point",
+    "dismiss": "Ignorer le check-in cette semaine"
+  },
+  "viewMode": {
+    "day": "Jour",
+    "week": "Semaine",
+    "month": "Mois"
+  },
+  "stats": {
+    "tasksToday": "Tâches du jour",
+    "tasksCompleted": "Tâches complétées",
+    "agenda": "Agenda",
+    "krCompleted": "KR réalisés",
+    "habits": "Habitudes",
+    "trendLabel": "{{label}}, évolution récente"
+  },
+  "chart": {
+    "series": {
+      "tasks": "Tâches",
+      "events": "Agenda",
+      "okrs": "OKR",
+      "habits": "Habitudes"
+    },
+    "period": {
+      "day": "7 derniers jours",
+      "week": "4 dernières semaines",
+      "month": "6 derniers mois"
+    },
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "weekAbbr": "S{{number}}"
+  },
+  "sections": {
+    "priorityTasks": "Tâches prioritaires",
+    "collaborativeTasks": "Tâches collaboratives",
+    "activeOkrs": "OKR en cours",
+    "todayHabits": "Habitudes du jour"
+  },
+  "okrs": {
+    "activeGoal_one": "{{count}} objectif actif",
+    "activeGoal_many": "{{count}} d'objectifs actifs",
+    "activeGoal_other": "{{count}} objectifs actifs",
+    "keyResult_one": "{{count}} résultat clé",
+    "keyResult_many": "{{count}} de résultats clés",
+    "keyResult_other": "{{count}} résultats clés",
+    "deadline": "Échéance : {{date}}",
+    "timeProgress": "{{current}} / {{target}} min",
+    "empty": {
+      "title": "Prêt à viser plus haut ?",
+      "description": "Définissez un objectif et ses résultats clés pour suivre votre progression.",
+      "action": "Créer votre premier objectif"
+    }
+  },
+  "todayTasks": {
+    "summary_one": "{{count}} tâche • {{duration}}",
+    "summary_many": "{{count}} de tâches • {{duration}}",
+    "summary_other": "{{count}} tâches • {{duration}}",
+    "priority": "Priorité {{level}}",
+    "noDeadline": "Pas d'échéance",
+    "markDone": "Marquer \"{{name}}\" comme complétée",
+    "markUndone": "Marquer \"{{name}}\" comme non complétée",
+    "convertToEvent": "Convertir en événement",
+    "addToList": "Ajouter à une liste",
+    "deleted": "Tâche supprimée",
+    "restored": "Tâche restaurée",
+    "empty": {
+      "noneTitle": "Aucune tâche pour le moment",
+      "noneDescription": "Créez votre première tâche pour démarrer. Cosmo l'ajoutera à votre planning.",
+      "noneAction": "Créer ma première tâche",
+      "clearTitle": "Tout est sous contrôle 🎯",
+      "clearDescription": "Vos tâches urgentes sont terminées. Profitez-en pour avancer sur le reste.",
+      "clearAction": "Voir toutes mes tâches"
+    },
+    "deleteDialog": {
+      "title": "Supprimer la tâche",
+      "body": "Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    }
+  },
+  "collaborative": {
+    "shared_one": "{{count}} tâche partagée",
+    "shared_many": "{{count}} de tâches partagées",
+    "shared_other": "{{count}} tâches partagées",
+    "sharedBy": "Partagé par {{name}}",
+    "me": "Moi",
+    "modified": "modifiée {{when}}",
+    "addToAgenda": "Ajouter à l'agenda",
+    "addToList": "Ajouter à une liste",
+    "validated": "Validé",
+    "notValidated": "Non validé",
+    "collaboratorStatus": "{{name}} - {{status}}",
+    "emptyTitle": "Aucune tâche collaborative",
+    "emptyDescription": "Commencez à partager des tâches avec votre équipe"
+  },
+  "habits": {
+    "allDone": "Journée bouclée 🎉 {{done}}/{{total}} complétées",
+    "progress": "{{done}}/{{total}} complétées • {{duration}}",
+    "create": "+ Créer une habitude",
+    "empty": "Aucune habitude pour aujourd'hui",
+    "minutes": "{{count}} min",
+    "streak_one": "{{count}} jour",
+    "streak_many": "{{count}} de jours",
+    "streak_other": "{{count}} jours",
+    "showLess": "Voir moins",
+    "showMore_one": "Voir plus ({{count}} restante)",
+    "showMore_many": "Voir plus ({{count}} de restantes)",
+    "showMore_other": "Voir plus ({{count}} restantes)"
+  }
+}

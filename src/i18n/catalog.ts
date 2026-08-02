@@ -46,6 +46,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from './locale';
 import { lookup, type CatalogNode } from './translate';
 
 import frCommon from '@/locales/fr/common.json';
+import frDashboard from '@/locales/fr/dashboard.json';
 import frErrors from '@/locales/fr/errors.json';
 import frSeo from '@/locales/fr/seo.json';
 import frTasks from '@/locales/fr/tasks.json';
@@ -54,6 +55,8 @@ import frTasks from '@/locales/fr/tasks.json';
 interface CatalogShapes {
   /** Chrome de l'app : navigation, actions, libellés partagés. */
   common: typeof frCommon;
+  /** Tableau de bord — salutation, résumé du jour, cartes de stats, sections. */
+  dashboard: typeof frDashboard;
   /** Messages d'erreur — lus aussi par `normalizeApiError`. */
   errors: typeof frErrors;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
@@ -105,6 +108,7 @@ const registry: Registry = {};
 // en infère un type littéral plus étroit.
 registry[DEFAULT_LOCALE] = {
   common: frCommon as CatalogNode,
+  dashboard: frDashboard as CatalogNode,
   errors: frErrors as CatalogNode,
   seo: frSeo as CatalogNode,
   tasks: frTasks as CatalogNode,

@@ -15,19 +15,28 @@ import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
-
-type ViewMode = 'jour' | 'semaine' | 'mois';
+import { useT } from '@/i18n/useT';
+import { type ViewMode } from '@/lib/view-mode';
 
 interface DashboardBarChartProps {
   viewMode: ViewMode;
 }
 
-const chartConfig = {
-  tasks:  { label: 'Tâches',    color: '#3b82f6' },
-  events: { label: 'Agenda',    color: '#ef4444' },
-  okrs:   { label: 'OKR',       color: '#22c55e' },
-  habits: { label: 'Habitudes', color: '#eab308' },
-} satisfies ChartConfig;
+/**
+ * Couleurs des séries. Les LIBELLÉS n'ont plus leur place ici : une constante
+ * de module est résolue au premier import et figée pour la session, donc un
+ * changement de langue ne l'atteignait jamais. Ils sont reconstruits au rendu
+ * par `useChartConfig`.
+ */
+const SERIES_COLORS = {
+  tasks:  '#3b82f6',
+  events: '#ef4444',
+  okrs:   '#22c55e',
+  habits: '#eab308',
+} as const;
+
+/** Séries du graphique, dans l'ordre d'affichage. */
+const SERIES_KEYS = ['tasks', 'events', 'okrs', 'habits'] as const;
 
 const formatMinutes = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
@@ -61,6 +70,16 @@ const calcOkrTime = (start: Date, end: Date, krCompletions: KRCompletion[], okrs
 };
 
 const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
+  const { t } = useT('dashboard');
+  // Config shadcn reconstruite à chaque changement de langue — c'est elle qui
+  // porte les libellés de la légende et de l'infobulle.
+  const chartConfig = useMemo(
+    () =>
+      Object.fromEntries(
+        SERIES_KEYS.map((key) => [key, { label: t(`chart.series.${key}`), color: SERIES_COLORS[key] }])
+      ) as ChartConfig,
+    [t]
+  );
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
@@ -78,7 +97,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       };
     };
 
-    if (viewMode === 'jour') {
+    if (viewMode === 'day') {
       return Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
@@ -91,14 +110,14 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       });
     }
 
-    if (viewMode === 'semaine') {
+    if (viewMode === 'week') {
       return Array.from({ length: 4 }, (_, i) => {
         const end = new Date();
         end.setDate(end.getDate() - (3 - i) * 7);
         const start = new Date(end);
         start.setDate(start.getDate() - 6);
         return {
-          label: `S${i + 1}`,
+          label: t('chart.weekAbbr', { number: i + 1 }),
           ...calcPeriod(
             new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0),
             new Date(end.getFullYear(),   end.getMonth(),   end.getDate(),   23, 59, 59, 999),
@@ -119,14 +138,12 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
         ...calcPeriod(start, end),
       };
     });
-  }, [tasks, events, habits, okrs, krCompletions, viewMode]);
+    // `t` en dépendance : les étiquettes de l'axe X sont calculées ici.
+  }, [tasks, events, habits, okrs, krCompletions, viewMode, t]);
 
-  const periodLabel =
-    viewMode === 'jour' ? '7 derniers jours' :
-    viewMode === 'semaine' ? '4 dernières semaines' :
-    '6 derniers mois';
+  const periodLabel = t(`chart.period.${viewMode}`);
 
-  const keys = ['tasks', 'events', 'okrs', 'habits'] as const;
+  const keys = SERIES_KEYS;
 
   return (
     <motion.div

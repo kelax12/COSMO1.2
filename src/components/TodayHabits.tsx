@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { useT } from '@/i18n/useT';
 
 // Hauteur approximative d'une carte habitude (p-4 + contenu + gap)
 const HABIT_ITEM_HEIGHT = 100;
@@ -16,6 +17,7 @@ const getVisibleLimit = () => {
 };
 
 const TodayHabits: React.FC = () => {
+  const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
   const { data: habits = [], isLoading } = useHabits();
   const toggleCompletionMutation = useToggleHabitCompletion();
@@ -65,15 +67,19 @@ const TodayHabits: React.FC = () => {
     <div className="card card-plain-mobile p-gutter md:p-6">
     <div className="flex items-center gap-3 mb-6">
       <div>
-        <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
+        <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('sections.todayHabits')}</h2>
         <p className="text-[rgb(var(--color-text-secondary))] text-sm">
           {/* Célébration (#39) : récompenser le zéro restant, pas juste le compter */}
           {todayHabits.length > 0 && completedCount === todayHabits.length ? (
             <span className="font-medium text-emerald-600 dark:text-emerald-400">
-              Journée bouclée 🎉 {completedCount}/{todayHabits.length} complétées
+              {t('habits.allDone', { done: completedCount, total: todayHabits.length })}
             </span>
           ) : (
-            <>{completedCount}/{todayHabits.length} complétées • {Math.floor(totalTime / 60)}h{totalTime % 60}min</>
+            t('habits.progress', {
+              done: completedCount,
+              total: todayHabits.length,
+              duration: `${Math.floor(totalTime / 60)}h${totalTime % 60}min`,
+            })
           )}
         </p>
       </div>
@@ -111,11 +117,11 @@ const TodayHabits: React.FC = () => {
                 <div className="flex items-center gap-4 mt-1">
                   <div className={`flex items-center gap-1 text-label sm:text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                     <Clock size={14} />
-                    <span>{habit.estimatedTime} min</span>
+                    <span>{t('habits.minutes', { count: habit.estimatedTime })}</span>
                   </div>
                   <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     <span>🔥</span>
-                    <span>{Object.values(habit.completions).filter(Boolean).length} jours</span>
+                    <span>{tp('habits.streak', Object.values(habit.completions).filter(Boolean).length)}</span>
                   </div>
                 </div>
               </div>
@@ -126,13 +132,13 @@ const TodayHabits: React.FC = () => {
         {todayHabits.length === 0 && (
           <div className="py-6 flex flex-col items-center gap-3 text-center">
             <p className="text-sm text-[rgb(var(--color-text-secondary))] leading-relaxed max-w-[220px]">
-              Aucune habitude pour aujourd'hui
+              {t('habits.empty')}
             </p>
             <button
               onClick={() => navigate('/habits')}
               className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
             >
-              + Créer une habitude
+              {t('habits.create')}
             </button>
           </div>
         )}
@@ -145,12 +151,12 @@ const TodayHabits: React.FC = () => {
             {showAll ? (
               <>
                 <ChevronUp size={16} />
-                Voir moins
+                {t('habits.showLess')}
               </>
             ) : (
               <>
                 <ChevronDown size={16} />
-                Voir plus ({todayHabits.length - visibleLimit} restantes)
+                {tp('habits.showMore', todayHabits.length - visibleLimit)}
               </>
             )}
           </button>

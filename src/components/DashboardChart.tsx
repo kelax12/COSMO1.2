@@ -17,18 +17,28 @@ import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
-
-type ViewMode = 'jour' | 'semaine' | 'mois';
+import { useT } from '@/i18n/useT';
+import { type ViewMode } from '@/lib/view-mode';
 
 interface DashboardChartProps {
   viewMode: ViewMode;
 }
 
+/**
+ * Séries du graphique — identifiant + couleur, SANS libellé.
+ *
+ * Le libellé vivait ici, dans une constante de module : il était donc résolu au
+ * premier import et figé pour toute la session. C'est le piège que
+ * `CLAUDE.md` documente pour les messages zod, et il est invisible en
+ * développement — tant qu'on ne change pas de langue, une constante figée se
+ * comporte exactement comme une valeur correcte. Les libellés sont désormais
+ * résolus au rendu, via `t()`.
+ */
 const SERIES = [
-  { key: 'tasks',  label: 'Tâches',   color: '#3b82f6' },
-  { key: 'events', label: 'Agenda',   color: '#ef4444' },
-  { key: 'okrs',   label: 'OKR',      color: '#22c55e' },
-  { key: 'habits', label: 'Habitudes', color: '#eab308' },
+  { key: 'tasks',  color: '#3b82f6' },
+  { key: 'events', color: '#ef4444' },
+  { key: 'okrs',   color: '#22c55e' },
+  { key: 'habits', color: '#eab308' },
 ] as const;
 
 type SeriesKey = typeof SERIES[number]['key'];
@@ -75,21 +85,24 @@ const computeYAxis = (maxValue: number): { ticks: number[]; domainMax: number } 
   return { ticks, domainMax: topHours * 60 };
 };
 
-const CustomTooltip = ({ active, payload, label }: {
+const CustomTooltip = ({ active, payload, label, seriesLabel }: {
   active?: boolean;
   payload?: { dataKey: SeriesKey; value: number; color: string }[];
   label?: string;
+  /** Résolveur de libellé injecté par le parent — ce composant est monté par
+   *  recharts hors de l'arbre de rendu habituel, on lui passe `t` plutôt que de
+   *  lui faire appeler `useT` (il est aussi rendu en dehors d'un contexte). */
+  seriesLabel: (key: SeriesKey) => string;
 }) => {
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 shadow-2xl">
       <p className="text-[rgb(var(--color-text-secondary))] text-xs font-semibold mb-2 uppercase tracking-wide">{label}</p>
       {payload.map(entry => {
-        const series = SERIES.find(s => s.key === entry.dataKey);
         return (
           <div key={entry.dataKey} className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: entry.color }} />
-            <span className="text-[rgb(var(--color-text-secondary))] text-xs">{series?.label ?? entry.dataKey}</span>
+            <span className="text-[rgb(var(--color-text-secondary))] text-xs">{seriesLabel(entry.dataKey)}</span>
             <span className="text-[rgb(var(--color-text-primary))] text-xs font-bold ml-auto pl-4">{formatMinutes(entry.value)}</span>
           </div>
         );
@@ -114,6 +127,7 @@ const calcOkrTime = (start: Date, end: Date, krCompletions: KRCompletion[], okrs
 };
 
 const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
+  const { t } = useT('dashboard');
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
@@ -131,7 +145,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       };
     };
 
-    if (viewMode === 'jour') {
+    if (viewMode === 'day') {
       const points: ChartPoint[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
@@ -144,7 +158,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       return points;
     }
 
-    if (viewMode === 'semaine') {
+    if (viewMode === 'week') {
       const points: ChartPoint[] = [];
       for (let i = 3; i >= 0; i--) {
         const end = new Date();
@@ -153,7 +167,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
         start.setDate(start.getDate() - 6);
         const startD = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
         const endD   = new Date(end.getFullYear(),   end.getMonth(),   end.getDate(),   23, 59, 59, 999);
-        points.push({ label: `S${4 - i}`, ...calcPeriod(startD, endD) });
+        points.push({ label: t('chart.weekAbbr', { number: 4 - i }), ...calcPeriod(startD, endD) });
       }
       return points;
     }
@@ -170,7 +184,9 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
       points.push({ label, ...calcPeriod(start, end) });
     }
     return points;
-  }, [tasks, events, habits, okrs, krCompletions, viewMode]);
+    // `t` en dépendance : les étiquettes de l'axe X (abréviations de semaine,
+    // noms de mois) sont calculées dans ce mémo et doivent suivre la langue.
+  }, [tasks, events, habits, okrs, krCompletions, viewMode, t]);
 
   const { ticks: yTicks, domainMax: yDomainMax } = useMemo(() => {
     const maxValue = Math.max(
@@ -180,7 +196,8 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
     return computeYAxis(maxValue);
   }, [chartData]);
 
-  const periodLabel = viewMode === 'jour' ? '7 derniers jours' : viewMode === 'semaine' ? '4 dernières semaines' : '6 derniers mois';
+  const periodLabel = t(`chart.period.${viewMode}`);
+  const seriesLabel = (key: SeriesKey) => t(`chart.series.${key}`);
 
   return (
     <motion.div
@@ -212,7 +229,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
           {SERIES.map(s => (
             <div key={s.key} className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-[2px]" style={{ backgroundColor: s.color }} />
-              <span className="text-[rgb(var(--color-text-secondary))] text-xs font-medium">{s.label}</span>
+              <span className="text-[rgb(var(--color-text-secondary))] text-xs font-medium">{seriesLabel(s.key)}</span>
             </div>
           ))}
         </div>
@@ -252,7 +269,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
               tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 11, fontWeight: 600 }}
               tickFormatter={(v: number) => formatYTick(v)}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
+            <Tooltip content={<CustomTooltip seriesLabel={seriesLabel} />} cursor={{ stroke: 'rgb(var(--color-border))', strokeWidth: 1 }} />
             {SERIES.map(s => (
               <Area
                 key={s.key}
