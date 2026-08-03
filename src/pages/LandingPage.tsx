@@ -35,8 +35,12 @@ import SolutionsSection from './landing/SolutionsSection';
 import WhySection from './landing/WhySection';
 import FaqSection from './landing/FaqSection';
 import LandingFooter from './landing/LandingFooter';
+import { useT } from '@/i18n/useT';
+import { useRootSeoMeta } from '@/lib/useSeoMeta';
 
 const LandingPage: React.FC = () => {
+  const { t } = useT('landing');
+  useRootSeoMeta();
   const navigate = useNavigate();
   const { loginDemo } = useAuth();
   const reduceMotion = useReducedMotion();
@@ -428,10 +432,10 @@ const LandingPage: React.FC = () => {
             {/* Nav centrale */}
             <nav className="hidden md:flex items-center gap-0.5 absolute left-1/2 -translate-x-1/2" aria-label="Navigation principale">
               {[
-                { href: '#features', label: 'Fonctionnalités' },
-                { href: '#solutions', label: 'Solutions' },
+                { href: '#features', label: t('nav.features') },
+                { href: '#solutions', label: t('nav.solutions') },
                 { href: '#faq', label: 'FAQ' },
-                { href: '/guide', label: 'Guide' },
+                { href: '/guide', label: t('nav.guide') },
               ].map(({ href, label }) => (
                 <a
                   key={href}
@@ -451,7 +455,7 @@ const LandingPage: React.FC = () => {
                 onClick={(e) => { e.preventDefault(); handleLoginClick(); }}
                 className="hidden sm:block px-3 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
               >
-                Se connecter
+                {t('nav.login')}
               </a>
               <button
                 ref={magneticNavCta}
@@ -459,8 +463,8 @@ const LandingPage: React.FC = () => {
                 className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 text-[rgb(var(--color-accent-solid-foreground))] px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
-                <span className="relative lg:hidden">Commencer</span>
-                <span className="relative hidden lg:inline">Commencer gratuitement</span>
+                <span className="relative lg:hidden">{t('nav.start')}</span>
+                <span className="relative hidden lg:inline">{t('nav.startFree')}</span>
               </button>
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -486,9 +490,9 @@ const LandingPage: React.FC = () => {
                 <nav className="flex flex-col px-3 py-3">
                   {[
                     { href: '#features', label: 'Fonctionnalités' },
-                    { href: '#solutions', label: 'Solutions' },
+                    { href: '#solutions', label: t('nav.solutions') },
                     { href: '#faq', label: 'FAQ' },
-                    { href: '/guide', label: 'Guide' },
+                    { href: '/guide', label: t('nav.guide') },
                   ].map(({ href, label }) => (
                     <a
                       key={href}
@@ -600,13 +604,13 @@ const LandingPage: React.FC = () => {
                 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
               >
                 <span className="hero-line block bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-                  Toute votre productivité,
+                  {t('hero.line1')}
                 </span>
                 <span
                   className="hero-line hero-line-accent block bg-[rgb(var(--color-accent-solid))] via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
                   style={{ backgroundSize: '200% auto' }}
                 >
-                  réunie dans une seule app.
+                  {t('hero.line2')}
                 </span>
               </h1>
 
@@ -614,8 +618,7 @@ const LandingPage: React.FC = () => {
                 data-hero-fade
                 className="text-lg lg:text-xl text-slate-400 mb-12 lg:mb-16 max-w-xl leading-relaxed"
               >
-                Tâches, habitudes, agenda avec time-blocking et méthode OKR —
-                connectés dans un seul outil pensé pour vous faire avancer. Sans friction.
+                {t('hero.subtitle')}
               </p>
 
               <div
@@ -630,10 +633,10 @@ const LandingPage: React.FC = () => {
                     setTimeout(() => navigate('/dashboard'), 0);
                   }}
                   className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-violet-500 text-[rgb(var(--color-accent-solid-foreground))] px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-                  aria-label="Essayer la démo sans inscription"
+                  aria-label={t('hero.demoAria')}
                 >
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
-                  <span className="relative">Essayer la démo gratuite</span>
+                  <span className="relative">{t('hero.demoCta')}</span>
                   <ArrowRight size={18} className="relative group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </button>
                 <button
@@ -641,13 +644,13 @@ const LandingPage: React.FC = () => {
                   onClick={handleRegisterClick}
                   className="group bg-white/5 hover:bg-white/10 text-white border border-white/15 px-8 py-4 rounded-2xl font-semibold text-base backdrop-blur-md transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
-                  Créer un compte gratuit
+                  {t('hero.signupCta')}
                 </button>
               </div>
 
               {/* Micro-preuve sous les CTAs */}
               <p data-hero-fade className="mt-4 text-xs text-slate-500">
-                Démo pré-remplie de 100 tâches · aucune installation · prêt en 1 clic
+                {t('hero.reassurance')}
               </p>
             </div>
 
@@ -687,7 +690,7 @@ const LandingPage: React.FC = () => {
             className="scroll-cue mt-14 hidden lg:flex flex-col items-center gap-2 text-slate-500"
             aria-hidden="true"
           >
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em]">Découvrir</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.3em]">{t('hero.scroll')}</span>
             <svg className="scroll-cue-arrow h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
@@ -706,7 +709,7 @@ const LandingPage: React.FC = () => {
         <div className="marquee-track flex w-max whitespace-nowrap text-sm font-mono uppercase tracking-[0.25em] text-slate-500">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex items-center gap-10 pr-10">
-              {['Tâches', 'Agenda', 'Time-blocking', 'OKR', 'Habitudes', 'Statistiques', 'Mode démo gratuit'].map((word) => (
+              {([t('marquee.tasks'), t('marquee.agenda'), t('marquee.timeBlocking'), t('marquee.okr'), t('marquee.habits'), t('marquee.stats'), t('marquee.demo')]).map((word) => (
                 <span key={word} className="flex items-center gap-10">
                   <span>{word}</span>
                   <span className="text-blue-400/60">✦</span>
@@ -751,24 +754,24 @@ const LandingPage: React.FC = () => {
               <h2 className="text-4xl lg:text-5xl font-bold mb-6">
                 <span className="block overflow-hidden">
                   <span className="cta-line block bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                    Prêt à révolutionner
+                    {t('cta.line1')}
                   </span>
                 </span>
                 <span className="block overflow-hidden">
                   <span className="cta-line block bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
-                    votre productivité ?
+                    {t('cta.line2')}
                   </span>
                 </span>
               </h2>
               <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-                Rejoignez des milliers de professionnels qui ont déjà transformé leur façon de travailler avec Cosmo
+                {t('cta.subtitle')}
               </p>
               {/* Count-ups : la démo est pré-remplie, chiffres animés (GSAP) */}
-              <div className="flex items-center justify-center gap-8 mb-10 text-slate-300" aria-label="Contenu de la démo : 100 tâches, 100 habitudes, 150 événements">
+              <div className="flex items-center justify-center gap-8 mb-10 text-slate-300" aria-label={t('cta.statsAria')}>
                 {[
-                  { value: 100, label: 'tâches' },
-                  { value: 100, label: 'habitudes' },
-                  { value: 150, label: 'événements' },
+                  { value: 100, label: t('cta.tasks') },
+                  { value: 100, label: t('cta.habits') },
+                  { value: 150, label: t('cta.events') },
                 ].map(({ value, label }) => (
                   <div key={label} className="flex flex-col items-center">
                     <span data-countup={value} className="text-3xl lg:text-4xl font-bold tabular-nums bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent" aria-hidden="true">
@@ -786,13 +789,13 @@ const LandingPage: React.FC = () => {
                   }}
                   className="group bg-slate-200 hover:bg-slate-300 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
                 >
-                  Essayer la démo
+                  {t('cta.tryDemo')}
                 </button>
                 <button
                   onClick={handleRegisterClick}
                   className="group bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-700 text-[rgb(var(--color-accent-solid-foreground))] px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
                 >
-                  Commencer maintenant
+                  {t('cta.startNow')}
                 </button>
               </div>
             </div>

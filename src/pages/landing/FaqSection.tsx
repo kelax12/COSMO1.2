@@ -6,8 +6,10 @@ import { motion } from 'framer-motion';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { FAQ_ITEMS } from './data';
 import FaqItem from './FaqItem';
+import { useT } from '@/i18n/useT';
 
 const FaqSection: React.FC = () => {
+  const { t } = useT('landing');
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -38,7 +40,7 @@ const FaqSection: React.FC = () => {
               viewport={{ once: true }}
               className="text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-4 block"
             >
-              — Questions fréquentes —
+              {t('faq.eyebrow')}
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
@@ -59,7 +61,7 @@ const FaqSection: React.FC = () => {
               transition={{ delay: 0.15 }}
               className="text-slate-400 text-lg"
             >
-              Méthode OKR, habitudes, time-blocking, mode démo, sécurité... on répond à tout.
+              {t('faq.subtitle')}
             </motion.p>
           </div>
 
@@ -72,18 +74,18 @@ const FaqSection: React.FC = () => {
           >
             {FAQ_ITEMS.map((item, i) => (
               <div key={i} className="faq-row">
-                <FaqItem question={item.question} answer={item.answer} index={i} />
+                <FaqItem question={t(item.questionKey)} answer={t(item.answerKey)} index={i} />
               </div>
             ))}
           </motion.div>
 
           <p className="text-center text-slate-500 text-sm mt-8">
-            Une question non listée ?{' '}
+            {t('faq.notListed')}{' '}
             <a
               href="mailto:axellongattepro@gmail.com"
               className="text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
             >
-              Écrivez-nous
+              {t('faq.writeUs')}
             </a>
           </p>
         </div>

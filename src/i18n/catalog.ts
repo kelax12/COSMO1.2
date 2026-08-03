@@ -53,6 +53,7 @@ import frErrors from '@/locales/fr/errors.json';
 import frEventModal from '@/locales/fr/eventModal.json';
 import frGuide from '@/locales/fr/guide.json';
 import frHabits from '@/locales/fr/habits.json';
+import frLanding from '@/locales/fr/landing.json';
 import frOkr from '@/locales/fr/okr.json';
 import frOrg from '@/locales/fr/org.json';
 import frPremium from '@/locales/fr/premium.json';
@@ -85,6 +86,8 @@ interface CatalogShapes {
   okr: typeof frOkr;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
   premium: typeof frPremium;
+  /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
+  landing: typeof frLanding;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: typeof frOrg;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
@@ -152,6 +155,7 @@ registry[DEFAULT_LOCALE] = {
   guide: frGuide as CatalogNode,
   habits: frHabits as CatalogNode,
   okr: frOkr as CatalogNode,
+  landing: frLanding as CatalogNode,
   org: frOrg as CatalogNode,
   premium: frPremium as CatalogNode,
   seo: frSeo as CatalogNode,

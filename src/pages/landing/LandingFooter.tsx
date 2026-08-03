@@ -1,8 +1,11 @@
 // Pied de page de la LandingPage — extrait verbatim.
 import React from 'react';
 import { Link } from 'react-router';
+import { useT } from '@/i18n/useT';
 
-const LandingFooter: React.FC = () => (
+const LandingFooter: React.FC = () => {
+  const { t } = useT('landing');
+  return (
       <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
@@ -12,26 +15,27 @@ const LandingFooter: React.FC = () => (
               </div>
               <span className="text-lg font-bold text-white">Cosmo</span>
               <span className="text-slate-600 hidden sm:inline">—</span>
-              <span className="text-slate-400 text-sm hidden sm:inline">© 2026 Tous droits réservés.</span>
+              <span className="text-slate-400 text-sm hidden sm:inline">{t('footer.rights')}</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400 flex-wrap justify-center md:justify-end">
-              <Link to="/guide" className="hover:text-white transition-colors">Guide d'utilisation</Link>
-              <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <Link to="/pour-freelances" className="hover:text-white transition-colors">Pour les freelances</Link>
-              <Link to="/pour-etudiants" className="hover:text-white transition-colors">Pour les étudiants</Link>
-              <Link to="/pour-managers" className="hover:text-white transition-colors">Pour les managers</Link>
-              <Link to="/a-propos" className="hover:text-white transition-colors">À propos</Link>
+              <Link to="/guide" className="hover:text-white transition-colors">{t('footer.guide')}</Link>
+              <Link to="/blog" className="hover:text-white transition-colors">{t('footer.blog')}</Link>
+              <Link to="/pour-freelances" className="hover:text-white transition-colors">{t('footer.freelancers')}</Link>
+              <Link to="/pour-etudiants" className="hover:text-white transition-colors">{t('footer.students')}</Link>
+              <Link to="/pour-managers" className="hover:text-white transition-colors">{t('footer.managers')}</Link>
+              <Link to="/a-propos" className="hover:text-white transition-colors">{t('footer.about')}</Link>
               {/* Ancre in-page (scroll vers la FAQ) — reste un <a href="#..."> */}
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-              <Link to="/signup" className="hover:text-white transition-colors">Inscription gratuite</Link>
-              <Link to="/login" className="hover:text-white transition-colors">Connexion</Link>
-              <Link to="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
-              <Link to="/politique-confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
-              <Link to="/cgu" className="hover:text-white transition-colors">CGU</Link>
+              <Link to="/signup" className="hover:text-white transition-colors">{t('footer.signup')}</Link>
+              <Link to="/login" className="hover:text-white transition-colors">{t('footer.login')}</Link>
+              <Link to="/mentions-legales" className="hover:text-white transition-colors">{t('footer.legalNotice')}</Link>
+              <Link to="/politique-confidentialite" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
+              <Link to="/cgu" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
             </div>
           </div>
         </div>
       </footer>
-);
+  );
+};
 
 export default LandingFooter;

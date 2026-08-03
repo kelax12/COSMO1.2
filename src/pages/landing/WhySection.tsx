@@ -5,8 +5,10 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
+import { useT } from '@/i18n/useT';
 
 const WhySection: React.FC = () => {
+  const { t } = useT('landing');
   const sectionRef = useRef<HTMLElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -115,12 +117,12 @@ const WhySection: React.FC = () => {
               — Ce qui change tout —
             </span>
             <h2 className="why-title text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
-              <span className="text-white">Pas une app de plus.</span>
+              <span className="text-white">{t('why.titleTop')}</span>
               <br />
-              <span className="text-slate-500">Un système connecté.</span>
+              <span className="text-slate-500">{t('why.titleBottom')}</span>
             </h2>
             <p className="text-lg text-slate-400 leading-relaxed">
-              Là où les autres apps font une chose, Cosmo fait dialoguer vos tâches, votre agenda,
+              {t('why.subtitle')}
               vos objectifs et vos habitudes. Une seule boucle, plus de copier-coller mental.
             </p>
           </div>
@@ -161,7 +163,7 @@ const WhySection: React.FC = () => {
                     viewport={{ once: true }}
                     transition={{ delay: 0.4 }}
                   >
-                    Réunion
+                    {t('why.meeting')}
                   </motion.div>
                   {/* Dropped task — le dépôt est scrubbé par GSAP (le scroll
                       « pose » la tâche dans l'agenda) */}
@@ -182,12 +184,12 @@ const WhySection: React.FC = () => {
               </div>
 
               <div className="relative z-10 max-w-md">
-                <span className="text-[10px] font-mono tracking-[0.25em] text-blue-400 uppercase">// 01 · Time blocking</span>
+                <span className="text-[10px] font-mono tracking-[0.25em] text-blue-400 uppercase">{t('why.tag1')}</span>
                 <h3 className="text-3xl lg:text-4xl font-semibold text-white mt-4 mb-4 leading-[1.1] tracking-tight">
                   Glissez. Bloquez.<br />Avancez.
                 </h3>
                 <p className="text-slate-400 leading-relaxed text-base">
-                  Glissez une tâche dans votre calendrier — l'événement se crée, la tâche reste liée.
+                  {t('why.desc1')}
                   Plus de double saisie, plus de blocs orphelins. Votre planification devient une vraie
                   intention de temps.
                 </p>
@@ -201,12 +203,12 @@ const WhySection: React.FC = () => {
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-amber-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-amber-400 uppercase">// 02 · Discipline</span>
+              <span className="text-[10px] font-mono tracking-[0.25em] text-amber-400 uppercase">{t('why.tag2')}</span>
               <h3 className="text-xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
                 Vos habitudes,<br />sur 26 semaines.
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-5">
-                Une case par jour. Un streak par victoire. Le pattern se révèle tout seul.
+                {t('why.desc2')}
               </p>
               {/* Mini heatmap */}
               <div className="flex gap-[3px]">
@@ -240,12 +242,12 @@ const WhySection: React.FC = () => {
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-emerald-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-emerald-400 uppercase">// 03 · OKR</span>
+              <span className="text-[10px] font-mono tracking-[0.25em] text-emerald-400 uppercase">{t('why.tag3')}</span>
               <h3 className="text-xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
-                La méthode Google,<br />sans le tableur.
+                {t('why.title3')}<br />{t('why.title3b')}
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-5">
-                Objectifs ambitieux, résultats clés mesurables. La progression se calcule pendant que vous travaillez.
+                {t('why.desc3')}
               </p>
               {/* Mini circular progress */}
               <div className="flex items-center gap-4">
@@ -279,13 +281,13 @@ const WhySection: React.FC = () => {
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-violet-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-violet-400 uppercase">// 04 · Vue consolidée</span>
+              <span className="text-[10px] font-mono tracking-[0.25em] text-violet-400 uppercase">{t('why.tag4')}</span>
               <h3 className="text-2xl lg:text-3xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
-                Où passe votre temps ?
+                {t('why.title4')}
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-md">
                 Tâches, agenda, OKR, habitudes — tout converge dans une seule vue.
-                Vous arrêtez de deviner. Vous voyez.
+                {t('why.desc4')}
               </p>
               {/* Mini bar chart */}
               <div className="flex items-end gap-2 h-20">
@@ -319,13 +321,12 @@ const WhySection: React.FC = () => {
               style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-cyan-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-cyan-400 uppercase">// 05 · Zéro friction</span>
+              <span className="text-[10px] font-mono tracking-[0.25em] text-cyan-400 uppercase">{t('why.tag5')}</span>
               <h3 className="text-2xl lg:text-3xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
                 Pas d'inscription.<br />Juste essayer.
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-5 max-w-md">
-                Un mode démo pré-rempli avec 12 mois de données réalistes. Vous testez
-                le vrai Cosmo, pas une vidéo. Pas un email demandé.
+                {t('why.desc5')}
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono" style={{ backgroundColor: 'rgba(34, 211, 238, 0.08)', color: '#67E8F9', border: '1px solid rgba(34, 211, 238, 0.2)' }}>
