@@ -1,3 +1,5 @@
+import { useT } from '@/i18n/useT';
+
 interface OrgConsentNoticeProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -8,15 +10,17 @@ interface OrgConsentNoticeProps {
  * flux d'entrée (code, lien d'invitation). Résume ce que l'organisation
  * verra ; la case doit être cochée pour continuer.
  */
-const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => (
+const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => {
+  const { t } = useT('org');
+  return (
   <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] p-4 space-y-2.5">
     <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">
       En rejoignant cette entreprise :
     </p>
     <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1.5 list-disc pl-4">
-      <li>Les membres voient votre nom, votre avatar et votre activité sur les projets d'équipe (tâches, commentaires).</li>
-      <li>Vos responsables (managers et admins) peuvent <strong>consulter votre agenda</strong> et y ajouter des événements — sauf ceux que vous marquez <strong>« Privé »</strong>, qui restent invisibles pour eux.</li>
-      <li>Vos tâches, habitudes et données personnelles restent invisibles pour l'entreprise.</li>
+      <li>{t('consent.visibility')}</li>
+      <li>{t('consent.agendaBefore')}<strong>{t('consent.agendaBold')}</strong>{t('consent.agendaMiddle')}<strong>{t('consent.agendaPrivate')}</strong>{t('consent.agendaAfter')}</li>
+      <li>{t('consent.personalSafe')}</li>
     </ul>
     <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
       <input
@@ -30,6 +34,7 @@ const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => (
       </span>
     </label>
   </div>
-);
+  );
+};
 
 export default OrgConsentNotice;

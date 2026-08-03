@@ -3,6 +3,7 @@ import { X, Mail, Users, Move, UserRoundPlus, Network } from 'lucide-react';
 import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface MemberProfileSheetProps {
   member: OrgMember;
@@ -24,6 +25,7 @@ interface MemberProfileSheetProps {
  * effectifs, équipes transverses et actions rapides (déplacer / ajouter).
  */
 const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, canAddUnder, onClose, onMove, onAddUnder }: MemberProfileSheetProps) => {
+  const { t, tp } = useT('org');
   const m = member;
   const isMe = m.userId === currentUserId;
   const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
@@ -75,16 +77,16 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
             <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
             <dd className="text-[rgb(var(--color-text-secondary))]">
               {managerMember
-                ? <>Rattaché(e) à <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? 'vous' : managerMember.displayName}</strong></>
-                : 'Sans responsable (sommet ou non placé)'}
+                ? <>{t('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? t('member.you') : managerMember.displayName}</strong></>
+                : t('member.noManager')}
             </dd>
           </div>
           <div className="flex items-center gap-2.5 text-sm">
             <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
             <dd className="text-[rgb(var(--color-text-secondary))]">
               {directs === 0
-                ? 'Aucun subordonné direct'
-                : `${directs} direct${directs > 1 ? 's' : ''}${total > directs ? ` · ${total} au total` : ''}`}
+                ? t('member.noDirectReport')
+                : tp('pyramid.directCount', directs) + (total > directs ? t('pyramid.totalSuffix', { count: total }) : '')}
             </dd>
           </div>
         </dl>
@@ -92,7 +94,7 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
         {teams.length > 0 && (
           <div className="mb-5">
             <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-              Équipes transverses
+              {t('member.crossTeams')}
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {teams.map((t) => (
@@ -131,7 +133,7 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
                 }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
               >
-                <Move size={15} aria-hidden="true" /> Déplacer
+                <Move size={15} aria-hidden="true" /> {t('member.move')}
               </button>
             )}
           </div>

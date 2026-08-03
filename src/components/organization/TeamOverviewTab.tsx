@@ -13,6 +13,7 @@ import {
   summarize, overallOkrProgress, memberLoad, overdueByMember,
   projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
 } from './team-stats.helpers';
+import { useT } from '@/i18n/useT';
 
 interface TeamOverviewTabProps {
   orgId: string;
@@ -24,8 +25,10 @@ interface TeamOverviewTabProps {
 
 const firstName = (name: string) => name.split(' ')[0];
 
-const velocityConfig = { completed: { label: 'Terminées', color: '#10b981' } } satisfies ChartConfig;
-const trendConfig = { rate: { label: 'Taux de complétion', color: '#6366f1' } } satisfies ChartConfig;
+// Les libellés viennent du catalogue au RENDU : une constante de module serait
+// figée au premier import (cf. src/i18n/catalog.ts).
+const velocityColor = '#10b981';
+const trendColor = '#6366f1';
 
 const SectionCard = ({ title, children, aside }: {
   title: string; children: React.ReactNode; aside?: React.ReactNode;
@@ -61,6 +64,11 @@ const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) =
  * direct » (jauge de l'état courant, pas une activité datée).
  */
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
+  const { t } = useT('org');
+  // Configs de graphique construites au RENDU : elles portent des libellés
+  // traduits, une constante de module les figerait au premier import.
+  const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
+  const trendConfig = { rate: { label: t('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
   const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: allOkrs = [] } = useTeamOKRs(orgId);
@@ -109,14 +117,14 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const hasTrend = trend.some((t) => t.rate > 0);
 
   const periodLabel = STATS_PERIODS.find((p) => p.id === period)?.label ?? '';
-  const periodHint = period === 'all' ? 'depuis le début' : `actives sur ${periodLabel}`;
+  const periodHint = period === 'all' ? t('overview.sinceStart') : t('overview.activeOver', { period: periodLabel });
 
   // Export CSV (reco #14) — membres, projets, OKR (3 fichiers espacés,
   // Safari refuse plusieurs .click() simultanés, cf. exportAllCSV).
   const handleExport = () => {
     downloadCSV(
       'cosmo-stats-membres',
-      ['Membre', 'Ouvertes', 'Terminées', 'Total', 'Taux (%)', 'En retard'],
+      [t('overview.csvMember'), t('overview.csvOpen'), t('overview.csvDone'), t('overview.csvTotal'), t('overview.csvRate'), t('overview.csvOverdue')],
       load.map((m) => [
         m.name, m.open, m.done, m.total, m.completionRate,
         overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0,
@@ -139,10 +147,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* En-tête : sélecteur de période */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          {isAdmin ? "Statistiques de toute l'entreprise." : 'Statistiques de votre périmètre (vous et vos équipes).'}
+          {isAdmin ? t('overview.scopeAdmin') : t('overview.scopeMember')}
         </p>
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label="Période">
+          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={t('overview.period')}>
             {STATS_PERIODS.map((p) => (
               <button
                 key={p.id}
@@ -177,7 +185,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
         overdue={summary.overdueCount}
         completionRate={summary.completionRate}
-        emptyLabel="Aucune tâche sur la période."
+        emptyLabel={t('overview.emptyPeriod')}
         aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
       />
 
@@ -185,7 +193,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       <div className="grid lg:grid-cols-2 gap-5 items-start">
         <SectionCard title="Par membre">
           {load.every((m) => m.total === 0) ? (
-            <EmptyRow>Aucune tâche assignée sur la période.</EmptyRow>
+            <EmptyRow>{t('overview.emptyAssigned')}</EmptyRow>
           ) : (
             <ul className="space-y-2.5">
               {load.filter((m) => m.total > 0).map((m) => (
@@ -199,7 +207,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                     className={`w-11 shrink-0 text-right text-xs font-semibold tabular-nums ${
                       m.completionRate >= 66 ? 'text-emerald-500' : m.completionRate >= 33 ? 'text-amber-500' : 'text-[rgb(var(--color-text-muted))]'
                     }`}
-                    title={`${m.done}/${m.total} terminées`}
+                    title={t('overview.doneRatio', { done: m.done, total: m.total })}
                   >
                     {m.completionRate}%
                   </span>
@@ -209,9 +217,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title="Répartition par projet">
+        <SectionCard title={t('overview.byProject')}>
           {byProject.length === 0 ? (
-            <EmptyRow>Aucune tâche par projet sur la période.</EmptyRow>
+            <EmptyRow>{t('overview.emptyByProject')}</EmptyRow>
           ) : (
             <ul className="space-y-2.5">
               {byProject.map((p) => (
@@ -234,9 +242,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Vélocité + Tendance */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title="Vélocité (tâches terminées / semaine)">
+        <SectionCard title={t('overview.velocity')}>
           {!hasVelocity ? (
-            <EmptyRow>Aucune complétion sur la période.</EmptyRow>
+            <EmptyRow>{t('overview.emptyVelocity')}</EmptyRow>
           ) : (
             <ChartContainer config={velocityConfig} className="h-[200px] w-full">
               <BarChart data={velocity} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -250,9 +258,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title="Tendance du taux de complétion">
+        <SectionCard title={t('overview.trend')}>
           {!hasTrend ? (
-            <EmptyRow>Pas assez de données sur la période.</EmptyRow>
+            <EmptyRow>{t('overview.emptyTrend')}</EmptyRow>
           ) : (
             <ChartContainer config={trendConfig} className="h-[200px] w-full">
               <LineChart data={trend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -270,7 +278,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* Avancement OKR détaillé */}
       <SectionCard title="Avancement des OKR">
         {okrStats.length === 0 ? (
-          <EmptyRow>Aucun OKR d'équipe pour l'instant.</EmptyRow>
+          <EmptyRow>{t('overview.emptyOkr')}</EmptyRow>
         ) : (
           <ul className="space-y-3">
             {okrStats.map((o) => (

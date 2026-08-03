@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useActiveOrganization } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface OrgSwitcherProps {
   /** Mode sidebar repliée (icône seule). */
@@ -21,6 +22,7 @@ interface OrgSwitcherProps {
  * est persistée par utilisateur (ActiveOrgContext).
  */
 const OrgSwitcher = ({ collapsed = false }: OrgSwitcherProps) => {
+  const { t } = useT('org');
   const { organizations, activeOrg, setActiveOrgId } = useActiveOrganization();
   const navigate = useNavigate();
 
@@ -49,7 +51,7 @@ const OrgSwitcher = ({ collapsed = false }: OrgSwitcherProps) => {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>Mes entreprises</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('switcher.myOrgs')}</DropdownMenuLabel>
         {organizations.map((org) => (
           <DropdownMenuItem key={org.id} onClick={() => setActiveOrgId(org.id)}>
             <span className="truncate">{org.name}</span>
@@ -65,7 +67,7 @@ const OrgSwitcher = ({ collapsed = false }: OrgSwitcherProps) => {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/entreprise/onboarding')}>
-          <Plus size={14} aria-hidden="true" /> Créer ou rejoindre
+          <Plus size={14} aria-hidden="true" /> {t('switcher.createOrJoin')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

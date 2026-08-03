@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { OrgMember } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface ConfirmRemoveMemberDialogProps {
   member: OrgMember;
@@ -22,7 +23,9 @@ interface ConfirmRemoveMemberDialogProps {
  * remplace les window.confirm de l'annuaire et de la pyramide. Le cas
  * « membre avec subordonnés » reste géré en amont par ReassignManagerSheet.
  */
-const ConfirmRemoveMemberDialog = ({ member, pending, onConfirm, onCancel }: ConfirmRemoveMemberDialogProps) => (
+const ConfirmRemoveMemberDialog = ({ member, pending, onConfirm, onCancel }: ConfirmRemoveMemberDialogProps) => {
+  const { t } = useT('org');
+  return (
   <AlertDialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
     <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
       <AlertDialogHeader>
@@ -30,9 +33,7 @@ const ConfirmRemoveMemberDialog = ({ member, pending, onConfirm, onCancel }: Con
           Retirer {member.displayName} ?
         </AlertDialogTitle>
         <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
-          Cette personne perdra immédiatement l'accès aux projets, tâches et OKR de
-          l'entreprise. Ses données personnelles (tâches, habitudes, agenda) ne sont
-          pas affectées. Elle pourra revenir avec un nouveau code d'invitation.
+          {t('removeMemberDialog.body')}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter className="gap-2">
@@ -49,6 +50,7 @@ const ConfirmRemoveMemberDialog = ({ member, pending, onConfirm, onCancel }: Con
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
-);
+  );
+};
 
 export default ConfirmRemoveMemberDialog;

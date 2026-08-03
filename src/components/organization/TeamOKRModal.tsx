@@ -28,6 +28,7 @@ import {
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
 import OKRCategoryPicker from './OKRCategoryPicker';
+import { useT } from '@/i18n/useT';
 
 interface TeamOKRModalProps {
   orgId: string;
@@ -54,6 +55,7 @@ const newKR = (): KRDraft => ({
 });
 
 export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
+  const { t } = useT('org');
   const isEdit = !!editingOKR;
   const { data: teams = [] } = useOrgTeams(orgId);
   const createOKR = useCreateTeamOKR(orgId);
@@ -154,8 +156,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Modifier l'objectif" : "Nouvel objectif d'équipe"}</SheetTitle>
-          <SheetDescription>Définis un objectif d'équipe et ses résultats clés mesurables.</SheetDescription>
+          <SheetTitle>{isEdit ? t('okrModal.edit') : t('okrModal.new')}</SheetTitle>
+          <SheetDescription>{t('okrModal.description')}</SheetDescription>
         </SheetHeader>
 
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
@@ -163,29 +165,29 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         <ScrollArea className="flex-1 min-h-0">
           <div className="grid gap-4 px-4 pb-4">
             <div className="grid gap-2">
-              <Label htmlFor="tokr-title">Objectif</Label>
-              <Input id="tokr-title" value={title} autoFocus placeholder="Ex. Réussir le lancement produit" onChange={(e) => setTitle(e.target.value)} />
+              <Label htmlFor="tokr-title">{t('okrModal.objective')}</Label>
+              <Input id="tokr-title" value={title} autoFocus placeholder={t('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="tokr-end">Échéance</Label>
+              <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
               <Input id="tokr-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
 
             {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
             <div className="grid gap-2">
-              <Label>Catégorie</Label>
+              <Label>{t('okrModal.category')}</Label>
               <OKRCategoryPicker orgId={orgId} value={category} onChange={setCategory} />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="tokr-desc">Description</Label>
+              <Label htmlFor="tokr-desc">{t('okrModal.descriptionLabel')}</Label>
               <Textarea id="tokr-desc" rows={2} value={description} placeholder="Facultatif…" onChange={(e) => setDescription(e.target.value)} />
             </div>
 
             {/* Rattachement d'équipes (cloisonnement de visibilité) */}
             <div className="grid gap-2">
-              <Label>Visibilité</Label>
+              <Label>{t('okrModal.visibility')}</Label>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -219,14 +221,14 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               <p className="text-muted-foreground text-xs">
                 {teamIds.length === 0
                   ? "Objectif visible par tous les membres de l'entreprise."
-                  : 'Visible uniquement par les équipes sélectionnées et les admins.'}
+                  : t('okrModal.visibilityTeams')}
               </p>
             </div>
 
             <Separator />
 
             <div className="flex items-center justify-between">
-              <Label>Résultats clés</Label>
+              <Label>{t('okrModal.keyResults')}</Label>
               <Button
                 type="button"
                 size="sm"
@@ -242,7 +244,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               {keyResults.map((kr, idx) => (
                 <div key={kr.id ?? idx} className="border-border grid gap-3 rounded-lg border p-3">
                   <div className="flex items-center gap-2">
-                    <Input value={kr.title} placeholder="Résultat clé mesurable" className="h-8" onChange={(e) => setKR(idx, { title: e.target.value })} />
+                    <Input value={kr.title} placeholder={t('okrModal.krPlaceholder')} className="h-8" onChange={(e) => setKR(idx, { title: e.target.value })} />
                     {keyResults.length > 1 && (
                       <Button type="button" variant="destructive" size="icon-sm" aria-label="Retirer" onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
                         <Trash2 aria-hidden="true" />
@@ -251,7 +253,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                   </div>
                   <div className="grid gap-1.5">
                     <div className="text-muted-foreground flex items-center justify-between text-xs">
-                      <span>Avancement</span>
+                      <span>{t('okrModal.progress')}</span>
                       <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
                     </div>
                     <Slider
@@ -267,15 +269,15 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       entreprise, la notion de temps de réalisation n'a pas de sens. */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Cible</Label>
+                      <Label className="text-muted-foreground text-xs">{t('okrModal.target')}</Label>
                       <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">Unité</Label>
+                      <Label className="text-muted-foreground text-xs">{t('okrModal.unit')}</Label>
                       <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs" title="Importance du KR dans la progression globale">Coef. (1–10)</Label>
+                      <Label className="text-muted-foreground text-xs" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
                       <Input
                         type="number"
                         min={1}
@@ -299,10 +301,10 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
           {!hasKeyResult && (
             <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
-              Ajoute au moins 1 résultat clé mesurable.
+              {t('okrModal.needOneKr')}
             </span>
           )}
-          <Button type="button" variant="outline" onClick={handleClose}>Annuler</Button>
+          <Button type="button" variant="outline" onClick={handleClose}>{t('okrModal.cancel')}</Button>
           <Button
             type="button"
             disabled={!canSave || isPending}
@@ -313,7 +315,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
             }`}
           >
-            {isPending ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer'}
+            {isPending ? t('okrModal.saving') : isEdit ? t('okrModal.save') : t('okrModal.create')}
           </Button>
         </SheetFooter>
       </SheetContent>

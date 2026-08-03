@@ -18,6 +18,7 @@ import { projectColor, PRIORITY_META, sortOpenTasks } from './team-projects.help
 import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
 import TeamActivityFeed from './TeamActivityFeed';
+import { useT } from '@/i18n/useT';
 
 interface MyWorkTabProps {
   orgId: string;
@@ -33,11 +34,12 @@ const isOverdue = (t: TeamTask): boolean => {
 
 /** Bloc latéral « prochaine échéance » de la carte de synthèse Aperçu. */
 const NextDeadline = ({ task }: { task: TeamTask | null }) => {
+  const { t } = useT('org');
   if (!task || !task.deadline) {
     return (
       <div className="flex flex-col items-center text-[rgb(var(--color-text-muted))]">
         <CalendarDays size={22} aria-hidden="true" />
-        <span className="text-xs mt-1.5">À jour</span>
+        <span className="text-xs mt-1.5">{t('myWork.upToDate')}</span>
       </div>
     );
   }
@@ -50,7 +52,7 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
         <span className="text-[10px] uppercase mt-0.5">{format(d, 'MMM', { locale: getDateLocale() })}</span>
       </div>
       <span className="text-xs text-[rgb(var(--color-text-primary))] mt-2 text-center truncate max-w-full">{task.name}</span>
-      <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">Prochaine échéance</span>
+      <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">{t('myWork.nextDeadline')}</span>
     </div>
   );
 };
@@ -64,12 +66,13 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
 interface StartStep { id: string; label: string; done: boolean; tab: string; }
 
 const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
+  const { t } = useT('org');
   const navigate = useNavigate();
   const doneCount = steps.filter((s) => s.done).length;
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Bien démarrer</h3>
+        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('myWork.getStarted')}</h3>
         <span className="text-xs text-[rgb(var(--color-text-muted))]">{doneCount}/{steps.length}</span>
       </div>
       <ul className="space-y-1">
@@ -101,6 +104,12 @@ const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
 };
 
 const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
+  // `tt` est un alias de `t` : dans ce fichier, `t` est aussi le nom de la
+  // variable de tâche des callbacks (`open.filter((t) => …)`). `tt` sert là où
+  // le traducteur est appelé À L'INTÉRIEUR d'un de ces callbacks, où `t`
+  // désigne la tâche.
+  const { t, tp } = useT('org');
+  const tt = t;
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: tasks = [] } = useTeamTasks(orgId);
   const { data: okrs = [] } = useTeamOKRs(orgId);
@@ -161,11 +170,12 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   // les 4 étapes sont faites.
   const isAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
   const startSteps = useMemo<StartStep[]>(() => [
-    { id: 'project', label: 'Créer un premier projet', done: activeProjects.length > 0, tab: 'projects' },
-    { id: 'invite', label: 'Inviter des membres', done: members.length > 1, tab: 'members' },
-    { id: 'pyramid', label: 'Construire la pyramide hiérarchique', done: members.some((m) => !!m.managerId), tab: 'pyramid' },
-    { id: 'okr', label: 'Définir un premier OKR', done: okrs.length > 0, tab: 'okr' },
-  ], [activeProjects.length, members, okrs.length]);
+    { id: 'project', label: t('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
+    { id: 'invite', label: t('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
+    { id: 'pyramid', label: t('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
+    { id: 'okr', label: t('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
+    // `t` en dépendance : les libellés de la checklist sont traduits ici.
+  ], [activeProjects.length, members, okrs.length, t]);
   const showChecklist = isAdmin && startSteps.some((s) => !s.done);
 
   const toggleComplete = (task: TeamTask) =>
@@ -179,12 +189,12 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
 
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
-        title={`Mes ${mine.length} tâche${mine.length > 1 ? 's' : ''} assignée${mine.length > 1 ? 's' : ''}`}
+        title={tp('myWork.myTasks', mine.length)}
         completed={done.length}
         inProgress={Math.max(0, open.length - overdue.length)}
         overdue={overdue.length}
         completionRate={completionRate}
-        emptyLabel="Aucune tâche assignée."
+        emptyLabel={t('myWork.emptyLabel')}
         aside={<NextDeadline task={nextDeadline} />}
       />
 
@@ -193,10 +203,9 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
             <ListTodo size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Aucune tâche assignée</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('myWork.emptyTitle')}</p>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 max-w-xs">
-            Les tâches d'équipe qui vous seront attribuées (ou que vous vous attribuez
-            depuis l'onglet Projets) apparaîtront ici.
+            {t('myWork.emptyHint')}
           </p>
         </div>
       ) : (
@@ -204,10 +213,10 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           {/* Mes tâches */}
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              Mes tâches ({open.length})
+              {t('myWork.myTasksSection', { count: open.length })}
             </h3>
             {open.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">Tout est terminé 🎉</p>
+              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.allDone')}</p>
             ) : (
               <ul className="space-y-1">
                 {open.map((t) => {
@@ -220,7 +229,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       <button
                         type="button"
                         onClick={() => toggleComplete(t)}
-                        aria-label={`Marquer « ${t.name} » comme terminée`}
+                        aria-label={tt('myWork.markDone', { name: t.name })}
                         className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center shrink-0 transition-colors"
                       >
                         {t.completed && <Check size={13} aria-hidden="true" />}
@@ -253,10 +262,10 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           {/* Mes échéances (agenda entreprise) */}
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              Mes échéances ({scheduled.length})
+              {t('myWork.myDeadlines', { count: scheduled.length })}
             </h3>
             {scheduled.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">Aucune échéance datée.</p>
+              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.noDeadline')}</p>
             ) : (
               <ul className="space-y-1.5">
                 {scheduled.map((t) => {

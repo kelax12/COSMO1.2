@@ -30,6 +30,7 @@ import { PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.hel
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskModal from './TeamTaskModal';
+import { useT } from '@/i18n/useT';
 
 interface MemberAgendaSheetProps {
   member: OrgMember;
@@ -58,6 +59,7 @@ const PROJECT_HEX: Record<string, string> = {
  * sur l'agenda classique. Réservé à la hiérarchie du membre (RLS 077). Portal.
  */
 const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
+  const { t } = useT('org');
   const calendarRef = useRef<FullCalendar>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const [view, setView] = useState<ViewName>('timeGridWeek');
@@ -248,7 +250,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fermer l'agenda"
+          aria-label={t('agendaSheet.close')}
           className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
         >
           <X size={20} aria-hidden="true" />
@@ -310,7 +312,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
           >
             <Plus size={18} aria-hidden="true" />
-            <span className="font-medium text-sm">Nouveau</span>
+            <span className="font-medium text-sm">{t('agendaSheet.new')}</span>
           </button>
         </div>
       </div>
@@ -324,7 +326,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           >
             <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-start justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">Tâches d'équipe</h3>
+                <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('agendaSheet.teamTasks')}</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
                   Glissez une tâche sur le calendrier pour la planifier.
                 </p>
@@ -332,8 +334,8 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
               <button
                 type="button"
                 onClick={() => setCreatingTask(true)}
-                aria-label={`Ajouter une tâche pour ${member.displayName}`}
-                title="Ajouter une tâche"
+                aria-label={t('agendaSheet.addTaskFor', { name: member.displayName })}
+                title={t('agendaSheet.addTask')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
               >
                 <Plus size={15} aria-hidden="true" />

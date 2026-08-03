@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useT } from '@/i18n/useT';
 
 interface ConfirmLeaveOrgDialogProps {
   orgName: string;
@@ -20,7 +21,9 @@ interface ConfirmLeaveOrgDialogProps {
  * Confirmation avant de quitter l'entreprise — remplace le window.confirm
  * (même pattern que ConfirmRemoveMemberDialog).
  */
-const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: ConfirmLeaveOrgDialogProps) => (
+const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: ConfirmLeaveOrgDialogProps) => {
+  const { t } = useT('org');
+  return (
   <AlertDialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
     <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
       <AlertDialogHeader>
@@ -28,9 +31,7 @@ const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: Confir
           Quitter {orgName} ?
         </AlertDialogTitle>
         <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
-          Vous perdrez immédiatement l'accès aux projets, tâches et OKR de
-          l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont
-          pas affectées. Vous pourrez revenir avec un nouveau code d'invitation.
+          {t('leaveDialog.body')}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter className="gap-2">
@@ -47,6 +48,7 @@ const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: Confir
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
-);
+  );
+};
 
 export default ConfirmLeaveOrgDialog;

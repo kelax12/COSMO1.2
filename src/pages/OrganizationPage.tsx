@@ -26,17 +26,21 @@ import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
 import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
+import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members';
 
-const TABS: { id: OrgTab; label: string; Icon: typeof Users; managerOnly?: boolean }[] = [
-  { id: 'overview', label: 'Aperçu', Icon: LayoutDashboard },
-  { id: 'pyramid', label: 'Pyramide', Icon: Network },
-  { id: 'projects', label: 'Projets', Icon: FolderKanban },
-  { id: 'okr', label: 'OKR', Icon: Target },
+// Libellés = CLÉS : cette constante est évaluée au premier import, y écrire du
+// texte figerait les onglets en français pour toute la session.
+const TABS: { id: OrgTab; labelKey: KeyOf<'org'>; Icon: typeof Users; managerOnly?: boolean }[] = [
+  { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
+  { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network },
+  { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban },
+  { id: 'okr', labelKey: 'tabs.okr', Icon: Target },
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
-  { id: 'stats', label: 'Statistiques', Icon: BarChart3, managerOnly: true },
-  { id: 'members', label: 'Membres', Icon: Users },
+  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, managerOnly: true },
+  { id: 'members', labelKey: 'tabs.members', Icon: Users },
 ];
 
 /**
@@ -54,6 +58,7 @@ const launchBannerKey = (orgId: string) => `cosmo_org_launch_banner_dismissed_${
 const LAUNCH_FREE_UNTIL = new Date('2026-08-01T00:00:00');
 
 const OrganizationPage = () => {
+  const { t, tp } = useT('org');
   const { user } = useAuth();
   // #1 — onglet actif dans l'URL (?tab=okr) : survit au refresh et se partage.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -133,7 +138,7 @@ const OrganizationPage = () => {
               <button
                 type="button"
                 onClick={() => setEditProfile(true)}
-                aria-label="Modifier le profil de l'entreprise"
+                aria-label={t('page.editProfile')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
                 <Pencil size={14} aria-hidden="true" />
@@ -141,7 +146,7 @@ const OrganizationPage = () => {
             )}
           </div>
           <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">
-            {members.length} membre{members.length > 1 ? 's' : ''}
+            {tp('page.memberCount', members.length)}
             {myOrg.industry ? ` · ${myOrg.industry}` : ''}
           </p>
           {myOrg.description && (
@@ -158,13 +163,13 @@ const OrganizationPage = () => {
       {showLaunchBanner && (
         <div className="mb-5 rounded-2xl border border-[rgb(var(--color-accent)/0.3)] bg-[rgb(var(--color-accent)/0.08)] px-4 py-3 flex items-start justify-between gap-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            <span className="font-semibold text-[rgb(var(--color-text-primary))]">COSMO Entreprise est gratuit</span>
-            {' '}jusqu'au 1er août — profitez-en avec toute votre équipe, sans limite.
+            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{t('page.launchFree')}</span>
+            {t('page.launchFreeRest')}
           </p>
           <button
             type="button"
             onClick={dismissLaunchBanner}
-            aria-label="Masquer cette information"
+            aria-label={t('page.hideInfo')}
             className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
           >
             <X size={14} aria-hidden="true" />
@@ -178,16 +183,16 @@ const OrganizationPage = () => {
       {members.length >= ORG_FREE_SEATS && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
         <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{members.length} membres.</span>{' '}
+            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tp('page.memberCountDot', members.length)}</span>{' '}
             {ENTERPRISE_BILLING_ENFORCED
-              ? 'Au-delà de 5 collaborateurs, un abonnement entreprise est requis pour accepter de nouveaux membres.'
-              : 'COSMO Entreprise restera gratuit jusqu\'à 5 collaborateurs — une offre payante arrivera au-delà (20 €/mois jusqu\'à 50, 100 €/mois ensuite). Rien ne change pour vous aujourd\'hui.'}
+              ? t('page.freemiumOver')
+              : t('page.freemiumInfo')}
           </p>
           {!ENTERPRISE_BILLING_ENFORCED && (
             <button
               type="button"
               onClick={dismissSeatsBanner}
-              aria-label="Masquer cette information"
+              aria-label={t('page.hideInfo')}
               className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
             >
               <X size={14} aria-hidden="true" />
@@ -198,7 +203,7 @@ const OrganizationPage = () => {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto overflow-y-hidden hide-scrollbar">
-        {TABS.filter((t) => !t.managerOnly || isManager).map(({ id, label, Icon }) => (
+        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => (
           <button
             key={id}
             type="button"
@@ -210,7 +215,7 @@ const OrganizationPage = () => {
                 : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
             }`}
           >
-            <Icon size={16} aria-hidden="true" /> {label}
+            <Icon size={16} aria-hidden="true" /> {t(labelKey)}
           </button>
         ))}
       </div>
@@ -270,9 +275,9 @@ const OrganizationPage = () => {
           {isAdmin ? (
             <div className="mt-2 rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-red-600 dark:text-red-400">Zone de danger</h3>
+                <h3 className="text-sm font-bold text-red-600 dark:text-red-400">{t('page.dangerZone')}</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  Supprime définitivement l'entreprise, ses projets, OKR et équipes.
+                  {t('page.dangerHint')}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 shrink-0">
@@ -283,7 +288,7 @@ const OrganizationPage = () => {
                     disabled={transferMutation.isPending}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
                   >
-                    <ArrowRightLeft size={15} aria-hidden="true" /> Transférer la propriété
+                    <ArrowRightLeft size={15} aria-hidden="true" /> {t('page.transferOwnership')}
                   </button>
                 )}
                 <button

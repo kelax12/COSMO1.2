@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Copy, Check, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateInviteLink } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface OrgInviteLinkCardProps {
   orgId: string;
@@ -19,6 +20,7 @@ interface OrgInviteLinkCardProps {
  * l'utilisateur courant (le lien vaut approbation — pas de validation admin).
  */
 const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
+  const { t } = useT('org');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const createLink = useCreateInviteLink();
@@ -39,7 +41,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
-      toast.success('Lien copié');
+      toast.success(t('invite.linkCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error('Impossible de copier le lien');
@@ -48,10 +50,9 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">Lien d'invitation</h3>
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">{t('invite.linkTitle')}</h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-        Lien à usage unique, valable 7 jours. La personne crée son compte et rejoint
-        directement l'entreprise, rattachée à vous — sans validation à faire.
+        {t('invite.linkHint')}
       </p>
       {inviteUrl ? (
         <div className="flex items-center gap-2">
@@ -71,8 +72,8 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
             onClick={generateLink}
             disabled={createLink.isPending}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] hover:text-indigo-500 flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors disabled:opacity-50 shrink-0"
-            aria-label="Générer un nouveau lien"
-            title="Générer un nouveau lien"
+            aria-label={t('invite.generateNewLink')}
+            title={t('invite.generateNewLink')}
           >
             <RotateCcw size={17} className={createLink.isPending ? 'animate-spin' : ''} aria-hidden="true" />
           </button>
@@ -84,7 +85,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
           disabled={createLink.isPending}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
         >
-          {createLink.isPending ? 'Génération…' : 'Générer un lien'}
+          {createLink.isPending ? t('invite.generating') : t('invite.generateLink')}
         </button>
       )}
     </div>

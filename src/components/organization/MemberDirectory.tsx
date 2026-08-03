@@ -34,6 +34,7 @@ import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
+import { useT } from '@/i18n/useT';
 
 interface MemberDirectoryProps {
   orgId: string;
@@ -73,6 +74,7 @@ const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
  * un vrai modal (#3). La hiérarchie (rôles) ne se modifie plus ici (#1).
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
+  const { t } = useT('org');
   const removeMutation = useRemoveMember();
   const setManager = useSetMemberManager();
 
@@ -159,15 +161,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un membre (nom, email)…"
-            aria-label="Rechercher un membre dans l'annuaire"
+            placeholder={t('directory.searchPlaceholder')}
+            aria-label={t('directory.searchAria')}
             className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              aria-label="Effacer la recherche"
+              aria-label={t('directory.clearSearch')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
             >
               <X size={14} aria-hidden="true" />
@@ -178,7 +180,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
 
       {filteredMembers.length === 0 ? (
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-8 text-center">
-          Aucun membre ne correspond à « {query.trim()} ».
+          {t('directory.noMatch', { query: query.trim() })}
         </p>
       ) : (
       <ul className="space-y-2">

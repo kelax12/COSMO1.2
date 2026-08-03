@@ -7,6 +7,7 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor, PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface AssignTaskSheetProps {
   /** Membre cible (null = colonne « Non assignées » → création seule). */
@@ -27,6 +28,7 @@ interface AssignTaskSheetProps {
  * une nouvelle via le modal complet.
  */
 const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClose }: AssignTaskSheetProps) => {
+  const { t, tp } = useT('org');
   const [search, setSearch] = useState('');
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
@@ -47,17 +49,17 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label={member ? `Attribuer une tâche à ${member.displayName}` : 'Ajouter une tâche non assignée'}
+        aria-label={member ? t('assign.assignTo', { name: member.displayName }) : t('assign.addUnassigned')}
       >
         {/* En-tête */}
         <div className="flex items-center gap-3 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
           {member && <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />}
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
-              {member ? `Attribuer à ${member.displayName}` : 'Nouvelle tâche non assignée'}
+              {member ? t('assign.assignToShort', { name: member.displayName }) : t('assign.newUnassigned')}
             </h2>
             <p className="text-xs text-[rgb(var(--color-text-muted))]">
-              {member ? 'Choisissez une tâche existante ou créez-en une.' : 'Créez une tâche sans assigné.'}
+              {member ? t('assign.pickOrCreate') : t('assign.createWithout')}
             </p>
           </div>
           <button
@@ -81,7 +83,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
               <Plus size={16} aria-hidden="true" />
             </span>
             <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-              Créer une nouvelle tâche
+              {t('assign.createNew')}
             </span>
           </button>
         </div>
@@ -96,8 +98,8 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher une tâche…"
-                  aria-label="Rechercher une tâche existante"
+                  placeholder={t('assign.searchPlaceholder')}
+                  aria-label={t('assign.searchExisting')}
                   className="w-full h-9 pl-9 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                 />
               </div>
@@ -106,7 +108,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
             <div className="overflow-y-auto p-3 space-y-1 flex-1 min-h-[120px]">
               {candidates.length === 0 && (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-6">
-                  {search.trim() ? 'Aucune tâche ne correspond.' : 'Aucune tâche ouverte à attribuer.'}
+                  {search.trim() ? t('assign.noMatch') : t('assign.noOpenTask')}
                 </p>
               )}
               {candidates.map((task) => {
@@ -132,7 +134,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                       )}
                       {task.assigneeIds.length > 0 && (
                         <span className="text-[10px] text-[rgb(var(--color-text-muted))]">
-                          {task.assigneeIds.length} assigné{task.assigneeIds.length > 1 ? 's' : ''}
+                          {tp('assign.assignees', task.assigneeIds.length)}
                         </span>
                       )}
                       {task.deadline && (

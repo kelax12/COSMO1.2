@@ -4,6 +4,7 @@ import { X, Camera, Building2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateAvatarFile, computeAvatarDimensions } from '@/lib/avatar-upload';
 import { useUpdateOrganization, type MyOrganization } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface OrgProfileSheetProps {
   org: MyOrganization;
@@ -15,6 +16,7 @@ const inputClasses =
 
 /** Édition du profil d'entreprise (admin) : image (#12), nom, description, secteur. */
 const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
+  const { t } = useT('org');
   const [name, setName] = useState(org.name);
   const [description, setDescription] = useState(org.description ?? '');
   const [industry, setIndustry] = useState(org.industry ?? '');
@@ -32,7 +34,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
     if (!file) return;
     const verdict = validateAvatarFile(file);
     if (!verdict.ok) {
-      toast.error(verdict.reason === 'type' ? 'Format non supporté (JPEG, PNG, WebP, GIF)' : 'Image trop grande (500 Ko max)');
+      toast.error(verdict.reason === 'type' ? t('profile.unsupportedFormat') : t('profile.tooLarge'));
       e.target.value = '';
       return;
     }
@@ -86,7 +88,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
         aria-label="Profil de l'entreprise"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Profil de l'entreprise</h2>
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('profile.title')}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -150,14 +152,14 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           </div>
           <div>
             <label htmlFor="org-profile-industry" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Secteur d'activité
+              {t('profile.sector')}
             </label>
             <input
               id="org-profile-industry"
               type="text"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              placeholder="Design & Tech, Artisanat, Santé…"
+              placeholder={t('profile.sectorPlaceholder')}
               className={inputClasses}
               maxLength={80}
             />

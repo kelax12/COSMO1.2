@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useT } from '@/i18n/useT';
 
 interface WorkSummaryCardProps {
   /** Titre principal, ex. « 20 tâches · 90 j » ou « Mes 12 tâches assignées ». */
@@ -70,8 +71,9 @@ export const ProgressRing = ({ value, label }: { value: number; label: string })
 const WorkSummaryCard = ({
   title, completed, inProgress, overdue, completionRate, aside, emptyLabel,
 }: WorkSummaryCardProps) => {
+  const { t } = useT('org');
   const total = completed + inProgress + overdue;
-  const barLabel = `${completed} terminée${completed > 1 ? 's' : ''}, ${inProgress} en cours, ${overdue} en retard`;
+  const barLabel = t('summary.barLabel', { completed, inProgress, overdue });
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-5 sm:gap-6 items-center">
@@ -79,12 +81,12 @@ const WorkSummaryCard = ({
         <div className="flex items-baseline justify-between gap-3 mb-3.5">
           <span className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</span>
           {total > 0 && (
-            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{completionRate}% terminées</span>
+            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{t('summary.completedPercent', { percent: completionRate })}</span>
           )}
         </div>
 
         {total === 0 ? (
-          <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? 'Aucune donnée.'}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? t('summary.empty')}</p>
         ) : (
           <>
             <div className="flex h-3 rounded-full overflow-hidden gap-0.5" role="img" aria-label={barLabel}>
@@ -93,9 +95,9 @@ const WorkSummaryCard = ({
               <Segment ratio={overdue / total} colorClass="bg-red-500" />
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3.5">
-              <LegendDot colorClass="bg-emerald-500" label="terminées" value={completed} />
-              <LegendDot colorClass="bg-[rgb(var(--color-text-muted))]" label="en cours" value={inProgress} />
-              <LegendDot colorClass="bg-red-500" label="en retard" value={overdue} valueClass="text-red-500" />
+              <LegendDot colorClass="bg-emerald-500" label={t('summary.legendCompleted')} value={completed} />
+              <LegendDot colorClass="bg-[rgb(var(--color-text-muted))]" label={t('summary.legendInProgress')} value={inProgress} />
+              <LegendDot colorClass="bg-red-500" label={t('summary.legendOverdue')} value={overdue} valueClass="text-red-500" />
             </div>
           </>
         )}

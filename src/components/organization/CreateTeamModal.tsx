@@ -4,18 +4,22 @@ import { X, Loader2, Check, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 /** Palette d'équipes — valeurs CSS directes (pastilles `backgroundColor`). */
+// Noms de couleur = CLÉS du catalogue : cette constante est évaluée au premier
+// import, y écrire « Bleu » figerait les libellés en français pour la session.
 export const TEAM_COLORS = [
-  { value: '#6366f1', label: 'Indigo' },
-  { value: '#3b82f6', label: 'Bleu' },
-  { value: '#14b8a6', label: 'Teal' },
-  { value: '#10b981', label: 'Émeraude' },
-  { value: '#f59e0b', label: 'Ambre' },
-  { value: '#ef4444', label: 'Rouge' },
-  { value: '#ec4899', label: 'Rose' },
-  { value: '#8b5cf6', label: 'Violet' },
-] as const;
+  { value: '#6366f1', labelKey: 'colors.indigo' },
+  { value: '#3b82f6', labelKey: 'colors.blue' },
+  { value: '#14b8a6', labelKey: 'colors.teal' },
+  { value: '#10b981', labelKey: 'colors.emerald' },
+  { value: '#f59e0b', labelKey: 'colors.amber' },
+  { value: '#ef4444', labelKey: 'colors.red' },
+  { value: '#ec4899', labelKey: 'colors.pink' },
+  { value: '#8b5cf6', labelKey: 'colors.violet' },
+] as const satisfies readonly { value: string; labelKey: KeyOf<'org'> }[];
 
 interface CreateTeamModalProps {
   members: OrgMember[];
@@ -35,6 +39,7 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
  * visuel que NewTeamProjectModal (bottom-sheet mobile / modal desktop).
  */
 const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }: CreateTeamModalProps) => {
+  const { t } = useT('org');
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
   const [selected, setSelected] = useState<string[]>(currentUserId ? [currentUserId] : []);
@@ -54,7 +59,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
   const handleSubmit = async () => {
     if (pending) return;
     const n = name.trim();
-    if (!n) { setError("Le nom de l'équipe est requis"); return; }
+    if (!n) { setError(t('team.nameRequired')); return; }
     setPending(true);
     setError(null);
     try {
@@ -75,7 +80,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Nouvelle équipe"
+        aria-label={t('team.newTeam')}
       >
         {/* Poignée mobile */}
         <div className="sm:hidden flex justify-center pt-4 pb-2 shrink-0">
@@ -88,12 +93,12 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <h2 className="text-base sm:text-lg font-semibold inline-flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            <UsersRound size={18} className="text-blue-500" aria-hidden="true" /> Nouvelle équipe
+            <UsersRound size={18} className="text-blue-500" aria-hidden="true" /> {t('team.newTeam')}
           </h2>
           <button
             onClick={onClose}
             disabled={pending}
-            aria-label="Fermer le formulaire"
+            aria-label={t('team.closeForm')}
             className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
             style={{ color: 'rgb(var(--color-text-muted))' }}
           >
@@ -111,7 +116,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
 
           {/* Nom */}
           <div>
-            <label htmlFor="new-team-name" className={labelClass} style={labelStyle}>Nom de l'équipe *</label>
+            <label htmlFor="new-team-name" className={labelClass} style={labelStyle}>{t('team.name')}</label>
             <input
               id="new-team-name"
               type="text"
@@ -128,15 +133,15 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
 
           {/* Couleur */}
           <div>
-            <span className={labelClass} style={labelStyle}>Couleur</span>
-            <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label="Couleur de l'équipe">
+            <span className={labelClass} style={labelStyle}>{t('team.color')}</span>
+            <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('team.colorAria')}>
               {TEAM_COLORS.map((c) => (
                 <button
                   key={c.value}
                   type="button"
                   role="radio"
                   aria-checked={color === c.value}
-                  aria-label={`Couleur ${c.label}`}
+                  aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
                   onClick={() => setColor(c.value)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${color === c.value ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-background))] ring-blue-500' : ''}`}
                 >
@@ -153,7 +158,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
             </span>
             {addable.length === 0 ? (
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                Aucun membre disponible dans votre périmètre.
+                {t('team.noMember')}
               </p>
             ) : (
               <ul className="space-y-1.5">
@@ -219,10 +224,10 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
             {pending ? (
               <>
                 <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                <span>Création...</span>
+                <span>{t('team.creating')}</span>
               </>
             ) : (
-              "Créer l'équipe"
+              t('team.create')
             )}
           </Button>
         </div>

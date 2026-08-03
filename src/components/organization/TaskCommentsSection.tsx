@@ -9,6 +9,7 @@ import {
 } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface TaskCommentsSectionProps {
   taskId: string;
@@ -22,6 +23,7 @@ interface TaskCommentsSectionProps {
  * des membres ; les ids mentionnés sont recalculés du texte à l'envoi.
  */
 const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSectionProps) => {
+  const { t } = useT('org');
   const { data: comments = [], isLoading } = useTeamTaskComments(taskId);
   const addMutation = useAddTeamTaskComment(taskId);
   const deleteMutation = useDeleteTeamTaskComment(taskId);
@@ -71,7 +73,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
       </h3>
 
       {isLoading ? (
-        <p className="text-xs py-3 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>Chargement…</p>
+        <p className="text-xs py-3 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('comments.loading')}</p>
       ) : comments.length === 0 ? (
         <p className="text-xs py-1 mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
           Aucun commentaire — lancez la discussion. Tapez « @ » pour mentionner un membre.
@@ -151,7 +153,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
             }}
             rows={2}
             maxLength={2000}
-            placeholder="Écrire un commentaire… (@ pour mentionner)"
+            placeholder={t('comments.placeholder')}
             className="flex-1 px-3 py-2 text-sm rounded-xl border resize-none focus:outline-none focus:border-[rgb(var(--color-accent))]"
             style={{
               borderColor: 'rgb(var(--color-border))',

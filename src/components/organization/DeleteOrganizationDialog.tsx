@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { MyOrganization } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface DeleteOrganizationDialogProps {
   org: MyOrganization;
@@ -17,6 +18,7 @@ interface DeleteOrganizationDialogProps {
  * EXACT de l'entreprise pour déverrouiller le bouton.
  */
 const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCancel }: DeleteOrganizationDialogProps) => {
+  const { t, tp } = useT('org');
   const [typed, setTyped] = useState('');
   const match = typed === org.name;
 
@@ -50,13 +52,13 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
         <div className="p-5 space-y-4">
           <div className="rounded-xl border border-red-300/60 dark:border-red-700/40 bg-red-50/60 dark:bg-red-900/10 px-4 py-3">
             <p className="text-sm font-semibold text-red-600 dark:text-red-400 mb-1">
-              Cette action est irréversible.
+              {t('deleteOrg.irreversible')}
             </p>
             <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1 list-disc pl-4">
-              <li>Les {memberCount} membre{memberCount > 1 ? 's' : ''} perdent l'accès immédiatement.</li>
-              <li>Tous les projets, tâches d'équipe et OKR sont supprimés définitivement.</li>
-              <li>Les équipes, invitations et la pyramide sont effacées.</li>
-              <li>Les données personnelles des membres ne sont pas affectées.</li>
+              <li>{tp('deleteOrg.membersLose', memberCount)}</li>
+              <li>{t('deleteOrg.projectsDeleted')}</li>
+              <li>{t('deleteOrg.teamsErased')}</li>
+              <li>{t('deleteOrg.personalSafe')}</li>
             </ul>
           </div>
 

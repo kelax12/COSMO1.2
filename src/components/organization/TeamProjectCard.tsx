@@ -22,6 +22,7 @@ import {
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
+import { useT } from '@/i18n/useT';
 
 interface TeamProjectCardProps {
   project: TeamProject;
@@ -50,6 +51,7 @@ const TeamProjectCard = ({
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject,
 }: TeamProjectCardProps) => {
+  const { t } = useT('org');
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -128,7 +130,7 @@ const TeamProjectCard = ({
           )}
           {archived && (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] shrink-0">
-              Archivé
+              {t('project.archivedBadge')}
             </span>
           )}
           {overdueCount > 0 && !archived && (
@@ -161,7 +163,7 @@ const TeamProjectCard = ({
               </span>
             )}
             {/* Progression */}
-            <span className="flex items-center gap-1.5" title={`${done}/${total} tâches terminées (${progress} %)`}>
+            <span className="flex items-center gap-1.5" title={t('project.doneRatio', { done, total, percent: progress })}>
               <span className="w-16 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden hidden sm:block">
                 <span className={`block h-full rounded-full ${color.dot} transition-all`} style={{ width: `${progress}%` }} />
               </span>
@@ -204,7 +206,7 @@ const TeamProjectCard = ({
               {teams.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <UsersRound size={14} aria-hidden="true" /> Équipe
+                    <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
                     <DropdownMenuItem onClick={() => onUpdateProject({ teamId: null })}>
@@ -260,7 +262,7 @@ const TeamProjectCard = ({
                   onClick={() => onAddTask(project.id)}
                   className="text-xs font-semibold text-indigo-500 hover:text-indigo-600"
                 >
-                  Créer la première tâche
+                  {t('project.createFirstTask')}
                 </button>
               )}
             </div>
@@ -276,7 +278,7 @@ const TeamProjectCard = ({
                 className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
               >
                 {showCompleted ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
-                Terminées ({completedTasks.length})
+                {t('project.completed', { count: completedTasks.length })}
               </button>
               {showCompleted && completedTasks.map((task) => (
                 <TeamTaskRow

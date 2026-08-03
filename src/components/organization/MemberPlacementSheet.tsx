@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import { X, ArrowUpFromLine } from 'lucide-react';
 import { useSetMemberManager, isManagerOf, subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface MemberPlacementSheetProps {
   orgId: string;
@@ -19,6 +20,7 @@ interface MemberPlacementSheetProps {
  * de la cible (cycle) ; un non-admin ne voit que lui + son sous-arbre.
  */
 const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, onClose }: MemberPlacementSheetProps) => {
+  const { t } = useT('org');
   const setManagerMutation = useSetMemberManager();
 
   const targetSubtree = subtreeOf(members, target.userId);
@@ -82,7 +84,7 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
                 <span className="w-9 h-9 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center">
                   <ArrowUpFromLine size={15} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
                 </span>
-                <span className="text-sm text-[rgb(var(--color-text-secondary))]">Détacher (non placé)</span>
+                <span className="text-sm text-[rgb(var(--color-text-secondary))]">{t('member.detach')}</span>
               </button>
             </li>
           )}
@@ -101,7 +103,7 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
                     {m.userId === currentUserId ? ' (vous)' : ''}
                   </span>
                   {isManagerOf(members, m.userId) && (
-                    <span className="block text-[11px] text-blue-600 dark:text-blue-400">Manager</span>
+                    <span className="block text-[11px] text-blue-600 dark:text-blue-400">{t('member.manager')}</span>
                   )}
                 </span>
               </button>
