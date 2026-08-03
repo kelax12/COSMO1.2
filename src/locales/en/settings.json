@@ -81,7 +81,9 @@
     "eveningReminder": "Evening habit reminder",
     "eveningReminderHint": "After 6pm, a banner flags the habits you haven't ticked",
     "shortcuts": "Keyboard shortcuts",
-    "shortcutsHint": "Also available at any time with the key"
+    "shortcutsHint": "Also available at any time with the key",
+    "themeListTest": "Light · Dark · Black · Test",
+    "themeList": "Light · Dark · Black"
   },
   "modules": {
     "hint": "Turn on only what you need. Hidden modules disappear from the navigation; your data is kept. Tasks & Dashboard are always on.",
@@ -89,10 +91,22 @@
     "demoToast": "All modules stay on in demo mode",
     "enabled": "{{module}} enabled",
     "hidden": "{{module}} hidden",
-    "agenda": { "label": "Calendar", "description": "Plan your tasks in time blocks" },
-    "habits": { "label": "Habits", "description": "Track your daily routines" },
-    "okr": { "label": "OKRs", "description": "Objectives & key results" },
-    "statistics": { "label": "Statistics", "description": "Analyse your progress" }
+    "agenda": {
+      "label": "Calendar",
+      "description": "Plan your tasks in time blocks"
+    },
+    "habits": {
+      "label": "Habits",
+      "description": "Track your daily routines"
+    },
+    "okr": {
+      "label": "OKRs",
+      "description": "Objectives & key results"
+    },
+    "statistics": {
+      "label": "Statistics",
+      "description": "Analyse your progress"
+    }
   },
   "help": {
     "intro": "Everything you need to master every Cosmo feature.",

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '@/i18n/useT';
 
 interface RemoveFriendConfirmProps {
   open: boolean;
@@ -55,6 +56,7 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  const { t } = useT('common');
   if (!open) return null;
 
   return (
@@ -81,25 +83,24 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
             Retirer cet ami
           </h3>
           <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            Êtes-vous sûr de vouloir retirer{' '}
+            {t('removeFriend.confirm')}{' '}
             <strong style={{ color: 'rgb(var(--color-text-primary))' }}>
               {friendName}
             </strong>
             {' de vos amis ?'}
           </p>
           <p className="text-sm leading-relaxed mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            Cette personne sera retirée de <strong style={{ color: 'rgb(var(--color-text-primary))' }}>toutes vos tâches</strong>,
-            et vous serez retiré de <strong style={{ color: 'rgb(var(--color-text-primary))' }}>toutes les siennes</strong>.
+            {t('removeFriend.bodyBefore')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{t('removeFriend.bodyAllYours')}</strong>{t('removeFriend.bodyMiddle')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{t('removeFriend.bodyAllTheirs')}</strong>{t('removeFriend.bodyAfter')}
           </p>
 
           {(ownedSharedTasks.length > 0 || receivedSharedTasks.length > 0) && (
             <div className="mb-5 sm:mb-6 max-h-52 overflow-y-auto">
               <TaskPreviewList
-                title="Tâches dont il perdra l'accès"
+                title={t('removeFriend.losesAccess')}
                 tasks={ownedSharedTasks}
               />
               <TaskPreviewList
-                title="Tâches partagées auxquelles vous perdrez l'accès"
+                title={t('removeFriend.youLoseAccess')}
                 tasks={receivedSharedTasks}
               />
             </div>

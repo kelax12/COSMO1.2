@@ -104,7 +104,11 @@
   "theme": {
     "label": "Interface theme",
     "title": "Theme: {{name}} — click to change",
-    "aria": "Current theme: {{name}}. Click to change."
+    "aria": "Current theme: {{name}}. Click to change.",
+    "light": "Light",
+    "dark": "Dark",
+    "grey": "Grey",
+    "black": "Black"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -128,5 +132,110 @@
     "body": "This page doesn't exist or has moved. Check the address, or head back home.",
     "home": "Back to home",
     "guide": "See the guide"
+  },
+  "palette": {
+    "groupNavigation": "Navigation",
+    "groupActions": "Actions",
+    "groupPreferences": "Preferences",
+    "events": "Events",
+    "teamTasks": "Team tasks",
+    "team": "Team",
+    "teamProjects": "Team projects",
+    "goHome": "Go to home",
+    "goAgenda": "Go to the calendar",
+    "goSettings": "Go to settings",
+    "themeLight": "Light theme",
+    "themeDark": "Dark theme",
+    "themeGrey": "Grey theme",
+    "themeBlack": "Black theme",
+    "quickTask": "Create a quick task",
+    "createEvent": "Create an event",
+    "createHabit": "Create a habit",
+    "createObjective": "Create an objective",
+    "logout": "Sign out",
+    "noResult": "No results",
+    "searchPlaceholder": "Search a task, a page, a command...",
+    "goTasks": "Go to tasks",
+    "goHabits": "Go to habits",
+    "goOkr": "Go to OKRs",
+    "goStats": "Go to statistics",
+    "showShortcuts": "Show keyboard shortcuts",
+    "navigate": "navigate",
+    "open": "open",
+    "close": "close"
+  },
+  "moduleOnboarding": {
+    "question": "What do you want to manage?",
+    "hint": "Pick your modules. You can turn them back on any time in Settings."
+  },
+  "shareInvite": {
+    "alreadyCollab": "You already collaborate on “{{name}}”.",
+    "expired": "This invitation link has expired. Ask for a new one.",
+    "invalid": "This invitation link is invalid or has been revoked.",
+    "accepted": "Task “{{name}}” accepted!",
+    "refused": "Invitation declined.",
+    "sharedWithYou": "Task shared with you"
+  },
+  "shareLink": {
+    "availableAfterCreate": "Available once created",
+    "generatingLink": "Generating the link…",
+    "copied": "Invitation link copied!",
+    "copyFailed": "Couldn't copy — select the link manually.",
+    "hint": "Anyone with this link can join the task, even without an account (valid for 7 days).",
+    "creating": "Creating…",
+    "generate": "Generate the link",
+    "willSave": "The task will be saved to create a shareable link.",
+    "aria": "Invitation link to copy",
+    "copiedShort": "Copied!",
+    "copy": "Copy",
+    "saveFirst": "Save the task to generate a shareable invitation link."
+  },
+  "removeFriend": {
+    "confirm": "Are you sure you want to remove",
+    "bodyBefore": "This person will be removed from ",
+    "bodyAllYours": "all your tasks",
+    "bodyMiddle": ", and you will be removed from ",
+    "bodyAllTheirs": "all of theirs",
+    "bodyAfter": ".",
+    "losesAccess": "Tasks they'll lose access to",
+    "youLoseAccess": "Shared tasks you'll lose access to"
+  },
+  "discard": {
+    "body": "Unsaved changes will be lost."
+  },
+  "loading": "Loading...",
+  "tasksSummary": {
+    "showSide": "Show on the side",
+    "showBottom": "Show at the bottom"
+  },
+  "tutorial": {
+    "skip": "Skip the tutorial",
+    "done": "Done",
+    "next": "Next",
+    "previous": "← Previous"
+  },
+  "inbox": {
+    "friendAccepted": "Friend request accepted",
+    "requestRefused": "Request declined",
+    "removedFriend": "{{name}} removed from your friends",
+    "friendRequestSent": "Friend request sent",
+    "backToInbox": "Back to the inbox",
+    "myFriends": "My friends",
+    "manageFriends": "Manage my friends",
+    "noFriend": "No friends yet",
+    "noFriendHint": "Add a friend to start collaborating.",
+    "receivedFrom": "From {{name}}",
+    "receivedFromWithCount_one": "From {{name}} · {{count}} task",
+    "receivedFromWithCount_other": "From {{name}} · {{count}} tasks",
+    "joinRequests": "Join requests ({{count}})",
+    "acceptJoin": "Accept the join request from {{name}}",
+    "refuseJoin": "Decline the join request from {{name}}",
+    "someone": "this user",
+    "friendEmailAria": "Friend's email to invite"
+  },
+  "collaborator": {
+    "sent": "Sent",
+    "requestSent": "⏳ Friend request sent",
+    "awaiting": "Awaiting acceptance"
   }
 }

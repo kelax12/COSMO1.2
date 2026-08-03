@@ -17,22 +17,19 @@ const CALENDAR_GRID = '[data-tutorial-id="agenda-calendar-grid"]';
 
 export const agendaTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Contrôle total du planning',
-    description:
-      "Visualisez tout. Glissez vos tâches non planifiées dans le calendrier en un clic.",
+    titleKey: 'agendaDesktop.step1Title',
+    descriptionKey: 'agendaDesktop.step1Desc',
   },
   {
-    title: 'Adaptez votre vue',
-    description:
-      "Détail heure par heure (Jour), vue d'ensemble (Semaine), ou contexte large (Mois).",
+    titleKey: 'agendaDesktop.step2Title',
+    descriptionKey: 'agendaDesktop.step2Desc',
     target: '[data-tutorial-id="agenda-view-switcher"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Accès rapide aux tâches',
-    description:
-      "Ouvrez la liste des tâches à planifier. Glissez-en une sur un créneau pour l'ajouter à l'agenda.",
+    titleKey: 'agendaDesktop.step3Title',
+    descriptionKey: 'agendaDesktop.step3Desc',
     target: '[data-tutorial-id="agenda-task-sidebar-toggle"]',
     cardPlacement: 'bottom',
     action: 'custom',
@@ -51,9 +48,8 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     },
   },
   {
-    title: 'Du panneau au calendrier',
-    description:
-      "Saisissez une tâche, glissez-la sur un créneau. Elle s'ajoute à votre agenda en un geste.",
+    titleKey: 'agendaDesktop.step4Title',
+    descriptionKey: 'agendaDesktop.step4Desc',
     target: '[data-tutorial-id="agenda-first-task"]',
     cardPlacement: 'right',
     ghostAnimation: 'drag-place',
@@ -63,9 +59,8 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     dimLevel: 'light',
   },
   {
-    title: 'Étirer pour rallonger',
-    description:
-      "Attrapez le bas de l'événement et glissez vers le bas pour l'allonger.",
+    titleKey: 'agendaDesktop.step5Title',
+    descriptionKey: 'agendaDesktop.step5Desc',
     target: CALENDAR_GRID,
     cardPlacement: 'inside',
     ghostAnimation: 'resize-grow',
@@ -75,9 +70,8 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     dimLevel: 'light',
   },
   {
-    title: 'Créer depuis un créneau vide',
-    description:
-      "Sélectionnez un créneau horaire pour y créer un événement",
+    titleKey: 'agendaDesktop.step6Title',
+    descriptionKey: 'agendaDesktop.step6Desc',
     target: CALENDAR_GRID,
     cardPlacement: 'inside',
     ghostAnimation: 'select-create',

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, X } from 'lucide-react';
 import { TutorialStep } from './types';
+import { useT } from '@/i18n/useT';
 
 interface TutorialCardProps {
   step: TutorialStep;
@@ -29,6 +30,8 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
   onPrev,
   onNext,
 }) => {
+  const { t } = useT('common');
+  const { t: tTut } = useT('tutorials');
   return (
     <motion.div
       key={`card-${stepIndex}`}
@@ -47,7 +50,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
       {/* Skip button */}
       <button
         onClick={onClose}
-        aria-label="Passer le tutoriel"
+        aria-label={t('tutorial.skip')}
         className="absolute top-2 right-2 min-w-touch min-h-touch sm:min-w-9 sm:min-h-9 flex items-center justify-center rounded-full text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2"
         style={{ outlineColor: accentColor }}
       >
@@ -58,10 +61,10 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
         id="tut-card-title"
         className="text-base sm:text-lg font-bold mb-1 pr-8 text-[rgb(var(--color-text-primary))]"
       >
-        {step.title}
+        {tTut(step.titleKey)}
       </h3>
       <p className="text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
-        {step.description}
+        {tTut(step.descriptionKey)}
       </p>
 
       {/* Progress dots */}
@@ -90,7 +93,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
           disabled={stepIndex === 0}
           className="px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-medium text-sm text-[rgb(var(--color-text-secondary))] disabled:opacity-30 hover:bg-[rgb(var(--color-hover))] transition-colors disabled:cursor-not-allowed"
         >
-          ← Précédent
+          {t('tutorial.previous')}
         </button>
         <button
           type="button"
@@ -98,7 +101,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
           className="px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-bold text-sm text-white shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform flex items-center gap-1.5"
           style={{ backgroundColor: accentColor }}
         >
-          {stepIndex === totalSteps - 1 ? 'Terminé' : 'Suivant'}
+          {stepIndex === totalSteps - 1 ? t('tutorial.done') : t('tutorial.next')}
           {stepIndex < totalSteps - 1 && <ArrowRight size={14} />}
         </button>
       </div>

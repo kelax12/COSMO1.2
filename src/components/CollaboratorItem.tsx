@@ -2,6 +2,7 @@ import React from 'react';
 import { UserPlus, Trash2, X, Mail } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
+import { useT } from '@/i18n/useT';
 
 interface CollaboratorItemProps {
   id: string;
@@ -22,11 +23,14 @@ interface CollaboratorItemProps {
   sentBadge?: boolean;
 }
 
-const SentPill = () => (
+const SentPill = () => {
+  const { t } = useT('common');
+  return (
   <span className="ml-1 shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-    Envoyé
+    {t('collaborator.sent')}
   </span>
-);
+  );
+};
 
 const getInitials = (value: string) => {
   if (!value) return '?';
@@ -49,6 +53,7 @@ const CollaboratorItemBase: React.FC<CollaboratorItemProps> = ({
   badge,
   sentBadge = false,
 }) => {
+  const { t } = useT('common');
   const isEmoji = isEmojiAvatar(avatar);
   const isImage = isImageAvatar(avatar);
 
@@ -148,9 +153,9 @@ const CollaboratorItemBase: React.FC<CollaboratorItemProps> = ({
             {sentBadge && <SentPill />}
           </p>
           {isPending ? (
-            <p className="text-xs text-orange-500">⏳ Demande d'ami envoyée</p>
+            <p className="text-xs text-orange-500">{t('collaborator.requestSent')}</p>
           ) : sentBadge ? (
-            <p className="text-xs text-amber-600 dark:text-amber-400">En attente d'acceptation</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">{t('collaborator.awaiting')}</p>
           ) : email && (
             <div className="flex items-center gap-1.5 text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
               <Mail size={12} className="shrink-0" />

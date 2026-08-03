@@ -10,6 +10,7 @@ import {
   useDeleteList,
 } from '@/modules/lists';
 import { AddToListModalProps, resolveColor, InlineForm } from './shared';
+import { useT } from '@/i18n/useT';
 
 // ════════════════════════════════════════════════════════════════════════
 // Desktop : design du commit bcddf61 — modal centré, InlineForm,
@@ -17,6 +18,7 @@ import { AddToListModalProps, resolveColor, InlineForm } from './shared';
 // ════════════════════════════════════════════════════════════════════════
 
 const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
+  const { t } = useT('tasks');
   const { data: lists = [] } = useLists();
   const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
@@ -111,11 +113,11 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
                     id="add-to-list-title"
                     className="text-lg font-semibold text-[rgb(var(--color-text-primary))]"
                   >
-                    Ajouter à une liste
+                    {t('addToList.title')}
                   </h2>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
                     {lists.filter(l => l.type !== 'smart').length}{' '}
-                    {lists.filter(l => l.type !== 'smart').length <= 1 ? 'liste manuelle' : 'listes manuelles'}
+                    {lists.filter(l => l.type !== 'smart').length <= 1 ? t('addToList.manualList') : t('addToList.manualLists')}
                   </p>
                 </div>
                 <button
@@ -139,7 +141,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
                     key="create-form"
                     onSave={handleCreate}
                     onCancel={() => setCreating(false)}
-                    saveLabel="Créer"
+                    saveLabel={t('addToList.create')}
                   />
                 ) : (
                   <motion.button

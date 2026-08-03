@@ -11,6 +11,7 @@ import {
   useDeleteList,
 } from '@/modules/lists';
 import { AddToListModalProps, COLOR_PALETTE, resolveColor } from './shared';
+import { useT } from '@/i18n/useT';
 
 // ════════════════════════════════════════════════════════════════════════
 // Mobile : version iOS-style sheet avec brouillon inline,
@@ -18,6 +19,7 @@ import { AddToListModalProps, COLOR_PALETTE, resolveColor } from './shared';
 // ════════════════════════════════════════════════════════════════════════
 
 const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
+  const { t } = useT('tasks');
   const { data: lists = [] } = useLists();
   const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
@@ -151,7 +153,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                 <button
                   type="button"
                   onClick={() => { setEditMode((m) => !m); setConfirmDeleteId(null); }}
-                  aria-label="Mode édition"
+                  aria-label={t('addToList.editMode')}
                   className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                     editMode
                       ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
@@ -166,7 +168,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
             <div data-scroll-area className="flex-1 overflow-y-auto px-4">
               {manualLists.length === 0 && !hasDraft && (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-[rgb(var(--color-text-muted))]">Aucune liste pour l'instant</p>
+                  <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('addToList.noList')}</p>
                 </div>
               )}
 
@@ -298,7 +300,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                       style={{ border: 'none' }}
                     />
                     {draftList!.name.trim() ? (
-                      <button type="button" onClick={handleCreate} aria-label="Créer" className="text-blue-500 shrink-0">
+                      <button type="button" onClick={handleCreate} aria-label={t('addToList.create')} className="text-blue-500 shrink-0">
                         <Check size={16} />
                       </button>
                     ) : (

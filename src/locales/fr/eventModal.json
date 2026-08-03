@@ -1,0 +1,38 @@
+{
+  "title": "Titre de l'événement",
+  "titlePlaceholder": "nom de l'événement",
+  "titlePlaceholderMobile": "Titre de l'événement",
+  "datePlaceholder": "Sélectionner une date",
+  "date": "Date",
+  "start": "Début",
+  "end": "Fin",
+  "totalDuration": "Durée totale",
+  "duration": "Durée",
+  "recurrence": "Récurrence",
+  "recurrenceAria": "Récurrence de l'événement",
+  "days": "Jours",
+  "descriptionPlaceholder": "description de l'événement",
+  "descriptionTitle": "Description de l'événement",
+  "color": "Couleur de l'événement",
+  "showLegend": "Voir la légende des catégories",
+  "hideLegend": "Masquer la légende des catégories",
+  "legend": "Légende des catégories",
+  "create": "Créer",
+  "duplicate": "Dupliquer l'événement",
+  "delete": "Supprimer l'événement",
+  "repeatDays": "Répéter les jours",
+  "repeatDaysHint": "Sélectionnez les jours de la semaine où l'événement se répète.",
+  "schedule": {
+    "title": "Planifier dans l'agenda",
+    "description": "Crée un événement lié à cette tâche.",
+    "titleLabel": "Titre",
+    "date": "Date",
+    "startTime": "Heure de début",
+    "endTime": "Heure de fin",
+    "notes": "Notes"
+  },
+  "calendar": {
+    "pickDay": "Sélectionne un jour",
+    "noTask": "Aucune tâche ce jour-là."
+  }
+}

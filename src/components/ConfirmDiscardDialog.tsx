@@ -6,6 +6,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useT } from '@/i18n/useT';
 
 interface ConfirmDiscardDialogProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface ConfirmDiscardDialogProps {
 }
 
 const ConfirmDiscardDialog: React.FC<ConfirmDiscardDialogProps> = ({ isOpen, onCancel, onConfirm }) => {
+  const { t } = useT('common');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onCancel);
 
   return (
@@ -48,7 +50,7 @@ const ConfirmDiscardDialog: React.FC<ConfirmDiscardDialogProps> = ({ isOpen, onC
                 Abandonner les modifications ?
               </h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                Les modifications non enregistrées seront perdues.
+                {t('discard.body')}
               </p>
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                 <button

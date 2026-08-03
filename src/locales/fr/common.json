@@ -107,7 +107,11 @@
   "theme": {
     "label": "Thème de l'interface",
     "title": "Thème : {{name}} — cliquer pour changer",
-    "aria": "Thème actuel : {{name}}. Cliquer pour changer."
+    "aria": "Thème actuel : {{name}}. Cliquer pour changer.",
+    "light": "Clair",
+    "dark": "Sombre",
+    "grey": "Gris",
+    "black": "Noir"
   },
   "errorBoundary": {
     "title": "Une erreur inattendue s'est produite",
@@ -131,5 +135,111 @@
     "body": "Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse, ou repartez de l'accueil.",
     "home": "Retour à l'accueil",
     "guide": "Voir le guide"
+  },
+  "palette": {
+    "groupNavigation": "Navigation",
+    "groupActions": "Actions",
+    "groupPreferences": "Préférences",
+    "events": "Événements",
+    "teamTasks": "Tâches d'équipe",
+    "team": "Équipe",
+    "teamProjects": "Projets d'équipe",
+    "goHome": "Aller à l'accueil",
+    "goAgenda": "Aller à l'agenda",
+    "goSettings": "Aller aux paramètres",
+    "themeLight": "Thème clair",
+    "themeDark": "Thème sombre",
+    "themeGrey": "Thème gris",
+    "themeBlack": "Thème noir",
+    "quickTask": "Créer une tâche rapide",
+    "createEvent": "Créer un événement",
+    "createHabit": "Créer une habitude",
+    "createObjective": "Créer un objectif",
+    "logout": "Se déconnecter",
+    "noResult": "Aucun résultat",
+    "searchPlaceholder": "Rechercher une tâche, une page, une commande...",
+    "goTasks": "Aller aux tâches",
+    "goHabits": "Aller aux habitudes",
+    "goOkr": "Aller aux OKR",
+    "goStats": "Aller aux statistiques",
+    "showShortcuts": "Afficher les raccourcis clavier",
+    "navigate": "naviguer",
+    "open": "ouvrir",
+    "close": "fermer"
+  },
+  "moduleOnboarding": {
+    "question": "Que voulez-vous gérer ?",
+    "hint": "Choisissez vos modules. Vous pourrez les réactiver à tout moment dans les Réglages."
+  },
+  "shareInvite": {
+    "alreadyCollab": "Vous collaborez déjà sur « {{name}} ».",
+    "expired": "Ce lien d'invitation a expiré. Demandez-en un nouveau.",
+    "invalid": "Ce lien d'invitation est invalide ou a été révoqué.",
+    "accepted": "Tâche « {{name}} » acceptée !",
+    "refused": "Invitation refusée.",
+    "sharedWithYou": "Tâche partagée avec vous"
+  },
+  "shareLink": {
+    "availableAfterCreate": "Disponible après la création",
+    "generatingLink": "Génération du lien…",
+    "copied": "Lien d'invitation copié !",
+    "copyFailed": "Impossible de copier — sélectionnez le lien manuellement.",
+    "hint": "Toute personne avec ce lien pourra rejoindre la tâche, même sans compte (valable 7 jours).",
+    "creating": "Création…",
+    "generate": "Générer le lien",
+    "willSave": "La tâche sera enregistrée pour créer un lien partageable.",
+    "aria": "Lien d'invitation à copier",
+    "copiedShort": "Copié !",
+    "copy": "Copier",
+    "saveFirst": "Enregistre la tâche pour générer un lien d'invitation partageable."
+  },
+  "removeFriend": {
+    "confirm": "Êtes-vous sûr de vouloir retirer",
+    "bodyBefore": "Cette personne sera retirée de ",
+    "bodyAllYours": "toutes vos tâches",
+    "bodyMiddle": ", et vous serez retiré de ",
+    "bodyAllTheirs": "toutes les siennes",
+    "bodyAfter": ".",
+    "losesAccess": "Tâches dont il perdra l'accès",
+    "youLoseAccess": "Tâches partagées auxquelles vous perdrez l'accès"
+  },
+  "discard": {
+    "body": "Les modifications non enregistrées seront perdues."
+  },
+  "loading": "Chargement...",
+  "tasksSummary": {
+    "showSide": "Afficher sur le côté",
+    "showBottom": "Afficher en bas"
+  },
+  "tutorial": {
+    "skip": "Passer le tutoriel",
+    "done": "Terminé",
+    "next": "Suivant",
+    "previous": "← Précédent"
+  },
+  "inbox": {
+    "friendAccepted": "Demande d'ami acceptée",
+    "requestRefused": "Demande refusée",
+    "removedFriend": "{{name}} retiré de vos amis",
+    "friendRequestSent": "Demande d'ami envoyée",
+    "backToInbox": "Retour à la boîte de réception",
+    "myFriends": "Mes amis",
+    "manageFriends": "Gérer mes amis",
+    "noFriend": "Aucun ami",
+    "noFriendHint": "Ajoutez un ami pour commencer à collaborer.",
+    "receivedFrom": "Reçu de {{name}}",
+    "receivedFromWithCount_one": "Reçu de {{name}} · {{count}} tâche",
+    "receivedFromWithCount_many": "Reçu de {{name}} · {{count}} de tâches",
+    "receivedFromWithCount_other": "Reçu de {{name}} · {{count}} tâches",
+    "joinRequests": "Demandes d'adhésion ({{count}})",
+    "acceptJoin": "Accepter la demande d'adhésion de {{name}}",
+    "refuseJoin": "Refuser la demande d'adhésion de {{name}}",
+    "someone": "cet utilisateur",
+    "friendEmailAria": "Email de l'ami à inviter"
+  },
+  "collaborator": {
+    "sent": "Envoyé",
+    "requestSent": "⏳ Demande d'ami envoyée",
+    "awaiting": "En attente d'acceptation"
   }
 }

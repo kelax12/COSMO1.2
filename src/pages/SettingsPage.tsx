@@ -644,7 +644,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? 'Clair · Sombre · Noir · Test' : 'Clair · Sombre · Noir'}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
                     </div>
                   </div>
                   <ThemeToggle showLabel />

@@ -9,7 +9,8 @@
     "choose": "Choose",
     "chooseDots": "Choose...",
     "none": "None",
-    "optional": "(Optional)"
+    "optional": "(Optional)",
+    "savingDots": "Saving..."
   },
   "fields": {
     "moreOptions": "More options — due date, category, priority, duration, lists",
@@ -60,5 +61,13 @@
     "owner": " · Owner",
     "sent": "Sent",
     "noFriend": "No friends to add"
+  },
+  "desktop": {
+    "closeForm": "Close the form",
+    "unsaved": "Unsaved",
+    "changeColor": "Change colour",
+    "namePlaceholder": "Enter the task name",
+    "minuteEstimate": "Estimate in minutes",
+    "listNamePlaceholder": "List name..."
   }
 }

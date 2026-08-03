@@ -6,48 +6,42 @@ import { TutorialStep } from '@/components/tutorial/types';
  */
 export const tasksTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Toutes vos tâches en un endroit',
-    description:
-      "Titre, priorité, catégorie, deadline, durée. Tout ce qu'il faut pour gérer vos tâches.",
+    titleKey: 'tasksDesktop.step1Title',
+    descriptionKey: 'tasksDesktop.step1Desc',
   },
   {
-    title: 'Organisez par listes',
-    description:
-      "Groupez vos tâches en listes (Travail, Maison, Projets...). Cliquez sur une liste pour la consulter seule.",
+    titleKey: 'tasksDesktop.step2Title',
+    descriptionKey: 'tasksDesktop.step2Desc',
     target: '[data-tutorial-id="tasks-lists"]',
     cardPlacement: 'bottom',
     action: 'pulse',
     dimLevel: 'light',
   },
   {
-    title: 'Trouvez ce que vous cherchez',
-    description:
-      "Recherche par mot-clé, filtre par catégorie, slider de priorité. En un instant.",
+    titleKey: 'tasksDesktop.step3Title',
+    descriptionKey: 'tasksDesktop.step3Desc',
     target: '[data-tutorial-id="tasks-filter"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Visualisez vos deadlines',
-    description:
-      "Mini-calendrier des échéances. Identifiez les semaines surchargées en un coup d'œil.",
+    titleKey: 'tasksDesktop.step4Title',
+    descriptionKey: 'tasksDesktop.step4Desc',
     target: '[data-tutorial-id="tasks-calendar-toggle"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Créer une tâche',
-    description:
-      "Organisez votre travail en tâches pour une meilleure efficacité.",
+    titleKey: 'tasksDesktop.step5Title',
+    descriptionKey: 'tasksDesktop.step5Desc',
     target: '[data-tutorial-id="tasks-create-button"]',
     cardPlacement: 'bottom',
     action: 'click',
     actionDelay: 1800,
   },
   {
-    title: 'Tableau des tâches',
-    description:
-      "visualisez en un coup d'œil toutes vos tâches",
+    titleKey: 'tasksDesktop.step6Title',
+    descriptionKey: 'tasksDesktop.step6Desc',
     target: '[data-tutorial-id="tasks-list"]',
     cardPlacement: 'top',
     action: 'pulse',

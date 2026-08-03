@@ -11,6 +11,7 @@ import type { EventRecurrence } from '@/modules/events';
 import DescriptionField from '@/components/DescriptionField';
 import { DAY_LABELS } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
+import { useT } from '@/i18n/useT';
 
 const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   mode, onClose, handleBarWidth,
@@ -21,7 +22,9 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   categories, lockedSet, register, isInvalid,
   handleFieldChange, doSave, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, duration, isMobileFormValid,
-}) => (
+}) => {
+  const { t } = useT('eventModal');
+  return (
   <div className="flex flex-col bg-[rgb(var(--color-background))] h-full">
     {/* Drag handle */}
     <div className="flex justify-center pt-2.5 shrink-0">
@@ -47,7 +50,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           isMobileFormValid ? 'text-blue-500' : 'text-blue-300'
         }`}
       >
-        {mode === 'convert' ? 'Créer' : getSubmitButtonText()}
+        {mode === 'convert' ? t('create') : getSubmitButtonText()}
       </button>
     </div>
 
@@ -63,14 +66,14 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       >
         {lockedSet.has('title') ? (
           <div className="w-full px-4 min-h-12 flex items-center text-[17px] text-[rgb(var(--color-text-muted))] cursor-not-allowed opacity-80">
-            {title || "Titre de l'événement"}
+            {title || t('titlePlaceholderMobile')}
           </div>
         ) : (
           <input
             type="text"
             value={title}
             onChange={(e) => handleFieldChange("title", setTitle, e.target.value)}
-            placeholder="Titre de l'événement"
+            placeholder={t('titlePlaceholderMobile')}
             autoFocus={!lockedSet.has('title')}
             className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
             style={{ border: 'none' }}
@@ -91,7 +94,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
 
         {/* Date */}
         <div className={`flex items-center px-4 min-h-11 relative ${lockedSet.has('startDate') ? 'opacity-60' : ''}`}>
-          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Date</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('date')}</span>
           <span className={`text-[15px] ${startDate ? 'text-blue-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
             {startDate
               ? format(new Date(startDate + "T12:00:00"), "d MMM yyyy", { locale: getDateLocale() })
@@ -115,7 +118,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
 
         {/* Début */}
         <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Début</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('start')}</span>
           <input
             type="time"
             value={startTime}
@@ -129,7 +132,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
 
         {/* Fin */}
         <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Fin</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('end')}</span>
           <input
             type="time"
             value={endTime}
@@ -144,7 +147,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           <>
             <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
             <div className="flex items-center px-4 min-h-11">
-              <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Durée</span>
+              <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('duration')}</span>
               <span className={`text-[15px] ${duration.startsWith('⚠️') ? 'text-red-500' : 'text-blue-500'}`}>
                 {duration}
               </span>
@@ -160,7 +163,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
         {/* Récurrence */}
         <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">Récurrence</span>
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('recurrence')}</span>
           <div
             className="inline-flex rounded-full p-0.5 border text-[11px]"
             style={{
@@ -168,7 +171,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               borderColor: "rgb(var(--color-chip-border))",
             }}
             role="radiogroup"
-            aria-label="Récurrence de l'événement"
+            aria-label={t('recurrenceAria')}
           >
             {([
               { value: 'none', label: 'Non' },
@@ -205,7 +208,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               onClick={() => setShowDaysModal(true)}
               className="w-full flex items-center px-4 min-h-11 gap-3 active:bg-[rgb(var(--color-hover))]"
             >
-              <span className="flex-1 text-left text-[15px] text-[rgb(var(--color-text-primary))]">Jours</span>
+              <span className="flex-1 text-left text-[15px] text-[rgb(var(--color-text-primary))]">{t('days')}</span>
               <span className="text-[15px] text-blue-500">
                 {recurrenceDays.length > 0
                   ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')
@@ -277,8 +280,8 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               onChange={(value) => handleFieldChange("notes", setNotes, value)}
               rows={4}
               autoFocus={!notes}
-              placeholder="Description de l'événement"
-              expandedTitle="Description de l'événement"
+              placeholder={t('descriptionTitle')}
+              expandedTitle={t('descriptionTitle')}
               className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
               style={{ border: 'none' }}
             />
@@ -304,7 +307,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
             onClick={handleDuplicate}
             className="flex items-center justify-center px-4 min-h-11 w-full active:bg-blue-50 dark:active:bg-blue-950/20"
           >
-            <span className="text-[15px] text-blue-600 dark:text-blue-400 font-medium">Dupliquer l'événement</span>
+            <span className="text-[15px] text-blue-600 dark:text-blue-400 font-medium">{t('duplicate')}</span>
           </button>
         </div>
       )}
@@ -321,7 +324,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               onClick={handleDelete}
               className="flex items-center justify-center px-4 min-h-11 w-full active:bg-red-50 dark:active:bg-red-950/20"
             >
-              <span className="text-[15px] text-red-500 font-medium">Supprimer l'événement</span>
+              <span className="text-[15px] text-red-500 font-medium">{t('delete')}</span>
             </button>
           </div>
         </>
@@ -334,5 +337,6 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
     </div>
   </div>
 );
+};
 
 export default EventModalFormMobile;

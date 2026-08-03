@@ -93,14 +93,14 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Rechercher..."
+              placeholder={t('filter.searchPlaceholder')}
               className="w-full pl-9 pr-12 py-[11px] sm:py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm text-xs sm:text-sm"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
                 color: 'rgb(var(--color-text-primary))'
               }}
-              aria-label="Rechercher une tâche par nom"
+              aria-label={t('filter.searchByName')}
             />
             {searchTerm && (
               <Button
@@ -108,7 +108,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 size="icon"
                 onClick={() => setSearchTerm('')}
                 className="absolute right-1.5 top-1/2 transform -translate-y-1/2 h-11 w-11 sm:h-9 sm:w-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
-                aria-label="Effacer la recherche"
+                aria-label={t('filter.clearSearch')}
               >
                 <X size={16} aria-hidden="true" />
               </Button>
@@ -141,7 +141,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                   }
                 }}
                 value={showCompleted ? 'completed' : currentFilter}
-                aria-label="Trier les tâches par"
+                aria-label={t('filter.sortBy')}
               >
                 <option value="priority">{t('sort.priority')}</option>
                 <option value="deadline">{t('sort.deadline')}</option>
@@ -223,7 +223,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 {/* Priorité */}
                 <div>
                   <div className="flex items-center justify-between gap-4 mb-3">
-                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Intervalle de priorité</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('filter.priorityRange')}</label>
                     <span className="text-xs font-bold" style={{ color: 'rgb(var(--color-text-secondary))' }}>P{priorityRange[0]} – P{priorityRange[1]}</span>
                   </div>
                   <Slider
@@ -235,7 +235,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     className="cursor-pointer [&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                   />
                   <div className="flex justify-between mt-2 text-[10px] text-slate-500">
-                    <span>Très haute</span><span>Très basse</span>
+                    <span>{t('filter.veryHigh')}</span><span>{t('filter.veryLow')}</span>
                   </div>
                 </div>
 
@@ -243,7 +243,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
 
                 {/* Catégories */}
                 <div>
-                  <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégories</label>
+                  <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('filter.filterCategories')}</label>
                   <div className="grid max-h-[180px] gap-1 overflow-y-auto pr-1 custom-scrollbar">
                     {categories.map((category) => (
                       <label

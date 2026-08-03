@@ -9,7 +9,8 @@
     "choose": "Choisir",
     "chooseDots": "Choisir...",
     "none": "Aucune",
-    "optional": "(Facultatif)"
+    "optional": "(Facultatif)",
+    "savingDots": "Enregistrement..."
   },
   "fields": {
     "moreOptions": "Plus d'options — échéance, catégorie, priorité, durée, listes",
@@ -60,5 +61,13 @@
     "owner": " · Propriétaire",
     "sent": "Envoyé",
     "noFriend": "Aucun ami à ajouter"
+  },
+  "desktop": {
+    "closeForm": "Fermer le formulaire",
+    "unsaved": "Non sauvegardé",
+    "changeColor": "Changer la couleur",
+    "namePlaceholder": "Entrez le nom de la tâche",
+    "minuteEstimate": "Estimation en minute",
+    "listNamePlaceholder": "Nom de la liste..."
   }
 }

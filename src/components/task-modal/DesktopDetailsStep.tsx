@@ -116,7 +116,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         color: 'rgb(var(--color-text-primary))',
                         borderColor: errors.name || dInvalid('name') ? '#ef4444' : (okrFields.name ? undefined : undefined)
                       }}
-                      placeholder="Entrez le nom de la tâche"
+                      placeholder={t('desktop.namePlaceholder')}
                       aria-describedby={errors.name ? 'name-error' : undefined}
                       aria-invalid={!!errors.name}
                     />
@@ -279,7 +279,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             }}
                             className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                             style={{ backgroundColor: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
-                            title="Changer la couleur"
+                            title={t('desktop.changeColor')}
                           />
                           <input
                             type="text"
@@ -414,7 +414,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               type="number"
                               value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
                               onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
-                              placeholder="Estimation en minute"
+                              placeholder={t('desktop.minuteEstimate')}
                               className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base ${
                                 errors.estimatedTime ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                               } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
@@ -646,7 +646,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                                 setNewListColor('blue');
                               }
                             }}
-                            placeholder="Nom de la liste..."
+                            placeholder={t('desktop.listNamePlaceholder')}
                             className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
                             style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                           />

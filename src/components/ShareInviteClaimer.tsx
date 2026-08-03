@@ -14,6 +14,7 @@ import {
 } from '@/modules/friends';
 import { taskKeys } from '@/modules/tasks';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
+import { useT } from '@/i18n/useT';
 
 /**
  * Monté au niveau App (comme CookieBanner) : dès que l'utilisateur est
@@ -24,6 +25,7 @@ import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
  * la popup « à la fin de l'inscription » sans coupler signup et partage.
  */
 const ShareInviteClaimer: React.FC = () => {
+  const { t } = useT('common');
   const { user, isAuthenticated, isLoading, isDemo } = useAuth();
   const queryClient = useQueryClient();
   const claimMutation = useClaimShareLink();
@@ -47,7 +49,7 @@ const ShareInviteClaimer: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: friendKeys.all });
         queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
         if (result.already_accepted) {
-          toast.info(`Vous collaborez déjà sur « ${result.task_name} ».`);
+          toast.info(t('shareInvite.alreadyCollab', { name: result.task_name }));
           return;
         }
         setInvite(result);
@@ -57,9 +59,9 @@ const ShareInviteClaimer: React.FC = () => {
         if (msg.includes('own_link')) {
           toast.info("Ce lien d'invitation pointe vers votre propre tâche.");
         } else if (msg.includes('expired_link')) {
-          toast.error("Ce lien d'invitation a expiré. Demandez-en un nouveau.");
+          toast.error(t('shareInvite.expired'));
         } else {
-          toast.error("Ce lien d'invitation est invalide ou a été révoqué.");
+          toast.error(t('shareInvite.invalid'));
         }
       },
     });
@@ -75,7 +77,7 @@ const ShareInviteClaimer: React.FC = () => {
     acceptMutation.mutate(invite.task_id, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-        toast.success(`Tâche « ${invite.task_name} » acceptée !`);
+        toast.success(t('shareInvite.accepted', { name: invite.task_name }));
         closeAfter();
       },
     });
@@ -88,7 +90,7 @@ const ShareInviteClaimer: React.FC = () => {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-          toast.success('Invitation refusée.');
+          toast.success(t('shareInvite.refused'));
           closeAfter();
         },
       }
@@ -145,7 +147,7 @@ const ShareInviteClaimer: React.FC = () => {
                 )}
               </div>
               <h2 id="share-invite-title" className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-1">
-                Tâche partagée avec vous
+                {t('shareInvite.sharedWithYou')}
               </h2>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
                 <span className="font-semibold text-[rgb(var(--color-text-primary))]">{invite.owner_name}</span>

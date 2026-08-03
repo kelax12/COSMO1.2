@@ -3,6 +3,7 @@ import { Sun, Moon, Circle, MoonStar } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 import type { Theme } from '@/lib/theme';
 import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 interface ThemeToggleProps {
   className?: string;
@@ -10,11 +11,12 @@ interface ThemeToggleProps {
   showLabel?: boolean;
 }
 
-const THEMES: { id: Theme; icon: React.ElementType; label: string }[] = [
-  { id: 'light', icon: Sun,      label: 'Clair'  },
-  { id: 'dark',  icon: Moon,     label: 'Sombre' },
-  { id: 'gris',  icon: Circle,   label: 'Gris'   },
-  { id: 'noir',  icon: MoonStar, label: 'Noir'   },
+const THEMES: { id: Theme; icon: React.ElementType; labelKey: KeyOf<'common'> }[] = [
+  // Libellés = CLÉS : constante de module, donc évaluée au premier import.
+  { id: 'light', icon: Sun,      labelKey: 'theme.light' },
+  { id: 'dark',  icon: Moon,     labelKey: 'theme.dark'  },
+  { id: 'gris',  icon: Circle,   labelKey: 'theme.grey'  },
+  { id: 'noir',  icon: MoonStar, labelKey: 'theme.black' },
 ];
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {
@@ -32,7 +34,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
         role="radiogroup"
         aria-label={t('theme.label')}
       >
-        {visibleThemes.map(({ id, icon: Icon, label }) => {
+        {visibleThemes.map(({ id, icon: Icon, labelKey }) => {
           const active = theme === id;
           return (
             <button
@@ -40,7 +42,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
               role="radio"
               aria-checked={active}
               onClick={() => setTheme(id)}
-              title={label}
+              title={t(labelKey)}
               style={{ minHeight: '36px', minWidth: '60px' }}
               className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
                 active
@@ -59,7 +61,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
                 }
                 fill="none"
               />
-              {label}
+              {t(labelKey)}
             </button>
           );
         })}
@@ -74,8 +76,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
   return (
     <button
       onClick={toggleTheme}
-      title={t('theme.title', { name: current.label })}
-      aria-label={t('theme.aria', { name: current.label })}
+      title={t('theme.title', { name: t(current.labelKey) })}
+      aria-label={t('theme.aria', { name: t(current.labelKey) })}
       className={`p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40 ${className}`}
     >
       <Icon
