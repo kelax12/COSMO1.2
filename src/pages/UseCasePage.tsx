@@ -3,10 +3,12 @@ import { Link, Navigate, useLocation } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { getUseCase } from '@/content/use-cases.mjs';
+import { useT } from '@/i18n/useT';
 
 // Page use-case commerciale (/pour-freelances, /pour-etudiants, /pour-managers).
 // Contenu dans src/content/use-cases.mjs — même pattern que le blog.
 const UseCasePage: React.FC = () => {
+  const { t } = useT('landing');
   const slug = useLocation().pathname.replace(/^\//, '');
   const useCase = getUseCase(slug);
 
@@ -27,7 +29,7 @@ const UseCasePage: React.FC = () => {
             <span className="font-semibold text-white">Cosmo</span>
           </Link>
           <Link to="/signup" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1.5">
-            Créer un compte gratuit
+            {t('useCasePage.signupCta')}
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -43,7 +45,7 @@ const UseCasePage: React.FC = () => {
         <div className="blog-prose" dangerouslySetInnerHTML={{ __html: useCase.html }} />
 
         <aside className="mt-14 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
-          <p className="text-lg font-semibold text-white mb-2">Essayez Cosmo en 2 minutes</p>
+          <p className="text-lg font-semibold text-white mb-2">{t('useCasePage.ctaTitle')}</p>
           <p className="text-slate-400 text-sm mb-5">
             Démo instantanée pré-remplie, sans inscription ni carte bancaire.
           </p>

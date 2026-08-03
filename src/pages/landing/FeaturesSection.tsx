@@ -19,6 +19,7 @@ import {
   OKRMobileShowcase,
   StatsMobileShowcase,
 } from '../../components/showcase/MobileShowcases';
+import { useT } from '@/i18n/useT';
 
 // Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
 // page should never block on it: lazy-load with a lightweight skeleton so
@@ -219,6 +220,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
 };
 
 const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatureClick }) => {
+  const { t } = useT('landing');
   const reduceMotion = useReducedMotion();
   // Layout empilé = mobile OU reduced-motion (le deck pinné n'a de sens
   // qu'avec les animations scrubbées).
@@ -311,7 +313,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             transition={{ delay: 0.2 }}
             className="text-xl text-slate-400 max-w-3xl mx-auto"
           >
-            Chaque module est conçu pour être puissant et intuitif — gestionnaire de tâches, tracker d'habitudes, agenda avec time-blocking et méthode OKR réunis
+            {t('features.modulesSubtitle')}
           </motion.p>
         </div>
 

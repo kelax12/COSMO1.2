@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
+import { useT } from '@/i18n/useT';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-10">
@@ -11,10 +12,11 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 const AProposPage: React.FC = () => {
+  const { t } = useT('landing');
   useSeoMeta({
-    title: 'À propos de Cosmo — qui sommes-nous ?',
+    title: t('about.metaTitle'),
     description:
-      "Pourquoi Cosmo existe : une application de productivité française, gratuite, qui réunit tâches, habitudes, agenda et OKR dans un seul écosystème.",
+      t('about.metaDescription'),
     canonical: 'https://thecosmo.app/a-propos',
   });
   const navigate = useNavigate();
@@ -27,63 +29,48 @@ const AProposPage: React.FC = () => {
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-10 group"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          Retour
+          {t('about.back')}
         </button>
 
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">À propos de Cosmo</h1>
-        <p className="text-slate-400 mb-10">Une app de productivité française, gratuite, tout-en-un.</p>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">{t('about.title')}</h1>
+        <p className="text-slate-400 mb-10">{t('about.subtitle')}</p>
 
-        <Section title="Pourquoi Cosmo existe">
+        <Section title={t('about.whyTitle')}>
+          <p>{t('about.p1')}</p>
           <p>
-            S'organiser en 2026 ressemble trop souvent à ça : une todo-list quelque part, une application
-            d'habitudes ailleurs, un agenda dans un troisième outil, et des objectifs de début d'année…
-            dans un tableur qu'on n'ouvre plus jamais. Chaque outil est bon, mais rien ne se parle.
-          </p>
-          <p>
-            Cosmo part d'une conviction simple : <strong className="text-white">la productivité personnelle repose
-            sur quatre piliers — les tâches, les habitudes, le temps et les objectifs</strong> — et ils ne
-            fonctionnent vraiment que connectés. Une tâche se planifie dans l'agenda, une habitude nourrit
-            un objectif, et le tout se mesure au même endroit.
+            {t('about.p2before')}<strong className="text-white">{t('about.p2bold')}</strong>{t('about.p2after')}
           </p>
         </Section>
 
-        <Section title="Ce qu'on croit">
+        <Section title={t('about.beliefsTitle')}>
           <ul className="list-disc pl-5 space-y-2">
-            <li><strong className="text-white">Gratuit d'abord.</strong> Les fonctionnalités principales sont gratuites, sans limite artificielle. On préfère convaincre que verrouiller.</li>
-            <li><strong className="text-white">Essayer avant de s'inscrire.</strong> La démo s'ouvre sans compte ni email, pré-remplie avec 12 mois de données réalistes. Jugez sur pièce.</li>
-            <li><strong className="text-white">Le français n'est pas une traduction.</strong> Cosmo est conçu en français, pour un public francophone — pas localisé après coup.</li>
-            <li><strong className="text-white">Vos données vous appartiennent.</strong> Stockage sécurisé avec Row Level Security, et en mode démo, rien ne quitte votre navigateur.</li>
+            <li><strong className="text-white">{t('about.principle1Bold')}</strong>{t('about.principle1')}</li>
+            <li><strong className="text-white">{t('about.principle2Bold')}</strong>{t('about.principle2')}</li>
+            <li><strong className="text-white">{t('about.principle3Bold')}</strong>{t('about.principle3')}</li>
+            <li><strong className="text-white">{t('about.principle4Bold')}</strong>{t('about.principle4')}</li>
           </ul>
         </Section>
 
-        <Section title="Cosmo, The Cosmo App ou thecosmo ?">
+        <Section title={t('about.namesTitle')}>
           <p>
-            Les trois désignent la même application : <strong className="text-white">Cosmo</strong>, accessible à
-            l'adresse <strong className="text-white">thecosmo.app</strong>. On nous cherche aussi sous « Cosmo app »,
-            « The Cosmo » ou « thecosmo app » — c'est toujours nous. À ne pas confondre avec d'autres produits
-            homonymes sur les stores mobiles : Cosmo est une application web, sans téléchargement, et son seul
-            site officiel est thecosmo.app.
+            {t('about.namesP')}<strong className="text-white">{t('about.namesBold1')}</strong>{t('about.namesMid')}<strong className="text-white">{t('about.namesBold2')}</strong>{t('about.namesAfter')}
           </p>
         </Section>
 
-        <Section title="Qui est derrière ?">
+        <Section title={t('about.whoTitle')}>
+          <p>{t('about.whoP')}</p>
           <p>
-            Cosmo est un produit indépendant, développé en France par une très petite équipe — pas de
-            levée de fonds, pas de growth hacking agressif, juste un produit qu'on améliore chaque semaine
-            en écoutant les retours des utilisateurs.
-          </p>
-          <p>
-            Une question, un bug, une idée ? Écrivez-nous :{' '}
+            {t('about.contactP')}{' '}
             <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">
               axellongattepro@gmail.com
             </a>
-            . On répond vite.
+            {t('about.contactAfter')}
           </p>
         </Section>
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
-          <p className="text-lg font-semibold mb-2">Découvrez Cosmo en 2 minutes</p>
-          <p className="text-slate-400 text-sm mb-5">Tâches, habitudes, agenda et OKR — démo instantanée, sans inscription.</p>
+          <p className="text-lg font-semibold mb-2">{t('about.ctaTitle')}</p>
+          <p className="text-slate-400 text-sm mb-5">{t('about.ctaSubtitle')}</p>
           <Link
             to="/signup"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-200 transition-colors"

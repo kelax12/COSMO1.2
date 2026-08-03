@@ -1,0 +1,233 @@
+{
+  "nav": {
+    "features": "Features",
+    "start": "Get started",
+    "startFree": "Get started for free",
+    "solutions": "Solutions",
+    "guide": "Guide",
+    "login": "Sign in"
+  },
+  "hero": {
+    "line1": "All your productivity,",
+    "line2": "in a single app.",
+    "subtitle": "Tasks, habits, a calendar with time-blocking and the OKR method — connected in one tool built to move you forward. No friction.",
+    "demoAria": "Try the demo without signing up",
+    "demoCta": "Try the free demo",
+    "signupCta": "Create a free account",
+    "reassurance": "Demo pre-filled with 100 tasks · nothing to install · ready in 1 click",
+    "scroll": "Discover"
+  },
+  "marquee": {
+    "tasks": "Tasks",
+    "agenda": "Calendar",
+    "timeBlocking": "Time-blocking",
+    "okr": "OKRs",
+    "habits": "Habits",
+    "stats": "Statistics",
+    "demo": "Free demo mode"
+  },
+  "cta": {
+    "line1": "Ready to transform",
+    "line2": "your productivity?",
+    "subtitle": "Join thousands of professionals who have already changed the way they work with Cosmo",
+    "statsAria": "Demo contents: 100 tasks, 100 habits, 150 events",
+    "tasks": "tasks",
+    "habits": "habits",
+    "events": "events",
+    "tryDemo": "Try the demo",
+    "startNow": "Get started now"
+  },
+  "why": {
+    "titleTop": "Not one more app.",
+    "titleBottom": "A connected system.",
+    "subtitle": "Where other apps do one thing, Cosmo makes your tasks, your calendar,",
+    "meeting": "Meeting",
+    "tag1": "// 01 · Time blocking",
+    "desc1": "Drag a task into your calendar — the event is created, the task stays linked.",
+    "tag2": "// 02 · Discipline",
+    "desc2": "One box per day. One streak per win. The pattern reveals itself.",
+    "tag3": "// 03 · OKR",
+    "title3": "Google's method,",
+    "title3b": "without the spreadsheet.",
+    "desc3": "Ambitious objectives, measurable key results. Progress adds up while you work.",
+    "tag4": "// 04 · One view",
+    "title4": "Where does your time go?",
+    "desc4": "You stop guessing. You see.",
+    "tag5": "// 05 · Zero friction",
+    "desc5": "A demo pre-filled with 12 months of realistic data. You try the real Cosmo, not a video. No email asked."
+  },
+  "features": {
+    "heading": "A productivity app for every profile",
+    "subtitle": "Student, professional, founder or team — Cosmo adapts task management, habit tracking and OKRs to what you actually need",
+    "modulesSubtitle": "Every module is built to be powerful and intuitive — task manager, habit tracker, calendar with time-blocking and the OKR method, together",
+    "tasks": {
+      "titleTop": "Task management",
+      "titleAccent": "done right",
+      "description": "Bring all your tasks together with priorities, colour-coded categories and due dates. Filter in one click to focus on what matters.",
+      "b1": "Filter by priority, category or due date in one click",
+      "b2": "Add categories to see your work at a glance",
+      "b3": "Create task lists to stay organised",
+      "b4": "Share your tasks with your team",
+      "cta": "Try tasks"
+    },
+    "agenda": {
+      "titleTop": "Built-in calendar",
+      "titleAccent": "and time-blocking",
+      "description": "Plan your tasks in time blocks. Drag and drop links your calendar to your tasks, with no double entry.",
+      "b1": "Drag a task from the sidebar onto a slot: an event is created instantly",
+      "b2": "The event's colour matches the task's category, so your priorities stand out",
+      "b3": "Create, move or resize events with the mouse: the linked task updates on its own",
+      "b4": "Day / week / month views, one click apart, with quick navigation between periods",
+      "cta": "Try the calendar"
+    },
+    "okr": {
+      "titleTop": "Objectives",
+      "titleAccent": "the Google way",
+      "description": "The OKR method used by Google, Intel and Netflix — now in your pocket. Set ambitious objectives and measure every key result.",
+      "b1": "Set ambitious objectives with numeric key results",
+      "b2": "Your progress is calculated automatically",
+      "b3": "See your objectives advance in real time",
+      "b4": "Break objectives into key results to go from \"someday\" to \"now\"",
+      "cta": "Try OKRs"
+    },
+    "habits": {
+      "titleTop": "Habits",
+      "titleAccent": "shown as a heatmap",
+      "description": "Build routines that last with complete tracking. The 26-week heatmap reveals your patterns and rewards your consistency.",
+      "b1": "Measure your consistency with the tracking board.",
+      "b2": "Stay motivated with the consecutive-day streak system",
+      "b3": "Overall tracking board: see all your habits at a glance",
+      "b4": "Completion rate and time invested: measure your real consistency",
+      "cta": "Try habits"
+    },
+    "stats": {
+      "titleTop": "Statistics",
+      "titleAccent": "that speak",
+      "description": "Analyse the time you invest across every module — tasks, calendar, OKRs, habits. Precise data for informed decisions.",
+      "b1": "Time split across tasks, calendar, OKRs and habits, for real clarity",
+      "b2": "Day, week, month, year views — zoom wherever you want",
+      "b3": "Track your progress from a single page",
+      "b4": "See your productivity at a glance",
+      "cta": "See the statistics"
+    }
+  },
+  "useCases": {
+    "students": {
+      "profile": "Students",
+      "title": "Academic excellence",
+      "description": "Manage your courses, assignments and revision with optimised planning that adapts to how you learn.",
+      "f1": "Optimised revision schedule",
+      "f2": "Track grades and objectives",
+      "f3": "The full picture + less stress"
+    },
+    "professionals": {
+      "profile": "Professionals",
+      "title": "Peak performance",
+      "description": "Boost your career with productivity tools that change how you work and how you hit your goals.",
+      "f1": "Advanced project management",
+      "f2": "OKRs and personal development",
+      "f3": "An effective prioritisation system"
+    },
+    "teams": {
+      "profile": "Teams",
+      "title": "Smooth collaboration",
+      "description": "Keep your team in sync with collaborative tools that align everyone on the same strategic objectives.",
+      "f1": "Simple task sharing",
+      "f2": "Shared objective tracking",
+      "f3": "Team dashboards"
+    },
+    "founders": {
+      "profile": "Founders",
+      "title": "Faster growth",
+      "description": "Steer your startup with precise metrics and automations that save you real time.",
+      "f1": "Advanced multi-project organisation",
+      "f2": "Delegation and task tracking",
+      "f3": "Built-in strategic planning"
+    }
+  },
+  "faq": {
+    "eyebrow": "— Frequently asked questions —",
+    "subtitle": "OKR method, habits, time-blocking, demo mode, security... we answer everything.",
+    "notListed": "A question not covered?",
+    "writeUs": "Write to us",
+    "q1": "Is Cosmo really free?",
+    "a1": "Yes. Every core feature — tasks, habits, calendar, OKRs and statistics — is completely free. Premium access (team collaboration, task sharing) is earned by watching a short ad, without ever reaching for your card.",
+    "q2": "What is the OKR method and why use it?",
+    "a2": "The OKR method (Objectives & Key Results) is the goal-setting system used by Google, Intel and Netflix. One OKR = one ambitious qualitative objective + 2 to 5 measurable key results. Cosmo computes progress for you and shows where you stand in real time, with no spreadsheet.",
+    "q3": "How is it different from Notion or Todoist?",
+    "a3": "Notion is a very flexible notes space, but with no built-in productivity structure. Todoist is an excellent task manager, but it doesn't cover habits, OKRs or time-blocking. Cosmo is the only app that connects all four pillars — tasks, habits, calendar and objectives — in one coherent ecosystem.",
+    "q4": "How does demo mode work?",
+    "a4": "Click \"Try the demo\": you get the full app straight away, pre-filled with 100 tasks, 100 habits, 150 calendar events and 8 OKRs across 12 months of realistic data. No account, no email asked. When you're convinced, create your real account in 30 seconds.",
+    "q5": "Does Cosmo work on mobile?",
+    "a5": "Yes. Cosmo is built mobile-first: responsive interface, bottom navigation bar, swipe gestures on tasks, smooth bottom sheets and iOS safe-area support. It runs in any mobile browser — Safari on iOS, Chrome on Android — with nothing to download.",
+    "q6": "What is time-blocking?",
+    "a6": "Time-blocking means reserving slots in your calendar to work on specific tasks, instead of reacting as things come. In Cosmo, just drag a task from the side panel onto a slot in your calendar: the event is created automatically and linked to the task. It's the method favoured by Elon Musk, Bill Gates and Cal Newport.",
+    "q7": "Can I collaborate with my team?",
+    "a7": "Yes. With Premium access (free via an ad), send friend requests by email, share tasks with a Viewer or Editor role, and follow your collaborators' progress from your dashboard. Contextual messaging lets you discuss right inside a task.",
+    "q8": "How do I track my habits effectively?",
+    "a8": "Create a habit, set its frequency (daily, weekly, specific days), then tick it off each day. Cosmo shows a GitHub-style 26-week heatmap, computes your streak (consecutive days) and your completion rate over the period you choose. The golden rule: start with 2 to 3 habits at most.",
+    "q9": "Is my data secure?",
+    "a9": "Your data is stored on Supabase with Row Level Security: nobody else can reach your tasks or habits. The app's pages (dashboard, tasks, etc.) are blocked for search crawlers in robots.txt. In demo mode, data stays in your browser (localStorage) and never touches our servers.",
+    "q10": "Can I use Cosmo without an internet connection?",
+    "a10": "In demo mode, all data is stored locally in your browser — no connection needed after the initial load. With an account, a 24-hour localStorage cache lets you consult your recent tasks and habits even on a shaky connection."
+  },
+  "footer": {
+    "rights": "© 2026 All rights reserved.",
+    "guide": "User guide",
+    "blog": "Blog",
+    "freelancers": "For freelancers",
+    "students": "For students",
+    "managers": "For managers",
+    "about": "About",
+    "faq": "FAQ",
+    "signup": "Free sign-up",
+    "login": "Sign in",
+    "legalNotice": "Legal notice",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  },
+  "about": {
+    "metaTitle": "About Cosmo — who are we?",
+    "metaDescription": "Why Cosmo exists: a free productivity app that brings tasks, habits, calendar and OKRs into a single ecosystem.",
+    "title": "About Cosmo",
+    "subtitle": "A free, all-in-one productivity app.",
+    "p1": "Getting organised in 2026 too often looks like this: a to-do list somewhere, a habits app elsewhere, a calendar in a third tool, and new-year objectives… in a spreadsheet nobody opens again. Each tool is fine, but none of them talk to each other.",
+    "p2before": "Cosmo starts from a simple conviction: ",
+    "p2bold": "personal productivity rests on four pillars — tasks, habits, time and objectives",
+    "p2after": " — and they only really work when connected. A task gets scheduled in the calendar, a habit feeds an objective, and all of it is measured in one place.",
+    "principle1Bold": "Free first.",
+    "principle1": " The core features are free, with no artificial limits. We would rather convince you than lock you in.",
+    "principle2Bold": "Try before you sign up.",
+    "principle2": " The demo opens with no account and no email, pre-filled with 12 months of realistic data. Judge for yourself.",
+    "principle3Bold": "One app, not a patchwork.",
+    "principle3": " Tasks, habits, calendar and objectives are designed together from the start — not bolted on afterwards.",
+    "principle4Bold": "Your data is yours.",
+    "principle4": " Secure storage with Row Level Security, and in demo mode nothing leaves your browser.",
+    "namesP": "All three refer to the same app: ",
+    "namesBold1": "Cosmo",
+    "namesMid": ", available at ",
+    "namesBold2": "thecosmo.app",
+    "namesAfter": ". People also look for us as “Cosmo app”, “The Cosmo” or “thecosmo app” — it's always us. Not to be confused with other products of the same name on mobile stores: Cosmo is a web app, with nothing to download, and its only official site is thecosmo.app.",
+    "whoTitle": "Who's behind it?",
+    "whoP": "Cosmo is an independent product, built in France by a very small team — no funding round, no aggressive growth hacking, just a product we improve every week by listening to what users tell us.",
+    "contactP": "A question, a bug, an idea? Write to us:",
+    "contactAfter": ". We reply fast.",
+    "ctaTitle": "Discover Cosmo in 2 minutes",
+    "ctaSubtitle": "Tasks, habits, calendar and OKRs — instant demo, no sign-up.",
+    "whyTitle": "Why Cosmo exists",
+    "beliefsTitle": "What we believe",
+    "namesTitle": "Cosmo, The Cosmo App or thecosmo?",
+    "back": "Back"
+  },
+  "useCasePage": {
+    "signupCta": "Create a free account",
+    "ctaTitle": "Try Cosmo in 2 minutes"
+  },
+  "blog": {
+    "metaTitle": "Cosmo blog — Productivity, OKRs, habits and time-blocking",
+    "metaDescription": "Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. By the Cosmo team.",
+    "title": "The Cosmo blog",
+    "readNext": "Read next",
+    "tryFree": "Try Cosmo for free"
+  }
+}

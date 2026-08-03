@@ -78,6 +78,18 @@ export function useSeoMeta({ title, description, canonical, ogTitle, ogDescripti
   }, [title, description, canonical, ogTitle, ogDescription]);
 }
 
+/**
+ * Applique les méta de la RACINE (titre, description, canonical) à la page.
+ *
+ * Pour la landing, qui n'a pas de méta propres : sans ce hook, le `<title>`
+ * statique d'`index.html` — écrit en français — restait affiché sur `/en/`.
+ * `useSeoMeta` ne les posait qu'au DÉMONTAGE, pour restaurer l'état d'origine.
+ */
+export function useRootSeoMeta() {
+  const root = rootMeta();
+  useSeoMeta({ title: root.title, description: root.description, canonical: root.canonical });
+}
+
 /** Étiquette BCP 47 de la locale courante — pour les JSON-LD construits côté client. */
 export function currentInLanguage(): string {
   return BCP47_TAG[localeStore.locale];

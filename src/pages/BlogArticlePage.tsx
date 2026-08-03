@@ -4,11 +4,13 @@ import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { ARTICLES, getArticle } from '@/content/blog/index.mjs';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 const formatArticleDate = (iso: string) =>
   formatDate(new Date(iso + 'T00:00:00'), { day: 'numeric', month: 'long', year: 'numeric' });
 
 const BlogArticlePage: React.FC = () => {
+  const { t } = useT('landing');
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticle(slug) : undefined;
 
@@ -61,7 +63,7 @@ const BlogArticlePage: React.FC = () => {
         </article>
 
         <nav aria-label="À lire ensuite" className="mt-16">
-          <h2 className="text-lg font-bold text-white mb-4">À lire ensuite</h2>
+          <h2 className="text-lg font-bold text-white mb-4">{t('blog.readNext')}</h2>
           <div className="space-y-3">
             {ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3).map((a) => (
               <Link
@@ -77,7 +79,7 @@ const BlogArticlePage: React.FC = () => {
         </nav>
 
         <aside className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
-          <p className="text-lg font-semibold mb-2">Essayez Cosmo gratuitement</p>
+          <p className="text-lg font-semibold mb-2">{t('blog.tryFree')}</p>
           <p className="text-slate-400 text-sm mb-5">
             Tâches, habitudes, agenda et OKR dans une seule application. Démo instantanée, sans inscription.
           </p>

@@ -4,11 +4,13 @@ import { ArrowRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { ARTICLES } from '@/content/blog/index.mjs';
 import { formatDate } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
 
 const formatArticleDate = (iso: string) =>
   formatDate(new Date(iso + 'T00:00:00'), { day: 'numeric', month: 'long', year: 'numeric' });
 
 const BlogIndexPage: React.FC = () => {
+  const { t } = useT('landing');
   useSeoMeta({
     title: 'Blog Cosmo — Productivité, OKR, habitudes et time-blocking',
     description:
@@ -32,7 +34,7 @@ const BlogIndexPage: React.FC = () => {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-white">Le blog Cosmo</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-white">{t('blog.title')}</h1>
         <p className="text-slate-400 mb-12">
           Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité — sans bullshit.
         </p>

@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { USE_CASES, ENTRY_OFFSETS } from './data';
+import { useT } from '@/i18n/useT';
 
 interface SolutionsSectionProps {
   handleFeatureClick: (path: string) => void;
@@ -21,6 +22,7 @@ const UseCaseCardContent: React.FC<{
   index: number;
   onClick: () => void;
 }> = ({ useCase, index, onClick }) => {
+  const { t } = useT('landing');
   const num = String(index + 1).padStart(2, '0');
   return (
     <>
@@ -48,26 +50,26 @@ const UseCaseCardContent: React.FC<{
           {num}
         </span>
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: useCase.accent }}>
-          {useCase.profile}
+          {t(useCase.profileKey)}
         </span>
         <span className="flex-1 h-px" style={{ backgroundColor: useCase.accent, opacity: 0.25 }} />
       </div>
 
       <h3 className="relative text-3xl lg:text-4xl font-semibold text-white mb-5 leading-[1.1] tracking-tight">
-        {useCase.title}
+        {t(useCase.titleKey)}
       </h3>
 
       <p className="relative text-base text-slate-400 leading-relaxed mb-8 max-w-md">
-        {useCase.description}
+        {t(useCase.descriptionKey)}
       </p>
 
       <ul className="relative space-y-2.5 mb-10">
-        {useCase.features.map((feature, i) => (
+        {useCase.featureKeys.map((featureKey, i) => (
           <li key={i} className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
             <span className="select-none mt-[2px]" style={{ color: useCase.accent }}>
               —
             </span>
-            <span>{feature}</span>
+            <span>{t(featureKey)}</span>
           </li>
         ))}
       </ul>
@@ -90,6 +92,7 @@ const CARD_STYLE: React.CSSProperties = {
 };
 
 const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick }) => {
+  const { t } = useT('landing');
   const isMobile = useIsMobile();
   const reduceMotion = useReducedMotion();
   // Grille classique = mobile OU reduced-motion ; sinon piste horizontale.
@@ -180,10 +183,10 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-8">
             <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Application productivité pour chaque profil
+              {t('features.heading')}
             </h2>
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">
-              Étudiant, professionnel, entrepreneur ou équipe — Cosmo adapte la gestion de tâches, le suivi d'habitudes et les OKR à vos besoins spécifiques
+              {t('features.subtitle')}
             </p>
           </div>
         </div>
