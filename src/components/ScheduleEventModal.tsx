@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useCreateEvent, type CreateEventInput } from '@/modules/events';
 import { useCategoryColor } from '@/modules/categories';
 import type { Task } from '@/modules/tasks';
+import { useT } from '@/i18n/useT';
 
 interface ScheduleEventModalProps {
   open: boolean;
@@ -53,6 +54,7 @@ export function defaultSlot(task: Task | null): { start: string; end: string } {
 }
 
 export default function ScheduleEventModal({ open, onOpenChange, task }: ScheduleEventModalProps) {
+  const { t } = useT('eventModal');
   const createEvent = useCreateEvent();
   const categoryColor = useCategoryColor(task?.category ?? '');
 
@@ -99,13 +101,13 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Planifier dans l'agenda</DialogTitle>
-          <DialogDescription>Crée un événement lié à cette tâche.</DialogDescription>
+          <DialogTitle>{t('schedule.title')}</DialogTitle>
+          <DialogDescription>{t('schedule.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
-            <Label htmlFor="schedule-event-title">Titre</Label>
+            <Label htmlFor="schedule-event-title">{t('schedule.titleLabel')}</Label>
             <Input
               id="schedule-event-title"
               value={title}
@@ -119,7 +121,7 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="schedule-event-date">Date</Label>
+            <Label htmlFor="schedule-event-date">{t('schedule.date')}</Label>
             <Input
               id="schedule-event-date"
               type="date"
@@ -129,7 +131,7 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="schedule-event-start-time">Heure de début</Label>
+              <Label htmlFor="schedule-event-start-time">{t('schedule.startTime')}</Label>
               <Input
                 id="schedule-event-start-time"
                 type="time"
@@ -138,7 +140,7 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="schedule-event-end-time">Heure de fin</Label>
+              <Label htmlFor="schedule-event-end-time">{t('schedule.endTime')}</Label>
               <Input
                 id="schedule-event-end-time"
                 type="time"
@@ -148,7 +150,7 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="schedule-event-notes">Notes</Label>
+            <Label htmlFor="schedule-event-notes">{t('schedule.notes')}</Label>
             <Textarea
               id="schedule-event-notes"
               rows={2}

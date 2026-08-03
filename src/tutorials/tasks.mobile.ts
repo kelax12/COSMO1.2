@@ -6,56 +6,49 @@ import { TutorialStep } from '@/components/tutorial/types';
  */
 export const tasksTutorialStepsMobile: TutorialStep[] = [
   {
-    title: 'Vos tâches en un endroit',
-    description:
-      "Ici vous gérez toutes vos tâches. 7 étapes pour découvrir les gestes mobiles — swipe, tap long, bouton « … ».",
+    titleKey: 'tasksMobile.step1Title',
+    descriptionKey: 'tasksMobile.step1Desc',
   },
   {
-    title: 'Listes personnelles',
-    description:
-      "Vos listes (Travail, Courses, Voyage…) se trouvent ici. Touchez une liste pour filtrer. Faites glisser le carrousel pour voir toutes vos listes.",
+    titleKey: 'tasksMobile.step2Title',
+    descriptionKey: 'tasksMobile.step2Desc',
     target: '[data-tutorial-id="tasks-lists"]',
     cardPlacement: 'bottom',
     action: 'pulse',
     dimLevel: 'light',
   },
   {
-    title: 'Recherche & filtres',
-    description:
-      "Tapez pour chercher. Touchez « + d'options » pour révéler les filtres rapides : Favoris, Terminées, En retard, Collaboration.",
+    titleKey: 'tasksMobile.step3Title',
+    descriptionKey: 'tasksMobile.step3Desc',
     target: '[data-tutorial-id="tasks-filter"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Mini-calendrier',
-    description:
-      "Affiche vos échéances sur une semaine. Touchez ce bouton pour l'afficher ou le masquer.",
+    titleKey: 'tasksMobile.step4Title',
+    descriptionKey: 'tasksMobile.step4Desc',
     target: '[data-tutorial-id="tasks-calendar-toggle"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Créer une tâche',
-    description:
-      "Ce bouton flottant est accessible depuis toutes les pages. Il ouvre la création rapide : tapez « Appeler le dentiste jeudi 10h » et la date est comprise automatiquement.",
+    titleKey: 'tasksMobile.step5Title',
+    descriptionKey: 'tasksMobile.step5Desc',
     target: '[data-tutorial-id="global-quick-add-fab"]',
     cardPlacement: 'top',
     action: 'pulse',
   },
   {
-    title: 'Geste : glisser à droite pour valider',
-    description:
-      "Sur une tâche, glissez votre doigt vers la droite. Une zone verte « Valider » apparaît. Lâchez : la tâche est cochée (avec une légère vibration).",
+    titleKey: 'tasksMobile.step6Title',
+    descriptionKey: 'tasksMobile.step6Desc',
     target: '[data-tutorial-id="tasks-list"]',
     cardPlacement: 'top',
     action: 'pulse',
     dimLevel: 'light',
   },
   {
-    title: 'Plus simple : le bouton « … »',
-    description:
-      "Pas envie de glisser ? Le bouton « … » à droite de chaque tâche ouvre le panneau d'actions : favori, partage, planifier, supprimer.",
+    titleKey: 'tasksMobile.step7Title',
+    descriptionKey: 'tasksMobile.step7Desc',
     target: '[data-tutorial-id="tasks-list"]',
     cardPlacement: 'top',
     action: 'pulse',

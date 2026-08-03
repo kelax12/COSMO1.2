@@ -18,6 +18,7 @@ import {
   type Granularity,
 } from '@/modules/admin';
 import type { AdminChartPoint, LabeledValue } from './admin/AdminCharts';
+import { useT } from '@/i18n/useT';
 
 // Règle P-2 : recharts (vendor-charts) chargé uniquement quand un admin
 // ouvre effectivement la page.
@@ -96,6 +97,7 @@ const ChartCard: React.FC<{ title: string; note?: string; children: React.ReactN
 );
 
 const AdminPage: React.FC = () => {
+  const { t } = useT('admin');
   const { isDemo } = useAuth();
   const { data, isLoading, error } = useAdminStats();
 
@@ -162,13 +164,13 @@ const AdminPage: React.FC = () => {
   const adoptionData: LabeledValue[] = [
     { label: '≥1 tâche', value: pctNum(adoption.tasksUsers, totals.users), hint: `${adoption.tasksUsers}/${totals.users} utilisateurs` },
     { label: '≥1 habitude', value: pctNum(adoption.habitsUsers, totals.users), hint: `${adoption.habitsUsers}/${totals.users} utilisateurs` },
-    { label: '≥1 événement', value: pctNum(adoption.eventsUsers, totals.users), hint: `${adoption.eventsUsers}/${totals.users} utilisateurs` },
+    { label: t('eventsAtLeastOne'), value: pctNum(adoption.eventsUsers, totals.users), hint: t('usersRatio', { count: adoption.eventsUsers, total: totals.users }) },
     { label: '≥1 OKR', value: pctNum(adoption.okrsUsers, totals.users), hint: `${adoption.okrsUsers}/${totals.users} utilisateurs` },
   ];
 
   const engagementData: LabeledValue[] = [
-    { label: 'Activation 24 h', value: pctNum(activation24h.activated, activation24h.total), hint: `${activation24h.activated}/${activation24h.total} ont créé ≥1 objet le 1er jour` },
-    { label: 'Complétion tâches', value: pctNum(tasksCompletion.completed, tasksCompletion.total), hint: `${tasksCompletion.completed}/${tasksCompletion.total} tâches complétées` },
+    { label: t('activation24h'), value: pctNum(activation24h.activated, activation24h.total), hint: t('activationHint', { count: activation24h.activated, total: activation24h.total }) },
+    { label: t('taskCompletion'), value: pctNum(tasksCompletion.completed, tasksCompletion.total), hint: t('taskCompletionHint', { count: tasksCompletion.completed, total: tasksCompletion.total }) },
     { label: 'Stickiness DAU/MAU', value: pctNum(stickiness.dau, stickiness.mau), hint: `${stickiness.dau} actifs aujourd'hui / ${stickiness.mau} sur 30 j` },
     { label: 'Churn 30 j+', value: pctNum(totals.inactive30dPlus, totals.users), hint: `${totals.inactive30dPlus}/${totals.users} comptes inactifs depuis 30 j+` },
   ];
@@ -176,20 +178,20 @@ const AdminPage: React.FC = () => {
   const usageData: LabeledValue[] = [
     { label: 'Tâches', value: usage.tasks },
     { label: 'Habitudes', value: usage.habits },
-    { label: 'Événements', value: usage.events },
+    { label: t('events'), value: usage.events },
     { label: 'OKRs', value: usage.okrs },
     { label: 'Partages', value: usage.sharedTasks },
   ];
 
   const collabData: LabeledValue[] = [
-    { label: 'Ont partagé', value: collaboration.sharers, hint: `${collaboration.sharers} users (${pct(collaboration.sharers, totals.users)})` },
+    { label: t('shared'), value: collaboration.sharers, hint: t('sharedHint', { count: collaboration.sharers, pct: pct(collaboration.sharers, totals.users) }) },
     { label: 'Ont ≥1 ami', value: collaboration.usersWithFriends, hint: `${collaboration.usersWithFriends} users (${pct(collaboration.usersWithFriends, totals.users)})` },
-    { label: 'Demandes acceptées', value: collaboration.acceptedRequests },
+    { label: t('acceptedRequests'), value: collaboration.acceptedRequests },
   ];
 
   const demoData: LabeledValue[] = [
-    { label: 'Visiteurs démo', value: demo.visitors },
-    { label: 'Comptes créés', value: demo.converted, hint: `${demo.converted} convertis (${demo.visitors > 0 ? `${demo.conversionPct}%` : '—'})` },
+    { label: t('demoVisitors'), value: demo.visitors },
+    { label: t('accountsCreated'), value: demo.converted, hint: t('demoConverted', { count: demo.converted, pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '—' }) },
   ];
 
   // Cohortes rétention : les 12 dernières semaines, ordre chronologique.
@@ -205,15 +207,15 @@ const AdminPage: React.FC = () => {
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
       <div className="mb-8">
-        <PageHeading variant="standard" className="mb-2">Stats COSMO</PageHeading>
+        <PageHeading variant="standard" className="mb-2">{t('title')}</PageHeading>
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          Croissance et activité — généré le {format(new Date(data.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: getDateLocale() })}
+          {t('generatedAt', { date: format(new Date(data.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: getDateLocale() }) })}
         </p>
       </div>
 
       {/* Croissance */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <KpiCard label="Comptes créés" value={String(totals.users)} />
+        <KpiCard label={t('accountsCreated')} value={String(totals.users)} />
         <KpiCard
           label="Actifs aujourd'hui"
           value={String(totals.activeToday)}
@@ -240,47 +242,47 @@ const AdminPage: React.FC = () => {
         </ChartCard>
         <ChartCard
           title="Utilisateurs actifs"
-          note="Journal d'activité actif depuis la migration 056 — l'historique démarre à son déploiement"
+          note={t('activityLogNote')}
         >
           {dau ? (
             <DauChart data={dau.points} />
           ) : (
-            <EmptyChart>Pas encore de données d'activité</EmptyChart>
+            <EmptyChart>{t('noActivity')}</EmptyChart>
           )}
         </ChartCard>
 
-        <ChartCard title="Répartition de l'activité" note="Segments exclusifs — chaque compte est dans une seule tranche">
-          {activityData.length > 0 ? <Donut data={activityData} /> : <EmptyChart>Aucun compte</EmptyChart>}
+        <ChartCard title={t('activitySplit')} note={t('activitySplitNote')}>
+          {activityData.length > 0 ? <Donut data={activityData} /> : <EmptyChart>{t('noAccount')}</EmptyChart>}
         </ChartCard>
-        <ChartCard title="Acquisition" note="Inscriptions par méthode de connexion">
-          {providerData.length > 0 ? <Donut data={providerData} /> : <EmptyChart>Aucune inscription</EmptyChart>}
+        <ChartCard title={t('acquisition')} note={t('acquisitionNote')}>
+          {providerData.length > 0 ? <Donut data={providerData} /> : <EmptyChart>{t('noSignup')}</EmptyChart>}
         </ChartCard>
 
-        <ChartCard title="Adoption par fonctionnalité" note="% des comptes ayant créé au moins 1 élément">
+        <ChartCard title={t('adoption')} note={t('adoptionNote')}>
           <PercentBars data={adoptionData} />
         </ChartCard>
-        <ChartCard title="Engagement" note="Activation = ≥1 objet créé dans les 24 h après inscription">
+        <ChartCard title={t('engagement')} note={t('engagementNote')}>
           <PercentBars data={engagementData} color="#8b5cf6" />
         </ChartCard>
 
-        <ChartCard title="Usage produit" note="Volumes totaux créés">
+        <ChartCard title={t('usage')} note={t('usageNote')}>
           <CountBars data={usageData} />
         </ChartCard>
         <ChartCard title="Collaboration" note="Le partage de tâches est le levier d'acquisition virale">
           <CountBars data={collabData} />
         </ChartCard>
 
-        <ChartCard title="Conversion démo" note={`Taux de conversion : ${demo.visitors > 0 ? `${demo.conversionPct}%` : '—'}`}>
+        <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '—' })}>
           <CountBars data={demoData} />
         </ChartCard>
         <ChartCard
-          title="Rétention J7 par cohorte"
-          note="Inscrits de la semaine encore actifs entre J+7 et J+13 — mesurable ~2 semaines après la mig. 056"
+          title={t('retention')}
+          note={t('retentionNote')}
         >
           {retentionData.length > 0 ? (
             <PercentBars data={retentionData} color="#22c55e" />
           ) : (
-            <EmptyChart>Pas encore de cohortes</EmptyChart>
+            <EmptyChart>{t('noCohort')}</EmptyChart>
           )}
         </ChartCard>
       </div>

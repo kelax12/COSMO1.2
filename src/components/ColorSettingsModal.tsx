@@ -4,6 +4,7 @@ import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useT } from '@/i18n/useT';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
@@ -12,6 +13,7 @@ type ColorSettingsModalProps = {
 };
 
 const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose, isNested }) => {
+  const { t } = useT('tasks');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
@@ -70,7 +72,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
     // Validation : chaque nom de catégorie doit faire ≥ 2 caractères
     const invalid = localCategories.find(lc => lc.name.trim().length < 2);
     if (invalid) {
-      toast.error('Chaque nom de catégorie doit contenir au moins 2 caractères');
+      toast.error(t('colorModal.nameTooShort'));
       return;
     }
 
@@ -139,7 +141,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
           </div>
 
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0">
-            <h2 className="text-base sm:text-xl font-medium text-[rgb(var(--color-text-primary))]">Modifier les catégories</h2>
+            <h2 className="text-base sm:text-xl font-medium text-[rgb(var(--color-text-primary))]">{t('colorModal.title')}</h2>
             <button
               onClick={onClose}
               aria-label="Fermer"
@@ -194,7 +196,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                         value={category.name}
                         onChange={(e) => handleUpdateLocal(category.id, { name: e.target.value })}
                         className="w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))] dark:focus:border-slate-500 transition-all"
-                        placeholder="Nom de la catégorie"
+                        placeholder={t('colorModal.namePlaceholder')}
                       />
                     </div>
 
@@ -255,9 +257,9 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Supprimer la catégorie</h3>
+                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('colorModal.deleteTitle')}</h3>
                   <p className="text-sm leading-relaxed mb-5 sm:mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
+                    {t('colorModal.deleteBody')}
                   </p>
                   <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                     <button

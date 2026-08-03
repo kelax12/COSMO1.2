@@ -3,6 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_ORDER } from './helpers';
+import { useT } from '@/i18n/useT';
 
 interface RecurrenceDaysModalProps {
   isOpen: boolean;
@@ -14,7 +15,9 @@ interface RecurrenceDaysModalProps {
 
 const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
   isOpen, onClose, recurrenceDays, setRecurrenceDays, setRecurrence,
-}) => (
+}) => {
+  const { t } = useT('eventModal');
+  return (
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -38,10 +41,10 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
               </div>
               <div className="px-5 sm:px-6 py-4">
                 <h3 className="text-base font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  Répéter les jours
+                  {t('repeatDays')}
                 </h3>
                 <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  Sélectionnez les jours de la semaine où l'événement se répète.
+                  {t('repeatDaysHint')}
                 </p>
                 <div className="space-y-1">
                   {DAY_ORDER.map((d) => {
@@ -95,5 +98,6 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
         )}
       </AnimatePresence>
 );
+};
 
 export default RecurrenceDaysModal;

@@ -162,7 +162,17 @@
     "markUndone": "Marquer comme non complétée",
     "subtasksDone": "Sous-tâches complétées",
     "noPriority": "Aucune priorité",
-    "noDeadline": "Pas d'échéance"
+    "noDeadline": "Pas d'échéance",
+    "overdue": "(en retard)",
+    "addCollaborator": "Ajouter un collaborateur",
+    "addToListShort": "Ajouter à la liste",
+    "duplicate": "Dupliquer la tâche",
+    "pendingInvite": "Invitation en attente d'acceptation",
+    "close": "Fermer",
+    "edit": "Modifier la tâche",
+    "schedule": "Planifier dans l'agenda",
+    "delete": "Supprimer la tâche",
+    "removeFromList": "Retirer de la liste"
   },
   "sort": {
     "label": "Trier par",
@@ -227,5 +237,66 @@
     "refuseList": "Refuser la liste partagée {{name}}",
     "withCount": "Boîte de réception, {{count}} en attente",
     "pendingTitle": "Tâches partagées en attente ({{count}})"
+  },
+  "filter": {
+    "clearSearch": "Effacer la recherche",
+    "filterCategories": "Filtrer par catégories",
+    "priorityRange": "Intervalle de priorité",
+    "searchByName": "Rechercher une tâche par nom",
+    "searchPlaceholder": "Rechercher...",
+    "sortBy": "Trier les tâches par",
+    "veryLow": "Très basse",
+    "veryHigh": "Très haute"
+  },
+  "modal": {
+    "createError": "Erreur lors de la création. Veuillez réessayer.",
+    "deleteError": "Erreur lors de la suppression. Veuillez réessayer.",
+    "deleted": "Tâche supprimée",
+    "created": "Tâche « {{name}} » créée",
+    "leftShared": "Vous avez quitté la tâche partagée",
+    "cancelRequest": "Annuler la demande",
+    "cancelRequestAria": "Annuler la demande d'ami",
+    "noContact": "Aucun contact trouvé",
+    "searchContact": "Email, nom ou identifiant...",
+    "owner": "Propriétaire",
+    "willBeAdded": "Sera ajouté",
+    "creating": "Création...",
+    "createTask": "Créer la tâche",
+    "savingEllipsis": "Enregistrement...",
+    "closeForm": "Fermer le formulaire",
+    "unsaved": "Non sauvegardé",
+    "changeColor": "Changer la couleur",
+    "namePlaceholder": "Entrez le nom de la tâche",
+    "minuteEstimate": "Estimation en minute",
+    "listNamePlaceholder": "Nom de la liste...",
+    "pending": "En attente"
+  },
+  "addToList": {
+    "title": "Ajouter à une liste",
+    "selected_one": "{{count}} tâche sélectionnée",
+    "selected_many": "{{count}} de tâches sélectionnées",
+    "selected_other": "{{count}} tâches sélectionnées",
+    "createAndAdd": "Créer et ajouter",
+    "createOne": "Créez-en une pour y ranger votre sélection.",
+    "editMode": "Mode édition",
+    "noList": "Aucune liste pour l'instant",
+    "create": "Créer",
+    "manualList": "liste manuelle",
+    "manualLists": "listes manuelles"
+  },
+  "colorModal": {
+    "nameTooShort": "Chaque nom de catégorie doit contenir au moins 2 caractères",
+    "title": "Modifier les catégories",
+    "namePlaceholder": "Nom de la catégorie",
+    "deleteTitle": "Supprimer la catégorie",
+    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible."
+  },
+  "desktop": {
+    "closeForm": "Fermer le formulaire",
+    "unsaved": "Non sauvegardé",
+    "changeColor": "Changer la couleur",
+    "namePlaceholder": "Entrez le nom de la tâche",
+    "minuteEstimate": "Estimation en minute",
+    "listNamePlaceholder": "Nom de la liste..."
   }
 }

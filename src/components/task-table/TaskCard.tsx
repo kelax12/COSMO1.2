@@ -243,7 +243,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         <button
           onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
           className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={selectedForListIds.includes(task.id) ? 'Retirer de la liste' : 'Ajouter à la liste'}
+          aria-label={selectedForListIds.includes(task.id) ? t('card.removeFromList') : t('card.addToListShort')}
           aria-pressed={selectedForListIds.includes(task.id)}
         >
           <span
@@ -269,7 +269,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           }}
           onPointerDown={(e) => { e.stopPropagation(); }}
           className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={task.completed ? 'Marquer comme non complétée' : 'Marquer comme complétée'}
+          aria-label={task.completed ? t('card.markUndone') : t('card.markDone')}
           aria-pressed={task.completed}
         >
           <span
@@ -315,7 +315,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 <Hourglass
                   size={13}
                   className="text-amber-500"
-                  aria-label="Invitation en attente d'acceptation"
+                  aria-label={t('card.pendingInvite')}
                 />
               </span>
             )}
@@ -327,7 +327,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
             {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
             {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
-            {isOverdue && <span className="sr-only"> (en retard)</span>}
+            {isOverdue && <span className="sr-only"> {t('card.overdue')}</span>}
           </span>
           <span aria-hidden="true">·</span>
           <span>{formatDuration(task.estimatedTime)}</span>
@@ -335,7 +335,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           {(task.subtasks?.length ?? 0) > 0 && (
             <>
               <span aria-hidden="true">·</span>
-              <span title="Sous-tâches complétées">
+              <span title={t('card.subtasksDone')}>
                 ☑ {task.subtasks!.filter(s => s.completed).length}/{task.subtasks!.length}
               </span>
             </>
@@ -397,7 +397,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             <button
               onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
               className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label="Modifier la tâche"
+              aria-label={t('card.edit')}
             >
               <Pencil size={18} />
             </button>
@@ -411,7 +411,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             <button
               onClick={(e) => { e.stopPropagation(); onOpenCollaborator(task.id); setActionsVisible(false); }}
               className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label="Ajouter un collaborateur"
+              aria-label={t('card.addCollaborator')}
             >
               <UserPlus size={18} />
             </button>
@@ -419,7 +419,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               <button
                 onClick={(e) => { e.stopPropagation(); onScheduleTask(task); setActionsVisible(false); }}
                 className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-                aria-label="Planifier dans l'agenda"
+                aria-label={t('card.schedule')}
               >
                 <Calendar size={18} />
               </button>
@@ -434,7 +434,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             <button
               onClick={(e) => { e.stopPropagation(); onDuplicate(task.id); setActionsVisible(false); }}
               className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label="Dupliquer la tâche"
+              aria-label={t('card.duplicate')}
             >
               <Copy size={18} />
             </button>
@@ -456,14 +456,14 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             <button
               onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
               className="min-w-touch min-h-touch p-2 rounded-row text-red-500 flex items-center justify-center"
-              aria-label="Supprimer la tâche"
+              aria-label={t('card.delete')}
             >
               <Trash2 size={18} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setActionsVisible(false); }}
               className="min-w-touch min-h-touch p-2 rounded-row text-slate-400 dark:text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label="Fermer"
+              aria-label={t('card.close')}
             >
               <X size={18} />
             </button>

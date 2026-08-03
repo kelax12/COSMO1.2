@@ -15,6 +15,7 @@ import DescriptionField from '@/components/DescriptionField';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_LABELS, formatEventDuration } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
+import { useT } from '@/i18n/useT';
 
 const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
   mode, onClose, handleBarWidth,
@@ -26,6 +27,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
   handleFieldChange, handleSubmit, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, isPrefilledMode,
 }) => {
+  const { t } = useT('eventModal');
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
   // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
   const [showCategoryLegend, setShowCategoryLegend] = useState(false);
@@ -71,7 +73,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                 className="block text-xs font-semibold uppercase tracking-wider mb-2 !whitespace-pre-line"
                 style={{ color: "rgb(var(--color-text-secondary))" }}
               >
-                Titre de l'événement
+                {t('title')}
               </label>
               <input
                 type="text"
@@ -101,7 +103,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                         ? undefined
                         : "rgb(var(--color-border))",
                   }}
-                placeholder="nom de l'événement"
+                placeholder={t('titlePlaceholder')}
               />
             </div>
 
@@ -124,7 +126,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     handleFieldChange("endDate", setEndDate, e.target.value);
                   }}
                   disabled={lockedSet.has('startDate')}
-                  placeholder="Sélectionner une date"
+                  placeholder={t('datePlaceholder')}
                   className={`md:hidden w-full px-4 h-11 border rounded-lg text-sm transition-colors ${
                     lockedSet.has('startDate')
                       ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-[rgb(var(--color-border))]'
@@ -200,7 +202,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     className="block text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
-                    Début
+                    {t('start')}
                   </label>
                   {/* Mobile : input natif direct (pas de wrapper pour éviter conflits touch iOS) */}
                   <input
@@ -274,7 +276,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       className="text-xs font-medium"
                       style={{ color: "rgb(var(--color-text-muted))" }}
                     >
-                      Durée totale
+                      {t('totalDuration')}
                     </span>
                     <div className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-3 py-1 rounded-full text-xs font-bold shadow-sm">
                       <Clock size={12} />
@@ -291,7 +293,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     className="text-xs font-semibold uppercase tracking-wider"
                     style={{ color: "rgb(var(--color-text-secondary))" }}
                   >
-                    Récurrence
+                    {t('recurrence')}
                   </span>
                   <div
                     className="inline-flex rounded-full p-0.5 border text-[11px]"
@@ -300,7 +302,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       borderColor: "rgb(var(--color-chip-border))",
                     }}
                     role="radiogroup"
-                    aria-label="Récurrence de l'événement"
+                    aria-label={t('recurrenceAria')}
                   >
                     {([
                       { value: 'none', label: 'Non' },
@@ -381,8 +383,8 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                           ? undefined
                           : "rgb(var(--color-border))",
                     }}
-                    placeholder="description de l'événement"
-                    expandedTitle="Description de l'événement"
+                    placeholder={t('descriptionPlaceholder')}
+                    expandedTitle={t('descriptionTitle')}
                 />
               </div>
             ) : (
@@ -403,7 +405,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   className="block text-xs font-semibold uppercase tracking-wider"
                   style={{ color: "rgb(var(--color-text-secondary))" }}
                 >
-                  Couleur de l'événement
+                  {t('color')}
                 </label>
                 {/* Pattern unifié (audit UI §5) — remplace l'icône Plus nue
                     non focusable qui vivait dans le <label>. */}
@@ -461,7 +463,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     onClick={() => setShowCategoryLegend((v) => !v)}
                     className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
                   >
-                    {showCategoryLegend ? 'Masquer la légende des catégories' : 'Voir la légende des catégories'}
+                    {showCategoryLegend ? t('hideLegend') : t('showLegend')}
                   </button>
                   {showCategoryLegend && (
                     <div
@@ -475,7 +477,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                         className="text-[12px] font-bold uppercase tracking-widest mb-2"
                         style={{ color: "rgb(var(--color-text-muted))" }}
                       >
-                        Légende des catégories
+                        {t('legend')}
                       </h4>
                       <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
                         {categories.map((cat) => (

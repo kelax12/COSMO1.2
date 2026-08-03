@@ -6,6 +6,7 @@ import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import TaskModal from './TaskModal';
+import { useT } from '@/i18n/useT';
 
 // Calendrier des échéances — composant shadcn Calendar (react-day-picker)
 // agrandi, avec pastilles de catégorie directement dans les cases des jours
@@ -18,6 +19,7 @@ const sameDay = (a: Date, b: Date) =>
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
 const DeadlineCalendar: React.FC = () => {
+  const { t } = useT('eventModal');
   const { data: tasks = [] } = usePendingTasks();
   const getCategoryById = useCategoryLookup();
   const [selected, setSelected] = useState<Date | undefined>(new Date());
@@ -85,10 +87,10 @@ const DeadlineCalendar: React.FC = () => {
         <h3 className="mb-3 text-sm font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
           {selected
             ? formatDate(selected, { weekday: 'long', day: 'numeric', month: 'long' })
-            : 'Sélectionne un jour'}
+            : t('calendar.pickDay')}
         </h3>
         {dayTasks.length === 0 ? (
-          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucune tâche ce jour-là.</p>
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('calendar.noTask')}</p>
         ) : (
           <ul className="grid gap-1.5">
             {dayTasks.map((task) => {

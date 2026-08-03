@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import ShareLinkField from '@/components/ShareLinkField';
 import type { DesktopBodyProps } from './TaskModalDesktopBody';
+import { useT } from '@/i18n/useT';
 
 export type DesktopCollaboratorsStepProps = Pick<DesktopBodyProps,
   | 'collaboratorRef' | 'isTaskOwner' | 'task' | 'onGenerateShareLink'
@@ -30,6 +31,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
   filteredFriends, collabIdOf, toggleCollaborator,
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
+  const { t } = useT('tasks');
   return (
                 <div className="space-y-5">
 
@@ -62,7 +64,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                     onAction={() => {}}
                                     variant="remove"
                                     readOnly
-                                    badge={id === task?.userId ? 'Propriétaire' : undefined}
+                                    badge={id === task?.userId ? t('modal.owner') : undefined}
                                   />
                                 );
                               })}
@@ -120,7 +122,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                     value={emailInput}
                                     onChange={(e) => { setEmailInput(e.target.value); if (inputError) setInputError(null); }}
                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
-                                    placeholder="Email, nom ou identifiant..."
+                                    placeholder={t('modal.searchContact')}
                                     className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-2 text-sm transition-colors ${inputError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))]'}`}
                                     style={{
                                       backgroundColor: 'rgb(var(--color-surface))',
@@ -164,7 +166,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                 );
                               })}
                               {filteredFriends.length === 0 && emailInput && (
-                                <p className="col-span-2 text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
+                                <p className="col-span-2 text-center py-4 text-sm text-slate-500">{t('modal.noContact')}</p>
                               )}
                             </div>
 
@@ -216,7 +218,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                           </div>
                                           <div className="flex-1 min-w-0">
                                             <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{req.email}</p>
-                                            <p className="text-[10px] text-amber-600 dark:text-amber-400">{selected ? 'Sera ajouté' : 'En attente'}</p>
+                                            <p className="text-[10px] text-amber-600 dark:text-amber-400">{selected ? t('modal.willBeAdded') : t('modal.pending')}</p>
                                           </div>
                                           {canSelect && (selected
                                             ? <Check size={15} className="text-blue-500 shrink-0" />
@@ -228,8 +230,8 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                             onSuccess: () => toast.success(`Demande d'ami à ${req.email} annulée`),
                                           })}
                                           className="p-1 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors shrink-0"
-                                          aria-label="Annuler la demande"
-                                          title="Annuler la demande d'ami"
+                                          aria-label={t('modal.cancelRequest')}
+                                          title={t('modal.cancelRequestAria')}
                                         >
                                           <X size={13} />
                                         </button>

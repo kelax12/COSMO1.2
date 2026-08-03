@@ -45,10 +45,12 @@
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locale';
 import { lookup, type CatalogNode } from './translate';
 
+import frAdmin from '@/locales/fr/admin.json';
 import frAgenda from '@/locales/fr/agenda.json';
 import frCommon from '@/locales/fr/common.json';
 import frDashboard from '@/locales/fr/dashboard.json';
 import frErrors from '@/locales/fr/errors.json';
+import frEventModal from '@/locales/fr/eventModal.json';
 import frGuide from '@/locales/fr/guide.json';
 import frHabits from '@/locales/fr/habits.json';
 import frOkr from '@/locales/fr/okr.json';
@@ -59,9 +61,12 @@ import frSettings from '@/locales/fr/settings.json';
 import frStatistics from '@/locales/fr/statistics.json';
 import frTaskModal from '@/locales/fr/taskModal.json';
 import frTasks from '@/locales/fr/tasks.json';
+import frTutorials from '@/locales/fr/tutorials.json';
 
 /** Forme du catalogue de référence, par namespace — base du typage des clés. */
 interface CatalogShapes {
+  /** Tableau de bord admin — KPI de croissance et d'activité. */
+  admin: typeof frAdmin;
   /** Agenda — calendrier, création rapide, revue de créneaux, récurrences. */
   agenda: typeof frAgenda;
   /** Chrome de l'app : navigation, actions, libellés partagés. */
@@ -72,6 +77,8 @@ interface CatalogShapes {
   errors: typeof frErrors;
   /** Guide d'utilisation — sommaire, sections, étapes, encarts. */
   guide: typeof frGuide;
+  /** Modale d'événement — champs, récurrence, planification, calendrier. */
+  eventModal: typeof frEventModal;
   /** Habitudes — liste, tableau de suivi, modale, actions, mur-pub. */
   habits: typeof frHabits;
   /** OKR — page, cartes, catégories, modales, check-in hebdo. */
@@ -90,6 +97,8 @@ interface CatalogShapes {
   taskModal: typeof frTaskModal;
   /** Page Tâches — en-tête, filtres, barre de listes, section équipe. */
   tasks: typeof frTasks;
+  /** Tutoriels par page — titres et descriptions des étapes. */
+  tutorials: typeof frTutorials;
 }
 
 /**
@@ -134,10 +143,12 @@ const registry: Registry = {};
 // Le cast est sûr — un objet JSON importé EST un `CatalogNode`, mais TypeScript
 // en infère un type littéral plus étroit.
 registry[DEFAULT_LOCALE] = {
+  admin: frAdmin as CatalogNode,
   agenda: frAgenda as CatalogNode,
   common: frCommon as CatalogNode,
   dashboard: frDashboard as CatalogNode,
   errors: frErrors as CatalogNode,
+  eventModal: frEventModal as CatalogNode,
   guide: frGuide as CatalogNode,
   habits: frHabits as CatalogNode,
   okr: frOkr as CatalogNode,
@@ -148,6 +159,7 @@ registry[DEFAULT_LOCALE] = {
   statistics: frStatistics as CatalogNode,
   taskModal: frTaskModal as CatalogNode,
   tasks: frTasks as CatalogNode,
+  tutorials: frTutorials as CatalogNode,
 };
 
 /**

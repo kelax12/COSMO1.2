@@ -274,13 +274,13 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
         </button>
 
         <div className="inline-flex items-center gap-1">
-          <button type="button" onClick={() => nav('prev')} aria-label="Période précédente" className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
+          <button type="button" onClick={() => nav('prev')} aria-label={t('agendaSheet.prevPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => nav('today')} className="px-3 h-8 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-blue-600 hover:border-[rgb(var(--color-accent-solid-hover))]/60 transition-colors">
             Aujourd'hui
           </button>
-          <button type="button" onClick={() => nav('next')} aria-label="Période suivante" className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
+          <button type="button" onClick={() => nav('next')} aria-label={t('agendaSheet.nextPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>

@@ -3,6 +3,7 @@ import { Settings, ChevronUp, ChevronDown } from 'lucide-react';
 import { usePendingTasks } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import ColorSettingsModal from './ColorSettingsModal';
+import { useT } from '@/i18n/useT';
 
 interface TasksSummaryProps {
   onTogglePosition?: () => void;
@@ -13,6 +14,7 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
   onTogglePosition,
   isBottomPosition = false 
 }) => {
+  const { t } = useT('common');
   // Use new module for tasks (read-only)
   const { data: tasks = [], isLoading } = usePendingTasks();
   // Use new module for categories
@@ -42,7 +44,7 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
   if (isLoading) {
     return (
       <div className="card p-6">
-        <h2 className="text-xl font-bold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>Chargement...</h2>
+        <h2 className="text-xl font-bold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('loading')}</h2>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-4 bg-slate-200 dark:bg-slate-700 rounded" />
@@ -78,7 +80,7 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
                 e.currentTarget.style.color = 'rgb(var(--color-text-muted))';
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
-              title={isBottomPosition ? "Afficher sur le côté" : "Afficher en bas"}
+              title={isBottomPosition ? t('tasksSummary.showSide') : t('tasksSummary.showBottom')}
             >
               {isBottomPosition ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
             </button>

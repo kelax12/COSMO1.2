@@ -9,6 +9,7 @@ import {
   markModuleOnboardingDone,
   isModuleOnboardingDone,
 } from '@/modules/ui-states';
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AM10 — Onboarding progressif « Que voulez-vous gérer ? »
@@ -38,6 +39,7 @@ const MODULE_CARDS: ModuleCard[] = [
 ];
 
 const ModuleOnboarding: React.FC = () => {
+  const { t } = useT('common');
   const { isAuthenticated, isDemo, isLoading } = useAuth();
   const [open, setOpen] = useState(false);
   // Par défaut, tout coché (parcours « tout-en-un » conservé si l'utilisateur valide direct).
@@ -109,10 +111,10 @@ const ModuleOnboarding: React.FC = () => {
                 id="module-onboarding-title"
                 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))]"
               >
-                Que voulez-vous gérer&nbsp;?
+                {t('moduleOnboarding.question')}
               </h2>
               <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                Choisissez vos modules. Vous pourrez les réactiver à tout moment dans les Réglages.
+                {t('moduleOnboarding.hint')}
               </p>
             </div>
 

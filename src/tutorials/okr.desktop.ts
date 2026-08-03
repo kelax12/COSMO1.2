@@ -5,30 +5,26 @@ import { TutorialStep } from '@/components/tutorial/types';
  */
 export const okrTutorialStepsDesktop: TutorialStep[] = [
   {
-    title: 'Définissez votre cap.',
-    description:
-      "OKR = Objective (votre but) + Key Results (métrique). Clarté et alignement garantis.",
+    titleKey: 'okrDesktop.step1Title',
+    descriptionKey: 'okrDesktop.step1Desc',
   },
   {
-    title: 'Filtrer par catégorie',
-    description:
-      "Segmentez vos OKR / Travail, Personnel, Santé... Filtrez par domaine. Le « + » crée une catégorie.",
+    titleKey: 'okrDesktop.step2Title',
+    descriptionKey: 'okrDesktop.step2Desc',
     target: '[data-tutorial-id="okr-category-filter"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Créer un objectif',
-    description:
-      "Définissez un objectif et décomposez le en métriques (KR).",
+    titleKey: 'okrDesktop.step3Title',
+    descriptionKey: 'okrDesktop.step3Desc',
     target: '[data-tutorial-id="okr-create-button"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
-    title: 'Transformez vos métriques.',
-    description:
-      "ajoutez des métriques dans votre to do liste ou dans votre agenda.",
+    titleKey: 'okrDesktop.step4Title',
+    descriptionKey: 'okrDesktop.step4Desc',
     target: '[data-tutorial-id="okr-first-card"]',
     cardPlacement: 'top',
     action: 'custom',

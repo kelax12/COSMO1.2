@@ -50,6 +50,7 @@ import {
   resolveCollaboratorDisplay,
 } from './collaborators';
 import { runTaskSave, createTaskWithShares } from './save-task';
+import { translator } from '@/i18n/useT';
 
 export interface TaskModalProps {
   task?: Task;
@@ -492,7 +493,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     setErrors({});
     setShowCollaboratorSection(showCollaborators);
     setStep(1);
-    toast.success(`Tâche « ${createdTaskName} » créée`);
+    toast.success(translator('tasks').t('modal.created', { name: createdTaskName }));
   };
 
   const handleSave = async () => {
@@ -531,7 +532,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       return t.id;
     } catch (err) {
       console.error('Error creating task for share link:', err);
-      setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
+      setErrors({ general: translator('tasks').t('modal.createError') });
       return null;
     }
   };
@@ -565,11 +566,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
             onSuccess: () => {
               setShowDeleteConfirm(false);
               onClose();
-              toast.success('Vous avez quitté la tâche partagée');
+              toast.success(translator('tasks').t('modal.leftShared'));
             },
             onError: (err) => {
               console.error('Leave shared task failed', err);
-              setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+              setErrors({ general: translator('tasks').t('modal.deleteError') });
               setShowDeleteConfirm(false);
             },
           }
@@ -583,7 +584,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
           onClose();
           // Raccourci d'annulation (barre de progression 5 s, haut à droite).
           const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
-          showUndoToast('Tâche supprimée', () => {
+          showUndoToast(translator('tasks').t('modal.deleted'), () => {
             createTaskMutation.mutate(rest);
           });
         },

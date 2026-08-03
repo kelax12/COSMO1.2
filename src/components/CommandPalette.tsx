@@ -32,12 +32,13 @@ import { useActiveOrganization } from '@/modules/organizations';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
 import { useActiveModules } from '@/modules/ui-states';
+import { useT } from '@/i18n/useT';
 
 interface PaletteCommand {
   id: string;
   label: string;
   hint?: string;
-  group: 'Navigation' | 'Actions' | 'Préférences';
+  group: string;
   icon: ReactNode;
   run: () => void;
   keywords?: string[];
@@ -56,6 +57,7 @@ const MAX_DATA_RESULTS = 8;
  * caractères, pour ne pas alourdir le DOM ni déclencher de fetch hors session.
  */
 const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, onDone }) => {
+  const { t } = useT('common');
   const navigate = useNavigate();
   const { data: tasks = [] } = useTasks();
   const { data: habits = [] } = useHabits();
@@ -122,7 +124,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedEvents.length > 0 && (
-        <CommandGroup heading="Événements">
+        <CommandGroup heading={t('palette.events')}>
           {matchedEvents.map((e) => (
             <CommandItem key={`event-${e.id}`} value={`event-${e.id}`} onSelect={() => go('/agenda')}>
               <Calendar size={16} aria-hidden="true" />
@@ -145,18 +147,18 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedTeamTasks.length > 0 && (
-        <CommandGroup heading="Tâches d'équipe">
-          {matchedTeamTasks.map((t) => (
-            <CommandItem key={`team-task-${t.id}`} value={`team-task-${t.id}`} onSelect={() => go('/entreprise?tab=projects')}>
-              <CheckSquare size={16} className={t.completed ? 'opacity-40' : ''} aria-hidden="true" />
-              <span className={`flex-1 ${t.completed ? 'line-through opacity-60' : ''}`}>{t.name}</span>
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">Équipe</span>
+        <CommandGroup heading={t('palette.teamTasks')}>
+          {matchedTeamTasks.map((teamTask) => (
+            <CommandItem key={`team-task-${teamTask.id}`} value={`team-task-${teamTask.id}`} onSelect={() => go('/entreprise?tab=projects')}>
+              <CheckSquare size={16} className={teamTask.completed ? 'opacity-40' : ''} aria-hidden="true" />
+              <span className={`flex-1 ${teamTask.completed ? 'line-through opacity-60' : ''}`}>{teamTask.name}</span>
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('palette.team')}</span>
             </CommandItem>
           ))}
         </CommandGroup>
       )}
       {matchedTeamProjects.length > 0 && (
-        <CommandGroup heading="Projets d'équipe">
+        <CommandGroup heading={t('palette.teamProjects')}>
           {matchedTeamProjects.map((p) => (
             <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go('/entreprise?tab=projects')}>
               <FolderKanban size={16} aria-hidden="true" />
@@ -180,6 +182,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
  * désactivé) pour contrôler le nombre de résultats par groupe.
  */
 export function CommandPalette() {
+  const { t } = useT('common');
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
@@ -193,28 +196,28 @@ export function CommandPalette() {
       setIsOpen(false);
     };
     const base: PaletteCommand[] = [
-      { id: 'nav-dashboard', label: "Aller à l'accueil", group: 'Navigation', icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
-      { id: 'nav-tasks', label: 'Aller aux tâches', group: 'Navigation', icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
+      { id: 'nav-dashboard', label: t('palette.goHome'), group: t('palette.groupNavigation'), icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
+      { id: 'nav-tasks', label: t('palette.goTasks'), group: t('palette.groupNavigation'), icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
       // Modules optionnels (AM10) — masqués de la palette si désactivés, sinon
       // l'entrée serait une impasse (RequireModule redirige vers le dashboard).
-      ...(activeModules.agenda ? [{ id: 'nav-agenda', label: "Aller à l'agenda", group: 'Navigation' as const, icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] }] : []),
-      ...(activeModules.habits ? [{ id: 'nav-habits', label: 'Aller aux habitudes', group: 'Navigation' as const, icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] }] : []),
-      ...(activeModules.okr ? [{ id: 'nav-okr', label: 'Aller aux OKR', group: 'Navigation' as const, icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] }] : []),
-      ...(activeModules.statistics ? [{ id: 'nav-statistics', label: 'Aller aux statistiques', group: 'Navigation' as const, icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] }] : []),
-      { id: 'nav-settings', label: 'Aller aux paramètres', group: 'Navigation', icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
+      ...(activeModules.agenda ? [{ id: 'nav-agenda', label: t('palette.goAgenda'), group: t('palette.groupNavigation'), icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] }] : []),
+      ...(activeModules.habits ? [{ id: 'nav-habits', label: t('palette.goHabits'), group: t('palette.groupNavigation'), icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] }] : []),
+      ...(activeModules.okr ? [{ id: 'nav-okr', label: t('palette.goOkr'), group: t('palette.groupNavigation'), icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] }] : []),
+      ...(activeModules.statistics ? [{ id: 'nav-statistics', label: t('palette.goStats'), group: t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] }] : []),
+      { id: 'nav-settings', label: t('palette.goSettings'), group: t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
       ...(PREMIUM_ENFORCED
         ? [{ id: 'nav-premium', label: 'Voir Premium', group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
         : []),
-      { id: 'pref-theme-light', label: 'Thème clair', group: 'Préférences', icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
-      { id: 'pref-theme-dark', label: 'Thème sombre', group: 'Préférences', icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
-      { id: 'pref-theme-gris', label: 'Thème gris', group: 'Préférences', icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
-      { id: 'pref-theme-noir', label: 'Thème noir', group: 'Préférences', icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
+      { id: 'pref-theme-light', label: t('palette.themeLight'), group: t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
+      { id: 'pref-theme-dark', label: t('palette.themeDark'), group: t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
+      { id: 'pref-theme-gris', label: t('palette.themeGrey'), group: t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
+      { id: 'pref-theme-noir', label: t('palette.themeBlack'), group: t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
     ];
     if (isAuthenticated) {
       base.push(
         {
           id: 'action-quick-add',
-          label: 'Créer une tâche rapide',
+          label: t('palette.quickTask'),
           hint: 'N',
           group: 'Actions',
           icon: <Plus size={16} />,
@@ -228,7 +231,7 @@ export function CommandPalette() {
         // création via location.state.openCreate, lu par chaque page.
         {
           id: 'action-create-event',
-          label: 'Créer un événement',
+          label: t('palette.createEvent'),
           group: 'Actions',
           icon: <CalendarPlus size={16} />,
           run: nav('/agenda', { openCreate: true }),
@@ -236,7 +239,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-create-habit',
-          label: 'Créer une habitude',
+          label: t('palette.createHabit'),
           group: 'Actions',
           icon: <Repeat size={16} />,
           run: nav('/habits', { openCreate: true }),
@@ -244,7 +247,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-create-okr',
-          label: 'Créer un objectif',
+          label: t('palette.createObjective'),
           group: 'Actions',
           icon: <Target size={16} />,
           run: nav('/okr', { openCreate: true }),
@@ -252,7 +255,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-shortcuts',
-          label: 'Afficher les raccourcis clavier',
+          label: t('palette.showShortcuts'),
           hint: '?',
           group: 'Actions',
           icon: <Keyboard size={16} />,
@@ -264,7 +267,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-logout',
-          label: 'Se déconnecter',
+          label: t('palette.logout'),
           group: 'Actions',
           icon: <LogOut size={16} />,
           run: () => { logout(); setIsOpen(false); },
@@ -273,7 +276,8 @@ export function CommandPalette() {
       );
     }
     return base;
-  }, [navigate, setTheme, logout, isAuthenticated, activeModules]);
+    // `t` en dépendance : toutes les commandes portent un libellé traduit.
+  }, [navigate, setTheme, logout, isAuthenticated, activeModules, t]);
 
   // Filtrage manuel : substring insensible aux accents sur label + keywords.
   const filteredCommands = useMemo(() => {
@@ -347,11 +351,11 @@ export function CommandPalette() {
                 autoFocus
                 value={query}
                 onValueChange={setQuery}
-                placeholder="Rechercher une tâche, une page, une commande..."
+                placeholder={t('palette.searchPlaceholder')}
                 className="text-[rgb(var(--color-text-primary))]"
               />
               <CommandList className="max-h-none flex-1">
-                <CommandEmpty>Aucun résultat</CommandEmpty>
+                <CommandEmpty>{t('palette.noResult')}</CommandEmpty>
                 {showDataResults && (
                   <DataResults query={query} onDone={() => setIsOpen(false)} />
                 )}
@@ -373,19 +377,19 @@ export function CommandPalette() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">↑↓</kbd>
-                    naviguer
+                    {t('palette.navigate')}
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">↵</kbd>
-                    ouvrir
+                    {t('palette.open')}
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">ESC</kbd>
-                    fermer
+                    {t('palette.close')}
                   </span>
                 </div>
                 <span className="hidden sm:inline">
-                  {{ dark: 'Sombre', gris: 'Gris', noir: 'Noir', light: 'Clair' }[theme]}
+                  {t(`theme.${({ dark: 'dark', gris: 'grey', noir: 'black', light: 'light' } as const)[theme]}`)}
                 </span>
               </div>
             </Command>

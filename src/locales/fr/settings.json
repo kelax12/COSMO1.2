@@ -81,7 +81,9 @@
     "eveningReminder": "Rappel habitudes du soir",
     "eveningReminderHint": "Après 18 h, un bandeau signale les habitudes non cochées",
     "shortcuts": "Raccourcis clavier",
-    "shortcutsHint": "Aussi accessibles à tout moment avec la touche"
+    "shortcutsHint": "Aussi accessibles à tout moment avec la touche",
+    "themeListTest": "Clair · Sombre · Noir · Test",
+    "themeList": "Clair · Sombre · Noir"
   },
   "modules": {
     "hint": "Activez uniquement ce dont vous avez besoin. Les modules masqués disparaissent de la navigation ; vos données sont conservées. Tâches & Dashboard sont toujours présents.",
@@ -89,10 +91,22 @@
     "demoToast": "Les modules sont tous actifs en mode démo",
     "enabled": "{{module}} activé",
     "hidden": "{{module}} masqué",
-    "agenda": { "label": "Agenda", "description": "Planifiez vos tâches en blocs horaires" },
-    "habits": { "label": "Habitudes", "description": "Suivez vos routines quotidiennes" },
-    "okr": { "label": "OKR", "description": "Objectifs & résultats clés" },
-    "statistics": { "label": "Statistiques", "description": "Analysez votre progression" }
+    "agenda": {
+      "label": "Agenda",
+      "description": "Planifiez vos tâches en blocs horaires"
+    },
+    "habits": {
+      "label": "Habitudes",
+      "description": "Suivez vos routines quotidiennes"
+    },
+    "okr": {
+      "label": "OKR",
+      "description": "Objectifs & résultats clés"
+    },
+    "statistics": {
+      "label": "Statistiques",
+      "description": "Analysez votre progression"
+    }
   },
   "help": {
     "intro": "Tout ce qu'il faut savoir pour maîtriser chaque fonctionnalité de Cosmo.",

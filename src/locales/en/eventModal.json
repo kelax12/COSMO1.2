@@ -1,0 +1,38 @@
+{
+  "title": "Event title",
+  "titlePlaceholder": "event name",
+  "titlePlaceholderMobile": "Event title",
+  "datePlaceholder": "Pick a date",
+  "date": "Date",
+  "start": "Start",
+  "end": "End",
+  "totalDuration": "Total duration",
+  "duration": "Duration",
+  "recurrence": "Repeat",
+  "recurrenceAria": "Event recurrence",
+  "days": "Days",
+  "descriptionPlaceholder": "event description",
+  "descriptionTitle": "Event description",
+  "color": "Event colour",
+  "showLegend": "Show the category legend",
+  "hideLegend": "Hide the category legend",
+  "legend": "Category legend",
+  "create": "Create",
+  "duplicate": "Duplicate event",
+  "delete": "Delete event",
+  "repeatDays": "Repeat on",
+  "repeatDaysHint": "Pick the days of the week the event repeats on.",
+  "schedule": {
+    "title": "Schedule in the calendar",
+    "description": "Creates an event linked to this task.",
+    "titleLabel": "Title",
+    "date": "Date",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "notes": "Notes"
+  },
+  "calendar": {
+    "pickDay": "Pick a day",
+    "noTask": "No tasks on that day."
+  }
+}

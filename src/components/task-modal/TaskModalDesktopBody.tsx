@@ -17,6 +17,7 @@ import { useCreateCategory } from '@/modules/categories';
 import { useCreateList } from '@/modules/lists';
 import { useRejectFriendRequest } from '@/modules/friends';
 import type { Task } from '@/modules/tasks';
+import { useT } from '@/i18n/useT';
 
 type TaskFormState = {
   name: string;
@@ -112,6 +113,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   filteredFriends, collabIdOf, toggleCollaborator,
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
+  const { t } = useT('taskModal');
   // Enregistrement principal (bouton + touche Entrée dans un champ) : les
   // boutons vivent hors du <form> (footer sticky), donc on partage cette
   // logique entre onSubmit du form et onClick du bouton pour préserver la
@@ -149,13 +151,13 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
               {hasChanges && !collaboratorsOnly &&
                 <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
                   <AlertCircle size={12} aria-hidden="true" />
-                  <span className="hidden sm:inline">Non sauvegardé</span>
+                  <span className="hidden sm:inline">{t('desktop.unsaved')}</span>
                 </div>
               }
             </div>
             <button
               onClick={handleClose}
-              aria-label="Fermer le formulaire"
+              aria-label={t('desktop.closeForm')}
               className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
               style={{ color: 'rgb(var(--color-text-muted))' }}
             >
@@ -322,7 +324,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                       {isLoading ? (
                         <>
                           <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                          <span>Enregistrement...</span>
+                          <span>{t('common.savingDots')}</span>
                         </>
                       ) : (
                         'Enregistrer'
@@ -349,10 +351,10 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 {isLoading ? (
                   <>
                     <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                    <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                    <span>{isCreating ? t('common.creating') : 'Sauvegarde...'}</span>
                   </>
                 ) : (
-                  isCreating ? 'Créer la tâche' : 'Sauvegarder'
+                  isCreating ? t('mobile.createTask') : 'Sauvegarder'
                 )}
               </Button>
                 </>

@@ -3,6 +3,7 @@ import { X, Plus, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLists, useCreateList } from '@/modules/lists';
 import { resolveColor, InlineForm } from './shared';
+import { useT } from '@/i18n/useT';
 
 interface BulkAddToListModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ interface BulkAddToListModalProps {
  * permet d'en créer une à la volée (puis y ajoute la sélection).
  */
 const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose, count, onAddToList }) => {
+  const { t, tp } = useT('tasks');
   const { data: lists = [] } = useLists();
   const createListMutation = useCreateList();
   const [creating, setCreating] = useState(false);
@@ -88,10 +90,10 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 id="bulk-add-to-list-title" className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
-                    Ajouter à une liste
+                    {t('addToList.title')}
                   </h2>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                    {count} tâche{count > 1 ? 's' : ''} sélectionnée{count > 1 ? 's' : ''}
+                    {tp('addToList.selected', count)}
                   </p>
                 </div>
                 <button
@@ -113,7 +115,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                     key="create-form"
                     onSave={handleCreate}
                     onCancel={() => setCreating(false)}
-                    saveLabel="Créer et ajouter"
+                    saveLabel={t('addToList.createAndAdd')}
                   />
                 ) : (
                   <motion.button
@@ -138,7 +140,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                     Aucune liste manuelle pour l'instant.
                   </p>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-                    Créez-en une pour y ranger votre sélection.
+                    {t('addToList.createOne')}
                   </p>
                 </div>
               )}

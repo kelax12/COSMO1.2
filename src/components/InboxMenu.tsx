@@ -35,6 +35,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
 import RemoveFriendConfirm from './RemoveFriendConfirm';
+import { useT } from '@/i18n/useT';
 
 /**
  * Boîte de réception unifiée du Dashboard. Remplace l'ancien panneau
@@ -50,6 +51,8 @@ import RemoveFriendConfirm from './RemoveFriendConfirm';
  * partagée n'est plus gated par le Premium.
  */
 const InboxMenu: React.FC = () => {
+  const { t, tp } = useT('common');
+  const { t: tTasks } = useT('tasks');
   const { user } = useAuth();
 
   const queryClient = useQueryClient();
@@ -226,10 +229,10 @@ const InboxMenu: React.FC = () => {
 
   // ── Handlers ───────────────────────────────────────────────────────────
   const handleAcceptFriend = (id: string) => {
-    acceptFriendMutation.mutate(id, { onSuccess: () => toast.success("Demande d'ami acceptée") });
+    acceptFriendMutation.mutate(id, { onSuccess: () => toast.success(t('inbox.friendAccepted')) });
   };
   const handleRejectFriend = (id: string) => {
-    rejectFriendMutation.mutate(id, { onSuccess: () => toast.success('Demande refusée') });
+    rejectFriendMutation.mutate(id, { onSuccess: () => toast.success(t('inbox.requestRefused')) });
   };
 
   const handleAcceptTask = (task: Task) => {
@@ -239,10 +242,10 @@ const InboxMenu: React.FC = () => {
     if (isDemo) {
       acknowledgeShare(user?.id, task.id);
       setAckVersion((v) => v + 1);
-      toast.success('Tâche acceptée');
+      toast.success(tTasks('toast.accepted'));
     } else {
       acceptSharedTaskMutation.mutate(task.id, {
-        onSuccess: () => toast.success('Tâche acceptée'),
+        onSuccess: () => toast.success(tTasks('toast.accepted')),
       });
     }
   };
@@ -261,7 +264,7 @@ const InboxMenu: React.FC = () => {
           // Invalide la liste de tâches : sans la grant, la RLS ne renvoie plus
           // cette tâche au destinataire.
           queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-          toast.success('Tâche refusée');
+          toast.success(tTasks('toast.refused'));
         },
       }
     );
@@ -275,7 +278,7 @@ const InboxMenu: React.FC = () => {
   };
   const handleRejectList = (grant: SharedListGrant) => {
     refuseSharedListMutation.mutate(grant.id, {
-      onSuccess: () => toast.success('Liste refusée'),
+      onSuccess: () => toast.success(tTasks('toast.listRefused')),
     });
   };
 
@@ -287,7 +290,7 @@ const InboxMenu: React.FC = () => {
     if (!friendToRemove) return;
     const { id, name } = friendToRemove;
     removeFriendMutation.mutate(id, {
-      onSuccess: () => toast.success(`${name} retiré de vos amis`),
+      onSuccess: () => toast.success(t('inbox.removedFriend', { name })),
     });
     setFriendToRemove(null);
   };
@@ -297,7 +300,7 @@ const InboxMenu: React.FC = () => {
     if (!email) return;
     sendFriendMutation.mutate({ email }, {
       onSuccess: () => {
-        toast.success("Demande d'ami envoyée");
+        toast.success(t('inbox.friendRequestSent'));
         setFriendEmail('');
         setShowAddFriend(false);
       },
@@ -320,12 +323,12 @@ const InboxMenu: React.FC = () => {
             <button
               onClick={() => setShowManageFriends(false)}
               className="-ml-1 w-11 h-11 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              aria-label="Retour à la boîte de réception"
+              aria-label={t('inbox.backToInbox')}
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
             <Users size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">Mes amis</span>
+            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.myFriends')}</span>
             {friends.length > 0 && (
               <span className="ml-auto text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))]">
                 {friends.length}
@@ -335,7 +338,7 @@ const InboxMenu: React.FC = () => {
         ) : (
           <>
             <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">Boîte de réception</span>
+            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{tTasks('inbox.label')}</span>
             <div className="ml-auto flex items-center gap-2">
               {total > 0 && (
                 <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
@@ -345,8 +348,8 @@ const InboxMenu: React.FC = () => {
               <button
                 onClick={() => setShowManageFriends(true)}
                 className="w-11 h-11 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                aria-label="Gérer mes amis"
-                title="Gérer mes amis"
+                aria-label={t('inbox.manageFriends')}
+                title={t('inbox.manageFriends')}
               >
                 <Settings size={15} aria-hidden="true" />
               </button>
@@ -363,9 +366,9 @@ const InboxMenu: React.FC = () => {
               <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
                 <Users size={18} className="text-slate-400" aria-hidden="true" />
               </div>
-              <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">Aucun ami</p>
+              <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{t('inbox.noFriend')}</p>
               <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Ajoutez un ami pour commencer à collaborer.
+                {t('inbox.noFriendHint')}
               </p>
             </div>
           ) : (
@@ -409,7 +412,7 @@ const InboxMenu: React.FC = () => {
             <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
               <Bell size={18} className="text-slate-400" aria-hidden="true" />
             </div>
-            <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">Tout est à jour</p>
+            <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{tTasks('inbox.allClear')}</p>
             <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Aucune demande, tâche ou liste en attente.
             </p>
@@ -480,7 +483,7 @@ const InboxMenu: React.FC = () => {
         {!showManageFriends && tasksToAccept.length > 0 && (
           <div className="px-3 pt-3 pb-1">
             <p className="px-1 text-caption sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-              Tâches partagées ({tasksToAccept.length})
+              {tTasks('inbox.sharedTasks', { count: tasksToAccept.length })}
             </p>
             <div className="space-y-2">
               {tasksToAccept.map((task) => {
@@ -507,14 +510,14 @@ const InboxMenu: React.FC = () => {
                         {task.name}
                       </p>
                       <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 truncate">
-                        Reçu de {sharerName}
+                        {t('inbox.receivedFrom', { name: sharerName ?? '' })}
                       </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
                       <button
                         onClick={() => handleAcceptTask(task)}
                         className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                        aria-label={`Accepter la tâche partagée ${task.name}`}
+                        aria-label={tTasks('inbox.acceptTask', { name: task.name })}
                       >
                         <Check size={15} aria-hidden="true" />
                       </button>
@@ -522,7 +525,7 @@ const InboxMenu: React.FC = () => {
                         onClick={() => handleRejectTask(task)}
                         disabled={unshareTaskMutation.isPending}
                         className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        aria-label={`Refuser la tâche partagée ${task.name}`}
+                        aria-label={tTasks('inbox.refuseTask', { name: task.name })}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -539,7 +542,7 @@ const InboxMenu: React.FC = () => {
         {!showManageFriends && incomingLists.length > 0 && (
           <div className="px-3 pt-3 pb-1">
             <p className="px-1 text-caption sm:text-xs font-semibold uppercase tracking-wide mb-2 text-teal-600 dark:text-teal-400">
-              Listes partagées ({incomingLists.length})
+              {tTasks('inbox.sharedLists', { count: incomingLists.length })}
             </p>
             <div className="space-y-2">
               {incomingLists.map((grant) => {
@@ -566,7 +569,7 @@ const InboxMenu: React.FC = () => {
                         {grant.name}
                       </p>
                       <p className="text-caption sm:text-xs truncate text-teal-700 dark:text-teal-300">
-                        Reçu de {sharerName} · {grant.tasks.length} tâche{grant.tasks.length > 1 ? 's' : ''}
+                        {tp('inbox.receivedFromWithCount', grant.tasks.length, { name: sharerName })}
                       </p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
@@ -574,7 +577,7 @@ const InboxMenu: React.FC = () => {
                         onClick={() => handleAcceptList(grant)}
                         disabled={acceptSharedListMutation.isPending}
                         className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                        aria-label={`Accepter la liste partagée ${grant.name}`}
+                        aria-label={tTasks('inbox.acceptList', { name: grant.name })}
                       >
                         <Check size={15} aria-hidden="true" />
                       </button>
@@ -582,7 +585,7 @@ const InboxMenu: React.FC = () => {
                         onClick={() => handleRejectList(grant)}
                         disabled={refuseSharedListMutation.isPending}
                         className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-teal-300 dark:border-teal-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        aria-label={`Refuser la liste partagée ${grant.name}`}
+                        aria-label={tTasks('inbox.refuseList', { name: grant.name })}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -599,7 +602,7 @@ const InboxMenu: React.FC = () => {
         {!showManageFriends && pendingJoinRequests.length > 0 && (
           <div className="px-3 pt-3 pb-1">
             <p className="px-1 text-caption sm:text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600 dark:text-indigo-400">
-              Demandes d'adhésion ({pendingJoinRequests.length})
+              {t('inbox.joinRequests', { count: pendingJoinRequests.length })}
             </p>
             <div className="space-y-2">
               {pendingJoinRequests.map((req) => {
@@ -634,7 +637,7 @@ const InboxMenu: React.FC = () => {
                           onClick={() => handleRespondJoin(req.id, true)}
                           disabled={respondJoinRequestMutation.isPending}
                           className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                          aria-label={`Accepter la demande d'adhésion de ${req.requesterName || 'cet utilisateur'}`}
+                          aria-label={t('inbox.acceptJoin', { name: req.requesterName || t('inbox.someone') })}
                         >
                           <Check size={15} aria-hidden="true" />
                         </button>
@@ -642,7 +645,7 @@ const InboxMenu: React.FC = () => {
                           onClick={() => handleRespondJoin(req.id, false)}
                           disabled={respondJoinRequestMutation.isPending}
                           className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-indigo-300 dark:border-indigo-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                          aria-label={`Refuser la demande d'adhésion de ${req.requesterName || 'cet utilisateur'}`}
+                          aria-label={t('inbox.refuseJoin', { name: req.requesterName || t('inbox.someone') })}
                         >
                           <X size={15} aria-hidden="true" />
                         </button>
@@ -667,7 +670,7 @@ const InboxMenu: React.FC = () => {
               onChange={(e) => setFriendEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendFriendRequest()}
               placeholder="email@exemple.com"
-              aria-label="Email de l'ami à inviter"
+              aria-label={t('inbox.friendEmailAria')}
               className="flex-1 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-label sm:text-sm text-[rgb(var(--color-text-primary))] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-[rgb(var(--color-accent-solid))] transition-all"
             />
             <button
@@ -702,7 +705,7 @@ const InboxMenu: React.FC = () => {
           style={{ position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9999 }}
           className="w-[22rem] max-w-[calc(100vw-24px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
           role="dialog"
-          aria-label="Boîte de réception"
+          aria-label={tTasks('inbox.label')}
         >
           {popoverInner}
         </motion.div>
@@ -717,7 +720,7 @@ const InboxMenu: React.FC = () => {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent)/0.5)] hover:bg-[rgb(var(--color-hover))] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label={total > 0 ? `Boîte de réception, ${total} en attente` : 'Boîte de réception'}
+        aria-label={total > 0 ? tTasks('inbox.withCount', { count: total }) : tTasks('inbox.label')}
         aria-haspopup="dialog"
         aria-expanded={open}
       >

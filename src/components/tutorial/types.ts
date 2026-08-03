@@ -1,3 +1,5 @@
+import type { KeyOf } from '@/i18n/catalog';
+
 /**
  * Types du framework de tutoriel par page.
  *
@@ -15,10 +17,16 @@ export type ArrowSide = 'top' | 'bottom' | 'left' | 'right';
 export type CardPlacement = 'top' | 'bottom' | 'left' | 'right' | 'center' | 'inside';
 
 export interface TutorialStep {
-  /** Titre court affiché dans la carte */
-  title: string;
-  /** Description (1-3 lignes) */
-  description: string;
+  /**
+   * CLÉ du catalogue `tutorials`, pas le texte.
+   *
+   * Les tutoriels sont des constantes de MODULE (`src/tutorials/*`), évaluées
+   * au premier import : y stocker la chaîne traduite figerait la langue pour
+   * toute la session. `TutorialCard` résout la clé au rendu.
+   */
+  titleKey: KeyOf<'tutorials'>;
+  /** Clé de la description (1-3 lignes). */
+  descriptionKey: KeyOf<'tutorials'>;
   /**
    * Sélecteur CSS de l'élément à mettre en avant. Le rect du 1er élément
    * matching est utilisé. Si absent → carte centrée plein écran.
