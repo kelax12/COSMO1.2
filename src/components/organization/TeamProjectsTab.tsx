@@ -37,6 +37,7 @@ import TeamProjectsKanban from './TeamProjectsKanban';
 import TeamTaskModal from './TeamTaskModal';
 import NewTeamProjectModal from './NewTeamProjectModal';
 import AssignTaskSheet from './AssignTaskSheet';
+import { useT } from '@/i18n/useT';
 
 interface TeamProjectsTabProps {
   orgId: string;
@@ -72,6 +73,7 @@ const ProjectsSkeleton = () => (
 );
 
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
+  const { t, tp } = useT('org');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   const [showNewProject, setShowNewProject] = useState(false);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
@@ -141,7 +143,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const removeWithUndo = (task: TeamTask) =>
     deleteTask.mutate(task.id, {
       onSuccess: () => {
-        showUndoToast('Tâche supprimée', () =>
+        showUndoToast(t('projects.taskDeleted'), () =>
           createTask.mutate({
             projectId: task.projectId,
             name: task.name,
@@ -168,12 +170,13 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     const sections: { key: string; label: string | null; projects: TeamProject[] }[] = [];
     for (const team of teams) {
       const ps = activeProjects.filter((p) => p.teamId === team.id);
-      if (ps.length > 0) sections.push({ key: team.id, label: `Équipe ${team.name}`, projects: ps });
+      if (ps.length > 0) sections.push({ key: team.id, label: t('projects.teamSection', { name: team.name }), projects: ps });
     }
     const orgProjects = activeProjects.filter((p) => !p.teamId || !teams.some((t) => t.id === p.teamId));
-    if (orgProjects.length > 0) sections.push({ key: 'org', label: sections.length > 0 ? 'Entreprise' : null, projects: orgProjects });
+    if (orgProjects.length > 0) sections.push({ key: 'org', label: sections.length > 0 ? t('projects.orgSection') : null, projects: orgProjects });
     return sections;
-  }, [teamFilter, teams, activeProjects]);
+    // `t` en dépendance : les en-têtes de section sont traduits ici.
+  }, [teamFilter, teams, activeProjects, t]);
 
   if (loadingProjects) return <ProjectsSkeleton />;
 
@@ -217,7 +220,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           )}
           {doneThisWeek > 0 && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
-              <CheckCircle2 size={12} aria-hidden="true" /> {doneThisWeek} terminée{doneThisWeek > 1 ? 's' : ''} cette semaine
+              <CheckCircle2 size={12} aria-hidden="true" /> {tp('projects.doneThisWeek', doneThisWeek)}
             </span>
           )}
         </div>
@@ -251,7 +254,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           {/* Tâches d'un membre */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              aria-label="Filtrer par assigné"
+              aria-label={t('projects.filterAssignee')}
               className={`h-9 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                 filteredMember && assigneeFilter !== currentUserId
                   ? 'border-indigo-500 text-[rgb(var(--color-text-primary))]'
@@ -270,9 +273,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
               )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-              <DropdownMenuLabel>Voir les tâches de</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('projects.seeTasksOf')}</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null })}>
-                <span className="text-[rgb(var(--color-text-muted))]">Tout le monde</span>
+                <span className="text-[rgb(var(--color-text-muted))]">{t('projects.everyone')}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {members.map((m) => (
@@ -290,11 +293,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             <select
               value={teamFilter}
               onChange={(e) => updatePrefs({ teamFilter: e.target.value })}
-              aria-label="Filtrer par équipe"
+              aria-label={t('projects.filterTeam')}
               className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
             >
-              <option value="">Toutes les équipes</option>
-              <option value="org">Entreprise (sans équipe)</option>
+              <option value="">{t('projects.allTeams')}</option>
+              <option value="org">{t('projects.orgNoTeam')}</option>
               {teams.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
@@ -320,9 +323,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             <button
               type="button"
               onClick={() => updatePrefs({ view: 'kanban' })}
-              aria-label="Vue kanban par assigné"
+              aria-label={t('projects.kanbanByAssignee')}
               aria-pressed={view === 'kanban'}
-              title="Vue kanban par assigné"
+              title={t('projects.kanbanByAssignee')}
               className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
                 view === 'kanban' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
               }`}
@@ -360,17 +363,17 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
             <FolderKanban size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Aucun projet</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('projects.empty')}</p>
           {isManager ? (
             <button
               type="button"
               onClick={() => setShowNewProject(true)}
               className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
             >
-              <Plus size={15} aria-hidden="true" /> Créer un projet
+              <Plus size={15} aria-hidden="true" /> {t('projects.createProject')}
             </button>
           ) : (
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">Un manager doit créer un projet.</p>
+            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('projects.managerMustCreate')}</p>
           )}
         </div>
       ) : view === 'kanban' ? (
@@ -409,7 +412,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
                 className="inline-flex items-center gap-1.5 px-1 py-1 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
               >
                 {showArchived ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
-                Projets archivés ({archivedProjects.length})
+                {t('projects.archived', { count: archivedProjects.length })}
               </button>
               {showArchived && (
                 <div className="space-y-3 mt-2">{archivedProjects.map(renderProjectCard)}</div>

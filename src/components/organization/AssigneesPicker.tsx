@@ -10,6 +10,7 @@ import {
 import { UserPlus, Plus } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface AssigneesPickerProps {
   members: OrgMember[];
@@ -30,6 +31,7 @@ interface AssigneesPickerProps {
  * montre jusqu'à 3 avatars (+N), ou une icône « assigner » si personne.
  */
 const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover }: AssigneesPickerProps) => {
+  const { t } = useT('org');
   const assigned = value
     .map((id) => members.find((m) => m.userId === id))
     .filter((m): m is OrgMember => !!m);
@@ -38,7 +40,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
     onChange(value.includes(userId) ? value.filter((id) => id !== userId) : [...value, userId]);
 
   const label = assigned.length
-    ? `Assignée à ${assigned.map((m) => m.displayName).join(', ')}`
+    ? t('assign.assignedTo', { names: assigned.map((m) => m.displayName).join(', ') })
     : 'Assigner des membres';
 
   return (
@@ -81,11 +83,11 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
       {/* z-[10000] : le menu doit passer AU-DESSUS des modals (z-[9999]) —
           sans ça il s'ouvrait derrière le modal et paraissait « ne rien faire ». */}
       <DropdownMenuContent align="end" className="w-56 max-h-72 overflow-y-auto z-[10000]">
-        <DropdownMenuLabel>Assigner à</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('assign.picker')}</DropdownMenuLabel>
         {value.length > 0 && (
           <>
             <DropdownMenuItem onClick={() => onChange([])}>
-              <span className="text-[rgb(var(--color-text-muted))]">Tout désassigner</span>
+              <span className="text-[rgb(var(--color-text-muted))]">{t('assign.unassignAll')}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>

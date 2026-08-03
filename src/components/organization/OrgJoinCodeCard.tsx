@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRegenerateJoinCode } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface OrgJoinCodeCardProps {
   code: string;
@@ -15,6 +16,7 @@ interface OrgJoinCodeCardProps {
  * Le code circule pour inviter ; l'admin valide chaque demande (pattern inbox).
  */
 const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps) => {
+  const { t } = useT('org');
   const [copied, setCopied] = useState(false);
   const regenerateMutation = useRegenerateJoinCode();
 
@@ -22,7 +24,7 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps)
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      toast.success('Code copié');
+      toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error('Impossible de copier le code');
@@ -30,16 +32,15 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps)
   };
 
   const regenerate = () => {
-    if (!window.confirm('Régénérer le code ? L\'ancien code ne fonctionnera plus pour rejoindre l\'entreprise.')) return;
+    if (!window.confirm(t('invite.regenerateConfirm'))) return;
     regenerateMutation.mutate(orgId);
   };
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">Code d'invitation</h3>
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">{t('invite.codeTitle')}</h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-        Partagez ce code pour que de nouveaux membres demandent à rejoindre l'entreprise.
-        Chaque demande doit être validée par un administrateur.
+        {t('invite.codeHint')}
       </p>
       <div className="flex items-center gap-2">
         <code className="flex-1 text-base font-bold tracking-widest px-3 py-2.5 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center">
@@ -59,8 +60,8 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps)
             onClick={regenerate}
             disabled={regenerateMutation.isPending}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] hover:text-amber-500 flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors disabled:opacity-50"
-            aria-label="Régénérer le code (invalide l'ancien)"
-            title="Régénérer le code"
+            aria-label={t('invite.regenerateAria')}
+            title={t('invite.regenerate')}
           >
             <RefreshCw size={18} className={regenerateMutation.isPending ? 'animate-spin' : ''} aria-hidden="true" />
           </button>

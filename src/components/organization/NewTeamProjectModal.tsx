@@ -7,6 +7,7 @@ import type { OrgTeam } from '@/modules/org-teams';
 import type { CreateTeamProjectInput } from '@/modules/team-projects';
 import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
+import { useT } from '@/i18n/useT';
 
 /** Tâche initiale saisie dans le popup (créée après le projet). */
 export interface DraftTask {
@@ -36,6 +37,7 @@ const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(v
  * liste de tâches initiales, chacune assignable à des membres.
  */
 const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose }: NewTeamProjectModalProps) => {
+  const { t } = useT('org');
   const [name, setName] = useState('');
   const [color, setColor] = useState('blue');
   const [teamId, setTeamId] = useState(defaultTeamId ?? '');
@@ -82,7 +84,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Nouveau projet d'équipe"
+        aria-label={t('project.newAria')}
       >
         {/* Poignée mobile */}
         <div className="sm:hidden flex justify-center pt-4 pb-2 shrink-0">
@@ -100,7 +102,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           <button
             onClick={onClose}
             disabled={pending}
-            aria-label="Fermer le formulaire"
+            aria-label={t('project.closeForm')}
             className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
             style={{ color: 'rgb(var(--color-text-muted))' }}
           >
@@ -118,14 +120,14 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
 
           {/* Nom */}
           <div>
-            <label htmlFor="new-project-name" className={labelClass} style={labelStyle}>Nom du projet *</label>
+            <label htmlFor="new-project-name" className={labelClass} style={labelStyle}>{t('project.name')}</label>
             <input
               id="new-project-name"
               type="text"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(null); }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); } }}
-              placeholder="Ex : Refonte du site"
+              placeholder={t('project.namePlaceholder')}
               autoFocus
               maxLength={120}
               className={inputClass}
@@ -135,8 +137,8 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
 
           {/* Couleur */}
           <div>
-            <span className={labelClass} style={labelStyle}>Couleur</span>
-            <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label="Couleur du projet">
+            <span className={labelClass} style={labelStyle}>{t('project.color')}</span>
+            <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('project.colorAria')}>
               {PROJECT_COLOR_NAMES.map((c) => (
                 <button
                   key={c}
@@ -155,7 +157,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
 
           {/* Équipe / collaborateurs */}
           <div>
-            <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>Collaborateurs · équipe</label>
+            <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>{t('project.team')}</label>
             <select
               id="new-project-team"
               value={teamId}
@@ -163,14 +165,14 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
               className={inputClass}
               style={inputStyle}
             >
-              <option value="">Toute l'entreprise</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>Équipe {t.name}</option>
+              <option value="">{t('project.wholeOrg')}</option>
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>{t('project.teamOption', { name: team.name })}</option>
               ))}
             </select>
             <p className="mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {teamId
-                ? 'Seuls les membres de cette équipe (et la hiérarchie au-dessus) verront le projet.'
+                ? t('project.teamHint')
                 : 'Visible par toute l\'entreprise.'}
             </p>
           </div>
@@ -219,7 +221,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 value={composerName}
                 onChange={(e) => setComposerName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTask(); } }}
-                placeholder="Ajouter une tâche…"
+                placeholder={t('project.addTask')}
                 maxLength={500}
                 className="flex-1 h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
                 style={inputStyle}
@@ -229,7 +231,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 type="button"
                 onClick={addTask}
                 disabled={!composerName.trim()}
-                aria-label="Ajouter la tâche à la liste"
+                aria-label={t('project.addTaskToList')}
                 className="h-10 px-3 rounded-lg bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] disabled:opacity-40 text-sm font-semibold inline-flex items-center gap-1 shrink-0"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
               >
@@ -265,7 +267,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
             {pending ? (
               <>
                 <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                <span>Création...</span>
+                <span>{t('project.creating')}</span>
               </>
             ) : (
               tasks.length > 0 ? `Créer le projet (${tasks.length} tâche${tasks.length > 1 ? 's' : ''})` : 'Créer le projet'

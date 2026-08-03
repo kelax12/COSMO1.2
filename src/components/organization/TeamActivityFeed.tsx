@@ -4,6 +4,7 @@ import { getDateLocale } from '@/i18n/format';
 import { CheckCircle2, PlusCircle } from 'lucide-react';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface TeamActivityFeedProps {
   tasks: TeamTask[];
@@ -28,6 +29,7 @@ const firstName = (name: string) => name.split(' ')[0];
  * table dédiée. 8 entrées max, 14 derniers jours.
  */
 const TeamActivityFeed = ({ tasks, projects, members }: TeamActivityFeedProps) => {
+  const { t } = useT('org');
   const items = useMemo<ActivityItem[]>(() => {
     const memberById = new Map(members.map((m) => [m.userId, m]));
     const projectById = new Map(projects.map((p) => [p.id, p]));
@@ -74,7 +76,7 @@ const TeamActivityFeed = ({ tasks, projects, members }: TeamActivityFeedProps) =
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        Activité de l'équipe
+        {t('activity.title')}
       </h3>
       <ul className="space-y-2">
         {items.map((item) => (
@@ -87,13 +89,13 @@ const TeamActivityFeed = ({ tasks, projects, members }: TeamActivityFeedProps) =
             <p className="flex-1 min-w-0 text-[rgb(var(--color-text-secondary))]">
               {item.kind === 'completed' ? (
                 <>
-                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{item.actorName ?? 'L\'équipe'}</span>
-                  {' a terminé '}
+                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{item.actorName ?? t('activity.theTeam')}</span>
+                  {t('activity.completed')}
                 </>
               ) : (
                 <>
                   <span className="font-semibold text-[rgb(var(--color-text-primary))]">{item.actorName ?? 'Un membre'}</span>
-                  {' a créé '}
+                  {t('activity.created')}
                 </>
               )}
               <span className="text-[rgb(var(--color-text-primary))]">« {item.taskName} »</span>

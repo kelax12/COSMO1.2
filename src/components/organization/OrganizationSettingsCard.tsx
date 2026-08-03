@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { Building2, ArrowRight } from 'lucide-react';
 import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
+import { useT } from '@/i18n/useT';
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Administrateur',
@@ -17,6 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
  * Rend son propre titre ; à insérer dans un <SectionCard> côté SettingsPage.
  */
 const OrganizationSettingsCard = () => {
+  const { t } = useT('org');
   const navigate = useNavigate();
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
 
@@ -30,7 +32,7 @@ const OrganizationSettingsCard = () => {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-[rgb(var(--color-text-secondary))]">Chargement…</p>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('settingsCard.loading')}</p>
       ) : myOrg ? (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3">
           <div>
@@ -44,13 +46,13 @@ const OrganizationSettingsCard = () => {
             onClick={() => navigate('/entreprise')}
             className="shrink-0 inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-0 sm:py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[#1f6feb] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all" // --color-accent-solid (#388bfd) ne passe pas le contraste AA (3.3:1) avec du texte blanc
           >
-            Accéder <ArrowRight size={15} aria-hidden="true" />
+            {t('settingsCard.access')} <ArrowRight size={15} aria-hidden="true" />
           </button>
         </div>
       ) : (
         <div className="mt-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
-            Créez une entreprise pour collaborer avec votre équipe, ou rejoignez-en une avec un code d'invitation.
+            {t('settingsCard.hint')}
           </p>
           <CreateOrJoinOrganization onCreated={() => { /* code affiché dans le composant */ }} />
         </div>

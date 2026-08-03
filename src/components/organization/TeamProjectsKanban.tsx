@@ -6,6 +6,7 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface TeamProjectsKanbanProps {
   projects: TeamProject[];
@@ -33,6 +34,7 @@ interface DragPayload {
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
 const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn }: TeamProjectsKanbanProps) => {
+  const { t } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
@@ -49,10 +51,11 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
       (a, b) => (counts.get(b.userId) ?? 0) - (counts.get(a.userId) ?? 0),
     );
     return [
-      { id: KANBAN_UNASSIGNED, label: 'Non assignées', member: null as OrgMember | null },
+      { id: KANBAN_UNASSIGNED, label: t('kanban.unassigned'), member: null as OrgMember | null },
       ...memberCols.map((m) => ({ id: m.userId, label: m.displayName, member: m as OrgMember | null })),
     ];
-  }, [members, openTasks]);
+    // `t` en dépendance : la colonne « non assignées » porte un libellé traduit.
+  }, [members, openTasks, t]);
 
   const tasksOf = (colId: string) =>
     colId === KANBAN_UNASSIGNED
@@ -75,7 +78,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label="Kanban par assigné">
+    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
       {columns.map((col) => {
         const colTasks = tasksOf(col.id);
         const overdue = colTasks.filter(isTaskOverdue).length;
@@ -107,8 +110,8 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                 <button
                   type="button"
                   onClick={() => onAddToColumn(col.member ? col.id : null)}
-                  aria-label={col.member ? `Attribuer une tâche à ${col.label}` : 'Ajouter une tâche non assignée'}
-                  title="Attribuer ou créer une tâche"
+                  aria-label={col.member ? t('kanban.assignTo', { name: col.label }) : t('kanban.addUnassigned')}
+                  title={t('kanban.assignOrCreate')}
                   className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                   <Plus size={14} aria-hidden="true" />
@@ -119,7 +122,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
             <div className="p-2 space-y-1.5 min-h-[64px] max-h-[60vh] overflow-y-auto">
               {colTasks.length === 0 && (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-4">
-                  Déposez une tâche ici
+                  {t('kanban.dropHere')}
                 </p>
               )}
               {colTasks.map((task) => {

@@ -126,6 +126,7 @@
   "notFound": {
     "title": "Page not found",
     "body": "This page doesn't exist or has moved. Check the address, or head back home.",
-    "home": "Back to home"
+    "home": "Back to home",
+    "guide": "See the guide"
   }
 }

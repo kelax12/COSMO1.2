@@ -7,6 +7,7 @@ import {
   useCreateInviteLink,
   type OrgMember,
 } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface AddUnderSheetProps {
   orgId: string;
@@ -24,6 +25,7 @@ interface AddUnderSheetProps {
  *      non placée).
  */
 const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetProps) => {
+  const { t } = useT('org');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -48,7 +50,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
-      toast.success('Lien copié');
+      toast.success(t('invite.linkCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error('Impossible de copier le lien');
@@ -60,7 +62,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
     try {
       await navigator.clipboard.writeText(joinCode);
       setCodeCopied(true);
-      toast.success('Code copié');
+      toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCodeCopied(false), 1500);
     } catch {
       toast.error('Impossible de copier le code');
@@ -92,17 +94,16 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
           </button>
         </div>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">
-          Invitez une nouvelle personne à rejoindre l'entreprise à cette place.
+          {t('invite.addUnderHint')}
         </p>
 
         {/* ── Lien d'invitation placé ── */}
         <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4 mb-4">
           <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
-            Lien d'invitation personnalisé
+            {t('invite.personalLink')}
           </h3>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-            Usage unique, valable 7 jours. Après création de son compte, la personne rejoint
-            directement l'entreprise, rattachée à {under.userId === currentUserId ? 'vous' : under.displayName}.
+            {t('invite.personalLinkHint', { name: under.userId === currentUserId ? t('invite.you') : under.displayName })}
           </p>
           {inviteUrl ? (
             <div className="flex items-center gap-2">
@@ -125,7 +126,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
               disabled={createLink.isPending}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {createLink.isPending ? 'Génération…' : 'Générer un lien'}
+              {createLink.isPending ? t('invite.generating') : t('invite.generateLink')}
             </button>
           )}
         </section>
@@ -137,8 +138,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
               Code d'invitation de l'entreprise
             </h3>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-              Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un
-              administrateur valide sa demande (elle arrive non placée dans la pyramide).
+              {t('invite.permanentCodeHint')}
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-base font-bold tracking-widest px-3 py-2.5 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center">

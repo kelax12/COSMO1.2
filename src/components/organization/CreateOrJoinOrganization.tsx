@@ -9,6 +9,7 @@ import {
   type Organization,
 } from '@/modules/organizations';
 import OrgConsentNotice from './OrgConsentNotice';
+import { useT } from '@/i18n/useT';
 
 interface CreateOrJoinOrganizationProps {
   /** Appelé quand l'utilisateur vient de créer une entreprise (nav vers /entreprise). */
@@ -34,6 +35,7 @@ const primaryBtn =
  *     getMySentJoinRequest, poll 20 s → l'écran d'attente reste après reload)
  */
 const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated }) => {
+  const { t } = useT('org');
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -66,7 +68,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      toast.success('Code copié');
+      toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error('Impossible de copier le code');
@@ -82,10 +84,10 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
         </div>
         <div>
           <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-            {createdOrg.name} est créée
+            {t('createJoin.orgCreated', { name: createdOrg.name })}
           </h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            Partagez ce code d'invitation avec votre équipe pour qu'ils vous rejoignent.
+            {t('createJoin.shareCode')}
           </p>
         </div>
         <div className="flex items-center gap-2 justify-center">
@@ -114,17 +116,17 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
         </div>
         <div>
           <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-            Demande envoyée
+            {t('createJoin.requestSent')}
           </h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            Votre demande d'adhésion est en attente de validation par un administrateur.
+            {t('createJoin.requestPending')}
           </p>
         </div>
         <button
           type="button"
           onClick={() =>
             cancelMutation.mutate(sentRequest.id, {
-              onSuccess: () => toast.success('Demande annulée'),
+              onSuccess: () => toast.success(t('createJoin.requestCancelled')),
             })
           }
           disabled={cancelMutation.isPending}
@@ -146,9 +148,9 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
           className={`${cardBase} border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:ring-2 hover:ring-blue-500/30`}
         >
           <Building2 size={22} className="text-blue-500" aria-hidden="true" />
-          <span className="text-base font-bold text-[rgb(var(--color-text-primary))]">Créer une entreprise</span>
+          <span className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('createJoin.createOrg')}</span>
           <span className="text-sm text-[rgb(var(--color-text-secondary))]">
-            Vous devenez administrateur et invitez votre équipe avec un code.
+            {t('createJoin.createOrgHint')}
           </span>
         </button>
         <button
@@ -157,9 +159,9 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
           className={`${cardBase} border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-indigo-500 hover:ring-2 hover:ring-indigo-500/30`}
         >
           <Users size={22} className="text-indigo-500" aria-hidden="true" />
-          <span className="text-base font-bold text-[rgb(var(--color-text-primary))]">Rejoindre une entreprise</span>
+          <span className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('createJoin.joinOrg')}</span>
           <span className="text-sm text-[rgb(var(--color-text-secondary))]">
-            Saisissez le code d'invitation reçu de votre administrateur.
+            {t('createJoin.joinOrgHint')}
           </span>
         </button>
       </div>
@@ -199,7 +201,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             disabled={name.trim().length < 2 || createMutation.isPending}
             className={primaryBtn}
           >
-            {createMutation.isPending ? 'Création…' : "Créer l'entreprise"}
+            {createMutation.isPending ? t('createJoin.creating') : t('createJoin.createCta')}
           </button>
         </div>
       ) : (

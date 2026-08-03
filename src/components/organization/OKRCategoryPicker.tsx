@@ -5,6 +5,7 @@ import {
   useCreateOrgOKRCategory,
   OKR_CATEGORY_COLORS,
 } from '@/modules/org-okr-categories';
+import { useT } from '@/i18n/useT';
 
 interface OKRCategoryPickerProps {
   orgId: string;
@@ -19,6 +20,7 @@ interface OKRCategoryPickerProps {
  * le NOM (stocké dans team_okrs.category).
  */
 const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) => {
+  const { t } = useT('org');
   const { data: categories = [] } = useOrgOKRCategories(orgId);
   const createCategory = useCreateOrgOKRCategory(orgId);
   const [creating, setCreating] = useState(false);
@@ -68,7 +70,7 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
             onClick={() => setCreating(true)}
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
           >
-            <Plus size={12} aria-hidden="true" /> Nouvelle catégorie
+            <Plus size={12} aria-hidden="true" /> {t('okrCategory.new')}
           </button>
         )}
       </div>
@@ -80,7 +82,7 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate(); } if (e.key === 'Escape') setCreating(false); }}
-            placeholder="Nom de la catégorie"
+            placeholder={t('okrCategory.namePlaceholder')}
             autoFocus
             maxLength={60}
             className="flex-1 min-w-[140px] h-8 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
@@ -104,12 +106,12 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
             disabled={!newName.trim() || createCategory.isPending}
             className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold"
           >
-            Créer
+            {t('okrCategory.create')}
           </button>
           <button
             type="button"
             onClick={() => setCreating(false)}
-            aria-label="Annuler"
+            aria-label={t('okrCategory.cancel')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={14} aria-hidden="true" />

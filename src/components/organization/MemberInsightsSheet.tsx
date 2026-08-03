@@ -19,6 +19,7 @@ import { useOrgMembers, type OrgMember } from '@/modules/organizations';
 import { showUndoToast } from '@/lib/undo-toast';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskModal from './TeamTaskModal';
+import { useT } from '@/i18n/useT';
 
 export type InsightsTab = 'tasks' | 'agenda' | 'contribution';
 
@@ -53,6 +54,7 @@ const isOverdue = (t: TeamTask): boolean => {
  *  - Contribution : synthèse de son activité (complétées, taux, retards).
  */
 const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClose }: MemberInsightsSheetProps) => {
+  const { t } = useT('org');
   // 'agenda' a désormais son propre écran plein page — on retombe sur 'tasks'.
   const [tab, setTab] = useState<InsightsTab>(initialTab === 'agenda' ? 'tasks' : initialTab);
   const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
@@ -69,7 +71,7 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClo
   const removeWithUndo = (task: TeamTask) =>
     deleteTask.mutate(task.id, {
       onSuccess: () => {
-        showUndoToast('Tâche supprimée', () =>
+        showUndoToast(t('insights.taskDeleted'), () =>
           createTask.mutate({
             projectId: task.projectId,
             name: task.name,
@@ -122,7 +124,7 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClo
             <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
               {member.displayName}
             </h2>
-            <p className="text-xs text-[rgb(var(--color-text-muted))]">Activité dans l'entreprise</p>
+            <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.activity')}</p>
           </div>
           <button
             type="button"
@@ -156,7 +158,7 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClo
         {/* Contenu */}
         <div className="overflow-y-auto p-5">
           {isLoading ? (
-            <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">Chargement…</p>
+            <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>
           ) : tab === 'tasks' ? (
             <TasksView
               open={open}
@@ -208,22 +210,25 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClo
 
 const priorityLabel = (p: number) => `P${Math.min(5, Math.max(1, Math.round(p)))}`;
 
-const TaskRow = ({ t, canEdit, onEdit }: { t: TeamTask; canEdit: boolean; onEdit: (t: TeamTask) => void }) => {
+// La prop de tâche s'appelait `t` — elle masquait le traducteur `t` dès qu'on
+// a voulu traduire « En retard ». Renommée `task`.
+const TaskRow = ({ task, canEdit, onEdit }: { task: TeamTask; canEdit: boolean; onEdit: (task: TeamTask) => void }) => {
+  const { t } = useT('org');
   const content = (
     <>
-      {t.completed ? (
+      {task.completed ? (
         <CheckCircle2 size={16} className="text-green-500 shrink-0" aria-hidden="true" />
       ) : (
         <Circle size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
       )}
-      <span className={`text-sm flex-1 truncate ${t.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
-        {t.name}
+      <span className={`text-sm flex-1 truncate ${task.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
+        {task.name}
       </span>
-      {!t.completed && isOverdue(t) && (
-        <span className="text-[10px] font-semibold text-red-500 shrink-0">En retard</span>
+      {!task.completed && isOverdue(task) && (
+        <span className="text-[10px] font-semibold text-red-500 shrink-0">{t('insights.overdue')}</span>
       )}
       <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] shrink-0">
-        {priorityLabel(t.priority)}
+        {priorityLabel(task.priority)}
       </span>
     </>
   );
@@ -238,8 +243,8 @@ const TaskRow = ({ t, canEdit, onEdit }: { t: TeamTask; canEdit: boolean; onEdit
     <li>
       <button
         type="button"
-        onClick={() => onEdit(t)}
-        aria-label={`Modifier la tâche ${t.name}`}
+        onClick={() => onEdit(task)}
+        aria-label={`Modifier la tâche ${task.name}`}
         className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
       >
         {content}
@@ -263,10 +268,11 @@ const TasksView = ({
 }: {
   open: TeamTask[]; done: TeamTask[]; canEdit: boolean; onAddTask: () => void; onEditTask: (t: TeamTask) => void;
 }) => {
+  const { t } = useT('org');
   if (open.length === 0 && done.length === 0) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-[rgb(var(--color-text-muted))] py-2 text-center">Aucune tâche d'équipe assignée.</p>
+        <p className="text-sm text-[rgb(var(--color-text-muted))] py-2 text-center">{t('insights.noTeamTask')}</p>
         <AddTaskButton onAddTask={onAddTask} />
       </div>
     );
@@ -279,20 +285,20 @@ const TasksView = ({
           En cours ({open.length})
         </h3>
         {open.length === 0 ? (
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">Aucune tâche en cours.</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.noOpenTask')}</p>
         ) : (
           <ul className="space-y-1.5">
-            {open.map((t) => <TaskRow key={t.id} t={t} canEdit={canEdit} onEdit={onEditTask} />)}
+            {open.map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} />)}
           </ul>
         )}
       </section>
       {done.length > 0 && (
         <section>
           <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-            Terminées ({done.length})
+            {t('insights.completed', { count: done.length })}
           </h3>
           <ul className="space-y-1.5">
-            {done.slice(0, 20).map((t) => <TaskRow key={t.id} t={t} canEdit={canEdit} onEdit={onEditTask} />)}
+            {done.slice(0, 20).map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} />)}
           </ul>
         </section>
       )}
@@ -301,12 +307,13 @@ const TasksView = ({
 };
 
 const AgendaView = ({ scheduled }: { scheduled: TeamTask[] }) => {
+  const { t } = useT('org');
   if (scheduled.length === 0) {
     return (
       <div className="py-6 text-center">
-        <p className="text-sm text-[rgb(var(--color-text-muted))]">Aucune échéance à venir.</p>
+        <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('insights.noUpcoming')}</p>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mt-2">
-          Seules les échéances des tâches d'équipe sont visibles (le calendrier personnel reste privé).
+          {t('insights.privacyNote')}
         </p>
       </div>
     );
@@ -347,21 +354,22 @@ const StatBlock = ({ value, label, tone }: { value: string; label: string; tone:
 const ContributionView = ({ total, done, open, overdue, completionRate }: {
   total: number; done: number; open: number; overdue: number; completionRate: number;
 }) => {
+  const { t } = useT('org');
   if (total === 0) {
-    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">Aucune contribution à afficher.</p>;
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.noContribution')}</p>;
   }
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <StatBlock value={`${completionRate}%`} label="Taux de complétion" tone="text-emerald-500" />
-        <StatBlock value={String(done)} label="Tâches terminées" tone="text-[rgb(var(--color-text-primary))]" />
+        <StatBlock value={`${completionRate}%`} label={t('insights.completionRate')} tone="text-emerald-500" />
+        <StatBlock value={String(done)} label={t('insights.tasksDone')} tone="text-[rgb(var(--color-text-primary))]" />
         <StatBlock value={String(open)} label="En cours" tone="text-indigo-500" />
         <StatBlock value={String(overdue)} label="En retard" tone={overdue > 0 ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'} />
       </div>
       {/* Barre de progression complétées / total */}
       <div>
         <div className="flex items-center justify-between text-xs text-[rgb(var(--color-text-muted))] mb-1.5">
-          <span>Progression</span>
+          <span>{t('insights.progress')}</span>
           <span>{done} / {total}</span>
         </div>
         <div className="h-2.5 w-full rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">

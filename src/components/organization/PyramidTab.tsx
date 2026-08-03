@@ -48,6 +48,8 @@ import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
 import MemberAgendaSheet from './MemberAgendaSheet';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
+import { useT } from '@/i18n/useT';
+import RichText from '@/components/ui/rich-text';
 
 interface PyramidTabProps {
   orgId: string;
@@ -152,6 +154,7 @@ interface NodeCardProps {
 }
 
 const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile }: NodeCardProps) => {
+  const { t, tp } = useT('org');
   const collapsed = collapsedIds.has(node.member.userId);
   // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
   // l'élément sous le pointeur (la carte) → sinon la fiche s'ouvrait en plus de
@@ -293,10 +296,12 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       data-card="true"
       aria-label={
         isDropTarget
-          ? `Placer ${drag.member.displayName} sous ${m.displayName}`
-          : `${isMe ? 'Vous' : m.displayName}, ${m.role === 'admin' ? 'admin' : manager ? 'manager' : 'membre'}${
-              node.children.length > 0 ? `, ${node.children.length} subordonné${node.children.length > 1 ? 's' : ''} direct${node.children.length > 1 ? 's' : ''}` : ''
-            }`
+          ? t('pyramid.placeUnder', { member: drag.member.displayName, target: m.displayName })
+          : t('pyramid.cardAria', {
+              name: isMe ? t('pyramid.you') : m.displayName,
+              role: m.role === 'admin' ? t('pyramid.roleAdmin') : manager ? t('pyramid.roleManager') : t('pyramid.roleMember'),
+              reports: node.children.length > 0 ? tp('pyramid.directReports', node.children.length) : '',
+            })
       }
       style={isDragSource || editDraggable ? { touchAction: 'none' } : undefined}
       className={`inline-flex items-center rounded-2xl border bg-[rgb(var(--color-surface))] transition-colors ${
@@ -315,7 +320,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             e.preventDefault();
             onGrab(m, e);
           }}
-          title={`Glisser pour déplacer ${m.displayName}`}
+          title={t('pyramid.dragToMove', { name: m.displayName })}
           data-grip="true"
           className="cursor-grab text-[rgb(var(--color-text-muted))]/50 hover:text-indigo-500 -ml-1 shrink-0 touch-none"
           aria-hidden="true"
@@ -330,7 +335,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             e.stopPropagation();
             onToggleCollapse(m.userId);
           }}
-          aria-label={collapsed ? `Déplier l'équipe de ${m.displayName}` : `Replier l'équipe de ${m.displayName}`}
+          aria-label={collapsed ? t('pyramid.expandTeam', { name: m.displayName }) : t('pyramid.collapseTeam', { name: m.displayName })}
           aria-expanded={!collapsed}
           className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
         >
@@ -340,20 +345,20 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <MemberAvatar avatar={m.avatar} name={m.displayName} size={34} />
       <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
-            {isMe ? 'Vous' : m.displayName}
+            {isMe ? t('pyramid.you') : m.displayName}
           </p>
           <p
             className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
               totalReports > node.children.length
-                ? `${node.children.length} direct${node.children.length > 1 ? 's' : ''} · ${totalReports} au total`
+                ? tp('pyramid.directCount', node.children.length) + t('pyramid.totalSuffix', { count: totalReports })
                 : undefined
             }
           >
             <span>
-              {m.role === 'admin' ? 'Admin' : manager ? 'Manager' : 'Membre'}
+              {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
               {node.children.length > 0 ? ` · ${node.children.length}` : ''}
-              {totalReports > node.children.length ? ` · ${totalReports} au total` : ''}
+              {totalReports > node.children.length ? t('pyramid.totalSuffix', { count: totalReports }) : ''}
             </span>
             {myTeams.length > 0 && (
               <span className="inline-flex items-center gap-1 shrink-0">
@@ -393,7 +398,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             {movable && (
               <DropdownMenuItem onClick={() => onStartDrag(m)}>
                 <Move size={14} className="text-indigo-500" aria-hidden="true" />
-                Déplacer
+                {t('pyramid.move')}
               </DropdownMenuItem>
             )}
             {canSeeInsights && (
@@ -497,6 +502,7 @@ const PyramidSkeleton = () => (
  * cibles valides surlignées et zone « Détacher » pour les admins.
  */
 const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }: PyramidTabProps) => {
+  const { t, tp } = useT('org');
   const isMobile = useIsMobile();
   const [dragging, setDragging] = useState<OrgMember | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
@@ -761,15 +767,15 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             dropId === UNPLACED_DROP_ID ? null : members.find((u) => u.userId === dropId)?.displayName;
           setAnnouncement(
             destName
-              ? `${target.displayName} est maintenant rattaché(e) à ${destName}`
-              : `${target.displayName} est détaché(e) de la pyramide`,
+              ? t('pyramid.nowUnder', { name: target.displayName, manager: destName })
+              : t('pyramid.detached', { name: target.displayName }),
           );
           if (editModeRef.current) {
             // Mode réorganisation : on journalise pour « Annuler », pas de toast.
             sessionMovesRef.current.push({ userId: target.userId, prevManagerId: previousManagerId });
             setMoveCount(sessionMovesRef.current.length);
           } else {
-            showUndoToast(`${target.displayName} déplacé(e)`, () => {
+            showUndoToast(t('pyramid.moved', { name: target.displayName }), () => {
               setManager.mutate({ orgId, userId: target.userId, managerId: previousManagerId });
               flashCard(target.userId);
             });
@@ -890,7 +896,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   };
 
   const finishEdit = () => {
-    if (sessionMovesRef.current.length > 0) toast.success('Réorganisation enregistrée');
+    if (sessionMovesRef.current.length > 0) toast.success(t('pyramid.reorgSaved'));
     resetEditState();
   };
 
@@ -899,8 +905,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     if (moves.length > 0) {
       const ok = window.confirm(
         moves.length > 1
-          ? `Annuler la réorganisation ? Les ${moves.length} déplacements effectués seront rétablis.`
-          : 'Annuler la réorganisation ? Le déplacement effectué sera rétabli.',
+          ? tp('pyramid.undoConfirm', moves.length)
+          : tp('pyramid.undoConfirm', 1),
       );
       if (!ok) return;
       // Rétablissement dans l'ordre inverse (évite les faux cycles serveur).
@@ -911,7 +917,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           break; // l'erreur est déjà remontée par le toast du hook
         }
       }
-      toast.success('Modifications annulées');
+      toast.success(t('pyramid.undone'));
     }
     resetEditState();
   };
@@ -937,7 +943,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           <p className="text-sm text-[rgb(var(--color-text-primary))] inline-flex items-center gap-2 min-w-0">
             <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
             <span className="truncate">
-              Glissez <strong>{dragging.displayName}</strong> sur son nouveau responsable, ou touchez une carte surlignée.
+              <RichText strongClassName="font-semibold">{t('pyramid.dragBanner', { name: dragging.displayName })}</RichText>
             </span>
           </p>
           <button
@@ -956,14 +962,14 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           type="button"
           data-drop-id={UNPLACED_DROP_ID}
           onClick={() => drop(UNPLACED_DROP_ID)}
-          aria-label={`Détacher ${dragging.displayName} (non placé)`}
+          aria-label={t('pyramid.detachAria', { name: dragging.displayName })}
           className={`w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-3 text-sm transition-colors ${
             hoverDropId === UNPLACED_DROP_ID
               ? 'border-amber-500 ring-2 ring-amber-500/40 text-amber-600 dark:text-amber-400'
               : 'border-amber-400/60 text-[rgb(var(--color-text-muted))] hover:border-amber-500'
           }`}
         >
-          <ArrowUpFromLine size={15} aria-hidden="true" /> Détacher (non placé)
+          <ArrowUpFromLine size={15} aria-hidden="true" /> {t('pyramid.detach')}
         </button>
       )}
 
@@ -971,10 +977,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
       {unplaced.length > 0 && (isMobile || roots.length === 0) && (
         <section className="rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
           <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-            <UserPlus size={15} aria-hidden="true" /> Non placés ({unplaced.length})
+            <UserPlus size={15} aria-hidden="true" /> {t('pyramid.unplaced', { count: unplaced.length })}
           </h3>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-            Ces membres ne sont rattachés à personne. {isAdmin ? 'Placez-les dans la pyramide.' : 'Un administrateur doit les placer.'}
+            {isAdmin ? t('pyramid.unplacedHintAdmin') : t('pyramid.unplacedHintMember')}
           </p>
           <div className="flex flex-wrap gap-2">
             {unplaced.map((m) => (
@@ -987,7 +993,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                     onClick={() => setPlacing(m)}
                     className="ml-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
                   >
-                    Placer
+                    {t('pyramid.place')}
                   </button>
                 )}
               </div>
@@ -1006,7 +1012,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             Votre pyramide est vide
           </p>
           <p className="text-sm text-[rgb(var(--color-text-muted))] max-w-sm mb-5">
-            La pyramide représente qui travaille avec qui : chaque membre est rattaché à un
+            {t('pyramid.intro')}
             responsable direct (N+1). Invitez vos collaborateurs pour la construire.
           </p>
           {selfMember && (
@@ -1034,15 +1040,15 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher un membre…"
-                  aria-label="Rechercher un membre dans la pyramide"
+                  placeholder={t('pyramid.searchPlaceholder')}
+                  aria-label={t('pyramid.searchAria')}
                   className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
                 />
                 {query && (
                   <button
                     type="button"
                     onClick={() => setQuery('')}
-                    aria-label="Effacer la recherche"
+                    aria-label={t('pyramid.clearSearch')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
                   >
                     <X size={12} aria-hidden="true" />
@@ -1051,13 +1057,13 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               </div>
               {query.trim() && (
                 <span className="text-xs text-[rgb(var(--color-text-muted))]" aria-live="polite">
-                  {matchIds.size} résultat{matchIds.size > 1 ? 's' : ''}
+                  {tp('pyramid.results', matchIds.size)}
                 </span>
               )}
               {orgTeams.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    aria-label="Choisir la vue de la pyramide"
+                    aria-label={t('pyramid.chooseView')}
                     className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
                       activeTeam
                         ? 'border-transparent text-white'
@@ -1072,20 +1078,20 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       </>
                     ) : (
                       <>
-                        <Users size={14} aria-hidden="true" /> Toute l'entreprise
+                        <Users size={14} aria-hidden="true" /> {t('pyramid.wholeOrg')}
                       </>
                     )}
                     <ChevronDown size={13} aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-                    <DropdownMenuLabel>Afficher</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('pyramid.display')}</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => setViewTeamId(null)}>
                       <Users size={14} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-                      Toute l'entreprise
+                      {t('pyramid.wholeOrg')}
                       {!viewTeamId && <Check size={14} className="ml-auto text-indigo-500" aria-hidden="true" />}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Par équipe</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('pyramid.byTeam')}</DropdownMenuLabel>
                     {orgTeams.map((t) => (
                       <DropdownMenuItem key={t.id} onClick={() => setViewTeamId(t.id)}>
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} aria-hidden="true" />
@@ -1109,7 +1115,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       onClick={() => setAddingUnder(selfMember)}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
                     >
-                      <UserPlus size={14} aria-hidden="true" /> Ajouter
+                      <UserPlus size={14} aria-hidden="true" /> {t('pyramid.add')}
                     </button>
                   )}
                   {editMode && (
@@ -1118,7 +1124,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       onClick={finishEdit}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                     >
-                      <Check size={15} aria-hidden="true" /> Terminé
+                      <Check size={15} aria-hidden="true" /> {t('pyramid.done')}
                     </button>
                   )}
                   <button
@@ -1136,7 +1142,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       </>
                     ) : (
                       <>
-                        <Pencil size={14} aria-hidden="true" /> Modifier
+                        <Pencil size={14} aria-hidden="true" /> {t('pyramid.edit')}
                       </>
                     )}
                   </button>
@@ -1149,7 +1155,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <div className="flex items-center gap-2 rounded-2xl border border-indigo-400/60 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3 mb-3">
               <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
               <p className="text-sm text-[rgb(var(--color-text-primary))]">
-                Mode réorganisation : glissez n'importe quelle carte sur son nouveau responsable.
+                {t('pyramid.reorgBanner')}
               </p>
             </div>
           )}
@@ -1181,10 +1187,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           {roots.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                Aucun membre placé dans cette équipe
+                {t('pyramid.noMemberInTeam')}
               </p>
               <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-                Ajoutez des membres à l'équipe depuis l'onglet Membres.
+                {t('pyramid.addMembersHint')}
               </p>
             </div>
           ) : (
@@ -1225,15 +1231,15 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         {!isMobile && unplaced.length > 0 && (
           <aside
             className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
-            aria-label="Membres à placer dans la pyramide"
+            aria-label={t('pyramid.toPlaceAria')}
           >
             <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-              <UserPlus size={15} aria-hidden="true" /> À placer ({unplaced.length})
+              <UserPlus size={15} aria-hidden="true" /> {t('pyramid.toPlace', { count: unplaced.length })}
             </h3>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
               {isAdmin
-                ? 'Glissez chaque personne sur son responsable dans la pyramide.'
-                : 'Un administrateur doit les placer.'}
+                ? t('pyramid.dragEachHint')
+                : t('pyramid.unplacedHintMember')}
             </p>
             <ul className="space-y-2">
               {unplaced.map((m) => {
@@ -1272,7 +1278,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                           onClick={() => setPlacing(m)}
                           className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 transition-colors shrink-0"
                         >
-                          Placer
+                          {t('pyramid.place')}
                         </button>
                       )}
                     </div>

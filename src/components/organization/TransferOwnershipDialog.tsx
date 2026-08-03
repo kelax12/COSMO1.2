@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { OrgMember } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 interface TransferOwnershipDialogProps {
   orgName: string;
@@ -26,22 +27,22 @@ interface TransferOwnershipDialogProps {
  * admin et peut ensuite se rétrograder ou quitter.
  */
 const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCancel }: TransferOwnershipDialogProps) => {
+  const { t } = useT('org');
   const [selected, setSelected] = useState('');
   return (
     <AlertDialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
       <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl font-bold">
-            Transférer la propriété de {orgName}
+            {t('transfer.title', { org: orgName })}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
-            Le membre choisi devient propriétaire et administrateur. Vous restez
-            administrateur, mais seul le nouveau propriétaire pourra transférer à
+            {t('transfer.body')}
             nouveau ou supprimer l'entreprise.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">
-          Nouveau propriétaire
+          {t('transfer.newOwner')}
         </label>
         <select
           id="transfer-owner-select"
@@ -49,7 +50,7 @@ const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCa
           onChange={(e) => setSelected(e.target.value)}
           className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]"
         >
-          <option value="">Choisir un membre…</option>
+          <option value="">{t('transfer.choose')}</option>
           {candidates.map((m) => (
             <option key={m.userId} value={m.userId}>{m.displayName}</option>
           ))}
@@ -63,7 +64,7 @@ const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCa
             onClick={() => selected && onConfirm(selected)}
             className="rounded-xl font-semibold text-sm bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90 disabled:opacity-50"
           >
-            {pending ? 'Transfert…' : 'Transférer la propriété'}
+            {pending ? t('transfer.pending') : t('transfer.confirm')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

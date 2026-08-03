@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import MemberAvatar from './MemberAvatar';
 import CreateTeamModal from './CreateTeamModal';
+import { useT } from '@/i18n/useT';
 
 interface TeamsSectionProps {
   orgId: string;
@@ -51,6 +52,7 @@ function subtreeOf(members: OrgMember[], root: string): Set<string> {
  * rattachés à une équipe sont cloisonnés à ses membres + leur hiérarchie.
  */
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: TeamsSectionProps) => {
+  const { t } = useT('org');
   const [showNewTeam, setShowNewTeam] = useState(false);
 
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -75,7 +77,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
     <div>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-          Équipes ({teams.length})
+          {t('team.sectionTitle', { count: teams.length })}
         </h2>
         {isManager && (
           <button
@@ -83,7 +85,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
             onClick={() => setShowNewTeam(true)}
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
           >
-            <Plus size={13} aria-hidden="true" /> Ajouter une équipe
+            <Plus size={13} aria-hidden="true" /> {t('team.add')}
           </button>
         )}
       </div>
@@ -100,7 +102,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
 
       {teams.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">
-          Aucune équipe. {isManager ? 'Créez-en une pour cloisonner des projets.' : ''}
+          {isManager ? t('team.emptyManager') : t('team.empty')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -125,11 +127,11 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`Supprimer l'équipe « ${team.name} » ? Ses projets deviendront visibles par toute l'entreprise.`)) {
+                        if (window.confirm(t('team.deleteConfirm', { name: team.name }))) {
                           deleteTeam.mutate(team.id);
                         }
                       }}
-                      aria-label={`Supprimer l'équipe ${team.name}`}
+                      aria-label={t('team.deleteAria', { name: team.name })}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
                       <Trash2 size={13} aria-hidden="true" />
@@ -150,7 +152,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                           <button
                             type="button"
                             onClick={() => removeMember.mutate({ teamId: team.id, userId: uid })}
-                            aria-label={`Retirer ${m.displayName} de l'équipe ${team.name}`}
+                            aria-label={t('team.removeMemberAria', { member: m.displayName, team: team.name })}
                             className="text-[rgb(var(--color-text-muted))] hover:text-red-500"
                           >
                             <UserMinus size={11} aria-hidden="true" />
@@ -163,12 +165,12 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
-                        aria-label={`Ajouter un membre à l'équipe ${team.name}`}
+                        aria-label={t('team.addMemberAria', { team: team.name })}
                       >
                         <Plus size={11} aria-hidden="true" /> Ajouter
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-52 max-h-64 overflow-y-auto">
-                        <DropdownMenuLabel>Ajouter à {team.name}</DropdownMenuLabel>
+                        <DropdownMenuLabel>{t('team.addTo', { name: team.name })}</DropdownMenuLabel>
                         {addable.map((m) => (
                           <DropdownMenuItem
                             key={m.userId}

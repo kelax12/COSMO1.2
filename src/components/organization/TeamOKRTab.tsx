@@ -21,6 +21,7 @@ import { getColorHex } from '@/components/CategoryManager';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteCategoryConfirm from '@/pages/okr/DeleteCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';
+import { useT } from '@/i18n/useT';
 
 interface TeamOKRTabProps {
   orgId: string;
@@ -123,6 +124,7 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
 };
 
 const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
+  const { t } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId);
@@ -148,7 +150,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
   const [newCategoryColor, setNewCategoryColor] = useState<string>(OKR_CATEGORY_COLORS[0]);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
 
-  const teamName = (id: string) => teams.find((t) => t.id === id)?.name ?? 'Équipe';
+  const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? t('okrTab.fallbackTeam');
   // Couleur d'une catégorie par son nom (badge coloré, parité mode perso).
   const colorByName = useMemo(() => {
     const m = new Map<string, string>();
@@ -184,7 +186,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
     if (!editingCategoryId) return;
     const name = editCategoryName.trim();
     if (name.length < 2) {
-      toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+      toast.error(t('okrCategory.nameTooShort'));
       return;
     }
     const oldName = categories.find((c) => c.id === editingCategoryId)?.name;
@@ -199,7 +201,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
             if (ids.length > 0) reassignCategory.mutate({ okrIds: ids, category: name });
           }
           cancelEditCategory();
-          toast.success('Catégorie mise à jour');
+          toast.success(t('okrCategory.updated'));
         },
       },
     );
@@ -215,7 +217,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
   };
 
   if (isLoading) {
-    return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">Chargement…</div>;
+    return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('okrTab.loading')}</div>;
   }
 
   return (
@@ -271,14 +273,14 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
             <Target size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Aucun objectif</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.empty')}</p>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-            {isManager ? 'Créez un objectif pour aligner l\'équipe.' : 'Un manager doit créer un objectif.'}
+            {isManager ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
           </p>
         </div>
       ) : visibleOKRs.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Aucun objectif dans cette catégorie</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.emptyCategory')}</p>
           <button
             type="button"
             onClick={() => setSelectedCategory('all')}

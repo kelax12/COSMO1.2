@@ -9,6 +9,7 @@ import {
   type OrgTreeNode,
 } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
 
 interface ReassignManagerSheetProps {
   /** Le membre qu'on retire (avec subordonnés). */
@@ -31,6 +32,7 @@ interface ReassignManagerSheetProps {
  * sous-arbre du membre retiré (et lui-même) ne sont pas sélectionnables.
  */
 const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfirm, onCancel }: ReassignManagerSheetProps) => {
+  const { t, tp } = useT('org');
   const [pending, setPending] = useState(false);
 
   const directReports = useMemo(
@@ -78,7 +80,7 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
               {isMe ? 'Vous' : m.displayName}
-              {m.userId === member.userId ? ' · à retirer' : ''}
+              {m.userId === member.userId ? t('member.toRemove') : ''}
             </span>
             <span className="block text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
               {m.role === 'admin' ? 'Admin' : isManagerOf(members, m.userId) ? 'Manager' : 'Membre'}
@@ -99,7 +101,7 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label={`Réassigner l'équipe de ${member.displayName}`}
+        aria-label={t('member.reassignAria', { name: member.displayName })}
       >
         <div className="flex items-start justify-between gap-2 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
           <div className="min-w-0">
@@ -107,8 +109,7 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
               Retirer {member.displayName}
             </h2>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-              {directReports.length} subordonné{directReports.length > 1 ? 's' : ''} direct{directReports.length > 1 ? 's' : ''} —
-              choisissez leur nouveau responsable dans la pyramide. Leur équipe reste rattachée à eux.
+              {tp('member.reassignHint', directReports.length)}
             </p>
           </div>
           <button
@@ -134,7 +135,7 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
               <ArrowUpFromLine size={14} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
             </span>
             <span className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Les détacher (non placés)
+              {t('member.detachThem')}
             </span>
           </button>
 
@@ -145,12 +146,12 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
         {pending && (
           <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] text-xs text-[rgb(var(--color-text-muted))] inline-flex items-center gap-2">
             <span className="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-indigo-500" />
-            Réassignation en cours…
+            {t('member.reassigning')}
           </div>
         )}
         {!pending && (
           <div className="px-5 py-2.5 border-t border-[rgb(var(--color-border))] text-[11px] text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5">
-            <AlertTriangle size={12} aria-hidden="true" /> {member.displayName} sera définitivement retiré de l'entreprise.
+            <AlertTriangle size={12} aria-hidden="true" /> {t('member.willBeRemoved', { name: member.displayName })}
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useT } from '@/i18n/useT';
 
 interface TeamTaskModalProps {
   /** Tâche à éditer — absente en création. */
@@ -43,6 +44,7 @@ const TeamTaskModal = ({
   defaultProjectId, defaultAssigneeIds,
   onCreate, onUpdate, onDelete, onClose,
 }: TeamTaskModalProps) => {
+  const { t } = useT('org');
   const [name, setName] = useState(task?.name ?? '');
   const [description, setDescription] = useState(task?.description ?? '');
   // Pas de présélection en création : tant que l'utilisateur n'a pas cliqué
@@ -110,7 +112,7 @@ const TeamTaskModal = ({
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label={isCreating ? 'Nouvelle tâche d\'équipe' : `Modifier la tâche ${task?.name ?? ''}`}
+        aria-label={isCreating ? t('taskModal.newAria') : t('taskModal.editAria', { name: task?.name ?? '' })}
       >
         {/* Poignée mobile */}
         <div className="sm:hidden flex justify-center pt-4 pb-2 shrink-0">
@@ -124,12 +126,12 @@ const TeamTaskModal = ({
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {isCreating ? 'Nouvelle tâche d\'équipe' : 'Modifier la tâche'}
+              {isCreating ? t('taskModal.new') : t('taskModal.edit')}
             </h2>
             {hasChanges && !isCreating && (
               <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
                 <AlertCircle size={12} aria-hidden="true" />
-                <span className="hidden sm:inline">Non sauvegardé</span>
+                <span className="hidden sm:inline">{t('taskModal.unsaved')}</span>
               </div>
             )}
           </div>
@@ -157,7 +159,7 @@ const TeamTaskModal = ({
 
           <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-5">
             <div>
-              <label htmlFor="team-task-name" className={labelClass} style={labelStyle}>Nom de la tâche *</label>
+              <label htmlFor="team-task-name" className={labelClass} style={labelStyle}>{t('taskModal.name')}</label>
               <input
                 id="team-task-name"
                 type="text"
@@ -172,14 +174,14 @@ const TeamTaskModal = ({
             </div>
 
             <div>
-              <label htmlFor="team-task-desc" className={labelClass} style={labelStyle}>Description</label>
+              <label htmlFor="team-task-desc" className={labelClass} style={labelStyle}>{t('taskModal.description')}</label>
               <textarea
                 id="team-task-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={5000}
                 rows={3}
-                placeholder="Contexte, liens, critères d'acceptation…"
+                placeholder={t('taskModal.descriptionPlaceholder')}
                 className={`${inputClass} h-auto py-3 resize-y min-h-[76px]`}
                 style={inputStyle}
               />
@@ -187,7 +189,7 @@ const TeamTaskModal = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="team-task-project" className={labelClass} style={labelStyle}>Projet *</label>
+                <label htmlFor="team-task-project" className={labelClass} style={labelStyle}>{t('taskModal.project')}</label>
                 <select
                   id="team-task-project"
                   value={projectId}
@@ -202,14 +204,14 @@ const TeamTaskModal = ({
                 {projectId && (
                   <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     <span className={`w-2 h-2 rounded-full ${projectColor(projects.find((p) => p.id === projectId)?.color ?? 'blue').dot}`} aria-hidden="true" />
-                    Projet d'équipe
+                    {t('taskModal.teamProject')}
                   </span>
                 )}
               </div>
 
               <div>
-                <span className={labelClass} style={labelStyle}>Priorité</span>
-                <div className="flex gap-1.5 h-12 items-stretch" role="radiogroup" aria-label="Priorité">
+                <span className={labelClass} style={labelStyle}>{t('taskModal.priority')}</span>
+                <div className="flex gap-1.5 h-12 items-stretch" role="radiogroup" aria-label={t('taskModal.priority')}>
                   {[1, 2, 3, 4, 5].map((p) => (
                     <button
                       key={p}
@@ -234,7 +236,7 @@ const TeamTaskModal = ({
               </div>
 
               <div>
-                <label htmlFor="team-task-deadline" className={labelClass} style={labelStyle}>Échéance</label>
+                <label htmlFor="team-task-deadline" className={labelClass} style={labelStyle}>{t('taskModal.deadline')}</label>
                 <input
                   id="team-task-deadline"
                   type="date"
@@ -246,7 +248,7 @@ const TeamTaskModal = ({
               </div>
 
               <div>
-                <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>Temps estimé (min)</label>
+                <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>{t('taskModal.estimatedTime')}</label>
                 <input
                   id="team-task-time"
                   type="number"
@@ -355,10 +357,10 @@ const TeamTaskModal = ({
               {pending ? (
                 <>
                   <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                  <span>{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                  <span>{isCreating ? t('taskModal.creating') : t('taskModal.saving')}</span>
                 </>
               ) : (
-                isCreating ? 'Créer la tâche' : 'Sauvegarder'
+                isCreating ? t('taskModal.create') : t('taskModal.save')
               )}
             </Button>
           </div>

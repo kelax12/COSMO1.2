@@ -43,7 +43,7 @@ const NotFoundPage: React.FC = () => {
             {t('notFound.home')}
           </Link>
           <Link to="/guide" className="text-slate-400 hover:text-white transition-colors">
-            Voir le guide
+            {t('notFound.guide')}
           </Link>
         </div>
       </div>

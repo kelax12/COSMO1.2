@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import CreateOrJoinOrganization from '@/components/organization/CreateOrJoinOrganization';
 import { useActiveOrganization } from '@/modules/organizations';
+import { useT } from '@/i18n/useT';
 
 /**
  * Onboarding entreprise — affiché juste après une inscription « Entreprise »
@@ -13,6 +14,7 @@ import { useActiveOrganization } from '@/modules/organizations';
  * d'entreprise et n'a pas besoin de la nav applicative.
  */
 const OrganizationOnboardingPage = () => {
+  const { t } = useT('org');
   const navigate = useNavigate();
   const { activeOrg, organizations, isLoading } = useActiveOrganization();
 
@@ -28,7 +30,7 @@ const OrganizationOnboardingPage = () => {
             Votre espace entreprise
           </h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.
+            {t('onboarding.intro')}
           </p>
         </div>
 
@@ -38,7 +40,7 @@ const OrganizationOnboardingPage = () => {
           <div className="mb-6 space-y-3 text-center">
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
               Vous faites {organizations.length > 1 ? `partie de ${organizations.length} entreprises` : (
-                <>partie de <span className="font-semibold text-[rgb(var(--color-text-primary))]">{activeOrg.name}</span></>
+                <>{t('onboarding.memberOf')} <span className="font-semibold text-[rgb(var(--color-text-primary))]">{activeOrg.name}</span></>
               )}.
             </p>
             <button
@@ -46,9 +48,9 @@ const OrganizationOnboardingPage = () => {
               onClick={() => navigate('/entreprise')}
               className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20 inline-flex items-center justify-center gap-2"
             >
-              Accéder à mon entreprise <ArrowRight size={16} aria-hidden="true" />
+              {t('onboarding.goToOrg')} <ArrowRight size={16} aria-hidden="true" />
             </button>
-            <p className="text-xs text-[rgb(var(--color-text-muted))]">— ou en créer/rejoindre une autre —</p>
+            <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('onboarding.orCreateAnother')}</p>
           </div>
         )}
         <CreateOrJoinOrganization onCreated={() => { /* le code s'affiche dans le composant */ }} />
@@ -59,7 +61,7 @@ const OrganizationOnboardingPage = () => {
             onClick={() => navigate('/dashboard')}
             className="text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
           >
-            Plus tard, accéder à l'application
+            {t('onboarding.later')}
           </button>
         </div>
       </div>
