@@ -69,9 +69,42 @@ explicite :
 supabase functions deploy stripe-webhook stripe-create-checkout delete-account
 ```
 
-Passer par la CLI et non par l'API : elle résout seule l'arborescence des
-imports relatifs (`../_shared/alert.ts`) et préserve le réglage `verify_jwt` de
-chaque fonction. Réglages actuels, à ne PAS changer :
+La CLI est la voie recommandée : elle résout seule l'arborescence des imports
+relatifs (`../_shared/alert.ts`) et préserve le réglage `verify_jwt`.
+
+Un déploiement par l'API (MCP `deploy_edge_function`) est possible mais exige
+de reproduire l'arborescence **à la main** — il faut passer `_shared/alert.ts`
+dans `files` ET viser `entrypoint_path: '<fonction>/index.ts'`, sinon l'import
+relatif ne résout pas. Et il faut re-préciser `verify_jwt` à chaque fois.
+
+### Smoke test après déploiement (sans effet de bord)
+
+Une erreur d'import ne se voit PAS dans la réponse du déploiement : la fonction
+est marquée `ACTIVE` et échoue au premier appel. Toujours vérifier :
+
+```bash
+BASE="https://<ref>.supabase.co/functions/v1"
+curl -s -w "
+%{http_code}
+" -X GET  "$BASE/stripe-webhook"           # 405
+curl -s -w "
+%{http_code}
+" -X POST "$BASE/stripe-webhook" -d '{}'   # 400 Invalid signature
+curl -s -w "
+%{http_code}
+" -X POST "$BASE/delete-account" -H "Authorization: Bearer <anon>"  # 401
+curl -s -w "
+%{http_code}
+" -X POST "$BASE/stripe-create-checkout" -H "Authorization: Bearer <anon>" # 401
+```
+
+Ces appels **ne suppriment rien et ne facturent rien** : ils s'arrêtent au
+contrôle de méthode ou d'authentification. Mais ils prouvent que la fonction
+démarre (imports résolus) — un échec de boot renverrait un 5xx `BOOT_ERROR`.
+Un corps de réponse applicatif (`{"error":"Unauthorized"}`) confirme qu'on a
+bien atteint le code de la fonction, et non la passerelle.
+
+Réglages actuels, à ne PAS changer :
 
 | Fonction | `verify_jwt` | Pourquoi |
 |---|---|---|

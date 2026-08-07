@@ -132,10 +132,41 @@ la plus importante de tout ce lot.
 
 | Point | Raison |
 |---|---|
-| **Déployer les Edge Functions via l'API** | Faisable techniquement, mais ce sont les fonctions de **paiement** et d'**effacement RGPD**, je ne peux pas les fumer-tester, et l'assemblage manuel de l'arborescence risque de casser les imports relatifs (`../_shared/alert.ts`) ou le réglage `verify_jwt` (`false` pour le webhook Stripe — le changer bloque tous les paiements). La CLI résout tout ça seule. Procédure ajoutée au runbook. |
+| ~~Déployer les Edge Functions via l'API~~ | ✅ **FAIT** — cf. lot 4 ci-dessous. Le risque que j'avais soulevé (imports relatifs, `verify_jwt`) était réel mais mitigeable : arborescence reproduite explicitement, réglages relevés avant/après, et smoke test HTTP sans effet de bord sur chacune. |
 | **Migrer les 29 tailles restantes de `TaskModalMobileBody`** | Mêmes px mais `line-height` différente → changement visuel réel sur le modal mobile le plus utilisé, sans validation visuelle du design. Dette tracée dans le test. |
 | **Passer le plan Supabase en Pro** | C'est un achat. |
 | **`DROP TABLE profiles_avatar_backup_084`** | Sauvegarde de données utilisateur créée par une autre session : ce n'est pas à moi de décider de sa destruction. |
+
+### Lot 4 — déploiement des Edge Functions
+
+Les 3 fonctions sont **déployées et vérifiées en production**.
+
+| Fonction | Version | `verify_jwt` | Smoke test (sans effet de bord) |
+|---|---|---|---|
+| `stripe-webhook` | 13 → **14** | `false` *(préservé)* | `GET` → **405** · `POST` non signé → **400 « Invalid signature »** |
+| `stripe-create-checkout` | 10 → **11** | `true` *(préservé)* | `POST` avec clé anon → **401** |
+| `delete-account` | 3 → **4** | `true` *(préservé)* | `GET` → **405** · `POST` avec clé anon → **401** |
+
+**Pourquoi ces tests-là.** Une erreur d'import ne se voit pas dans la réponse du
+déploiement : la fonction est marquée `ACTIVE` et n'échoue qu'au premier appel
+réel. Ces requêtes s'arrêtent au contrôle de méthode ou d'authentification —
+elles **ne suppriment aucun compte et ne créent aucune session de paiement** —
+mais elles traversent tout le démarrage du module, donc prouvent que
+`../_shared/alert.ts` se résout. Un corps de réponse applicatif
+(`{"error":"Unauthorized"}`) confirme qu'on a atteint le code de la fonction et
+non la passerelle.
+
+Le point le plus délicat était `stripe-webhook` : son `verify_jwt` **doit**
+rester à `false` (Stripe n'envoie pas de JWT, l'authentification est la
+signature). Le passer à `true` aurait bloqué **tous** les webhooks de paiement,
+en silence. Vérifié avant et après, et confirmé par le fait que l'appel sans
+aucun en-tête d'autorisation atteint bien la fonction.
+
+Chaîne de rétention validée de bout en bout : `prune_processed_stripe_events()`
+exécutable par `service_role` uniquement (`authenticated` et `anon` : refusé),
+retour `0` ligne purgée (la plus ancienne date de 5 semaines).
+
+Logs Edge : aucune erreur de boot, uniquement les 400/401 attendus.
 
 ### Ce qui reste ouvert
 
@@ -147,7 +178,7 @@ la plus importante de tout ce lot.
 | **Migration de `TaskModalMobileBody`** vers l'échelle typo | 30 tailles arbitraires cohérentes entre elles (métriques iOS natives) ; les migrer change les `line-height` → vérification visuelle requise. Dette tracée dans `design-system.guard.test.ts`. |
 | **Observabilité backend** | Alertes DB / uptime : configuration de compte, comme le point 3. |
 | **Protection mots de passe fuités** | Réglage de compte non scriptable : Dashboard → Authentication → Policies. 1 clic. |
-| **Déploiement des Edge Functions** | `supabase functions deploy stripe-webhook stripe-create-checkout delete-account` |
+
 
 ---
 
