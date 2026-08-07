@@ -73,12 +73,19 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
  *    fichier à moitié sur chaque échelle — pire que le statu quo.
  *
  * Le budget monte donc de 2, pas de 4, et l'écart est tracé plutôt que masqué.
+ *
+ * ── Puis 204 → 203 : la dernière violation FRANCHE du plancher ──
+ *
+ * `TaskModalMobileBody.tsx` contenait aussi un `text-[10px]` (badge « Envoyé »),
+ * SOUS le plancher de 11px. Contrairement à ses 15/17px — cohérents entre eux
+ * et alignés sur les métriques natives iOS — une taille sous le plancher n'est
+ * la cohérence de rien : c'est juste illisible. Migrée en `text-caption`.
  * ➜ DETTE OUVERTE : migrer TaskModalMobileBody.tsx en entier
  *   (`text-[15px]` → `text-body`, `text-[17px]` → `text-headline` — mêmes px,
  *   line-height différente, donc à vérifier visuellement). Ce jour-là, ce
  *   budget doit tomber d'environ 30.
  */
-const ARBITRARY_BUDGET = 204;
+const ARBITRARY_BUDGET = 203;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;

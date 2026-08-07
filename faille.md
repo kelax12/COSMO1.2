@@ -13,6 +13,28 @@ Légende :
 
 ---
 
+
+### Audit architecture 2026-08-07 — entrées à portée sécurité
+
+Rapport complet : `AUDIT-ARCHITECTURE-2026-08-07.md`. Seules les entrées ayant
+une dimension sécurité/confidentialité sont reprises ici (source de vérité).
+
+| ID | Sévérité | Sujet | État | Correctif |
+|---|---|---|---|---|
+| A-1 | 🟠 Important | `get_work_time_stats` laissait la **RLS définir son périmètre** : depuis la mig. 077, les statistiques « temps investi » d'un manager agrégeaient silencieusement celles de tout son sous-arbre. Fuite de périmètre dans un calcul métier, pas fuite d'accès. | ✅ Corrigé | mig. 085 — `user_id = auth.uid()` explicite dans les 4 sous-requêtes. **Règle générale** : la RLS dit ce qu'on a le DROIT de lire, jamais ce qu'on VEUT compter. |
+| A-2 | 🟡 À plan. | `org_team_members_insert` : `auth.uid()` nu **imbriqué dans un argument de fonction** (`get_subtree(org_id, auth.uid())`), donc ré-évalué par ligne. **Invisible aux advisors Supabase** — ils ne descendent pas dans les arguments d'appel. | ✅ Corrigé | mig. 085 + garde CI `scripts/check-rls-advisors.mjs`, qui l'a détecté |
+| A-3 | 🟡 À plan. | `shared_lists` : 4 policies en `auth.uid()` nu (régression de la mig. 059 vs la convention de la 043) | ✅ Corrigé | mig. 085 |
+| A-4 | 🟠 Important | Les invariants RLS ne vivaient que dans `CLAUDE.md` — **déjà régressés deux fois** (mig. 059, 077, 082). Une règle non vérifiée n'est pas une règle. | ✅ Corrigé | `npm run check:rls` bloquant en CI (cliquet ≥ mig. 043) |
+| A-5 | 🟠 Important | Nouvelle RPC `get_my_tasks` en **`SECURITY DEFINER`** : la RLS ne s'applique pas dans son corps, son périmètre ne tient qu'à sa logique. | ✅ Corrigé + testé | Aucun paramètre (périmètre = `auth.uid()` seul), `REVOKE` pour `anon`, et **4 tests d'intégration RLS** (`e2e/rls/get-my-tasks.test.ts`) dont l'équivalence stricte avec un SELECT sous RLS. Isolation aussi vérifiée sur deux comptes réels en prod. |
+| A-6 | 🟡 À plan. | `processed_stripe_events` : table d'idempotence **jamais purgée**, croissance perpétuelle | ✅ Corrigé | mig. 089 — `prune_processed_stripe_events()` (rétention 90 j), `service_role` uniquement |
+| A-7 | 🟡 À plan. | `stripe-create-checkout` sans **aucune alerte** ; `catch` global de `delete-account` muet (état RGPD inconnu après un crash) | ✅ Corrigé | `opsAlert` sur les 3 Edge Functions ⚠️ **nécessite `supabase functions deploy`** |
+| A-8 | 🟠 Important | `isDemoMode` / `setDemoMode` encore exportés : second drapeau de mode démo, importable, figé au chargement du module. Faille **B0** prête à se reproduire. | ✅ Corrigé | Exports supprimés — source unique `appModeStore` |
+| A-9 | 🔴 Bloquant | **Plan Supabase `free`** : pas de PITR, rétention de backup minimale, restauration jamais testée. RPO réel jusqu'à 24 h, RTO inconnu. | ❌ **OUVERT** | Action de compte : passer en Pro + activer PITR + exécuter le drill de `docs/DEPLOYMENT.md` §7 |
+| A-10 | 🟠 Important | **Protection contre les mots de passe fuités désactivée** (advisor `auth_leaked_password_protection`) — Supabase peut vérifier les mots de passe contre HaveIBeenPwned. | ❌ **OUVERT** | Réglage de compte, non scriptable : Dashboard → Authentication → Policies → activer « Leaked password protection ». 1 clic. |
+| A-11 | 🟡 À plan. | `profiles_avatar_backup_084` : sauvegarde d'URL d'avatars (**données personnelles**) créée pendant la mig. 084, sans date de péremption. RGPD art. 5.1.e. | ❌ **OUVERT** | `DROP TABLE public.profiles_avatar_backup_084;` après validation du nouveau flux d'avatars |
+
+---
+
 ## ✅ Tableau récapitulatif
 
 | ID  | Sévérité     | Sujet                                          | État         | Commit / Fichier |

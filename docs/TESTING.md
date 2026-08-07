@@ -1,5 +1,19 @@
 # Tests — COSMO
 
+> **Gates ajoutées le 2026-08-07** (audit architecture) :
+> - `npm run check:rls` — invariants RLS (`auth.uid()` wrappé, une seule policy
+>   PERMISSIVE par rôle+action). **Bloquant en CI.** Cliquet : n'audite que les
+>   migrations ≥ 043. A déjà trouvé une violation invisible aux advisors Supabase.
+> - `npm run check:drift` — dérive repo ↔ prod. **Pas** une gate CI : demande une
+>   introspection live (2 étapes, cf. `docs/DEPLOYMENT.md`). À exécuter avant
+>   chaque déploiement comportant une migration.
+> - `e2e/rls/get-my-tasks.test.ts` — isolation de la RPC `SECURITY DEFINER`
+>   `get_my_tasks`. La RLS ne s'applique PAS dans le corps d'une telle fonction :
+>   son périmètre ne tient qu'à sa logique, donc il doit être testé contre une
+>   vraie base, pas mocké.
+>
+> Suite complète au 2026-08-07 : **1133 tests**, tous verts.
+
 ## Vitest — tests unitaires de logique métier pure
 
 Config `vitest.config.ts` (séparée de `vite.config.ts`), environnement `node`. Les tests vivent **à côté** du code testé (`*.test.ts`).
