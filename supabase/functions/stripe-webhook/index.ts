@@ -109,6 +109,16 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Rétention (audit archi 2026-08-07) : `processed_stripe_events` était
+  // INSÉRÉE et jamais purgée — croissance linéaire et perpétuelle. Stripe
+  // cesse de re-livrer après ~3 jours, donc une ligne de plus de 90 jours ne
+  // protège plus de rien. Purge opportuniste, adossée au trafic réel : pas de
+  // pg_cron à activer, et fire-and-forget car une purge ratée ne doit
+  // évidemment pas faire échouer le traitement d'un paiement.
+  void supabaseAdmin.rpc('prune_processed_stripe_events').then(({ error }) => {
+    if (error) console.error('prune_processed_stripe_events failed:', error.message)
+  })
+
   return new Response(JSON.stringify({ received: true }), {
     headers: { 'Content-Type': 'application/json' },
   })
@@ -236,19 +246,14 @@ async function applySubscriptionToDb(
     payload.win_streak = 0
   } else {
     if (opts.resetTokens) payload.premium_tokens = daysLeft
-    if (opts.resetWinStreak) {
-      payload.win_streak = 1
-    } else if (opts.incrementWinStreak) {
-      // Renewal (invoice.payment_succeeded): +1. This single read-modify-write
-      // path is not concurrent with ad-credits in practice (renewals are not
-      // user-triggered), so it stays read-based.
-      const { data: existing } = await supabaseAdmin
-        .from('subscriptions')
-        .select('win_streak')
-        .eq('user_id', userId)
-        .maybeSingle()
-      payload.win_streak = (existing?.win_streak ?? 0) + 1
-    }
+    if (opts.resetWinStreak) payload.win_streak = 1
+    // AUD-14 — `incrementWinStreak` n'est PLUS traité ici : il l'était par un
+    // read-modify-write (SELECT win_streak puis upsert n+1). Or le marqueur
+    // d'idempotence n'est écrit qu'APRÈS le handler (choix délibéré, faille
+    // M-5) : deux livraisons concurrentes du même event exécutent toutes deux
+    // le handler, lisent la même valeur et écrivent la même — un incrément
+    // perdu — ou s'entrelacent en n+2. L'incrément est désormais fait par la
+    // RPC atomique `bump_win_streak` après l'upsert (voir plus bas).
     // else: pure preserve (e.g. subscription.updated) → omit both fields.
   }
 
@@ -260,6 +265,19 @@ async function applySubscriptionToDb(
   if (error) {
     console.error('applySubscriptionToDb upsert error:', error)
     throw error
+  }
+
+  // AUD-14 — Incrément atomique (`UPDATE … SET win_streak = win_streak + 1`)
+  // exécuté APRÈS l'upsert, pour que la ligne existe forcément. Sûr sous
+  // livraison concurrente, contrairement au read-modify-write précédent.
+  if (isActive && opts.incrementWinStreak) {
+    const { error: bumpError } = await supabaseAdmin.rpc('bump_win_streak', {
+      p_user: userId,
+    })
+    if (bumpError) {
+      console.error('bump_win_streak error:', bumpError)
+      throw bumpError
+    }
   }
 }
 

@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { friendKeys } from './constants';
 
@@ -51,7 +52,7 @@ export const useShareLink = (taskId: string, enabled: boolean) => {
       if (selectError) throw normalizeApiError(selectError);
       if (existing) return existing.id as string;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
       const { data: created, error: insertError } = await supabase
         .from('share_links')

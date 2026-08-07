@@ -24,6 +24,7 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 | [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) | **Mémo court** : ajouter une tâche dans le vrai compte COSMO d'Axel |
 | [`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) | Accès agent aux données COSMO réelles (`scripts/cosmo/`) : lecture tâches/habitudes/agenda/OKR, écriture complète sur les tâches |
 | [`faille.md`](./faille.md) | Failles de sécurité (archive + roadmap, **source de vérité**) |
+| [`AUDIT-ARCHITECTURE-2026-08-07.md`](./AUDIT-ARCHITECTURE-2026-08-07.md) | Audit architecture + 20 correctifs livrés ; scalabilité, RLS indexable, récurrence serveur |
 | [`a-faire.md`](./a-faire.md) | Bugs/régressions mobile non résolus |
 
 > **Source de vérité sécurité = `faille.md`.** CLAUDE.md ne duplique PAS les statuts de failles ; en cas de divergence, `faille.md` fait foi.
@@ -76,7 +77,7 @@ Détails : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) (mémo
 |---|---|
 | Framework | React 18 + TypeScript 5.5 (strict) |
 | Build | Vite 7 (+ prérendu `prerender.mjs` dans `npm run build`) |
-| Routing | React Router DOM 6 |
+| Routing | React Router 7 (paquet `react-router`, imports depuis `react-router`) |
 | State serveur | TanStack React Query 5 |
 | Backend / Auth | Supabase 2 |
 | UI Components | shadcn/ui (Radix UI + Tailwind CSS 3) |
@@ -109,6 +110,8 @@ npm test           # Vitest — tests unitaires (run once)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # Vitest + couverture v8 (seuils par fichier — bloquant CI)
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
+npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE (CI)
+npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
 npm run test:rls   # Tests d'intégration RLS (vitest.integration.config.ts — nécessite pg)
 npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (+ :ui, :report)
 ```
@@ -454,6 +457,63 @@ toast.success('Message'); toast.error('Erreur');
 ## i18n
 
 L'app est **100 % français** (UI, copy, dates via `date-fns/locale/fr`). Pas de framework i18n. Si on ajoute une langue : `i18next` + `react-i18next`, ne jamais concaténer des strings, le mode démo reste en FR.
+
+---
+
+## ⚡ Lecture des tâches — passer par `get_my_tasks()`
+
+**Ne JAMAIS lire `tasks` en direct pour une vue de liste.** La policy
+`tasks_select_own_or_shared` (mig. 049) est un `OR` entre une égalité et un
+`EXISTS` : Postgres ne peut alors pas utiliser `idx_tasks_user_id` et fait un
+**`Seq Scan` de la table globale** — vérifié par `EXPLAIN` en prod le
+2026-08-07. Le coût d'une lecture croît avec le volume de TOUTE la plateforme,
+pas avec celui de l'utilisateur.
+
+```typescript
+supabase.from('tasks').select(...)          // ❌ Seq Scan global
+supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
+```
+
+`get_my_tasks()` exprime « mes tâches UNION celles partagées avec moi » en deux
+branches indexables. Elle ne prend **aucun paramètre** : son périmètre vient de
+`auth.uid()` seul. Les policies RLS restent en place sur la table (défense en
+profondeur), et l'isolation est prouvée par `e2e/rls/get-my-tasks.test.ts`.
+
+Exception légitime : `getById` (une ligne, accès par clé primaire).
+
+---
+
+## 🔁 Récurrence des tâches — serveur uniquement
+
+La génération de l'occurrence suivante appartient à `toggle_task_complete_v2`
+(mig. 086), **pas au client**. Elle est atomique (même transaction que la
+bascule) et idempotente (index unique `ux_tasks_recurrence_parent`).
+
+Le client ne fournit QUE la date suivante, calculée en date locale de
+l'utilisateur (`nextOccurrenceDeadline`) — le serveur ne connaît pas son fuseau.
+
+- ❌ Ne jamais recréer un `repository.create(nextOccurrence)` côté client :
+  c'était la faille H1 (occurrence perdue si l'onglet se ferme, doublon si on
+  décoche puis recoche, échec avalé par un `.catch(() => {})`).
+- ❌ Ne jamais écrire `recurrence_parent_id` depuis le client — c'est la clé
+  d'idempotence, `mapTaskToDb` ne l'émet volontairement pas.
+
+---
+
+## 📡 Synchronisation de la collaboration — Realtime, pas sondage
+
+`useSharedTasksRealtime` (monté **une seule fois** dans `App.tsx`) écoute
+`shared_tasks` et invalide la liste au moment du partage. Le `refetchInterval`
+de `useTasks` n'est plus qu'un filet de sécurité à 5 min.
+
+- ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()`
+  complet. La version à 15 s coûtait ≈ 58 Mo/mois/utilisateur d'egress.
+- ❌ Ne pas monter le canal Realtime dans un composant de page : c'est un
+  WebSocket, il s'en ouvrirait un par écran affiché.
+- ⚠️ Toute nouvelle table écoutée en Realtime doit être ajoutée à la
+  publication `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL`
+  (sinon les événements DELETE ne portent que la clé primaire et les filtres
+  côté client ne matchent jamais) — cf. mig. 087.
 
 ---
 

@@ -32,6 +32,17 @@ export default tseslint.config(
           destructuredArrayIgnorePattern: '^_',
         },
       ],
+      // Audit archi 2026-08-07 (M3) — un `catch {}` totalement vide rend une
+      // panne réelle indiscernable d'un no-op volontaire. Le code actuel n'en
+      // contient AUCUN (tous portent au minimum un commentaire d'intention) :
+      // cette règle verrouille cet état plutôt que de le laisser dériver.
+      //
+      // `allowEmptyCatch: false` (défaut de `no-empty`, réaffirmé ici pour que
+      // l'intention soit lisible) : un catch délibérément silencieux doit
+      // porter un commentaire expliquant POURQUOI l'erreur est ignorable.
+      // Un commentaire suffit à satisfaire la règle — l'objectif est la
+      // justification écrite, pas la gestion d'erreur cérémonielle.
+      'no-empty': ['error', { allowEmptyCatch: false }],
     },
   }
 );

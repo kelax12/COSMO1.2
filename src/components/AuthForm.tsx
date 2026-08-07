@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, UserRound, Building2 } from 'lucide-react';
 import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/lib/password-policy';
 import { useT } from '@/i18n/useT';
 
 const GoogleIcon = () => (
@@ -28,17 +29,9 @@ export interface AuthFormProps {
   showDemo?: boolean;
 }
 
-const MIN_PASSWORD_LENGTH = 8;
-
-/** Force du mot de passe : 0–3 (longueur + variété de caractères). */
-export const passwordStrength = (pwd: string): number => {
-  if (!pwd) return 0;
-  let score = 0;
-  if (pwd.length >= MIN_PASSWORD_LENGTH) score += 1;
-  if (pwd.length >= 12) score += 1;
-  if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd) && /\d/.test(pwd)) score += 1;
-  return score;
-};
+// AUD-10 — source unique de la politique (était dupliquée ici, dans
+// ResetPasswordPage et en dur dans SettingsPage).
+export { passwordStrength };
 
 const STRENGTH_LABELS = ['', 'Faible', 'Correct', 'Fort'] as const;
 const STRENGTH_COLORS = ['transparent', '#ef4444', '#eab308', '#22c55e'] as const;

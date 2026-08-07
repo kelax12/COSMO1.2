@@ -40,8 +40,15 @@ export interface RecordedQuery {
 const DEFAULT_USER = { id: '11111111-1111-4111-8111-111111111111', email: 'me@test.dev' };
 
 class SupabaseMock {
-  /** Toutes les requêtes .from() dans l'ordre d'exécution. */
+  /**
+   * Requêtes `.from()` uniquement, dans l'ordre d'exécution.
+   * Les chaînes construites sur une RPC vont dans `rpcQueries` — plusieurs
+   * tests assertent « zéro accès direct à la table », il ne faut donc pas les
+   * mélanger.
+   */
   queries: RecordedQuery[] = [];
+  /** Chaînes `.select()/.order()/.range()` construites sur une RPC SETOF. */
+  rpcQueries: RecordedQuery[] = [];
   /** Tous les appels rpc dans l'ordre. */
   rpcCalls: Array<{ fn: string; args: unknown }> = [];
   /** Utilisateur retourné par auth.getUser()/getSession() (null = déconnecté). */
@@ -51,11 +58,16 @@ class SupabaseMock {
   private rpcResults = new Map<string, QueryResult[]>();
 
   readonly client = {
-    from: vi.fn((table: string) => this.buildQuery(table)),
-    rpc: vi.fn(async (fn: string, args?: unknown) => {
+    from: vi.fn((table: string) => this.buildQuery(table, this.tableResults, this.queries)),
+    // Une RPC PostgREST qui renvoie `SETOF <table>` se filtre, s'ordonne et se
+    // pagine exactement comme une table (`.select().order().range()`) — c'est
+    // ce qu'utilise `SupabaseTasksRepository.getAll` via `get_my_tasks()`
+    // (mig. 085). Le mock renvoie donc le MÊME builder chaînable/thenable que
+    // `from()`, de sorte que `await supabase.rpc(...)` (appel simple) et
+    // `supabase.rpc(...).select().range()` fonctionnent tous les deux.
+    rpc: vi.fn((fn: string, args?: unknown) => {
       this.rpcCalls.push({ fn, args });
-      const r = shiftOrDefault(this.rpcResults, fn);
-      return { data: r.data ?? null, error: r.error ?? null };
+      return this.buildQuery(fn, this.rpcResults, this.rpcQueries);
     }),
     auth: {
       getUser: vi.fn(async () => ({ data: { user: this.user }, error: null })),
@@ -80,9 +92,12 @@ class SupabaseMock {
     this.rpcResults.set(fn, list);
   }
 
-  /** Chaîne d'appels de la n-ième requête (défaut: première) sur `table`. */
+  /**
+   * Chaîne d'appels de la n-ième requête (défaut: première) sur `table`.
+   * `table` accepte aussi un nom de RPC SETOF (ex. 'get_my_tasks').
+   */
   callsFor(table: string, index = 0): RecordedCall[] {
-    const matching = this.queries.filter((q) => q.table === table);
+    const matching = [...this.queries, ...this.rpcQueries].filter((q) => q.table === table);
     return matching[index]?.calls ?? [];
   }
 
@@ -93,6 +108,7 @@ class SupabaseMock {
 
   reset(): void {
     this.queries = [];
+    this.rpcQueries = [];
     this.rpcCalls = [];
     this.tableResults.clear();
     this.rpcResults.clear();
@@ -103,10 +119,14 @@ class SupabaseMock {
     this.client.auth.getSession.mockClear();
   }
 
-  private buildQuery(table: string): unknown {
-    const result = shiftOrDefault(this.tableResults, table);
+  private buildQuery(
+    table: string,
+    queue: Map<string, QueryResult[]>,
+    sink: RecordedQuery[],
+  ): unknown {
+    const result = shiftOrDefault(queue, table);
     const rec: RecordedQuery = { table, calls: [] };
-    this.queries.push(rec);
+    sink.push(rec);
 
     const resolved = {
       data: result.data ?? null,

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
@@ -75,7 +76,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   async createHabit(input: CreateHabitInput): Promise<Habit> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     const dbInput = { ...mapHabitToDb(input), user_id: user.id };
 

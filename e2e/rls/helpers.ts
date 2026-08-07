@@ -31,6 +31,21 @@ export interface TestUser {
   client: SupabaseClient;
 }
 
+/**
+ * Client NON authentifié (clé anon, aucune session) — `auth.uid()` y vaut NULL.
+ *
+ * Nécessaire pour tester le cas anonyme, qui n'est pas couvert par un simple
+ * « Bob ne voit pas les données d'Alice » : un objet peut être correctement
+ * isolé entre comptes tout en fuyant vers le rôle `anon` (une policy sans
+ * clause sur `auth.uid()`, un GRANT trop large, une RPC `SECURITY DEFINER`
+ * dont le `REVOKE ... FROM anon` a été oublié).
+ *
+ * Partagé entre les tests : il ne porte aucun état de session par construction.
+ */
+export const anonClient: SupabaseClient = createClient(url, anonKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
 let counter = 0;
 
 /** Crée un utilisateur confirmé et renvoie un client authentifié (JWT user). */

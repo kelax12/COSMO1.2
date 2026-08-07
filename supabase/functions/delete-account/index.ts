@@ -264,6 +264,11 @@ Deno.serve(async (req) => {
     })
   } catch (err) {
     console.error('delete-account error:', err)
+    // Les deux chemins d'échec ATTENDUS alertaient déjà ; celui-ci — un crash
+    // inattendu — ne disait rien. C'est pourtant le pire cas : on ne sait même
+    // pas où la suppression s'est arrêtée, donc si des données subsistent
+    // (RGPD art. 17). Résumé générique, aucune PII (audit archi M6).
+    await opsAlert('delete-account', 'unexpected crash during erasure — state unknown, manual check required (RGPD)')
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...cors, 'Content-Type': 'application/json' },

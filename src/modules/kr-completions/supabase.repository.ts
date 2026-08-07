@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IKRCompletionsRepository } from './repository';
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
@@ -71,7 +72,7 @@ export class SupabaseKRCompletionsRepository implements IKRCompletionsRepository
   async create(input: CreateKRCompletionInput): Promise<KRCompletion> {
     if (!supabase) throw new Error('Supabase not configured');
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     const { data, error } = await supabase

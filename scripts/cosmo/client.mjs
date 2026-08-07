@@ -1,5 +1,6 @@
 // Auth + transport uniquement. Ce module ne connaît aucune notion métier
 // (pas de tâche, pas d'habitude) — c'est api.mjs qui porte le domaine.
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -10,6 +11,35 @@ import { CosmoAuthError } from './errors.mjs';
 export const SESSION_PATH = path.join(os.homedir(), '.cosmo', 'session.json');
 
 const CONFIG_PATH = path.resolve(process.cwd(), '.env.cosmo-cli');
+
+/**
+ * AUD-13 — Restreint le fichier au seul propriétaire.
+ *
+ * `fs.writeFileSync(..., { mode: 0o600 })` est un NO-OP sous Windows : NTFS n'a
+ * pas de bits de permission POSIX, Node ne mappe que le flag lecture seule. Le
+ * fichier héritait donc des ACL du dossier utilisateur, et ce fichier contient
+ * un refresh token de PRODUCTION à longue durée de vie : tout processus tournant
+ * sous la même session Windows pouvait le lire.
+ *
+ * On repose donc les ACL explicitement avec `icacls` : héritage coupé
+ * (`/inheritance:r`), puis contrôle total pour le seul utilisateur courant.
+ * Best-effort — si `icacls` est indisponible on n'échoue pas, le CLI reste
+ * utilisable (le fichier est simplement aussi protégé qu'avant).
+ */
+function restrictToOwner(filePath) {
+  if (process.platform !== 'win32') return; // chmod POSIX a déjà fait le travail
+  const owner = process.env.USERNAME
+    ? `${process.env.USERDOMAIN ?? process.env.COMPUTERNAME ?? '.'}\\${process.env.USERNAME}`
+    : null;
+  if (!owner) return;
+  try {
+    execFileSync('icacls', [filePath, '/inheritance:r', '/grant:r', `${owner}:F`], {
+      stdio: 'ignore',
+    });
+  } catch {
+    // Best-effort : ne jamais casser le login pour une question d'ACL.
+  }
+}
 
 /**
  * Storage synchrone sur fichier pour supabase-js. L'interface attendue est
@@ -26,7 +56,9 @@ export function createFileStorage(sessionPath = SESSION_PATH) {
   };
   const writeAll = (data) => {
     fs.mkdirSync(path.dirname(sessionPath), { recursive: true });
+    const existed = fs.existsSync(sessionPath);
     fs.writeFileSync(sessionPath, JSON.stringify(data, null, 2), { mode: 0o600 });
+    if (!existed) restrictToOwner(sessionPath);
   };
   return {
     getItem: (key) => {

@@ -136,7 +136,7 @@ const ModuleOnboarding: React.FC = () => {
                     Toujours inclus
                   </p>
                 </div>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+                <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
                   Inclus
                 </span>
               </div>

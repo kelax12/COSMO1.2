@@ -118,6 +118,43 @@ type AuthContextType = {
   logout: () => Promise<void>;
 };
 
+// ═══════════════════════════════════════════════════════════════════
+// AUD-05 — Ne jamais renvoyer `error.message` brut à l'UI
+//
+// `login` et `register` étaient les deux derniers chemins à échapper à la
+// règle V7/N1 appliquée partout ailleurs via `normalizeApiError`. Le cas qui
+// compte est `signUp` sur une adresse déjà enregistrée : Supabase répond
+// « User already registered » (code `user_already_exists`), ce qui transforme
+// le formulaire d'inscription en oracle d'existence de compte — de quoi
+// vérifier en masse quelles adresses d'une fuite tierce ont un compte COSMO,
+// puis cibler le credential stuffing.
+//
+// Contrat : seuls des codes explicitement whitelistés produisent un message
+// spécifique ; tout le reste retombe sur un texte générique identique.
+// ═══════════════════════════════════════════════════════════════════
+
+const AUTH_LOGIN_GENERIC = 'Email ou mot de passe incorrect.';
+const AUTH_REGISTER_GENERIC =
+  "Impossible de finaliser l'inscription. Vérifiez vos informations et réessayez.";
+
+type SupabaseAuthErrorLike = { code?: string; status?: number; message?: string };
+
+const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): string => {
+  // Loggé pour l'ops (droppé du bundle prod par esbuild, remonté par Sentry).
+  console.error('[auth]', error.code ?? error.status ?? 'unknown', error.message);
+  const code = error.code;
+  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error.status === 429) {
+    return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  }
+  if (code === 'weak_password') {
+    return 'Mot de passe trop faible. Choisissez-en un plus long et plus varié.';
+  }
+  if (code === 'email_address_invalid') {
+    return "Cette adresse email n'est pas valide.";
+  }
+  return fallback;
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -342,7 +379,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     exitDemoIfActive();
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { success: false, error: error.message || 'Erreur de connexion' };
+      if (error) return { success: false, error: safeAuthError(error, AUTH_LOGIN_GENERIC) };
       return { success: true };
     } catch {
       return { success: false, error: 'Une erreur est survenue' };
@@ -381,7 +418,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         },
       });
-      if (error) return { success: false, error: error.message || "Erreur lors de l'inscription" };
+      if (error) return { success: false, error: safeAuthError(error, AUTH_REGISTER_GENERIC) };
       return { success: true };
     } catch {
       return { success: false, error: 'Une erreur est survenue' };

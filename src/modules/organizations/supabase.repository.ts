@@ -10,6 +10,7 @@
 // (pas d'auto-promotion admin, pas d'accepted_at forgé).
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
 import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
@@ -58,8 +59,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async getMyOrganizations(): Promise<MyOrganization[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     if (!uid) return [];
 
     // Mes memberships donnent orgs + rôles (RLS : je ne vois que mes orgs).
@@ -163,8 +163,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async getMySentJoinRequest(): Promise<OrgJoinRequest | null> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     if (!uid) return null;
 
     const { data: row, error } = await supabase
@@ -219,8 +218,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async cancelJoinRequest(requestId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     const { error } = await supabase
       .from('organization_join_requests')
       .delete()
@@ -321,8 +319,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     if (!uid) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('org_invite_links')

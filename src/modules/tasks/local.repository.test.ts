@@ -67,11 +67,11 @@ describe('écriture', () => {
   it('toggleComplete bascule completed + completedAt', async () => {
     await repo.getAll();
     const done = await repo.toggleComplete('t002'); // t002 non complétée
-    expect(done.completed).toBe(true);
-    expect(done.completedAt).toBeTruthy();
+    expect(done.task.completed).toBe(true);
+    expect(done.task.completedAt).toBeTruthy();
     const undone = await repo.toggleComplete('t002');
-    expect(undone.completed).toBe(false);
-    expect(undone.completedAt).toBeUndefined();
+    expect(undone.task.completed).toBe(false);
+    expect(undone.task.completedAt).toBeUndefined();
     await expect(repo.toggleComplete('absent')).rejects.toThrow();
   });
 
@@ -90,5 +90,81 @@ describe('écriture', () => {
     expect(p1.hasMore).toBe(true);
     const p2 = await repo.getPage({ limit: 5, cursor: p1.nextCursor! });
     expect(p2.data[0].id).not.toBe(p1.data[0].id);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Récurrence — parité démo/prod (audit archi 2026-08-07, H1)
+//
+// La génération de l'occurrence suivante existe en DEUX exemplaires : la RPC
+// `toggle_task_complete_v2` (mig. 086) et ce repository LocalStorage. C'est la
+// duplication structurelle imposée par le mode démo (cf. CLAUDE.md,
+// `recordKRCompletion`). Ces tests verrouillent l'invariant qui compte —
+// l'IDEMPOTENCE — pour que les deux implémentations ne divergent pas en
+// silence. Côté serveur c'est l'index unique `ux_tasks_recurrence_parent` ;
+// ici c'est la recherche d'un enfant existant.
+// ═══════════════════════════════════════════════════════════════════
+describe('récurrence : génération de l\'occurrence suivante', () => {
+  const seedRecurring = async () => {
+    await repo.getAll();
+    return repo.create({
+      name: 'Réunion hebdo',
+      description: 'Point équipe',
+      priority: 3,
+      category: 'cat-1',
+      deadline: '2026-06-15',
+      estimatedTime: 60,
+      bookmarked: false,
+      completed: false,
+      recurrence: 'weekly',
+      subtasks: [{ id: 's1', title: 'Préparer l\'ordre du jour', completed: true }],
+    } as never);
+  };
+
+  it('génère l\'occurrence suivante à la validation, décochée et rattachée au parent', async () => {
+    const parent = await seedRecurring();
+    const { spawned } = await repo.toggleComplete(parent.id, '2026-06-22');
+
+    expect(spawned).not.toBeNull();
+    expect(spawned!.deadline).toBe('2026-06-22');
+    expect(spawned!.completed).toBe(false);
+    expect(spawned!.recurrenceParentId).toBe(parent.id);
+    expect(spawned!.name).toBe('Réunion hebdo');
+    // Les sous-tâches sont reportées mais DÉCOCHÉES (parité SQL).
+    expect(spawned!.subtasks?.every((s) => !s.completed)).toBe(true);
+  });
+
+  it('est IDEMPOTENT : décocher puis recocher ne crée pas de doublon', async () => {
+    const parent = await seedRecurring();
+
+    await repo.toggleComplete(parent.id, '2026-06-22'); // validée → 1 occurrence
+    await repo.toggleComplete(parent.id, '2026-06-22'); // dé-validée → retirée
+    await repo.toggleComplete(parent.id, '2026-06-22'); // re-validée → 1 occurrence
+
+    const children = (await repo.getAll()).filter((t) => t.recurrenceParentId === parent.id);
+    expect(children).toHaveLength(1);
+  });
+
+  it('ne génère rien pour une tâche non récurrente ni sans date calculée', async () => {
+    await repo.getAll();
+    expect((await repo.toggleComplete('t002', '2026-06-22')).spawned).toBeNull(); // recurrence 'none'
+
+    const parent = await seedRecurring();
+    expect((await repo.toggleComplete(parent.id, null)).spawned).toBeNull();
+  });
+
+  it('la dé-validation ne supprime PAS une occurrence déjà retravaillée', async () => {
+    const parent = await seedRecurring();
+    const { spawned } = await repo.toggleComplete(parent.id, '2026-06-22');
+
+    // L'utilisateur modifie l'occurrence : elle lui appartient désormais.
+    await repo.update(spawned!.id, { name: 'Réunion hebdo (agenda revu)', updatedAt: new Date(Date.now() + 5000).toISOString() } as never);
+
+    await repo.toggleComplete(parent.id, '2026-06-22'); // dé-validation
+
+    const survivor = await repo.getById(spawned!.id);
+    expect(survivor).not.toBeNull();
+    // Détachée du parent, mais conservée.
+    expect(survivor!.recurrenceParentId).toBeUndefined();
   });
 });

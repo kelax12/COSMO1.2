@@ -34,7 +34,14 @@ const MIGRATION_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'supab
 // dashboard, jamais re-déclarés dans un fichier). Connus et assumés — ne pas
 // les signaler comme dérive. Toute NOUVELLE entrée ici doit être justifiée.
 const LEGACY_ALLOWLIST = {
-  tables: new Set(['subscriptions', 'profiles']),
+  tables: new Set([
+    'subscriptions',
+    'profiles',
+    // Sauvegarde prise avant la normalisation des avatar_url (mig. 084).
+    // TEMPORAIRE — contient des données personnelles (URL d'avatars), donc à
+    // supprimer après validation du nouveau flux : cf. mig. 088.
+    'profiles_avatar_backup_084',
+  ]),
   functions: new Set([]),
   triggers: new Set([]),
   policies: new Set([
@@ -163,10 +170,20 @@ SELECT json_build_object(
     WHERE n.nspname IN ('public', 'auth') AND NOT t.tgisinternal
   ),
   'policies', (
-    SELECT coalesce(json_agg(lower(polname) || '@@' || lower(c.relname) ORDER BY 1), '[]'::json)
+    -- 'storage' inclus : les policies du bucket \`avatars\` (mig. 084) vivent sur
+    -- storage.objects. Sans ce schéma, le script les déclarait MANQUANTES en
+    -- prod alors qu'elles y étaient — un faux positif qui, répété, apprend à
+    -- ignorer la sortie de l'outil (audit archi 2026-08-07, D1).
+    -- Le nom prod est préfixé du schéma pour les tables hors 'public', afin de
+    -- correspondre au format déclaré côté repo.
+    SELECT coalesce(json_agg(
+      lower(polname) || '@@' ||
+      CASE WHEN n.nspname = 'public' THEN lower(c.relname)
+           ELSE lower(n.nspname) || '.' || lower(c.relname) END
+      ORDER BY 1), '[]'::json)
     FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
     JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = 'public'
+    WHERE n.nspname IN ('public', 'storage')
   )
 ) AS introspection;
 `.trim();

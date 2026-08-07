@@ -53,7 +53,7 @@
     "hint": "At least 8 characters. Mix letters, numbers and symbols.",
     "updating": "Updating…",
     "update": "Update",
-    "tooShort": "Your password must be at least 8 characters long",
+    "tooShort": "Your password must be at least {{count}} characters long",
     "mustDiffer": "Your new password must differ from the current one",
     "demoDisabled": "Password changes are disabled in demo mode",
     "updateError": "Something went wrong while updating your password",

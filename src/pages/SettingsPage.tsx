@@ -25,8 +25,10 @@ import {
 } from '@/modules/ui-states';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
-import { validateAvatarFile, computeAvatarDimensions } from '@/lib/avatar-upload';
+import { validateAvatarFile, computeAvatarDimensions, canvasToAvatarBlob, uploadAvatar } from '@/lib/avatar-upload';
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -156,7 +158,7 @@ const SettingsPage: React.FC = () => {
     e.preventDefault();
     if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error('Veuillez remplir tous les champs'); return; }
     if (passwords.new !== passwords.confirm) { toast.error('Les nouveaux mots de passe ne correspondent pas'); return; }
-    if (passwords.new.length < 8) { toast.error(t('security.tooShort')); return; }
+    if (passwords.new.length < MIN_PASSWORD_LENGTH) { toast.error(t('security.tooShort', { count: MIN_PASSWORD_LENGTH })); return; }
     if (passwords.current === passwords.new) { toast.error(t('security.mustDiffer')); return; }
     setSavingPassword(true);
     try {
@@ -251,29 +253,41 @@ const SettingsPage: React.FC = () => {
         canvas.width = dims.width;
         canvas.height = dims.height;
         const ctx = canvas.getContext('2d');
-        const dataUrl = ctx
-          ? (ctx.drawImage(img, 0, 0, canvas.width, canvas.height), canvas.toDataURL('image/jpeg', 0.85))
-          : result;
+        if (!ctx) { toast.error(t('profile.photoUpdateFailed')); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
         // Persist avatar to the same source the UI reads from. In demo mode
-        // that's localStorage via useUpdateUserSettings; in prod that's the
-        // Supabase user_metadata. The old path always wrote to localStorage
-        // which `useAuth` never reads → silent loss on reload. Faille B7.
+        // that's localStorage via useUpdateUserSettings; in prod that's le
+        // bucket Storage `avatars`. L'ancien chemin écrivait toujours dans
+        // localStorage, que `useAuth` ne lit jamais → perte silencieuse au
+        // rechargement. Faille B7.
         if (isDemo) {
-          updateUserSettings({ avatar: dataUrl });
+          // La démo n'a pas de backend : la data URL reste locale et ne part
+          // dans aucun JWT — le problème AUD-04 ne s'y pose pas.
+          updateUserSettings({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
         } else {
-          const { error } = await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
+          // AUD-04 — on n'écrit PLUS la data URL dans user_metadata (elle
+          // finissait dans le JWT de chaque requête). On uploade dans Storage
+          // et on ne persiste que l'URL publique, courte et sur un hôte
+          // autorisé par l'allowlist serveur d'AUD-03 (mig. 084).
+          const blob = await canvasToAvatarBlob(canvas);
+          if (!blob) { toast.error(t('profile.photoUpdateFailed')); return; }
+          const authUser = await getCurrentUser();
+          if (!authUser) { toast.error(t('profile.photoUpdateFailed')); return; }
+
+          const publicUrl = await uploadAvatar(supabase, authUser.id, blob);
+          if (!publicUrl) { toast.error(t('profile.photoUpdateFailed')); return; }
+
+          const { error } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
           if (error) { toast.error(t('profile.photoUpdateFailed')); return; }
           // Mirror to `profiles` so other users can see the updated avatar
           // (auth.user_metadata is private and not visible to other users).
           // `profiles.id` / `.email` / `.account_type` sont verrouillés côté
           // serveur (mig. 083, faille H-1) : seul l'avatar est modifiable ici.
           // La ligne existe toujours (créée par le trigger sur auth.users).
-          const { data: { user: authUser } } = await supabase.auth.getUser();
-          if (authUser) {
-            await supabase.from('profiles')
-              .update({ avatar_url: dataUrl })
-              .eq('id', authUser.id);
-          }
+          await supabase.from('profiles')
+            .update({ avatar_url: publicUrl })
+            .eq('id', authUser.id);
         }
         toast.success(t('profile.photoUpdated'));
       };
@@ -296,7 +310,7 @@ const SettingsPage: React.FC = () => {
           if (error) { toast.error('Impossible de supprimer la photo'); return; }
           // Also clear in profiles so friends see the removal immediately.
           // Idem : colonnes d'identité verrouillées (mig. 083, faille H-1).
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCurrentUser();
           if (authUser) {
             await supabase.from('profiles')
               .update({ avatar_url: null })

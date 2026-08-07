@@ -1,5 +1,6 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { opsAlert } from '../_shared/alert.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 
@@ -138,6 +139,13 @@ Deno.serve(async (req) => {
     })
   } catch (err) {
     console.error('stripe-create-checkout error:', err)
+    // Observabilité (audit archi 2026-08-07, M6) : cette fonction n'avait
+    // AUCUNE alerte. Un checkout cassé (clé Stripe expirée, price id
+    // supprimé, panne réseau) échouait donc en silence — l'utilisateur voit
+    // une erreur générique, personne côté équipe n'est prévenu, et c'est de
+    // la perte de revenu directe. Résumé générique only (pas d'err brut,
+    // pas de PII — cf. contrat de `opsAlert`).
+    await opsAlert('stripe-create-checkout', 'checkout session creation failed — user could not subscribe')
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...cors, 'Content-Type': 'application/json' },

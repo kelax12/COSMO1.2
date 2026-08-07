@@ -289,7 +289,11 @@ const TasksInboxMenu: React.FC = () => {
         <Inbox size={20} aria-hidden="true" />
         {total > 0 && (
           <span
-            className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+            // Taille via `text-caption` (11px), le plancher de l'échelle
+            // mobile — pas une valeur arbitraire plus petite. Un badge de
+            // notification est précisément ce qu'on ne doit pas rendre
+            // illisible pour gagner un pixel (cf. design-system.guard.test.ts).
+            className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
             aria-hidden="true"
           >
             {total > 9 ? '9+' : total}

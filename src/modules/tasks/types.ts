@@ -27,6 +27,13 @@ export interface Task {
   krId?: string;
   /** Récurrence (#26) — défaut 'none'. */
   recurrence?: TaskRecurrence;
+  /**
+   * Occurrence dont cette tâche est issue (récurrence). Écrit par le SERVEUR
+   * (`toggle_task_complete_v2`, mig. 086) et jamais par le client : c'est la
+   * clé d'idempotence qui garantit au plus une occurrence générée par parent.
+   * Lecture seule côté client — `mapTaskToDb` ne l'émet jamais.
+   */
+  recurrenceParentId?: string;
   isCollaborative?: boolean;
   pendingInvites?: string[];
   collaboratorValidations?: Record<string, boolean>;

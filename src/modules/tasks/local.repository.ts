@@ -1,4 +1,4 @@
-import { ITasksRepository } from './repository';
+import { ITasksRepository, ToggleCompleteResult } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 const STORAGE_KEY = 'cosmo_demo_tasks';
@@ -201,14 +201,27 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     this.saveTasks(filtered);
   }
 
-  async toggleComplete(id: string): Promise<Task> {
+  /**
+   * Bascule la complétion, et génère/retire l'occurrence récurrente suivante.
+   *
+   * ⚠️ PARITÉ OBLIGATOIRE avec `toggle_task_complete_v2` (mig. 086) — même
+   * règle que `recordKRCompletion` (cf. CLAUDE.md) : une règle métier qui
+   * n'existe que dans un des deux repositories diverge en silence. Ici,
+   * l'invariant à préserver est l'IDEMPOTENCE : recocher deux fois la même
+   * tâche ne doit jamais produire deux occurrences.
+   *
+   * Côté serveur, l'index unique `ux_tasks_recurrence_parent` la garantit.
+   * Côté LocalStorage, elle est obtenue par la recherche d'un enfant existant
+   * (`recurrenceParentId === id`) avant toute création.
+   */
+  async toggleComplete(id: string, nextDeadline?: string | null): Promise<ToggleCompleteResult> {
     const tasks = this.getTasks();
     const index = tasks.findIndex(t => t.id === id);
-    
+
     if (index === -1) {
       throw new Error(`Task with id ${id} not found`);
     }
-    
+
     const task = tasks[index];
     const updatedTask: Task = {
       ...task,
@@ -216,8 +229,51 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       completedAt: !task.completed ? new Date().toISOString() : undefined,
     };
     tasks[index] = updatedTask;
+
+    let spawned: Task | null = null;
+    const existingChild = tasks.find(t => t.recurrenceParentId === id);
+
+    if (
+      updatedTask.completed &&
+      (updatedTask.recurrence ?? 'none') !== 'none' &&
+      nextDeadline &&
+      !existingChild // ← garde d'idempotence (pendant serveur : ON CONFLICT DO NOTHING)
+    ) {
+      spawned = {
+        ...task,
+        id: crypto.randomUUID(),
+        deadline: nextDeadline,
+        completed: false,
+        completedAt: undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        subtasks: (task.subtasks ?? []).map(s => ({ ...s, completed: false })),
+        // Le partage ne se propage pas à l'occurrence suivante.
+        isCollaborative: undefined,
+        pendingInvites: undefined,
+        sharedBy: undefined,
+        recurrenceParentId: id,
+      };
+      tasks.unshift(spawned);
+    } else if (!updatedTask.completed && existingChild) {
+      // Dé-validation : on retire l'occurrence générée SI elle est intacte
+      // (non complétée, jamais modifiée). Sinon elle appartient désormais à
+      // l'utilisateur — on la détache seulement. Miroir exact du SQL.
+      const untouched =
+        !existingChild.completed && existingChild.updatedAt === existingChild.createdAt;
+      if (untouched) {
+        const childIndex = tasks.findIndex(t => t.id === existingChild.id);
+        if (childIndex !== -1) tasks.splice(childIndex, 1);
+      } else {
+        const childIndex = tasks.findIndex(t => t.id === existingChild.id);
+        if (childIndex !== -1) {
+          tasks[childIndex] = { ...existingChild, recurrenceParentId: undefined };
+        }
+      }
+    }
+
     this.saveTasks(tasks);
-    return updatedTask;
+    return { task: updatedTask, spawned };
   }
 
   async toggleBookmark(id: string): Promise<Task> {

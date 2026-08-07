@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
-import { ITasksRepository } from './repository';
+import { ITasksRepository, ToggleCompleteResult } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
@@ -29,20 +30,31 @@ export class SupabaseTasksRepository implements ITasksRepository {
   async getAll(): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const db = supabase;
-    // Exclude `description` (long text, not shown in list) and
-    // `collaborator_validations` (JSONB, only needed in TaskModal detail view).
-    // getById() keeps select('*') so TaskModal always has the full payload.
-    // Auto-pagination (range) : plus de troncature silencieuse au-delà de 500
-    // (cf. fetch-all-pages.ts). `id` en tiebreak pour un ordre stable entre pages.
+    // ⚠️ Lecture via la RPC `get_my_tasks()` et NON `.from('tasks')` — c'est
+    // le correctif C1 de l'audit architecture 2026-08-07.
+    //
+    // La policy `tasks_select_own_or_shared` (mig. 049) est un OR entre une
+    // égalité et un EXISTS : Postgres ne peut alors PAS utiliser
+    // `idx_tasks_user_id` et fait un Seq Scan de la table GLOBALE, puis trie.
+    // Vérifié par EXPLAIN en prod. Le coût d'une lecture croissait donc avec le
+    // volume total de la plateforme, pas avec celui de l'utilisateur.
+    //
+    // `get_my_tasks()` (mig. 085) exprime les deux ensembles en UNION de deux
+    // branches indexables → Index Scan. Le périmètre reste dérivé de
+    // `auth.uid()` seul (aucun paramètre), et les policies RLS restent en place
+    // sur la table pour tout accès direct.
+    //
+    // PostgREST applique select/order/range à une RPC `SETOF` exactement comme
+    // à une table : la pagination et la réduction de colonnes sont préservées.
     const rows = await fetchAllPages(async (from, to) => {
       const { data, error } = await db
-        .from('tasks')
+        .rpc('get_my_tasks')
         .select(TASK_LIST_COLUMNS)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(from, to);
       if (error) throw normalizeApiError(error);
-      return data || [];
+      return (data || []) as unknown as TaskRow[];
     });
 
     return this.enrichSharedBy(warnIfTruncated(rows, MAX_ROWS, 'tasks').map(mapTaskFromDb));
@@ -57,7 +69,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
    */
   private async enrichSharedBy(tasks: Task[]): Promise<Task[]> {
     if (!supabase) return tasks;
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return tasks;
 
     const ownerIds = [
@@ -93,8 +105,10 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
 
+    // Même chemin indexable que getAll (cf. C1) : une RPC `SETOF` se filtre,
+    // s'ordonne et se pagine comme une table côté PostgREST.
     let query = supabase
-      .from('tasks')
+      .rpc('get_my_tasks')
       .select('*')
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
@@ -146,20 +160,27 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const startOfDay = `${targetDate}T00:00:00.000Z`;
     const endOfDay = `${targetDate}T23:59:59.999Z`;
 
+    // Même chemin indexable que getAll (cf. C1). Sans cela, cette lecture
+    // conservait le `Seq Scan` de la table globale : le filtre `deadline`
+    // ne rattrape rien, puisque c'est le OR de la policy qui rend l'index
+    // `idx_tasks_user_id` inutilisable, pas l'absence de prédicat.
     const { data, error } = await supabase
-      .from('tasks')
+      .rpc('get_my_tasks')
       .select(TASK_LIST_COLUMNS)
       .gte('deadline', startOfDay)
       .lte('deadline', endOfDay)
       .order('deadline', { ascending: true });
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
+    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    let query = supabase.from('tasks').select(TASK_LIST_COLUMNS);
+    // Même chemin indexable que getAll (cf. C1). `usePendingTasks` (consommé
+    // par DeadlineCalendar et TasksSummary) passe par ici : c'était donc un
+    // second Seq Scan de la table globale à chaque affichage du dashboard.
+    let query = supabase.rpc('get_my_tasks').select(TASK_LIST_COLUMNS);
 
     if (filters.completed !== undefined) {
       query = query.eq('completed', filters.completed);
@@ -192,7 +213,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
+    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -201,7 +222,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async create(input: CreateTaskInput): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     const dbInput: TaskDbCreateInput = { ...mapTaskToDb(input), user_id: user.id };
 
@@ -240,16 +261,30 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (error) throw normalizeApiError(error);
   }
 
-  async toggleComplete(id: string): Promise<Task> {
+  async toggleComplete(id: string, nextDeadline?: string | null): Promise<ToggleCompleteResult> {
     if (!supabase) throw new Error('Supabase not configured');
-    // Atomic flip via RPC (migration 023, faille TOCTOU-3). Ancien code :
-    // SELECT * → !completed → UPDATE — race possible avec un toggle
-    // concurrent (l'utilisateur double-clic, deux tabs ouverts, etc.).
-    const { data, error } = await supabase.rpc('toggle_task_complete', {
+    // Bascule atomique via RPC (mig. 023, faille TOCTOU-3) — l'ancien
+    // SELECT → !completed → UPDATE laissait passer un double-clic ou deux
+    // onglets concurrents.
+    //
+    // v2 (mig. 086, audit archi H1) : la génération de l'occurrence récurrente
+    // se fait dans la MÊME transaction, et est rendue idempotente par l'index
+    // unique `ux_tasks_recurrence_parent`. Avant, c'était un `create()`
+    // fire-and-forget côté client : perdu si l'onglet se fermait, dupliqué si
+    // l'utilisateur décochait puis recochait.
+    //
+    // `p_next_deadline` est calculée par l'appelant, en date LOCALE de
+    // l'utilisateur (le serveur ne connaît pas son fuseau).
+    const { data, error } = await supabase.rpc('toggle_task_complete_v2', {
       p_task_id: id,
+      p_next_deadline: nextDeadline ?? null,
     });
     if (error) throw normalizeApiError(error);
-    return mapTaskFromDb(data as TaskRow);
+    const payload = data as { task: TaskRow; spawned: TaskRow | null };
+    return {
+      task: mapTaskFromDb(payload.task),
+      spawned: payload.spawned ? mapTaskFromDb(payload.spawned) : null,
+    };
   }
 
   async toggleBookmark(id: string): Promise<Task> {

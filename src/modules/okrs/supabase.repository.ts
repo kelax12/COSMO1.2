@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
@@ -236,7 +237,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
   async create(input: CreateOKRInput): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     const dbInput = { ...mapOkrToDb(input), user_id: user.id };
@@ -290,7 +291,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     // If keyResults were updated, sync to dedicated table
     if (updates.keyResults) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         await this.syncKRsToTable(id, user.id, updates.keyResults);
       }
@@ -433,7 +434,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     // Faille B18.
     const MAX_REPS_PER_WRITE = 100;
     const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) {
       console.warn('recordKRReps: no auth user; KR journal entry skipped');
       return;
@@ -463,7 +464,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!supabase || count <= 0) return;
     const MAX_REPS_PER_WRITE = 100;
     const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return;
 
     const { data: rows, error: selectErr } = await supabase
@@ -511,7 +512,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const { progress, completed } = recalcProgress(okr.keyResults);
 
     // Sync to key_results table for future reads (ids sont maintenant tous des UUID)
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (user) await this.syncKRsToTable(okrId, user.id, okr.keyResults);
 
     const { data, error } = await supabase

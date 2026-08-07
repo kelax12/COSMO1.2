@@ -23,6 +23,7 @@ export interface TaskRow {
   subtasks?: Subtask[];
   kr_id?: string | null;
   recurrence?: string | null;
+  recurrence_parent_id?: string | null;
   is_collaborative?: boolean;
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
@@ -70,6 +71,10 @@ export function mapTaskFromDb(row: TaskRow): Task {
     subtasks: row.subtasks || [],
     krId: row.kr_id ?? undefined,
     recurrence: (row.recurrence as TaskRecurrence | null) ?? 'none',
+    // Écrit par le serveur uniquement (mig. 086) — `mapTaskToDb` étant une
+    // whitelist, il ne peut pas repartir en écriture, ce qui est voulu :
+    // c'est la clé d'idempotence de la récurrence, pas un champ éditable.
+    recurrenceParentId: row.recurrence_parent_id ?? undefined,
     isCollaborative: row.is_collaborative ?? false,
     pendingInvites: row.pending_invites || [],
     collaboratorValidations: row.collaborator_validations || {},

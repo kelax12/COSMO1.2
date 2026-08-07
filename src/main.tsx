@@ -67,7 +67,13 @@ if (sentryDsn) {
 // Mobile debug console — only loaded when the URL contains ?debug=1.
 // Lets us read timing logs on iOS Safari without needing a Mac for remote
 // inspection. Stay loaded for the rest of the session.
-if (new URLSearchParams(window.location.search).has('debug')) {
+// AUD-17 — `import.meta.env.DEV` : sans ce garde, n'importe qui pouvait faire
+// injecter un <script> tiers (jsdelivr) dans l'app de PRODUCTION avec un simple
+// `?debug=1`. La CSP le bloquait déjà (`script-src 'self' …` n'autorise pas
+// jsdelivr), mais on ne veut pas dépendre d'un header pour ne pas exécuter du
+// code distant : le jour où quelqu'un élargit la CSP, la porte se rouvre. Le
+// bloc est désormais éliminé du bundle prod par le tree-shaking de Vite.
+if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debug')) {
   const script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/eruda';
   script.onload = () => {

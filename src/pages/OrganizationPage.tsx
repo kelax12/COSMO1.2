@@ -243,10 +243,17 @@ const OrganizationPage = () => {
       {tab === 'members' && (
         <div className="space-y-6">
           {/* Inviter : par code (validation admin) ou par lien direct — deux
-              moyens côte à côte pour ne plus occuper toute la largeur. */}
-          <div className="grid gap-4 md:grid-cols-2 items-start">
+              moyens côte à côte pour ne plus occuper toute la largeur.
+
+              AUD-02 — le lien direct fait entrer quelqu'un SANS validation
+              admin. Il n'est donc proposé qu'aux admins et aux managers
+              (= au moins un subordonné), exactement comme la policy
+              `org_invite_links_insert` de la mig. 084. Sans ce garde, la carte
+              restait visible pour tout le monde et un simple membre recevrait
+              désormais une erreur 403 au clic. */}
+          <div className={`grid gap-4 items-start ${isManager ? 'md:grid-cols-2' : ''}`}>
             <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
-            <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} />
+            {isManager && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} />}
           </div>
 
           <TeamsSection

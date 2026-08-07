@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IListsRepository } from './repository';
 import { TaskList, CreateListInput, UpdateListInput } from './types';
@@ -72,7 +73,7 @@ export class SupabaseListsRepository implements IListsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     // Defense-in-depth: also scope by user_id even though RLS already does.
     // Faille V15.
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return null;
     const { data, error } = await supabase
       .from('lists')
@@ -90,7 +91,7 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async getByTaskId(taskId: string): Promise<TaskList[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return [];
     const { data, error } = await supabase
       .from('lists')
@@ -108,7 +109,7 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async create(input: CreateListInput): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
@@ -150,7 +151,7 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async update(id: string, updates: UpdateListInput): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     const dbUpdates = this.mapToDb(updates);
 
@@ -168,7 +169,7 @@ export class SupabaseListsRepository implements IListsRepository {
 
   async delete(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     const { error } = await supabase
       .from('lists')
