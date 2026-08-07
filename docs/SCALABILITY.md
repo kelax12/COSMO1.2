@@ -161,10 +161,52 @@ policy `OR` unique** (sémantique 1:1, cf. `docs/SECURITY.md`).
   produisait déjà le même OR ; le gain est l'évaluation d'1 policy au lieu de 2
   + le lint éteint).
 
-**Conclusion** : le coût RLS collaboration n'est **pas** un goulot à l'échelle
+> ## ⛔ CETTE CONCLUSION ÉTAIT FAUSSE — corrigée le 2026-08-07
+>
+> Le texte ci-dessous concluait que « le coût RLS collaboration n'est **pas** un
+> goulot » et que « à volume réel le planner peut basculer le `Seq Scan` en
+> `BitmapOr` de deux index ». **Le planner ne bascule pas.** Mesuré en prod sous
+> le rôle `authenticated` le 2026-08-07 :
+>
+> ```
+> Limit
+>   ->  Sort  (Sort Key: created_at DESC, id DESC)
+>         ->  Seq Scan on tasks                      ← ❌ table GLOBALE
+>               Filter: (uid = user_id) OR (ANY (id = (hashed SubPlan 9).col1))
+> ```
+>
+> Deux erreurs dans le raisonnement d'origine :
+>
+> 1. **« Le sous-plan est hashé, donc c'est maîtrisé »** — vrai, mais hors
+>    sujet. Ce qui coûte n'est pas le sous-plan : c'est que le `OR` empêche
+>    d'utiliser `idx_tasks_user_id` pour ATTEINDRE les lignes. Postgres lit donc
+>    toute la table, puis applique le filtre. Le coût croît avec le volume
+>    **total de la plateforme**, pas avec celui du compte.
+> 2. **« Le planner basculera en `BitmapOr` à volume réel »** — hypothèse jamais
+>    vérifiée, et fausse ici. Un `BitmapOr` supposerait deux chemins d'index sur
+>    la MÊME table ; la seconde branche passe par `shared_tasks`, ce que le
+>    planner résout en `hashed SubPlan`, pas en bitmap. S'ajoute l'`ORDER BY
+>    created_at DESC` + `LIMIT` : sans index utilisable, il faut trier toute la
+>    table avant de prendre les 1000 premières lignes.
+>
+> **Leçon de méthode** : cette section a été écrite sur la base d'un `EXPLAIN`
+> réel, mais son interprétation reposait sur une projection (« à volume réel… »)
+> présentée comme un acquis. Une doc qui rassure sans mesurer empêche de
+> re-regarder. C'est ce qui a maintenu ce défaut pendant six semaines.
+>
+> **Correctif (mig. 085)** : la lecture passe par la RPC `get_my_tasks()`, qui
+> exprime les deux ensembles en `UNION` de deux branches indexables. Plan
+> obtenu : `Index Scan using idx_tasks_user_id` + `Index Scan using tasks_pkey`.
+> Détail complet : `AUDIT-ARCHITECTURE-2026-08-07.md`.
+>
+> ⚠️ Les policies RLS restent **inchangées** (défense en profondeur). Toute
+> lecture de liste sur `tasks` doit passer par la RPC — cf. CLAUDE.md.
+
+~~**Conclusion** : le coût RLS collaboration n'est **pas** un goulot à l'échelle
 visée — les index (020/044/048) + le fold OR + le sous-plan hashé le
-maintiennent linéaire et indexable. Le vrai frein scalabilité reste la
-**profondeur de données par compte** (§3 pagination), pas la RLS.
+maintiennent linéaire et indexable.~~ Le vrai frein scalabilité reste la
+**profondeur de données par compte** (§3 pagination) — mais la RLS **en était
+un aussi**, jusqu'à la mig. 085.
 
 > **Index `unused` résiduels** (advisor INFO) : `idx_tasks_deadline`,
 > `idx_subscriptions_stripe_customer_id`, `idx_friends_*`, `idx_kr_completions_*`,

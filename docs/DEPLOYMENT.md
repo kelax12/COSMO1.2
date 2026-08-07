@@ -25,10 +25,59 @@ Un `git push origin main` déclenche la CI **et** le déploiement Vercel du
 npm run lint            # 0 erreur
 npx tsc -b              # 0 erreur
 npm run validate:migrations
+npm run check:rls       # invariants RLS (bloquant CI depuis le 2026-08-07)
 npm run test:coverage   # thresholds respectés
+npm run i18n:check
 npm run build
 npx playwright test --project=chromium
 ```
+
+### Vérifier la dérive repo ↔ prod (avant tout déploiement avec migration)
+
+`check:drift` ne peut pas être une gate CI : elle a besoin d'une introspection
+**live** de la base, donc de secrets que la CI n'a pas (et un check qui exige
+des secrets finit désactivé). C'est une étape manuelle en 2 temps :
+
+```bash
+npm run check:drift -- --print-sql
+```
+
+Exécuter le SQL affiché sur la prod (SQL editor ou MCP `execute_sql` — lecture
+seule), sauver la réponse JSON, puis :
+
+```bash
+npm run check:drift -- introspection.json
+```
+
+Sortie ≠ 0 si un objet attendu par le dépôt **manque** en prod (= migration non
+appliquée). Un objet EN TROP est un simple avertissement (héritage dashboard).
+
+> Historique : ce script existait depuis juin 2026 et n'avait jamais été
+> exécuté. Premier passage le 2026-08-07 — il a révélé une vraie dérive
+> (mig. 090) **et** un faux positif de son propre SQL (le schéma `storage`
+> était ignoré). Un détecteur jamais lancé ne détecte rien.
+
+---
+
+## 2bis. Déployer les Edge Functions
+
+⚠️ **Vercel ne déploie PAS les Edge Functions.** Un `git push` livre le front ;
+les fonctions Deno restent dans leur version précédente jusqu'à un déploiement
+explicite :
+
+```bash
+supabase functions deploy stripe-webhook stripe-create-checkout delete-account
+```
+
+Passer par la CLI et non par l'API : elle résout seule l'arborescence des
+imports relatifs (`../_shared/alert.ts`) et préserve le réglage `verify_jwt` de
+chaque fonction. Réglages actuels, à ne PAS changer :
+
+| Fonction | `verify_jwt` | Pourquoi |
+|---|---|---|
+| `stripe-webhook` | **false** | Stripe n'envoie pas de JWT — l'authentification est la signature du webhook |
+| `stripe-create-checkout` | true | Appelée par un utilisateur connecté |
+| `delete-account` | true | Idem, et l'id supprimé est celui du JWT |
 
 ---
 

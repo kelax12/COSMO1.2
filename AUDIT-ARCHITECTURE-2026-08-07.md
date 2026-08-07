@@ -115,6 +115,28 @@ la plus importante de tout ce lot.
 > ce qui est le bon sens de déploiement : l'ancien front continue de
 > fonctionner (policies inchangées, `toggle_task_complete` v1 conservée).
 
+### Lot 3 — finitions
+
+| Point | Traitement |
+|---|---|
+| **`docs/SCALABILITY.md` §8 affirmait le CONTRAIRE de la mesure** — « le coût RLS collaboration n'est **pas** un goulot », « à volume réel le planner peut basculer le `Seq Scan` en `BitmapOr` ». | ⛔ **Corrigé en place**, avec l'analyse des deux erreurs de raisonnement (le sous-plan hashé n'était pas le problème ; le `BitmapOr` était une projection jamais vérifiée). C'est cette doc rassurante qui a maintenu le défaut six semaines. |
+| `docs/PERFORMANCE.md` | 3 encadrés : lecture via RPC, Realtime vs sondage, `getSession` vs `getUser` |
+| `docs/TESTING.md` | Nouvelles gates + pourquoi les tests RLS d'intégration sont non négociables sur une RPC `SECURITY DEFINER` |
+| `docs/DEPLOYMENT.md` | Nouvelle §2bis **déploiement des Edge Functions** (avec le tableau `verify_jwt` à ne pas casser) + procédure `check:drift` en 2 étapes |
+| `faille.md` (source de vérité sécurité) | 11 entrées A-1 → A-11, dont les 3 restées ouvertes |
+| `toggle_task_complete` v1 | Marquée **dépréciée** dans la migration ET par un `COMMENT ON FUNCTION` en base. Elle n'a plus d'appelant ; la laisser garde un chemin d'écriture qui **ne génère pas** la récurrence. |
+| Plancher typo 11px | Dernière violation franche (`text-[10px]`, badge « Envoyé » du modal mobile) migrée ; budget 204 → **203** |
+| Racine du dépôt « encombrée » | 🔵 **RECTIFIÉ** — tout est déjà gitignoré, aucun artefact suivi. Constat infondé. |
+
+**Non fait, délibérément** — et pourquoi :
+
+| Point | Raison |
+|---|---|
+| **Déployer les Edge Functions via l'API** | Faisable techniquement, mais ce sont les fonctions de **paiement** et d'**effacement RGPD**, je ne peux pas les fumer-tester, et l'assemblage manuel de l'arborescence risque de casser les imports relatifs (`../_shared/alert.ts`) ou le réglage `verify_jwt` (`false` pour le webhook Stripe — le changer bloque tous les paiements). La CLI résout tout ça seule. Procédure ajoutée au runbook. |
+| **Migrer les 29 tailles restantes de `TaskModalMobileBody`** | Mêmes px mais `line-height` différente → changement visuel réel sur le modal mobile le plus utilisé, sans validation visuelle du design. Dette tracée dans le test. |
+| **Passer le plan Supabase en Pro** | C'est un achat. |
+| **`DROP TABLE profiles_avatar_backup_084`** | Sauvegarde de données utilisateur créée par une autre session : ce n'est pas à moi de décider de sa destruction. |
+
 ### Ce qui reste ouvert
 
 | Point | Pourquoi ce n'est pas fait |
@@ -124,6 +146,8 @@ la plus importante de tout ce lot.
 | **E2E Playwright sur compte réel** | La suite d'intégration RLS couvre désormais le chemin de production (`get_my_tasks`) ; un parcours UI sur compte réel reste souhaitable. |
 | **Migration de `TaskModalMobileBody`** vers l'échelle typo | 30 tailles arbitraires cohérentes entre elles (métriques iOS natives) ; les migrer change les `line-height` → vérification visuelle requise. Dette tracée dans `design-system.guard.test.ts`. |
 | **Observabilité backend** | Alertes DB / uptime : configuration de compte, comme le point 3. |
+| **Protection mots de passe fuités** | Réglage de compte non scriptable : Dashboard → Authentication → Policies. 1 clic. |
+| **Déploiement des Edge Functions** | `supabase functions deploy stripe-webhook stripe-create-checkout delete-account` |
 
 ---
 

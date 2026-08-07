@@ -42,6 +42,25 @@
 
 ## Limites de requêtes
 
+> **⚡ `tasks` : lire via `get_my_tasks()`, jamais `.from('tasks')`** (mig. 085,
+> 2026-08-07). La policy `tasks_select_own_or_shared` est un `OR` qui rend
+> `idx_tasks_user_id` inutilisable → `Seq Scan` de la table GLOBALE, vérifié par
+> `EXPLAIN` en prod. La RPC exprime le même ensemble en `UNION` indexable.
+> Vaut pour `getAll`, `getByDate`, `getFiltered` **et** `getPage`.
+> Exception : `getById` (accès par clé primaire).
+
+> **📡 Collaboration : Realtime, pas sondage** (mig. 089). Le `refetchInterval`
+> de 15 s sur `useTasks` coûtait ≈ 58 Mo/mois/utilisateur d'egress Supabase.
+> `useSharedTasksRealtime` (monté une fois dans `App.tsx`) écoute
+> `shared_tasks` ; le sondage subsiste à 5 min en filet de sécurité.
+> Toute table écoutée doit être dans la publication `supabase_realtime` **et**
+> en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que la clé primaire).
+
+> **🔑 Identité : `getSession()`, pas `getUser()`** (`src/lib/auth-user.ts`).
+> `supabase.auth.getUser()` fait un **aller-retour réseau** vers GoTrue ; il
+> était appelé en tête de presque chaque lecture (45 sites), doublant la latence
+> perçue et faisant de GoTrue un SPOF pour la lecture de données.
+
 Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto-pagination `fetchAllPages()` (`src/lib/fetch-all-pages.ts`) : pagination via `.range(from, to)` par pages de `PAGE_SIZE` (1000) jusqu'à épuisement, plafonné à `MAX_ROWS` (5000). Pour ≤ 1000 items → **une seule requête**. Ordre stable garanti par un tiebreak `.order('id')`.
 
 - Les `getAll()` à faible volume (categories, lists, friends) gardent `.limit(200)`.

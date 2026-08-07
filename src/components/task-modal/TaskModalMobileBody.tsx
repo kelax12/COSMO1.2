@@ -655,7 +655,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                           {info.name}{!isTaskOwner && id === ownerId ? t('mobile.owner') : ''}
                         </span>
                         {isSent && (
-                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('mobile.sent')}</span>
+                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-caption font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('mobile.sent')}</span>
                         )}
                         {isTaskOwner && (
                           <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
