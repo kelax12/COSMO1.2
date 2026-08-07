@@ -37,10 +37,8 @@ const LEGACY_ALLOWLIST = {
   tables: new Set([
     'subscriptions',
     'profiles',
-    // Sauvegarde prise avant la normalisation des avatar_url (mig. 084).
-    // TEMPORAIRE — contient des données personnelles (URL d'avatars), donc à
-    // supprimer après validation du nouveau flux : cf. mig. 088.
-    'profiles_avatar_backup_084',
+    // (`profiles_avatar_backup_084` retirée le 2026-08-08 : la table a été
+    //  supprimée en prod par la mig. 088, le filet AUD-03 étant resté vide.)
   ]),
   functions: new Set([]),
   triggers: new Set([]),
