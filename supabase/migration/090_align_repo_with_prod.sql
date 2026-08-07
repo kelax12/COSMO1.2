@@ -1,0 +1,54 @@
+-- ═══════════════════════════════════════════════════════════════════
+-- 090 — Aligner le repo sur l'état RÉEL de la prod
+-- Rapport : AUDIT-ARCHITECTURE-2026-08-07.md, point D1
+--
+-- `scripts/check-prod-drift.mjs` existait depuis l'audit 2026-06-10 mais
+-- n'avait JAMAIS été exécuté. Premier passage le 2026-08-07 : il signale une
+-- policy que le repo attend et que la prod n'a pas.
+--
+--   ❌ MANQUANT en prod : "Users can read own tasks" ON tasks
+--
+-- Diagnostic : la migration 001 crée cette policy. La migration 043 (wrap
+-- `auth.uid()`) a recréé les policies de `tasks` sous des noms normalisés
+-- (« Users can VIEW own tasks »), puis la 049 les a fusionnées en
+-- `tasks_select_own_or_shared`. L'ancienne policy de la 001 a bien disparu de
+-- la base — mais aucun fichier ne porte le `DROP` correspondant. Le repo
+-- décrit donc un schéma qui n'existe plus : c'est précisément la dérive que
+-- CLAUDE.md documente (« les fichiers de migration DIVERGENT de la prod »).
+--
+-- Ce DROP est un NO-OP sur la prod actuelle. Son intérêt est ailleurs :
+--
+--   1. Il rend `check-prod-drift.mjs` VERT, donc utilisable. Un détecteur qui
+--      signale en permanence un faux problème connu finit ignoré — c'est le
+--      même mécanisme d'érosion que la CI rouge (point H6).
+--   2. Sur une INSTALLATION NEUVE (tests d'intégration RLS, projet de
+--      staging), il supprime une vraie redondance : `tasks` s'y retrouvait
+--      avec DEUX policies PERMISSIVE en SELECT (celle de la 001 et celle de
+--      la 049), que Postgres évalue séparément puis OR — exactement ce que la
+--      mig. 049 et `check-rls-advisors.mjs` interdisent.
+--
+-- Aucune perte d'accès : `tasks_select_own_or_shared` (mig. 049) couvre
+-- strictement plus (`user_id = auth.uid()` OR partagée avec moi).
+-- ═══════════════════════════════════════════════════════════════════
+
+DROP POLICY IF EXISTS "Users can read own tasks" ON public.tasks;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Note pour la suite : `profiles_avatar_backup_084`
+-- ═══════════════════════════════════════════════════════════════════
+--
+-- Le détecteur signale aussi une table EN TROP en prod :
+-- `public.profiles_avatar_backup_084`, sauvegarde prise avant la
+-- normalisation des `avatar_url` de la migration 084.
+--
+-- Elle n'est PAS supprimée ici, volontairement : c'est un filet de sécurité
+-- sur des données utilisateur, et son sort appartient à la personne qui a
+-- décidé de la créer. Elle contient par ailleurs des URL d'avatars, donc des
+-- données personnelles — à ce titre elle ne doit pas rester indéfiniment
+-- (RGPD art. 5.1.e, limitation de conservation).
+--
+-- ➜ À FAIRE après validation du nouveau flux d'avatars :
+--      DROP TABLE public.profiles_avatar_backup_084;
+--
+-- En attendant, elle est déclarée dans `LEGACY_ALLOWLIST` de
+-- `check-prod-drift.mjs` pour que le détecteur reste vert et donc crédible.

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ICategoriesRepository } from './repository';
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
@@ -74,7 +75,7 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
 
   async create(input: CreateCategoryInput): Promise<Category> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     const dbInput = { ...this.mapToDb(input), user_id: user.id };
 

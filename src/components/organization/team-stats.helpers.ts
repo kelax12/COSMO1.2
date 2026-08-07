@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  parseISO, isValid, isPast, isToday, subDays, startOfDay,
+  parseISO, isValid, subDays, startOfDay,
   startOfWeek, addWeeks, isWithinInterval, format,
 } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
@@ -73,10 +73,28 @@ export function filterByActivity(tasks: TeamTask[], start: Date | null): TeamTas
 
 // ─── Retard ───────────────────────────────────────────────────────────
 
-export const isOverdue = (t: TeamTask): boolean => {
+/**
+ * Tâche en retard : non terminée, et dont l'échéance est strictement antérieure
+ * à aujourd'hui (le jour même n'est pas « en retard »).
+ *
+ * `now` est injectable — et ce n'est pas de la coquetterie de testabilité.
+ * L'implémentation précédente s'appuyait sur `isPast`/`isToday` de date-fns,
+ * qui lisent l'horloge système sans paramètre possible. Les tests posaient donc
+ * des échéances relatives à une date FIGÉE (`NOW = 2026-07-18`) pendant que la
+ * fonction, elle, comparait à la date RÉELLE : le 2026-08-07, une échéance
+ * « dans 3 jours » du référentiel de test était devenue passée, et deux tests
+ * se sont mis à échouer tout seuls. Ce n'était pas une régression de code mais
+ * une bombe à retardement dans les tests — le genre qui finit par entraîner
+ * l'équipe à ignorer une CI rouge (audit archi 2026-08-07, H6).
+ *
+ * Avec un `now` explicite, la fonction est déterministe et le test ne peut plus
+ * pourrir avec le temps.
+ */
+export const isOverdue = (t: TeamTask, now: Date = new Date()): boolean => {
   if (t.completed || !t.deadline) return false;
   const d = parse(t.deadline);
-  return d ? isPast(d) && !isToday(d) : false;
+  if (!d) return false;
+  return startOfDay(d) < startOfDay(now);
 };
 
 // ─── OKR (progression pondérée) ───────────────────────────────────────
@@ -110,10 +128,10 @@ export interface StatsSummary {
   overdueCount: number;
 }
 
-export function summarize(tasks: TeamTask[]): StatsSummary {
+export function summarize(tasks: TeamTask[], now: Date = new Date()): StatsSummary {
   const total = tasks.length;
   const completed = tasks.filter((t) => t.completed).length;
-  const overdueCount = tasks.filter(isOverdue).length;
+  const overdueCount = tasks.filter((t) => isOverdue(t, now)).length;
   return {
     total,
     completed,
@@ -177,10 +195,11 @@ export function memberLoad(tasks: TeamTask[], members: OrgMember[]): MemberLoad[
 export function overdueByMember(
   tasks: TeamTask[],
   members: OrgMember[],
+  now: Date = new Date(),
 ): { userId: string; name: string; count: number }[] {
   const byUser = new Map<string, number>();
   for (const t of tasks) {
-    if (!isOverdue(t)) continue;
+    if (!isOverdue(t, now)) continue;
     for (const uid of t.assigneeIds) byUser.set(uid, (byUser.get(uid) ?? 0) + 1);
   }
   return members
@@ -201,7 +220,7 @@ export interface ProjectStat {
 }
 
 /** Répartition des tâches par projet (actifs, ceux qui ont ≥ 1 tâche), trié par ouvertes desc. */
-export function projectBreakdown(tasks: TeamTask[], projects: TeamProject[]): ProjectStat[] {
+export function projectBreakdown(tasks: TeamTask[], projects: TeamProject[], now: Date = new Date()): ProjectStat[] {
   const active = projects.filter((p) => !p.archivedAt);
   return active
     .map((p) => {
@@ -211,7 +230,7 @@ export function projectBreakdown(tasks: TeamTask[], projects: TeamProject[]): Pr
         name: p.name,
         color: p.color,
         open: pt.filter((t) => !t.completed).length,
-        overdue: pt.filter(isOverdue).length,
+        overdue: pt.filter((t) => isOverdue(t, now)).length,
         total: pt.length,
       };
     })

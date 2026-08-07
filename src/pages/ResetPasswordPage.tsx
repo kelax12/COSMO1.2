@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import Logo from '@/components/Logo';
 import { useT } from '@/i18n/useT';
 
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 /**
  * Choix du nouveau mot de passe (amélioration UX n°1). Consommée depuis le

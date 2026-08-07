@@ -10,6 +10,7 @@ import { isTimeoutError } from '@/lib/withTimeout';
 import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
 import { getLastVisitedPage } from '@/modules/ui-states';
+import { useSharedTasksRealtime } from '@/modules/tasks/useSharedTasksRealtime';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
 import { Analytics } from '@vercel/analytics/react';
@@ -193,6 +194,22 @@ const RootRoute = () => {
   return <PageWithSuspense><LandingPage /></PageWithSuspense>;
 };
 
+/**
+ * Abonnement Realtime aux partages de tâches — monté UNE SEULE FOIS ici.
+ *
+ * Un canal Realtime est une connexion WebSocket : le monter dans un composant
+ * de page en ouvrirait une par écran affiché. Au niveau App, il suit la session
+ * et se referme proprement au changement d'utilisateur.
+ *
+ * Composant vide (pas de rendu) : c'est uniquement un point d'ancrage de cycle
+ * de vie. Cf. audit archi 2026-08-07, point C2.
+ */
+const SharedTasksRealtime: React.FC = () => {
+  const { user, isDemo } = useAuth();
+  useSharedTasksRealtime(isDemo ? undefined : user?.id);
+  return null;
+};
+
 const AppRoutes = () => {
   // Locale servie pour ce montage. `basename` étant figé au montage du routeur,
   // elle ne change pas sans rechargement complet (cf. src/i18n/bootstrap.ts) —
@@ -282,6 +299,7 @@ const App: React.FC = () => {
                 duration: 3000,
               }}
             />
+            <SharedTasksRealtime />
             <AppRoutes />
             <CookieBanner />
             {/* Popup d'invitation de partage — niveau App pour survivre aux

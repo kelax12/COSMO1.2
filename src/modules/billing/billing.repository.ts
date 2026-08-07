@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 
 export interface Subscription {
@@ -33,7 +34,7 @@ export class BillingRepository {
   async getSubscription(): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     const { data: existing, error: fetchError } = await supabase

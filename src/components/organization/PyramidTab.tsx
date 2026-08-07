@@ -33,6 +33,14 @@ import {
   type OrgTreeNode,
 } from '@/modules/organizations';
 import {
+  UNPLACED_DROP_ID,
+  collapsedStorageKey,
+  normalize,
+  readCollapsedIds,
+  canManage,
+  isValidDestination,
+} from './pyramid.helpers';
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -61,54 +69,11 @@ interface PyramidTabProps {
   loading?: boolean;
 }
 
-/** Zone de dépôt « détacher » (managerId → null). */
-const UNPLACED_DROP_ID = '__unplaced__';
-
-/** Clé localStorage de l'état replié de la pyramide (par organisation). */
-const collapsedStorageKey = (orgId: string) => `cosmo_pyramid_collapsed_${orgId}`;
-
-/** Lecture sûre de l'état replié (B14 — jamais de JSON.parse nu). */
-function readCollapsedIds(orgId: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(collapsedStorageKey(orgId));
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []);
-  } catch {
-    return new Set();
-  }
-}
-
-/** Normalisation pour la recherche : minuscules, sans accents (diacritiques combinants). */
-const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
+// Logique pure extraite dans `pyramid.helpers.ts` (audit archi 2026-08-07, M1) :
+// ce sont les seules fonctions de ce fichier qui DÉCIDENT quelque chose
+// (autorisation de déplacement, interdiction des cycles, recherche), donc les
+// seules qui méritaient des tests. Elles y sont couvertes.
 const EMPTY_SET = new Set<string>();
-
-/** Peut-on déplacer `target` ? Admin : tous (sauf soi). Manager : son sous-arbre. */
-function canManage(target: OrgMember, members: OrgMember[], currentUserId: string | undefined, isAdmin: boolean): boolean {
-  if (!currentUserId || target.userId === currentUserId) return false;
-  if (isAdmin) return true;
-  return subtreeOf(members, currentUserId).has(target.userId);
-}
-
-/**
- * `destId` est-il une destination valide pour `target` ? Version pure (données),
- * utilisée en secours au relâcher quand les attributs data-drop-id ne sont pas
- * encore rendus (drag très rapide : saisir + relâcher avant le re-render).
- */
-function isValidDestination(
-  target: OrgMember,
-  destId: string,
-  members: OrgMember[],
-  currentUserId: string | undefined,
-  isAdmin: boolean,
-): boolean {
-  if (destId === target.userId) return false;
-  if (destId === (target.managerId ?? null)) return false;
-  if (!members.some((m) => m.userId === destId)) return false;
-  if (subtreeOf(members, target.userId).has(destId)) return false;
-  if (!isAdmin && destId !== currentUserId && !(currentUserId && subtreeOf(members, currentUserId).has(destId))) return false;
-  return true;
-}
 
 /** État du déplacement en cours, distribué aux cartes de l'arbre. */
 interface DragState {
@@ -174,10 +139,19 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
   const isMe = m.userId === currentUserId;
   // Effectif total du sous-arbre (au-delà des directs) — affiché quand il diffère.
   const totalReports = node.children.length > 0 ? subtreeOf(members, m.userId).size : 0;
-  // « Ajouter un collaborateur » : admin partout ; sinon sous soi-même ou
-  // son sous-arbre (miroir de la policy INSERT org_invite_links).
+  // « Ajouter un collaborateur » : admin partout ; sinon MANAGER (au moins un
+  // subordonné) sous soi-même ou son sous-arbre.
+  //
+  // AUD-02 — la condition `m.userId === currentUserId` seule reproduisait la
+  // policy vulnérable de la mig. 067 : tout membre, même sans subordonné,
+  // pouvait générer un lien et faire entrer un externe dans l'entreprise sans
+  // validation admin. La mig. 084 exige désormais `has_reports` côté serveur ;
+  // on aligne l'UI pour ne pas afficher un bouton qui renverrait 403.
   const canAddUnder =
-    isAdmin || m.userId === currentUserId || canManage(m, members, currentUserId, isAdmin);
+    isAdmin ||
+    (!!currentUserId &&
+      isManagerOf(members, currentUserId) &&
+      (m.userId === currentUserId || canManage(m, members, currentUserId, isAdmin)));
   // « Retirer de l'entreprise » : réservé aux admins (RPC remove_member exige
   // is_org_admin), sur une autre personne que soi (sous soi dans la pyramide).
   const canRemove = isAdmin && !isMe;
@@ -1015,7 +989,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             {t('pyramid.intro')}
             responsable direct (N+1). Invitez vos collaborateurs pour la construire.
           </p>
-          {selfMember && (
+          {selfMember && canEdit && (
             <button
               type="button"
               onClick={() => setAddingUnder(selfMember)}
@@ -1109,7 +1083,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       {moveCount} modification{moveCount > 1 ? 's' : ''}
                     </span>
                   )}
-                  {!editMode && selfMember && (
+                  {!editMode && selfMember && canEdit && (
                     <button
                       type="button"
                       onClick={() => setAddingUnder(selfMember)}

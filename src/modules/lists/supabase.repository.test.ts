@@ -50,10 +50,15 @@ describe('SupabaseListsRepository', () => {
   });
 
   it('create: forces empty task_ids and auth-derived user_id (anti-mass-assignment)', async () => {
-    supabaseMock.queueTable('lists', { data: row });
+    // `create()` appelle d'abord `getAll()` en interne (backfill des positions,
+    // cf. mig. 021) : il faut donc DEUX réponses en file, et la première doit
+    // être un TABLEAU. Sans elle, le mock rendait l'objet `row` seul à `getAll`,
+    // qui échouait sur `.map` — un défaut de fixture, pas du code testé.
+    supabaseMock.queueTable('lists', { data: [] });   // getAll() interne
+    supabaseMock.queueTable('lists', { data: row });  // insert().select().single()
     await repo.create({ name: 'X', color: 'red', taskIds: ['evil'] } as never);
 
-    const inserted = (supabaseMock.argsOf('lists', 'insert')?.[0] as Record<string, unknown>[])[0];
+    const inserted = (supabaseMock.argsOf('lists', 'insert', 1)?.[0] as Record<string, unknown>[])[0]; // index 1 = requête d'insert (0 = getAll interne)
     expect(inserted.task_ids).toEqual([]); // toujours vide à la création
     expect(inserted.user_id).toBe(supabaseMock.user?.id);
   });

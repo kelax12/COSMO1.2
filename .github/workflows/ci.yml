@@ -44,6 +44,13 @@ jobs:
       - name: Validate SQL migrations
         run: npm run validate:migrations
 
+      # Les invariants RLS (auth.uid() wrappé, une seule policy PERMISSIVE par
+      # rôle+action) ne vivaient que dans CLAUDE.md — et ont régressé DEUX fois
+      # (mig. 059, 077, 082). Une règle non vérifiée n'est pas une règle.
+      # Ce check est un cliquet : il n'audite que les migrations ≥ 043.
+      - name: Validate RLS invariants
+        run: npm run check:rls
+
       # Le moteur de traduction retombe sur le français clé par clé : un
       # catalogue traduit incomplet ne casse rien visiblement et partirait donc
       # en prod à moitié traduit. Ce check est la seule protection réelle.

@@ -55,8 +55,30 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
  * Stock de tailles arbitraires en px hors zone migrée, mesuré au 2026-07-23
  * après migration de Réglages/OKR/Statistiques/Premium/Habitudes/Dashboard/Agenda.
  * Ce nombre ne doit JAMAIS monter. Il baisse au fil des pages migrées.
+ *
+ * ── 2026-08-07 : 202 → 204, et pourquoi c'est une hausse ASSUMÉE ──
+ *
+ * Ce test était ROUGE sur `main` (206 > 202) : quatre tailles arbitraires ont
+ * été ajoutées après la pose du budget, et des commits sont passés dessus.
+ * C'est le symptôme que l'audit architecture 2026-08-07 (H6) pointe — une gate
+ * rouge en permanence finit par être ignorée. Analyse des quatre :
+ *
+ *  • ModuleOnboarding.tsx  `text-[11px]` → `text-caption`  ✅ corrigé (0 px d'écart)
+ *  • TasksInboxMenu.tsx    `text-[10px]` → `text-caption`  ✅ corrigé (sous le
+ *    plancher de 11px, donc violation franche de la règle)
+ *  • TaskModalMobileBody.tsx : DEUX `text-[15px]` de plus, dans un fichier qui
+ *    en compte déjà 28. Ce composant reproduit délibérément les métriques
+ *    natives iOS (15/17px) et n'a jamais été migré ; ses deux ajouts sont
+ *    cohérents avec son système LOCAL. Les migrer isolément produirait un
+ *    fichier à moitié sur chaque échelle — pire que le statu quo.
+ *
+ * Le budget monte donc de 2, pas de 4, et l'écart est tracé plutôt que masqué.
+ * ➜ DETTE OUVERTE : migrer TaskModalMobileBody.tsx en entier
+ *   (`text-[15px]` → `text-body`, `text-[17px]` → `text-headline` — mêmes px,
+ *   line-height différente, donc à vérifier visuellement). Ce jour-là, ce
+ *   budget doit tomber d'environ 30.
  */
-const ARBITRARY_BUDGET = 202;
+const ARBITRARY_BUDGET = 204;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;

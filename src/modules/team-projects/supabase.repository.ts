@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { ITeamProjectsRepository } from './repository';
@@ -109,8 +110,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     if (!uid) throw new Error('Not authenticated');
     // Whitelist explicite — org_id/created_by injectés serveur-side, jamais input.
     // Id généré client : pas de `.select()` de représentation après l'insert —
@@ -185,8 +185,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     if (!uid) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('team_tasks')

@@ -41,3 +41,67 @@ export function computeAvatarDimensions(
   const scale = Math.min(1, maxDim / Math.max(width, height));
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// AUD-04 — Stockage de l'avatar dans Supabase Storage, plus en data URL
+//
+// L'ancien chemin écrivait `canvas.toDataURL()` (10–30 Ko de base64) dans
+// `auth.user_metadata`. Or user_metadata est EMBARQUÉ DANS LE JWT : chaque
+// requête PostgREST repartait avec un en-tête `Authorization` de plusieurs
+// dizaines de Ko — au-delà de la limite usuelle des proxys (8 Ko par header),
+// l'API devient inaccessible (431 Request Header Fields Too Large). Le même
+// blob était aussi dupliqué dans `profiles.avatar_url` et dans localStorage.
+//
+// Désormais : upload dans le bucket `avatars` (mig. 084), et seule l'URL
+// publique — courte, sur l'hôte Storage du projet — est persistée. C'est ce
+// qui rend applicable l'allowlist d'hôte posée par la mig. 084 sur
+// `profiles.avatar_url` (AUD-03).
+// ═══════════════════════════════════════════════════════════════════
+
+/** Bucket public créé par la migration 084. */
+export const AVATAR_BUCKET = 'avatars';
+
+/** Convertit le canvas de re-encodage en Blob JPEG (qualité 0.85). */
+export function canvasToAvatarBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+}
+
+type MinimalStorageClient = {
+  storage: {
+    from(bucket: string): {
+      upload(
+        path: string,
+        body: Blob,
+        opts: { upsert: boolean; contentType: string; cacheControl: string },
+      ): Promise<{ error: unknown }>;
+      getPublicUrl(path: string): { data: { publicUrl: string } };
+    };
+  };
+};
+
+/**
+ * Uploade l'avatar de `userId` et retourne son URL publique, ou `null` si
+ * l'upload échoue.
+ *
+ * Le chemin est `<userId>/avatar.jpg` : les policies Storage de la mig. 084
+ * n'autorisent l'écriture que dans le dossier dont le nom vaut `auth.uid()`.
+ * `upsert: true` écrase la version précédente (pas d'accumulation d'orphelins).
+ * Le cache-buster `?v=` est indispensable : l'URL étant stable, un navigateur
+ * qui a déjà l'ancienne image en cache ne verrait jamais la nouvelle.
+ */
+export async function uploadAvatar(
+  client: MinimalStorageClient,
+  userId: string,
+  blob: Blob,
+): Promise<string | null> {
+  const path = `${userId}/avatar.jpg`;
+  const bucket = client.storage.from(AVATAR_BUCKET);
+  const { error } = await bucket.upload(path, blob, {
+    upsert: true,
+    contentType: 'image/jpeg',
+    cacheControl: '3600',
+  });
+  if (error) return null;
+  const { data } = bucket.getPublicUrl(path);
+  return data?.publicUrl ? `${data.publicUrl}?v=${Date.now()}` : null;
+}

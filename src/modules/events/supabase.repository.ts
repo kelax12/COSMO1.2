@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
@@ -192,7 +193,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
 
   async create(input: CreateEventInput): Promise<CalendarEvent> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     const dbInput = { ...mapEventToDb(input), user_id: user.id };
 

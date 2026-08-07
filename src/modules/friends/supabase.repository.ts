@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant, TaskSnapshot } from './types';
@@ -173,7 +174,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getPendingRequests(): Promise<PendingFriendRequest[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return [];
 
     const { data, error } = await supabase
@@ -210,7 +211,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getSentRequests(): Promise<PendingFriendRequest[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return [];
 
     const { data, error } = await supabase
@@ -230,7 +231,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const currentUser = await getCurrentUser();
     if (!currentUser) throw new Error('Non authentifié');
 
     const email = input.email.toLowerCase();
@@ -330,7 +331,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       if (resolvedId) friendUserId = resolvedId as string;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     const { error } = await supabase
@@ -406,7 +407,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getMyTaskShares(): Promise<TaskShare[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return [];
     const { data, error } = await supabase
       .from('shared_tasks')
@@ -423,7 +424,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getRelatedTaskShares(): Promise<RelatedTaskShare[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return [];
     // Policy `shared_tasks_select` : auth.uid() = shared_by OR = friend_id.
     // user.id provient de auth.getUser() (uid de confiance, pas un input client)
@@ -460,7 +461,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       if (resolvedId) friendUserId = resolvedId as string;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
     const { error } = await supabase
@@ -492,7 +493,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async getIncomingSharedLists(): Promise<SharedListGrant[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return [];
     // RLS `shared_lists_select` : friend_id = auth.uid(). Non acceptées seulement.
     const { data, error } = await supabase
@@ -515,7 +516,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
 
   async acceptSharedList(grantId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
     // RLS `shared_lists_update` : le destinataire (friend_id) pose accepted_at.
     const { error } = await supabase

@@ -114,16 +114,18 @@ describe('scopeOkrs', () => {
   });
 });
 
+// `NOW` est passé explicitement : sans horloge injectée, ces cas devenaient
+// faux avec le temps qui passe (cf. commentaire de isOverdue).
 describe('isOverdue', () => {
   it('vrai si deadline passée et non terminée', () => {
-    expect(isOverdue(task({ deadline: dateStr(-3) }))).toBe(true);
+    expect(isOverdue(task({ deadline: dateStr(-3) }), NOW)).toBe(true);
   });
   it('faux si terminée', () => {
-    expect(isOverdue(task({ deadline: dateStr(-3), completed: true }))).toBe(false);
+    expect(isOverdue(task({ deadline: dateStr(-3), completed: true }), NOW)).toBe(false);
   });
   it('faux si pas de deadline ou deadline future', () => {
-    expect(isOverdue(task({ deadline: '' }))).toBe(false);
-    expect(isOverdue(task({ deadline: dateStr(3) }))).toBe(false);
+    expect(isOverdue(task({ deadline: '' }), NOW)).toBe(false);
+    expect(isOverdue(task({ deadline: dateStr(3) }), NOW)).toBe(false);
   });
 });
 
@@ -135,7 +137,7 @@ describe('summarize', () => {
       task({ id: 'c', completed: false }),
       task({ id: 'd', completed: true }),
     ];
-    const s = summarize(tasks);
+    const s = summarize(tasks, NOW);
     expect(s.total).toBe(4);
     expect(s.completed).toBe(2);
     expect(s.completionRate).toBe(50);
@@ -205,7 +207,7 @@ describe('overdueByMember', () => {
       task({ id: 'b', assigneeIds: ['u1'], deadline: dateStr(-5) }),
       task({ id: 'c', assigneeIds: ['u2'], deadline: dateStr(3) }), // future → pas en retard
     ];
-    const res = overdueByMember(tasks, members);
+    const res = overdueByMember(tasks, members, NOW);
     expect(res).toHaveLength(1);
     expect(res[0]).toMatchObject({ userId: 'u1', count: 2 });
   });
@@ -223,7 +225,7 @@ describe('projectBreakdown', () => {
       task({ id: 'b', projectId: 'p1', completed: true }),
       task({ id: 'c', projectId: 'p2', completed: false }),
     ];
-    const res = projectBreakdown(tasks, projects);
+    const res = projectBreakdown(tasks, projects, NOW);
     expect(res.map((p) => p.id)).toEqual(['p1']);
     expect(res[0]).toMatchObject({ open: 1, overdue: 1, total: 2 });
   });

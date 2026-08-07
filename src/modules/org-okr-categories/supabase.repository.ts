@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgOKRCategoriesRepository } from './repository';
 import { OrgOKRCategory, CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
@@ -40,8 +41,7 @@ export class SupabaseOrgOKRCategoriesRepository implements IOrgOKRCategoriesRepo
 
   async createCategory(orgId: string, input: CreateOrgOKRCategoryInput): Promise<OrgOKRCategory> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const uid = await getCurrentUserId();
     if (!uid) throw new Error('Not authenticated');
     // Whitelist explicite — org_id/created_by jamais depuis l'input.
     const { data, error } = await supabase

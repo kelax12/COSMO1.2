@@ -54,6 +54,17 @@ export const supabase: SupabaseClient = hasSupabaseConfig
   ? createClient(supabaseUrl, supabaseAnonKey, {
       global: { fetch: timeoutFetch },
       auth: {
+        // AUD-01 — PKCE obligatoire. Le défaut de @supabase/auth-js est
+        // `implicit` (cf. GoTrueClient DEFAULT_OPTIONS) : dans ce mode, Google
+        // OAuth, les magic links et le lien de réinitialisation renvoient
+        // l'utilisateur avec `#access_token=…&refresh_token=…` dans le
+        // FRAGMENT d'URL. Le fragment n'est pas envoyé au serveur, mais il est
+        // lisible par tout script de l'origine (AdSense injecté par AdModal,
+        // Sentry, Vercel Analytics) et persisté dans l'historique du
+        // navigateur — un refresh token qui fuit = prise de contrôle du compte.
+        // En PKCE, l'URL de retour ne porte qu'un `?code=` à usage unique,
+        // échangeable seulement avec le code_verifier stocké localement.
+        flowType: 'pkce',
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true,
@@ -62,5 +73,14 @@ export const supabase: SupabaseClient = hasSupabaseConfig
   : createClient('https://placeholder.supabase.co', 'placeholder-key');
 
 export const isSupabaseConfigured = hasSupabaseConfig;
-export let isDemoMode = !hasSupabaseConfig;
-export const setDemoMode = (v: boolean) => { isDemoMode = v; };
+
+// ⚠️ `isDemoMode` / `setDemoMode` ont été SUPPRIMÉS ici (audit archi
+// 2026-08-07, point D2). Ils formaient un SECOND drapeau de mode démo, à côté
+// de `appModeStore` que CLAUDE.md désigne comme source de vérité unique.
+// Ils n'avaient plus aucun consommateur, mais leur simple existence était un
+// piège : `import { isDemoMode } from '@/lib/supabase'` compilait et renvoyait
+// une valeur figée au chargement du module, jamais mise à jour par
+// `loginDemo()`. C'est exactement la faille B0 (dériver `isDemo` d'une source
+// parallèle) prête à se reproduire.
+//
+// Source unique : `appModeStore.isDemo` / `useIsDemo()` (src/lib/app-mode.store.ts).

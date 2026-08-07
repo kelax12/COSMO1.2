@@ -109,7 +109,11 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const trend = useMemo(() => completionTrend(scopedTasks, start), [scopedTasks, start]);
   const okrStats = useMemo(() => okrBreakdown(okrs), [okrs]);
 
-  const overdueTasks = useMemo(() => periodTasks.filter(isOverdue), [periodTasks]);
+  // ⚠️ Ne PAS écrire `.filter(isOverdue)` : `Array.filter` passe (item, index,
+  // array), donc l'index atterrirait dans le paramètre `now` de `isOverdue`.
+  // TypeScript l'attrape (types incompatibles), mais l'intention mérite d'être
+  // écrite : la lambda est obligatoire.
+  const overdueTasks = useMemo(() => periodTasks.filter((t) => isOverdue(t)), [periodTasks]);
   const maxOpen = Math.max(1, ...load.map((m) => m.open));
   const maxProjectOpen = Math.max(1, ...byProject.map((p) => p.open));
   const maxOverdue = Math.max(1, ...overdueMembers.map((m) => m.count));
