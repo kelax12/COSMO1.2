@@ -31,7 +31,7 @@ une dimension sécurité/confidentialité sont reprises ici (source de vérité)
 | A-8 | 🟠 Important | `isDemoMode` / `setDemoMode` encore exportés : second drapeau de mode démo, importable, figé au chargement du module. Faille **B0** prête à se reproduire. | ✅ Corrigé | Exports supprimés — source unique `appModeStore` |
 | A-9 | 🔴 Bloquant | **Plan Supabase `free`** : pas de PITR, rétention de backup minimale, restauration jamais testée. RPO réel jusqu'à 24 h, RTO inconnu. | ❌ **OUVERT** | Action de compte : passer en Pro + activer PITR + exécuter le drill de `docs/DEPLOYMENT.md` §7 |
 | A-10 | 🟠 Important | **Protection contre les mots de passe fuités désactivée** (advisor `auth_leaked_password_protection`) — Supabase peut vérifier les mots de passe contre HaveIBeenPwned. | ❌ **OUVERT** | Réglage de compte, non scriptable : Dashboard → Authentication → Policies → activer « Leaked password protection ». 1 clic. |
-| A-11 | 🟡 À plan. | `profiles_avatar_backup_084` : sauvegarde d'URL d'avatars (**données personnelles**) créée pendant la mig. 084, sans date de péremption. RGPD art. 5.1.e. | ❌ **OUVERT** | `DROP TABLE public.profiles_avatar_backup_084;` après validation du nouveau flux d'avatars |
+| A-11 | 🟡 À plan. | `profiles_avatar_backup_084` : sauvegarde d'URL d'avatars (**données personnelles**) créée pendant la mig. 084, sans date de péremption. RGPD art. 5.1.e. | ✅ Corrigé | `088_drop_avatar_backup.sql` (2026-08-08). Le filet était **resté vide** — les 12 `avatar_url` en base étaient tous conformes à l'allowlist, aucun n'a été neutralisé. La migration porte un garde-fou qui refuse le `DROP` si la table contient une ligne. Comble aussi le trou de numérotation 087→089 : `check-prod-drift.mjs` renvoyait vers une « mig. 088 » qui n'existait pas ; son entrée de `LEGACY_ALLOWLIST` est retirée |
 
 ---
 
@@ -104,6 +104,113 @@ une dimension sécurité/confidentialité sont reprises ici (source de vérité)
 | G-9 | 🟠 Medium | `react-router` 6.x — open redirect via antislash dans `<Link>`/`useNavigate` (GHSA-wrjc-x8rr-h8h6) | ✅ Corrigé | **Migration `react-router-dom` 6.30.4 → 7.18.2** le 2026-07-29 (plan : `docs/superpowers/plans/2026-07-29-react-router-v7-migration.md`). Clôt d'un coup les 3 avis : celui-ci, `GHSA-jjmj-jmhj-qwj2` (open redirect → XSS) et `GHSA-337j-9hxr-rhxg` (`deserializeErrors`) — vérifié, les 3 ont disparu de `npm audit`. Migration en mode déclaratif pur : seuls `v7_relativeSplatPath` et `v7_startTransition` s'appliquaient, adoptés par étapes sur la 6.30 **avant** le bump pour que celui-ci soit un non-évènement. L'invariant qui rendait la faille inexploitable (aucune navigation alimentée par un paramètre d'URL) est désormais **gardé par un test statique** (`src/lib/no-open-redirect.test.ts`) au lieu de reposer sur une revue manuelle refaite à chaque audit. Portée : détection par **teinte** (`const next = searchParams.get(…)` puis `navigate(next)`) + fenêtre de 3 lignes pour les appels multi-lignes ; le test **s'auto-vérifie** sur 4 formes réalistes de réintroduction. Reste une analyse statique, pas une preuve : un flux passant par un store ou plusieurs fichiers lui échapperait. **Contrepartie assumée → [G-11](#-tableau-récapitulatif)** |
 | G-10 | 🟡 Low | Jetons de session en `localStorage` + `style-src 'unsafe-inline'` | 🟢 Partiel | `frame-ancestors 'none'` ajouté à la CSP. `'unsafe-inline'` **conservé volontairement** : le retirer casse Framer Motion et Radix (styles inline). `localStorage` = compromis standard Supabase SPA |
 | G-11 | 🟠 High (théorique) | `react-router` ≥ 7.12 — CSRF en **mode RSC** : exécution d'une action avant la réponse 400 (GHSA-qwww-vcr4-c8h2, plage `>=7.12.0 <8.3.0`) | ⚠️ **Non corrigé — assumé** | Hérité de la migration [G-9](#-tableau-récapitulatif) du 2026-07-29. **Aucune version ne clôt les deux familles d'avis en React 18** : 7.11.0 **réintroduirait l'open redirect** (régression), 8.3.0 exige React ≥ 19.2.7 + Node ≥ 22. 🔴 **Ne PAS lancer `npm audit fix`** : il propose précisément 7.11.0. Exploitabilité **nulle par construction** — SPA Vite sans React Server Components : `grep -rE "react-router/rsc\|matchRSCServerRequest\|createCallServer\|ServerRouter\|createStaticHandler" src prerender.mjs vite.config.ts` → 0 occurrence. Ni serveur, ni `action`, ni requête RSC à contourner. Sortie prévue : migration React 19 + react-router 8 |
+| AUD-01 | 🟠 High (CVSS 6.5) | **Flux d'auth en `implicit` au lieu de PKCE** — `@supabase/auth-js` a pour défaut `flowType: 'implicit'` et le client ne le surchargeait pas : sur Google OAuth, les magic links et la réinitialisation de mot de passe, l'`access_token` **et le refresh token** arrivaient dans le fragment d'URL | ✅ Corrigé | `src/lib/supabase.ts` — `flowType: 'pkce'`. Voir [AUD-01](#aud-01--flux-dauthentification-en-implicit-au-lieu-de-pkce) |
+| AUD-02 | 🟠 High (CVSS 6.5) | **Tout membre d'une org pouvait y faire entrer des externes** : la policy `org_invite_links_insert` (mig. 067) acceptait `manager_id = auth.uid()`, tautologie vraie pour un `role = 'member'` sans aucun subordonné ; `claim_org_invite` re-validait la même tautologie | ✅ Corrigé | `084` + `087` — garde `has_subordinates` (helper existant de la mig. 066) côté policy **et** côté RPC, + gating UI (`PyramidTab`, `OrganizationPage`). Voir [AUD-02](#aud-02--tout-membre-dune-organisation-peut-y-faire-entrer-des-externes) |
+| AUD-03 | 🟠 Medium (CVSS 5.3) | `profiles.avatar_url` écrivable par le client **sans validation ni borne**, rendue en `<img src>` chez tous les amis et co-membres → balise de traçage (IP + User-Agent de chaque collègue) et bloat non borné | ✅ Corrigé + testé | `084` — `is_allowed_avatar_url()`, contrainte `profiles_avatar_url_valid` (≤ 60 000 car.), garde dans `enforce_profile_integrity`, `img-src` CSP resserré. **Rejoué en prod le 2026-08-08** : 6 charges refusées (balise distante, downgrade `http://`, suffixe `supabase.co.evil.tld`, `javascript:`, `data:text/html`, hôte arbitraire), 3 formes légitimes acceptées, payload 70 ko refusé, 12 avatars intacts |
+| AUD-04 | 🟠 Medium (CVSS 4.3) | Avatar stocké en **data URL base64 dans `auth.user_metadata`**, donc embarqué dans le JWT → en-tête `Authorization` de plusieurs dizaines de Ko à chaque requête (risque de `431`) | ✅ Corrigé | `084` (bucket Storage `avatars` + 4 policies) + `src/lib/avatar-upload.ts` / `SettingsPage.tsx` — seule l'URL publique est persistée. La data URL ne subsiste qu'en mode démo, où aucun JWT n'est émis |
+| AUD-05 | 🟠 Medium (CVSS 5.3) | `login()` / `register()` renvoyaient **`error.message` brut** à l'UI (dernière entorse à la règle V7/N1) : `signUp` sur un email déjà pris répond « User already registered » → oracle d'existence de compte | ✅ Corrigé | `AuthContext.tsx` — `safeAuthError()`, whitelist de codes, message générique par défaut |
+| AUD-06 | 🟠 Medium | Serveur de dev sur `0.0.0.0` + CVE Vite/esbuild. **Nuance vérifiée** : les CVE visaient les copies de vite 5.x **imbriquées sous vitest**, pas le vite top-level (7.3.6) — le serveur réellement lancé n'était pas vulnérable | ✅ Corrigé | `npm start` bind `127.0.0.1` (`start:lan` conservé pour le test mobile) ; vitest 2.1.9 → 4.1.10. `npm audit --omit=dev` : 8 vulnérabilités → 1 ([G-11](#-tableau-récapitulatif), assumée) |
+| AUD-07 | 🟡 Low | `expires_at` non contraint à l'INSERT sur `share_links` / `org_invite_links` : le `DEFAULT NOW() + 7 days` n'est qu'un défaut, le client insère en direct et pouvait poser un lien perpétuel | ✅ Corrigé | `084` — `expires_at <= NOW() + INTERVAL '7 days'` dans les deux `WITH CHECK`, + interdiction de pré-marquer un lien consommé |
+| AUD-08 | 🟡 Low | Quota anti-énumération de [G-4](#-tableau-récapitulatif) indexé sur `user_id` : la création de compte étant gratuite, 100 000 adresses coûtaient 500 comptes | 🟢 Atténué | `084` — plafond **global** de 2 000 résolutions/heure en plus du quota par compte. Ne ferme pas l'oracle : la fermeture réelle serait d'envoyer l'invitation quel que soit le résultat (changement de flux produit) |
+| AUD-09 | 🟡 Low | `record_demo_visit` : le plafond de [G-3](#-tableau-récapitulatif) était **global et horaire** → 500 appels anonymes aveuglaient les métriques d'acquisition pendant une heure | 🟢 Atténué | `084` — fenêtre glissante d'**1 minute** (dégâts 60 min → 60 s) + purge à 90 jours (RGPD art. 5.1.e). Toute écriture non authentifiée reste inondable par construction ; le correctif durable est de déporter ce compteur vers Vercel Analytics |
+| AUD-10 | 🟡 Low | Politique de mot de passe appliquée **côté client uniquement** (8 caractères), contournable par appel direct à `/auth/v1/signup` | 🟢 Partiel | `src/lib/password-policy.ts` — source unique, minimum porté à 12 (était dupliqué dans 3 fichiers). ❌ **Réglage serveur restant** : Dashboard → Auth → Policies (min. 12 + complexité + HaveIBeenPwned). Doublon de [A-10](#audit-architecture-2026-08-07--entrées-à-portée-sécurité) |
+| AUD-12 | 🟡 Low | COOP/CORP absents ; `img-src https:` autorisait n'importe quel hôte (ce qui rendait [AUD-03](#-tableau-récapitulatif) exploitable) | ✅ Corrigé | `vercel.json` — `Cross-Origin-Opener-Policy: same-origin-allow-popups` (le popup OAuth Google impose `allow-popups`), `Cross-Origin-Resource-Policy: same-origin` sur `/assets/*` uniquement (l'appliquer à la racine casserait les aperçus OG), `img-src` restreint aux hôtes réellement utilisés |
+| AUD-13 | 🟡 Low | `~/.cosmo/session.json` (refresh token de prod) écrit avec `mode: 0o600` — **no-op sous Windows**, NTFS n'ayant pas de bits POSIX : tout processus de la session pouvait le lire | ✅ Corrigé | `scripts/cosmo/client.mjs` — `restrictToOwner()` pose les ACL via `icacls` (`/inheritance:r` + contrôle total au seul utilisateur), best-effort |
+| AUD-14 | 🟡 Low | `win_streak` incrémenté par read-modify-write dans `stripe-webhook`. Le marqueur d'idempotence étant écrit **après** le handler (choix délibéré, faille M-5), deux livraisons concurrentes perdaient un incrément ou produisaient `n+2` | ✅ Corrigé | `084` — RPC `bump_win_streak` (`UPDATE … win_streak + 1`, `service_role` only) appelée après l'upsert. Edge Function redéployée (v13) |
+| AUD-15 | 🔵 Info | Deux policies PERMISSIVE pour `authenticated` + `SELECT` sur `events` (mig. 077/081) — exactement ce que la mig. 049 et CLAUDE.md interdisent | ✅ Corrigé | `084` — fusion en un `OR` unique, sémantique strictement préservée (`own` OU `manages_user AND NOT is_private`) |
+| AUD-16 | 🔵 Info | `team_task_comments_insert` en `auth.uid()` nu (convention mig. 043) | ✅ Corrigé | `084` — `(SELECT auth.uid())`. Même famille que [A-2](#audit-architecture-2026-08-07--entrées-à-portée-sécurité)/[A-3](#audit-architecture-2026-08-07--entrées-à-portée-sécurité) |
+| AUD-17 | 🟡 Low | `?debug=1` injectait un `<script>` **jsdelivr** dans l'app de **production** (console eruda). Bloqué par la CSP, mais dépendre d'un en-tête pour ne pas exécuter du code distant est un pari | ✅ Corrigé | `src/main.tsx` — garde `import.meta.env.DEV`, le bloc est éliminé du bundle prod par tree-shaking (vérifié : 0 occurrence de `jsdelivr` dans `dist/`). Découvert **pendant** la correction d'AUD-12, pas pendant l'audit |
+
+---
+
+## 🔎 Audit sécurité 2026-08-07 — passe complète (commit `4678beb`)
+
+Rapport complet : `AUDIT-SECURITE-2026-08-07.md`. Périmètre : `src/`,
+`supabase/migration/*.sql` (001→083), les 3 Edge Functions, `scripts/cosmo/`,
+`vercel.json`, `index.html`, `vite.config.ts`, `package.json`.
+
+**Aucune vulnérabilité critique ni directement exploitable à distance.** Le socle
+est nettement au-dessus de la moyenne : **82/82** fonctions `SECURITY DEFINER`
+figent `search_path`, **33/33** tables ont la RLS active, la CSP interdit
+`unsafe-inline` sur `script-src`, la signature Stripe est vérifiée avec
+idempotence durable, les whitelists `mapToDb` bloquent le mass-assignment, et
+l'injection de formules CSV est neutralisée ([N11](#-tableau-récapitulatif)).
+
+17 findings, **15 corrigés** (voir le tableau récapitulatif, entrées `AUD-*`) :
+migrations `084` / `087` / `088` appliquées en prod le 2026-08-07/08 via le MCP
+Supabase, `stripe-webhook` redéployée en v13, front poussé sur `main`.
+
+**Restent ouverts, hors de portée d'un agent** (le MCP Supabase n'expose aucun
+outil de configuration Auth et le CLI n'est pas installé) : les réglages
+Dashboard d'AUD-10 (mot de passe 12 + HIBP — doublon d'[A-10](#audit-architecture-2026-08-07--entrées-à-portée-sécurité)),
+la vérification de l'allowlist de redirection OAuth, « Secure email change », et
+le **MFA sur le compte admin** — la mesure la plus rentable du rapport, `/admin`
+n'étant protégé que par l'allowlist `admin_users` et un mot de passe.
+
+### AUD-01 — Flux d'authentification en *implicit* au lieu de PKCE
+
+`@supabase/auth-js@2.103.0` a pour défaut `flowType: 'implicit'` (vérifié dans
+`GoTrueClient.js`, `DEFAULT_OPTIONS`). Le client COSMO ne surchargeait pas cette
+valeur : sur Google OAuth, les magic links et `resetPasswordForEmail`, Supabase
+renvoyait l'utilisateur avec `#access_token=…&refresh_token=…` dans le
+**fragment d'URL**.
+
+Le fragment n'est pas envoyé au serveur, mais il est lisible par **tout script
+de l'origine** — AdSense injecté à la demande par `AdModal`, `@vercel/analytics`,
+`@sentry/react`, et toute future balise marketing — et il est écrit dans
+l'historique du navigateur, restauré à la réouverture d'onglet. Un refresh token
+Supabase reste valide jusqu'à rotation : sa fuite vaut prise de contrôle du compte.
+
+En PKCE, l'URL de retour ne porte plus qu'un `?code=` à usage unique, échangeable
+uniquement avec le `code_verifier` stocké localement.
+
+> ⚠️ **Au déploiement** : les liens de récupération **déjà envoyés** avant la
+> bascule restent au format implicit et échoueront. Prévoir la fenêtre.
+
+### AUD-02 — Tout membre d'une organisation peut y faire entrer des externes
+
+La policy `org_invite_links_insert` de la mig. 067 :
+
+```sql
+OR (manager_id IS NOT NULL
+    AND (manager_id = (SELECT auth.uid()) OR public.is_above(org_id, manager_id)))
+```
+
+La branche `manager_id = auth.uid()` est **vraie pour n'importe quel membre**,
+y compris un `role = 'member'` sans le moindre subordonné. Le commentaire
+d'intention disait « manager posant le lien sous LUI », mais rien ne vérifiait
+que l'appelant *était* manager. `claim_org_invite` re-validait la même
+tautologie (`v_link.manager_id = v_link.created_by`).
+
+Chaîne d'exploitation, entièrement côté insider :
+
+1. Un employé `POST /rest/v1/org_invite_links` avec `{org_id, manager_id: <son uid>}` ;
+2. il transmet `/org-invite/<uuid>` à un compte externe qu'il contrôle ;
+3. `claim_org_invite` fait entrer ce compte comme `member` ;
+4. via `shares_org_with` (mig. 071), l'externe lit `profiles` de **tous les
+   employés** — `display_name`, `avatar_url` et **`email`** — plus les OKR
+   d'équipe non cloisonnés et les projets/tâches selon `can_access_team_*` ;
+5. répétable sans limite (la garde `org_seats_allowed` est dormante).
+
+Impact : fuite de l'annuaire d'entreprise (RGPD — données de contact de tiers),
+pollution de l'org par des comptes non approuvés, contournement complet du flux
+« code + validation admin » de `respond_join_request`.
+
+Correctif : « être manager » devient une propriété **vérifiée**, via
+`has_subordinates(p_org, p_user)` — helper déjà en place depuis la mig. 066 et
+déjà consommé par `is_org_manager`. La garde est posée côté policy **et** côté
+RPC (re-validation au claim, le créateur ayant pu être rétrogradé entre-temps).
+L'UI est alignée (`PyramidTab.canAddUnder`, carte « Lien d'invitation » de
+`OrganizationPage`) pour ne pas afficher un bouton qui renverrait 403.
+
+> **Note de ledger** — la première version de la `084` créait un helper
+> `has_reports` qui était le **doublon exact** de `has_subordinates` (même
+> corps, même signature). La `087` recâble policy et RPC sur l'helper existant
+> et supprime le doublon. En production, les deux migrations sont enregistrées
+> sous `084_security_audit_2026_08_07` et `084b_use_existing_has_subordinates` ;
+> le fichier local a été renuméroté `087` car `validate-migrations` refuse le
+> suffixe `b` et `085`/`086` avaient été pris entre-temps par l'audit
+> d'architecture. Contenu identique, seul le nom d'entrée du ledger diffère.
 
 ---
 
@@ -707,7 +814,28 @@ Vérification finale par re-audit indépendant :
 
 ---
 
-## Ordre de priorité avant déploiement prod (à jour 2026-07-26)
+## Ordre de priorité avant déploiement prod (à jour 2026-08-08)
+
+> **Mise à jour 2026-08-08** — passe sécurité `AUD-*` close côté code et côté SQL :
+> migrations `084` / `087` / `088` appliquées en prod, `stripe-webhook` redéployée
+> (v13), front poussé. Il ne reste **aucun finding High exploitable**. Risque
+> global : **FAIBLE**.
+>
+> Le seul **bloquant** est [A-9](#audit-architecture-2026-08-07--entrées-à-portée-sécurité)
+> (plan Supabase `free` : pas de PITR, restauration jamais testée) — un point de
+> résilience, pas une faille. Tout le reste est du réglage de console.
+>
+> | # | Action | Effort | Bloque déploiement ? |
+> |---|---|---|---|
+> | 1 | **Passer en plan Pro + PITR + drill de restauration** (`docs/DEPLOYMENT.md` §7) — [A-9](#audit-architecture-2026-08-07--entrées-à-portée-sécurité) | 1 h | 🔴 **Oui** |
+> | 2 | **Activer HaveIBeenPwned + min. 12 caractères** (Dashboard → Auth → Policies) — [A-10](#audit-architecture-2026-08-07--entrées-à-portée-sécurité) / [AUD-10](#-tableau-récapitulatif) | 2 min | Non — la garde client est en place, la serveur non |
+> | 3 | **MFA (TOTP) sur le compte admin** — `/admin` n'est protégé que par l'allowlist `admin_users` + mot de passe, alors que `get_admin_stats` expose toute la volumétrie business | 5 min | Non — meilleur rapport effort/risque du rapport |
+> | 4 | Vérifier l'**allowlist de redirection OAuth** (Dashboard → Auth → URL Configuration) : un wildcard large annulerait une partie du bénéfice de PKCE ([AUD-01](#aud-01--flux-dauthentification-en-implicit-au-lieu-de-pkce)) | 5 min | Non |
+> | 5 | Activer **« Secure email change »** (confirmation sur l'ancienne ET la nouvelle adresse) | 2 min | Non |
+> | 6 | Vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique + secret scanning GitHub (dépôt **public**) | 15 min | Non |
+> | 7 | Migration React 19 + `react-router` 8 ([G-11](#-tableau-récapitulatif)) | PR dédiée | Non — exploitabilité nulle par construction (SPA sans RSC) |
+
+### Ancien tableau (2026-07-26, conservé pour historique)
 
 > **Mise à jour 2026-07-26** — la mig. `083` (audit G) est **appliquée en prod** et
 > validée par rejeu des PoC. Il ne reste **aucun finding High ou Critical

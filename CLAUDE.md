@@ -29,7 +29,7 @@ Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute mod
 
 > **Source de vérité sécurité = `faille.md`.** CLAUDE.md ne duplique PAS les statuts de failles ; en cas de divergence, `faille.md` fait foi.
 >
-> **Avant un déploiement** : consulter `faille.md`. **Aucun bloquant technique restant.** `APP_URL` configuré sur les 2 Edge Functions (2026-06-11). Stripe à finaliser si activé.
+> **Avant un déploiement** : consulter `faille.md` → « Ordre de priorité avant déploiement prod ». **Un bloquant depuis le 2026-08-07** : A-9, le plan Supabase `free` (pas de PITR, restauration jamais testée) — résilience, pas faille. Aucun finding High exploitable. `APP_URL` configuré sur les 2 Edge Functions (2026-06-11). Stripe à finaliser si activé.
 
 ---
 
