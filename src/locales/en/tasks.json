@@ -221,7 +221,9 @@
     "refuseTask": "Decline the shared task {{name}}",
     "acceptList": "Accept the shared list {{name}}",
     "refuseList": "Decline the shared list {{name}}",
-    "withCount": "Inbox, {{count}} pending"
+    "withCount": "Inbox, {{count}} pending",
+    "accept": "Accept",
+    "refuse": "Decline"
   },
   "filter": {
     "clearSearch": "Clear the search",
