@@ -731,6 +731,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           onCreate={modalCreate}
           onUpdate={modalUpdate}
           onDelete={removeWithUndo}
+          isManager={isManager}
           onClose={() => setTaskModal(null)}
         />
       )}

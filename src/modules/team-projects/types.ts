@@ -136,3 +136,56 @@ export interface UpdateTeamSubtaskInput {
   completed?: boolean;
   position?: number;
 }
+
+// ─── Labels transverses (mig. 093) ───────────────────────────────────
+
+/** Label d'organisation — vocabulaire partagé, écriture réservée aux managers. */
+export interface TeamLabel {
+  id: string;
+  orgId: string;
+  name: string;
+  /** Hex `#rrggbb` (validé par CHECK côté base). */
+  color: string;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface CreateTeamLabelInput {
+  name: string;
+  color?: string;
+}
+
+export interface UpdateTeamLabelInput {
+  name?: string;
+  color?: string;
+}
+
+/** Ligne de jonction tâche ↔ label. */
+export interface TeamTaskLabel {
+  taskId: string;
+  labelId: string;
+}
+
+// ─── Historique (mig. 094) ───────────────────────────────────────────
+
+/** Champs journalisés par le trigger `log_team_task_activity`. */
+export type TeamActivityField =
+  | 'status' | 'assignees' | 'deadline' | 'priority' | 'project' | 'name';
+
+/**
+ * Entrée du journal append-only. `oldValue`/`newValue` sont du texte : le
+ * journal doit rester lisible même si le type de la colonne d'origine change.
+ * Pour `name`, les deux sont null — savoir QUE le titre a changé suffit
+ * (choix de la mig. 094, pour ne pas dupliquer le contenu dans le journal).
+ */
+export interface TeamTaskActivity {
+  id: string;
+  taskId: string;
+  orgId: string;
+  /** null si le compte auteur a été supprimé (FK SET NULL). */
+  actorId: string | null;
+  field: TeamActivityField;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+}
