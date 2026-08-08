@@ -16,10 +16,17 @@ interface TeamTaskRowProps {
   onOpen: (task: TeamTask) => void;
   /** Densité d'affichage — `compact` resserre la ligne. */
   density?: 'comfortable' | 'compact';
+  /** Mode sélection actif : la ligne affiche une case à cocher. */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (task: TeamTask) => void;
 }
 
 /** Ligne de tâche d'équipe : complétion, nom, priorité, deadline, assigné, suppression. */
-const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, onOpen, density = 'comfortable' }: TeamTaskRowProps) => {
+const TeamTaskRow = ({
+  task, members, onToggleComplete, onReassign, onDelete, onOpen,
+  density = 'comfortable', selectable = false, selected = false, onToggleSelect,
+}: TeamTaskRowProps) => {
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
   const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
@@ -28,7 +35,22 @@ const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, on
   const rowPad = density === 'compact' ? 'py-1 px-2 gap-2' : 'py-2.5 px-3 gap-3';
 
   return (
-    <div className={`flex items-center ${rowPad} rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors group`}>
+    <div
+      className={`flex items-center ${rowPad} rounded-xl transition-colors group ${
+        selected ? 'bg-[rgb(var(--color-accent)/0.1)]' : 'hover:bg-[rgb(var(--color-hover))]'
+      }`}
+    >
+      {/* Case de sélection — n'apparaît qu'en mode sélection, pour ne pas
+          alourdir la ligne le reste du temps. */}
+      {selectable && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect?.(task)}
+          aria-label={task.name}
+          className="w-4 h-4 shrink-0 accent-[rgb(var(--color-accent))] cursor-pointer"
+        />
+      )}
       {/* Complétion */}
       <button
         type="button"

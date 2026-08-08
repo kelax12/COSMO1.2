@@ -19,6 +19,8 @@ import {
   CalendarPlus,
   Keyboard,
   FolderKanban,
+  UserRound,
+  UsersRound,
 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -28,7 +30,9 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
-import { useActiveOrganization } from '@/modules/organizations';
+import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
+import { useOrgTeams } from '@/modules/org-teams';
+import { useTeamOKRs } from '@/modules/team-okrs';
 import { buildOrgLink } from '@/components/organization/deep-link.helpers';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
@@ -69,6 +73,11 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const { activeOrg } = useActiveOrganization();
   const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
   const { data: teamProjects = [] } = useTeamProjects(activeOrg?.id);
+  // Périmètre entreprise élargi : membres, équipes et OKR d'équipe étaient les
+  // seules entités de /entreprise introuvables au clavier.
+  const { data: orgMembers = [] } = useOrgMembers(activeOrg?.id);
+  const { data: orgTeams = [] } = useOrgTeams(activeOrg?.id);
+  const { data: teamOkrs = [] } = useTeamOKRs(activeOrg?.id);
 
   const q = normalize(query);
 
@@ -95,6 +104,22 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const matchedTeamProjects = useMemo(
     () => teamProjects.filter((p) => !p.archivedAt && normalize(p.name).includes(q)).slice(0, MAX_DATA_RESULTS),
     [teamProjects, q]
+  );
+  // Un membre se cherche aussi par email : c'est souvent la seule chose qu'on
+  // connaisse de quelqu'un qu'on vient d'inviter.
+  const matchedMembers = useMemo(
+    () => orgMembers
+      .filter((m) => normalize(m.displayName).includes(q) || normalize(m.email ?? '').includes(q))
+      .slice(0, MAX_DATA_RESULTS),
+    [orgMembers, q]
+  );
+  const matchedTeams = useMemo(
+    () => orgTeams.filter((tm) => normalize(tm.name).includes(q)).slice(0, MAX_DATA_RESULTS),
+    [orgTeams, q]
+  );
+  const matchedTeamOkrs = useMemo(
+    () => teamOkrs.filter((o) => normalize(o.title).includes(q)).slice(0, MAX_DATA_RESULTS),
+    [teamOkrs, q]
   );
 
   const go = (path: string, state?: Record<string, string>) => {
@@ -164,6 +189,37 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
             <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go(buildOrgLink('projects', { project: p.id }))}>
               <FolderKanban size={16} aria-hidden="true" />
               <span>{p.name}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+      {matchedMembers.length > 0 && (
+        <CommandGroup heading={t('palette.orgMembers')}>
+          {matchedMembers.map((m) => (
+            <CommandItem key={`org-member-${m.userId}`} value={`org-member-${m.userId}`} onSelect={() => go(buildOrgLink('members', { member: m.userId }))}>
+              <UserRound size={16} aria-hidden="true" />
+              <span className="flex-1">{m.displayName}</span>
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('palette.member')}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+      {matchedTeams.length > 0 && (
+        <CommandGroup heading={t('palette.orgTeams')}>
+          {matchedTeams.map((tm) => (
+            <CommandItem key={`org-team-${tm.id}`} value={`org-team-${tm.id}`} onSelect={() => go(buildOrgLink('members'))}>
+              <UsersRound size={16} aria-hidden="true" />
+              <span>{tm.name}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+      {matchedTeamOkrs.length > 0 && (
+        <CommandGroup heading={t('palette.teamOkrs')}>
+          {matchedTeamOkrs.map((o) => (
+            <CommandItem key={`team-okr-${o.id}`} value={`team-okr-${o.id}`} onSelect={() => go(buildOrgLink('okr'))}>
+              <Target size={16} aria-hidden="true" />
+              <span>{o.title}</span>
             </CommandItem>
           ))}
         </CommandGroup>
