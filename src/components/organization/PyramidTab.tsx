@@ -48,6 +48,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { useTeamTasks } from '@/modules/team-projects';
+import { memberWorkload, workloadTone, type MemberWorkload } from './team-stats.helpers';
+import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
@@ -87,6 +90,14 @@ interface DragState {
 }
 
 interface NodeCardProps {
+  /**
+   * Calque de charge (item #28) — absent = calque désactivé.
+   *
+   * Une Map plutôt qu'une prop par métrique : la signature de NodeCard porte
+   * déjà 18 paramètres, et chaque métrique future s'ajouterait ici sans
+   * toucher aux 3 sites d'appel.
+   */
+  workloadByUser?: Map<string, MemberWorkload>;
   node: OrgTreeNode;
   members: OrgMember[];
   currentUserId?: string;
@@ -118,7 +129,7 @@ interface NodeCardProps {
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile, workloadByUser }: NodeCardProps) => {
   const { t, tp } = useT('org');
   const collapsed = collapsedIds.has(node.member.userId);
   // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
@@ -185,6 +196,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 : 'border-[rgb(var(--color-border))]';
 
   const myTeams = teamsByUser.get(m.userId) ?? [];
+  const myWorkload = workloadByUser?.get(m.userId);
 
   const card = (
     <motion.div
@@ -321,6 +333,36 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
             {isMe ? t('pyramid.you') : m.displayName}
           </p>
+          {/* Calque de charge : voir l'organisation ET sa santé sur le même
+              écran. Rendu seulement si la personne a des tâches ouvertes —
+              une barre vide n'apprend rien. */}
+          {myWorkload && myWorkload.open > 0 && (
+            <span
+              className="flex items-center gap-1 mt-0.5"
+              title={`${formatDuration(myWorkload.estimatedMinutes)} · ${myWorkload.open} ouverte(s)${myWorkload.overdue > 0 ? ` · ${myWorkload.overdue} en retard` : ''}`}
+            >
+              <span className="w-10 h-1 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden shrink-0">
+                <span
+                  className={`block h-full rounded-full ${
+                    workloadTone(myWorkload.loadRatio) === 'over'
+                      ? 'bg-red-500'
+                      : workloadTone(myWorkload.loadRatio) === 'under'
+                        ? 'bg-[rgb(var(--color-text-muted))]'
+                        : 'bg-[rgb(var(--color-accent))]'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.round(myWorkload.loadRatio * 66))}%` }}
+                />
+              </span>
+              <span className="text-caption text-[rgb(var(--color-text-muted))] tabular-nums">
+                {myWorkload.open}
+              </span>
+              {myWorkload.overdue > 0 && (
+                <span className="text-caption font-bold text-red-500 tabular-nums">
+                  !{myWorkload.overdue}
+                </span>
+              )}
+            </span>
+          )}
           <p
             className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
@@ -412,7 +454,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -441,7 +483,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -497,6 +539,16 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
   // les déplacements de la session sont journalisés pour pouvoir tout annuler.
   const [editMode, setEditMode] = useState(false);
+
+  // ─── Calque de charge (item #28) ────────────────────────────────────
+  // Désactivé par défaut : la pyramide sert d'abord à lire l'organisation, et
+  // une barre sur chaque carte en permanence brouillerait cette lecture.
+  const [showWorkload, setShowWorkload] = useState(false);
+  const { data: workloadTasks = [] } = useTeamTasks(showWorkload ? orgId : undefined);
+  const workloadByUser = useMemo(() => {
+    if (!showWorkload) return undefined;
+    return new Map(memberWorkload(workloadTasks, members).map((w) => [w.userId, w]));
+  }, [showWorkload, workloadTasks, members]);
   const [moveCount, setMoveCount] = useState(0);
   const sessionMovesRef = useRef<{ userId: string; prevManagerId: string | null }[]>([]);
   const editModeRef = useRef(false);
@@ -1101,6 +1153,23 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       <Check size={15} aria-hidden="true" /> {t('pyramid.done')}
                     </button>
                   )}
+                  {/* Calque de charge — masqué en mode réorganisation : deux
+                      lectures simultanées de la même carte se gêneraient. */}
+                  {!editMode && (
+                    <button
+                      type="button"
+                      onClick={() => setShowWorkload((v) => !v)}
+                      aria-pressed={showWorkload}
+                      title={t('pyramid.overlayHint')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                        showWorkload
+                          ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))] bg-[rgb(var(--color-hover))]'
+                          : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+                      }`}
+                    >
+                      <TrendingUp size={14} aria-hidden="true" /> {t('pyramid.overlayToggle')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={editMode ? cancelEdit : startEdit}
@@ -1172,6 +1241,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             {roots.map((root) => (
               <NodeCard
                 key={root.member.userId}
+                workloadByUser={workloadByUser}
                 node={root}
                 members={members}
                 currentUserId={currentUserId}

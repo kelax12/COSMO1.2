@@ -130,7 +130,9 @@
     "directCount_other": "{{count}} directs",
     "totalSuffix": " · {{count}} au total",
     "dragEachHint": "Glissez chaque personne sur son responsable dans la pyramide.",
-    "place": "Placer"
+    "place": "Placer",
+    "overlayToggle": "Afficher la charge",
+    "overlayHint": "Colore les cartes selon le temps estimé restant"
   },
   "overview": {
     "completed": "Terminées",
@@ -155,7 +157,18 @@
     "emptyVelocity": "Aucune complétion sur la période.",
     "trend": "Tendance du taux de complétion",
     "emptyTrend": "Pas assez de données sur la période.",
-    "emptyOkr": "Aucun OKR d'équipe pour l'instant."
+    "emptyOkr": "Aucun OKR d'équipe pour l'instant.",
+    "workloadTitle": "Charge de l'équipe",
+    "workloadHint": "Temps estimé restant sur les tâches ouvertes, comparé à la médiane de l'équipe.",
+    "workloadEmpty": "Aucune tâche ouverte estimée. Renseignez le temps estimé sur les tâches pour voir la répartition de la charge.",
+    "workloadOver": "En surcharge",
+    "workloadUnder": "Sous-chargé",
+    "workloadNormal": "Dans la norme",
+    "workloadOpen_one": "{{count}} ouverte",
+    "workloadOpen_many": "{{count}} d'ouvertes",
+    "workloadOpen_other": "{{count}} ouvertes",
+    "workloadOverdue": "{{count}} en retard",
+    "workloadNoEstimate": "sans estimation"
   },
   "myWork": {
     "upToDate": "À jour",

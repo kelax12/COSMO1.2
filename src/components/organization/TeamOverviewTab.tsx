@@ -12,7 +12,9 @@ import {
   STATS_PERIODS, type StatsPeriod, periodStart, filterByActivity, scopeOkrs,
   summarize, overallOkrProgress, memberLoad, overdueByMember,
   projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
+  memberWorkload,
 } from './team-stats.helpers';
+import TeamWorkloadCard from './TeamWorkloadCard';
 import { useT } from '@/i18n/useT';
 
 interface TeamOverviewTabProps {
@@ -103,6 +105,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const summary = useMemo(() => summarize(periodTasks), [periodTasks]);
   const okrProgress = useMemo(() => overallOkrProgress(okrs), [okrs]);
   const load = useMemo(() => memberLoad(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
+  // Charge : calculée sur les tâches du périmètre SANS filtre de période — une
+  // tâche ouverte pèse sur l'équipe qu'elle ait été créée hier ou il y a six
+  // mois. La borner à la fenêtre affichée sous-estimerait la charge réelle.
+  const workload = useMemo(() => memberWorkload(scopedTasks, scopedMembers), [scopedTasks, scopedMembers]);
   const overdueMembers = useMemo(() => overdueByMember(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
   const byProject = useMemo(() => projectBreakdown(periodTasks, projects), [periodTasks, projects]);
   const velocity = useMemo(() => velocityByWeek(scopedTasks, start), [scopedTasks, start]);
@@ -192,6 +198,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         emptyLabel={t('overview.emptyPeriod')}
         aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
       />
+
+      {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
+          la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}
+      <TeamWorkloadCard rows={workload} members={scopedMembers} />
 
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
