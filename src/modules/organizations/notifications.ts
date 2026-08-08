@@ -11,7 +11,12 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { appModeStore } from '@/lib/app-mode.store';
 
-export type OrgNotificationKind = 'task_assigned' | 'mention';
+/**
+ * `task_overdue` (mig. 096) est produit par pg_cron, pas par une action
+ * humaine : son `actorId` est donc TOUJOURS null. Afficher un auteur pour ce
+ * type serait un mensonge — c'est le temps qui passe, personne ne l'a fait.
+ */
+export type OrgNotificationKind = 'task_assigned' | 'mention' | 'task_overdue';
 
 export interface OrgNotification {
   id: string;
