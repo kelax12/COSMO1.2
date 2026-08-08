@@ -23,6 +23,11 @@ interface TeamProjectsKanbanProps {
   onAddToColumn: (memberId: string | null) => void;
   /** Axe des colonnes : charge par personne, ou flux par statut (mig. 091). */
   groupBy: 'assignee' | 'status';
+  /** Change l'axe des colonnes. Le contrôle vit ICI, au-dessus des colonnes
+   *  qu'il gouverne : dans la barre du haut il apparaissait en cours de route
+   *  (donc décalait les boutons voisins) et « Statut / Assigné » y flottait
+   *  sans verbe — on ne savait pas s'il triait, filtrait ou regroupait. */
+  onSetGroupBy: (groupBy: 'assignee' | 'status') => void;
   /** Change le statut d'une tâche (glisser-déposer en mode `status`). */
   onSetStatus: (task: TeamTask, status: TeamTaskStatus) => void;
 }
@@ -40,7 +45,7 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetGroupBy, onSetStatus }: TeamProjectsKanbanProps) => {
   const { t } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -103,8 +108,34 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
     onSetAssignees(task, next);
   };
 
+  const axisBtn = (value: 'status' | 'assignee', label: string) => (
+    <button
+      type="button"
+      onClick={() => onSetGroupBy(value)}
+      aria-pressed={groupBy === value}
+      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 ${
+        groupBy === value
+          ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+          : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
+    <div className="space-y-2.5">
+      {/* Le mot « Colonnes : » manquait — sans lui, « Statut / Assigné » ne se
+          lisait pas comme une phrase. */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('projects.columnsLabel')}</span>
+        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
+          {axisBtn('status', t('projects.groupByStatus'))}
+          {axisBtn('assignee', t('projects.groupByAssignee'))}
+        </div>
+      </div>
+
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
       {columns.map((col) => {
         const colTasks = tasksOf(col.id);
         const overdue = colTasks.filter(isTaskOverdue).length;
@@ -216,6 +247,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
           </div>
         );
       })}
+      </div>
     </div>
   );
 };
