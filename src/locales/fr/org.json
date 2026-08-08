@@ -455,7 +455,9 @@
     "reassignHint_other": "{{count}} subordonnés directs — choisissez leur nouveau responsable dans la pyramide. Leur équipe reste rattachée à eux.",
     "detachThem": "Les détacher (non placés)",
     "reassigning": "Réassignation en cours…",
-    "willBeRemoved": "{{name}} sera définitivement retiré de l'entreprise."
+    "willBeRemoved": "{{name}} sera définitivement retiré de l'entreprise.",
+    "copyLink": "Copier le lien vers cette fiche",
+    "copyLinkDone": "Lien copié"
   },
   "okrCategory": {
     "new": "Nouvelle catégorie",

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   UserPlus,
   ChevronDown,
@@ -49,6 +50,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { useTeamTasks } from '@/modules/team-projects';
+import { readEntityParam } from './deep-link.helpers';
 import { memberWorkload, workloadTone, type MemberWorkload } from './team-stats.helpers';
 import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
@@ -526,6 +528,26 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [placing, setPlacing] = useState<OrgMember | null>(null);
   const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
   const [profile, setProfile] = useState<OrgMember | null>(null);
+
+  // ─── Deep-link `?member=<id>` ───────────────────────────────────────
+  // Le helper `readEntityParam` accepte 'member' depuis la vague 1 mais rien ne
+  // le consommait : une fiche membre n'était donc pas partageable.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepMemberId = readEntityParam(searchParams, 'member');
+
+  useEffect(() => {
+    if (!deepMemberId) return;
+    const target = members.find((m) => m.userId === deepMemberId);
+    // Les membres arrivent en asynchrone : tant qu'ils ne sont pas là, on garde
+    // le paramètre et l'effet se rejoue au chargement suivant.
+    if (!target) return;
+    setProfile(target);
+    // Nettoyage : sans lui, refermer la fiche la rouvrirait au rendu suivant,
+    // l'URL restant la source de vérité.
+    const next = new URLSearchParams(searchParams);
+    next.delete('member');
+    setSearchParams(next, { replace: true });
+  }, [deepMemberId, members, searchParams, setSearchParams]);
   // Infos d'un subordonné (tâches / contribution), ouvert sur un onglet.
   const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
   // Agenda complet d'un subordonné (manager) — plein écran, éditable.
