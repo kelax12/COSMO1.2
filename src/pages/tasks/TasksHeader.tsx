@@ -86,6 +86,11 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
             transition={{ delay: 0.2 }}
             className="flex items-center gap-2 shrink-0"
           >
+            {/* Tâches/listes partagées en attente : plus de bandeaux inline
+                dans le tableau (cf. TaskTable), tout passe par cette boîte de
+                réception — comme sur mobile, avec un déclencheur en pastille
+                assortie au bouton Calendrier. */}
+            <TasksInboxMenu variant="desktop" />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

@@ -12,7 +12,7 @@
 // les commentaires le disent au cas par cas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, X } from 'lucide-react';
+import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, X, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -212,22 +212,38 @@ const ProjectsToolbar = ({
           </div>
 
           {/* Le libellé nomme l'axe : « Toutes les équipes » seul ne disait pas
-              de quoi il parlait au milieu de trois autres filtres. */}
+              de quoi il parlait au milieu de trois autres filtres.
+
+              Le <select> N'EST PAS enveloppé dans un conteneur bordé : une
+              règle globale (index.css, « Global Input Styles ») pose déjà
+              `border` + `rounded-lg` en `!important` sur TOUT <select> de
+              l'app — un `border-0` local ne peut pas gagner contre un
+              `!important`, d'où le double liséré observé. Le pattern déjà en
+              place ailleurs (TaskFilter, TaskSidebar) laisse le <select>
+              porter sa propre bordure ; on s'y aligne au lieu de la
+              recouvrir d'une seconde. */}
           {teams.length > 0 && (
-            <label className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] text-sm text-[rgb(var(--color-text-muted))] focus-within:ring-2 focus-within:ring-indigo-500/40">
+            <label className="inline-flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-muted))]">
               <span className="hidden sm:inline">{t('projects.teamLabel')}</span>
-              <select
-                value={teamFilter}
-                onChange={(e) => updatePrefs({ teamFilter: e.target.value })}
-                aria-label={t('projects.filterTeam')}
-                className="bg-transparent text-sm font-medium text-[rgb(var(--color-text-primary))] focus:outline-none max-w-[9rem]"
-              >
-                <option value="">{t('projects.allTeams')}</option>
-                <option value="org">{t('projects.orgNoTeam')}</option>
-                {teams.map((tm) => (
-                  <option key={tm.id} value={tm.id}>{tm.name}</option>
-                ))}
-              </select>
+              <span className="relative inline-flex items-center">
+                <select
+                  value={teamFilter}
+                  onChange={(e) => updatePrefs({ teamFilter: e.target.value })}
+                  aria-label={t('projects.filterTeam')}
+                  className="appearance-none h-9 pl-2.5 pr-6 bg-[rgb(var(--color-surface))] text-sm font-medium text-[rgb(var(--color-text-primary))] max-w-[9rem] cursor-pointer"
+                >
+                  <option value="">{t('projects.allTeams')}</option>
+                  <option value="org">{t('projects.orgNoTeam')}</option>
+                  {teams.map((tm) => (
+                    <option key={tm.id} value={tm.id}>{tm.name}</option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={12}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-2 text-[rgb(var(--color-text-muted))]"
+                />
+              </span>
             </label>
           )}
         </div>
