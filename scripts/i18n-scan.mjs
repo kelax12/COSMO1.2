@@ -30,7 +30,11 @@ function walk(d, out = []) {
   return out;
 }
 
-const ACC = '[éèêàçùôîûœÉÈÀÇÎÔÛ]';
+// Toutes les voyelles accentuées du français, PAS seulement les plus courantes.
+// La version précédente omettait `â` : « tâches » — le mot le plus fréquent de
+// l'app — était donc invisible pour le scan, et avec lui toute chaîne qui ne
+// contenait pas d'autre accent (« Toutes les tâches », « Tâches de… »).
+const ACC = '[éèêëàâäçùûüôöîïœÉÈÊËÀÂÄÇÙÛÔÖÎÏŒ]';
 const PATTERNS = [
   new RegExp(`>\\s*([^<>{}\\n]*${ACC}[^<>{}\\n]*?)\\s*<`, 'g'),
   new RegExp(`(?:title|aria-label|placeholder|label|actionLabel|description|alt)=["']([^"']*${ACC}[^"']*)["']`, 'g'),

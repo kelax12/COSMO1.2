@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette,
+  Pencil, Archive, ArchiveRestore, Palette, Clock,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import type { TeamProject, TeamTask, UpdateTeamProjectInput } from '@/modules/te
 import {
   projectColor, PROJECT_COLOR_NAMES, PROJECT_COLORS,
   sortOpenTasks, sortCompletedTasks, isTaskOverdue,
+  sumEstimatedTime, formatDuration,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
@@ -42,6 +43,8 @@ interface TeamProjectCardProps {
   onDelete: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
   onUpdateProject: (input: UpdateTeamProjectInput) => void;
+  /** Densité des lignes de tâche. */
+  density?: 'comfortable' | 'compact';
 }
 
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
@@ -49,7 +52,7 @@ const TeamProjectCard = ({
   project, tasks, members, teams, isManager,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
-  onUpdateProject,
+  onUpdateProject, density = 'comfortable',
 }: TeamProjectCardProps) => {
   const { t } = useT('org');
   const [renaming, setRenaming] = useState(false);
@@ -63,6 +66,8 @@ const TeamProjectCard = ({
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
   const completedTasks = useMemo(() => sortCompletedTasks(tasks.filter((t) => t.completed)), [tasks]);
   const overdueCount = openTasks.filter(isTaskOverdue).length;
+  /** Reste à faire estimé : somme des tâches ouvertes ayant une estimation. */
+  const restEstimated = useMemo(() => sumEstimatedTime(openTasks), [openTasks]);
   const done = completedTasks.length;
   const total = tasks.length;
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -139,6 +144,14 @@ const TeamProjectCard = ({
               title={`${overdueCount} tâche${overdueCount > 1 ? 's' : ''} en retard`}
             >
               {overdueCount} en retard
+            </span>
+          )}
+          {restEstimated > 0 && !archived && (
+            <span
+              className="inline-flex items-center gap-1 text-caption text-[rgb(var(--color-text-muted))] shrink-0"
+              title={t('project.restEstimated', { duration: formatDuration(restEstimated) })}
+            >
+              <Clock size={10} aria-hidden="true" /> {formatDuration(restEstimated)}
             </span>
           )}
 
@@ -244,6 +257,7 @@ const TeamProjectCard = ({
               key={task.id}
               task={task}
               members={members}
+              density={density}
               onToggleComplete={onToggleComplete}
               onReassign={onReassign}
               onDelete={onDelete}
@@ -285,6 +299,7 @@ const TeamProjectCard = ({
                   key={task.id}
                   task={task}
                   members={members}
+                  density={density}
                   onToggleComplete={onToggleComplete}
                   onReassign={onReassign}
                   onDelete={onDelete}

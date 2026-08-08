@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
-import { markOrgSeen } from '@/lib/hooks/use-org-notifications';
+import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
 import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -73,10 +73,16 @@ const OrganizationPage = () => {
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
+  const badges = useOrgBadges();
 
-  // Badge nav (reco #7) : visiter la page marque les notifications comme vues.
+  // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
+  // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
+  // rendu, donc les badges d'onglet (Projets / Membres) naissaient toujours à
+  // zéro et la fonctionnalité était morte sans jamais échouer.
   useEffect(() => {
-    if (myOrg?.id) markOrgSeen(myOrg.id);
+    const orgId = myOrg?.id;
+    if (!orgId) return;
+    return () => markOrgSeen(orgId);
   }, [myOrg?.id]);
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
@@ -203,21 +209,34 @@ const OrganizationPage = () => {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto overflow-y-hidden hide-scrollbar">
-        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            aria-current={tab === id ? 'page' : undefined}
-            className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-              tab === id
-                ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
-                : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-            }`}
-          >
-            <Icon size={16} aria-hidden="true" /> {t(labelKey)}
-          </button>
-        ))}
+        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
+          // Seuls Projets (tâches nouvellement assignées) et Membres (demandes
+          // d'adhésion en attente) portent un compteur.
+          const badge = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              aria-current={tab === id ? 'page' : undefined}
+              className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                tab === id
+                  ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
+                  : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+              }`}
+            >
+              <Icon size={16} aria-hidden="true" /> {t(labelKey)}
+              {badge > 0 && (
+                <span
+                  className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[rgb(var(--color-accent))] text-white text-caption font-bold inline-flex items-center justify-center"
+                  aria-label={tp('page.badgeCount', badge)}
+                >
+                  {badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Contenu */}
@@ -266,7 +285,7 @@ const OrganizationPage = () => {
 
           <div>
             <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              Annuaire ({members.length})
+              {t('page.directoryTitle', { count: members.length })}
             </h2>
             <MemberDirectory
               orgId={myOrg.id}
@@ -304,7 +323,7 @@ const OrganizationPage = () => {
                   disabled={deleteMutation.isPending}
                   className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
                 >
-                  <Trash2 size={15} aria-hidden="true" /> Supprimer l'entreprise
+                  <Trash2 size={15} aria-hidden="true" /> {t('page.deleteOrg')}
                 </button>
               </div>
             </div>
@@ -316,7 +335,7 @@ const OrganizationPage = () => {
                 disabled={leaveMutation.isPending}
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
               >
-                <LogOut size={15} aria-hidden="true" /> Quitter l'entreprise
+                <LogOut size={15} aria-hidden="true" /> {t('page.leaveOrg')}
               </button>
             </div>
           )}

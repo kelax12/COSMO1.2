@@ -77,6 +77,49 @@ export const completedThisWeek = (tasks: TeamTask[]): number => {
   ).length;
 };
 
+// ─── Filtre de statut (pastilles cliquables) ─────────────────────────
+
+/** Filtre actif des pastilles de synthèse. `all` = aucun filtre. */
+export type TaskStatusFilter = 'all' | 'open' | 'overdue' | 'doneThisWeek';
+
+/**
+ * Restreint une liste de tâches au filtre de statut choisi.
+ *
+ * `doneThisWeek` réutilise la MÊME fenêtre de 7 jours que `completedThisWeek` :
+ * si les deux divergeaient, la pastille afficherait un compte que le filtre
+ * serait incapable de reproduire.
+ */
+export const filterByStatus = (tasks: TeamTask[], filter: TaskStatusFilter): TeamTask[] => {
+  if (filter === 'all') return tasks;
+  if (filter === 'open') return tasks.filter((t) => !t.completed);
+  if (filter === 'overdue') return tasks.filter(isTaskOverdue);
+  const cutoff = Date.now() - WEEK_MS;
+  return tasks.filter(
+    (t) => t.completed && t.completedAt && new Date(t.completedAt).getTime() >= cutoff,
+  );
+};
+
+// ─── Durées estimées ─────────────────────────────────────────────────
+
+/** Somme des `estimatedTime` (minutes) ; une tâche sans estimation vaut 0. */
+export const sumEstimatedTime = (tasks: TeamTask[]): number =>
+  tasks.reduce((sum, t) => sum + (t.estimatedTime ?? 0), 0);
+
+/**
+ * Minutes → libellé court (`45 min`, `2 h`, `2 h 15`).
+ *
+ * Renvoie '' pour 0 ou moins : l'appelant n'affiche alors rien du tout, plutôt
+ * qu'un « 0 min » qui ferait croire à une estimation saisie et nulle.
+ */
+export const formatDuration = (minutes: number): string => {
+  if (!minutes || minutes <= 0) return '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${String(m).padStart(2, '0')}`;
+};
+
 // ─── Prefs UI persistées (filtres, vue, projets repliés) ─────────────
 
 export interface ProjectsUiPrefs {
@@ -87,6 +130,10 @@ export interface ProjectsUiPrefs {
   teamFilter: string;
   collapsed: Record<string, boolean>;
   showArchived: boolean;
+  /** Pastille de synthèse active. */
+  statusFilter: TaskStatusFilter;
+  /** Densité des listes de tâches. */
+  density: 'comfortable' | 'compact';
 }
 
 const DEFAULT_PREFS: ProjectsUiPrefs = {
@@ -95,6 +142,8 @@ const DEFAULT_PREFS: ProjectsUiPrefs = {
   teamFilter: '',
   collapsed: {},
   showArchived: false,
+  statusFilter: 'all',
+  density: 'comfortable',
 };
 
 const prefsKey = (orgId: string) => `cosmo_org_projects_ui_${orgId}`;
