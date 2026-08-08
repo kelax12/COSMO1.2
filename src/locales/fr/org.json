@@ -629,5 +629,24 @@
     "sprintT2": "Développement",
     "sprintT3": "Recette",
     "sprintT4": "Rétrospective"
+  },
+  "weeklyReview": {
+    "title": "Revue de la semaine",
+    "subtitle": "Quatre questions pour préparer votre lundi.",
+    "open": "Revue de la semaine",
+    "progressTitle": "Ce qui a avancé",
+    "vsLastWeek": "{{change}} % vs la semaine passée",
+    "noComparison": "Rien à comparer",
+    "lastWeekCount_one": "{{count}} terminée la semaine passée",
+    "lastWeekCount_many": "{{count}} de terminées la semaine passée",
+    "lastWeekCount_other": "{{count}} terminées la semaine passée",
+    "slippedTitle": "Ce qui a dérapé",
+    "slippedEmpty": "Aucune échéance repoussée sur les deux dernières semaines.",
+    "tensionTitle": "Qui est en tension",
+    "tensionEmpty": "Personne au-dessus de la charge médiane de l'équipe.",
+    "workload": "{{duration}} · {{open}} ouvertes",
+    "arbitrageTitle": "Arbitrages",
+    "arbitrageEmpty": "Aucune tâche en retard — rien à arbitrer.",
+    "arbitrageHint": "Ouvrez chaque tâche pour la replanifier, la réassigner ou l'abandonner."
   }
 }

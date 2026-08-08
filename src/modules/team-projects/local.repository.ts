@@ -448,4 +448,11 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       .filter((a) => a.taskId === taskId)
       .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
   }
+
+  /** Même contrat qu'en production : borné à l'org et à la fenêtre demandée. */
+  async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {
+    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, [])
+      .filter((a) => a.orgId === orgId && a.createdAt >= since)
+      .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+  }
 }
