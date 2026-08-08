@@ -123,7 +123,9 @@
     "directCount_other": "{{count}} direct",
     "totalSuffix": " · {{count}} in total",
     "dragEachHint": "Drag each person onto their manager in the pyramid.",
-    "place": "Place"
+    "place": "Place",
+    "overlayToggle": "Show workload",
+    "overlayHint": "Colors cards by estimated time left"
   },
   "overview": {
     "completed": "Completed",
@@ -148,7 +150,17 @@
     "emptyVelocity": "No completions over this period.",
     "trend": "Completion rate trend",
     "emptyTrend": "Not enough data over this period.",
-    "emptyOkr": "No team OKRs yet."
+    "emptyOkr": "No team OKRs yet.",
+    "workloadTitle": "Team workload",
+    "workloadHint": "Estimated time left on open tasks, compared to the team median.",
+    "workloadEmpty": "No estimated open tasks. Fill in estimated time on tasks to see how workload is spread.",
+    "workloadOver": "Overloaded",
+    "workloadUnder": "Underloaded",
+    "workloadNormal": "Normal",
+    "workloadOpen_one": "{{count}} open",
+    "workloadOpen_other": "{{count}} open",
+    "workloadOverdue": "{{count}} overdue",
+    "workloadNoEstimate": "no estimate"
   },
   "myWork": {
     "upToDate": "Up to date",
