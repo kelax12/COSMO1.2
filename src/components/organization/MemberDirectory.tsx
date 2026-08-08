@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   Shield, UserCog, UserRound, MoreVertical, LogOut,
   ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X,
@@ -27,6 +28,7 @@ import {
   type CreateTeamTaskInput,
 } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
+import { readEntityParam } from './deep-link.helpers';
 import MemberProfileSheet from './MemberProfileSheet';
 import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
 import MemberAgendaSheet from './MemberAgendaSheet';
@@ -93,6 +95,22 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
   const [removing, setRemoving] = useState<OrgMember | null>(null);
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
+
+  // ─── Deep-link `?member=<id>` ───────────────────────────────────────
+  // Même contrat que `?task=` : on ouvre la fiche puis on retire le paramètre,
+  // sinon refermer le sheet le rouvrirait au rendu suivant.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepMemberId = readEntityParam(searchParams, 'member');
+
+  useEffect(() => {
+    if (!deepMemberId) return;
+    const target = members.find((m) => m.userId === deepMemberId);
+    if (!target) return;
+    setProfile(target);
+    const next = new URLSearchParams(searchParams);
+    next.delete('member');
+    setSearchParams(next, { replace: true });
+  }, [deepMemberId, members, searchParams, setSearchParams]);
 
   // Périmètre hiérarchique de l'utilisateur courant (miroir de la pyramide).
   const mySubtree = useMemo(

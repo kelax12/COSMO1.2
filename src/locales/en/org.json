@@ -229,7 +229,20 @@
     "densityToggle": "Display density",
     "densityComfortable": "Comfortable",
     "densityCompact": "Compact",
-    "estimatedTotal": "{{duration}} estimated"
+    "estimatedTotal": "{{duration}} estimated",
+    "selectMode": "Select",
+    "selectExit": "Exit selection",
+    "selectTask": "Select \"{{name}}\"",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "bulkDone": "Complete",
+    "bulkReopen": "Reopen",
+    "bulkDelete": "Delete",
+    "bulkClear": "Clear selection",
+    "bulkDeleted_one": "{{count}} task deleted",
+    "bulkDeleted_other": "{{count}} tasks deleted",
+    "selectAll": "Select all",
+    "reassigned": "Task reassigned"
   },
   "insights": {
     "taskDeleted": "Task deleted",

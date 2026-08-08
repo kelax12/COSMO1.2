@@ -4,7 +4,7 @@ import { showUndoToast } from '@/lib/undo-toast';
 import {
   Plus, FolderKanban, LayoutList, SquareKanban, AlarmClock,
   CircleDashed, CheckCircle2, ChevronDown, ChevronRight, UserRound,
-  Clock, Rows3,
+  Clock, Rows3, ListChecks,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +41,7 @@ import TeamProjectsKanban from './TeamProjectsKanban';
 import TeamTaskModal from './TeamTaskModal';
 import NewTeamProjectModal from './NewTeamProjectModal';
 import AssignTaskSheet from './AssignTaskSheet';
+import BulkActionsBar from './BulkActionsBar';
 import { useT } from '@/i18n/useT';
 
 interface TeamProjectsTabProps {
@@ -194,6 +195,21 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
     updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
 
+  /**
+   * Réassignation par glisser-déposer (kanban) — avec « Annuler ».
+   *
+   * Un drag se déclenche à la souris sans confirmation : c'est le geste le plus
+   * facile à faire par accident de toute la vue. Il lui fallait donc le même
+   * filet que la suppression, qui l'avait déjà.
+   */
+  const setAssigneesWithUndo = (task: TeamTask, assigneeIds: string[]) => {
+    const previous = task.assigneeIds;
+    updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
+    showUndoToast(t('projects.reassigned'), () =>
+      updateTask.mutate({ taskId: task.id, input: { assigneeIds: previous } }),
+    );
+  };
+
   // Suppression avec « Annuler » : la tâche est recréée à l'identique.
   const removeWithUndo = (task: TeamTask) =>
     deleteTask.mutate(task.id, {
@@ -211,6 +227,61 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         );
       },
     });
+
+  // ─── Sélection multiple + actions groupées ──────────────────────────
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+
+  const toggleSelect = (task: TeamTask) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(task.id)) next.delete(task.id);
+      else next.add(task.id);
+      return next;
+    });
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    clearSelection();
+  };
+
+  /** Tâches sélectionnées ENCORE visibles — une sélection ne survit pas au filtre. */
+  const selectedTasks = useMemo(
+    () => visibleTasks.filter((t) => selectedIds.has(t.id)),
+    [visibleTasks, selectedIds],
+  );
+
+  const bulkSetCompleted = (completed: boolean) => {
+    for (const task of selectedTasks) {
+      if (task.completed === completed) continue;
+      updateTask.mutate({ taskId: task.id, input: { completed } });
+    }
+    clearSelection();
+  };
+
+  // Suppression groupée : une seule ligne d'annulation qui recrée TOUT le lot,
+  // plutôt qu'un toast par tâche qui noierait l'écran.
+  const bulkDelete = () => {
+    const doomed = [...selectedTasks];
+    if (doomed.length === 0) return;
+    clearSelection();
+    for (const task of doomed) deleteTask.mutate(task.id);
+    showUndoToast(tp('projects.bulkDeleted', doomed.length), () => {
+      for (const task of doomed) {
+        createTask.mutate({
+          projectId: task.projectId,
+          name: task.name,
+          description: task.description,
+          priority: task.priority,
+          deadline: task.deadline,
+          estimatedTime: task.estimatedTime,
+          assigneeIds: task.assigneeIds,
+        });
+      }
+    });
+  };
 
   // ─── Deep-link `?task=<id>` ─────────────────────────────────────────
   const [searchParams, setSearchParams] = useSearchParams();
@@ -261,6 +332,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       teams={teams}
       isManager={isManager}
       density={density}
+      selectable={selectMode}
+      selectedIds={selectedIds}
+      onToggleSelect={toggleSelect}
       collapsed={!!collapsed[project.id]}
       onToggleCollapse={() => toggleCollapse(project.id)}
       assigneeFiltered={!!assigneeFilter}
@@ -444,6 +518,26 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             <Rows3 size={15} aria-hidden="true" />
           </button>
 
+          {/* Mode sélection — réservé à la vue liste : le kanban a déjà le
+              drag & drop comme geste principal, y superposer des cases à
+              cocher rendrait la carte ambiguë au clic. */}
+          {view === 'list' && (
+            <button
+              type="button"
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+              aria-pressed={selectMode}
+              title={selectMode ? t('projects.selectExit') : t('projects.selectMode')}
+              aria-label={selectMode ? t('projects.selectExit') : t('projects.selectMode')}
+              className={`w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] flex items-center justify-center transition-colors ${
+                selectMode
+                  ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                  : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              <ListChecks size={15} aria-hidden="true" />
+            </button>
+          )}
+
           {isManager && !showNewProject && (
             <button
               type="button"
@@ -491,7 +585,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           projects={activeProjects}
           tasks={statsTasks}
           members={members}
-          onSetAssignees={setAssignees}
+          onSetAssignees={setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
           onAddToColumn={(memberId) => setAssignSheetFor(memberId)}
         />
@@ -554,6 +648,19 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             });
           }}
           onClose={() => setAssignSheetFor('closed')}
+        />
+      )}
+
+      {/* Barre d'actions groupées (flottante) */}
+      {selectMode && (
+        <BulkActionsBar
+          count={selectedTasks.length}
+          hasOpen={selectedTasks.some((t) => !t.completed)}
+          hasCompleted={selectedTasks.some((t) => t.completed)}
+          onComplete={() => bulkSetCompleted(true)}
+          onReopen={() => bulkSetCompleted(false)}
+          onDelete={bulkDelete}
+          onClear={clearSelection}
         />
       )}
 

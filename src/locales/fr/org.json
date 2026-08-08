@@ -241,7 +241,22 @@
     "estimatedTotal": "{{duration}} estimées",
     "projectCount_many": "{{count}} de projets",
     "openCount_many": "{{count}} d'ouvertes",
-    "overdueCount_many": "{{count}} en retard"
+    "overdueCount_many": "{{count}} en retard",
+    "selectMode": "Sélectionner",
+    "selectExit": "Quitter la sélection",
+    "selectTask": "Sélectionner « {{name}} »",
+    "selected_one": "{{count}} sélectionnée",
+    "selected_many": "{{count}} de sélectionnées",
+    "selected_other": "{{count}} sélectionnées",
+    "bulkDone": "Terminer",
+    "bulkReopen": "Rouvrir",
+    "bulkDelete": "Supprimer",
+    "bulkClear": "Tout désélectionner",
+    "bulkDeleted_one": "{{count}} tâche supprimée",
+    "bulkDeleted_many": "{{count}} de tâches supprimées",
+    "bulkDeleted_other": "{{count}} tâches supprimées",
+    "selectAll": "Tout sélectionner",
+    "reassigned": "Tâche réassignée"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",

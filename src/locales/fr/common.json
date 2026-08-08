@@ -165,7 +165,11 @@
     "showShortcuts": "Afficher les raccourcis clavier",
     "navigate": "naviguer",
     "open": "ouvrir",
-    "close": "fermer"
+    "close": "fermer",
+    "orgMembers": "Membres",
+    "orgTeams": "Équipes",
+    "teamOkrs": "OKR d'équipe",
+    "member": "Membre"
   },
   "moduleOnboarding": {
     "question": "Que voulez-vous gérer ?",

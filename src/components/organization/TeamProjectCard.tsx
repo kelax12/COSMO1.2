@@ -45,6 +45,11 @@ interface TeamProjectCardProps {
   onUpdateProject: (input: UpdateTeamProjectInput) => void;
   /** Densité des lignes de tâche. */
   density?: 'comfortable' | 'compact';
+  /** Mode sélection multiple (actions groupées). */
+  selectable?: boolean;
+  /** Ids des tâches sélectionnées. */
+  selectedIds?: Set<string>;
+  onToggleSelect?: (task: TeamTask) => void;
 }
 
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
@@ -53,6 +58,7 @@ const TeamProjectCard = ({
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject, density = 'comfortable',
+  selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
   const { t } = useT('org');
   const [renaming, setRenaming] = useState(false);
@@ -258,6 +264,9 @@ const TeamProjectCard = ({
               task={task}
               members={members}
               density={density}
+              selectable={selectable}
+              selected={!!selectedIds?.has(task.id)}
+              onToggleSelect={onToggleSelect}
               onToggleComplete={onToggleComplete}
               onReassign={onReassign}
               onDelete={onDelete}
@@ -300,6 +309,9 @@ const TeamProjectCard = ({
                   task={task}
                   members={members}
                   density={density}
+                  selectable={selectable}
+                  selected={!!selectedIds?.has(task.id)}
+                  onToggleSelect={onToggleSelect}
                   onToggleComplete={onToggleComplete}
                   onReassign={onReassign}
                   onDelete={onDelete}
