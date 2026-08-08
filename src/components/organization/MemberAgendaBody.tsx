@@ -29,6 +29,7 @@ import { PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.hel
 import type { OrgMember } from '@/modules/organizations';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 interface MemberAgendaBodyProps {
   member: OrgMember;
@@ -36,11 +37,15 @@ interface MemberAgendaBodyProps {
 
 type ViewName = 'timeGridWeek' | 'timeGridDay' | 'dayGridMonth';
 
-const VIEW_LABELS: { id: ViewName; label: string }[] = [
-  { id: 'timeGridDay', label: 'Jour' },
-  { id: 'timeGridWeek', label: 'Semaine' },
-  { id: 'dayGridMonth', label: 'Mois' },
-];
+// Les libelles viennent du catalogue au RENDU : une constante de module
+// serait figee au premier import (cf. src/i18n/catalog.ts).
+const VIEW_LABEL_KEYS = {
+  timeGridDay: 'common.agendaDay',
+  timeGridWeek: 'common.agendaWeek',
+  dayGridMonth: 'common.agendaMonth',
+} as const satisfies Record<ViewName, KeyOf<'org'>>;
+
+const VIEW_ORDER: ViewName[] = ['timeGridDay', 'timeGridWeek', 'dayGridMonth'];
 
 // Couleur (hex) d'un projet — pour colorer l'événement issu d'une tâche d'équipe.
 const PROJECT_HEX: Record<string, string> = {
@@ -274,19 +279,19 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
         <div className="ml-auto flex items-center gap-2">
           {/* Sélecteur de vue — couleur accent comme l'agenda classique */}
           <div className="flex gap-1 p-1 rounded-xl border border-[rgb(var(--color-border))]" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-            {VIEW_LABELS.map((v) => (
+            {VIEW_ORDER.map((id) => (
               <button
-                key={v.id}
+                key={id}
                 type="button"
-                onClick={() => changeView(v.id)}
-                aria-pressed={view === v.id}
+                onClick={() => changeView(id)}
+                aria-pressed={view === id}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  view === v.id
+                  view === id
                     ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                 }`}
               >
-                {v.label}
+                {t(VIEW_LABEL_KEYS[id])}
               </button>
             ))}
           </div>

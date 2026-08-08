@@ -15,7 +15,7 @@ const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => {
   return (
   <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] p-4 space-y-2.5">
     <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">
-      En rejoignant cette entreprise :
+      {t('common.consentIntro')}
     </p>
     <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1.5 list-disc pl-4">
       <li>{t('consent.visibility')}</li>
@@ -30,7 +30,7 @@ const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => {
         className="mt-0.5 h-4 w-4 rounded border-[rgb(var(--color-border))] accent-[rgb(var(--color-accent))]"
       />
       <span className="text-xs text-[rgb(var(--color-text-primary))]">
-        J'ai compris ce que l'entreprise pourra voir et j'accepte ces conditions.
+        {t('common.consentAccept')}
       </span>
     </label>
   </div>

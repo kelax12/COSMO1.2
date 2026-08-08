@@ -12,6 +12,7 @@ import {
   CreateTeamProjectInput,
   UpdateTeamProjectInput,
   TeamTask,
+  TeamTaskStatus,
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
   TeamTaskFilters,
@@ -63,6 +64,13 @@ const t = (
   priority: number,
   deadlineOffset: number | null,
   completed: boolean,
+  /**
+   * Statut de flux (mig. 091). Les seeds ne produisaient que `todo` et `done`,
+   * si bien que le kanban par statut — l'item #9 — n'avait qu'une seule
+   * colonne remplie et paraissait cassé. `done` reste lié a `completed` : le
+   * serveur garde les deux synchronises, la demo doit en faire autant.
+   */
+  status: Exclude<TeamTaskStatus, 'done'> = 'todo',
 ): TeamTask => {
   seq += 1;
   const assigneeIds = [MEMBERS[assigneeIdx % MEMBERS.length]];
@@ -72,7 +80,7 @@ const t = (
   }
   return {
     id: `ttask-${seq}`,
-    status: completed ? 'done' : 'todo',
+    status: completed ? 'done' : status,
     orgId: DEMO_ORG_ID,
     projectId,
     name,
@@ -91,25 +99,25 @@ const t = (
 const DEMO_TASKS: TeamTask[] = [
   // Refonte du site
   t('tproj-1', 'Maquettes de la page d\'accueil', 1, 4, 3, false),
-  t('tproj-1', 'Intégration du header responsive', 2, 3, 5, false),
-  t('tproj-1', 'Audit accessibilité WCAG', 3, 4, -1, false),
-  t('tproj-1', 'Optimisation des images', 4, 2, 8, false),
-  t('tproj-1', 'Rédaction des contenus SEO', 5, 3, 2, false),
+  t('tproj-1', 'Intégration du header responsive', 2, 3, 5, false, 'in_progress'),
+  t('tproj-1', 'Audit accessibilité WCAG', 3, 4, -1, false, 'blocked'),
+  t('tproj-1', 'Optimisation des images', 4, 2, 8, false, 'review'),
+  t('tproj-1', 'Rédaction des contenus SEO', 5, 3, 2, false, 'in_progress'),
   t('tproj-1', 'Charte graphique validée', 1, 3, -5, true),
   t('tproj-1', 'Setup analytics', 2, 2, 10, false),
   // Lancement produit
   t('tproj-2', 'Plan de communication', 0, 5, 0, false),
-  t('tproj-2', 'Kit presse', 5, 3, 4, false),
+  t('tproj-2', 'Kit presse', 5, 3, 4, false, 'in_progress'),
   t('tproj-2', 'Préparer la démo investisseurs', 1, 5, -2, false),
-  t('tproj-2', 'Landing page de teasing', 2, 4, 6, false),
+  t('tproj-2', 'Landing page de teasing', 2, 4, 6, false, 'review'),
   t('tproj-2', 'Campagne réseaux sociaux', 3, 3, 7, false),
   t('tproj-2', 'Brief agence vidéo', 4, 2, -3, true),
   t('tproj-2', 'Liste des early adopters', 5, 3, 9, false),
   // Interne
-  t('tproj-3', 'Onboarding nouveaux arrivants', 1, 3, 5, false),
+  t('tproj-3', 'Onboarding nouveaux arrivants', 1, 3, 5, false, 'in_progress'),
   t('tproj-3', 'Mise à jour du wiki', 4, 1, 12, false),
   t('tproj-3', 'Rétrospective sprint', 0, 2, -2, false),
-  t('tproj-3', 'Budget prévisionnel Q3', 3, 4, -1, false),
+  t('tproj-3', 'Budget prévisionnel Q3', 3, 4, -1, false, 'blocked'),
   t('tproj-3', 'Commande matériel', 2, 2, 3, true),
   t('tproj-3', 'Planifier le séminaire', 5, 3, 14, false),
 ];

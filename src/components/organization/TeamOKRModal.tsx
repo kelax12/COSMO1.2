@@ -246,7 +246,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                   <div className="flex items-center gap-2">
                     <Input value={kr.title} placeholder={t('okrModal.krPlaceholder')} className="h-8" onChange={(e) => setKR(idx, { title: e.target.value })} />
                     {keyResults.length > 1 && (
-                      <Button type="button" variant="destructive" size="icon-sm" aria-label="Retirer" onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
+                      <Button type="button" variant="destructive" size="icon-sm" aria-label={t('common.removeKr')} onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
                         <Trash2 aria-hidden="true" />
                       </Button>
                     )}
