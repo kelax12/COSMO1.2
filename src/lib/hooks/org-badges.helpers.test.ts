@@ -77,3 +77,41 @@ describe('computeOrgBadges', () => {
     expect(badges.total).toBe(3);
   });
 });
+
+describe('computeOrgBadges — notifications serveur (mig. 095)', () => {
+  it('les notifications non lues supplantent le comptage dérivé', () => {
+    // 1 tâche dériverait 1 ; 3 notifications serveur doivent gagner, car
+    // `lastSeen` est en localStorage donc faux dès qu'on change d'appareil.
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [task({ assigneeIds: ['me'] })],
+      unreadNotifications: 3,
+    });
+    expect(badges.projects).toBe(3);
+  });
+
+  it("retombe sur le comptage dérivé quand il n'y a aucune notification", () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [task({ assigneeIds: ['me'] })],
+      unreadNotifications: 0,
+    });
+    expect(badges.projects).toBe(1);
+  });
+
+  it('reste compatible avec les appelants qui ne passent pas le champ', () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [task({ assigneeIds: ['me'] })],
+    });
+    expect(badges.projects).toBe(1);
+  });
+
+  it('additionne notifications et demandes dans le total', () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 2,
+      tasks: [], unreadNotifications: 4,
+    });
+    expect(badges.total).toBe(6);
+  });
+});

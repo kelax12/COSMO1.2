@@ -7,7 +7,9 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useActiveOrganization, useOrgJoinRequests } from '@/modules/organizations';
+import {
+  useActiveOrganization, useOrgJoinRequests, useOrgNotifications, unreadCount,
+} from '@/modules/organizations';
 import { useTeamTasks } from '@/modules/team-projects';
 import { computeOrgBadges, type OrgBadges } from './org-badges.helpers';
 
@@ -43,6 +45,7 @@ export function useOrgBadges(): OrgBadges {
   // Requêtes no-op (enabled: !!orgId) hors entreprise / hors admin.
   const { data: requests = [] } = useOrgJoinRequests(isAdmin ? activeOrg?.id : undefined);
   const { data: tasks = [] } = useTeamTasks(activeOrg?.id);
+  const { data: notifications = [] } = useOrgNotifications(activeOrg?.id);
 
   return useMemo(() => {
     if (!activeOrg || !user?.id) return EMPTY_BADGES;
@@ -51,8 +54,9 @@ export function useOrgBadges(): OrgBadges {
       lastSeen: readOrgLastSeen(activeOrg.id),
       pendingRequests: requests.filter((r) => r.status === 'pending').length,
       tasks,
+      unreadNotifications: unreadCount(notifications),
     });
-  }, [activeOrg, user?.id, requests, tasks]);
+  }, [activeOrg, user?.id, requests, tasks, notifications]);
 }
 
 /** Total pour la pastille de navigation — signature inchangée (compat). */
