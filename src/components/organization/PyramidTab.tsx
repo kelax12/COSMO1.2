@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   UserPlus,
   ChevronDown,
@@ -48,12 +49,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { useTeamTasks } from '@/modules/team-projects';
+import { readEntityParam } from './deep-link.helpers';
+import { memberWorkload, workloadTone, type MemberWorkload } from './team-stats.helpers';
+import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
-import MemberProfileSheet from './MemberProfileSheet';
-import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
-import MemberAgendaSheet from './MemberAgendaSheet';
+import MemberSheet from './MemberSheet';
+import { MEMBER_TAB_PARAM, type MemberTab } from './member-sheet.helpers';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
 import { useT } from '@/i18n/useT';
@@ -87,6 +91,14 @@ interface DragState {
 }
 
 interface NodeCardProps {
+  /**
+   * Calque de charge (item #28) — absent = calque désactivé.
+   *
+   * Une Map plutôt qu'une prop par métrique : la signature de NodeCard porte
+   * déjà 18 paramètres, et chaque métrique future s'ajouterait ici sans
+   * toucher aux 3 sites d'appel.
+   */
+  workloadByUser?: Map<string, MemberWorkload>;
   node: OrgTreeNode;
   members: OrgMember[];
   currentUserId?: string;
@@ -107,10 +119,12 @@ interface NodeCardProps {
   matchIds: Set<string>;
   /** Équipes transverses par membre (pastilles couleur). */
   teamsByUser: Map<string, OrgTeam[]>;
-  /** Ouvre la fiche membre (clic ou Entrée sur une carte hors mode déplacement). */
-  onOpenProfile: (m: OrgMember) => void;
-  /** Ouvre les infos d'un subordonné (tâches / agenda / contribution). */
-  onOpenInsights: (m: OrgMember, tab: InsightsTab) => void;
+  /**
+   * Ouvre la fiche membre unifiée sur un onglet (item #18). Le clic sur la
+   * carte ouvre le profil ; les entrées du menu ⋯ ouvrent la même fiche
+   * directement sur l'onglet demandé.
+   */
+  onOpenMember: (m: OrgMember, tab: MemberTab) => void;
   /** Mode réorganisation : toutes les cartes déplaçables sont draggables. */
   editMode: boolean;
   /** Profondeur (mobile : indentation ; desktop : sans objet). */
@@ -118,7 +132,7 @@ interface NodeCardProps {
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenMember, editMode, depth, mobile, workloadByUser }: NodeCardProps) => {
   const { t, tp } = useT('org');
   const collapsed = collapsedIds.has(node.member.userId);
   // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
@@ -185,6 +199,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 : 'border-[rgb(var(--color-border))]';
 
   const myTeams = teamsByUser.get(m.userId) ?? [];
+  const myWorkload = workloadByUser?.get(m.userId);
 
   const card = (
     <motion.div
@@ -237,14 +252,14 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
         if (Date.now() - menuActionAtRef.current < 500) return;
         const t = e.target as HTMLElement;
         if (t.closest('button') || t.closest('[data-grip]')) return;
-        onOpenProfile(m);
+        onOpenMember(m, 'profile');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           if (e.target !== e.currentTarget) return; // boutons internes
           e.preventDefault();
           if (isDropTarget) drag.onDrop(m.userId);
-          else if (!drag) onOpenProfile(m);
+          else if (!drag) onOpenMember(m, 'profile');
           return;
         }
         // Navigation clavier : flèches = parent / enfant / frère précédent-suivant.
@@ -321,6 +336,36 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
             {isMe ? t('pyramid.you') : m.displayName}
           </p>
+          {/* Calque de charge : voir l'organisation ET sa santé sur le même
+              écran. Rendu seulement si la personne a des tâches ouvertes —
+              une barre vide n'apprend rien. */}
+          {myWorkload && myWorkload.open > 0 && (
+            <span
+              className="flex items-center gap-1 mt-0.5"
+              title={`${formatDuration(myWorkload.estimatedMinutes)} · ${myWorkload.open} ouverte(s)${myWorkload.overdue > 0 ? ` · ${myWorkload.overdue} en retard` : ''}`}
+            >
+              <span className="w-10 h-1 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden shrink-0">
+                <span
+                  className={`block h-full rounded-full ${
+                    workloadTone(myWorkload.loadRatio) === 'over'
+                      ? 'bg-red-500'
+                      : workloadTone(myWorkload.loadRatio) === 'under'
+                        ? 'bg-[rgb(var(--color-text-muted))]'
+                        : 'bg-[rgb(var(--color-accent))]'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.round(myWorkload.loadRatio * 66))}%` }}
+                />
+              </span>
+              <span className="text-caption text-[rgb(var(--color-text-muted))] tabular-nums">
+                {myWorkload.open}
+              </span>
+              {myWorkload.overdue > 0 && (
+                <span className="text-caption font-bold text-red-500 tabular-nums">
+                  !{myWorkload.overdue}
+                </span>
+              )}
+            </span>
+          )}
           <p
             className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
@@ -351,7 +396,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       {!drag && (movable || canAddUnder || canRemove) && (
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label={`Actions pour ${m.displayName}`}
+            aria-label={t('common.actionsFor', { name: m.displayName })}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] shrink-0"
           >
             <MoreHorizontal size={15} aria-hidden="true" />
@@ -366,7 +411,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             {canAddUnder && (
               <DropdownMenuItem onClick={() => onAddUnder(m)}>
                 <UserRoundPlus size={14} className="text-green-500" aria-hidden="true" />
-                Ajouter un collaborateur
+                {t('common.addCollaborator')}
               </DropdownMenuItem>
             )}
             {movable && (
@@ -378,17 +423,17 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             {canSeeInsights && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'tasks')}>
+                <DropdownMenuItem onClick={() => onOpenMember(m, 'tasks')}>
                   <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
-                  Voir ses tâches
+                  {t('pyramid.seeTasksAction')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'agenda')}>
+                <DropdownMenuItem onClick={() => onOpenMember(m, 'agenda')}>
                   <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
-                  Voir son agenda
+                  {t('common.seeAgenda')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'contribution')}>
+                <DropdownMenuItem onClick={() => onOpenMember(m, 'contribution')}>
                   <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
-                  Voir sa contribution
+                  {t('common.seeContribution')}
                 </DropdownMenuItem>
               </>
             )}
@@ -397,7 +442,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={() => onRemove(m)}>
                   <Trash2 size={14} aria-hidden="true" />
-                  Retirer de l'entreprise
+                  {t('common.removeFromOrg')}
                 </DropdownMenuItem>
               </>
             )}
@@ -412,7 +457,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenMember={onOpenMember} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -441,7 +486,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenMember={onOpenMember} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -483,11 +528,33 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [hoverDropId, setHoverDropId] = useState<string | null>(null);
   const [placing, setPlacing] = useState<OrgMember | null>(null);
   const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
-  const [profile, setProfile] = useState<OrgMember | null>(null);
-  // Infos d'un subordonné (tâches / contribution), ouvert sur un onglet.
-  const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
-  // Agenda complet d'un subordonné (manager) — plein écran, éditable.
-  const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
+  // Fiche membre unifiée (item #18) : profil, tâches, contribution, agenda —
+  // un seul sheet, ouvert sur l'onglet demandé. `tab` reste une chaîne brute
+  // ici : seul `MemberSheet` connaît les onglets AUTORISÉS pour ce membre, et
+  // c'est lui qui valide (une URL forgée ne doit pas ouvrir un onglet interdit).
+  const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
+
+  // ─── Deep-link `?member=<id>&memberTab=<tab>` ───────────────────────
+  // Le helper `readEntityParam` accepte 'member' depuis la vague 1 mais rien ne
+  // le consommait : une fiche membre n'était donc pas partageable.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepMemberId = readEntityParam(searchParams, 'member');
+  const deepMemberTab = searchParams.get(MEMBER_TAB_PARAM);
+
+  useEffect(() => {
+    if (!deepMemberId) return;
+    const target = members.find((m) => m.userId === deepMemberId);
+    // Les membres arrivent en asynchrone : tant qu'ils ne sont pas là, on garde
+    // le paramètre et l'effet se rejoue au chargement suivant.
+    if (!target) return;
+    setSheet({ member: target, tab: deepMemberTab });
+    // Nettoyage : sans lui, refermer la fiche la rouvrirait au rendu suivant,
+    // l'URL restant la source de vérité.
+    const next = new URLSearchParams(searchParams);
+    next.delete('member');
+    next.delete(MEMBER_TAB_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [deepMemberId, deepMemberTab, members, searchParams, setSearchParams]);
   // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   // Retrait d'un membre SANS subordonné : modal de confirmation (#3).
@@ -497,6 +564,16 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
   // les déplacements de la session sont journalisés pour pouvoir tout annuler.
   const [editMode, setEditMode] = useState(false);
+
+  // ─── Calque de charge (item #28) ────────────────────────────────────
+  // Désactivé par défaut : la pyramide sert d'abord à lire l'organisation, et
+  // une barre sur chaque carte en permanence brouillerait cette lecture.
+  const [showWorkload, setShowWorkload] = useState(false);
+  const { data: workloadTasks = [] } = useTeamTasks(showWorkload ? orgId : undefined);
+  const workloadByUser = useMemo(() => {
+    if (!showWorkload) return undefined;
+    return new Map(memberWorkload(workloadTasks, members).map((w) => [w.userId, w]));
+  }, [showWorkload, workloadTasks, members]);
   const [moveCount, setMoveCount] = useState(0);
   const sessionMovesRef = useRef<{ userId: string; prevManagerId: string | null }[]>([]);
   const editModeRef = useRef(false);
@@ -925,7 +1002,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             onClick={() => setDragging(null)}
             className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] px-3 py-1.5 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] shrink-0 transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
         </div>
       )}
@@ -983,7 +1060,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <Users size={26} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
           <p className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1.5">
-            Votre pyramide est vide
+            {t('pyramid.emptyTitle')}
           </p>
           <p className="text-sm text-[rgb(var(--color-text-muted))] max-w-sm mb-5">
             {t('pyramid.intro')}
@@ -995,7 +1072,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               onClick={() => setAddingUnder(selfMember)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
             >
-              <UserPlus size={16} aria-hidden="true" /> Inviter votre premier collaborateur
+              <UserPlus size={16} aria-hidden="true" /> {t('pyramid.inviteFirst')}
             </button>
           )}
         </div>
@@ -1101,6 +1178,23 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                       <Check size={15} aria-hidden="true" /> {t('pyramid.done')}
                     </button>
                   )}
+                  {/* Calque de charge — masqué en mode réorganisation : deux
+                      lectures simultanées de la même carte se gêneraient. */}
+                  {!editMode && (
+                    <button
+                      type="button"
+                      onClick={() => setShowWorkload((v) => !v)}
+                      aria-pressed={showWorkload}
+                      title={t('pyramid.overlayHint')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                        showWorkload
+                          ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))] bg-[rgb(var(--color-hover))]'
+                          : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+                      }`}
+                    >
+                      <TrendingUp size={14} aria-hidden="true" /> {t('pyramid.overlayToggle')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={editMode ? cancelEdit : startEdit}
@@ -1112,7 +1206,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                   >
                     {editMode ? (
                       <>
-                        <X size={15} aria-hidden="true" /> Annuler
+                        <X size={15} aria-hidden="true" /> {t('common.cancel')}
                       </>
                     ) : (
                       <>
@@ -1172,6 +1266,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             {roots.map((root) => (
               <NodeCard
                 key={root.member.userId}
+                workloadByUser={workloadByUser}
                 node={root}
                 members={members}
                 currentUserId={currentUserId}
@@ -1186,10 +1281,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 onToggleCollapse={toggleCollapse}
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
-                onOpenProfile={setProfile}
-                onOpenInsights={(mem, tab) =>
-                  tab === 'agenda' ? setAgendaMember(mem) : setInsights({ member: mem, tab })
-                }
+                onOpenMember={(mem, tab) => setSheet({ member: mem, tab })}
                 editMode={editMode}
                 depth={0}
                 mobile={isMobile}
@@ -1295,32 +1387,24 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         {announcement}
       </div>
 
-      {profile && (
-        <MemberProfileSheet
-          member={profile}
+      {sheet && (
+        <MemberSheet
+          orgId={orgId}
+          member={sheet.member}
           members={members}
-          teams={teamsByUser.get(profile.userId) ?? []}
+          teams={teamsByUser.get(sheet.member.userId) ?? []}
           currentUserId={currentUserId}
-          canMove={canManage(profile, members, currentUserId, isAdmin)}
-          canAddUnder={isAdmin || profile.userId === currentUserId || canManage(profile, members, currentUserId, isAdmin)}
-          onClose={() => setProfile(null)}
+          canMove={canManage(sheet.member, members, currentUserId, isAdmin)}
+          canAddUnder={isAdmin || sheet.member.userId === currentUserId || canManage(sheet.member, members, currentUserId, isAdmin)}
+          // Mêmes droits que l'ancien menu ⋯ : supérieur hiérarchique
+          // uniquement (admin partout, manager sur son sous-arbre), jamais soi.
+          canSeeInsights={canManage(sheet.member, members, currentUserId, isAdmin)}
+          canSeeAgenda={canManage(sheet.member, members, currentUserId, isAdmin)}
+          initialTab={sheet.tab}
+          onClose={() => setSheet(null)}
           onMove={setDragging}
           onAddUnder={setAddingUnder}
         />
-      )}
-
-      {insights && (
-        <MemberInsightsSheet
-          orgId={orgId}
-          member={insights.member}
-          initialTab={insights.tab}
-          canEdit={canManage(insights.member, members, currentUserId, isAdmin)}
-          onClose={() => setInsights(null)}
-        />
-      )}
-
-      {agendaMember && (
-        <MemberAgendaSheet member={agendaMember} onClose={() => setAgendaMember(null)} />
       )}
 
       {removing && (

@@ -162,7 +162,11 @@
     "showShortcuts": "Show keyboard shortcuts",
     "navigate": "navigate",
     "open": "open",
-    "close": "close"
+    "close": "close",
+    "orgMembers": "Members",
+    "orgTeams": "Teams",
+    "teamOkrs": "Team OKRs",
+    "member": "Member"
   },
   "moduleOnboarding": {
     "question": "What do you want to manage?",

@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { showUndoToast } from '@/lib/undo-toast';
 import {
   Plus, FolderKanban, LayoutList, SquareKanban, AlarmClock,
   CircleDashed, CheckCircle2, ChevronDown, ChevronRight, UserRound,
+  Clock, Rows3, ListChecks, CalendarRange,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -21,6 +23,7 @@ import {
   useUpdateTeamTask,
   useDeleteTeamTask,
   type TeamTask,
+  type TeamTaskStatus,
   type TeamProject,
   type CreateTeamProjectInput,
   type CreateTeamTaskInput,
@@ -30,13 +33,17 @@ import { useOrgTeams } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
+  filterByStatus, sumEstimatedTime, formatDuration, type TaskStatusFilter,
 } from './team-projects.helpers';
+import { readEntityParam } from './deep-link.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamProjectCard from './TeamProjectCard';
 import TeamProjectsKanban from './TeamProjectsKanban';
+import TeamProjectsTimeline from './TeamProjectsTimeline';
 import TeamTaskModal from './TeamTaskModal';
 import NewTeamProjectModal from './NewTeamProjectModal';
 import AssignTaskSheet from './AssignTaskSheet';
+import BulkActionsBar from './BulkActionsBar';
 import { useT } from '@/i18n/useT';
 
 interface TeamProjectsTabProps {
@@ -72,6 +79,41 @@ const ProjectsSkeleton = () => (
   </div>
 );
 
+/**
+ * Pastille de synthèse cliquable : bascule le filtre de statut.
+ *
+ * Une statistique qu'on ne peut pas creuser est une statistique morte — c'est
+ * tout l'objet de ce composant, les pastilles étant auparavant décoratives.
+ */
+const StatPill = ({ active, onClick, label, tone, children }: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  tone: 'neutral' | 'danger' | 'success';
+  children: React.ReactNode;
+}) => {
+  const toneClass =
+    tone === 'danger'
+      ? 'bg-red-500/10 text-red-500 font-semibold'
+      : tone === 'success'
+        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+        : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      title={label}
+      aria-label={label}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 ${toneClass} ${
+        active ? 'ring-2 ring-[rgb(var(--color-accent))]' : 'hover:brightness-110'
+      }`}
+    >
+      {children}
+    </button>
+  );
+};
+
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
   const { t, tp } = useT('org');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
@@ -89,7 +131,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
 
-  const { teamFilter, assigneeFilter, view, collapsed, showArchived } = prefs;
+  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, density, kanbanGroupBy } = prefs;
+
+  // Un second clic sur la pastille active retire le filtre.
+  const toggleStatus = (next: TaskStatusFilter) =>
+    updatePrefs({ statusFilter: statusFilter === next ? 'all' : next });
 
   // ─── Projets visibles (filtre équipe + actifs/archivés) ────────────
   const matchesTeam = (p: TeamProject) => {
@@ -110,9 +156,21 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const overdueCount = statsTasks.filter(isTaskOverdue).length;
   const doneThisWeek = completedThisWeek(statsTasks);
 
-  const visibleTasks = useMemo(
-    () => (assigneeFilter ? allTasks.filter((t) => t.assigneeIds.includes(assigneeFilter)) : allTasks),
-    [allTasks, assigneeFilter],
+  // Vue filtrée : assigné (dropdown) PUIS statut (pastilles). Les compteurs des
+  // pastilles restent calculés sur `statsTasks`, NON filtré — sinon cliquer
+  // « en retard » ferait tomber son propre compteur à sa valeur filtrée, et on
+  // ne pourrait plus savoir combien il y en a réellement.
+  const visibleTasks = useMemo(() => {
+    const byAssignee = assigneeFilter
+      ? allTasks.filter((t) => t.assigneeIds.includes(assigneeFilter))
+      : allTasks;
+    return filterByStatus(byAssignee, statusFilter);
+  }, [allTasks, assigneeFilter, statusFilter]);
+
+  /** Reste à faire estimé sur le périmètre visible (tâches ouvertes). */
+  const totalEstimated = useMemo(
+    () => sumEstimatedTime(statsTasks.filter((t) => !t.completed)),
+    [statsTasks],
   );
   const tasksByProject = (projectId: string) => visibleTasks.filter((t) => t.projectId === projectId);
 
@@ -138,6 +196,24 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
   const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
     updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
+  // `status` seul : le serveur synchronise `completed` (trigger mig. 091).
+  const setStatus = (task: TeamTask, status: TeamTaskStatus) =>
+    updateTask.mutate({ taskId: task.id, input: { status } });
+
+  /**
+   * Réassignation par glisser-déposer (kanban) — avec « Annuler ».
+   *
+   * Un drag se déclenche à la souris sans confirmation : c'est le geste le plus
+   * facile à faire par accident de toute la vue. Il lui fallait donc le même
+   * filet que la suppression, qui l'avait déjà.
+   */
+  const setAssigneesWithUndo = (task: TeamTask, assigneeIds: string[]) => {
+    const previous = task.assigneeIds;
+    updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
+    showUndoToast(t('projects.reassigned'), () =>
+      updateTask.mutate({ taskId: task.id, input: { assigneeIds: previous } }),
+    );
+  };
 
   // Suppression avec « Annuler » : la tâche est recréée à l'identique.
   const removeWithUndo = (task: TeamTask) =>
@@ -156,6 +232,78 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         );
       },
     });
+
+  // ─── Sélection multiple + actions groupées ──────────────────────────
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+
+  const toggleSelect = (task: TeamTask) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(task.id)) next.delete(task.id);
+      else next.add(task.id);
+      return next;
+    });
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    clearSelection();
+  };
+
+  /** Tâches sélectionnées ENCORE visibles — une sélection ne survit pas au filtre. */
+  const selectedTasks = useMemo(
+    () => visibleTasks.filter((t) => selectedIds.has(t.id)),
+    [visibleTasks, selectedIds],
+  );
+
+  const bulkSetCompleted = (completed: boolean) => {
+    for (const task of selectedTasks) {
+      if (task.completed === completed) continue;
+      updateTask.mutate({ taskId: task.id, input: { completed } });
+    }
+    clearSelection();
+  };
+
+  // Suppression groupée : une seule ligne d'annulation qui recrée TOUT le lot,
+  // plutôt qu'un toast par tâche qui noierait l'écran.
+  const bulkDelete = () => {
+    const doomed = [...selectedTasks];
+    if (doomed.length === 0) return;
+    clearSelection();
+    for (const task of doomed) deleteTask.mutate(task.id);
+    showUndoToast(tp('projects.bulkDeleted', doomed.length), () => {
+      for (const task of doomed) {
+        createTask.mutate({
+          projectId: task.projectId,
+          name: task.name,
+          description: task.description,
+          priority: task.priority,
+          deadline: task.deadline,
+          estimatedTime: task.estimatedTime,
+          assigneeIds: task.assigneeIds,
+        });
+      }
+    });
+  };
+
+  // ─── Deep-link `?task=<id>` ─────────────────────────────────────────
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepTaskId = readEntityParam(searchParams, 'task');
+
+  // Ouvre la tâche ciblée par l'URL une fois les données arrivées, puis retire
+  // le paramètre : sans ce nettoyage, refermer le modal le rouvrirait au rendu
+  // suivant, l'URL restant la source de vérité.
+  useEffect(() => {
+    if (!deepTaskId) return;
+    const target = allTasks.find((t) => t.id === deepTaskId);
+    if (!target) return;
+    setTaskModal({ mode: 'edit', task: target });
+    const next = new URLSearchParams(searchParams);
+    next.delete('task');
+    setSearchParams(next, { replace: true });
+  }, [deepTaskId, allTasks, searchParams, setSearchParams]);
 
   const modalCreate = (input: CreateTeamTaskInput) => createTask.mutateAsync(input);
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
@@ -188,6 +336,10 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       members={members}
       teams={teams}
       isManager={isManager}
+      density={density}
+      selectable={selectMode}
+      selectedIds={selectedIds}
+      onToggleSelect={toggleSelect}
       collapsed={!!collapsed[project.id]}
       onToggleCollapse={() => toggleCollapse(project.id)}
       assigneeFiltered={!!assigneeFilter}
@@ -208,19 +360,39 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       {activeProjects.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap text-xs">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
-            <FolderKanban size={12} aria-hidden="true" /> {activeProjects.length} projet{activeProjects.length > 1 ? 's' : ''}
+            <FolderKanban size={12} aria-hidden="true" /> {tp('projects.projectCount', activeProjects.length)}
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
-            <CircleDashed size={12} aria-hidden="true" /> {openCount} ouverte{openCount > 1 ? 's' : ''}
-          </span>
+          <StatPill
+            active={statusFilter === 'open'}
+            onClick={() => toggleStatus('open')}
+            label={statusFilter === 'open' ? t('projects.filterClear') : t('projects.filterOpen')}
+            tone="neutral"
+          >
+            <CircleDashed size={12} aria-hidden="true" /> {tp('projects.openCount', openCount)}
+          </StatPill>
           {overdueCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-500 font-semibold">
-              <AlarmClock size={12} aria-hidden="true" /> {overdueCount} en retard
-            </span>
+            <StatPill
+              active={statusFilter === 'overdue'}
+              onClick={() => toggleStatus('overdue')}
+              label={statusFilter === 'overdue' ? t('projects.filterClear') : t('projects.filterOverdue')}
+              tone="danger"
+            >
+              <AlarmClock size={12} aria-hidden="true" /> {tp('projects.overdueCount', overdueCount)}
+            </StatPill>
           )}
           {doneThisWeek > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+            <StatPill
+              active={statusFilter === 'doneThisWeek'}
+              onClick={() => toggleStatus('doneThisWeek')}
+              label={statusFilter === 'doneThisWeek' ? t('projects.filterClear') : t('projects.filterDone')}
+              tone="success"
+            >
               <CheckCircle2 size={12} aria-hidden="true" /> {tp('projects.doneThisWeek', doneThisWeek)}
+            </StatPill>
+          )}
+          {totalEstimated > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
+              <Clock size={12} aria-hidden="true" /> {t('projects.estimatedTotal', { duration: formatDuration(totalEstimated) })}
             </span>
           )}
         </div>
@@ -238,7 +410,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
                 !assigneeFilter ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
               }`}
             >
-              Toutes les tâches
+              {t('projects.allTasks')}
             </button>
             <button
               type="button"
@@ -247,7 +419,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
                 assigneeFilter === currentUserId ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
               }`}
             >
-              Mes tâches
+              {t('projects.myTasks')}
             </button>
           </div>
 
@@ -268,7 +440,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
                 </>
               ) : (
                 <>
-                  <UserRound size={14} aria-hidden="true" /> Tâches de…
+                  <UserRound size={14} aria-hidden="true" /> {t('projects.tasksOf')}
                 </>
               )}
             </DropdownMenuTrigger>
@@ -311,9 +483,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             <button
               type="button"
               onClick={() => updatePrefs({ view: 'list' })}
-              aria-label="Vue liste"
+              aria-label={t('projects.listView')}
               aria-pressed={view === 'list'}
-              title="Vue liste"
+              title={t('projects.listView')}
               className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
                 view === 'list' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
               }`}
@@ -332,7 +504,86 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             >
               <SquareKanban size={15} aria-hidden="true" />
             </button>
+            <button
+              type="button"
+              onClick={() => updatePrefs({ view: 'timeline' })}
+              aria-label={t('projects.timelineView')}
+              aria-pressed={view === 'timeline'}
+              title={t('projects.timelineView')}
+              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
+                view === 'timeline' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+            >
+              <CalendarRange size={15} aria-hidden="true" />
+            </button>
           </div>
+
+          {/* Axe du kanban — seulement quand il sert à quelque chose. */}
+          {view === 'kanban' && (
+            <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
+              <button
+                type="button"
+                onClick={() => updatePrefs({ kanbanGroupBy: 'status' })}
+                aria-pressed={kanbanGroupBy === 'status'}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  kanbanGroupBy === 'status'
+                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                    : 'text-[rgb(var(--color-text-muted))]'
+                }`}
+              >
+                {t('projects.groupByStatus')}
+              </button>
+              <button
+                type="button"
+                onClick={() => updatePrefs({ kanbanGroupBy: 'assignee' })}
+                aria-pressed={kanbanGroupBy === 'assignee'}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  kanbanGroupBy === 'assignee'
+                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                    : 'text-[rgb(var(--color-text-muted))]'
+                }`}
+              >
+                {t('projects.groupByAssignee')}
+              </button>
+            </div>
+          )}
+
+          {/* Densité : un manager avec 12 projets scrolle, un IC avec 4 tâches
+              veut de l'air. Persisté par org comme les autres prefs. */}
+          <button
+            type="button"
+            onClick={() => updatePrefs({ density: density === 'compact' ? 'comfortable' : 'compact' })}
+            aria-pressed={density === 'compact'}
+            title={density === 'compact' ? t('projects.densityComfortable') : t('projects.densityCompact')}
+            aria-label={t('projects.densityToggle')}
+            className={`w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] flex items-center justify-center transition-colors ${
+              density === 'compact'
+                ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+            }`}
+          >
+            <Rows3 size={15} aria-hidden="true" />
+          </button>
+
+          {/* Mode sélection — réservé à la vue liste : le kanban a déjà le
+              drag & drop comme geste principal, y superposer des cases à
+              cocher rendrait la carte ambiguë au clic. */}
+          {view === 'list' && (
+            <button
+              type="button"
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+              aria-pressed={selectMode}
+              title={selectMode ? t('projects.selectExit') : t('projects.selectMode')}
+              aria-label={selectMode ? t('projects.selectExit') : t('projects.selectMode')}
+              className={`w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] flex items-center justify-center transition-colors ${
+                selectMode
+                  ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                  : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              <ListChecks size={15} aria-hidden="true" />
+            </button>
+          )}
 
           {isManager && !showNewProject && (
             <button
@@ -340,7 +591,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
               onClick={() => setShowNewProject(true)}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] text-sm font-medium text-[rgb(var(--color-text-secondary))] transition-colors"
             >
-              <Plus size={15} aria-hidden="true" /> Nouveau projet
+              <Plus size={15} aria-hidden="true" /> {t('projects.newProject')}
             </button>
           )}
         </div>
@@ -376,14 +627,22 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('projects.managerMustCreate')}</p>
           )}
         </div>
+      ) : view === 'timeline' ? (
+        <TeamProjectsTimeline
+          projects={activeProjects}
+          tasks={visibleTasks}
+          onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+        />
       ) : view === 'kanban' ? (
         <TeamProjectsKanban
           projects={activeProjects}
           tasks={statsTasks}
           members={members}
-          onSetAssignees={setAssignees}
+          onSetAssignees={setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
           onAddToColumn={(memberId) => setAssignSheetFor(memberId)}
+          groupBy={kanbanGroupBy}
+          onSetStatus={setStatus}
         />
       ) : (
         <>
@@ -447,6 +706,19 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         />
       )}
 
+      {/* Barre d'actions groupées (flottante) */}
+      {selectMode && (
+        <BulkActionsBar
+          count={selectedTasks.length}
+          hasOpen={selectedTasks.some((t) => !t.completed)}
+          hasCompleted={selectedTasks.some((t) => t.completed)}
+          onComplete={() => bulkSetCompleted(true)}
+          onReopen={() => bulkSetCompleted(false)}
+          onDelete={bulkDelete}
+          onClear={clearSelection}
+        />
+      )}
+
       {/* Modal de tâche (création / édition) */}
       {taskModal && (
         <TeamTaskModal
@@ -459,6 +731,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           onCreate={modalCreate}
           onUpdate={modalUpdate}
           onDelete={removeWithUndo}
+          isManager={isManager}
           onClose={() => setTaskModal(null)}
         />
       )}

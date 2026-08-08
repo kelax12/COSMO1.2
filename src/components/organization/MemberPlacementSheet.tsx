@@ -62,14 +62,14 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={18} aria-hidden="true" />
           </button>
         </div>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">
-          Choisissez son nouveau responsable direct dans la pyramide.
+          {t('member.placementHint')}
         </p>
 
         <ul className="space-y-1.5">
@@ -111,7 +111,7 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
           ))}
           {candidates.length === 0 && (
             <li className="text-center text-xs text-[rgb(var(--color-text-muted))] py-6">
-              Aucune destination possible.
+              {t('member.placementEmpty')}
             </li>
           )}
         </ul>

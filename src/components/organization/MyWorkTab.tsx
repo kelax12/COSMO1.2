@@ -14,7 +14,9 @@ import {
 } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import type { OrgMember } from '@/modules/organizations';
-import { projectColor, PRIORITY_META, sortOpenTasks } from './team-projects.helpers';
+import {
+  projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration,
+} from './team-projects.helpers';
 import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
 import TeamActivityFeed from './TeamActivityFeed';
@@ -129,6 +131,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const open = useMemo(() => sortOpenTasks(mine.filter((t) => !t.completed)), [mine]);
   const done = mine.filter((t) => t.completed);
   const overdue = open.filter(isOverdue);
+  /** Mon reste à faire estimé — le champ était saisi puis jamais restitué. */
+  const myEstimated = useMemo(() => sumEstimatedTime(open), [open]);
   const completionRate = mine.length ? Math.round((done.length / mine.length) * 100) : 0;
 
   // Échéances à venir (mes tâches ouvertes datées, triées).
@@ -214,6 +218,11 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
               {t('myWork.myTasksSection', { count: open.length })}
+              {myEstimated > 0 && (
+                <span className="ml-2 font-normal text-[rgb(var(--color-text-muted))]">
+                  · {formatDuration(myEstimated)}
+                </span>
+              )}
             </h3>
             {open.length === 0 ? (
               <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.allDone')}</p>
@@ -302,7 +311,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
       {orgDeadlines.length > 0 && (
         <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
           <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-            Prochaines échéances de l'entreprise
+            {t('myWork.orgDeadlines')}
           </h3>
           <ul className="space-y-1.5">
             {orgDeadlines.map((item) => (
@@ -333,6 +342,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           projects={activeProjects}
           members={members}
           onUpdate={modalUpdate}
+          isManager={isAdmin}
           onClose={() => setEditingTask(null)}
         />
       )}

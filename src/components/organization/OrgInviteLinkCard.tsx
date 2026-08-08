@@ -44,7 +44,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
       toast.success(t('invite.linkCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le lien');
+      toast.error(t('invite.linkCopyFailed'));
     }
   };
 
@@ -63,7 +63,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
             type="button"
             onClick={copy}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors shrink-0"
-            aria-label="Copier le lien d'invitation"
+            aria-label={t('invite.copyLinkAria')}
           >
             {copied ? <Check size={18} className="text-green-500" aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
           </button>

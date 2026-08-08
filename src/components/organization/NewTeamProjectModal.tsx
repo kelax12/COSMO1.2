@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type { CreateTeamProjectInput } from '@/modules/team-projects';
-import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
+import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META, projectColor } from './team-projects.helpers';
+import { PROJECT_TEMPLATES, type ProjectTemplate } from './project-templates';
 import AssigneesPicker from './AssigneesPicker';
 import { useT } from '@/i18n/useT';
 
@@ -46,6 +47,27 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
   const [composerAssignees, setComposerAssignees] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [appliedTemplate, setAppliedTemplate] = useState<string | null>(null);
+
+  /**
+   * Applique un gabarit. On n'écrase le nom que s'il est vide ou s'il provient
+   * d'un gabarit précédent : quelqu'un qui a déjà tapé son propre titre puis
+   * clique sur un gabarit pour récupérer ses tâches ne doit pas le perdre.
+   */
+  const applyTemplate = (tpl: ProjectTemplate) => {
+    const nameIsFree = name.trim() === '' || appliedTemplate !== null;
+    if (nameIsFree) setName(t(tpl.labelKey));
+    setColor(tpl.color);
+    setTasks(tpl.taskKeys.map((key) => ({ name: t(key), assigneeIds: [] })));
+    setAppliedTemplate(tpl.id);
+    setError(null);
+  };
+
+  const clearTemplate = () => {
+    setName('');
+    setTasks([]);
+    setAppliedTemplate(null);
+  };
 
   const addTask = () => {
     const n = composerName.trim();
@@ -97,7 +119,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Nouveau projet
+            {t('common.newProject')}
           </h2>
           <button
             onClick={onClose}
@@ -117,6 +139,45 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
               {error}
             </div>
           )}
+
+          {/* Gabarits — un projet vide part rarement de rien. Applique nom,
+              couleur et tâches initiales ; tout reste modifiable ensuite. */}
+          <div>
+            <span className={labelClass} style={labelStyle}>{t('templates.pickLabel')}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {PROJECT_TEMPLATES.map((tpl) => {
+                const active = appliedTemplate === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => applyTemplate(tpl)}
+                    aria-pressed={active}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                      active
+                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                        : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${projectColor(tpl.color).dot}`}
+                      aria-hidden="true"
+                    />
+                    {t(tpl.labelKey)}
+                  </button>
+                );
+              })}
+              {appliedTemplate && (
+                <button
+                  type="button"
+                  onClick={clearTemplate}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
+                >
+                  <X size={12} aria-hidden="true" /> {t('templates.clear')}
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* Nom */}
           <div>
@@ -181,7 +242,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           <div>
             <span className={labelClass} style={labelStyle}>
               <ListTodo size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
-              Tâches initiales (optionnel)
+              {t('project.initialTasks')}
             </span>
 
             {tasks.length > 0 && (
@@ -251,7 +312,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           }}
         >
           <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"

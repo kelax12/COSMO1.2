@@ -13,7 +13,12 @@
     "memberCount_one": "{{count}} member",
     "memberCount_other": "{{count}} members",
     "memberCountDot_one": "{{count}} member.",
-    "memberCountDot_other": "{{count}} members."
+    "memberCountDot_other": "{{count}} members.",
+    "directoryTitle": "Directory ({{count}})",
+    "deleteOrg": "Delete organization",
+    "leaveOrg": "Leave organization",
+    "badgeCount_one": "{{count}} new item",
+    "badgeCount_other": "{{count}} new items"
   },
   "onboarding": {
     "intro": "Create your company or join one to collaborate with your team.",
@@ -65,7 +70,10 @@
     "personalLink": "Personal invitation link",
     "personalLinkHint": "Single-use, valid for 7 days. Once they create their account, the person joins the company directly, reporting to {{name}}.",
     "you": "you",
-    "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the pyramid)."
+    "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the pyramid).",
+    "copyLinkAria": "Copy invitation link",
+    "copyCodeAria": "Copy invitation code",
+    "orgCodeTitle": "Organization invitation code"
   },
   "pyramid": {
     "directReports_one": ", {{count}} direct report",
@@ -118,7 +126,12 @@
     "directCount_other": "{{count}} direct",
     "totalSuffix": " · {{count}} in total",
     "dragEachHint": "Drag each person onto their manager in the pyramid.",
-    "place": "Place"
+    "place": "Place",
+    "overlayToggle": "Show workload",
+    "overlayHint": "Colors cards by estimated time left",
+    "seeTasksAction": "See their tasks",
+    "emptyTitle": "Your pyramid is empty",
+    "inviteFirst": "Invite your first teammate"
   },
   "overview": {
     "completed": "Completed",
@@ -143,7 +156,24 @@
     "emptyVelocity": "No completions over this period.",
     "trend": "Completion rate trend",
     "emptyTrend": "Not enough data over this period.",
-    "emptyOkr": "No team OKRs yet."
+    "emptyOkr": "No team OKRs yet.",
+    "workloadTitle": "Team workload",
+    "workloadHint": "Estimated time left on open tasks, compared to the team median.",
+    "workloadEmpty": "No estimated open tasks. Fill in estimated time on tasks to see how workload is spread.",
+    "workloadOver": "Overloaded",
+    "workloadUnder": "Underloaded",
+    "workloadNormal": "Normal",
+    "workloadOpen_one": "{{count}} open",
+    "workloadOpen_other": "{{count}} open",
+    "workloadOverdue": "{{count}} overdue",
+    "workloadNoEstimate": "no estimate",
+    "byMember": "By member",
+    "openTasks": "Open tasks",
+    "openShort": "Open",
+    "overdueShort": "Overdue",
+    "okrProgressTitle": "OKR progress",
+    "overdueByMember": "Overdue by member",
+    "csvProject": "Project"
   },
   "myWork": {
     "upToDate": "Up to date",
@@ -162,7 +192,8 @@
     "myDeadlines": "My due dates ({{count}})",
     "noDeadline": "No dated due date.",
     "stepInvite": "Invite members",
-    "myTasksSection": "My tasks ({{count}})"
+    "myTasksSection": "My tasks ({{count}})",
+    "orgDeadlines": "Upcoming company deadlines"
   },
   "okrModal": {
     "edit": "Edit objective",
@@ -186,7 +217,9 @@
     "cancel": "Cancel",
     "saving": "Saving…",
     "save": "Save",
-    "create": "Create"
+    "create": "Create",
+    "descPlaceholder": "Optional…",
+    "wholeOrg": "Whole organization"
   },
   "projects": {
     "taskDeleted": "Task deleted",
@@ -204,7 +237,53 @@
     "createProject": "Create a project",
     "managerMustCreate": "A manager needs to create a project.",
     "archived": "Archived projects ({{count}})",
-    "orgSection": "Company"
+    "orgSection": "Company",
+    "allTasks": "All tasks",
+    "myTasks": "My tasks",
+    "tasksOf": "Tasks of…",
+    "newProject": "New project",
+    "listView": "List view",
+    "projectCount_one": "{{count}} project",
+    "projectCount_other": "{{count}} projects",
+    "openCount_one": "{{count}} open",
+    "openCount_other": "{{count}} open",
+    "overdueCount_one": "{{count}} overdue",
+    "overdueCount_other": "{{count}} overdue",
+    "filterOpen": "Show open tasks only",
+    "filterOverdue": "Show overdue tasks only",
+    "filterDone": "Show tasks completed this week",
+    "filterClear": "Clear filter",
+    "densityToggle": "Display density",
+    "densityComfortable": "Comfortable",
+    "densityCompact": "Compact",
+    "estimatedTotal": "{{duration}} estimated",
+    "selectMode": "Select",
+    "selectExit": "Exit selection",
+    "selectTask": "Select \"{{name}}\"",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "bulkDone": "Complete",
+    "bulkReopen": "Reopen",
+    "bulkDelete": "Delete",
+    "bulkClear": "Clear selection",
+    "bulkDeleted_one": "{{count}} task deleted",
+    "bulkDeleted_other": "{{count}} tasks deleted",
+    "selectAll": "Select all",
+    "reassigned": "Task reassigned",
+    "timelineView": "Timeline view",
+    "timelineEmpty": "No upcoming deadlines. Add dates to tasks to see them here.",
+    "timelineToday": "Today",
+    "timelineNotGantt": "Places tasks at their deadline. Tasks without a date are not shown.",
+    "timelineMarker": "{{name}} — due {{date}}",
+    "statusTodo": "To do",
+    "statusInProgress": "In progress",
+    "statusReview": "In review",
+    "statusBlocked": "Blocked",
+    "statusDone": "Done",
+    "groupBy": "Group by",
+    "groupByAssignee": "Assignee",
+    "groupByStatus": "Status",
+    "statusLabel": "Status"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -219,7 +298,8 @@
     "noContribution": "No contributions to show.",
     "completionRate": "Completion rate",
     "tasksDone": "Tasks completed",
-    "progress": "Progress"
+    "progress": "Progress",
+    "addTask": "Add a task"
   },
   "taskModal": {
     "newAria": "New team task",
@@ -238,7 +318,36 @@
     "creating": "Creating...",
     "saving": "Saving...",
     "create": "Create task",
-    "save": "Save"
+    "save": "Save",
+    "subtasksTitle": "Subtasks",
+    "subtasksAdd": "Add a subtask",
+    "subtasksPlaceholder": "What needs doing?",
+    "subtasksEmpty": "Break this task into steps.",
+    "subtasksDelete": "Delete \"{{title}}\"",
+    "subtasksToggle": "Check \"{{title}}\"",
+    "subtasksProgress": "{{done}} of {{total}}",
+    "labelsTitle": "Labels",
+    "labelsNone": "No label",
+    "labelsPick": "Pick labels",
+    "labelsCreate": "Create \"{{name}}\"",
+    "labelsSearch": "Search or create…",
+    "labelsManagerOnly": "Only a manager can create a label.",
+    "historyTitle": "History",
+    "historyEmpty": "No recorded change.",
+    "historyStatus": "changed the status",
+    "historyAssignees": "changed assignees",
+    "historyDeadline": "changed the deadline",
+    "historyPriority": "changed the priority",
+    "historyProject": "moved the task",
+    "historyName": "renamed the task",
+    "historyFrom": "from {{from}}",
+    "historyTo": "to {{to}}",
+    "historyUnknownActor": "Someone",
+    "historyNone": "none",
+    "closeForm": "Close form",
+    "namePlaceholder": "What needs doing?",
+    "timePlaceholder": "e.g. 45",
+    "hasDescription": "Has a description"
   },
   "team": {
     "newTeam": "New team",
@@ -282,7 +391,13 @@
     "doneRatio": "{{done}}/{{total}} tasks completed ({{percent}}%)",
     "teamBadge": "Team",
     "createFirstTask": "Create the first task",
-    "completed": "Completed ({{count}})"
+    "completed": "Completed ({{count}})",
+    "restEstimated": "{{duration}} left",
+    "rename": "Rename",
+    "restore": "Restore",
+    "archive": "Archive",
+    "renameAria": "Rename project",
+    "initialTasks": "Initial tasks (optional)"
   },
   "deleteOrg": {
     "irreversible": "This cannot be undone.",
@@ -290,7 +405,9 @@
     "membersLose_other": "The {{count}} members lose access immediately.",
     "projectsDeleted": "All projects, team tasks and OKRs are permanently deleted.",
     "teamsErased": "Teams, invitations and the pyramid are erased.",
-    "personalSafe": "Members' personal data is not affected."
+    "personalSafe": "Members' personal data is not affected.",
+    "confirmPrefix": "To confirm, type",
+    "confirmSuffix": "below:"
   },
   "consent": {
     "visibility": "Members see your name, your avatar and your activity on team projects (tasks, comments).",
@@ -330,7 +447,12 @@
     "searchPlaceholder": "Search a member (name, email)…",
     "searchAria": "Search a member in the directory",
     "clearSearch": "Clear the search",
-    "noMatch": "No member matches “{{query}}”."
+    "noMatch": "No member matches “{{query}}”.",
+    "assignTask": "Assign a task",
+    "seeTasks": "See their tasks",
+    "seeAgenda": "See their calendar",
+    "seeContribution": "See their contribution",
+    "removeFromOrg": "Remove from organization"
   },
   "member": {
     "detach": "Detach (unplaced)",
@@ -347,7 +469,17 @@
     "reassignHint_other": "{{count}} direct reports — choose their new manager in the pyramid. Their own team stays with them.",
     "detachThem": "Detach them (unplaced)",
     "reassigning": "Reassigning…",
-    "willBeRemoved": "{{name}} will be permanently removed from the company."
+    "willBeRemoved": "{{name}} will be permanently removed from the company.",
+    "copyLink": "Copy link to this profile",
+    "copyLinkDone": "Link copied",
+    "placementHint": "Pick their new direct manager in the pyramid.",
+    "placementEmpty": "No possible destination.",
+    "sheetAria": "{{name}}'s profile",
+    "tabsAria": "Member profile sections",
+    "tabProfile": "Profile",
+    "tabTasks": "Tasks",
+    "tabContribution": "Contribution",
+    "tabAgenda": "Calendar"
   },
   "okrCategory": {
     "new": "New category",
@@ -363,7 +495,9 @@
     "empty": "No objectives",
     "emptyManager": "Create an objective to align the team.",
     "emptyMember": "A manager needs to create an objective.",
-    "emptyCategory": "No objectives in this category"
+    "emptyCategory": "No objectives in this category",
+    "newObjective": "New objective",
+    "seeAll": "See all objectives"
   },
   "switcher": {
     "myOrgs": "My companies",
@@ -407,7 +541,11 @@
   },
   "comments": {
     "loading": "Loading…",
-    "placeholder": "Write a comment… (@ to mention)"
+    "placeholder": "Write a comment… (@ to mention)",
+    "empty": "No comment yet — start the discussion. Type \"@\" to mention someone.",
+    "deleteAria": "Delete this comment",
+    "mentionAria": "Mention a member",
+    "sendAria": "Send comment"
   },
   "leaveDialog": {
     "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."
@@ -422,10 +560,48 @@
     "nextPeriod": "Next period",
     "teamTasks": "Team tasks",
     "close": "Close the calendar",
-    "addTaskFor": "Add a task for {{name}}"
+    "addTaskFor": "Add a task for {{name}}",
+    "managerHint": "You manage this calendar — create, drag their tasks, move or edit their events.",
+    "today": "Today",
+    "dragHint": "Drag a task onto the calendar to schedule it.",
+    "noTasks": "No team task assigned.",
+    "tasksTitle": "Tasks"
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel",
+    "add": "Add",
+    "remove": "Remove",
+    "deleteAction": "Delete",
+    "addCollaborator": "Add a teammate",
+    "seeAgenda": "See their calendar",
+    "seeContribution": "See their contribution",
+    "removeFromOrg": "Remove from the company",
+    "actionsFor": "Actions for {{name}}",
+    "orgProfileAria": "Company profile",
+    "descriptionPlaceholder": "What does your company do?",
+    "nameLabel": "Name",
+    "removeImage": "Remove",
+    "cancelRequest": "Cancel my request",
+    "orgNameLabel": "Company name",
+    "consentIntro": "By joining this company:",
+    "consentAccept": "I understand what the company will be able to see and I accept these terms.",
+    "youBadge": "You",
+    "seeProfileOf": "See {{name}}'s profile",
+    "newProject": "New project",
+    "settingsSection": "Company",
+    "adminBadge": "Admin",
+    "removeKr": "Remove",
+    "orgWideBadge": "Company",
+    "agendaDay": "Day",
+    "agendaWeek": "Week",
+    "agendaMonth": "Month",
+    "addUnderTitle": "Add under {{name}}",
+    "deleteOrgTitle": "Delete {{name}}?",
+    "deleteOrgAria": "Delete the company {{name}}",
+    "deleteOkrConfirm": "Delete the objective “{{title}}”?",
+    "deleteOkrAria": "Delete the objective {{title}}",
+    "editOkrAria": "Edit the objective {{title}}"
   },
   "tabs": {
     "overview": "Overview",
@@ -444,5 +620,53 @@
     "red": "Red",
     "pink": "Pink",
     "violet": "Violet"
+  },
+  "templates": {
+    "pickLabel": "Start from a template",
+    "clear": "Start from scratch",
+    "onboarding": "Client onboarding",
+    "onboardingT1": "Kick-off meeting",
+    "onboardingT2": "Collect access and documents",
+    "onboardingT3": "Set up the account",
+    "onboardingT4": "30-day check-in",
+    "launch": "Product launch",
+    "launchT1": "Define positioning",
+    "launchT2": "Prepare communication assets",
+    "launchT3": "Pre-release testing",
+    "launchT4": "Go live",
+    "launchT5": "Post-launch review",
+    "sprint": "Sprint",
+    "sprintT1": "Scoping and prioritisation",
+    "sprintT2": "Development",
+    "sprintT3": "Testing",
+    "sprintT4": "Retrospective"
+  },
+  "weeklyReview": {
+    "title": "Weekly review",
+    "subtitle": "Four questions to prepare your Monday.",
+    "open": "Weekly review",
+    "progressTitle": "What moved forward",
+    "vsLastWeek": "{{change}}% vs last week",
+    "noComparison": "Nothing to compare",
+    "lastWeekCount_one": "{{count}} completed last week",
+    "lastWeekCount_other": "{{count}} completed last week",
+    "slippedTitle": "What slipped",
+    "slippedEmpty": "No deadline pushed back over the last two weeks.",
+    "tensionTitle": "Who is under pressure",
+    "tensionEmpty": "Nobody above the team's median workload.",
+    "workload": "{{duration}} · {{open}} open",
+    "arbitrageTitle": "Decisions",
+    "arbitrageEmpty": "No overdue task — nothing to decide.",
+    "arbitrageHint": "Open each task to reschedule, reassign or drop it."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Company notifications",
+    "bellUnread_one": "Company notifications, {{count}} unread",
+    "bellUnread_other": "Company notifications, {{count}} unread",
+    "byActor": "{{actor}} — {{label}}",
+    "kindAssigned": "A task was assigned to you",
+    "kindMention": "You were mentioned in a comment",
+    "kindOverdue": "One of your tasks is overdue"
   }
 }

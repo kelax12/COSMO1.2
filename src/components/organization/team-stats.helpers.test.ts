@@ -8,6 +8,7 @@ import {
   summarize, overallOkrProgress, okrProgress,
   memberLoad, overdueByMember, projectBreakdown,
   velocityByWeek, completionTrend, okrBreakdown,
+  memberWorkload, workloadTone,
 } from './team-stats.helpers';
 
 const NOW = new Date('2026-07-18T12:00:00Z');
@@ -20,7 +21,7 @@ const dateStr = (daysFromNow: number) => {
 const task = (over: Partial<TeamTask>): TeamTask => ({
   id: 't1', orgId: 'o', projectId: 'p1', name: 'T', priority: 3,
   deadline: '', estimatedTime: 30, assigneeIds: ['u1'], createdBy: 'u1',
-  completed: false, completedAt: null, createdAt: iso(5), updatedAt: iso(1),
+  completed: false, status: 'todo', completedAt: null, createdAt: iso(5), updatedAt: iso(1),
   ...over,
 });
 
@@ -258,5 +259,119 @@ describe('completionTrend', () => {
     expect(trend[trend.length - 1].rate).toBe(50);
     // Première semaine (avant toute création) : 0 %
     expect(trend[0].rate).toBe(0);
+  });
+});
+
+describe('memberWorkload', () => {
+  it('somme les minutes estimées des tâches ouvertes par membre', () => {
+    const rows = memberWorkload(
+      [
+        task({ id: 'a', assigneeIds: ['u1'], estimatedTime: 60 }),
+        task({ id: 'b', assigneeIds: ['u1'], estimatedTime: 30 }),
+        task({ id: 'c', assigneeIds: ['u2'], estimatedTime: 30 }),
+      ],
+      members,
+      NOW,
+    );
+    expect(rows.find((r) => r.userId === 'u1')?.estimatedMinutes).toBe(90);
+    expect(rows.find((r) => r.userId === 'u2')?.estimatedMinutes).toBe(30);
+  });
+
+  it('exclut les tâches terminées de la charge restante', () => {
+    const rows = memberWorkload(
+      [
+        task({ id: 'a', assigneeIds: ['u1'], estimatedTime: 60, completed: true, completedAt: iso(1) }),
+        task({ id: 'b', assigneeIds: ['u1'], estimatedTime: 30 }),
+      ],
+      members,
+      NOW,
+    );
+    expect(rows.find((r) => r.userId === 'u1')?.estimatedMinutes).toBe(30);
+  });
+
+  it('compte une tâche multi-assignée pour chaque assigné', () => {
+    const rows = memberWorkload(
+      [task({ id: 'a', assigneeIds: ['u1', 'u2'], estimatedTime: 60 })],
+      members,
+      NOW,
+    );
+    expect(rows.find((r) => r.userId === 'u1')?.estimatedMinutes).toBe(60);
+    expect(rows.find((r) => r.userId === 'u2')?.estimatedMinutes).toBe(60);
+  });
+
+  it('compte les retards séparément', () => {
+    const rows = memberWorkload(
+      [
+        task({ id: 'a', assigneeIds: ['u1'], deadline: dateStr(-3) }),
+        task({ id: 'b', assigneeIds: ['u1'], deadline: dateStr(3) }),
+      ],
+      members,
+      NOW,
+    );
+    const u1 = rows.find((r) => r.userId === 'u1');
+    expect(u1?.overdue).toBe(1);
+    expect(u1?.open).toBe(2);
+  });
+
+  it('calcule un ratio relatif à la médiane de l\'équipe', () => {
+    // u1 = 120 min, u2 = 60 min → médiane 90 → ratios 1.33 et 0.67.
+    const rows = memberWorkload(
+      [
+        task({ id: 'a', assigneeIds: ['u1'], estimatedTime: 120 }),
+        task({ id: 'b', assigneeIds: ['u2'], estimatedTime: 60 }),
+      ],
+      members,
+      NOW,
+    );
+    expect(rows.find((r) => r.userId === 'u1')?.loadRatio).toBeCloseTo(1.33, 1);
+    expect(rows.find((r) => r.userId === 'u2')?.loadRatio).toBeCloseTo(0.67, 1);
+  });
+
+  it('donne un ratio de 0 quand personne n\'a d\'estimation', () => {
+    const rows = memberWorkload(
+      [task({ id: 'a', assigneeIds: ['u1'], estimatedTime: undefined })],
+      members,
+      NOW,
+    );
+    expect(rows.every((r) => r.loadRatio === 0)).toBe(true);
+  });
+
+  it('trie du plus chargé au moins chargé', () => {
+    const rows = memberWorkload(
+      [
+        task({ id: 'a', assigneeIds: ['u2'], estimatedTime: 200 }),
+        task({ id: 'b', assigneeIds: ['u1'], estimatedTime: 10 }),
+      ],
+      members,
+      NOW,
+    );
+    expect(rows[0].userId).toBe('u2');
+  });
+
+  it('inclut un membre sans aucune tâche, à zéro', () => {
+    const rows = memberWorkload([task({ id: 'a', assigneeIds: ['u1'] })], members, NOW);
+    const u2 = rows.find((r) => r.userId === 'u2');
+    expect(u2).toBeDefined();
+    expect(u2?.open).toBe(0);
+    expect(u2?.estimatedMinutes).toBe(0);
+  });
+});
+
+describe('workloadTone', () => {
+  it('signale une surcharge au-delà de 1.5x la médiane', () => {
+    expect(workloadTone(1.6)).toBe('over');
+  });
+
+  it('signale une sous-charge en dessous de 0.5x', () => {
+    expect(workloadTone(0.3)).toBe('under');
+  });
+
+  it('considère le reste comme normal', () => {
+    expect(workloadTone(1)).toBe('normal');
+    expect(workloadTone(1.4)).toBe('normal');
+  });
+
+  it('ne qualifie pas une équipe sans estimation', () => {
+    expect(workloadTone(0)).toBe('normal');
   });
 });

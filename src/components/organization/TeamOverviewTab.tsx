@@ -1,18 +1,23 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import { subtreeOf, type OrgMember } from '@/modules/organizations';
+import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
 import { projectColor } from './team-projects.helpers';
-import { Download } from 'lucide-react';
+import { Download, ClipboardCheck } from 'lucide-react';
 import { downloadCSV } from '@/lib/csv-export';
 import {
   STATS_PERIODS, type StatsPeriod, periodStart, filterByActivity, scopeOkrs,
   summarize, overallOkrProgress, memberLoad, overdueByMember,
   projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
+  memberWorkload,
 } from './team-stats.helpers';
+import TeamWorkloadCard from './TeamWorkloadCard';
+import WeeklyReviewSheet from './WeeklyReviewSheet';
+import { buildOrgLink } from './deep-link.helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamOverviewTabProps {
@@ -73,6 +78,13 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: allOkrs = [] } = useTeamOKRs(orgId);
   const [period, setPeriod] = useState<StatsPeriod>('30');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Revue hebdomadaire (#26) : elle sert a arbitrer la charge d'AUTRES
+  // personnes. Un membre sans subordonne n'a rien a y arbitrer — le bouton ne
+  // lui est donc pas propose.
+  const canReview = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
 
   // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
   const scopedMembers = useMemo(() => {
@@ -103,6 +115,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const summary = useMemo(() => summarize(periodTasks), [periodTasks]);
   const okrProgress = useMemo(() => overallOkrProgress(okrs), [okrs]);
   const load = useMemo(() => memberLoad(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
+  // Charge : calculée sur les tâches du périmètre SANS filtre de période — une
+  // tâche ouverte pèse sur l'équipe qu'elle ait été créée hier ou il y a six
+  // mois. La borner à la fenêtre affichée sous-estimerait la charge réelle.
+  const workload = useMemo(() => memberWorkload(scopedTasks, scopedMembers), [scopedTasks, scopedMembers]);
   const overdueMembers = useMemo(() => overdueByMember(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
   const byProject = useMemo(() => projectBreakdown(periodTasks, projects), [periodTasks, projects]);
   const velocity = useMemo(() => velocityByWeek(scopedTasks, start), [scopedTasks, start]);
@@ -136,7 +152,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     );
     setTimeout(() => downloadCSV(
       'cosmo-stats-projets',
-      ['Projet', 'Ouvertes', 'En retard', 'Total'],
+      [t('overview.csvProject'), t('overview.openShort'), t('overview.overdueShort'), t('overview.csvTotal')],
       byProject.map((p) => [p.name, p.open, p.overdue, p.total]),
     ), 150);
     setTimeout(() => downloadCSV(
@@ -172,6 +188,15 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
               </button>
             ))}
           </div>
+          {canReview && (
+            <button
+              type="button"
+              onClick={() => setReviewOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            >
+              <ClipboardCheck size={13} aria-hidden="true" /> {t('weeklyReview.open')}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleExport}
@@ -193,9 +218,13 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
       />
 
+      {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
+          la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}
+      <TeamWorkloadCard rows={workload} members={scopedMembers} />
+
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title="Par membre">
+        <SectionCard title={t('overview.byMember')}>
           {load.every((m) => m.total === 0) ? (
             <EmptyRow>{t('overview.emptyAssigned')}</EmptyRow>
           ) : (
@@ -204,7 +233,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                 <li key={m.userId} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
                   <MiniBar ratio={m.open / maxOpen} colorClass="bg-[rgb(var(--color-accent-solid))]" />
-                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Tâches ouvertes">
+                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={t('overview.openTasks')}>
                     {m.open}
                   </span>
                   <span
@@ -231,9 +260,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
                   <span className="w-24 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{p.name}</span>
                   <MiniBar ratio={p.open / maxProjectOpen} colorClass={projectColor(p.color).dot} />
-                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Ouvertes">{p.open}</span>
+                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={t('overview.openShort')}>{p.open}</span>
                   {p.overdue > 0 ? (
-                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title="En retard">{p.overdue} retard</span>
+                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title={t('overview.overdueShort')}>{p.overdue} retard</span>
                   ) : (
                     <span className="w-14 shrink-0" />
                   )}
@@ -280,7 +309,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </div>
 
       {/* Avancement OKR détaillé */}
-      <SectionCard title="Avancement des OKR">
+      <SectionCard title={t('overview.okrProgressTitle')}>
         {okrStats.length === 0 ? (
           <EmptyRow>{t('overview.emptyOkr')}</EmptyRow>
         ) : (
@@ -308,7 +337,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* Retards par membre + liste des tâches en retard */}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
-          <SectionCard title="Retards par membre">
+          <SectionCard title={t('overview.overdueByMember')}>
             <ul className="space-y-2.5">
               {overdueMembers.map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
@@ -344,6 +373,21 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
             </ul>
           </div>
         </div>
+      )}
+
+      {reviewOpen && (
+        <WeeklyReviewSheet
+          orgId={orgId}
+          // Meme perimetre que les statistiques affichees au-dessus : la revue
+          // ne doit pas montrer une equipe plus large que l'onglet qui la porte.
+          tasks={scopedTasks}
+          members={scopedMembers}
+          onOpenTask={(taskId) => {
+            setReviewOpen(false);
+            navigate(buildOrgLink('projects', { task: taskId }));
+          }}
+          onClose={() => setReviewOpen(false)}
+        />
       )}
     </div>
   );

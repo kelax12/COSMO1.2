@@ -71,7 +71,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
       toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le code');
+      toast.error(t('createJoin.copyFailed'));
     }
   };
 
@@ -98,7 +98,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             type="button"
             onClick={() => createdOrg.joinCode && copyCode(createdOrg.joinCode)}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors"
-            aria-label="Copier le code d'invitation"
+            aria-label={t('invite.copyCodeAria')}
           >
             {copied ? <Check size={18} className="text-green-500" aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
           </button>
@@ -132,7 +132,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
           disabled={cancelMutation.isPending}
           className="text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-colors underline underline-offset-2 disabled:opacity-60"
         >
-          Annuler ma demande
+          {t('common.cancelRequest')}
         </button>
       </div>
     );
@@ -182,7 +182,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
       {mode === 'create' ? (
         <div className="space-y-3">
           <label htmlFor="org-name" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-            Nom de l'entreprise
+            {t('common.orgNameLabel')}
           </label>
           <input
             id="org-name"
@@ -207,7 +207,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
       ) : (
         <div className="space-y-3">
           <label htmlFor="org-code" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-            Code d'invitation
+            {t('invite.codeTitle')}
           </label>
           <input
             id="org-code"

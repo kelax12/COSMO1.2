@@ -53,7 +53,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
       toast.success(t('invite.linkCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le lien');
+      toast.error(t('invite.linkCopyFailed'));
     }
   };
 
@@ -65,7 +65,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
       toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCodeCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le code');
+      toast.error(t('createJoin.copyFailed'));
     }
   };
 
@@ -78,16 +78,18 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label={`Ajouter sous ${under.displayName}`}
+        aria-label={t('common.addUnderTitle', { name: under.displayName })}
       >
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-            Ajouter sous {under.userId === currentUserId ? 'vous' : under.displayName}
+            {t('common.addUnderTitle', {
+              name: under.userId === currentUserId ? t('invite.you') : under.displayName,
+            })}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={18} aria-hidden="true" />
@@ -114,7 +116,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
                 type="button"
                 onClick={copy}
                 className="w-10 h-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] shrink-0"
-                aria-label="Copier le lien d'invitation"
+                aria-label={t('invite.copyLinkAria')}
               >
                 {copied ? <Check size={16} className="text-green-500" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
               </button>
@@ -135,7 +137,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
         {joinCode && (
           <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
-              Code d'invitation de l'entreprise
+              {t('invite.orgCodeTitle')}
             </h3>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
               {t('invite.permanentCodeHint')}
@@ -148,7 +150,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
                 type="button"
                 onClick={copyCode}
                 className="w-10 h-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] shrink-0"
-                aria-label="Copier le code d'invitation"
+                aria-label={t('invite.copyCodeAria')}
               >
                 {codeCopied ? <Check size={16} className="text-green-500" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
               </button>

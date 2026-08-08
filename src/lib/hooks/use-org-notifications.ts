@@ -7,8 +7,11 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useActiveOrganization, useOrgJoinRequests } from '@/modules/organizations';
+import {
+  useActiveOrganization, useOrgJoinRequests, useOrgNotifications, unreadCount,
+} from '@/modules/organizations';
 import { useTeamTasks } from '@/modules/team-projects';
+import { computeOrgBadges, type OrgBadges } from './org-badges.helpers';
 
 const lastSeenKey = (orgId: string) => `cosmo_org_last_seen_${orgId}`;
 
@@ -28,24 +31,35 @@ export function markOrgSeen(orgId: string): void {
   try { localStorage.setItem(lastSeenKey(orgId), String(Date.now())); } catch { /* no-op */ }
 }
 
-export function useOrgNotificationCount(): number {
+const EMPTY_BADGES: OrgBadges = { projects: 0, members: 0, total: 0 };
+
+/**
+ * Compteurs ventilés par onglet — source unique du badge de navigation ET des
+ * badges d'onglet de /entreprise. Le calcul est dans `org-badges.helpers.ts`
+ * (testé) ; ce hook ne fait que rassembler ses entrées.
+ */
+export function useOrgBadges(): OrgBadges {
   const { user } = useAuth();
   const { activeOrg } = useActiveOrganization();
   const isAdmin = activeOrg?.myRole === 'admin';
   // Requêtes no-op (enabled: !!orgId) hors entreprise / hors admin.
   const { data: requests = [] } = useOrgJoinRequests(isAdmin ? activeOrg?.id : undefined);
   const { data: tasks = [] } = useTeamTasks(activeOrg?.id);
+  const { data: notifications = [] } = useOrgNotifications(activeOrg?.id);
 
   return useMemo(() => {
-    if (!activeOrg || !user?.id) return 0;
-    const lastSeen = readOrgLastSeen(activeOrg.id);
-    const pendingRequests = requests.filter((r) => r.status === 'pending').length;
-    const newAssigned = tasks.filter((t) => {
-      if (t.completed || !t.assigneeIds.includes(user.id)) return false;
-      if (t.createdBy === user.id) return false; // s'auto-assigner ne notifie pas
-      const created = Date.parse(t.createdAt);
-      return Number.isFinite(created) && created > lastSeen;
-    }).length;
-    return pendingRequests + newAssigned;
-  }, [activeOrg, user?.id, requests, tasks]);
+    if (!activeOrg || !user?.id) return EMPTY_BADGES;
+    return computeOrgBadges({
+      userId: user.id,
+      lastSeen: readOrgLastSeen(activeOrg.id),
+      pendingRequests: requests.filter((r) => r.status === 'pending').length,
+      tasks,
+      unreadNotifications: unreadCount(notifications),
+    });
+  }, [activeOrg, user?.id, requests, tasks, notifications]);
+}
+
+/** Total pour la pastille de navigation — signature inchangée (compat). */
+export function useOrgNotificationCount(): number {
+  return useOrgBadges().total;
 }

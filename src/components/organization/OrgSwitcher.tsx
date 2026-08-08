@@ -58,7 +58,7 @@ const OrgSwitcher = ({ collapsed = false }: OrgSwitcherProps) => {
             <span className="ml-auto flex items-center gap-1.5">
               {org.myRole === 'admin' && (
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  Admin
+                  {t('common.adminBadge')}
                 </span>
               )}
               {org.id === activeOrg?.id && <Check size={14} aria-hidden="true" />}

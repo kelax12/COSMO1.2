@@ -167,7 +167,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                         className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
                         aria-label={t('team.addMemberAria', { team: team.name })}
                       >
-                        <Plus size={11} aria-hidden="true" /> Ajouter
+                        <Plus size={11} aria-hidden="true" /> {t('common.add')}
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-52 max-h-64 overflow-y-auto">
                         <DropdownMenuLabel>{t('team.addTo', { name: team.name })}</DropdownMenuLabel>

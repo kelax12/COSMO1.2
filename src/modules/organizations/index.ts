@@ -61,3 +61,12 @@ export {
   useClaimOrgInvite,
   useRegenerateJoinCode,
 } from './hooks';
+
+// Notifications d'entreprise (mig. 095) — lecture seule côté client.
+export {
+  useOrgNotifications,
+  useMarkNotificationsRead,
+  unreadCount,
+  orgNotificationKeys,
+} from './notifications';
+export type { OrgNotification, OrgNotificationKind } from './notifications';

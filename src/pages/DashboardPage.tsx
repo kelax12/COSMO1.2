@@ -17,6 +17,8 @@ const DashboardBarChart = React.lazy(() => import('../components/DashboardBarCha
 import TodayHabits from '../components/TodayHabits';
 import InboxMenu from '../components/InboxMenu';
 import TodayTasks from '../components/TodayTasks';
+import TodayUnified from '../components/TodayUnified';
+import { useActiveOrganization } from '@/modules/organizations';
 import CollaborativeTasks from '../components/CollaborativeTasks';
 import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
@@ -135,6 +137,10 @@ const shouldPlayTypingToday = (): boolean => {
 
 const DashboardPage: React.FC = () => {
   const { t, tp } = useT('dashboard');
+  // La vue « Aujourd'hui » unifiee (#29) n'a de sens qu'avec une DEUXIEME
+  // source de taches : le titre de section lui-meme est donc conditionne, pas
+  // seulement son contenu.
+  const { activeOrg } = useActiveOrganization();
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const weeklyCheckin = useWeeklyCheckin();
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -523,6 +529,14 @@ const DashboardPage: React.FC = () => {
             className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
             variants={itemVariants}
           >
+            {/* Vue « Aujourd'hui » unifiee (#29) — perso + equipe. Reservee aux
+                membres d'une organisation : sans deuxieme source, elle ferait
+                doublon avec « Taches prioritaires ». */}
+            {activeOrg && (
+              <MobileCollapsible title={t('sections.today')} defaultOpen>
+                <TodayUnified />
+              </MobileCollapsible>
+            )}
             <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
               <TodayTasks />
             </MobileCollapsible>

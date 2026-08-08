@@ -7,6 +7,9 @@ import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } 
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
+import TeamSubtasksSection from './TeamSubtasksSection';
+import TeamTaskLabelsSection from './TeamTaskLabelsSection';
+import TeamTaskHistorySection from './TeamTaskHistorySection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -24,6 +27,13 @@ interface TeamTaskModalProps {
   onUpdate?: (taskId: string, input: UpdateTeamTaskInput) => Promise<unknown>;
   onDelete?: (task: TeamTask) => void;
   onClose: () => void;
+  /**
+   * Manager/admin — conditionne la CRÉATION de labels (policy
+   * `team_labels_insert`, mig. 093). Poser un label existant reste ouvert à
+   * quiconque peut éditer la tâche. Défaut `false` : un appelant qui l'oublie
+   * masque un bouton plutôt que d'exposer une action qui renverrait 403.
+   */
+  isManager?: boolean;
 }
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
@@ -42,7 +52,7 @@ const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(v
 const TeamTaskModal = ({
   task, isCreating = false, projects, members,
   defaultProjectId, defaultAssigneeIds,
-  onCreate, onUpdate, onDelete, onClose,
+  onCreate, onUpdate, onDelete, onClose, isManager = false,
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
   const [name, setName] = useState(task?.name ?? '');
@@ -138,7 +148,7 @@ const TeamTaskModal = ({
           <button
             onClick={onClose}
             disabled={pending}
-            aria-label="Fermer le formulaire"
+            aria-label={t('taskModal.closeForm')}
             className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
             style={{ color: 'rgb(var(--color-text-muted))' }}
           >
@@ -165,7 +175,7 @@ const TeamTaskModal = ({
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); setError(null); }}
-                placeholder="Que faut-il faire ?"
+                placeholder={t('taskModal.namePlaceholder')}
                 autoFocus
                 maxLength={500}
                 className={inputClass}
@@ -256,7 +266,7 @@ const TeamTaskModal = ({
                   max={100000}
                   value={estimatedTime}
                   onChange={(e) => setEstimatedTime(e.target.value)}
-                  placeholder="Ex : 45"
+                  placeholder={t('taskModal.timePlaceholder')}
                   className={inputClass}
                   style={inputStyle}
                 />
@@ -312,6 +322,17 @@ const TeamTaskModal = ({
             </div>
           </form>
 
+          {/* Sous-tâches (mig. 092) — édition uniquement : une sous-tâche a
+              besoin de l'id de sa tâche parente, qui n'existe pas encore en
+              création. */}
+          {!isCreating && task && (
+            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
+              <TeamTaskLabelsSection orgId={task.orgId} taskId={task.id} isManager={isManager} />
+              <TeamSubtasksSection taskId={task.id} />
+              <TeamTaskHistorySection taskId={task.id} members={members} />
+            </div>
+          )}
+
           {/* Commentaires (reco #9) — édition uniquement (la tâche existe). */}
           {!isCreating && task && (
             <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
@@ -336,12 +357,12 @@ const TeamTaskModal = ({
               disabled={pending}
               className="min-h-11 w-full sm:w-auto text-red-500 hover:text-red-600 hover:bg-red-500/10"
             >
-              <Trash2 size={16} data-icon="inline-start" /> Supprimer
+              <Trash2 size={16} data-icon="inline-start" /> {t('common.deleteAction')}
             </Button>
           ) : <span className="hidden sm:block" />}
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
             <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
