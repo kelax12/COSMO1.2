@@ -10,7 +10,7 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, Check, X, Bell, ListChecks } from 'lucide-react';
+import { Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
@@ -152,73 +152,65 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
           exit={{ opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
           style={{ position: 'fixed', top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
-          className="w-80 max-w-[calc(100vw-16px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
+          className="w-80 max-w-[calc(100vw-16px)] bg-[rgb(var(--color-background))] rounded-xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
           role="dialog"
           aria-label={t('inbox.label')}
         >
-          <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center gap-2">
-            <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.label')}</span>
+          {/* Sobre : pas d'icône dans l'en-tête (déjà sur le déclencheur, la
+              répéter ici est décoratif), pas de badge coloré — le compte reste
+              lisible en chiffre neutre. */}
+          <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
+            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.label')}</span>
             {total > 0 && (
-              <span className="ml-auto text-caption font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                {total} en attente
-              </span>
+              <span className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">{total}</span>
             )}
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto">
             {total === 0 && (
-              <div className="px-4 py-8 text-center">
-                <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
-                  <Bell size={18} className="text-slate-400" aria-hidden="true" />
-                </div>
-                <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{t('inbox.allClear')}</p>
-                <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <div className="px-4 py-9 text-center">
+                <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{t('inbox.allClear')}</p>
+                <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
                   {t('inbox.allClearHint')}
                 </p>
               </div>
             )}
 
             {pendingTasks.length > 0 && (
-              <div className="px-3 pt-3 pb-1">
-                <p className="px-1 text-caption sm:text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">
+              <div>
+                <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
                   {t('inbox.sharedTasks', { count: pendingTasks.length })}
                 </p>
-                <div className="space-y-2">
+                <div className="divide-y divide-[rgb(var(--color-border))]">
                   {pendingTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-3 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                            {task.name}
-                          </p>
-                          <p className="text-caption sm:text-xs truncate text-amber-700 dark:text-amber-300">
-                            {t('inbox.sharedBy', { name: sharerName(task) })}
-                          </p>
-                        </div>
-                        <div className="flex gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptTask(task)}
-                            disabled={acceptSharedTaskMutation.isPending}
-                            className="w-11 h-11 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                            aria-label={t('inbox.acceptTask', { name: task.name })}
-                          >
-                            <Check size={15} aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRejectTask(task)}
-                            disabled={unshareTaskMutation.isPending}
-                            className="w-11 h-11 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                            aria-label={t('inbox.refuseTask', { name: task.name })}
-                          >
-                            <X size={15} aria-hidden="true" />
-                          </button>
-                        </div>
+                    <div key={task.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                          {task.name}
+                        </p>
+                        <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                          {t('inbox.sharedBy', { name: sharerName(task) })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptTask(task)}
+                          disabled={acceptSharedTaskMutation.isPending}
+                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.acceptTask', { name: task.name })}
+                        >
+                          {t('inbox.accept')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectTask(task)}
+                          disabled={unshareTaskMutation.isPending}
+                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.refuseTask', { name: task.name })}
+                        >
+                          {t('inbox.refuse')}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -227,48 +219,40 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
             )}
 
             {incomingLists.length > 0 && (
-              <div className="px-3 pt-3 pb-3">
-                <p className="px-1 text-caption sm:text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-2">
+              <div>
+                <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
                   {t('inbox.sharedLists', { count: incomingLists.length })}
                 </p>
-                <div className="space-y-2">
+                <div className="divide-y divide-[rgb(var(--color-border))]">
                   {incomingLists.map((grant) => (
-                    <div
-                      key={grant.id}
-                      className="p-3 rounded-xl border border-teal-300 dark:border-teal-700/60 bg-teal-50 dark:bg-teal-900/20"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0">
-                          <ListChecks size={15} className="text-teal-600 dark:text-teal-300" aria-hidden="true" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                            {grant.name}
-                          </p>
-                          <p className="text-caption sm:text-xs truncate text-teal-700 dark:text-teal-300">
-                            {tp('inbox.sharedListBy', grant.tasks.length, { name: grant.sharedByName ?? t('inbox.anonymousSharer') })}
-                          </p>
-                        </div>
-                        <div className="flex gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptList(grant)}
-                            disabled={acceptSharedListMutation.isPending}
-                            className="w-11 h-11 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                            aria-label={t('inbox.acceptList', { name: grant.name })}
-                          >
-                            <Check size={15} aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRejectList(grant)}
-                            disabled={refuseSharedListMutation.isPending}
-                            className="w-11 h-11 rounded-lg border border-teal-300 dark:border-teal-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                            aria-label={t('inbox.refuseList', { name: grant.name })}
-                          >
-                            <X size={15} aria-hidden="true" />
-                          </button>
-                        </div>
+                    <div key={grant.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                          {grant.name}
+                        </p>
+                        <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                          {tp('inbox.sharedListBy', grant.tasks.length, { name: grant.sharedByName ?? t('inbox.anonymousSharer') })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptList(grant)}
+                          disabled={acceptSharedListMutation.isPending}
+                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.acceptList', { name: grant.name })}
+                        >
+                          {t('inbox.accept')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectList(grant)}
+                          disabled={refuseSharedListMutation.isPending}
+                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.refuseList', { name: grant.name })}
+                        >
+                          {t('inbox.refuse')}
+                        </button>
                       </div>
                     </div>
                   ))}

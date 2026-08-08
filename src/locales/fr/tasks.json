@@ -235,7 +235,9 @@
     "refuseTask": "Refuser la tâche partagée {{name}}",
     "acceptList": "Accepter la liste partagée {{name}}",
     "refuseList": "Refuser la liste partagée {{name}}",
-    "withCount": "Boîte de réception, {{count}} en attente"
+    "withCount": "Boîte de réception, {{count}} en attente",
+    "accept": "Accepter",
+    "refuse": "Refuser"
   },
   "filter": {
     "clearSearch": "Effacer la recherche",
