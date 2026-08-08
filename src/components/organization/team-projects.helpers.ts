@@ -5,7 +5,7 @@
 
 import { useCallback, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
-import type { TeamTask } from '@/modules/team-projects';
+import type { TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 
 // ─── Couleurs de projet (champ TeamProject.color) ────────────────────
 
@@ -77,16 +77,65 @@ export const completedThisWeek = (tasks: TeamTask[]): number => {
   ).length;
 };
 
+// ─── Filtre de statut (pastilles cliquables) ─────────────────────────
+
+/** Filtre actif des pastilles de synthèse. `all` = aucun filtre. */
+export type TaskStatusFilter = 'all' | 'open' | 'overdue' | 'doneThisWeek';
+
+/**
+ * Restreint une liste de tâches au filtre de statut choisi.
+ *
+ * `doneThisWeek` réutilise la MÊME fenêtre de 7 jours que `completedThisWeek` :
+ * si les deux divergeaient, la pastille afficherait un compte que le filtre
+ * serait incapable de reproduire.
+ */
+export const filterByStatus = (tasks: TeamTask[], filter: TaskStatusFilter): TeamTask[] => {
+  if (filter === 'all') return tasks;
+  if (filter === 'open') return tasks.filter((t) => !t.completed);
+  if (filter === 'overdue') return tasks.filter(isTaskOverdue);
+  const cutoff = Date.now() - WEEK_MS;
+  return tasks.filter(
+    (t) => t.completed && t.completedAt && new Date(t.completedAt).getTime() >= cutoff,
+  );
+};
+
+// ─── Durées estimées ─────────────────────────────────────────────────
+
+/** Somme des `estimatedTime` (minutes) ; une tâche sans estimation vaut 0. */
+export const sumEstimatedTime = (tasks: TeamTask[]): number =>
+  tasks.reduce((sum, t) => sum + (t.estimatedTime ?? 0), 0);
+
+/**
+ * Minutes → libellé court (`45 min`, `2 h`, `2 h 15`).
+ *
+ * Renvoie '' pour 0 ou moins : l'appelant n'affiche alors rien du tout, plutôt
+ * qu'un « 0 min » qui ferait croire à une estimation saisie et nulle.
+ */
+export const formatDuration = (minutes: number): string => {
+  if (!minutes || minutes <= 0) return '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${String(m).padStart(2, '0')}`;
+};
+
 // ─── Prefs UI persistées (filtres, vue, projets repliés) ─────────────
 
 export interface ProjectsUiPrefs {
-  view: 'list' | 'kanban';
+  view: 'list' | 'kanban' | 'timeline';
   /** null = toutes les tâches ; sinon userId de l'assigné filtré. */
   assigneeFilter: string | null;
   /** '' = toutes équipes, 'org' = sans équipe, sinon teamId. */
   teamFilter: string;
   collapsed: Record<string, boolean>;
   showArchived: boolean;
+  /** Pastille de synthèse active. */
+  statusFilter: TaskStatusFilter;
+  /** Densité des listes de tâches. */
+  density: 'comfortable' | 'compact';
+  /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
+  kanbanGroupBy: 'assignee' | 'status';
 }
 
 const DEFAULT_PREFS: ProjectsUiPrefs = {
@@ -95,6 +144,12 @@ const DEFAULT_PREFS: ProjectsUiPrefs = {
   teamFilter: '',
   collapsed: {},
   showArchived: false,
+  statusFilter: 'all',
+  density: 'comfortable',
+  // Par défaut le FLUX : c'est la lecture attendue d'un kanban. La vue par
+  // personne reste à un clic, mais elle répond à « qui fait quoi », pas à
+  // « où en est-on » — et c'est la seconde question qu'un kanban doit servir.
+  kanbanGroupBy: 'status',
 };
 
 const prefsKey = (orgId: string) => `cosmo_org_projects_ui_${orgId}`;
@@ -127,4 +182,54 @@ export const useProjectsUiPrefs = (orgId: string) => {
   );
 
   return { prefs, updatePrefs };
+};
+
+// ─── Statuts de flux (mig. 091) ──────────────────────────────────────
+
+/** Ordre d'affichage des colonnes de statut — le flux de gauche à droite. */
+export const STATUS_ORDER: TeamTaskStatus[] = ['todo', 'in_progress', 'review', 'blocked', 'done'];
+
+/** Clé de catalogue et pastille par statut. */
+export const STATUS_META: Record<TeamTaskStatus, { labelKey: string; dot: string }> = {
+  todo: { labelKey: 'projects.statusTodo', dot: 'bg-slate-400' },
+  in_progress: { labelKey: 'projects.statusInProgress', dot: 'bg-blue-500' },
+  review: { labelKey: 'projects.statusReview', dot: 'bg-violet-500' },
+  blocked: { labelKey: 'projects.statusBlocked', dot: 'bg-red-500' },
+  done: { labelKey: 'projects.statusDone', dot: 'bg-emerald-500' },
+};
+
+/**
+ * Groupe les tâches par statut, colonnes vides comprises.
+ *
+ * Une colonne vide se garde volontairement : un kanban dont les colonnes
+ * apparaissent et disparaissent selon le contenu empêche de déposer une carte
+ * dans un état encore inutilisé — c'est précisément là qu'on veut la mettre.
+ */
+export const groupByStatus = (tasks: TeamTask[]): Record<TeamTaskStatus, TeamTask[]> => {
+  const groups = {
+    todo: [] as TeamTask[],
+    in_progress: [] as TeamTask[],
+    review: [] as TeamTask[],
+    blocked: [] as TeamTask[],
+    done: [] as TeamTask[],
+  } satisfies Record<TeamTaskStatus, TeamTask[]>;
+  for (const task of tasks) {
+    (groups[task.status] ?? groups.todo).push(task);
+  }
+  return groups;
+};
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+/**
+ * Avancement d'une checklist, en pourcentage entier.
+ *
+ * Renvoie `null` — et non 0 — quand la liste est vide : « aucune sous-tâche »
+ * et « aucune sous-tâche faite » sont deux états différents, et afficher 0 %
+ * sur une tâche sans checklist donnerait l'impression d'un retard inexistant.
+ */
+export const subtaskProgress = (subtasks: { completed: boolean }[]): number | null => {
+  if (subtasks.length === 0) return null;
+  const done = subtasks.filter((s) => s.completed).length;
+  return Math.round((done / subtasks.length) * 100);
 };

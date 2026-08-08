@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette,
+  Pencil, Archive, ArchiveRestore, Palette, Clock,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import type { TeamProject, TeamTask, UpdateTeamProjectInput } from '@/modules/te
 import {
   projectColor, PROJECT_COLOR_NAMES, PROJECT_COLORS,
   sortOpenTasks, sortCompletedTasks, isTaskOverdue,
+  sumEstimatedTime, formatDuration,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
@@ -42,6 +43,13 @@ interface TeamProjectCardProps {
   onDelete: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
   onUpdateProject: (input: UpdateTeamProjectInput) => void;
+  /** Densité des lignes de tâche. */
+  density?: 'comfortable' | 'compact';
+  /** Mode sélection multiple (actions groupées). */
+  selectable?: boolean;
+  /** Ids des tâches sélectionnées. */
+  selectedIds?: Set<string>;
+  onToggleSelect?: (task: TeamTask) => void;
 }
 
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
@@ -49,7 +57,8 @@ const TeamProjectCard = ({
   project, tasks, members, teams, isManager,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
-  onUpdateProject,
+  onUpdateProject, density = 'comfortable',
+  selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
   const { t } = useT('org');
   const [renaming, setRenaming] = useState(false);
@@ -63,6 +72,8 @@ const TeamProjectCard = ({
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
   const completedTasks = useMemo(() => sortCompletedTasks(tasks.filter((t) => t.completed)), [tasks]);
   const overdueCount = openTasks.filter(isTaskOverdue).length;
+  /** Reste à faire estimé : somme des tâches ouvertes ayant une estimation. */
+  const restEstimated = useMemo(() => sumEstimatedTime(openTasks), [openTasks]);
   const done = completedTasks.length;
   const total = tasks.length;
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -117,7 +128,7 @@ const TeamProjectCard = ({
               onClick={(e) => e.stopPropagation()}
               autoFocus
               maxLength={120}
-              aria-label="Renommer le projet"
+              aria-label={t('project.renameAria')}
               className="h-7 px-2 rounded-md border border-indigo-400 bg-[rgb(var(--color-background))] text-sm font-bold focus:outline-none min-w-0 flex-1"
             />
           ) : (
@@ -139,6 +150,14 @@ const TeamProjectCard = ({
               title={`${overdueCount} tâche${overdueCount > 1 ? 's' : ''} en retard`}
             >
               {overdueCount} en retard
+            </span>
+          )}
+          {restEstimated > 0 && !archived && (
+            <span
+              className="inline-flex items-center gap-1 text-caption text-[rgb(var(--color-text-muted))] shrink-0"
+              title={t('project.restEstimated', { duration: formatDuration(restEstimated) })}
+            >
+              <Clock size={10} aria-hidden="true" /> {formatDuration(restEstimated)}
             </span>
           )}
 
@@ -183,11 +202,11 @@ const TeamProjectCard = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
-                <Pencil size={14} aria-hidden="true" /> Renommer
+                <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <Palette size={14} aria-hidden="true" /> Couleur
+                  <Palette size={14} aria-hidden="true" /> {t('project.color')}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="grid grid-cols-3 gap-1 p-2">
                   {PROJECT_COLOR_NAMES.map((c) => (
@@ -195,7 +214,7 @@ const TeamProjectCard = ({
                       key={c}
                       type="button"
                       onClick={() => onUpdateProject({ color: c })}
-                      aria-label={`Couleur ${c}`}
+                      aria-label={t('project.colorAria', { name: c })}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${project.color === c ? 'ring-2 ring-indigo-500' : ''}`}
                     >
                       <span className={`w-4 h-4 rounded-full ${PROJECT_COLORS[c].dot}`} />
@@ -224,11 +243,11 @@ const TeamProjectCard = ({
               <DropdownMenuSeparator />
               {archived ? (
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: false })}>
-                  <ArchiveRestore size={14} aria-hidden="true" /> Restaurer
+                  <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: true })}>
-                  <Archive size={14} aria-hidden="true" /> Archiver
+                  <Archive size={14} aria-hidden="true" /> {t('project.archive')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -244,6 +263,10 @@ const TeamProjectCard = ({
               key={task.id}
               task={task}
               members={members}
+              density={density}
+              selectable={selectable}
+              selected={!!selectedIds?.has(task.id)}
+              onToggleSelect={onToggleSelect}
               onToggleComplete={onToggleComplete}
               onReassign={onReassign}
               onDelete={onDelete}
@@ -285,6 +308,10 @@ const TeamProjectCard = ({
                   key={task.id}
                   task={task}
                   members={members}
+                  density={density}
+                  selectable={selectable}
+                  selected={!!selectedIds?.has(task.id)}
+                  onToggleSelect={onToggleSelect}
                   onToggleComplete={onToggleComplete}
                   onReassign={onReassign}
                   onDelete={onDelete}
@@ -301,7 +328,7 @@ const TeamProjectCard = ({
               onClick={() => onAddTask(project.id)}
               className="w-full flex items-center gap-1.5 px-3 py-2 text-sm text-[rgb(var(--color-text-muted))] hover:text-indigo-500 transition-colors"
             >
-              <Plus size={15} aria-hidden="true" /> Ajouter une tâche
+              <Plus size={15} aria-hidden="true" /> {t('project.addTask')}
             </button>
           )}
         </div>

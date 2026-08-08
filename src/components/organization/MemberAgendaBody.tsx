@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, type EventReceiveArg } from '@fullcalendar/interaction';
 import type { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import type { EventResizeDoneArg } from '@fullcalendar/interaction';
-import { X, ChevronLeft, ChevronRight, CalendarDays, Plus, ListChecks, Clock, CalendarClock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ListChecks, Clock, CalendarClock } from 'lucide-react';
 import {
   useMemberEventsWindow,
   useCreateMemberEvent,
@@ -28,22 +27,25 @@ import {
 } from '@/pages/agenda/calendar-events';
 import { PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
 import type { OrgMember } from '@/modules/organizations';
-import MemberAvatar from './MemberAvatar';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
-interface MemberAgendaSheetProps {
+interface MemberAgendaBodyProps {
   member: OrgMember;
-  onClose: () => void;
 }
 
 type ViewName = 'timeGridWeek' | 'timeGridDay' | 'dayGridMonth';
 
-const VIEW_LABELS: { id: ViewName; label: string }[] = [
-  { id: 'timeGridDay', label: 'Jour' },
-  { id: 'timeGridWeek', label: 'Semaine' },
-  { id: 'dayGridMonth', label: 'Mois' },
-];
+// Les libelles viennent du catalogue au RENDU : une constante de module
+// serait figee au premier import (cf. src/i18n/catalog.ts).
+const VIEW_LABEL_KEYS = {
+  timeGridDay: 'common.agendaDay',
+  timeGridWeek: 'common.agendaWeek',
+  dayGridMonth: 'common.agendaMonth',
+} as const satisfies Record<ViewName, KeyOf<'org'>>;
+
+const VIEW_ORDER: ViewName[] = ['timeGridDay', 'timeGridWeek', 'dayGridMonth'];
 
 // Couleur (hex) d'un projet — pour colorer l'événement issu d'une tâche d'équipe.
 const PROJECT_HEX: Record<string, string> = {
@@ -52,19 +54,31 @@ const PROJECT_HEX: Record<string, string> = {
 };
 
 /**
- * Agenda complet d'un subordonné (mode entreprise) — même expérience que la
- * page Agenda personnelle : bouton « Nouveau », sélection de plage, glisser-
- * déposer des TÂCHES D'ÉQUIPE du membre vers le calendrier, drag/resize des
- * événements, et EventModal réutilisé tel quel. Couleurs de boutons alignées
- * sur l'agenda classique. Réservé à la hiérarchie du membre (RLS 077). Portal.
+ * CORPS de l'agenda d'un subordonné — barre d'outils, tâches à planifier,
+ * calendrier et modales, SANS overlay ni en-tête (item #18).
+ *
+ * ⚠️ FullCalendar mesure son conteneur au montage : ce corps ne doit être
+ * monté que lorsque son onglet est actif, sinon il calcule sa hauteur dans un
+ * conteneur masqué et rend une grille écrasée. Son hôte doit aussi lui donner
+ * une hauteur DÉFINIE (`height="100%"` remonte jusqu'à un parent dimensionné).
  */
-const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
+export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
   const { t } = useT('org');
   const calendarRef = useRef<FullCalendar>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const [view, setView] = useState<ViewName>('timeGridWeek');
   const [title, setTitle] = useState('');
-  const [showTasks, setShowTasks] = useState(true);
+  /**
+   * Volet « tâches à planifier ». Il occupe 240 px : sur un écran de 375 px il
+   * ne laisserait que 100 px au calendrier — un onglet Agenda qui ne montre pas
+   * l'agenda (mesuré au navigateur, item #18). Il démarre donc fermé sous `sm`,
+   * et les deux volets y sont exclusifs : celui qu'on ouvre prend tout.
+   *
+   * `window.innerWidth` plutôt que `useIsMobile()` : ce hook renvoie `false` au
+   * premier rendu puis se corrige, ce qui ferait monter le calendrier à 100 px
+   * avant de le corriger — exactement la mesure ratée que FullCalendar garde.
+   */
+  const [showTasks, setShowTasks] = useState(() => window.innerWidth >= 640);
   const [eventsWindow, setEventsWindow] = useState(() => defaultEventsWindow());
 
   const { data: events = [] } = useMemberEventsWindow(member.userId, eventsWindow.start, eventsWindow.end);
@@ -233,30 +247,6 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
 
   return (
     <>
-      {createPortal(
-    <div className="fixed inset-0 z-[9998] bg-[rgb(var(--color-background))] flex flex-col">
-      {/* En-tête */}
-      <header className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">
-        <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />
-        <div className="min-w-0">
-          <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate inline-flex items-center gap-1.5">
-            <CalendarDays size={15} className="text-indigo-500" aria-hidden="true" />
-            Agenda de {member.displayName}
-          </h2>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            Vous gérez cet agenda — créez, glissez ses tâches, déplacez ou modifiez ses événements.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('agendaSheet.close')}
-          className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-        >
-          <X size={20} aria-hidden="true" />
-        </button>
-      </header>
-
       {/* Barre d'outils — couleurs alignées sur l'agenda classique */}
       <div className="flex items-center gap-2 px-4 sm:px-6 py-2.5 border-b border-[rgb(var(--color-border))] shrink-0 flex-wrap">
         {/* Toggle sidebar tâches */}
@@ -270,7 +260,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             color: showTasks ? 'white' : 'rgb(var(--color-text-primary))',
           }}
         >
-          <ListChecks size={16} aria-hidden="true" /> Tâches
+          <ListChecks size={16} aria-hidden="true" /> {t('agendaSheet.tasksTitle')}
         </button>
 
         <div className="inline-flex items-center gap-1">
@@ -278,7 +268,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => nav('today')} className="px-3 h-8 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-blue-600 hover:border-[rgb(var(--color-accent-solid-hover))]/60 transition-colors">
-            Aujourd'hui
+            {t('agendaSheet.today')}
           </button>
           <button type="button" onClick={() => nav('next')} aria-label={t('agendaSheet.nextPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
             <ChevronRight size={16} aria-hidden="true" />
@@ -289,19 +279,19 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
         <div className="ml-auto flex items-center gap-2">
           {/* Sélecteur de vue — couleur accent comme l'agenda classique */}
           <div className="flex gap-1 p-1 rounded-xl border border-[rgb(var(--color-border))]" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-            {VIEW_LABELS.map((v) => (
+            {VIEW_ORDER.map((id) => (
               <button
-                key={v.id}
+                key={id}
                 type="button"
-                onClick={() => changeView(v.id)}
-                aria-pressed={view === v.id}
+                onClick={() => changeView(id)}
+                aria-pressed={view === id}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  view === v.id
+                  view === id
                     ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                 }`}
               >
-                {v.label}
+                {t(VIEW_LABEL_KEYS[id])}
               </button>
             ))}
           </div>
@@ -321,14 +311,14 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
       <div className="flex-1 min-h-0 flex overflow-hidden">
         {showTasks && (
           <aside
-            className="w-60 lg:w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex flex-col"
+            className="w-full sm:w-60 lg:w-72 shrink-0 sm:border-r border-[rgb(var(--color-border))] flex flex-col"
             style={{ backgroundColor: 'rgb(var(--nav-bg))' }}
           >
             <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-start justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('agendaSheet.teamTasks')}</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  Glissez une tâche sur le calendrier pour la planifier.
+                  {t('agendaSheet.dragHint')}
                 </p>
               </div>
               <button
@@ -344,7 +334,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             <div id="member-external-events" className="flex-1 overflow-y-auto p-3 space-y-2">
               {memberTasks.length === 0 ? (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-8">
-                  Aucune tâche d'équipe assignée.
+                  {t('agendaSheet.noTasks')}
                 </p>
               ) : (
                 memberTasks.map((task: TeamTask) => {
@@ -381,7 +371,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
         )}
 
         {/* Calendrier */}
-        <div className="flex-1 min-w-0 p-2 sm:p-4 overflow-hidden">
+        <div className={`flex-1 min-w-0 p-2 sm:p-4 overflow-hidden ${showTasks ? 'hidden sm:block' : ''}`}>
           <div className="h-full w-full rounded-xl border border-[rgb(var(--color-border))] overflow-hidden p-2 sm:p-4" style={{ backgroundColor: 'rgb(var(--calendar-bg))' }}>
             <FullCalendar
               ref={calendarRef}
@@ -452,9 +442,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           enterprisePublic
         />
       )}
-    </div>,
-        document.body,
-      )}
+
       {creatingTask && (
         <TeamTaskModal
           isCreating
@@ -469,5 +457,3 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
     </>
   );
 };
-
-export default MemberAgendaSheet;

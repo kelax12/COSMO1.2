@@ -12,6 +12,14 @@ import {
   TeamTaskFilters,
   TeamTaskComment,
   CreateTeamTaskCommentInput,
+  TeamSubtask,
+  CreateTeamSubtaskInput,
+  UpdateTeamSubtaskInput,
+  TeamLabel,
+  CreateTeamLabelInput,
+  UpdateTeamLabelInput,
+  TeamTaskLabel,
+  TeamTaskActivity,
 } from './types';
 
 export interface ITeamProjectsRepository {
@@ -31,4 +39,28 @@ export interface ITeamProjectsRepository {
   getComments(taskId: string): Promise<TeamTaskComment[]>;
   addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment>;
   deleteComment(commentId: string): Promise<void>;
+
+  // Sous-tâches (mig. 092)
+  getSubtasks(taskId: string): Promise<TeamSubtask[]>;
+  createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask>;
+  updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
+  deleteSubtask(subtaskId: string): Promise<void>;
+
+  // Labels (mig. 093)
+  getLabels(orgId: string): Promise<TeamLabel[]>;
+  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel>;
+  updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel>;
+  deleteLabel(labelId: string): Promise<void>;
+  /** Toutes les jonctions accessibles — une requête pour toute l'org, pas une par tâche. */
+  getTaskLabels(orgId: string): Promise<TeamTaskLabel[]>;
+  addTaskLabel(taskId: string, labelId: string): Promise<void>;
+  removeTaskLabel(taskId: string, labelId: string): Promise<void>;
+
+  // Historique (mig. 094) — lecture seule : la table est append-only, écrite par trigger.
+  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]>;
+  /**
+   * Journal de TOUTE l'organisation depuis `since` (ISO) — revue hebdomadaire
+   * (#26). Borné côté serveur : la revue lit deux semaines, pas l'historique.
+   */
+  getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]>;
 }

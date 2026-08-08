@@ -49,7 +49,8 @@
     "priorityTasks": "Priority tasks",
     "collaborativeTasks": "Shared tasks",
     "activeOkrs": "Active OKRs",
-    "todayHabits": "Today's habits"
+    "todayHabits": "Today's habits",
+    "today": "Today"
   },
   "okrs": {
     "activeGoal_one": "{{count}} active goal",
@@ -115,5 +116,16 @@
     "showLess": "Show less",
     "showMore_one": "Show more ({{count}} left)",
     "showMore_other": "Show more ({{count}} left)"
+  },
+  "today": {
+    "loading": "Loading…",
+    "empty": "Nothing due today — neither personal nor team.",
+    "summary_one": "{{count}} task today",
+    "summary_other": "{{count}} tasks today",
+    "overdue_one": "{{count}} overdue",
+    "overdue_other": "{{count}} overdue",
+    "markDone": "Mark “{{name}}” as done",
+    "sourcePersonal": "Personal",
+    "sourceTeam": "Team"
   }
 }

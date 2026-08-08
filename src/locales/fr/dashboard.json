@@ -51,7 +51,8 @@
     "priorityTasks": "Tâches prioritaires",
     "collaborativeTasks": "Tâches collaboratives",
     "activeOkrs": "OKR en cours",
-    "todayHabits": "Habitudes du jour"
+    "todayHabits": "Habitudes du jour",
+    "today": "Aujourd'hui"
   },
   "okrs": {
     "activeGoal_one": "{{count}} objectif actif",
@@ -123,5 +124,18 @@
     "showMore_one": "Voir plus ({{count}} restante)",
     "showMore_many": "Voir plus ({{count}} de restantes)",
     "showMore_other": "Voir plus ({{count}} restantes)"
+  },
+  "today": {
+    "loading": "Chargement…",
+    "empty": "Rien à faire aujourd'hui — ni côté perso, ni côté équipe.",
+    "summary_one": "{{count}} tâche aujourd'hui",
+    "summary_many": "{{count}} de tâches aujourd'hui",
+    "summary_other": "{{count}} tâches aujourd'hui",
+    "overdue_one": "{{count}} en retard",
+    "overdue_many": "{{count}} de retard",
+    "overdue_other": "{{count}} en retard",
+    "markDone": "Marquer « {{name}} » comme terminée",
+    "sourcePersonal": "Perso",
+    "sourceTeam": "Équipe"
   }
 }

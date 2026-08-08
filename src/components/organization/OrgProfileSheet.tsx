@@ -85,14 +85,14 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Profil de l'entreprise"
+        aria-label={t('common.orgProfileAria')}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('profile.title')}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={18} aria-hidden="true" />
@@ -131,7 +131,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
                   onClick={() => setAvatarDraft(null)}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
                 >
-                  <Trash2 size={12} aria-hidden="true" /> Supprimer
+                  <Trash2 size={12} aria-hidden="true" /> {t('common.removeImage')}
                 </button>
               )}
             </div>
@@ -139,7 +139,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           </div>
           <div>
             <label htmlFor="org-profile-name" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Nom
+              {t('common.nameLabel')}
             </label>
             <input
               id="org-profile-name"
@@ -172,7 +172,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
               id="org-profile-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Que fait votre entreprise ?"
+              placeholder={t('common.descriptionPlaceholder')}
               rows={3}
               className={`${inputClasses} resize-none`}
               maxLength={500}
@@ -186,7 +186,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             type="button"

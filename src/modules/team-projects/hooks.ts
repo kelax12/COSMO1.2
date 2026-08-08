@@ -8,6 +8,7 @@ import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
 import { teamProjectKeys } from './constants';
+import type { UpdateTeamSubtaskInput, CreateTeamLabelInput, UpdateTeamLabelInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
 import { translator } from '@/i18n/useT';
 
@@ -175,5 +176,172 @@ export const useDeleteTeamTaskComment = (taskId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
     },
     onError: (error: Error) => toast.error(`Impossible de supprimer le commentaire : ${error.message}`),
+  });
+};
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+export const useTeamSubtasks = (taskId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.subtasks(taskId ?? ''),
+    queryFn: () => repository.getSubtasks(taskId as string),
+    enabled: !!taskId,
+    staleTime: 1000 * 15,
+  });
+};
+
+/**
+ * Les trois mutations invalident la même clé plutôt que de patcher le cache :
+ * `position` est réattribuée côté serveur à la création, une mise à jour
+ * optimiste ferait donc scintiller l'ordre de la liste.
+ */
+export const useCreateTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (input: { title: string; position?: number }) =>
+      repository.createSubtask({ taskId, title: input.title, position: input.position }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible d'ajouter la sous-tâche : ${error.message}`),
+  });
+};
+
+export const useUpdateTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ subtaskId, input }: { subtaskId: string; input: UpdateTeamSubtaskInput }) =>
+      repository.updateSubtask(subtaskId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier la sous-tâche : ${error.message}`),
+  });
+};
+
+export const useDeleteTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (subtaskId: string) => repository.deleteSubtask(subtaskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de supprimer la sous-tâche : ${error.message}`),
+  });
+};
+
+// ─── Labels (mig. 093) ───────────────────────────────────────────────
+
+export const useTeamLabels = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.labels(orgId ?? ''),
+    queryFn: () => repository.getLabels(orgId as string),
+    enabled: !!orgId,
+    // Le vocabulaire bouge rarement — inutile de le refetcher en continu.
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+/**
+ * Jonctions tâche ↔ label pour TOUTE l'organisation, en une requête.
+ * Les chips s'affichent sur chaque ligne de liste : une requête par tâche
+ * ferait exploser les aller-retours sur un écran de 50 tâches.
+ */
+export const useTeamTaskLabels = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.taskLabels(orgId ?? ''),
+    queryFn: () => repository.getTaskLabels(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useCreateTeamLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (input: CreateTeamLabelInput) => repository.createLabel(orgId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de créer le label : ${error.message}`),
+  });
+};
+
+export const useUpdateTeamLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ labelId, input }: { labelId: string; input: UpdateTeamLabelInput }) =>
+      repository.updateLabel(labelId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier le label : ${error.message}`),
+  });
+};
+
+export const useDeleteTeamLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (labelId: string) => repository.deleteLabel(labelId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
+      // La jonction perd des lignes par CASCADE : son cache est périmé aussi.
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de supprimer le label : ${error.message}`),
+  });
+};
+
+/** Pose/retire un label sur une tâche — une seule mutation pour les deux sens. */
+export const useToggleTaskLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ taskId, labelId, attached }: { taskId: string; labelId: string; attached: boolean }) =>
+      attached
+        ? repository.removeTaskLabel(taskId, labelId)
+        : repository.addTaskLabel(taskId, labelId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier les labels : ${error.message}`),
+  });
+};
+
+// ─── Historique (mig. 094) — lecture seule ───────────────────────────
+
+/**
+ * Journal de l'organisation depuis `since` — revue hebdomadaire (#26).
+ *
+ * `since` doit être STABLE d'un rendu à l'autre : il entre dans la clé de
+ * cache, et une borne recalculée à chaque rendu (`new Date()`) créerait une
+ * entrée de cache par rendu, donc une requête par rendu.
+ */
+export const useOrgActivity = (orgId: string | undefined, since: string) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.orgActivity(orgId ?? '', since),
+    queryFn: () => repository.getOrgActivity(orgId as string, since),
+    enabled: !!orgId,
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useTeamTaskActivity = (taskId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.activity(taskId ?? ''),
+    queryFn: () => repository.getTaskActivity(taskId as string),
+    enabled: !!taskId,
+    staleTime: 1000 * 15,
   });
 };

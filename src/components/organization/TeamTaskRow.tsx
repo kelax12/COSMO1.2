@@ -5,6 +5,7 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
+import { useT } from '@/i18n/useT';
 
 interface TeamTaskRowProps {
   task: TeamTask;
@@ -14,16 +15,44 @@ interface TeamTaskRowProps {
   onDelete: (task: TeamTask) => void;
   /** Ouvre le modal d'édition complète. */
   onOpen: (task: TeamTask) => void;
+  /** Densité d'affichage — `compact` resserre la ligne. */
+  density?: 'comfortable' | 'compact';
+  /** Mode sélection actif : la ligne affiche une case à cocher. */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (task: TeamTask) => void;
 }
 
 /** Ligne de tâche d'équipe : complétion, nom, priorité, deadline, assigné, suppression. */
-const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, onOpen }: TeamTaskRowProps) => {
+const TeamTaskRow = ({
+  task, members, onToggleComplete, onReassign, onDelete, onOpen,
+  density = 'comfortable', selectable = false, selected = false, onToggleSelect,
+}: TeamTaskRowProps) => {
+  const { t } = useT('org');
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
   const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
+  // Seule la hauteur change : la cible tactile reste ≥ 32 px en compact, on ne
+  // descend donc pas sous le seuil confortable au doigt.
+  const rowPad = density === 'compact' ? 'py-1 px-2 gap-2' : 'py-2.5 px-3 gap-3';
 
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors group">
+    <div
+      className={`flex items-center ${rowPad} rounded-xl transition-colors group ${
+        selected ? 'bg-[rgb(var(--color-accent)/0.1)]' : 'hover:bg-[rgb(var(--color-hover))]'
+      }`}
+    >
+      {/* Case de sélection — n'apparaît qu'en mode sélection, pour ne pas
+          alourdir la ligne le reste du temps. */}
+      {selectable && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect?.(task)}
+          aria-label={task.name}
+          className="w-4 h-4 shrink-0 accent-[rgb(var(--color-accent))] cursor-pointer"
+        />
+      )}
       {/* Complétion */}
       <button
         type="button"
@@ -59,7 +88,7 @@ const TeamTaskRow = ({ task, members, onToggleComplete, onReassign, onDelete, on
             <AlignLeft
               size={12}
               className="inline-block ml-1.5 align-[-1px] text-[rgb(var(--color-text-muted))]"
-              aria-label="Contient une description"
+              aria-label={t('taskModal.hasDescription')}
             />
           )}
         </span>

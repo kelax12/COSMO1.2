@@ -208,6 +208,99 @@ export function overdueByMember(
     .sort((a, b) => b.count - a.count);
 }
 
+// ─── Charge d'équipe ──────────────────────────────────────────────────
+
+export interface MemberWorkload {
+  userId: string;
+  name: string;
+  /** Tâches ouvertes assignées. */
+  open: number;
+  /** Dont en retard. */
+  overdue: number;
+  /** Minutes estimées restantes (tâches ouvertes uniquement). */
+  estimatedMinutes: number;
+  /**
+   * Charge relative à la MÉDIANE de l'équipe (1 = dans la norme).
+   * 0 quand aucune estimation n'existe — on ne prétend pas mesurer une charge
+   * qu'on n'a pas.
+   */
+  loadRatio: number;
+}
+
+/** Médiane d'une liste de nombres (0 si vide). */
+const median = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+};
+
+/**
+ * Charge par membre : combien de tâches ouvertes, combien en retard, combien de
+ * temps estimé restant, et où cela se situe par rapport au reste de l'équipe.
+ *
+ * La référence est la MÉDIANE, pas la moyenne : dans une petite équipe, une
+ * seule personne écrasée tire la moyenne vers le haut et fait passer tous les
+ * autres pour sous-chargés — exactement le contresens qu'un manager ne doit
+ * pas lire ici. Une tâche multi-assignée compte pour chacun de ses assignés :
+ * elle occupe bien deux personnes.
+ */
+export function memberWorkload(
+  tasks: TeamTask[],
+  members: OrgMember[],
+  now: Date = new Date(),
+): MemberWorkload[] {
+  const open = new Map<string, number>();
+  const overdue = new Map<string, number>();
+  const minutes = new Map<string, number>();
+
+  for (const t of tasks) {
+    if (t.completed) continue;
+    const late = isOverdue(t, now);
+    for (const uid of t.assigneeIds) {
+      open.set(uid, (open.get(uid) ?? 0) + 1);
+      if (late) overdue.set(uid, (overdue.get(uid) ?? 0) + 1);
+      minutes.set(uid, (minutes.get(uid) ?? 0) + (t.estimatedTime ?? 0));
+    }
+  }
+
+  const rows = members.map((m) => ({
+    userId: m.userId,
+    name: firstName(m.displayName),
+    open: open.get(m.userId) ?? 0,
+    overdue: overdue.get(m.userId) ?? 0,
+    estimatedMinutes: minutes.get(m.userId) ?? 0,
+    loadRatio: 0,
+  }));
+
+  // La médiane ne porte que sur les personnes qui ont effectivement de la
+  // charge estimée : inclure les zéros ferait passer la médiane à 0 dès qu'une
+  // moitié de l'équipe n'a rien, et tout le monde deviendrait « en surcharge ».
+  const withLoad = rows.map((r) => r.estimatedMinutes).filter((v) => v > 0);
+  const ref = median(withLoad);
+  if (ref > 0) {
+    for (const row of rows) row.loadRatio = row.estimatedMinutes / ref;
+  }
+
+  return rows.sort(
+    (a, b) => b.estimatedMinutes - a.estimatedMinutes || b.open - a.open,
+  );
+}
+
+/** Qualification d'une charge relative — seuils volontairement larges. */
+export type WorkloadTone = 'under' | 'normal' | 'over';
+
+/**
+ * `0` renvoie 'normal' et non 'under' : un ratio nul signifie « aucune donnée
+ * d'estimation dans l'équipe », pas « cette personne n'a rien à faire ».
+ */
+export const workloadTone = (ratio: number): WorkloadTone => {
+  if (ratio <= 0) return 'normal';
+  if (ratio > 1.5) return 'over';
+  if (ratio < 0.5) return 'under';
+  return 'normal';
+};
+
 // ─── Par projet ───────────────────────────────────────────────────────
 
 export interface ProjectStat {

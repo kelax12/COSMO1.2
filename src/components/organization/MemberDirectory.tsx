@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   Shield, UserCog, UserRound, MoreVertical, LogOut,
   ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X,
@@ -27,9 +28,9 @@ import {
   type CreateTeamTaskInput,
 } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import MemberProfileSheet from './MemberProfileSheet';
-import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
-import MemberAgendaSheet from './MemberAgendaSheet';
+import { readEntityParam } from './deep-link.helpers';
+import MemberSheet from './MemberSheet';
+import { MEMBER_TAB_PARAM, type MemberTab } from './member-sheet.helpers';
 import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
 import ReassignManagerSheet from './ReassignManagerSheet';
@@ -86,19 +87,48 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const updateTask = useUpdateTeamTask(orgId);
 
   const [query, setQuery] = useState('');
-  const [profile, setProfile] = useState<OrgMember | null>(null);
-  const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
-  const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
+  // Fiche membre unifiee (item #18) — meme sheet que la pyramide, ouvert sur
+  // l'onglet demande. `tab` reste brut : seul `MemberSheet` connait les onglets
+  // AUTORISES pour ce membre, et c'est lui qui valide.
+  const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
   const [assigning, setAssigning] = useState<OrgMember | null>(null);
   const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
   const [removing, setRemoving] = useState<OrgMember | null>(null);
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
+
+  // ─── Deep-link `?member=<id>` ───────────────────────────────────────
+  // Même contrat que `?task=` : on ouvre la fiche puis on retire le paramètre,
+  // sinon refermer le sheet le rouvrirait au rendu suivant.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepMemberId = readEntityParam(searchParams, 'member');
+  const deepMemberTab = searchParams.get(MEMBER_TAB_PARAM);
+
+  useEffect(() => {
+    if (!deepMemberId) return;
+    const target = members.find((m) => m.userId === deepMemberId);
+    if (!target) return;
+    setSheet({ member: target, tab: deepMemberTab });
+    const next = new URLSearchParams(searchParams);
+    next.delete('member');
+    next.delete(MEMBER_TAB_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [deepMemberId, deepMemberTab, members, searchParams, setSearchParams]);
+
+  const openMember = (member: OrgMember, tab: MemberTab) => setSheet({ member, tab });
 
   // Périmètre hiérarchique de l'utilisateur courant (miroir de la pyramide).
   const mySubtree = useMemo(
     () => (currentUserId ? subtreeOf(members, currentUserId) : new Set<string>()),
     [members, currentUserId],
   );
+
+  /**
+   * Supérieur hiérarchique de `m` ? (admin partout ; manager sur son sous-arbre,
+   * jamais soi-même). Remonté au niveau du composant depuis la boucle de rendu :
+   * la fiche membre unifiée en a besoin hors de la ligne qui l'a ouverte.
+   */
+  const isAbove = (m: OrgMember) =>
+    m.userId !== currentUserId && (isAdmin || mySubtree.has(m.userId));
 
   const teamsByUser = useMemo(() => {
     const byId = new Map(orgTeams.map((t) => [t.id, t]));
@@ -187,7 +217,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
         {filteredMembers.map((m) => {
           const isSelf = m.userId === currentUserId;
           // Supérieur hiérarchique de m ? (admin partout ; manager : son sous-arbre)
-          const isAbove = !isSelf && (isAdmin || mySubtree.has(m.userId));
           return (
             <li key={m.userId}>
               <div
@@ -195,15 +224,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                 tabIndex={0}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).closest('button,[role="menu"]')) return;
-                  setProfile(m);
+                  openMember(m, 'profile');
                 }}
                 onKeyDown={(e) => {
                   if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
                     e.preventDefault();
-                    setProfile(m);
+                    openMember(m, 'profile');
                   }
                 }}
-                aria-label={`Voir le profil de ${m.displayName}`}
+                aria-label={t('common.seeProfileOf', { name: m.displayName })}
                 className="flex items-center gap-3 p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] cursor-pointer hover:border-indigo-400/60 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
@@ -214,7 +243,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                     </p>
                     {isSelf && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">
-                        Vous
+                        {t('common.youBadge')}
                       </span>
                     )}
                   </div>
@@ -227,37 +256,37 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                   kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
                 />
 
-                {isAbove && (
+                {isAbove(m) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label={`Actions pour ${m.displayName}`}
+                      aria-label={t('common.actionsFor', { name: m.displayName })}
                     >
                       <MoreVertical size={16} aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem onClick={() => setAssigning(m)}>
                         <ClipboardList size={14} className="text-indigo-500" aria-hidden="true" />
-                        Attribuer une tâche
+                        {t('directory.assignTask')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setInsights({ member: m, tab: 'tasks' })}>
+                      <DropdownMenuItem onClick={() => openMember(m, 'tasks')}>
                         <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
-                        Voir ses tâches
+                        {t('directory.seeTasks')}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setAgendaMember(m)}>
+                      <DropdownMenuItem onClick={() => openMember(m, 'agenda')}>
                         <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
-                        Voir son agenda
+                        {t('directory.seeAgenda')}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setInsights({ member: m, tab: 'contribution' })}>
+                      <DropdownMenuItem onClick={() => openMember(m, 'contribution')}>
                         <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
-                        Voir sa contribution
+                        {t('directory.seeContribution')}
                       </DropdownMenuItem>
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem variant="destructive" onClick={() => handleRemove(m)}>
-                            <LogOut size={14} aria-hidden="true" /> Retirer de l'entreprise
+                            <LogOut size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
                           </DropdownMenuItem>
                         </>
                       )}
@@ -271,35 +300,24 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
       </ul>
       )}
 
-      {profile && (
-        <MemberProfileSheet
-          member={profile}
+      {sheet && (
+        <MemberSheet
+          orgId={orgId}
+          member={sheet.member}
           members={members}
-          teams={teamsByUser.get(profile.userId) ?? []}
+          teams={teamsByUser.get(sheet.member.userId) ?? []}
           currentUserId={currentUserId}
+          // L'annuaire ne modifie pas la hierarchie (#1) : ces deux actions
+          // n'appartiennent qu'a la pyramide.
           canMove={false}
           canAddUnder={false}
-          onClose={() => setProfile(null)}
+          canSeeInsights={isAbove(sheet.member)}
+          canSeeAgenda={isAbove(sheet.member)}
+          initialTab={sheet.tab}
+          onClose={() => setSheet(null)}
           onMove={() => {}}
           onAddUnder={() => {}}
         />
-      )}
-
-      {insights && (
-        <MemberInsightsSheet
-          orgId={orgId}
-          member={insights.member}
-          initialTab={insights.tab}
-          canEdit={
-            insights.member.userId !== currentUserId &&
-            (isAdmin || (!!currentUserId && subtreeOf(members, currentUserId).has(insights.member.userId)))
-          }
-          onClose={() => setInsights(null)}
-        />
-      )}
-
-      {agendaMember && (
-        <MemberAgendaSheet member={agendaMember} onClose={() => setAgendaMember(null)} />
       )}
 
       {assigning && (
