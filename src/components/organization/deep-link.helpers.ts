@@ -27,14 +27,23 @@ export const readEntityParam = (
   return raw;
 };
 
-/** Construit un lien /entreprise (onglet + entité optionnelle). */
+/**
+ * Construit un lien /entreprise (onglet + entité optionnelle).
+ *
+ * `extra` porte les paramètres qui précisent l'ÉTAT d'une entité déjà ciblée,
+ * pas une entité de plus — `?memberTab=agenda` sur une fiche membre (#18).
+ * Ils restent hors de `EntityParam` parce qu'ils ne se relisent pas avec
+ * `readEntityParam` : leurs valeurs sont un vocabulaire fermé, validé contre
+ * ce que l'utilisateur a le DROIT de voir, pas contre un alphabet d'id.
+ */
 export const buildOrgLink = (
   tab: string,
   entity?: Partial<Record<EntityParam, string>>,
+  extra?: Record<string, string>,
 ): string => {
   const params = new URLSearchParams();
   if (tab && tab !== 'overview') params.set('tab', tab);
-  for (const [key, value] of Object.entries(entity ?? {})) {
+  for (const [key, value] of Object.entries({ ...entity, ...extra })) {
     if (value) params.set(key, value);
   }
   const qs = params.toString();

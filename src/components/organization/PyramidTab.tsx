@@ -56,9 +56,8 @@ import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
-import MemberProfileSheet from './MemberProfileSheet';
-import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
-import MemberAgendaSheet from './MemberAgendaSheet';
+import MemberSheet from './MemberSheet';
+import { MEMBER_TAB_PARAM, type MemberTab } from './member-sheet.helpers';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
 import { useT } from '@/i18n/useT';
@@ -120,10 +119,12 @@ interface NodeCardProps {
   matchIds: Set<string>;
   /** Équipes transverses par membre (pastilles couleur). */
   teamsByUser: Map<string, OrgTeam[]>;
-  /** Ouvre la fiche membre (clic ou Entrée sur une carte hors mode déplacement). */
-  onOpenProfile: (m: OrgMember) => void;
-  /** Ouvre les infos d'un subordonné (tâches / agenda / contribution). */
-  onOpenInsights: (m: OrgMember, tab: InsightsTab) => void;
+  /**
+   * Ouvre la fiche membre unifiée sur un onglet (item #18). Le clic sur la
+   * carte ouvre le profil ; les entrées du menu ⋯ ouvrent la même fiche
+   * directement sur l'onglet demandé.
+   */
+  onOpenMember: (m: OrgMember, tab: MemberTab) => void;
   /** Mode réorganisation : toutes les cartes déplaçables sont draggables. */
   editMode: boolean;
   /** Profondeur (mobile : indentation ; desktop : sans objet). */
@@ -131,7 +132,7 @@ interface NodeCardProps {
   mobile: boolean;
 }
 
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile, workloadByUser }: NodeCardProps) => {
+const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenMember, editMode, depth, mobile, workloadByUser }: NodeCardProps) => {
   const { t, tp } = useT('org');
   const collapsed = collapsedIds.has(node.member.userId);
   // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
@@ -251,14 +252,14 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
         if (Date.now() - menuActionAtRef.current < 500) return;
         const t = e.target as HTMLElement;
         if (t.closest('button') || t.closest('[data-grip]')) return;
-        onOpenProfile(m);
+        onOpenMember(m, 'profile');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           if (e.target !== e.currentTarget) return; // boutons internes
           e.preventDefault();
           if (isDropTarget) drag.onDrop(m.userId);
-          else if (!drag) onOpenProfile(m);
+          else if (!drag) onOpenMember(m, 'profile');
           return;
         }
         // Navigation clavier : flèches = parent / enfant / frère précédent-suivant.
@@ -422,15 +423,15 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             {canSeeInsights && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'tasks')}>
+                <DropdownMenuItem onClick={() => onOpenMember(m, 'tasks')}>
                   <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
                   {t('pyramid.seeTasksAction')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'agenda')}>
+                <DropdownMenuItem onClick={() => onOpenMember(m, 'agenda')}>
                   <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
                   Voir son agenda
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'contribution')}>
+                <DropdownMenuItem onClick={() => onOpenMember(m, 'contribution')}>
                   <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
                   Voir sa contribution
                 </DropdownMenuItem>
@@ -456,7 +457,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       <div style={{ marginLeft: depth * 16 }} className="space-y-2">
         <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
         {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile />
+          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenMember={onOpenMember} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile />
         ))}
       </div>
     );
@@ -485,7 +486,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                     />
                   )}
                   <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile={false} />
+                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenMember={onOpenMember} workloadByUser={workloadByUser} editMode={editMode} depth={depth + 1} mobile={false} />
                 </div>
               );
             })}
@@ -527,13 +528,18 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [hoverDropId, setHoverDropId] = useState<string | null>(null);
   const [placing, setPlacing] = useState<OrgMember | null>(null);
   const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
-  const [profile, setProfile] = useState<OrgMember | null>(null);
+  // Fiche membre unifiée (item #18) : profil, tâches, contribution, agenda —
+  // un seul sheet, ouvert sur l'onglet demandé. `tab` reste une chaîne brute
+  // ici : seul `MemberSheet` connaît les onglets AUTORISÉS pour ce membre, et
+  // c'est lui qui valide (une URL forgée ne doit pas ouvrir un onglet interdit).
+  const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
 
-  // ─── Deep-link `?member=<id>` ───────────────────────────────────────
+  // ─── Deep-link `?member=<id>&memberTab=<tab>` ───────────────────────
   // Le helper `readEntityParam` accepte 'member' depuis la vague 1 mais rien ne
   // le consommait : une fiche membre n'était donc pas partageable.
   const [searchParams, setSearchParams] = useSearchParams();
   const deepMemberId = readEntityParam(searchParams, 'member');
+  const deepMemberTab = searchParams.get(MEMBER_TAB_PARAM);
 
   useEffect(() => {
     if (!deepMemberId) return;
@@ -541,17 +547,14 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     // Les membres arrivent en asynchrone : tant qu'ils ne sont pas là, on garde
     // le paramètre et l'effet se rejoue au chargement suivant.
     if (!target) return;
-    setProfile(target);
+    setSheet({ member: target, tab: deepMemberTab });
     // Nettoyage : sans lui, refermer la fiche la rouvrirait au rendu suivant,
     // l'URL restant la source de vérité.
     const next = new URLSearchParams(searchParams);
     next.delete('member');
+    next.delete(MEMBER_TAB_PARAM);
     setSearchParams(next, { replace: true });
-  }, [deepMemberId, members, searchParams, setSearchParams]);
-  // Infos d'un subordonné (tâches / contribution), ouvert sur un onglet.
-  const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
-  // Agenda complet d'un subordonné (manager) — plein écran, éditable.
-  const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
+  }, [deepMemberId, deepMemberTab, members, searchParams, setSearchParams]);
   // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   // Retrait d'un membre SANS subordonné : modal de confirmation (#3).
@@ -1278,10 +1281,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 onToggleCollapse={toggleCollapse}
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
-                onOpenProfile={setProfile}
-                onOpenInsights={(mem, tab) =>
-                  tab === 'agenda' ? setAgendaMember(mem) : setInsights({ member: mem, tab })
-                }
+                onOpenMember={(mem, tab) => setSheet({ member: mem, tab })}
                 editMode={editMode}
                 depth={0}
                 mobile={isMobile}
@@ -1387,32 +1387,24 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         {announcement}
       </div>
 
-      {profile && (
-        <MemberProfileSheet
-          member={profile}
+      {sheet && (
+        <MemberSheet
+          orgId={orgId}
+          member={sheet.member}
           members={members}
-          teams={teamsByUser.get(profile.userId) ?? []}
+          teams={teamsByUser.get(sheet.member.userId) ?? []}
           currentUserId={currentUserId}
-          canMove={canManage(profile, members, currentUserId, isAdmin)}
-          canAddUnder={isAdmin || profile.userId === currentUserId || canManage(profile, members, currentUserId, isAdmin)}
-          onClose={() => setProfile(null)}
+          canMove={canManage(sheet.member, members, currentUserId, isAdmin)}
+          canAddUnder={isAdmin || sheet.member.userId === currentUserId || canManage(sheet.member, members, currentUserId, isAdmin)}
+          // Mêmes droits que l'ancien menu ⋯ : supérieur hiérarchique
+          // uniquement (admin partout, manager sur son sous-arbre), jamais soi.
+          canSeeInsights={canManage(sheet.member, members, currentUserId, isAdmin)}
+          canSeeAgenda={canManage(sheet.member, members, currentUserId, isAdmin)}
+          initialTab={sheet.tab}
+          onClose={() => setSheet(null)}
           onMove={setDragging}
           onAddUnder={setAddingUnder}
         />
-      )}
-
-      {insights && (
-        <MemberInsightsSheet
-          orgId={orgId}
-          member={insights.member}
-          initialTab={insights.tab}
-          canEdit={canManage(insights.member, members, currentUserId, isAdmin)}
-          onClose={() => setInsights(null)}
-        />
-      )}
-
-      {agendaMember && (
-        <MemberAgendaSheet member={agendaMember} onClose={() => setAgendaMember(null)} />
       )}
 
       {removing && (

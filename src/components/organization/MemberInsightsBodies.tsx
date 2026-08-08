@@ -1,27 +1,14 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { isPast, isToday, parseISO, format } from 'date-fns';
-import { getDateLocale } from '@/i18n/format';
-import {
-  X,
-  ListTodo,
-  TrendingUp,
-  CheckCircle2,
-  Circle,
-  AlertTriangle,
-  Plus,
-} from 'lucide-react';
+import { isPast, isToday, parseISO } from 'date-fns';
+import { CheckCircle2, Circle, Plus } from 'lucide-react';
 import {
   useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
   type TeamTask,
 } from '@/modules/team-projects';
 import { useOrgMembers, type OrgMember } from '@/modules/organizations';
 import { showUndoToast } from '@/lib/undo-toast';
-import MemberAvatar from './MemberAvatar';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
-
-export type InsightsTab = 'tasks' | 'agenda' | 'contribution';
 
 interface MemberBodyProps {
   orgId: string;
@@ -153,21 +140,6 @@ export const MemberContributionBody = ({ orgId, member }: MemberBodyProps) => {
   );
 };
 
-interface MemberInsightsSheetProps {
-  orgId: string;
-  member: OrgMember;
-  initialTab: InsightsTab;
-  /** Le viewer est-il un supérieur hiérarchique (admin ou manager du sous-arbre) ? Autorise l'édition des tâches. */
-  canEdit?: boolean;
-  onClose: () => void;
-}
-
-// L'agenda complet d'un membre a son propre écran plein page (MemberAgendaSheet,
-// éditable) — ici on ne garde que tâches + contribution.
-const TABS: { id: InsightsTab; label: string; Icon: typeof ListTodo }[] = [
-  { id: 'tasks', label: 'Tâches', Icon: ListTodo },
-  { id: 'contribution', label: 'Contribution', Icon: TrendingUp },
-];
 
 const isOverdue = (t: TeamTask): boolean => {
   if (t.completed || !t.deadline) return false;
@@ -175,168 +147,6 @@ const isOverdue = (t: TeamTask): boolean => {
   return isPast(d) && !isToday(d);
 };
 
-/**
- * Infos d'un subordonné dans le contexte entreprise (menu ⋯ de la pyramide,
- * réservé aux supérieurs hiérarchiques). Onglets :
- *  - Tâches : les tâches d'équipe assignées au membre.
- *  - Agenda : ses échéances de tâches d'équipe (le calendrier personnel n'est
- *    pas partagé entre membres — hors périmètre RLS actuel).
- *  - Contribution : synthèse de son activité (complétées, taux, retards).
- */
-const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClose }: MemberInsightsSheetProps) => {
-  const { t } = useT('org');
-  // 'agenda' a désormais son propre écran plein page — on retombe sur 'tasks'.
-  const [tab, setTab] = useState<InsightsTab>(initialTab === 'agenda' ? 'tasks' : initialTab);
-  const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
-  const { data: projects = [] } = useTeamProjects(orgId);
-  const { data: orgMembers = [] } = useOrgMembers(orgId);
-  const createTask = useCreateTeamTask(orgId);
-  const updateTask = useUpdateTeamTask(orgId);
-  const deleteTask = useDeleteTeamTask(orgId);
-  const [creatingTask, setCreatingTask] = useState(false);
-  const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
-  const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
-
-  // Suppression avec « Annuler » : la tâche est recréée à l'identique (même pattern que TeamProjectsTab).
-  const removeWithUndo = (task: TeamTask) =>
-    deleteTask.mutate(task.id, {
-      onSuccess: () => {
-        showUndoToast(t('insights.taskDeleted'), () =>
-          createTask.mutate({
-            projectId: task.projectId,
-            name: task.name,
-            description: task.description,
-            priority: task.priority,
-            deadline: task.deadline,
-            estimatedTime: task.estimatedTime,
-            assigneeIds: task.assigneeIds,
-          }),
-        );
-      },
-    });
-
-  const myTasks = useMemo(
-    () => allTasks.filter((t) => t.assigneeIds.includes(member.userId)),
-    [allTasks, member.userId],
-  );
-
-  const open = myTasks.filter((t) => !t.completed);
-  const done = myTasks.filter((t) => t.completed);
-  const overdue = open.filter(isOverdue);
-  const completionRate = myTasks.length ? Math.round((done.length / myTasks.length) * 100) : 0;
-
-  // Agenda : échéances à venir/passées des tâches ouvertes, triées par date.
-  const scheduled = useMemo(
-    () =>
-      open
-        .filter((t) => !!t.deadline)
-        .sort((a, b) => (a.deadline! < b.deadline! ? -1 : 1)),
-    [open],
-  );
-
-  return (
-    <>
-      {createPortal(
-        <div
-          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-          onClick={onClose}
-        >
-      <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={`Infos de ${member.displayName}`}
-      >
-        {/* En-tête */}
-        <div className="flex items-center gap-3 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
-          <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
-              {member.displayName}
-            </h2>
-            <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.activity')}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('common.close')}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Onglets */}
-        <div className="flex gap-1 px-3 pt-2 border-b border-[rgb(var(--color-border))]">
-          {TABS.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              aria-current={tab === id ? 'page' : undefined}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                tab === id
-                  ? 'border-indigo-500 text-[rgb(var(--color-text-primary))]'
-                  : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-              }`}
-            >
-              <Icon size={15} aria-hidden="true" /> {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Contenu */}
-        <div className="overflow-y-auto p-5">
-          {isLoading ? (
-            <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>
-          ) : tab === 'tasks' ? (
-            <TasksView
-              open={open}
-              done={done}
-              canEdit={canEdit}
-              onAddTask={() => setCreatingTask(true)}
-              onEditTask={setEditingTask}
-            />
-          ) : tab === 'agenda' ? (
-            <AgendaView scheduled={scheduled} />
-          ) : (
-            <ContributionView
-              total={myTasks.length}
-              done={done.length}
-              open={open.length}
-              overdue={overdue.length}
-              completionRate={completionRate}
-            />
-          )}
-        </div>
-        </div>
-        </div>,
-        document.body,
-      )}
-      {creatingTask && (
-        <TeamTaskModal
-          isCreating
-          projects={activeProjects.length > 0 ? activeProjects : projects}
-          members={orgMembers}
-          defaultProjectId={(activeProjects[0] ?? projects[0])?.id}
-          defaultAssigneeIds={[member.userId]}
-          onCreate={(input) => createTask.mutateAsync(input)}
-          onClose={() => setCreatingTask(false)}
-        />
-      )}
-      {editingTask && (
-        <TeamTaskModal
-          task={editingTask}
-          projects={activeProjects.length > 0 ? activeProjects : projects}
-          members={orgMembers}
-          onUpdate={(taskId, input) => updateTask.mutateAsync({ taskId, input })}
-          onDelete={removeWithUndo}
-          onClose={() => setEditingTask(null)}
-        />
-      )}
-    </>
-  );
-};
 
 const priorityLabel = (p: number) => `P${Math.min(5, Math.max(1, Math.round(p)))}`;
 
@@ -439,44 +249,6 @@ const TasksView = ({
   );
 };
 
-const AgendaView = ({ scheduled }: { scheduled: TeamTask[] }) => {
-  const { t } = useT('org');
-  if (scheduled.length === 0) {
-    return (
-      <div className="py-6 text-center">
-        <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('insights.noUpcoming')}</p>
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mt-2">
-          {t('insights.privacyNote')}
-        </p>
-      </div>
-    );
-  }
-  return (
-    <ul className="space-y-1.5">
-      {scheduled.map((t) => {
-        const late = isOverdue(t);
-        const d = parseISO(t.deadline!);
-        const today = isToday(d);
-        return (
-          <li
-            key={t.id}
-            className={`flex items-center gap-3 p-2.5 rounded-xl border ${
-              late ? 'border-red-300/60 bg-red-50/40 dark:bg-red-900/10' : 'border-[rgb(var(--color-border))]'
-            }`}
-          >
-            <div className={`flex flex-col items-center justify-center w-11 shrink-0 ${late ? 'text-red-500' : today ? 'text-indigo-500' : 'text-[rgb(var(--color-text-secondary))]'}`}>
-              <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: getDateLocale() })}</span>
-              <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: getDateLocale() })}</span>
-            </div>
-            <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{t.name}</span>
-            {late && <AlertTriangle size={14} className="text-red-500 shrink-0" aria-hidden="true" />}
-          </li>
-        );
-      })}
-    </ul>
-  );
-};
-
 const StatBlock = ({ value, label, tone }: { value: string; label: string; tone: string }) => (
   <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 text-center">
     <p className={`text-2xl font-bold ${tone}`}>{value}</p>
@@ -512,5 +284,3 @@ const ContributionView = ({ total, done, open, overdue, completionRate }: {
     </div>
   );
 };
-
-export default MemberInsightsSheet;

@@ -1,11 +1,7 @@
-import { createPortal } from 'react-dom';
-import { X, Mail, Users, Move, UserRoundPlus, Network, Link as LinkIcon } from 'lucide-react';
-import { toast } from 'sonner';
-import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
+import { Mail, Users, Move, UserRoundPlus, Network } from 'lucide-react';
+import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
-import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
-import { buildOrgLink } from './deep-link.helpers';
 
 interface MemberProfileBodyProps {
   member: OrgMember;
@@ -21,8 +17,6 @@ interface MemberProfileBodyProps {
   onMove: (m: OrgMember) => void;
   onAddUnder: (m: OrgMember) => void;
 }
-
-type MemberProfileSheetProps = MemberProfileBodyProps;
 
 /**
  * CORPS de la fiche profil — sans overlay ni en-tête (item #18).
@@ -117,85 +111,3 @@ export const MemberProfileBody = ({
     </>
   );
 };
-
-/**
- * Fiche membre (clic sur une carte de la pyramide) : identité, rattachement,
- * effectifs, équipes transverses et actions rapides (déplacer / ajouter).
- */
-const MemberProfileSheet = (props: MemberProfileSheetProps) => {
-  const { member, members, currentUserId, onClose } = props;
-  const { t } = useT('org');
-
-  /**
-   * URL absolue : le lien part dans une conversation, un chemin relatif n'y
-   * serait pas cliquable. `writeText` peut echouer (permission refusee, page
-   * non securisee) — on ne pretend pas avoir copie dans ce cas.
-   */
-  const copyProfileLink = async () => {
-    const url = `${window.location.origin}${buildOrgLink('pyramid', { member: member.userId })}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success(t('member.copyLinkDone'));
-    } catch {
-      toast.error(t('member.copyLink'));
-    }
-  };
-
-  const m = member;
-  const isMe = m.userId === currentUserId;
-  const roleLabel = m.role === 'admin' ? 'Admin' : isManagerOf(members, m.userId) ? 'Manager' : 'Membre';
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-sm max-h-[85vh] overflow-y-auto p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={`Profil de ${m.displayName}`}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <MemberAvatar avatar={m.avatar} name={m.displayName} size={52} />
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">
-                {isMe ? 'Vous' : m.displayName}
-              </h2>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-                {roleLabel}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Un deep-link qu'on ne peut pas copier ne sert a rien : c'est
-                cette action qui rend une fiche membre reellement partageable. */}
-            <button
-              type="button"
-              onClick={copyProfileLink}
-              aria-label={t('member.copyLink')}
-              title={t('member.copyLink')}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-            >
-              <LinkIcon size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t('common.close')}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
-        <MemberProfileBody {...props} />
-      </div>
-    </div>,
-    document.body,
-  );
-};
-
-export default MemberProfileSheet;
