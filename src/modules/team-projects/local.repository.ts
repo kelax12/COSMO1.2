@@ -19,11 +19,19 @@ import {
   TeamSubtask,
   CreateTeamSubtaskInput,
   UpdateTeamSubtaskInput,
+  TeamLabel,
+  CreateTeamLabelInput,
+  UpdateTeamLabelInput,
+  TeamTaskLabel,
+  TeamTaskActivity,
   CreateTeamTaskCommentInput,
 } from './types';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
   TEAM_TASK_SUBTASKS_STORAGE_KEY,
+  TEAM_LABELS_STORAGE_KEY,
+  TEAM_TASK_LABELS_STORAGE_KEY,
+  TEAM_TASK_ACTIVITY_STORAGE_KEY,
 } from './constants';
 
 const DEMO_ORG_ID = 'org-demo-1';
@@ -107,6 +115,17 @@ const DEMO_TASKS: TeamTask[] = [
 ];
 
 // Commentaires seed (mig. 082) — fil de discussion réaliste sur 2 tâches.
+/**
+ * Labels de démo — la fonctionnalité doit se montrer, pas se deviner. Un
+ * vocabulaire vide donnerait l'impression d'un écran cassé au premier essai.
+ */
+const DEMO_LABELS: TeamLabel[] = [
+  { id: 'lbl-bug', orgId: DEMO_ORG_ID, name: 'Bug', color: '#ef4444', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
+  { id: 'lbl-client', orgId: DEMO_ORG_ID, name: 'Client', color: '#0ea5e9', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
+  { id: 'lbl-urgent', orgId: DEMO_ORG_ID, name: 'Urgent', color: '#f59e0b', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
+  { id: 'lbl-tech', orgId: DEMO_ORG_ID, name: 'Technique', color: '#8b5cf6', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
+];
+
 const DEMO_COMMENTS: TeamTaskComment[] = [
   { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma — retours bienvenus !', mentions: [], createdAt: iso(-4) },
   { id: 'comment-seed-2', taskId: 'ttask-1', authorId: DEMO_USER_ID, body: '@Marie Dupont super base, je préfère la variante B pour le hero.', mentions: ['friend-1'], createdAt: iso(-3) },
@@ -343,5 +362,90 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
 
   async deleteSubtask(subtaskId: string): Promise<void> {
     this.saveSubtasks(this.getSubtasksArray().filter((s) => s.id !== subtaskId));
+  }
+
+  // ─── Labels (mig. 093) ─────────────────────────────────────────────
+
+  private getLabelsArray(): TeamLabel[] {
+    return readOrSeed<TeamLabel[]>(TEAM_LABELS_STORAGE_KEY, DEMO_LABELS);
+  }
+  private saveLabels(l: TeamLabel[]): void {
+    localStorage.setItem(TEAM_LABELS_STORAGE_KEY, JSON.stringify(l));
+  }
+  private getTaskLabelsArray(): TeamTaskLabel[] {
+    return readOrSeed<TeamTaskLabel[]>(TEAM_TASK_LABELS_STORAGE_KEY, []);
+  }
+  private saveTaskLabels(tl: TeamTaskLabel[]): void {
+    localStorage.setItem(TEAM_TASK_LABELS_STORAGE_KEY, JSON.stringify(tl));
+  }
+
+  async getLabels(_orgId: string): Promise<TeamLabel[]> {
+    return [...this.getLabelsArray()].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> {
+    const all = this.getLabelsArray();
+    // Miroir de l'index unique insensible à la casse (mig. 093) : sans lui, la
+    // démo accepterait « bug » et « Bug » là où la prod renverrait une erreur.
+    const wanted = input.name.trim().toLowerCase();
+    if (all.some((l) => l.name.trim().toLowerCase() === wanted)) {
+      throw new Error('Ce label existe déjà');
+    }
+    const label: TeamLabel = {
+      id: crypto.randomUUID(),
+      orgId,
+      name: input.name.trim(),
+      color: input.color ?? '#6366f1',
+      createdBy: DEMO_USER_ID,
+      createdAt: new Date().toISOString(),
+    };
+    this.saveLabels([...all, label]);
+    return label;
+  }
+
+  async updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel> {
+    const all = this.getLabelsArray();
+    const label = all.find((l) => l.id === labelId);
+    if (!label) throw new Error('Label introuvable');
+    if (input.name !== undefined) label.name = input.name.trim();
+    if (input.color !== undefined) label.color = input.color;
+    this.saveLabels(all);
+    return label;
+  }
+
+  async deleteLabel(labelId: string): Promise<void> {
+    this.saveLabels(this.getLabelsArray().filter((l) => l.id !== labelId));
+    // Miroir du ON DELETE CASCADE de la jonction.
+    this.saveTaskLabels(this.getTaskLabelsArray().filter((tl) => tl.labelId !== labelId));
+  }
+
+  async getTaskLabels(_orgId: string): Promise<TeamTaskLabel[]> {
+    return this.getTaskLabelsArray();
+  }
+
+  async addTaskLabel(taskId: string, labelId: string): Promise<void> {
+    const all = this.getTaskLabelsArray();
+    // Miroir de la PK composite : poser deux fois le même label est un no-op.
+    if (all.some((tl) => tl.taskId === taskId && tl.labelId === labelId)) return;
+    this.saveTaskLabels([...all, { taskId, labelId }]);
+  }
+
+  async removeTaskLabel(taskId: string, labelId: string): Promise<void> {
+    this.saveTaskLabels(
+      this.getTaskLabelsArray().filter((tl) => !(tl.taskId === taskId && tl.labelId === labelId)),
+    );
+  }
+
+  // ─── Historique (mig. 094) ─────────────────────────────────────────
+
+  /**
+   * En production, ce journal est écrit par un trigger. En démo il n'y a pas
+   * de base : on renvoie ce qui a été semé, sans jamais l'écrire depuis l'UI —
+   * c'est ce qui garde la même propriété append-only des deux côtés.
+   */
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> {
+    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, [])
+      .filter((a) => a.taskId === taskId)
+      .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
   }
 }

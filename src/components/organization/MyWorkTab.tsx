@@ -342,6 +342,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           projects={activeProjects}
           members={members}
           onUpdate={modalUpdate}
+          isManager={isAdmin}
           onClose={() => setEditingTask(null)}
         />
       )}

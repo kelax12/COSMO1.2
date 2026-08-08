@@ -8,6 +8,8 @@ import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import TeamSubtasksSection from './TeamSubtasksSection';
+import TeamTaskLabelsSection from './TeamTaskLabelsSection';
+import TeamTaskHistorySection from './TeamTaskHistorySection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -25,6 +27,13 @@ interface TeamTaskModalProps {
   onUpdate?: (taskId: string, input: UpdateTeamTaskInput) => Promise<unknown>;
   onDelete?: (task: TeamTask) => void;
   onClose: () => void;
+  /**
+   * Manager/admin — conditionne la CRÉATION de labels (policy
+   * `team_labels_insert`, mig. 093). Poser un label existant reste ouvert à
+   * quiconque peut éditer la tâche. Défaut `false` : un appelant qui l'oublie
+   * masque un bouton plutôt que d'exposer une action qui renverrait 403.
+   */
+  isManager?: boolean;
 }
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
@@ -43,7 +52,7 @@ const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(v
 const TeamTaskModal = ({
   task, isCreating = false, projects, members,
   defaultProjectId, defaultAssigneeIds,
-  onCreate, onUpdate, onDelete, onClose,
+  onCreate, onUpdate, onDelete, onClose, isManager = false,
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
   const [name, setName] = useState(task?.name ?? '');
@@ -317,8 +326,10 @@ const TeamTaskModal = ({
               besoin de l'id de sa tâche parente, qui n'existe pas encore en
               création. */}
           {!isCreating && task && (
-            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4">
+            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
+              <TeamTaskLabelsSection orgId={task.orgId} taskId={task.id} isManager={isManager} />
               <TeamSubtasksSection taskId={task.id} />
+              <TeamTaskHistorySection taskId={task.id} members={members} />
             </div>
           )}
 

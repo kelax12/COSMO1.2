@@ -20,6 +20,11 @@ import {
   TeamSubtask,
   CreateTeamSubtaskInput,
   UpdateTeamSubtaskInput,
+  TeamLabel,
+  CreateTeamLabelInput,
+  UpdateTeamLabelInput,
+  TeamTaskLabel,
+  TeamTaskActivity,
 } from './types';
 
 interface ProjectRow {
@@ -350,6 +355,117 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     const { error } = await supabase.from('team_task_subtasks').delete().eq('id', subtaskId);
     if (error) throw normalizeApiError(error);
   }
+
+  // ─── Labels (mig. 093) ───────────────────────────────────────────
+
+  async getLabels(orgId: string): Promise<TeamLabel[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_labels')
+      .select('*')
+      .eq('org_id', orgId)
+      .order('name', { ascending: true });
+    if (error) throw normalizeApiError(error);
+    return (data as LabelRow[]).map(mapLabel);
+  }
+
+  async createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) throw new Error('Non authentifié');
+    const { data, error } = await supabase
+      .from('team_labels')
+      .insert({
+        org_id: orgId,
+        name: input.name,
+        color: input.color ?? '#6366f1',
+        // La policy INSERT exige created_by = auth.uid().
+        created_by: uid,
+      })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapLabel(data as LabelRow);
+  }
+
+  async updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist — jamais org_id ni created_by (mass-assignment).
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.color !== undefined) patch.color = input.color;
+    const { data, error } = await supabase
+      .from('team_labels')
+      .update(patch)
+      .eq('id', labelId)
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapLabel(data as LabelRow);
+  }
+
+  async deleteLabel(labelId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.from('team_labels').delete().eq('id', labelId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  /**
+   * Une seule requête pour toute l'organisation plutôt qu'une par tâche : les
+   * chips de label s'affichent sur CHAQUE ligne de liste, une requête par tâche
+   * ferait exploser le nombre d'aller-retours sur un écran de 50 tâches.
+   *
+   * Le filtre passe par les labels de l'org (la jonction ne porte pas d'org_id) ;
+   * la RLS de `team_task_labels` reste la frontière réelle.
+   */
+  async getTaskLabels(orgId: string): Promise<TeamTaskLabel[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const labels = await this.getLabels(orgId);
+    if (labels.length === 0) return [];
+    const { data, error } = await supabase
+      .from('team_task_labels')
+      .select('task_id, label_id')
+      .in('label_id', labels.map((l) => l.id));
+    if (error) throw normalizeApiError(error);
+    return (data as { task_id: string; label_id: string }[]).map((r) => ({
+      taskId: r.task_id,
+      labelId: r.label_id,
+    }));
+  }
+
+  async addTaskLabel(taskId: string, labelId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('team_task_labels')
+      .insert({ task_id: taskId, label_id: labelId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async removeTaskLabel(taskId: string, labelId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('team_task_labels')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('label_id', labelId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Historique (mig. 094) — lecture seule ───────────────────────
+
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_activity')
+      .select('*')
+      .eq('task_id', taskId)
+      // Même ordre que l'index (task_id, created_at DESC).
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw normalizeApiError(error);
+    return (data as ActivityRow[]).map(mapActivity);
+  }
 }
 
 // ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
@@ -371,5 +487,47 @@ export const mapSubtask = (r: SubtaskRow): TeamSubtask => ({
   completed: r.completed,
   position: r.position,
   createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+// ─── Labels & historique : lignes brutes ─────────────────────────────
+
+interface LabelRow {
+  id: string;
+  org_id: string;
+  name: string;
+  color: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export const mapLabel = (r: LabelRow): TeamLabel => ({
+  id: r.id,
+  orgId: r.org_id,
+  name: r.name,
+  color: r.color,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+interface ActivityRow {
+  id: string;
+  task_id: string;
+  org_id: string;
+  actor_id: string | null;
+  field: string;
+  old_value: string | null;
+  new_value: string | null;
+  created_at: string;
+}
+
+export const mapActivity = (r: ActivityRow): TeamTaskActivity => ({
+  id: r.id,
+  taskId: r.task_id,
+  orgId: r.org_id,
+  actorId: r.actor_id,
+  field: r.field as TeamTaskActivity['field'],
+  oldValue: r.old_value,
+  newValue: r.new_value,
   createdAt: r.created_at,
 });

@@ -15,6 +15,11 @@ import {
   TeamSubtask,
   CreateTeamSubtaskInput,
   UpdateTeamSubtaskInput,
+  TeamLabel,
+  CreateTeamLabelInput,
+  UpdateTeamLabelInput,
+  TeamTaskLabel,
+  TeamTaskActivity,
 } from './types';
 
 export interface ITeamProjectsRepository {
@@ -40,4 +45,17 @@ export interface ITeamProjectsRepository {
   createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask>;
   updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
   deleteSubtask(subtaskId: string): Promise<void>;
+
+  // Labels (mig. 093)
+  getLabels(orgId: string): Promise<TeamLabel[]>;
+  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel>;
+  updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel>;
+  deleteLabel(labelId: string): Promise<void>;
+  /** Toutes les jonctions accessibles — une requête pour toute l'org, pas une par tâche. */
+  getTaskLabels(orgId: string): Promise<TeamTaskLabel[]>;
+  addTaskLabel(taskId: string, labelId: string): Promise<void>;
+  removeTaskLabel(taskId: string, labelId: string): Promise<void>;
+
+  // Historique (mig. 094) — lecture seule : la table est append-only, écrite par trigger.
+  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]>;
 }

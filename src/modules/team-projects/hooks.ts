@@ -8,7 +8,7 @@ import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
 import { teamProjectKeys } from './constants';
-import type { UpdateTeamSubtaskInput } from './types';
+import type { UpdateTeamSubtaskInput, CreateTeamLabelInput, UpdateTeamLabelInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
 import { translator } from '@/i18n/useT';
 
@@ -231,5 +231,100 @@ export const useDeleteTeamSubtask = (taskId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
     },
     onError: (error: Error) => toast.error(`Impossible de supprimer la sous-tâche : ${error.message}`),
+  });
+};
+
+// ─── Labels (mig. 093) ───────────────────────────────────────────────
+
+export const useTeamLabels = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.labels(orgId ?? ''),
+    queryFn: () => repository.getLabels(orgId as string),
+    enabled: !!orgId,
+    // Le vocabulaire bouge rarement — inutile de le refetcher en continu.
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+/**
+ * Jonctions tâche ↔ label pour TOUTE l'organisation, en une requête.
+ * Les chips s'affichent sur chaque ligne de liste : une requête par tâche
+ * ferait exploser les aller-retours sur un écran de 50 tâches.
+ */
+export const useTeamTaskLabels = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.taskLabels(orgId ?? ''),
+    queryFn: () => repository.getTaskLabels(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useCreateTeamLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (input: CreateTeamLabelInput) => repository.createLabel(orgId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de créer le label : ${error.message}`),
+  });
+};
+
+export const useUpdateTeamLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ labelId, input }: { labelId: string; input: UpdateTeamLabelInput }) =>
+      repository.updateLabel(labelId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier le label : ${error.message}`),
+  });
+};
+
+export const useDeleteTeamLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (labelId: string) => repository.deleteLabel(labelId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
+      // La jonction perd des lignes par CASCADE : son cache est périmé aussi.
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de supprimer le label : ${error.message}`),
+  });
+};
+
+/** Pose/retire un label sur une tâche — une seule mutation pour les deux sens. */
+export const useToggleTaskLabel = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ taskId, labelId, attached }: { taskId: string; labelId: string; attached: boolean }) =>
+      attached
+        ? repository.removeTaskLabel(taskId, labelId)
+        : repository.addTaskLabel(taskId, labelId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier les labels : ${error.message}`),
+  });
+};
+
+// ─── Historique (mig. 094) — lecture seule ───────────────────────────
+
+export const useTeamTaskActivity = (taskId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.activity(taskId ?? ''),
+    queryFn: () => repository.getTaskActivity(taskId as string),
+    enabled: !!taskId,
+    staleTime: 1000 * 15,
   });
 };
