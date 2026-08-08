@@ -2,18 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { showUndoToast } from '@/lib/undo-toast';
 import {
-  Plus, FolderKanban, LayoutList, SquareKanban, AlarmClock,
-  CircleDashed, CheckCircle2, ChevronDown, ChevronRight, UserRound,
-  Clock, Rows3, ListChecks, CalendarRange,
+  Plus, FolderKanban, AlarmClock, CircleDashed, CheckCircle2,
+  ChevronDown, ChevronRight, Clock,
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import {
   useTeamProjects,
   useTeamTasks,
@@ -36,8 +27,8 @@ import {
   filterByStatus, sumEstimatedTime, formatDuration, type TaskStatusFilter,
 } from './team-projects.helpers';
 import { readEntityParam } from './deep-link.helpers';
-import MemberAvatar from './MemberAvatar';
 import TeamProjectCard from './TeamProjectCard';
+import ProjectsToolbar from './ProjectsToolbar';
 import TeamProjectsKanban from './TeamProjectsKanban';
 import TeamProjectsTimeline from './TeamProjectsTimeline';
 import TeamTaskModal from './TeamTaskModal';
@@ -174,7 +165,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   );
   const tasksByProject = (projectId: string) => visibleTasks.filter((t) => t.projectId === projectId);
 
-  const filteredMember = members.find((m) => m.userId === assigneeFilter);
   const assignSheetMember = assignSheetFor !== 'closed' && assignSheetFor !== null
     ? members.find((m) => m.userId === assignSheetFor) ?? null
     : null;
@@ -356,11 +346,23 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
 
   return (
     <div className="space-y-4">
-      {/* Pouls : stats de l'espace projets */}
+      {/* Pouls : stats de l'espace projets.
+          Les compteurs QUI NE FILTRENT PAS perdent la forme de pastille et se
+          regroupent en une mention discrète : ils portaient jusqu'ici le style
+          exact des pastilles cliquables, si bien qu'un clic sans effet
+          enseignait que la rangée entière était inerte. */}
       {activeProjects.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
-            <FolderKanban size={12} aria-hidden="true" /> {tp('projects.projectCount', activeProjects.length)}
+          <span className="inline-flex items-center gap-1.5 text-[rgb(var(--color-text-muted))]">
+            <FolderKanban size={12} aria-hidden="true" />
+            {tp('projects.projectCount', activeProjects.length)}
+            {totalEstimated > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                <Clock size={12} aria-hidden="true" />
+                {t('projects.estimatedTotal', { duration: formatDuration(totalEstimated) })}
+              </>
+            )}
           </span>
           <StatPill
             active={statusFilter === 'open'}
@@ -390,212 +392,21 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
               <CheckCircle2 size={12} aria-hidden="true" /> {tp('projects.doneThisWeek', doneThisWeek)}
             </StatPill>
           )}
-          {totalEstimated > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium">
-              <Clock size={12} aria-hidden="true" /> {t('projects.estimatedTotal', { duration: formatDuration(totalEstimated) })}
-            </span>
-          )}
         </div>
       )}
 
-      {/* Barre d'actions */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Toutes / Mes tâches */}
-          <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
-            <button
-              type="button"
-              onClick={() => updatePrefs({ assigneeFilter: null })}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                !assigneeFilter ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
-              }`}
-            >
-              {t('projects.allTasks')}
-            </button>
-            <button
-              type="button"
-              onClick={() => currentUserId && updatePrefs({ assigneeFilter: currentUserId })}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                assigneeFilter === currentUserId ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
-              }`}
-            >
-              {t('projects.myTasks')}
-            </button>
-          </div>
-
-          {/* Tâches d'un membre */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={t('projects.filterAssignee')}
-              className={`h-9 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                filteredMember && assigneeFilter !== currentUserId
-                  ? 'border-indigo-500 text-[rgb(var(--color-text-primary))]'
-                  : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              {filteredMember && assigneeFilter !== currentUserId ? (
-                <>
-                  <MemberAvatar avatar={filteredMember.avatar} name={filteredMember.displayName} size={20} />
-                  <span className="max-w-[110px] truncate">{filteredMember.displayName}</span>
-                </>
-              ) : (
-                <>
-                  <UserRound size={14} aria-hidden="true" /> {t('projects.tasksOf')}
-                </>
-              )}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-              <DropdownMenuLabel>{t('projects.seeTasksOf')}</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null })}>
-                <span className="text-[rgb(var(--color-text-muted))]">{t('projects.everyone')}</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {members.map((m) => (
-                <DropdownMenuItem key={m.userId} onClick={() => updatePrefs({ assigneeFilter: m.userId })}>
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
-                  <span className="truncate">{m.userId === currentUserId ? 'Vous' : m.displayName}</span>
-                  {m.userId === assigneeFilter && <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]">✓</span>}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Filtre équipe */}
-          {teams.length > 0 && (
-            <select
-              value={teamFilter}
-              onChange={(e) => updatePrefs({ teamFilter: e.target.value })}
-              aria-label={t('projects.filterTeam')}
-              className="h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-            >
-              <option value="">{t('projects.allTeams')}</option>
-              <option value="org">{t('projects.orgNoTeam')}</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Liste / Kanban */}
-          <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
-            <button
-              type="button"
-              onClick={() => updatePrefs({ view: 'list' })}
-              aria-label={t('projects.listView')}
-              aria-pressed={view === 'list'}
-              title={t('projects.listView')}
-              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
-                view === 'list' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
-              }`}
-            >
-              <LayoutList size={15} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => updatePrefs({ view: 'kanban' })}
-              aria-label={t('projects.kanbanByAssignee')}
-              aria-pressed={view === 'kanban'}
-              title={t('projects.kanbanByAssignee')}
-              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
-                view === 'kanban' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
-              }`}
-            >
-              <SquareKanban size={15} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => updatePrefs({ view: 'timeline' })}
-              aria-label={t('projects.timelineView')}
-              aria-pressed={view === 'timeline'}
-              title={t('projects.timelineView')}
-              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
-                view === 'timeline' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
-              }`}
-            >
-              <CalendarRange size={15} aria-hidden="true" />
-            </button>
-          </div>
-
-          {/* Axe du kanban — seulement quand il sert à quelque chose. */}
-          {view === 'kanban' && (
-            <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
-              <button
-                type="button"
-                onClick={() => updatePrefs({ kanbanGroupBy: 'status' })}
-                aria-pressed={kanbanGroupBy === 'status'}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  kanbanGroupBy === 'status'
-                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                    : 'text-[rgb(var(--color-text-muted))]'
-                }`}
-              >
-                {t('projects.groupByStatus')}
-              </button>
-              <button
-                type="button"
-                onClick={() => updatePrefs({ kanbanGroupBy: 'assignee' })}
-                aria-pressed={kanbanGroupBy === 'assignee'}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  kanbanGroupBy === 'assignee'
-                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                    : 'text-[rgb(var(--color-text-muted))]'
-                }`}
-              >
-                {t('projects.groupByAssignee')}
-              </button>
-            </div>
-          )}
-
-          {/* Densité : un manager avec 12 projets scrolle, un IC avec 4 tâches
-              veut de l'air. Persisté par org comme les autres prefs. */}
-          <button
-            type="button"
-            onClick={() => updatePrefs({ density: density === 'compact' ? 'comfortable' : 'compact' })}
-            aria-pressed={density === 'compact'}
-            title={density === 'compact' ? t('projects.densityComfortable') : t('projects.densityCompact')}
-            aria-label={t('projects.densityToggle')}
-            className={`w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] flex items-center justify-center transition-colors ${
-              density === 'compact'
-                ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
-            }`}
-          >
-            <Rows3 size={15} aria-hidden="true" />
-          </button>
-
-          {/* Mode sélection — réservé à la vue liste : le kanban a déjà le
-              drag & drop comme geste principal, y superposer des cases à
-              cocher rendrait la carte ambiguë au clic. */}
-          {view === 'list' && (
-            <button
-              type="button"
-              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-              aria-pressed={selectMode}
-              title={selectMode ? t('projects.selectExit') : t('projects.selectMode')}
-              aria-label={selectMode ? t('projects.selectExit') : t('projects.selectMode')}
-              className={`w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] flex items-center justify-center transition-colors ${
-                selectMode
-                  ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                  : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              <ListChecks size={15} aria-hidden="true" />
-            </button>
-          )}
-
-          {isManager && !showNewProject && (
-            <button
-              type="button"
-              onClick={() => setShowNewProject(true)}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] text-sm font-medium text-[rgb(var(--color-text-secondary))] transition-colors"
-            >
-              <Plus size={15} aria-hidden="true" /> {t('projects.newProject')}
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Barre d'outils : périmètre · vue · action primaire (ProjectsToolbar) */}
+      <ProjectsToolbar
+        members={members}
+        teams={teams}
+        currentUserId={currentUserId}
+        prefs={prefs}
+        updatePrefs={updatePrefs}
+        isManager={isManager}
+        onNewProject={() => setShowNewProject(true)}
+        selectMode={selectMode}
+        onToggleSelectMode={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+      />
 
       {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
       {isManager && showNewProject && (
@@ -642,6 +453,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
           onAddToColumn={(memberId) => setAssignSheetFor(memberId)}
           groupBy={kanbanGroupBy}
+          onSetGroupBy={(next) => updatePrefs({ kanbanGroupBy: next })}
           onSetStatus={setStatus}
         />
       ) : (
