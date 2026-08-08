@@ -13,7 +13,12 @@
     "memberCount_one": "{{count}} member",
     "memberCount_other": "{{count}} members",
     "memberCountDot_one": "{{count}} member.",
-    "memberCountDot_other": "{{count}} members."
+    "memberCountDot_other": "{{count}} members.",
+    "directoryTitle": "Directory ({{count}})",
+    "deleteOrg": "Delete organization",
+    "leaveOrg": "Leave organization",
+    "badgeCount_one": "{{count}} new item",
+    "badgeCount_other": "{{count}} new items"
   },
   "onboarding": {
     "intro": "Create your company or join one to collaborate with your team.",
@@ -162,7 +167,8 @@
     "myDeadlines": "My due dates ({{count}})",
     "noDeadline": "No dated due date.",
     "stepInvite": "Invite members",
-    "myTasksSection": "My tasks ({{count}})"
+    "myTasksSection": "My tasks ({{count}})",
+    "orgDeadlines": "Upcoming company deadlines"
   },
   "okrModal": {
     "edit": "Edit objective",
@@ -204,7 +210,26 @@
     "createProject": "Create a project",
     "managerMustCreate": "A manager needs to create a project.",
     "archived": "Archived projects ({{count}})",
-    "orgSection": "Company"
+    "orgSection": "Company",
+    "allTasks": "All tasks",
+    "myTasks": "My tasks",
+    "tasksOf": "Tasks of…",
+    "newProject": "New project",
+    "listView": "List view",
+    "projectCount_one": "{{count}} project",
+    "projectCount_other": "{{count}} projects",
+    "openCount_one": "{{count}} open",
+    "openCount_other": "{{count}} open",
+    "overdueCount_one": "{{count}} overdue",
+    "overdueCount_other": "{{count}} overdue",
+    "filterOpen": "Show open tasks only",
+    "filterOverdue": "Show overdue tasks only",
+    "filterDone": "Show tasks completed this week",
+    "filterClear": "Clear filter",
+    "densityToggle": "Display density",
+    "densityComfortable": "Comfortable",
+    "densityCompact": "Compact",
+    "estimatedTotal": "{{duration}} estimated"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -282,7 +307,8 @@
     "doneRatio": "{{done}}/{{total}} tasks completed ({{percent}}%)",
     "teamBadge": "Team",
     "createFirstTask": "Create the first task",
-    "completed": "Completed ({{count}})"
+    "completed": "Completed ({{count}})",
+    "restEstimated": "{{duration}} left"
   },
   "deleteOrg": {
     "irreversible": "This cannot be undone.",

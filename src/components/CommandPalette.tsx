@@ -29,6 +29,7 @@ import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { useActiveOrganization } from '@/modules/organizations';
+import { buildOrgLink } from '@/components/organization/deep-link.helpers';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
 import { useActiveModules } from '@/modules/ui-states';
@@ -149,7 +150,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
       {matchedTeamTasks.length > 0 && (
         <CommandGroup heading={t('palette.teamTasks')}>
           {matchedTeamTasks.map((teamTask) => (
-            <CommandItem key={`team-task-${teamTask.id}`} value={`team-task-${teamTask.id}`} onSelect={() => go('/entreprise?tab=projects')}>
+            <CommandItem key={`team-task-${teamTask.id}`} value={`team-task-${teamTask.id}`} onSelect={() => go(buildOrgLink('projects', { task: teamTask.id }))}>
               <CheckSquare size={16} className={teamTask.completed ? 'opacity-40' : ''} aria-hidden="true" />
               <span className={`flex-1 ${teamTask.completed ? 'line-through opacity-60' : ''}`}>{teamTask.name}</span>
               <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('palette.team')}</span>
@@ -160,7 +161,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
       {matchedTeamProjects.length > 0 && (
         <CommandGroup heading={t('palette.teamProjects')}>
           {matchedTeamProjects.map((p) => (
-            <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go('/entreprise?tab=projects')}>
+            <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go(buildOrgLink('projects', { project: p.id }))}>
               <FolderKanban size={16} aria-hidden="true" />
               <span>{p.name}</span>
             </CommandItem>

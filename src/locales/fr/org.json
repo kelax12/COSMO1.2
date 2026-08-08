@@ -15,7 +15,13 @@
     "memberCount_other": "{{count}} membres",
     "memberCountDot_one": "{{count}} membre.",
     "memberCountDot_many": "{{count}} de membres.",
-    "memberCountDot_other": "{{count}} membres."
+    "memberCountDot_other": "{{count}} membres.",
+    "directoryTitle": "Annuaire ({{count}})",
+    "deleteOrg": "Supprimer l'entreprise",
+    "leaveOrg": "Quitter l'entreprise",
+    "badgeCount_one": "{{count}} nouveauté",
+    "badgeCount_other": "{{count}} nouveautés",
+    "badgeCount_many": "{{count}} de nouveautés"
   },
   "onboarding": {
     "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
@@ -169,7 +175,8 @@
     "myDeadlines": "Mes échéances ({{count}})",
     "noDeadline": "Aucune échéance datée.",
     "stepInvite": "Inviter des membres",
-    "myTasksSection": "Mes tâches ({{count}})"
+    "myTasksSection": "Mes tâches ({{count}})",
+    "orgDeadlines": "Prochaines échéances de l'entreprise"
   },
   "okrModal": {
     "edit": "Modifier l'objectif",
@@ -212,7 +219,29 @@
     "createProject": "Créer un projet",
     "managerMustCreate": "Un manager doit créer un projet.",
     "archived": "Projets archivés ({{count}})",
-    "orgSection": "Entreprise"
+    "orgSection": "Entreprise",
+    "allTasks": "Toutes les tâches",
+    "myTasks": "Mes tâches",
+    "tasksOf": "Tâches de…",
+    "newProject": "Nouveau projet",
+    "listView": "Vue liste",
+    "projectCount_one": "{{count}} projet",
+    "projectCount_other": "{{count}} projets",
+    "openCount_one": "{{count}} ouverte",
+    "openCount_other": "{{count}} ouvertes",
+    "overdueCount_one": "{{count}} en retard",
+    "overdueCount_other": "{{count}} en retard",
+    "filterOpen": "Voir uniquement les tâches ouvertes",
+    "filterOverdue": "Voir uniquement les tâches en retard",
+    "filterDone": "Voir les tâches terminées cette semaine",
+    "filterClear": "Retirer le filtre",
+    "densityToggle": "Densité d'affichage",
+    "densityComfortable": "Confortable",
+    "densityCompact": "Compact",
+    "estimatedTotal": "{{duration}} estimées",
+    "projectCount_many": "{{count}} de projets",
+    "openCount_many": "{{count}} d'ouvertes",
+    "overdueCount_many": "{{count}} en retard"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -290,7 +319,8 @@
     "doneRatio": "{{done}}/{{total}} tâches terminées ({{percent}} %)",
     "teamBadge": "Équipe",
     "createFirstTask": "Créer la première tâche",
-    "completed": "Terminées ({{count}})"
+    "completed": "Terminées ({{count}})",
+    "restEstimated": "{{duration}} restantes"
   },
   "deleteOrg": {
     "irreversible": "Cette action est irréversible.",
