@@ -9,8 +9,6 @@ import BulkAddToListModal from './add-to-list/BulkAddToListModal';
 import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList, TaskRow } from './task-table/list';
-import PendingSharedTasks from './task-table/PendingSharedTasks';
-import PendingSharedLists from './task-table/PendingSharedLists';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -410,17 +408,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   return (
     <>
-      {/* Mobile : ces bandeaux sont regroupés dans TasksInboxMenu (en-tête). */}
-      {!addToListMode && (
-        <div className="hidden md:block">
-          <PendingSharedTasks />
-        </div>
-      )}
-      {!addToListMode && (
-        <div className="hidden md:block">
-          <PendingSharedLists />
-        </div>
-      )}
+      {/* Tâches/listes partagées en attente : plus de bandeaux inline ici,
+          regroupées dans TasksInboxMenu (en-tête, mobile ET desktop) — pour
+          laisser toute la largeur au tableau. */}
       <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
         <div className="flex flex-wrap items-center gap-2">
           <Button

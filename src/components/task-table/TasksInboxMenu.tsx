@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
-// TasksInboxMenu — bouton boîte de réception mobile pour la page Tâches.
-// Regroupe les tâches partagées + listes partagées en attente (contenu
-// identique à PendingSharedTasks / PendingSharedLists) dans un popover,
-// sur le même modèle que InboxMenu (Dashboard). Mobile only : ces bandeaux
-// restent affichés inline sur desktop.
+// TasksInboxMenu — bouton boîte de réception pour la page Tâches.
+// Regroupe les tâches partagées + listes partagées en attente dans un
+// popover, sur le même modèle que InboxMenu (Dashboard). Un seul composant,
+// deux rendus de déclencheur : `variant="mobile"` (icône seule, TouchTarget,
+// dans MobileHeader) et `variant="desktop"` (pastille avec libellé, à côté
+// du bouton Calendrier) — la logique de données et le popover sont
+// partagés, seul le bouton qui l'ouvre change.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -28,7 +30,11 @@ import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shar
 import TouchTarget from '@/components/mobile/TouchTarget';
 import { useT } from '@/i18n/useT';
 
-const TasksInboxMenu: React.FC = () => {
+interface TasksInboxMenuProps {
+  variant?: 'mobile' | 'desktop';
+}
+
+const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) => {
   const { t, tp } = useT('tasks');
   const { user } = useAuth();
   const isDemo = useIsDemo();
@@ -275,31 +281,62 @@ const TasksInboxMenu: React.FC = () => {
     </AnimatePresence>
   );
 
+  const ariaLabel = total > 0 ? t('inbox.withCount', { count: total }) : t('inbox.label');
+
+  // Le badge est identique dans les deux variantes : seul le bouton qui le
+  // porte change de forme.
+  const badge = total > 0 && (
+    <span
+      // Taille via `text-caption` (11px), le plancher de l'échelle mobile —
+      // pas une valeur arbitraire plus petite. Un badge de notification est
+      // précisément ce qu'on ne doit pas rendre illisible pour gagner un
+      // pixel (cf. design-system.guard.test.ts).
+      className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+      aria-hidden="true"
+    >
+      {total > 9 ? '9+' : total}
+    </span>
+  );
+
   return (
     <>
-      <TouchTarget
-        ref={triggerRef}
-        onClick={() => setOpen((v) => !v)}
-        className="relative"
-        aria-label={total > 0 ? t('inbox.withCount', { count: total }) : t('inbox.label')}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        data-tutorial-id="tasks-inbox-toggle"
-      >
-        <Inbox size={20} aria-hidden="true" />
-        {total > 0 && (
-          <span
-            // Taille via `text-caption` (11px), le plancher de l'échelle
-            // mobile — pas une valeur arbitraire plus petite. Un badge de
-            // notification est précisément ce qu'on ne doit pas rendre
-            // illisible pour gagner un pixel (cf. design-system.guard.test.ts).
-            className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
-            aria-hidden="true"
-          >
-            {total > 9 ? '9+' : total}
-          </span>
-        )}
-      </TouchTarget>
+      {variant === 'desktop' ? (
+        // Même gabarit que le bouton Calendrier voisin (TasksHeader) : pastille
+        // bordée, icône + libellé masqué sous `sm`, hauteur 44px identique.
+        <motion.button
+          ref={triggerRef}
+          type="button"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setOpen((v) => !v)}
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          data-tutorial-id="tasks-inbox-toggle"
+          className={`relative flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
+            open
+              ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] shadow-md'
+              : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-border-strong))]'
+          }`}
+        >
+          <Inbox size={18} className={open ? 'text-white' : 'text-blue-600'} aria-hidden="true" />
+          <span className="hidden sm:inline">{t('inbox.label')}</span>
+          {badge}
+        </motion.button>
+      ) : (
+        <TouchTarget
+          ref={triggerRef}
+          onClick={() => setOpen((v) => !v)}
+          className="relative"
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          data-tutorial-id="tasks-inbox-toggle"
+        >
+          <Inbox size={20} aria-hidden="true" />
+          {badge}
+        </TouchTarget>
+      )}
       {typeof document !== 'undefined' && createPortal(popoverContent, document.body)}
     </>
   );
