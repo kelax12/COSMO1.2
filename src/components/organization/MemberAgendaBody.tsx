@@ -63,7 +63,17 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
   const draggableRef = useRef<Draggable | null>(null);
   const [view, setView] = useState<ViewName>('timeGridWeek');
   const [title, setTitle] = useState('');
-  const [showTasks, setShowTasks] = useState(true);
+  /**
+   * Volet « tâches à planifier ». Il occupe 240 px : sur un écran de 375 px il
+   * ne laisserait que 100 px au calendrier — un onglet Agenda qui ne montre pas
+   * l'agenda (mesuré au navigateur, item #18). Il démarre donc fermé sous `sm`,
+   * et les deux volets y sont exclusifs : celui qu'on ouvre prend tout.
+   *
+   * `window.innerWidth` plutôt que `useIsMobile()` : ce hook renvoie `false` au
+   * premier rendu puis se corrige, ce qui ferait monter le calendrier à 100 px
+   * avant de le corriger — exactement la mesure ratée que FullCalendar garde.
+   */
+  const [showTasks, setShowTasks] = useState(() => window.innerWidth >= 640);
   const [eventsWindow, setEventsWindow] = useState(() => defaultEventsWindow());
 
   const { data: events = [] } = useMemberEventsWindow(member.userId, eventsWindow.start, eventsWindow.end);
@@ -296,7 +306,7 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
       <div className="flex-1 min-h-0 flex overflow-hidden">
         {showTasks && (
           <aside
-            className="w-60 lg:w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex flex-col"
+            className="w-full sm:w-60 lg:w-72 shrink-0 sm:border-r border-[rgb(var(--color-border))] flex flex-col"
             style={{ backgroundColor: 'rgb(var(--nav-bg))' }}
           >
             <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-start justify-between gap-2">
@@ -356,7 +366,7 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
         )}
 
         {/* Calendrier */}
-        <div className="flex-1 min-w-0 p-2 sm:p-4 overflow-hidden">
+        <div className={`flex-1 min-w-0 p-2 sm:p-4 overflow-hidden ${showTasks ? 'hidden sm:block' : ''}`}>
           <div className="h-full w-full rounded-xl border border-[rgb(var(--color-border))] overflow-hidden p-2 sm:p-4" style={{ backgroundColor: 'rgb(var(--calendar-bg))' }}>
             <FullCalendar
               ref={calendarRef}
