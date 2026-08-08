@@ -12,6 +12,9 @@ import {
   TeamTaskFilters,
   TeamTaskComment,
   CreateTeamTaskCommentInput,
+  TeamSubtask,
+  CreateTeamSubtaskInput,
+  UpdateTeamSubtaskInput,
 } from './types';
 
 export interface ITeamProjectsRepository {
@@ -31,4 +34,10 @@ export interface ITeamProjectsRepository {
   getComments(taskId: string): Promise<TeamTaskComment[]>;
   addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment>;
   deleteComment(commentId: string): Promise<void>;
+
+  // Sous-tâches (mig. 092)
+  getSubtasks(taskId: string): Promise<TeamSubtask[]>;
+  createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask>;
+  updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
+  deleteSubtask(subtaskId: string): Promise<void>;
 }

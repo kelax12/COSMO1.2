@@ -218,3 +218,18 @@ export const groupByStatus = (tasks: TeamTask[]): Record<TeamTaskStatus, TeamTas
   }
   return groups;
 };
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+/**
+ * Avancement d'une checklist, en pourcentage entier.
+ *
+ * Renvoie `null` — et non 0 — quand la liste est vide : « aucune sous-tâche »
+ * et « aucune sous-tâche faite » sont deux états différents, et afficher 0 %
+ * sur une tâche sans checklist donnerait l'impression d'un retard inexistant.
+ */
+export const subtaskProgress = (subtasks: { completed: boolean }[]): number | null => {
+  if (subtasks.length === 0) return null;
+  const done = subtasks.filter((s) => s.completed).length;
+  return Math.round((done / subtasks.length) * 100);
+};

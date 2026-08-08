@@ -16,9 +16,15 @@ import {
   UpdateTeamTaskInput,
   TeamTaskFilters,
   TeamTaskComment,
+  TeamSubtask,
+  CreateTeamSubtaskInput,
+  UpdateTeamSubtaskInput,
   CreateTeamTaskCommentInput,
 } from './types';
-import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY } from './constants';
+import {
+  TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
+  TEAM_TASK_SUBTASKS_STORAGE_KEY,
+} from './constants';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -290,5 +296,52 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async deleteComment(commentId: string): Promise<void> {
     // Auteur only (miroir de la RLS) — en démo, seul demo-user écrit.
     this.saveComments(this.getCommentsArray().filter((c) => c.id !== commentId));
+  }
+
+  // ─── Sous-tâches (mig. 092) ────────────────────────────────────────
+
+  private getSubtasksArray(): TeamSubtask[] {
+    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, []);
+  }
+  private saveSubtasks(s: TeamSubtask[]): void {
+    localStorage.setItem(TEAM_TASK_SUBTASKS_STORAGE_KEY, JSON.stringify(s));
+  }
+
+  async getSubtasks(taskId: string): Promise<TeamSubtask[]> {
+    // Même ordre que la requête Supabase (position, puis création) : la démo
+    // et la prod doivent afficher la liste identiquement.
+    return this.getSubtasksArray()
+      .filter((s) => s.taskId === taskId)
+      .sort((a, b) => a.position - b.position || (a.createdAt < b.createdAt ? -1 : 1));
+  }
+
+  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> {
+    const all = this.getSubtasksArray();
+    const subtask: TeamSubtask = {
+      id: crypto.randomUUID(),
+      taskId: input.taskId,
+      title: input.title,
+      completed: false,
+      position: input.position ?? all.filter((s) => s.taskId === input.taskId).length,
+      createdBy: DEMO_USER_ID,
+      createdAt: new Date().toISOString(),
+    };
+    this.saveSubtasks([...all, subtask]);
+    return subtask;
+  }
+
+  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
+    const all = this.getSubtasksArray();
+    const subtask = all.find((s) => s.id === subtaskId);
+    if (!subtask) throw new Error('Sous-tâche introuvable');
+    if (input.title !== undefined) subtask.title = input.title;
+    if (input.completed !== undefined) subtask.completed = input.completed;
+    if (input.position !== undefined) subtask.position = input.position;
+    this.saveSubtasks(all);
+    return subtask;
+  }
+
+  async deleteSubtask(subtaskId: string): Promise<void> {
+    this.saveSubtasks(this.getSubtasksArray().filter((s) => s.id !== subtaskId));
   }
 }

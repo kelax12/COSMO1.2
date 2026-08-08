@@ -7,6 +7,7 @@ import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } 
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
+import TeamSubtasksSection from './TeamSubtasksSection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -311,6 +312,15 @@ const TeamTaskModal = ({
               )}
             </div>
           </form>
+
+          {/* Sous-tâches (mig. 092) — édition uniquement : une sous-tâche a
+              besoin de l'id de sa tâche parente, qui n'existe pas encore en
+              création. */}
+          {!isCreating && task && (
+            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4">
+              <TeamSubtasksSection taskId={task.id} />
+            </div>
+          )}
 
           {/* Commentaires (reco #9) — édition uniquement (la tâche existe). */}
           {!isCreating && task && (

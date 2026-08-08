@@ -17,6 +17,9 @@ import {
   TeamTaskFilters,
   TeamTaskComment,
   CreateTeamTaskCommentInput,
+  TeamSubtask,
+  CreateTeamSubtaskInput,
+  UpdateTeamSubtaskInput,
 } from './types';
 
 interface ProjectRow {
@@ -289,4 +292,84 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     const { error } = await supabase.from('team_task_comments').delete().eq('id', commentId);
     if (error) throw normalizeApiError(error);
   }
+
+  // ─── Sous-tâches (mig. 092) ──────────────────────────────────────
+
+  async getSubtasks(taskId: string): Promise<TeamSubtask[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_subtasks')
+      .select('*')
+      .eq('task_id', taskId)
+      // Même ordre que l'index (task_id, position) — pas de tri en mémoire.
+      .order('position', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) throw normalizeApiError(error);
+    return (data as SubtaskRow[]).map(mapSubtask);
+  }
+
+  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) throw new Error('Non authentifié');
+    const { data, error } = await supabase
+      .from('team_task_subtasks')
+      .insert({
+        task_id: input.taskId,
+        title: input.title,
+        position: input.position ?? 0,
+        // La policy INSERT exige created_by = auth.uid() : l'omettre serait un 403.
+        created_by: uid,
+      })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapSubtask(data as SubtaskRow);
+  }
+
+  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist champ-par-champ — jamais task_id ni created_by (mass-assignment).
+    const patch: Record<string, unknown> = {};
+    if (input.title !== undefined) patch.title = input.title;
+    if (input.completed !== undefined) patch.completed = input.completed;
+    if (input.position !== undefined) patch.position = input.position;
+    const { data, error } = await supabase
+      .from('team_task_subtasks')
+      .update(patch)
+      .eq('id', subtaskId)
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapSubtask(data as SubtaskRow);
+  }
+
+  async deleteSubtask(subtaskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.from('team_task_subtasks').delete().eq('id', subtaskId);
+    if (error) throw normalizeApiError(error);
+  }
 }
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+interface SubtaskRow {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+}
+
+export const mapSubtask = (r: SubtaskRow): TeamSubtask => ({
+  id: r.id,
+  taskId: r.task_id,
+  title: r.title,
+  completed: r.completed,
+  position: r.position,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});

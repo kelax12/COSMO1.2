@@ -6,10 +6,12 @@
 export const TEAM_PROJECTS_STORAGE_KEY = 'cosmo_team_projects';
 export const TEAM_TASKS_STORAGE_KEY = 'cosmo_team_tasks';
 export const TEAM_TASK_COMMENTS_STORAGE_KEY = 'cosmo_team_task_comments';
+export const TEAM_TASK_SUBTASKS_STORAGE_KEY = 'cosmo_team_task_subtasks';
 
 export const teamProjectKeys = {
   all: ['team-projects'] as const,
   projects: (orgId: string) => [...teamProjectKeys.all, 'projects', orgId] as const,
   tasks: (orgId: string) => [...teamProjectKeys.all, 'tasks', orgId] as const,
   comments: (taskId: string) => [...teamProjectKeys.all, 'comments', taskId] as const,
+  subtasks: (taskId: string) => [...teamProjectKeys.all, 'subtasks', taskId] as const,
 };

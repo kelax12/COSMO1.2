@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   filterByStatus, sumEstimatedTime, formatDuration, groupByStatus, STATUS_ORDER,
+  subtaskProgress,
 } from './team-projects.helpers';
 import type { TeamTask } from '@/modules/team-projects';
 
@@ -118,5 +119,29 @@ describe('groupByStatus', () => {
 
   it("expose les 5 statuts dans l'ordre du flux", () => {
     expect(STATUS_ORDER).toEqual(['todo', 'in_progress', 'review', 'blocked', 'done']);
+  });
+});
+
+describe('subtaskProgress', () => {
+  it('calcule un pourcentage entier', () => {
+    expect(subtaskProgress([{ completed: true }, { completed: false }])).toBe(50);
+  });
+
+  it('renvoie 100 quand tout est coché', () => {
+    expect(subtaskProgress([{ completed: true }, { completed: true }])).toBe(100);
+  });
+
+  it("renvoie 0 quand rien n'est coché", () => {
+    expect(subtaskProgress([{ completed: false }])).toBe(0);
+  });
+
+  it('renvoie null (et non 0) sur une liste vide', () => {
+    // « aucune sous-tâche » et « aucune sous-tâche faite » sont deux états
+    // différents : confondre les deux afficherait un retard inexistant.
+    expect(subtaskProgress([])).toBeNull();
+  });
+
+  it("arrondit à l'entier le plus proche", () => {
+    expect(subtaskProgress([{ completed: true }, { completed: false }, { completed: false }])).toBe(33);
   });
 });
