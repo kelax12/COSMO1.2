@@ -110,8 +110,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   const [showNewProject, setShowNewProject] = useState(false);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
-  // Colonne kanban ciblée par le « + » (null fermé, 'unassigned' possible).
-  const [assignSheetFor, setAssignSheetFor] = useState<string | null | 'closed'>('closed');
+  // Colonne kanban (membre) ciblée par le « + ». La colonne « Non assignées »
+  // ne passe PLUS par ici : avec `member = null`, la sheet ne proposait qu'un
+  // unique bouton « Créer une nouvelle tâche » — un clic de plus pour
+  // rien, elle ouvre directement TaskModal (cf. handler du kanban plus bas).
+  const [assignSheetFor, setAssignSheetFor] = useState<string | 'closed'>('closed');
 
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   const { data: allTasks = [] } = useTeamTasks(orgId);
@@ -165,7 +168,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   );
   const tasksByProject = (projectId: string) => visibleTasks.filter((t) => t.projectId === projectId);
 
-  const assignSheetMember = assignSheetFor !== 'closed' && assignSheetFor !== null
+  const assignSheetMember = assignSheetFor !== 'closed'
     ? members.find((m) => m.userId === assignSheetFor) ?? null
     : null;
 
@@ -451,7 +454,13 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           members={members}
           onSetAssignees={setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
-          onAddToColumn={(memberId) => setAssignSheetFor(memberId)}
+          onAddToColumn={(memberId) =>
+            memberId
+              ? setAssignSheetFor(memberId)
+              // Colonne « Non assignées » : la sheet n'aurait proposé qu'un
+              // unique bouton — droit au modal, sans détour.
+              : setTaskModal({ mode: 'create', projectId: activeProjects[0]?.id, assigneeIds: [] })
+          }
           groupBy={kanbanGroupBy}
           onSetGroupBy={(next) => updatePrefs({ kanbanGroupBy: next })}
           onSetStatus={setStatus}
@@ -500,18 +509,17 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           projects={activeProjects}
           tasks={statsTasks}
           onAssign={(task) => {
-            const target = assignSheetFor as string | null;
-            if (target && !task.assigneeIds.includes(target)) {
-              setAssignees(task, [...task.assigneeIds, target]);
+            if (assignSheetFor !== 'closed' && !task.assigneeIds.includes(assignSheetFor)) {
+              setAssignees(task, [...task.assigneeIds, assignSheetFor]);
             }
           }}
           onCreateNew={() => {
-            const target = assignSheetFor as string | null;
+            const target = assignSheetFor;
             setAssignSheetFor('closed');
             setTaskModal({
               mode: 'create',
               projectId: activeProjects[0]?.id,
-              assigneeIds: target ? [target] : [],
+              assigneeIds: target !== 'closed' ? [target] : [],
             });
           }}
           onClose={() => setAssignSheetFor('closed')}
