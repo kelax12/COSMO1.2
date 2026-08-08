@@ -561,7 +561,6 @@
     "teamTasks": "Team tasks",
     "close": "Close the calendar",
     "addTaskFor": "Add a task for {{name}}",
-    "titleFor": "{{name}}'s calendar",
     "managerHint": "You manage this calendar — create, drag their tasks, move or edit their events.",
     "today": "Today",
     "dragHint": "Drag a task onto the calendar to schedule it.",

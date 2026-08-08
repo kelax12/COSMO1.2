@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, type EventReceiveArg } from '@fullcalendar/interaction';
 import type { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import type { EventResizeDoneArg } from '@fullcalendar/interaction';
-import { X, ChevronLeft, ChevronRight, CalendarDays, Plus, ListChecks, Clock, CalendarClock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ListChecks, Clock, CalendarClock } from 'lucide-react';
 import {
   useMemberEventsWindow,
   useCreateMemberEvent,
@@ -28,14 +27,8 @@ import {
 } from '@/pages/agenda/calendar-events';
 import { PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
 import type { OrgMember } from '@/modules/organizations';
-import MemberAvatar from './MemberAvatar';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
-
-interface MemberAgendaSheetProps {
-  member: OrgMember;
-  onClose: () => void;
-}
 
 interface MemberAgendaBodyProps {
   member: OrgMember;
@@ -449,45 +442,3 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
     </>
   );
 };
-
-/**
- * Agenda complet d'un subordonné (mode entreprise) — même expérience que la
- * page Agenda personnelle : bouton « Nouveau », sélection de plage, glisser-
- * déposer des TÂCHES D'ÉQUIPE du membre vers le calendrier, drag/resize des
- * événements, et EventModal réutilisé tel quel. Couleurs de boutons alignées
- * sur l'agenda classique. Réservé à la hiérarchie du membre (RLS 077). Portal.
- */
-const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
-  const { t } = useT('org');
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9998] bg-[rgb(var(--color-background))] flex flex-col">
-      {/* En-tête */}
-      <header className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">
-        <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />
-        <div className="min-w-0">
-          <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate inline-flex items-center gap-1.5">
-            <CalendarDays size={15} className="text-indigo-500" aria-hidden="true" />
-            {t('agendaSheet.titleFor', { name: member.displayName })}
-          </h2>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {t('agendaSheet.managerHint')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('agendaSheet.close')}
-          className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-        >
-          <X size={20} aria-hidden="true" />
-        </button>
-      </header>
-
-      <MemberAgendaBody member={member} />
-    </div>,
-    document.body,
-  );
-};
-
-export default MemberAgendaSheet;

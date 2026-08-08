@@ -579,7 +579,6 @@
     "teamTasks": "Tâches d'équipe",
     "close": "Fermer l'agenda",
     "addTaskFor": "Ajouter une tâche pour {{name}}",
-    "titleFor": "Agenda de {{name}}",
     "managerHint": "Vous gérez cet agenda — créez, glissez ses tâches, déplacez ou modifiez ses événements.",
     "today": "Aujourd'hui",
     "dragHint": "Glissez une tâche sur le calendrier pour la planifier.",

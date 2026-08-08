@@ -36,3 +36,22 @@ export const visibleMemberTabs = (access: MemberTabAccess): MemberTab[] => {
  */
 export const isValidMemberTab = (value: string, allowed: MemberTab[]): boolean =>
   (allowed as string[]).includes(value);
+
+/** Nom du paramètre d'URL portant l'onglet demandé. */
+export const MEMBER_TAB_PARAM = 'memberTab';
+
+/**
+ * Onglet à ouvrir : celui demandé par l'URL s'il est autorisé, sinon le
+ * premier onglet visible.
+ *
+ * Le repli est le premier AUTORISÉ et non `'profile'` en dur : `allowed` vient
+ * toujours de `visibleMemberTabs`, qui garantit le profil en tête — coder la
+ * constante ici ferait diverger les deux le jour où cet ordre change.
+ */
+export const resolveMemberTab = (
+  requested: string | null | undefined,
+  allowed: MemberTab[],
+): MemberTab => {
+  if (requested && isValidMemberTab(requested, allowed)) return requested as MemberTab;
+  return allowed[0] ?? 'profile';
+};
