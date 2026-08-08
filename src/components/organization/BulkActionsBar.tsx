@@ -10,7 +10,8 @@ interface BulkActionsBarProps {
   onComplete: () => void;
   onReopen: () => void;
   onDelete: () => void;
-  onClear: () => void;
+  /** Quitte le mode sélection (et vide la sélection au passage). */
+  onExit: () => void;
 }
 
 /**
@@ -22,22 +23,31 @@ interface BulkActionsBarProps {
  * mobile (`bottom-20` en petit écran) pour ne jamais la recouvrir.
  */
 const BulkActionsBar = ({
-  count, hasCompleted, hasOpen, onComplete, onReopen, onDelete, onClear,
+  count, hasCompleted, hasOpen, onComplete, onReopen, onDelete, onExit,
 }: BulkActionsBarProps) => {
   const { t, tp } = useT('org');
-  if (count === 0) return null;
+  // La barre reste montée même à zéro sélection : elle porte désormais la SEULE
+  // sortie du mode. Depuis que le bouton ⋯ n'existe plus, disparaître ici
+  // enfermerait l'utilisateur dans un mode sélection qu'il ne pourrait plus
+  // quitter tant qu'il n'aurait pas coché puis décoché une tâche.
 
   return (
     <div
       role="toolbar"
-      aria-label={tp('projects.selected', count)}
+      aria-label={count > 0 ? tp('projects.selected', count) : t('projects.selectHint')}
       className="fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg max-w-[calc(100vw-2rem)] overflow-x-auto hide-scrollbar"
     >
-      <span className="px-2 text-sm font-semibold text-[rgb(var(--color-text-primary))] whitespace-nowrap tabular-nums">
-        {tp('projects.selected', count)}
+      <span
+        className={`px-2 text-sm whitespace-nowrap tabular-nums ${
+          count > 0
+            ? 'font-semibold text-[rgb(var(--color-text-primary))]'
+            : 'text-[rgb(var(--color-text-muted))]'
+        }`}
+      >
+        {count > 0 ? tp('projects.selected', count) : t('projects.selectHint')}
       </span>
 
-      <span className="w-px h-6 bg-[rgb(var(--color-border))] shrink-0" aria-hidden="true" />
+      {count > 0 && <span className="w-px h-6 bg-[rgb(var(--color-border))] shrink-0" aria-hidden="true" />}
 
       {hasOpen && (
         <button
@@ -59,19 +69,21 @@ const BulkActionsBar = ({
         </button>
       )}
 
-      <button
-        type="button"
-        onClick={onDelete}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors whitespace-nowrap"
-      >
-        <Trash2 size={15} aria-hidden="true" /> {t('projects.bulkDelete')}
-      </button>
+      {count > 0 && (
+        <button
+          type="button"
+          onClick={onDelete}
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors whitespace-nowrap"
+        >
+          <Trash2 size={15} aria-hidden="true" /> {t('projects.bulkDelete')}
+        </button>
+      )}
 
       <button
         type="button"
-        onClick={onClear}
-        aria-label={t('projects.bulkClear')}
-        title={t('projects.bulkClear')}
+        onClick={onExit}
+        aria-label={t('projects.selectExit')}
+        title={t('projects.selectExit')}
         className="w-9 h-9 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
       >
         <X size={16} aria-hidden="true" />

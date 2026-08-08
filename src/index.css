@@ -24,6 +24,13 @@
 
 @layer base {
   :root {
+    /* Les surfaces rendues par le SYSTÈME — liste déroulante d'un <select>,
+       sélecteur de date, ascenseurs, autofill — ignorent nos variables : elles
+       ne lisent que `color-scheme`. Sans cette déclaration elles restaient
+       claires sur les trois thèmes sombres, d'où un menu d'équipe blanc sous
+       un bouton sombre. */
+    color-scheme: light;
+
     /* Light mode colors (RGB format) */
     --color-primary: 71 85 105;
     --color-secondary: 100 116 139;
@@ -152,6 +159,10 @@
 }
 
     .dark {
+        /* `.dark` est posé pour Sombre, Gris ET Noir (cf. en-tête des thèmes) :
+           cette seule ligne bascule donc les surfaces système sur les trois. */
+        color-scheme: dark;
+
         /* Dark mode colors (RGB format) */
         --color-primary: 148 163 184;
         --color-secondary: 100 116 139;

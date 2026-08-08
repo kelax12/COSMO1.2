@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette, Clock,
+  Pencil, Archive, ArchiveRestore, Palette, Clock, ListChecks,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,8 +43,8 @@ interface TeamProjectCardProps {
   onDelete: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
   onUpdateProject: (input: UpdateTeamProjectInput) => void;
-  /** Densité des lignes de tâche. */
-  density?: 'comfortable' | 'compact';
+  /** Entre en mode sélection multiple depuis le menu du projet. */
+  onStartSelect?: () => void;
   /** Mode sélection multiple (actions groupées). */
   selectable?: boolean;
   /** Ids des tâches sélectionnées. */
@@ -57,7 +57,7 @@ const TeamProjectCard = ({
   project, tasks, members, teams, isManager,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
-  onUpdateProject, density = 'comfortable',
+  onUpdateProject, onStartSelect,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
   const { t } = useT('org');
@@ -191,8 +191,12 @@ const TeamProjectCard = ({
           </span>
         </button>
 
-        {/* Menu manager */}
-        {isManager && (
+        {/* Menu du projet. Il n'était monté que pour les managers ; il l'est
+            désormais pour tous, car « Sélectionner des tâches » y a remplacé le
+            bouton ⋯ de la barre d'outils — un contributeur doit garder l'accès
+            aux actions groupées. Les entrées d'administration restent gardées
+            par `isManager` une à une. */}
+        {(isManager || !!onStartSelect) && (
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={`Actions du projet ${project.name}`}
@@ -201,9 +205,12 @@ const TeamProjectCard = ({
               <MoreHorizontal size={16} aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
-                <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
-              </DropdownMenuItem>
+              {isManager && (
+                <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
+                  <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
+                </DropdownMenuItem>
+              )}
+              {isManager && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <Palette size={14} aria-hidden="true" /> {t('project.color')}
@@ -222,7 +229,8 @@ const TeamProjectCard = ({
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-              {teams.length > 0 && (
+              )}
+              {isManager && teams.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
@@ -240,8 +248,18 @@ const TeamProjectCard = ({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
               )}
-              <DropdownMenuSeparator />
-              {archived ? (
+              {/* Actions groupées — ouvertes à tous, et seulement quand il y a
+                  des tâches à cocher. */}
+              {onStartSelect && tasks.length > 0 && (
+                <>
+                  {isManager && <DropdownMenuSeparator />}
+                  <DropdownMenuItem onClick={onStartSelect}>
+                    <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMultiple')}
+                  </DropdownMenuItem>
+                </>
+              )}
+              {isManager && <DropdownMenuSeparator />}
+              {isManager && (archived ? (
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: false })}>
                   <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
                 </DropdownMenuItem>
@@ -249,7 +267,7 @@ const TeamProjectCard = ({
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: true })}>
                   <Archive size={14} aria-hidden="true" /> {t('project.archive')}
                 </DropdownMenuItem>
-              )}
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -263,7 +281,6 @@ const TeamProjectCard = ({
               key={task.id}
               task={task}
               members={members}
-              density={density}
               selectable={selectable}
               selected={!!selectedIds?.has(task.id)}
               onToggleSelect={onToggleSelect}
@@ -308,7 +325,6 @@ const TeamProjectCard = ({
                   key={task.id}
                   task={task}
                   members={members}
-                  density={density}
                   selectable={selectable}
                   selected={!!selectedIds?.has(task.id)}
                   onToggleSelect={onToggleSelect}

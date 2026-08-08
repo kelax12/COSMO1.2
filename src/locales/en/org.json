@@ -253,9 +253,6 @@
     "filterOverdue": "Show overdue tasks only",
     "filterDone": "Show tasks completed this week",
     "filterClear": "Clear filter",
-    "densityToggle": "Display density",
-    "densityComfortable": "Comfortable",
-    "densityCompact": "Compact",
     "estimatedTotal": "{{duration}} estimated",
     "selectMode": "Select",
     "selectExit": "Exit selection",
@@ -294,10 +291,6 @@
     "viewKanban": "Board",
     "viewTimeline": "Schedule",
     "columnsLabel": "Columns:",
-    "moreOptions": "More display options",
-    "displaySection": "Display",
-    "actionsSection": "Actions",
-    "densityCompactItem": "Compact density",
     "selectMultiple": "Select multiple tasks",
     "activeFilters": "Active filters:",
     "clearAll": "Clear all",
@@ -306,7 +299,8 @@
     "chipTeam": "Team: {{name}}",
     "chipOpen": "Open",
     "chipOverdue": "Overdue",
-    "chipDone": "Completed this week"
+    "chipDone": "Completed this week",
+    "selectHint": "Select tasks"
   },
   "insights": {
     "taskDeleted": "Task deleted",

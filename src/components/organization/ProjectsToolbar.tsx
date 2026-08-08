@@ -12,10 +12,7 @@
 // les commentaires le disent au cas par cas.
 // ═══════════════════════════════════════════════════════════════════
 
-import {
-  Plus, LayoutList, SquareKanban, CalendarRange, UserRound,
-  MoreHorizontal, Rows3, ListChecks, X,
-} from 'lucide-react';
+import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -23,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -39,8 +35,6 @@ interface ProjectsToolbarProps {
   updatePrefs: (patch: Partial<ProjectsUiPrefs>) => void;
   isManager: boolean;
   onNewProject: () => void;
-  selectMode: boolean;
-  onToggleSelectMode: () => void;
 }
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
@@ -89,15 +83,15 @@ const FilterChip = ({ label, removeLabel, onRemove }: {
 );
 
 const ProjectsToolbar = ({
-  members, teams, currentUserId, prefs, updatePrefs,
-  isManager, onNewProject, selectMode, onToggleSelectMode,
+  members, teams, currentUserId, prefs, updatePrefs, isManager, onNewProject,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
-  // `showArchived` n'est volontairement PAS piloté ici : la bascule du bas de
-  // liste est contextuelle, affiche le compte, et n'existe que s'il y a des
-  // projets archivés. La dupliquer dans le menu ⋯ recréerait exactement le
-  // défaut qu'on vient de retirer — deux contrôles pour un même état.
-  const { assigneeFilter, teamFilter, view, density, statusFilter } = prefs;
+  // La barre ne porte QUE le périmètre, la vue et la création. Les deux réglages
+  // rares qui vivaient ici (densité, sélection multiple) n'y sont plus : la
+  // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
+  // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
+  // affiche le compte et n'existe que s'il y a des archives.
+  const { assigneeFilter, teamFilter, view, statusFilter } = prefs;
 
   // Le périmètre a TROIS branches, pas deux. L'ancienne barre n'en montrait que
   // deux : choisir un collègue laissait « Toutes » et « Mes tâches » également
@@ -249,42 +243,6 @@ const ProjectsToolbar = ({
             <ViewTab active={view === 'kanban'} onClick={() => updatePrefs({ view: 'kanban' })} label={t('projects.viewKanban')} Icon={SquareKanban} />
             <ViewTab active={view === 'timeline'} onClick={() => updatePrefs({ view: 'timeline' })} label={t('projects.viewTimeline')} Icon={CalendarRange} />
           </div>
-
-          {/* Densité et sélection multiple sont les réglages les plus rares de
-              la vue ; ils occupaient la place la plus visible sous deux icônes
-              indevinables. Nommés dans un menu, ils coûtent un clic de plus
-              pour un usage mensuel — et rendent la barre lisible. */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={t('projects.moreOptions')}
-              className="w-9 h-9 rounded-lg border border-[rgb(var(--color-border))] inline-flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            >
-              <MoreHorizontal size={16} aria-hidden="true" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60">
-              <DropdownMenuLabel>{t('projects.displaySection')}</DropdownMenuLabel>
-              <DropdownMenuCheckboxItem
-                checked={density === 'compact'}
-                onCheckedChange={(checked) => updatePrefs({ density: checked ? 'compact' : 'comfortable' })}
-              >
-                <Rows3 size={14} aria-hidden="true" className="mr-1.5" />
-                {t('projects.densityCompactItem')}
-              </DropdownMenuCheckboxItem>
-              {/* Le mode sélection reste réservé à la vue liste : superposer des
-                  cases à cocher au glisser-déposer du tableau rendrait le clic
-                  sur une carte ambigu. */}
-              {view === 'list' && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>{t('projects.actionsSection')}</DropdownMenuLabel>
-                  <DropdownMenuCheckboxItem checked={selectMode} onCheckedChange={onToggleSelectMode}>
-                    <ListChecks size={14} aria-hidden="true" className="mr-1.5" />
-                    {t('projects.selectMultiple')}
-                  </DropdownMenuCheckboxItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           {/* La seule action créative de la page — et donc le seul bouton plein.
               L'état vide proposait déjà cet indigo : la barre s'aligne dessus
