@@ -27,7 +27,7 @@ const OrganizationSettingsCard = () => {
       <div className="flex items-center gap-2 mb-1">
         <Building2 size={18} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
         <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">
-          Entreprise
+          {t('common.settingsSection')}
         </h3>
       </div>
 

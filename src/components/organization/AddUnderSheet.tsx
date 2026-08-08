@@ -53,7 +53,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
       toast.success(t('invite.linkCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le lien');
+      toast.error(t('invite.linkCopyFailed'));
     }
   };
 
@@ -65,7 +65,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
       toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCodeCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le code');
+      toast.error(t('createJoin.copyFailed'));
     }
   };
 
@@ -78,11 +78,13 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label={`Ajouter sous ${under.displayName}`}
+        aria-label={t('common.addUnderTitle', { name: under.displayName })}
       >
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-            Ajouter sous {under.userId === currentUserId ? 'vous' : under.displayName}
+            {t('common.addUnderTitle', {
+              name: under.userId === currentUserId ? t('invite.you') : under.displayName,
+            })}
           </h2>
           <button
             type="button"

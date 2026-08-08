@@ -572,7 +572,36 @@
     "cancel": "Cancel",
     "add": "Add",
     "remove": "Remove",
-    "deleteAction": "Delete"
+    "deleteAction": "Delete",
+    "addCollaborator": "Add a teammate",
+    "seeAgenda": "See their calendar",
+    "seeContribution": "See their contribution",
+    "removeFromOrg": "Remove from the company",
+    "actionsFor": "Actions for {{name}}",
+    "orgProfileAria": "Company profile",
+    "descriptionPlaceholder": "What does your company do?",
+    "nameLabel": "Name",
+    "removeImage": "Remove",
+    "cancelRequest": "Cancel my request",
+    "orgNameLabel": "Company name",
+    "consentIntro": "By joining this company:",
+    "consentAccept": "I understand what the company will be able to see and I accept these terms.",
+    "youBadge": "You",
+    "seeProfileOf": "See {{name}}'s profile",
+    "newProject": "New project",
+    "settingsSection": "Company",
+    "adminBadge": "Admin",
+    "removeKr": "Remove",
+    "orgWideBadge": "Company",
+    "agendaDay": "Day",
+    "agendaWeek": "Week",
+    "agendaMonth": "Month",
+    "addUnderTitle": "Add under {{name}}",
+    "deleteOrgTitle": "Delete {{name}}?",
+    "deleteOrgAria": "Delete the company {{name}}",
+    "deleteOkrConfirm": "Delete the objective “{{title}}”?",
+    "deleteOkrAria": "Delete the objective {{title}}",
+    "editOkrAria": "Edit the objective {{title}}"
   },
   "tabs": {
     "overview": "Overview",
@@ -629,5 +658,15 @@
     "arbitrageTitle": "Decisions",
     "arbitrageEmpty": "No overdue task — nothing to decide.",
     "arbitrageHint": "Open each task to reschedule, reassign or drop it."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Company notifications",
+    "bellUnread_one": "Company notifications, {{count}} unread",
+    "bellUnread_other": "Company notifications, {{count}} unread",
+    "byActor": "{{actor}} — {{label}}",
+    "kindAssigned": "A task was assigned to you",
+    "kindMention": "You were mentioned in a comment",
+    "kindOverdue": "One of your tasks is overdue"
   }
 }

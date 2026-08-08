@@ -32,11 +32,11 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
-        aria-label={`Supprimer l'entreprise ${org.name}`}
+        aria-label={t('common.deleteOrgAria', { name: org.name })}
       >
         <div className="flex items-center gap-3 px-5 py-4 border-b border-[rgb(var(--color-border))]">
           <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] flex-1">
-            Supprimer {org.name} ?
+            {t('common.deleteOrgTitle', { name: org.name })}
           </h2>
           <button
             type="button"

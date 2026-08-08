@@ -23,6 +23,7 @@ import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
 import TeamsSection from '@/components/organization/TeamsSection';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
+import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
 import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
@@ -159,6 +160,9 @@ const OrganizationPage = () => {
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5 line-clamp-1">{myOrg.description}</p>
           )}
         </div>
+        {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
+            dans `org_notifications` sans qu'aucun ecran ne les lise. */}
+        <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
       {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}

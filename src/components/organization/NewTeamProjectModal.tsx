@@ -119,7 +119,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Nouveau projet
+            {t('common.newProject')}
           </h2>
           <button
             onClick={onClose}

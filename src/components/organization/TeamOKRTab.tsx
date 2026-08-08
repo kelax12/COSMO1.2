@@ -316,7 +316,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     {okr.teamIds.length === 0 ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
-                        <Building2 size={11} aria-hidden="true" /> Entreprise
+                        <Building2 size={11} aria-hidden="true" /> {t('common.orgWideBadge')}
                       </span>
                     ) : (
                       okr.teamIds.map((tid) => (
@@ -335,7 +335,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                     <button
                       type="button"
                       onClick={() => setEditingOKR(okr)}
-                      aria-label={`Modifier l'objectif ${okr.title}`}
+                      aria-label={t('common.editOkrAria', { title: okr.title })}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/10 transition-colors"
                     >
                       <Pencil size={15} aria-hidden="true" />
@@ -343,9 +343,9 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`Supprimer l'objectif « ${okr.title} » ?`)) deleteOKR.mutate(okr.id);
+                        if (window.confirm(t('common.deleteOkrConfirm', { title: okr.title }))) deleteOKR.mutate(okr.id);
                       }}
-                      aria-label={`Supprimer l'objectif ${okr.title}`}
+                      aria-label={t('common.deleteOkrAria', { title: okr.title })}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
                       <Trash2 size={15} aria-hidden="true" />

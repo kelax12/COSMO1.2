@@ -232,7 +232,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                     openMember(m, 'profile');
                   }
                 }}
-                aria-label={`Voir le profil de ${m.displayName}`}
+                aria-label={t('common.seeProfileOf', { name: m.displayName })}
                 className="flex items-center gap-3 p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] cursor-pointer hover:border-indigo-400/60 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
@@ -243,7 +243,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                     </p>
                     {isSelf && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">
-                        Vous
+                        {t('common.youBadge')}
                       </span>
                     )}
                   </div>
@@ -260,7 +260,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label={`Actions pour ${m.displayName}`}
+                      aria-label={t('common.actionsFor', { name: m.displayName })}
                     >
                       <MoreVertical size={16} aria-hidden="true" />
                     </DropdownMenuTrigger>

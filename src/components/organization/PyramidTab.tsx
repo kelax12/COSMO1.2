@@ -396,7 +396,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
       {!drag && (movable || canAddUnder || canRemove) && (
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label={`Actions pour ${m.displayName}`}
+            aria-label={t('common.actionsFor', { name: m.displayName })}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] shrink-0"
           >
             <MoreHorizontal size={15} aria-hidden="true" />
@@ -411,7 +411,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             {canAddUnder && (
               <DropdownMenuItem onClick={() => onAddUnder(m)}>
                 <UserRoundPlus size={14} className="text-green-500" aria-hidden="true" />
-                Ajouter un collaborateur
+                {t('common.addCollaborator')}
               </DropdownMenuItem>
             )}
             {movable && (
@@ -429,11 +429,11 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'agenda')}>
                   <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
-                  Voir son agenda
+                  {t('common.seeAgenda')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'contribution')}>
                   <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
-                  Voir sa contribution
+                  {t('common.seeContribution')}
                 </DropdownMenuItem>
               </>
             )}
@@ -442,7 +442,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={() => onRemove(m)}>
                   <Trash2 size={14} aria-hidden="true" />
-                  Retirer de l'entreprise
+                  {t('common.removeFromOrg')}
                 </DropdownMenuItem>
               </>
             )}
@@ -1206,7 +1206,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                   >
                     {editMode ? (
                       <>
-                        <X size={15} aria-hidden="true" /> Annuler
+                        <X size={15} aria-hidden="true" /> {t('common.cancel')}
                       </>
                     ) : (
                       <>
