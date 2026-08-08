@@ -23,6 +23,136 @@ import { useT } from '@/i18n/useT';
 
 export type InsightsTab = 'tasks' | 'agenda' | 'contribution';
 
+interface MemberBodyProps {
+  orgId: string;
+  member: OrgMember;
+  /** Le viewer est-il un supérieur hiérarchique ? Autorise l'édition des tâches. */
+  canEdit?: boolean;
+}
+
+/**
+ * Tâches d'équipe d'un membre — partition ouvertes / terminées, et les
+ * compteurs qu'en tire l'onglet Contribution.
+ *
+ * Un hook partagé plutôt qu'un composant parent qui passerait les données aux
+ * deux corps : `MemberSheet` ne monte QU'UN onglet à la fois (item #18), donc
+ * il n'y a pas de parent commun où poser le calcul. Le coût est nul — les deux
+ * onglets lisent le même cache React Query.
+ */
+const useMemberTasks = (orgId: string, memberId: string) => {
+  const { data: allTasks = [], isLoading } = useTeamTasks(orgId);
+  const myTasks = useMemo(
+    () => allTasks.filter((task) => task.assigneeIds.includes(memberId)),
+    [allTasks, memberId],
+  );
+  const open = myTasks.filter((task) => !task.completed);
+  const done = myTasks.filter((task) => task.completed);
+  const overdue = open.filter(isOverdue);
+  return {
+    isLoading,
+    myTasks,
+    open,
+    done,
+    overdue,
+    completionRate: myTasks.length ? Math.round((done.length / myTasks.length) * 100) : 0,
+  };
+};
+
+/**
+ * CORPS de l'onglet « Tâches » — sans overlay ni en-tête (item #18).
+ *
+ * Il porte ses propres modales de création/édition : ce sont des surcouches
+ * de l'onglet, pas du chrome de la fiche, et `MemberSheet` n'a pas à les
+ * connaître.
+ */
+export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyProps) => {
+  const { t } = useT('org');
+  const { isLoading, open, done } = useMemberTasks(orgId, member.userId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: orgMembers = [] } = useOrgMembers(orgId);
+  const createTask = useCreateTeamTask(orgId);
+  const updateTask = useUpdateTeamTask(orgId);
+  const deleteTask = useDeleteTeamTask(orgId);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
+
+  // Suppression avec « Annuler » : la tâche est recréée à l'identique (même pattern que TeamProjectsTab).
+  const removeWithUndo = (task: TeamTask) =>
+    deleteTask.mutate(task.id, {
+      onSuccess: () => {
+        showUndoToast(t('insights.taskDeleted'), () =>
+          createTask.mutate({
+            projectId: task.projectId,
+            name: task.name,
+            description: task.description,
+            priority: task.priority,
+            deadline: task.deadline,
+            estimatedTime: task.estimatedTime,
+            assigneeIds: task.assigneeIds,
+          }),
+        );
+      },
+    });
+
+  if (isLoading) {
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>;
+  }
+
+  return (
+    <>
+      <TasksView
+        open={open}
+        done={done}
+        canEdit={canEdit}
+        onAddTask={() => setCreatingTask(true)}
+        onEditTask={setEditingTask}
+      />
+      {creatingTask && (
+        <TeamTaskModal
+          isCreating
+          projects={activeProjects.length > 0 ? activeProjects : projects}
+          members={orgMembers}
+          defaultProjectId={(activeProjects[0] ?? projects[0])?.id}
+          defaultAssigneeIds={[member.userId]}
+          onCreate={(input) => createTask.mutateAsync(input)}
+          onClose={() => setCreatingTask(false)}
+        />
+      )}
+      {editingTask && (
+        <TeamTaskModal
+          task={editingTask}
+          projects={activeProjects.length > 0 ? activeProjects : projects}
+          members={orgMembers}
+          onUpdate={(taskId, input) => updateTask.mutateAsync({ taskId, input })}
+          onDelete={removeWithUndo}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
+    </>
+  );
+};
+
+/** CORPS de l'onglet « Contribution » — sans overlay ni en-tête (item #18). */
+export const MemberContributionBody = ({ orgId, member }: MemberBodyProps) => {
+  const { t } = useT('org');
+  const { isLoading, myTasks, open, done, overdue, completionRate } = useMemberTasks(orgId, member.userId);
+
+  if (isLoading) {
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>;
+  }
+
+  return (
+    <ContributionView
+      total={myTasks.length}
+      done={done.length}
+      open={open.length}
+      overdue={overdue.length}
+      completionRate={completionRate}
+    />
+  );
+};
+
 interface MemberInsightsSheetProps {
   orgId: string;
   member: OrgMember;

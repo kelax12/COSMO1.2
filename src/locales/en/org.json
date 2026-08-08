@@ -473,7 +473,13 @@
     "copyLink": "Copy link to this profile",
     "copyLinkDone": "Link copied",
     "placementHint": "Pick their new direct manager in the pyramid.",
-    "placementEmpty": "No possible destination."
+    "placementEmpty": "No possible destination.",
+    "sheetAria": "{{name}}'s profile",
+    "tabsAria": "Member profile sections",
+    "tabProfile": "Profile",
+    "tabTasks": "Tasks",
+    "tabContribution": "Contribution",
+    "tabAgenda": "Calendar"
   },
   "okrCategory": {
     "new": "New category",
@@ -555,6 +561,7 @@
     "teamTasks": "Team tasks",
     "close": "Close the calendar",
     "addTaskFor": "Add a task for {{name}}",
+    "titleFor": "{{name}}'s calendar",
     "managerHint": "You manage this calendar — create, drag their tasks, move or edit their events.",
     "today": "Today",
     "dragHint": "Drag a task onto the calendar to schedule it.",
