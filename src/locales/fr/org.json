@@ -269,7 +269,12 @@
     "bulkDeleted_many": "{{count}} de tâches supprimées",
     "bulkDeleted_other": "{{count}} tâches supprimées",
     "selectAll": "Tout sélectionner",
-    "reassigned": "Tâche réassignée"
+    "reassigned": "Tâche réassignée",
+    "timelineView": "Vue chronologique",
+    "timelineEmpty": "Aucune échéance à venir. Datez des tâches pour les voir apparaître ici.",
+    "timelineToday": "Aujourd'hui",
+    "timelineNotGantt": "Positionne les tâches à leur échéance. Les tâches sans date ne sont pas affichées.",
+    "timelineMarker": "{{name}} — échéance le {{date}}"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -513,5 +518,25 @@
     "red": "Rouge",
     "pink": "Rose",
     "violet": "Violet"
+  },
+  "templates": {
+    "pickLabel": "Partir d'un gabarit",
+    "clear": "Repartir de zéro",
+    "onboarding": "Onboarding client",
+    "onboardingT1": "Réunion de lancement",
+    "onboardingT2": "Collecter les accès et documents",
+    "onboardingT3": "Configurer le compte",
+    "onboardingT4": "Point de suivi à 30 jours",
+    "launch": "Lancement produit",
+    "launchT1": "Cadrer le positionnement",
+    "launchT2": "Préparer les supports de communication",
+    "launchT3": "Recette avant mise en ligne",
+    "launchT4": "Mise en ligne",
+    "launchT5": "Bilan post-lancement",
+    "sprint": "Sprint",
+    "sprintT1": "Cadrage et priorisation",
+    "sprintT2": "Développement",
+    "sprintT3": "Recette",
+    "sprintT4": "Rétrospective"
   }
 }

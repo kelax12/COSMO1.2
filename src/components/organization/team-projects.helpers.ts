@@ -123,7 +123,7 @@ export const formatDuration = (minutes: number): string => {
 // ─── Prefs UI persistées (filtres, vue, projets repliés) ─────────────
 
 export interface ProjectsUiPrefs {
-  view: 'list' | 'kanban';
+  view: 'list' | 'kanban' | 'timeline';
   /** null = toutes les tâches ; sinon userId de l'assigné filtré. */
   assigneeFilter: string | null;
   /** '' = toutes équipes, 'org' = sans équipe, sinon teamId. */

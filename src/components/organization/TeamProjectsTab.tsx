@@ -4,7 +4,7 @@ import { showUndoToast } from '@/lib/undo-toast';
 import {
   Plus, FolderKanban, LayoutList, SquareKanban, AlarmClock,
   CircleDashed, CheckCircle2, ChevronDown, ChevronRight, UserRound,
-  Clock, Rows3, ListChecks,
+  Clock, Rows3, ListChecks, CalendarRange,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -38,6 +38,7 @@ import { readEntityParam } from './deep-link.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamProjectCard from './TeamProjectCard';
 import TeamProjectsKanban from './TeamProjectsKanban';
+import TeamProjectsTimeline from './TeamProjectsTimeline';
 import TeamTaskModal from './TeamTaskModal';
 import NewTeamProjectModal from './NewTeamProjectModal';
 import AssignTaskSheet from './AssignTaskSheet';
@@ -499,6 +500,18 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             >
               <SquareKanban size={15} aria-hidden="true" />
             </button>
+            <button
+              type="button"
+              onClick={() => updatePrefs({ view: 'timeline' })}
+              aria-label={t('projects.timelineView')}
+              aria-pressed={view === 'timeline'}
+              title={t('projects.timelineView')}
+              className={`w-9 h-8 rounded-md flex items-center justify-center transition-colors ${
+                view === 'timeline' ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+            >
+              <CalendarRange size={15} aria-hidden="true" />
+            </button>
           </div>
 
           {/* Densité : un manager avec 12 projets scrolle, un IC avec 4 tâches
@@ -580,6 +593,12 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('projects.managerMustCreate')}</p>
           )}
         </div>
+      ) : view === 'timeline' ? (
+        <TeamProjectsTimeline
+          projects={activeProjects}
+          tasks={visibleTasks}
+          onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+        />
       ) : view === 'kanban' ? (
         <TeamProjectsKanban
           projects={activeProjects}

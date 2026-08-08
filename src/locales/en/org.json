@@ -254,7 +254,12 @@
     "bulkDeleted_one": "{{count}} task deleted",
     "bulkDeleted_other": "{{count}} tasks deleted",
     "selectAll": "Select all",
-    "reassigned": "Task reassigned"
+    "reassigned": "Task reassigned",
+    "timelineView": "Timeline view",
+    "timelineEmpty": "No upcoming deadlines. Add dates to tasks to see them here.",
+    "timelineToday": "Today",
+    "timelineNotGantt": "Places tasks at their deadline. Tasks without a date are not shown.",
+    "timelineMarker": "{{name}} — due {{date}}"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -495,5 +500,25 @@
     "red": "Red",
     "pink": "Pink",
     "violet": "Violet"
+  },
+  "templates": {
+    "pickLabel": "Start from a template",
+    "clear": "Start from scratch",
+    "onboarding": "Client onboarding",
+    "onboardingT1": "Kick-off meeting",
+    "onboardingT2": "Collect access and documents",
+    "onboardingT3": "Set up the account",
+    "onboardingT4": "30-day check-in",
+    "launch": "Product launch",
+    "launchT1": "Define positioning",
+    "launchT2": "Prepare communication assets",
+    "launchT3": "Pre-release testing",
+    "launchT4": "Go live",
+    "launchT5": "Post-launch review",
+    "sprint": "Sprint",
+    "sprintT1": "Scoping and prioritisation",
+    "sprintT2": "Development",
+    "sprintT3": "Testing",
+    "sprintT4": "Retrospective"
   }
 }
