@@ -132,8 +132,6 @@ export interface ProjectsUiPrefs {
   showArchived: boolean;
   /** Pastille de synthèse active. */
   statusFilter: TaskStatusFilter;
-  /** Densité des listes de tâches. */
-  density: 'comfortable' | 'compact';
   /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
   kanbanGroupBy: 'assignee' | 'status';
 }
@@ -145,7 +143,6 @@ const DEFAULT_PREFS: ProjectsUiPrefs = {
   collapsed: {},
   showArchived: false,
   statusFilter: 'all',
-  density: 'comfortable',
   // Par défaut le FLUX : c'est la lecture attendue d'un kanban. La vue par
   // personne reste à un clic, mais elle répond à « qui fait quoi », pas à
   // « où en est-on » — et c'est la seconde question qu'un kanban doit servir.

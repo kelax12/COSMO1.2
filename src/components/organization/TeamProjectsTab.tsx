@@ -122,7 +122,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
 
-  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, density, kanbanGroupBy } = prefs;
+  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, kanbanGroupBy } = prefs;
 
   // Un second clic sur la pastille active retire le filtre.
   const toggleStatus = (next: TaskStatusFilter) =>
@@ -326,7 +326,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       members={members}
       teams={teams}
       isManager={isManager}
-      density={density}
+      // Le mode sélection ne vaut que pour la vue liste : superposer des cases
+      // à cocher au glisser-déposer du kanban rendrait le clic ambigu.
+      onStartSelect={view === 'list' ? () => setSelectMode(true) : undefined}
       selectable={selectMode}
       selectedIds={selectedIds}
       onToggleSelect={toggleSelect}
@@ -404,8 +406,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         updatePrefs={updatePrefs}
         isManager={isManager}
         onNewProject={() => setShowNewProject(true)}
-        selectMode={selectMode}
-        onToggleSelectMode={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
       />
 
       {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
@@ -527,7 +527,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           onComplete={() => bulkSetCompleted(true)}
           onReopen={() => bulkSetCompleted(false)}
           onDelete={bulkDelete}
-          onClear={clearSelection}
+          onExit={exitSelectMode}
         />
       )}
 

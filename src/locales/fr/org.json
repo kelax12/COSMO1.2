@@ -263,9 +263,6 @@
     "filterOverdue": "Voir uniquement les tâches en retard",
     "filterDone": "Voir les tâches terminées cette semaine",
     "filterClear": "Retirer le filtre",
-    "densityToggle": "Densité d'affichage",
-    "densityComfortable": "Confortable",
-    "densityCompact": "Compact",
     "estimatedTotal": "{{duration}} estimées",
     "projectCount_many": "{{count}} de projets",
     "openCount_many": "{{count}} d'ouvertes",
@@ -309,10 +306,6 @@
     "viewKanban": "Tableau",
     "viewTimeline": "Planning",
     "columnsLabel": "Colonnes :",
-    "moreOptions": "Plus d'options d'affichage",
-    "displaySection": "Affichage",
-    "actionsSection": "Actions",
-    "densityCompactItem": "Densité compacte",
     "selectMultiple": "Sélectionner plusieurs tâches",
     "activeFilters": "Filtres actifs :",
     "clearAll": "Tout effacer",
@@ -321,7 +314,8 @@
     "chipTeam": "Équipe : {{name}}",
     "chipOpen": "Ouvertes",
     "chipOverdue": "En retard",
-    "chipDone": "Terminées cette semaine"
+    "chipDone": "Terminées cette semaine",
+    "selectHint": "Sélectionnez des tâches"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",

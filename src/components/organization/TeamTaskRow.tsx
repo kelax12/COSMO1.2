@@ -15,8 +15,6 @@ interface TeamTaskRowProps {
   onDelete: (task: TeamTask) => void;
   /** Ouvre le modal d'édition complète. */
   onOpen: (task: TeamTask) => void;
-  /** Densité d'affichage — `compact` resserre la ligne. */
-  density?: 'comfortable' | 'compact';
   /** Mode sélection actif : la ligne affiche une case à cocher. */
   selectable?: boolean;
   selected?: boolean;
@@ -26,15 +24,13 @@ interface TeamTaskRowProps {
 /** Ligne de tâche d'équipe : complétion, nom, priorité, deadline, assigné, suppression. */
 const TeamTaskRow = ({
   task, members, onToggleComplete, onReassign, onDelete, onOpen,
-  density = 'comfortable', selectable = false, selected = false, onToggleSelect,
+  selectable = false, selected = false, onToggleSelect,
 }: TeamTaskRowProps) => {
   const { t } = useT('org');
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
   const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
-  // Seule la hauteur change : la cible tactile reste ≥ 32 px en compact, on ne
-  // descend donc pas sous le seuil confortable au doigt.
-  const rowPad = density === 'compact' ? 'py-1 px-2 gap-2' : 'py-2.5 px-3 gap-3';
+  const rowPad = 'py-2.5 px-3 gap-3';
 
   return (
     <div
