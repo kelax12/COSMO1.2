@@ -142,7 +142,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     );
     setTimeout(() => downloadCSV(
       'cosmo-stats-projets',
-      ['Projet', 'Ouvertes', 'En retard', 'Total'],
+      [t('overview.csvProject'), t('overview.openShort'), t('overview.overdueShort'), t('overview.csvTotal')],
       byProject.map((p) => [p.name, p.open, p.overdue, p.total]),
     ), 150);
     setTimeout(() => downloadCSV(
@@ -205,7 +205,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title="Par membre">
+        <SectionCard title={t('overview.byMember')}>
           {load.every((m) => m.total === 0) ? (
             <EmptyRow>{t('overview.emptyAssigned')}</EmptyRow>
           ) : (
@@ -214,7 +214,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                 <li key={m.userId} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
                   <MiniBar ratio={m.open / maxOpen} colorClass="bg-[rgb(var(--color-accent-solid))]" />
-                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Tâches ouvertes">
+                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={t('overview.openTasks')}>
                     {m.open}
                   </span>
                   <span
@@ -241,9 +241,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
                   <span className="w-24 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{p.name}</span>
                   <MiniBar ratio={p.open / maxProjectOpen} colorClass={projectColor(p.color).dot} />
-                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Ouvertes">{p.open}</span>
+                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={t('overview.openShort')}>{p.open}</span>
                   {p.overdue > 0 ? (
-                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title="En retard">{p.overdue} retard</span>
+                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title={t('overview.overdueShort')}>{p.overdue} retard</span>
                   ) : (
                     <span className="w-14 shrink-0" />
                   )}
@@ -290,7 +290,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </div>
 
       {/* Avancement OKR détaillé */}
-      <SectionCard title="Avancement des OKR">
+      <SectionCard title={t('overview.okrProgressTitle')}>
         {okrStats.length === 0 ? (
           <EmptyRow>{t('overview.emptyOkr')}</EmptyRow>
         ) : (
@@ -318,7 +318,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* Retards par membre + liste des tâches en retard */}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
-          <SectionCard title="Retards par membre">
+          <SectionCard title={t('overview.overdueByMember')}>
             <ul className="space-y-2.5">
               {overdueMembers.map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">

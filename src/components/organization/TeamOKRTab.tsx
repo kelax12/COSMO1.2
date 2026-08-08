@@ -263,7 +263,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
             onClick={() => setShowCreate(true)}
             className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
           >
-            <Plus size={15} aria-hidden="true" /> Nouvel objectif
+            <Plus size={15} aria-hidden="true" /> {t('okrTab.newObjective')}
           </button>
         )}
       </div>
@@ -286,7 +286,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
             onClick={() => setSelectedCategory('all')}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
           >
-            Voir tous les objectifs
+            {t('okrTab.seeAll')}
           </button>
         </div>
       ) : (

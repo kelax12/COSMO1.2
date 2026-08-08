@@ -182,7 +182,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
             <div className="grid gap-2">
               <Label htmlFor="tokr-desc">{t('okrModal.descriptionLabel')}</Label>
-              <Textarea id="tokr-desc" rows={2} value={description} placeholder="Facultatif…" onChange={(e) => setDescription(e.target.value)} />
+              <Textarea id="tokr-desc" rows={2} value={description} placeholder={t('okrModal.descPlaceholder')} onChange={(e) => setDescription(e.target.value)} />
             </div>
 
             {/* Rattachement d'équipes (cloisonnement de visibilité) */}
@@ -198,7 +198,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
-                  <Building2 size={13} aria-hidden="true" /> Toute l'entreprise
+                  <Building2 size={13} aria-hidden="true" /> {t('okrModal.wholeOrg')}
                 </button>
                 {teams.map((team) => {
                   const active = teamIds.includes(team.id);
@@ -236,7 +236,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 disabled={keyResults.length >= 10}
                 className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
               >
-                <Plus aria-hidden="true" /> Ajouter
+                <Plus aria-hidden="true" /> {t('common.add')}
               </Button>
             </div>
 

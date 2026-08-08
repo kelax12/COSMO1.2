@@ -36,7 +36,7 @@ const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: Confir
       </AlertDialogHeader>
       <AlertDialogFooter className="gap-2">
         <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">
-          Annuler
+          {t('common.cancel')}
         </AlertDialogCancel>
         <AlertDialogAction
           disabled={pending}

@@ -70,7 +70,10 @@
     "personalLink": "Personal invitation link",
     "personalLinkHint": "Single-use, valid for 7 days. Once they create their account, the person joins the company directly, reporting to {{name}}.",
     "you": "you",
-    "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the pyramid)."
+    "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the pyramid).",
+    "copyLinkAria": "Copy invitation link",
+    "copyCodeAria": "Copy invitation code",
+    "orgCodeTitle": "Organization invitation code"
   },
   "pyramid": {
     "directReports_one": ", {{count}} direct report",
@@ -125,7 +128,10 @@
     "dragEachHint": "Drag each person onto their manager in the pyramid.",
     "place": "Place",
     "overlayToggle": "Show workload",
-    "overlayHint": "Colors cards by estimated time left"
+    "overlayHint": "Colors cards by estimated time left",
+    "seeTasksAction": "See their tasks",
+    "emptyTitle": "Your pyramid is empty",
+    "inviteFirst": "Invite your first teammate"
   },
   "overview": {
     "completed": "Completed",
@@ -160,7 +166,14 @@
     "workloadOpen_one": "{{count}} open",
     "workloadOpen_other": "{{count}} open",
     "workloadOverdue": "{{count}} overdue",
-    "workloadNoEstimate": "no estimate"
+    "workloadNoEstimate": "no estimate",
+    "byMember": "By member",
+    "openTasks": "Open tasks",
+    "openShort": "Open",
+    "overdueShort": "Overdue",
+    "okrProgressTitle": "OKR progress",
+    "overdueByMember": "Overdue by member",
+    "csvProject": "Project"
   },
   "myWork": {
     "upToDate": "Up to date",
@@ -204,7 +217,9 @@
     "cancel": "Cancel",
     "saving": "Saving…",
     "save": "Save",
-    "create": "Create"
+    "create": "Create",
+    "descPlaceholder": "Optional…",
+    "wholeOrg": "Whole organization"
   },
   "projects": {
     "taskDeleted": "Task deleted",
@@ -283,7 +298,8 @@
     "noContribution": "No contributions to show.",
     "completionRate": "Completion rate",
     "tasksDone": "Tasks completed",
-    "progress": "Progress"
+    "progress": "Progress",
+    "addTask": "Add a task"
   },
   "taskModal": {
     "newAria": "New team task",
@@ -327,7 +343,11 @@
     "historyFrom": "from {{from}}",
     "historyTo": "to {{to}}",
     "historyUnknownActor": "Someone",
-    "historyNone": "none"
+    "historyNone": "none",
+    "closeForm": "Close form",
+    "namePlaceholder": "What needs doing?",
+    "timePlaceholder": "e.g. 45",
+    "hasDescription": "Has a description"
   },
   "team": {
     "newTeam": "New team",
@@ -372,7 +392,12 @@
     "teamBadge": "Team",
     "createFirstTask": "Create the first task",
     "completed": "Completed ({{count}})",
-    "restEstimated": "{{duration}} left"
+    "restEstimated": "{{duration}} left",
+    "rename": "Rename",
+    "restore": "Restore",
+    "archive": "Archive",
+    "renameAria": "Rename project",
+    "initialTasks": "Initial tasks (optional)"
   },
   "deleteOrg": {
     "irreversible": "This cannot be undone.",
@@ -380,7 +405,9 @@
     "membersLose_other": "The {{count}} members lose access immediately.",
     "projectsDeleted": "All projects, team tasks and OKRs are permanently deleted.",
     "teamsErased": "Teams, invitations and the pyramid are erased.",
-    "personalSafe": "Members' personal data is not affected."
+    "personalSafe": "Members' personal data is not affected.",
+    "confirmPrefix": "To confirm, type",
+    "confirmSuffix": "below:"
   },
   "consent": {
     "visibility": "Members see your name, your avatar and your activity on team projects (tasks, comments).",
@@ -420,7 +447,12 @@
     "searchPlaceholder": "Search a member (name, email)…",
     "searchAria": "Search a member in the directory",
     "clearSearch": "Clear the search",
-    "noMatch": "No member matches “{{query}}”."
+    "noMatch": "No member matches “{{query}}”.",
+    "assignTask": "Assign a task",
+    "seeTasks": "See their tasks",
+    "seeAgenda": "See their calendar",
+    "seeContribution": "See their contribution",
+    "removeFromOrg": "Remove from organization"
   },
   "member": {
     "detach": "Detach (unplaced)",
@@ -439,7 +471,9 @@
     "reassigning": "Reassigning…",
     "willBeRemoved": "{{name}} will be permanently removed from the company.",
     "copyLink": "Copy link to this profile",
-    "copyLinkDone": "Link copied"
+    "copyLinkDone": "Link copied",
+    "placementHint": "Pick their new direct manager in the pyramid.",
+    "placementEmpty": "No possible destination."
   },
   "okrCategory": {
     "new": "New category",
@@ -455,7 +489,9 @@
     "empty": "No objectives",
     "emptyManager": "Create an objective to align the team.",
     "emptyMember": "A manager needs to create an objective.",
-    "emptyCategory": "No objectives in this category"
+    "emptyCategory": "No objectives in this category",
+    "newObjective": "New objective",
+    "seeAll": "See all objectives"
   },
   "switcher": {
     "myOrgs": "My companies",
@@ -499,7 +535,11 @@
   },
   "comments": {
     "loading": "Loading…",
-    "placeholder": "Write a comment… (@ to mention)"
+    "placeholder": "Write a comment… (@ to mention)",
+    "empty": "No comment yet — start the discussion. Type \"@\" to mention someone.",
+    "deleteAria": "Delete this comment",
+    "mentionAria": "Mention a member",
+    "sendAria": "Send comment"
   },
   "leaveDialog": {
     "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."
@@ -514,10 +554,19 @@
     "nextPeriod": "Next period",
     "teamTasks": "Team tasks",
     "close": "Close the calendar",
-    "addTaskFor": "Add a task for {{name}}"
+    "addTaskFor": "Add a task for {{name}}",
+    "managerHint": "You manage this calendar — create, drag their tasks, move or edit their events.",
+    "today": "Today",
+    "dragHint": "Drag a task onto the calendar to schedule it.",
+    "noTasks": "No team task assigned.",
+    "tasksTitle": "Tasks"
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel",
+    "add": "Add",
+    "remove": "Remove",
+    "deleteAction": "Delete"
   },
   "tabs": {
     "overview": "Overview",

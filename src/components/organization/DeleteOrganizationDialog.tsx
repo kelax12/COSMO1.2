@@ -42,7 +42,7 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
             type="button"
             onClick={onCancel}
             disabled={pending}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
           >
             <X size={18} aria-hidden="true" />
@@ -64,7 +64,7 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
 
           <div>
             <label htmlFor="delete-org-confirm" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Pour confirmer, tapez <strong className="text-[rgb(var(--color-text-primary))] select-all">{org.name}</strong> ci-dessous :
+              {t('deleteOrg.confirmPrefix')} <strong className="text-[rgb(var(--color-text-primary))] select-all">{org.name}</strong> {t('deleteOrg.confirmSuffix')}
             </label>
             <input
               id="delete-org-confirm"

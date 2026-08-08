@@ -89,7 +89,7 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
             <button
               type="button"
               onClick={onClose}
-              aria-label="Fermer"
+              aria-label={t('common.close')}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
             >
               <X size={18} aria-hidden="true" />

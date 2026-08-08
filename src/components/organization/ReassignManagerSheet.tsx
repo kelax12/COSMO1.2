@@ -116,7 +116,7 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
             type="button"
             onClick={onCancel}
             disabled={pending}
-            aria-label="Annuler"
+            aria-label={t('common.cancel')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 disabled:opacity-50"
           >
             <X size={18} aria-hidden="true" />

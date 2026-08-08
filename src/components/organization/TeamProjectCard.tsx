@@ -128,7 +128,7 @@ const TeamProjectCard = ({
               onClick={(e) => e.stopPropagation()}
               autoFocus
               maxLength={120}
-              aria-label="Renommer le projet"
+              aria-label={t('project.renameAria')}
               className="h-7 px-2 rounded-md border border-indigo-400 bg-[rgb(var(--color-background))] text-sm font-bold focus:outline-none min-w-0 flex-1"
             />
           ) : (
@@ -202,11 +202,11 @@ const TeamProjectCard = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
-                <Pencil size={14} aria-hidden="true" /> Renommer
+                <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <Palette size={14} aria-hidden="true" /> Couleur
+                  <Palette size={14} aria-hidden="true" /> {t('project.color')}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="grid grid-cols-3 gap-1 p-2">
                   {PROJECT_COLOR_NAMES.map((c) => (
@@ -214,7 +214,7 @@ const TeamProjectCard = ({
                       key={c}
                       type="button"
                       onClick={() => onUpdateProject({ color: c })}
-                      aria-label={`Couleur ${c}`}
+                      aria-label={t('project.colorAria', { name: c })}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${project.color === c ? 'ring-2 ring-indigo-500' : ''}`}
                     >
                       <span className={`w-4 h-4 rounded-full ${PROJECT_COLORS[c].dot}`} />
@@ -243,11 +243,11 @@ const TeamProjectCard = ({
               <DropdownMenuSeparator />
               {archived ? (
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: false })}>
-                  <ArchiveRestore size={14} aria-hidden="true" /> Restaurer
+                  <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: true })}>
-                  <Archive size={14} aria-hidden="true" /> Archiver
+                  <Archive size={14} aria-hidden="true" /> {t('project.archive')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -328,7 +328,7 @@ const TeamProjectCard = ({
               onClick={() => onAddTask(project.id)}
               className="w-full flex items-center gap-1.5 px-3 py-2 text-sm text-[rgb(var(--color-text-muted))] hover:text-indigo-500 transition-colors"
             >
-              <Plus size={15} aria-hidden="true" /> Ajouter une tâche
+              <Plus size={15} aria-hidden="true" /> {t('project.addTask')}
             </button>
           )}
         </div>
