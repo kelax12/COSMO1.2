@@ -49,4 +49,17 @@ describe('buildOrgLink', () => {
   it('ignore une entité vide', () => {
     expect(buildOrgLink('projects', { task: '' })).toBe('/entreprise?tab=projects');
   });
+
+  it('construit le lien de fiche membre attendu par la pyramide', () => {
+    // Contrat entre `MemberProfileSheet` (qui produit le lien) et `PyramidTab`
+    // (qui le consomme) : si l'onglet ou le nom du paramètre change ici, le
+    // lien partagé ouvre une page vide.
+    expect(buildOrgLink('pyramid', { member: 'u1' })).toBe('/entreprise?tab=pyramid&member=u1');
+  });
+
+  it('produit un lien que readEntityParam sait relire', () => {
+    const link = buildOrgLink('pyramid', { member: 'abc-123' });
+    const params = new URLSearchParams(link.split('?')[1]);
+    expect(readEntityParam(params, 'member')).toBe('abc-123');
+  });
 });

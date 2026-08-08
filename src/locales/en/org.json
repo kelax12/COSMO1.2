@@ -437,7 +437,9 @@
     "reassignHint_other": "{{count}} direct reports — choose their new manager in the pyramid. Their own team stays with them.",
     "detachThem": "Detach them (unplaced)",
     "reassigning": "Reassigning…",
-    "willBeRemoved": "{{name}} will be permanently removed from the company."
+    "willBeRemoved": "{{name}} will be permanently removed from the company.",
+    "copyLink": "Copy link to this profile",
+    "copyLinkDone": "Link copied"
   },
   "okrCategory": {
     "new": "New category",

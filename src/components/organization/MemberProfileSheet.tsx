@@ -1,9 +1,11 @@
 import { createPortal } from 'react-dom';
-import { X, Mail, Users, Move, UserRoundPlus, Network } from 'lucide-react';
+import { X, Mail, Users, Move, UserRoundPlus, Network, Link as LinkIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { buildOrgLink } from './deep-link.helpers';
 
 interface MemberProfileSheetProps {
   member: OrgMember;
@@ -26,6 +28,22 @@ interface MemberProfileSheetProps {
  */
 const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, canAddUnder, onClose, onMove, onAddUnder }: MemberProfileSheetProps) => {
   const { t, tp } = useT('org');
+
+  /**
+   * URL absolue : le lien part dans une conversation, un chemin relatif n'y
+   * serait pas cliquable. `writeText` peut echouer (permission refusee, page
+   * non securisee) — on ne pretend pas avoir copie dans ce cas.
+   */
+  const copyProfileLink = async () => {
+    const url = `${window.location.origin}${buildOrgLink('pyramid', { member: member.userId })}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(t('member.copyLinkDone'));
+    } catch {
+      toast.error(t('member.copyLink'));
+    }
+  };
+
   const m = member;
   const isMe = m.userId === currentUserId;
   const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
@@ -56,14 +74,27 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Un deep-link qu'on ne peut pas copier ne sert a rien : c'est
+                cette action qui rend une fiche membre reellement partageable. */}
+            <button
+              type="button"
+              onClick={copyProfileLink}
+              aria-label={t('member.copyLink')}
+              title={t('member.copyLink')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+            >
+              <LinkIcon size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         <dl className="space-y-3 mb-5">
