@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import { subtreeOf, type OrgMember } from '@/modules/organizations';
+import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
 import { projectColor } from './team-projects.helpers';
-import { Download } from 'lucide-react';
+import { Download, ClipboardCheck } from 'lucide-react';
 import { downloadCSV } from '@/lib/csv-export';
 import {
   STATS_PERIODS, type StatsPeriod, periodStart, filterByActivity, scopeOkrs,
@@ -15,6 +16,8 @@ import {
   memberWorkload,
 } from './team-stats.helpers';
 import TeamWorkloadCard from './TeamWorkloadCard';
+import WeeklyReviewSheet from './WeeklyReviewSheet';
+import { buildOrgLink } from './deep-link.helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamOverviewTabProps {
@@ -75,6 +78,13 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: allOkrs = [] } = useTeamOKRs(orgId);
   const [period, setPeriod] = useState<StatsPeriod>('30');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Revue hebdomadaire (#26) : elle sert a arbitrer la charge d'AUTRES
+  // personnes. Un membre sans subordonne n'a rien a y arbitrer — le bouton ne
+  // lui est donc pas propose.
+  const canReview = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
 
   // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
   const scopedMembers = useMemo(() => {
@@ -178,6 +188,15 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
               </button>
             ))}
           </div>
+          {canReview && (
+            <button
+              type="button"
+              onClick={() => setReviewOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            >
+              <ClipboardCheck size={13} aria-hidden="true" /> {t('weeklyReview.open')}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleExport}
@@ -354,6 +373,21 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
             </ul>
           </div>
         </div>
+      )}
+
+      {reviewOpen && (
+        <WeeklyReviewSheet
+          orgId={orgId}
+          // Meme perimetre que les statistiques affichees au-dessus : la revue
+          // ne doit pas montrer une equipe plus large que l'onglet qui la porte.
+          tasks={scopedTasks}
+          members={scopedMembers}
+          onOpenTask={(taskId) => {
+            setReviewOpen(false);
+            navigate(buildOrgLink('projects', { task: taskId }));
+          }}
+          onClose={() => setReviewOpen(false)}
+        />
       )}
     </div>
   );

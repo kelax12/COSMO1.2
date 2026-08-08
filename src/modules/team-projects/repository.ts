@@ -58,4 +58,9 @@ export interface ITeamProjectsRepository {
 
   // Historique (mig. 094) — lecture seule : la table est append-only, écrite par trigger.
   getTaskActivity(taskId: string): Promise<TeamTaskActivity[]>;
+  /**
+   * Journal de TOUTE l'organisation depuis `since` (ISO) — revue hebdomadaire
+   * (#26). Borné côté serveur : la revue lit deux semaines, pas l'historique.
+   */
+  getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]>;
 }

@@ -20,4 +20,6 @@ export const teamProjectKeys = {
   labels: (orgId: string) => [...teamProjectKeys.all, 'labels', orgId] as const,
   taskLabels: (orgId: string) => [...teamProjectKeys.all, 'task-labels', orgId] as const,
   activity: (taskId: string) => [...teamProjectKeys.all, 'activity', taskId] as const,
+  orgActivity: (orgId: string, since: string) =>
+    [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
 };

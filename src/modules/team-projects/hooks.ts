@@ -319,6 +319,23 @@ export const useToggleTaskLabel = (orgId: string) => {
 
 // ─── Historique (mig. 094) — lecture seule ───────────────────────────
 
+/**
+ * Journal de l'organisation depuis `since` — revue hebdomadaire (#26).
+ *
+ * `since` doit être STABLE d'un rendu à l'autre : il entre dans la clé de
+ * cache, et une borne recalculée à chaque rendu (`new Date()`) créerait une
+ * entrée de cache par rendu, donc une requête par rendu.
+ */
+export const useOrgActivity = (orgId: string | undefined, since: string) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.orgActivity(orgId ?? '', since),
+    queryFn: () => repository.getOrgActivity(orgId as string, since),
+    enabled: !!orgId,
+    staleTime: 1000 * 60,
+  });
+};
+
 export const useTeamTaskActivity = (taskId: string | undefined) => {
   const repository = useRepo();
   return useQuery({

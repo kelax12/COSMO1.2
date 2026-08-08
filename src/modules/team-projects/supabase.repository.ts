@@ -466,6 +466,27 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (error) throw normalizeApiError(error);
     return (data as ActivityRow[]).map(mapActivity);
   }
+
+  /**
+   * Journal de l'organisation depuis `since` — revue hebdomadaire (#26).
+   *
+   * Le filtre `(org_id, created_at DESC)` suit exactement l'index
+   * `idx_team_task_activity_org` de la mig. 094c : sans lui, la requête
+   * scannerait le journal complet de l'entreprise à chaque ouverture.
+   * La RLS reste la frontière — elle borne déjà le journal à l'org du lecteur.
+   */
+  async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_activity')
+      .select('*')
+      .eq('org_id', orgId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) throw normalizeApiError(error);
+    return (data as ActivityRow[]).map(mapActivity);
+  }
 }
 
 // ─── Sous-tâches (mig. 092) ──────────────────────────────────────────

@@ -611,5 +611,23 @@
     "sprintT2": "Development",
     "sprintT3": "Testing",
     "sprintT4": "Retrospective"
+  },
+  "weeklyReview": {
+    "title": "Weekly review",
+    "subtitle": "Four questions to prepare your Monday.",
+    "open": "Weekly review",
+    "progressTitle": "What moved forward",
+    "vsLastWeek": "{{change}}% vs last week",
+    "noComparison": "Nothing to compare",
+    "lastWeekCount_one": "{{count}} completed last week",
+    "lastWeekCount_other": "{{count}} completed last week",
+    "slippedTitle": "What slipped",
+    "slippedEmpty": "No deadline pushed back over the last two weeks.",
+    "tensionTitle": "Who is under pressure",
+    "tensionEmpty": "Nobody above the team's median workload.",
+    "workload": "{{duration}} · {{open}} open",
+    "arbitrageTitle": "Decisions",
+    "arbitrageEmpty": "No overdue task — nothing to decide.",
+    "arbitrageHint": "Open each task to reschedule, reassign or drop it."
   }
 }
