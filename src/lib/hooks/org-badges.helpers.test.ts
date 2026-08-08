@@ -4,7 +4,7 @@ import type { TeamTask } from '@/modules/team-projects';
 
 const base: TeamTask = {
   id: 't1', orgId: 'o1', projectId: 'p1', name: 'T', priority: 3,
-  assigneeIds: [], createdBy: 'other', completed: false,
+  assigneeIds: [], createdBy: 'other', completed: false, status: 'todo',
   createdAt: '2026-01-02T00:00:00Z', updatedAt: '2026-01-02T00:00:00Z',
 };
 const task = (over: Partial<TeamTask>): TeamTask => ({ ...base, ...over });

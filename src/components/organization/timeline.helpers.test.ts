@@ -10,7 +10,7 @@ const NOW = new Date(2026, 6, 15); // mercredi 15 juillet 2026
 
 const task = (over: Partial<TeamTask>): TeamTask => ({
   id: 't1', orgId: 'o', projectId: 'p1', name: 'T', priority: 3,
-  deadline: '', assigneeIds: [], createdBy: 'u1', completed: false,
+  deadline: '', assigneeIds: [], createdBy: 'u1', completed: false, status: 'todo',
   createdAt: '2026-07-01T00:00:00Z', updatedAt: '2026-07-01T00:00:00Z',
   ...over,
 });

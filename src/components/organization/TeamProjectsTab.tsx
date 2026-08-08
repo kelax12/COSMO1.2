@@ -23,6 +23,7 @@ import {
   useUpdateTeamTask,
   useDeleteTeamTask,
   type TeamTask,
+  type TeamTaskStatus,
   type TeamProject,
   type CreateTeamProjectInput,
   type CreateTeamTaskInput,
@@ -130,7 +131,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
 
-  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, density } = prefs;
+  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, density, kanbanGroupBy } = prefs;
 
   // Un second clic sur la pastille active retire le filtre.
   const toggleStatus = (next: TaskStatusFilter) =>
@@ -195,6 +196,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
   const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
     updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
+  // `status` seul : le serveur synchronise `completed` (trigger mig. 091).
+  const setStatus = (task: TeamTask, status: TeamTaskStatus) =>
+    updateTask.mutate({ taskId: task.id, input: { status } });
 
   /**
    * Réassignation par glisser-déposer (kanban) — avec « Annuler ».
@@ -514,6 +518,36 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             </button>
           </div>
 
+          {/* Axe du kanban — seulement quand il sert à quelque chose. */}
+          {view === 'kanban' && (
+            <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5">
+              <button
+                type="button"
+                onClick={() => updatePrefs({ kanbanGroupBy: 'status' })}
+                aria-pressed={kanbanGroupBy === 'status'}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  kanbanGroupBy === 'status'
+                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                    : 'text-[rgb(var(--color-text-muted))]'
+                }`}
+              >
+                {t('projects.groupByStatus')}
+              </button>
+              <button
+                type="button"
+                onClick={() => updatePrefs({ kanbanGroupBy: 'assignee' })}
+                aria-pressed={kanbanGroupBy === 'assignee'}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  kanbanGroupBy === 'assignee'
+                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                    : 'text-[rgb(var(--color-text-muted))]'
+                }`}
+              >
+                {t('projects.groupByAssignee')}
+              </button>
+            </div>
+          )}
+
           {/* Densité : un manager avec 12 projets scrolle, un IC avec 4 tâches
               veut de l'air. Persisté par org comme les autres prefs. */}
           <button
@@ -607,6 +641,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           onSetAssignees={setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
           onAddToColumn={(memberId) => setAssignSheetFor(memberId)}
+          groupBy={kanbanGroupBy}
+          onSetStatus={setStatus}
         />
       ) : (
         <>

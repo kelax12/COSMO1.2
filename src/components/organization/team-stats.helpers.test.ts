@@ -21,7 +21,7 @@ const dateStr = (daysFromNow: number) => {
 const task = (over: Partial<TeamTask>): TeamTask => ({
   id: 't1', orgId: 'o', projectId: 'p1', name: 'T', priority: 3,
   deadline: '', estimatedTime: 30, assigneeIds: ['u1'], createdBy: 'u1',
-  completed: false, completedAt: null, createdAt: iso(5), updatedAt: iso(1),
+  completed: false, status: 'todo', completedAt: null, createdAt: iso(5), updatedAt: iso(1),
   ...over,
 });
 

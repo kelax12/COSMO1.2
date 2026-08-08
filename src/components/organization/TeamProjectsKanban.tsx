@@ -3,8 +3,11 @@ import { CalendarClock, UserRound, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
+import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import {
+  projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks,
+  STATUS_ORDER, STATUS_META,
+} from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 
@@ -18,6 +21,10 @@ interface TeamProjectsKanbanProps {
   onOpenTask: (task: TeamTask) => void;
   /** Ouvre le sheet « attribuer / créer » pour une colonne (null = non assignées). */
   onAddToColumn: (memberId: string | null) => void;
+  /** Axe des colonnes : charge par personne, ou flux par statut (mig. 091). */
+  groupBy: 'assignee' | 'status';
+  /** Change le statut d'une tâche (glisser-déposer en mode `status`). */
+  onSetStatus: (task: TeamTask, status: TeamTaskStatus) => void;
 }
 
 export const KANBAN_UNASSIGNED = '__unassigned__';
@@ -33,15 +40,25 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus }: TeamProjectsKanbanProps) => {
   const { t } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
 
-  // Colonnes : non assignées + tous les membres (les plus chargés d'abord).
+  // Colonnes : par statut (flux) ou par personne (charge).
   const columns = useMemo(() => {
+    if (groupBy === 'status') {
+      // Colonnes vides comprises : un kanban dont les colonnes apparaissent
+      // selon le contenu empêche de déposer une carte dans un état encore
+      // inutilisé — exactement là où on veut la mettre.
+      return STATUS_ORDER.map((st) => ({
+        id: st as string,
+        label: t(STATUS_META[st].labelKey as Parameters<typeof t>[0]),
+        member: null as OrgMember | null,
+      }));
+    }
     const counts = new Map<string, number>();
     for (const t of openTasks) {
       if (t.assigneeIds.length === 0) counts.set(KANBAN_UNASSIGNED, (counts.get(KANBAN_UNASSIGNED) ?? 0) + 1);
@@ -54,13 +71,15 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
       { id: KANBAN_UNASSIGNED, label: t('kanban.unassigned'), member: null as OrgMember | null },
       ...memberCols.map((m) => ({ id: m.userId, label: m.displayName, member: m as OrgMember | null })),
     ];
-    // `t` en dépendance : la colonne « non assignées » porte un libellé traduit.
-  }, [members, openTasks, t]);
+    // `t` en dépendance : les libellés de colonne sont traduits ici.
+  }, [members, openTasks, t, groupBy]);
 
-  const tasksOf = (colId: string) =>
-    colId === KANBAN_UNASSIGNED
+  const tasksOf = (colId: string) => {
+    if (groupBy === 'status') return openTasks.filter((t) => t.status === colId);
+    return colId === KANBAN_UNASSIGNED
       ? openTasks.filter((t) => t.assigneeIds.length === 0)
       : openTasks.filter((t) => t.assigneeIds.includes(colId));
+  };
 
   const handleDrop = (colId: string, e: React.DragEvent) => {
     e.preventDefault();
@@ -70,6 +89,13 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
     if (!payload) return;
     const task = openTasks.find((t) => t.id === payload!.taskId);
     if (!task || colId === payload.from) return;
+
+    // En mode flux, déposer change le STATUT et rien d'autre : l'assignation
+    // ne doit pas bouger parce qu'on a fait avancer une tâche.
+    if (groupBy === 'status') {
+      onSetStatus(task, colId as TeamTaskStatus);
+      return;
+    }
 
     // Déplace l'assignation : retire la colonne d'origine, ajoute la cible.
     let next = task.assigneeIds.filter((id) => id !== payload!.from);

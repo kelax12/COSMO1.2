@@ -274,7 +274,16 @@
     "timelineEmpty": "Aucune échéance à venir. Datez des tâches pour les voir apparaître ici.",
     "timelineToday": "Aujourd'hui",
     "timelineNotGantt": "Positionne les tâches à leur échéance. Les tâches sans date ne sont pas affichées.",
-    "timelineMarker": "{{name}} — échéance le {{date}}"
+    "timelineMarker": "{{name}} — échéance le {{date}}",
+    "statusTodo": "À faire",
+    "statusInProgress": "En cours",
+    "statusReview": "En relecture",
+    "statusBlocked": "Bloquée",
+    "statusDone": "Terminée",
+    "groupBy": "Grouper par",
+    "groupByAssignee": "Assigné",
+    "groupByStatus": "Statut",
+    "statusLabel": "Statut"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",

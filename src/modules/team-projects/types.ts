@@ -30,6 +30,15 @@ export interface UpdateTeamProjectInput {
   archived?: boolean;
 }
 
+/**
+ * Statut de flux d'une tâche d'équipe (mig. 091).
+ *
+ * `completed` reste la colonne lue par tout le code existant : le serveur
+ * garde les deux synchronisés dans les deux sens. On ne dérive donc JAMAIS
+ * `completed` de `status` côté client — c'est le trigger qui fait autorité.
+ */
+export type TeamTaskStatus = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
+
 /** Tâche d'équipe — champs canoniques `name` / `completed` / `deadline` (B6). */
 export interface TeamTask {
   id: string;
@@ -46,6 +55,8 @@ export interface TeamTask {
   assigneeIds: string[];
   createdBy: string;
   completed: boolean;
+  /** Statut de flux (mig. 091) — synchronisé serveur avec `completed`. */
+  status: TeamTaskStatus;
   completedAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +70,7 @@ export interface CreateTeamTaskInput {
   deadline?: string;
   estimatedTime?: number;
   assigneeIds?: string[];
+  status?: TeamTaskStatus;
 }
 
 /** Champs modifiables — jamais orgId/createdBy (whitelist mapToDb). */
@@ -71,6 +83,7 @@ export interface UpdateTeamTaskInput {
   assigneeIds?: string[];
   projectId?: string;
   completed?: boolean;
+  status?: TeamTaskStatus;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */
