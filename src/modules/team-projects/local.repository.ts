@@ -98,7 +98,7 @@ const DEMO_TASKS: TeamTask[] = [
   t('tproj-1', 'Charte graphique validée', 1, 3, -5, true),
   t('tproj-1', 'Setup analytics', 2, 2, 10, false),
   // Lancement produit
-  t('tproj-2', 'Plan de communication', 0, 5, 1, false),
+  t('tproj-2', 'Plan de communication', 0, 5, 0, false),
   t('tproj-2', 'Kit presse', 5, 3, 4, false),
   t('tproj-2', 'Préparer la démo investisseurs', 1, 5, -2, false),
   t('tproj-2', 'Landing page de teasing', 2, 4, 6, false),
@@ -108,7 +108,7 @@ const DEMO_TASKS: TeamTask[] = [
   // Interne
   t('tproj-3', 'Onboarding nouveaux arrivants', 1, 3, 5, false),
   t('tproj-3', 'Mise à jour du wiki', 4, 1, 12, false),
-  t('tproj-3', 'Rétrospective sprint', 0, 2, 1, false),
+  t('tproj-3', 'Rétrospective sprint', 0, 2, -2, false),
   t('tproj-3', 'Budget prévisionnel Q3', 3, 4, -1, false),
   t('tproj-3', 'Commande matériel', 2, 2, 3, true),
   t('tproj-3', 'Planifier le séminaire', 5, 3, 14, false),
