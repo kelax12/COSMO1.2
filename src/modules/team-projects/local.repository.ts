@@ -58,6 +58,7 @@ const t = (
   }
   return {
     id: `ttask-${seq}`,
+    status: completed ? 'done' : 'todo',
     orgId: DEMO_ORG_ID,
     projectId,
     name,
@@ -212,6 +213,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       assigneeIds: input.assigneeIds ?? [],
       createdBy: DEMO_USER_ID,
       completed: false,
+      status: input.status ?? 'todo',
       completedAt: null,
       createdAt: now,
       updatedAt: now,
@@ -231,8 +233,21 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.estimatedTime !== undefined) task.estimatedTime = input.estimatedTime;
     if (input.assigneeIds !== undefined) task.assigneeIds = input.assigneeIds;
     if (input.projectId !== undefined) task.projectId = input.projectId;
-    if (input.completed !== undefined) {
+    // Reproduit le trigger `sync_team_task_status` de la mig. 091 : sans cette
+    // symétrie, le mode démo divergerait de la production dès qu'un statut est
+    // changé, et le kanban afficherait deux vérités différentes selon le mode.
+    if (input.status !== undefined) {
+      task.status = input.status;
+      if (input.status === 'done') {
+        task.completed = true;
+        task.completedAt = task.completedAt ?? new Date().toISOString();
+      } else {
+        task.completed = false;
+        task.completedAt = null;
+      }
+    } else if (input.completed !== undefined) {
       task.completed = input.completed;
+      task.status = input.completed ? 'done' : 'todo';
       task.completedAt = input.completed ? new Date().toISOString() : null;
     }
     task.updatedAt = new Date().toISOString();

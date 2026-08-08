@@ -7,6 +7,7 @@ export type {
   CreateTeamProjectInput,
   UpdateTeamProjectInput,
   TeamTask,
+  TeamTaskStatus,
   CreateTeamTaskInput,
   UpdateTeamTaskInput,
   TeamTaskFilters,

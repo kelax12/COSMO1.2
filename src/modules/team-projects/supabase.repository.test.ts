@@ -19,7 +19,7 @@ const projectRow = {
 const taskRow = {
   id: 'tk1', org_id: 'org1', project_id: 'p1', name: 'Maquette',
   description: 'desc', priority: 2, deadline: '2026-07-20', estimated_time: 60,
-  assignee_ids: ['u2'], created_by: 'u1', completed: false, completed_at: null,
+  assignee_ids: ['u2'], created_by: 'u1', completed: false, status: 'todo', completed_at: null,
   created_at: '2026-07-01T10:00:00.000Z', updated_at: '2026-07-02T10:00:00.000Z',
 };
 
@@ -129,7 +129,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     expect(result).toEqual([{
       id: 'tk1', orgId: 'org1', projectId: 'p1', name: 'Maquette',
       description: 'desc', priority: 2, deadline: '2026-07-20', estimatedTime: 60,
-      assigneeIds: ['u2'], createdBy: 'u1', completed: false, completedAt: null,
+      assigneeIds: ['u2'], createdBy: 'u1', completed: false, status: 'todo', completedAt: null,
       createdAt: taskRow.created_at, updatedAt: taskRow.updated_at,
     }]);
   });
@@ -169,6 +169,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     expect(inserted).toEqual({
       org_id: 'org1', created_by: supabaseMock.user?.id, project_id: 'p1', name: 'Maquette',
       description: null, priority: 3, deadline: null, estimated_time: null, assignee_ids: [],
+      status: 'todo',
     });
   });
 

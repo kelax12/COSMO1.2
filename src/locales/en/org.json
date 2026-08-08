@@ -259,7 +259,16 @@
     "timelineEmpty": "No upcoming deadlines. Add dates to tasks to see them here.",
     "timelineToday": "Today",
     "timelineNotGantt": "Places tasks at their deadline. Tasks without a date are not shown.",
-    "timelineMarker": "{{name}} — due {{date}}"
+    "timelineMarker": "{{name}} — due {{date}}",
+    "statusTodo": "To do",
+    "statusInProgress": "In progress",
+    "statusReview": "In review",
+    "statusBlocked": "Blocked",
+    "statusDone": "Done",
+    "groupBy": "Group by",
+    "groupByAssignee": "Assignee",
+    "groupByStatus": "Status",
+    "statusLabel": "Status"
   },
   "insights": {
     "taskDeleted": "Task deleted",

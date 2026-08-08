@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-  filterByStatus, sumEstimatedTime, formatDuration,
+  filterByStatus, sumEstimatedTime, formatDuration, groupByStatus, STATUS_ORDER,
 } from './team-projects.helpers';
 import type { TeamTask } from '@/modules/team-projects';
 
 const base: TeamTask = {
   id: 't1', orgId: 'o1', projectId: 'p1', name: 'Tache', priority: 3,
-  assigneeIds: [], createdBy: 'u1', completed: false,
+  assigneeIds: [], createdBy: 'u1', completed: false, status: 'todo',
   createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
 };
 
@@ -87,5 +87,36 @@ describe('formatDuration', () => {
 
   it('retourne une chaîne vide pour une valeur négative', () => {
     expect(formatDuration(-10)).toBe('');
+  });
+});
+
+describe('groupByStatus', () => {
+  it('range chaque tâche dans la colonne de son statut', () => {
+    const groups = groupByStatus([
+      task({ id: 'a', status: 'todo' }),
+      task({ id: 'b', status: 'in_progress' }),
+      task({ id: 'c', status: 'blocked' }),
+    ]);
+    expect(groups.todo.map((t) => t.id)).toEqual(['a']);
+    expect(groups.in_progress.map((t) => t.id)).toEqual(['b']);
+    expect(groups.blocked.map((t) => t.id)).toEqual(['c']);
+  });
+
+  it('conserve les colonnes vides (on doit pouvoir y déposer une carte)', () => {
+    const groups = groupByStatus([]);
+    for (const status of STATUS_ORDER) {
+      expect(groups[status]).toEqual([]);
+    }
+  });
+
+  it('retombe sur "todo" pour un statut inconnu (donnée antérieure à la mig. 091)', () => {
+    const groups = groupByStatus([
+      { ...task({ id: 'legacy' }), status: 'inconnu' as never },
+    ]);
+    expect(groups.todo.map((t) => t.id)).toEqual(['legacy']);
+  });
+
+  it("expose les 5 statuts dans l'ordre du flux", () => {
+    expect(STATUS_ORDER).toEqual(['todo', 'in_progress', 'review', 'blocked', 'done']);
   });
 });

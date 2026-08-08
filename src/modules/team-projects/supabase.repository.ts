@@ -42,6 +42,7 @@ interface TaskRow {
   assignee_ids: string[] | null;
   created_by: string;
   completed: boolean;
+  status: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -88,6 +89,10 @@ const mapTask = (r: TaskRow): TeamTask => ({
   assigneeIds: r.assignee_ids ?? [],
   createdBy: r.created_by,
   completed: r.completed,
+  // Repli sur `completed` : une ligne lue depuis un cache antérieur à la
+  // mig. 091 n'a pas encore de `status`, et un `undefined` casserait le
+  // groupement du kanban.
+  status: (r.status as TeamTask['status'] | null) ?? (r.completed ? 'done' : 'todo'),
   completedAt: r.completed_at,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
@@ -199,6 +204,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         deadline: input.deadline || null,
         estimated_time: input.estimatedTime ?? null,
         assignee_ids: input.assigneeIds ?? [],
+        status: input.status ?? 'todo',
       })
       .select('*')
       .single();
@@ -217,7 +223,13 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime;
     if (input.assigneeIds !== undefined) patch.assignee_ids = input.assigneeIds;
     if (input.projectId !== undefined) patch.project_id = input.projectId;
-    if (input.completed !== undefined) {
+    // `status` et `completed` sont synchronisés par le trigger de la mig. 091.
+    // On n'envoie donc JAMAIS les deux dans le même patch : le trigger traite
+    // `status` en priorité, et un `completed` contradictoire serait écrasé
+    // sans erreur — un bug silencieux plutôt qu'un échec visible.
+    if (input.status !== undefined) {
+      patch.status = input.status;
+    } else if (input.completed !== undefined) {
       patch.completed = input.completed;
       patch.completed_at = input.completed ? new Date().toISOString() : null;
     }
