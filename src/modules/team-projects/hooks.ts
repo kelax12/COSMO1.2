@@ -8,6 +8,7 @@ import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
 import { teamProjectKeys } from './constants';
+import type { UpdateTeamSubtaskInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
 import { translator } from '@/i18n/useT';
 
@@ -175,5 +176,60 @@ export const useDeleteTeamTaskComment = (taskId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
     },
     onError: (error: Error) => toast.error(`Impossible de supprimer le commentaire : ${error.message}`),
+  });
+};
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+export const useTeamSubtasks = (taskId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.subtasks(taskId ?? ''),
+    queryFn: () => repository.getSubtasks(taskId as string),
+    enabled: !!taskId,
+    staleTime: 1000 * 15,
+  });
+};
+
+/**
+ * Les trois mutations invalident la même clé plutôt que de patcher le cache :
+ * `position` est réattribuée côté serveur à la création, une mise à jour
+ * optimiste ferait donc scintiller l'ordre de la liste.
+ */
+export const useCreateTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (input: { title: string; position?: number }) =>
+      repository.createSubtask({ taskId, title: input.title, position: input.position }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible d'ajouter la sous-tâche : ${error.message}`),
+  });
+};
+
+export const useUpdateTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ subtaskId, input }: { subtaskId: string; input: UpdateTeamSubtaskInput }) =>
+      repository.updateSubtask(subtaskId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de modifier la sous-tâche : ${error.message}`),
+  });
+};
+
+export const useDeleteTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (subtaskId: string) => repository.deleteSubtask(subtaskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(`Impossible de supprimer la sous-tâche : ${error.message}`),
   });
 };

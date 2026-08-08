@@ -110,3 +110,29 @@ export interface TeamTaskFilters {
   assigneeId?: string;
   completed?: boolean;
 }
+
+/** Sous-tâche d'une tâche d'équipe (mig. 092) — un seul niveau, pas de récursion. */
+export interface TeamSubtask {
+  id: string;
+  taskId: string;
+  title: string;
+  completed: boolean;
+  /** Ordre d'affichage, réordonnable sans renuméroter le reste. */
+  position: number;
+  /** null si le compte auteur a été supprimé (FK SET NULL). */
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface CreateTeamSubtaskInput {
+  taskId: string;
+  title: string;
+  position?: number;
+}
+
+/** Champs modifiables — jamais taskId (le déplacement inter-tâches n'a pas de sens ici). */
+export interface UpdateTeamSubtaskInput {
+  title?: string;
+  completed?: boolean;
+  position?: number;
+}

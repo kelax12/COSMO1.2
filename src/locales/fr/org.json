@@ -317,7 +317,14 @@
     "creating": "Création...",
     "saving": "Sauvegarde...",
     "create": "Créer la tâche",
-    "save": "Sauvegarder"
+    "save": "Sauvegarder",
+    "subtasksTitle": "Sous-tâches",
+    "subtasksAdd": "Ajouter une sous-tâche",
+    "subtasksPlaceholder": "Que faut-il faire ?",
+    "subtasksEmpty": "Découpez cette tâche en étapes.",
+    "subtasksDelete": "Supprimer « {{title}} »",
+    "subtasksToggle": "Cocher « {{title}} »",
+    "subtasksProgress": "{{done}} sur {{total}}"
   },
   "team": {
     "newTeam": "Nouvelle équipe",

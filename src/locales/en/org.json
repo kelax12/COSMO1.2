@@ -302,7 +302,14 @@
     "creating": "Creating...",
     "saving": "Saving...",
     "create": "Create task",
-    "save": "Save"
+    "save": "Save",
+    "subtasksTitle": "Subtasks",
+    "subtasksAdd": "Add a subtask",
+    "subtasksPlaceholder": "What needs doing?",
+    "subtasksEmpty": "Break this task into steps.",
+    "subtasksDelete": "Delete \"{{title}}\"",
+    "subtasksToggle": "Check \"{{title}}\"",
+    "subtasksProgress": "{{done}} of {{total}}"
   },
   "team": {
     "newTeam": "New team",
