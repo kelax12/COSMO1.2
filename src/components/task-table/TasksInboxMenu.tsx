@@ -10,7 +10,7 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox } from 'lucide-react';
+import { Inbox, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
@@ -189,27 +189,29 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
                           {task.name}
                         </p>
                         <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                          {t('inbox.sharedBy', { name: sharerName(task) })}
+                          {sharerName(task)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleAcceptTask(task)}
                           disabled={acceptSharedTaskMutation.isPending}
-                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          title={t('inbox.accept')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           aria-label={t('inbox.acceptTask', { name: task.name })}
                         >
-                          {t('inbox.accept')}
+                          <Check size={15} aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRejectTask(task)}
                           disabled={unshareTaskMutation.isPending}
-                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          title={t('inbox.refuse')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           aria-label={t('inbox.refuseTask', { name: task.name })}
                         >
-                          {t('inbox.refuse')}
+                          <X size={15} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -234,24 +236,26 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
                           {tp('inbox.sharedListBy', grant.tasks.length, { name: grant.sharedByName ?? t('inbox.anonymousSharer') })}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleAcceptList(grant)}
                           disabled={acceptSharedListMutation.isPending}
-                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          title={t('inbox.accept')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           aria-label={t('inbox.acceptList', { name: grant.name })}
                         >
-                          {t('inbox.accept')}
+                          <Check size={15} aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRejectList(grant)}
                           disabled={refuseSharedListMutation.isPending}
-                          className="h-8 px-2.5 rounded-md text-caption sm:text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          title={t('inbox.refuse')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           aria-label={t('inbox.refuseList', { name: grant.name })}
                         >
-                          {t('inbox.refuse')}
+                          <X size={15} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
