@@ -37,6 +37,10 @@ interface MemberAgendaSheetProps {
   onClose: () => void;
 }
 
+interface MemberAgendaBodyProps {
+  member: OrgMember;
+}
+
 type ViewName = 'timeGridWeek' | 'timeGridDay' | 'dayGridMonth';
 
 const VIEW_LABELS: { id: ViewName; label: string }[] = [
@@ -52,13 +56,15 @@ const PROJECT_HEX: Record<string, string> = {
 };
 
 /**
- * Agenda complet d'un subordonné (mode entreprise) — même expérience que la
- * page Agenda personnelle : bouton « Nouveau », sélection de plage, glisser-
- * déposer des TÂCHES D'ÉQUIPE du membre vers le calendrier, drag/resize des
- * événements, et EventModal réutilisé tel quel. Couleurs de boutons alignées
- * sur l'agenda classique. Réservé à la hiérarchie du membre (RLS 077). Portal.
+ * CORPS de l'agenda d'un subordonné — barre d'outils, tâches à planifier,
+ * calendrier et modales, SANS overlay ni en-tête (item #18).
+ *
+ * ⚠️ FullCalendar mesure son conteneur au montage : ce corps ne doit être
+ * monté que lorsque son onglet est actif, sinon il calcule sa hauteur dans un
+ * conteneur masqué et rend une grille écrasée. Son hôte doit aussi lui donner
+ * une hauteur DÉFINIE (`height="100%"` remonte jusqu'à un parent dimensionné).
  */
-const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
+export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
   const { t } = useT('org');
   const calendarRef = useRef<FullCalendar>(null);
   const draggableRef = useRef<Draggable | null>(null);
@@ -233,30 +239,6 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
 
   return (
     <>
-      {createPortal(
-    <div className="fixed inset-0 z-[9998] bg-[rgb(var(--color-background))] flex flex-col">
-      {/* En-tête */}
-      <header className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">
-        <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />
-        <div className="min-w-0">
-          <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate inline-flex items-center gap-1.5">
-            <CalendarDays size={15} className="text-indigo-500" aria-hidden="true" />
-            Agenda de {member.displayName}
-          </h2>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {t('agendaSheet.managerHint')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('agendaSheet.close')}
-          className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-        >
-          <X size={20} aria-hidden="true" />
-        </button>
-      </header>
-
       {/* Barre d'outils — couleurs alignées sur l'agenda classique */}
       <div className="flex items-center gap-2 px-4 sm:px-6 py-2.5 border-b border-[rgb(var(--color-border))] shrink-0 flex-wrap">
         {/* Toggle sidebar tâches */}
@@ -452,9 +434,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
           enterprisePublic
         />
       )}
-    </div>,
-        document.body,
-      )}
+
       {creatingTask && (
         <TeamTaskModal
           isCreating
@@ -467,6 +447,46 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
         />
       )}
     </>
+  );
+};
+
+/**
+ * Agenda complet d'un subordonné (mode entreprise) — même expérience que la
+ * page Agenda personnelle : bouton « Nouveau », sélection de plage, glisser-
+ * déposer des TÂCHES D'ÉQUIPE du membre vers le calendrier, drag/resize des
+ * événements, et EventModal réutilisé tel quel. Couleurs de boutons alignées
+ * sur l'agenda classique. Réservé à la hiérarchie du membre (RLS 077). Portal.
+ */
+const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
+  const { t } = useT('org');
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9998] bg-[rgb(var(--color-background))] flex flex-col">
+      {/* En-tête */}
+      <header className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">
+        <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate inline-flex items-center gap-1.5">
+            <CalendarDays size={15} className="text-indigo-500" aria-hidden="true" />
+            {t('agendaSheet.titleFor', { name: member.displayName })}
+          </h2>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">
+            {t('agendaSheet.managerHint')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('agendaSheet.close')}
+          className="ml-auto w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
+        >
+          <X size={20} aria-hidden="true" />
+        </button>
+      </header>
+
+      <MemberAgendaBody member={member} />
+    </div>,
+    document.body,
   );
 };
 

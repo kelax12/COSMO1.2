@@ -7,7 +7,7 @@ import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 
-interface MemberProfileSheetProps {
+interface MemberProfileBodyProps {
   member: OrgMember;
   members: OrgMember[];
   /** Équipes transverses du membre. */
@@ -22,12 +22,109 @@ interface MemberProfileSheetProps {
   onAddUnder: (m: OrgMember) => void;
 }
 
+type MemberProfileSheetProps = MemberProfileBodyProps;
+
+/**
+ * CORPS de la fiche profil — sans overlay ni en-tête (item #18).
+ *
+ * Le chrome appartient à `MemberSheet`, qui monte ce corps dans un onglet.
+ * L'ancien sheet autonome ci-dessous le réutilise tel quel pour rester le
+ * même écran tant que tous les appelants n'ont pas migré.
+ */
+export const MemberProfileBody = ({
+  member, members, teams, currentUserId, canMove, canAddUnder, onClose, onMove, onAddUnder,
+}: MemberProfileBodyProps) => {
+  const { t, tp } = useT('org');
+  const m = member;
+  const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
+  const directs = members.filter((x) => x.managerId === m.userId).length;
+  const total = directs > 0 ? subtreeOf(members, m.userId).size : 0;
+
+  return (
+    <>
+      <dl className="space-y-3 mb-5">
+        {m.email && (
+          <div className="flex items-center gap-2.5 text-sm">
+            <Mail size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+            <dd className="text-[rgb(var(--color-text-secondary))] truncate">{m.email}</dd>
+          </div>
+        )}
+        <div className="flex items-center gap-2.5 text-sm">
+          <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+          <dd className="text-[rgb(var(--color-text-secondary))]">
+            {managerMember
+              ? <>{t('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? t('member.you') : managerMember.displayName}</strong></>
+              : t('member.noManager')}
+          </dd>
+        </div>
+        <div className="flex items-center gap-2.5 text-sm">
+          <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+          <dd className="text-[rgb(var(--color-text-secondary))]">
+            {directs === 0
+              ? t('member.noDirectReport')
+              : tp('pyramid.directCount', directs) + (total > directs ? t('pyramid.totalSuffix', { count: total }) : '')}
+          </dd>
+        </div>
+      </dl>
+
+      {teams.length > 0 && (
+        <div className="mb-5">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
+            {t('member.crossTeams')}
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {teams.map((team) => (
+              <span
+                key={team.id}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--color-text-secondary))]"
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
+                {team.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(canMove || canAddUnder) && (
+        <div className="flex gap-2">
+          {canAddUnder && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onAddUnder(m);
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            >
+              <UserRoundPlus size={15} aria-hidden="true" /> {t('common.add')}
+            </button>
+          )}
+          {canMove && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onMove(m);
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            >
+              <Move size={15} aria-hidden="true" /> {t('member.move')}
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
 /**
  * Fiche membre (clic sur une carte de la pyramide) : identité, rattachement,
  * effectifs, équipes transverses et actions rapides (déplacer / ajouter).
  */
-const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, canAddUnder, onClose, onMove, onAddUnder }: MemberProfileSheetProps) => {
-  const { t, tp } = useT('org');
+const MemberProfileSheet = (props: MemberProfileSheetProps) => {
+  const { member, members, currentUserId, onClose } = props;
+  const { t } = useT('org');
 
   /**
    * URL absolue : le lien part dans une conversation, un chemin relatif n'y
@@ -46,9 +143,6 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
 
   const m = member;
   const isMe = m.userId === currentUserId;
-  const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
-  const directs = members.filter((x) => x.managerId === m.userId).length;
-  const total = directs > 0 ? subtreeOf(members, m.userId).size : 0;
   const roleLabel = m.role === 'admin' ? 'Admin' : isManagerOf(members, m.userId) ? 'Manager' : 'Membre';
 
   return createPortal(
@@ -97,78 +191,7 @@ const MemberProfileSheet = ({ member, members, teams, currentUserId, canMove, ca
           </div>
         </div>
 
-        <dl className="space-y-3 mb-5">
-          {m.email && (
-            <div className="flex items-center gap-2.5 text-sm">
-              <Mail size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-              <dd className="text-[rgb(var(--color-text-secondary))] truncate">{m.email}</dd>
-            </div>
-          )}
-          <div className="flex items-center gap-2.5 text-sm">
-            <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-            <dd className="text-[rgb(var(--color-text-secondary))]">
-              {managerMember
-                ? <>{t('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? t('member.you') : managerMember.displayName}</strong></>
-                : t('member.noManager')}
-            </dd>
-          </div>
-          <div className="flex items-center gap-2.5 text-sm">
-            <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-            <dd className="text-[rgb(var(--color-text-secondary))]">
-              {directs === 0
-                ? t('member.noDirectReport')
-                : tp('pyramid.directCount', directs) + (total > directs ? t('pyramid.totalSuffix', { count: total }) : '')}
-            </dd>
-          </div>
-        </dl>
-
-        {teams.length > 0 && (
-          <div className="mb-5">
-            <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-              {t('member.crossTeams')}
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {teams.map((t) => (
-                <span
-                  key={t.id}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--color-text-secondary))]"
-                >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} aria-hidden="true" />
-                  {t.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {(canMove || canAddUnder) && (
-          <div className="flex gap-2">
-            {canAddUnder && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onAddUnder(m);
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-              >
-                <UserRoundPlus size={15} aria-hidden="true" /> Ajouter
-              </button>
-            )}
-            {canMove && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onMove(m);
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-              >
-                <Move size={15} aria-hidden="true" /> {t('member.move')}
-              </button>
-            )}
-          </div>
-        )}
+        <MemberProfileBody {...props} />
       </div>
     </div>,
     document.body,

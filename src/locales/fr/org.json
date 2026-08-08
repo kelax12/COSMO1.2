@@ -491,7 +491,13 @@
     "copyLink": "Copier le lien vers cette fiche",
     "copyLinkDone": "Lien copié",
     "placementHint": "Choisissez son nouveau responsable direct dans la pyramide.",
-    "placementEmpty": "Aucune destination possible."
+    "placementEmpty": "Aucune destination possible.",
+    "sheetAria": "Fiche de {{name}}",
+    "tabsAria": "Sections de la fiche membre",
+    "tabProfile": "Profil",
+    "tabTasks": "Tâches",
+    "tabContribution": "Contribution",
+    "tabAgenda": "Agenda"
   },
   "okrCategory": {
     "new": "Nouvelle catégorie",
@@ -573,6 +579,7 @@
     "teamTasks": "Tâches d'équipe",
     "close": "Fermer l'agenda",
     "addTaskFor": "Ajouter une tâche pour {{name}}",
+    "titleFor": "Agenda de {{name}}",
     "managerHint": "Vous gérez cet agenda — créez, glissez ses tâches, déplacez ou modifiez ses événements.",
     "today": "Aujourd'hui",
     "dragHint": "Glissez une tâche sur le calendrier pour la planifier.",
