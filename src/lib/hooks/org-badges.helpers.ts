@@ -15,6 +15,13 @@ export interface OrgBadgeInput {
   /** Demandes d'adhésion en attente (0 si non-admin). */
   pendingRequests: number;
   tasks: TeamTask[];
+  /**
+   * Notifications serveur non lues (mig. 095) — 0 en démo, où il n'y a pas de
+   * base. Elles SUPPLANTENT le comptage dérivé des tâches quand elles
+   * existent : `lastSeen` est en localStorage, donc faux dès qu'on change
+   * d'appareil, là où `read_at` est partagé.
+   */
+  unreadNotifications?: number;
 }
 
 export interface OrgBadges {
@@ -27,15 +34,20 @@ export interface OrgBadges {
 }
 
 export const computeOrgBadges = ({
-  userId, lastSeen, pendingRequests, tasks,
+  userId, lastSeen, pendingRequests, tasks, unreadNotifications,
 }: OrgBadgeInput): OrgBadges => {
-  const projects = tasks.filter((t) => {
+  const derived = tasks.filter((t) => {
     if (t.completed || !t.assigneeIds.includes(userId)) return false;
     // S'auto-assigner ne notifie pas : on sait déjà ce qu'on vient d'écrire.
     if (t.createdBy === userId) return false;
     const created = Date.parse(t.createdAt);
     return Number.isFinite(created) && created > lastSeen;
   }).length;
+
+  // Les notifications serveur font autorité dès qu'il y en a : le comptage
+  // dérivé n'est qu'un filet pour les organisations dont aucune tâche n'a
+  // encore été réassignée depuis l'application de la mig. 095.
+  const projects = unreadNotifications && unreadNotifications > 0 ? unreadNotifications : derived;
 
   return { projects, members: pendingRequests, total: projects + pendingRequests };
 };
