@@ -424,7 +424,7 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onOpenInsights(m, 'tasks')}>
                   <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
-                  Voir ses tâches
+                  {t('pyramid.seeTasksAction')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenInsights(m, 'agenda')}>
                   <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
@@ -999,7 +999,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             onClick={() => setDragging(null)}
             className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] px-3 py-1.5 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] shrink-0 transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
         </div>
       )}
@@ -1057,7 +1057,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <Users size={26} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
           <p className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1.5">
-            Votre pyramide est vide
+            {t('pyramid.emptyTitle')}
           </p>
           <p className="text-sm text-[rgb(var(--color-text-muted))] max-w-sm mb-5">
             {t('pyramid.intro')}
@@ -1069,7 +1069,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               onClick={() => setAddingUnder(selfMember)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
             >
-              <UserPlus size={16} aria-hidden="true" /> Inviter votre premier collaborateur
+              <UserPlus size={16} aria-hidden="true" /> {t('pyramid.inviteFirst')}
             </button>
           )}
         </div>

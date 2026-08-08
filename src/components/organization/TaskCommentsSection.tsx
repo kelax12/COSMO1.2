@@ -76,7 +76,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
         <p className="text-xs py-3 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('comments.loading')}</p>
       ) : comments.length === 0 ? (
         <p className="text-xs py-1 mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          Aucun commentaire — lancez la discussion. Tapez « @ » pour mentionner un membre.
+          {t('comments.empty')}
         </p>
       ) : (
         <ul className="space-y-3 mb-3 max-h-56 overflow-y-auto pr-1">
@@ -103,7 +103,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
                     type="button"
                     onClick={() => deleteMutation.mutate(c.id)}
                     disabled={deleteMutation.isPending}
-                    aria-label="Supprimer ce commentaire"
+                    aria-label={t('comments.deleteAria')}
                     className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
                     style={{ color: 'rgb(var(--color-text-muted))' }}
                   >
@@ -122,7 +122,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
             className="absolute bottom-full mb-1 left-0 right-0 rounded-xl border shadow-lg overflow-hidden z-10"
             style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
             role="listbox"
-            aria-label="Mentionner un membre"
+            aria-label={t('comments.mentionAria')}
           >
             {mentionCandidates.map((m) => (
               <li key={m.userId}>
@@ -165,7 +165,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
             type="button"
             onClick={submit}
             disabled={!body.trim() || addMutation.isPending}
-            aria-label="Envoyer le commentaire"
+            aria-label={t('comments.sendAria')}
             className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
           >
             <Send size={16} aria-hidden="true" />

@@ -256,26 +256,26 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem onClick={() => setAssigning(m)}>
                         <ClipboardList size={14} className="text-indigo-500" aria-hidden="true" />
-                        Attribuer une tâche
+                        {t('directory.assignTask')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setInsights({ member: m, tab: 'tasks' })}>
                         <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
-                        Voir ses tâches
+                        {t('directory.seeTasks')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAgendaMember(m)}>
                         <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
-                        Voir son agenda
+                        {t('directory.seeAgenda')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setInsights({ member: m, tab: 'contribution' })}>
                         <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
-                        Voir sa contribution
+                        {t('directory.seeContribution')}
                       </DropdownMenuItem>
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem variant="destructive" onClick={() => handleRemove(m)}>
-                            <LogOut size={14} aria-hidden="true" /> Retirer de l'entreprise
+                            <LogOut size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
                           </DropdownMenuItem>
                         </>
                       )}

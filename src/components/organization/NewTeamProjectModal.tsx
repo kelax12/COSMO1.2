@@ -242,7 +242,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           <div>
             <span className={labelClass} style={labelStyle}>
               <ListTodo size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
-              Tâches initiales (optionnel)
+              {t('project.initialTasks')}
             </span>
 
             {tasks.length > 0 && (
@@ -312,7 +312,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           }}
         >
           <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"

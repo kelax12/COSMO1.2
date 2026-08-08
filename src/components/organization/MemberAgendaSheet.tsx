@@ -244,7 +244,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             Agenda de {member.displayName}
           </h2>
           <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            Vous gérez cet agenda — créez, glissez ses tâches, déplacez ou modifiez ses événements.
+            {t('agendaSheet.managerHint')}
           </p>
         </div>
         <button
@@ -270,7 +270,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             color: showTasks ? 'white' : 'rgb(var(--color-text-primary))',
           }}
         >
-          <ListChecks size={16} aria-hidden="true" /> Tâches
+          <ListChecks size={16} aria-hidden="true" /> {t('agendaSheet.tasksTitle')}
         </button>
 
         <div className="inline-flex items-center gap-1">
@@ -278,7 +278,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => nav('today')} className="px-3 h-8 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-blue-600 hover:border-[rgb(var(--color-accent-solid-hover))]/60 transition-colors">
-            Aujourd'hui
+            {t('agendaSheet.today')}
           </button>
           <button type="button" onClick={() => nav('next')} aria-label={t('agendaSheet.nextPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-blue-600 transition-colors">
             <ChevronRight size={16} aria-hidden="true" />
@@ -328,7 +328,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
               <div>
                 <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('agendaSheet.teamTasks')}</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  Glissez une tâche sur le calendrier pour la planifier.
+                  {t('agendaSheet.dragHint')}
                 </p>
               </div>
               <button
@@ -344,7 +344,7 @@ const MemberAgendaSheet = ({ member, onClose }: MemberAgendaSheetProps) => {
             <div id="member-external-events" className="flex-1 overflow-y-auto p-3 space-y-2">
               {memberTasks.length === 0 ? (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-8">
-                  Aucune tâche d'équipe assignée.
+                  {t('agendaSheet.noTasks')}
                 </p>
               ) : (
                 memberTasks.map((task: TeamTask) => {

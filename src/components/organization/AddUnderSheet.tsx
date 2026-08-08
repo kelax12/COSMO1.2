@@ -87,7 +87,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={18} aria-hidden="true" />
@@ -114,7 +114,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
                 type="button"
                 onClick={copy}
                 className="w-10 h-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] shrink-0"
-                aria-label="Copier le lien d'invitation"
+                aria-label={t('invite.copyLinkAria')}
               >
                 {copied ? <Check size={16} className="text-green-500" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
               </button>
@@ -135,7 +135,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
         {joinCode && (
           <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
-              Code d'invitation de l'entreprise
+              {t('invite.orgCodeTitle')}
             </h3>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
               {t('invite.permanentCodeHint')}
@@ -148,7 +148,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
                 type="button"
                 onClick={copyCode}
                 className="w-10 h-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] shrink-0"
-                aria-label="Copier le code d'invitation"
+                aria-label={t('invite.copyCodeAria')}
               >
                 {codeCopied ? <Check size={16} className="text-green-500" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
               </button>

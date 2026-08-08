@@ -73,7 +73,10 @@
     "personalLink": "Lien d'invitation personnalisé",
     "personalLinkHint": "Usage unique, valable 7 jours. Après création de son compte, la personne rejoint directement l'entreprise, rattachée à {{name}}.",
     "you": "vous",
-    "permanentCodeHint": "Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un administrateur valide sa demande (elle arrive non placée dans la pyramide)."
+    "permanentCodeHint": "Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un administrateur valide sa demande (elle arrive non placée dans la pyramide).",
+    "copyLinkAria": "Copier le lien d'invitation",
+    "copyCodeAria": "Copier le code d'invitation",
+    "orgCodeTitle": "Code d'invitation de l'entreprise"
   },
   "pyramid": {
     "directReports_one": ", {{count}} subordonné direct",
@@ -132,7 +135,10 @@
     "dragEachHint": "Glissez chaque personne sur son responsable dans la pyramide.",
     "place": "Placer",
     "overlayToggle": "Afficher la charge",
-    "overlayHint": "Colore les cartes selon le temps estimé restant"
+    "overlayHint": "Colore les cartes selon le temps estimé restant",
+    "seeTasksAction": "Voir ses tâches",
+    "emptyTitle": "Votre pyramide est vide",
+    "inviteFirst": "Inviter votre premier collaborateur"
   },
   "overview": {
     "completed": "Terminées",
@@ -168,7 +174,14 @@
     "workloadOpen_many": "{{count}} d'ouvertes",
     "workloadOpen_other": "{{count}} ouvertes",
     "workloadOverdue": "{{count}} en retard",
-    "workloadNoEstimate": "sans estimation"
+    "workloadNoEstimate": "sans estimation",
+    "byMember": "Par membre",
+    "openTasks": "Tâches ouvertes",
+    "openShort": "Ouvertes",
+    "overdueShort": "En retard",
+    "okrProgressTitle": "Avancement des OKR",
+    "overdueByMember": "Retards par membre",
+    "csvProject": "Projet"
   },
   "myWork": {
     "upToDate": "À jour",
@@ -213,7 +226,9 @@
     "cancel": "Annuler",
     "saving": "Enregistrement…",
     "save": "Enregistrer",
-    "create": "Créer"
+    "create": "Créer",
+    "descPlaceholder": "Facultatif…",
+    "wholeOrg": "Toute l'entreprise"
   },
   "projects": {
     "taskDeleted": "Tâche supprimée",
@@ -298,7 +313,8 @@
     "noContribution": "Aucune contribution à afficher.",
     "completionRate": "Taux de complétion",
     "tasksDone": "Tâches terminées",
-    "progress": "Progression"
+    "progress": "Progression",
+    "addTask": "Ajouter une tâche"
   },
   "taskModal": {
     "newAria": "Nouvelle tâche d'équipe",
@@ -342,7 +358,11 @@
     "historyFrom": "de {{from}}",
     "historyTo": "à {{to}}",
     "historyUnknownActor": "Quelqu'un",
-    "historyNone": "aucune"
+    "historyNone": "aucune",
+    "closeForm": "Fermer le formulaire",
+    "namePlaceholder": "Que faut-il faire ?",
+    "timePlaceholder": "Ex : 45",
+    "hasDescription": "Contient une description"
   },
   "team": {
     "newTeam": "Nouvelle équipe",
@@ -387,7 +407,12 @@
     "teamBadge": "Équipe",
     "createFirstTask": "Créer la première tâche",
     "completed": "Terminées ({{count}})",
-    "restEstimated": "{{duration}} restantes"
+    "restEstimated": "{{duration}} restantes",
+    "rename": "Renommer",
+    "restore": "Restaurer",
+    "archive": "Archiver",
+    "renameAria": "Renommer le projet",
+    "initialTasks": "Tâches initiales (optionnel)"
   },
   "deleteOrg": {
     "irreversible": "Cette action est irréversible.",
@@ -396,7 +421,9 @@
     "membersLose_other": "Les {{count}} membres perdent l'accès immédiatement.",
     "projectsDeleted": "Tous les projets, tâches d'équipe et OKR sont supprimés définitivement.",
     "teamsErased": "Les équipes, invitations et la pyramide sont effacées.",
-    "personalSafe": "Les données personnelles des membres ne sont pas affectées."
+    "personalSafe": "Les données personnelles des membres ne sont pas affectées.",
+    "confirmPrefix": "Pour confirmer, tapez",
+    "confirmSuffix": "ci-dessous :"
   },
   "consent": {
     "visibility": "Les membres voient votre nom, votre avatar et votre activité sur les projets d'équipe (tâches, commentaires).",
@@ -437,7 +464,12 @@
     "searchPlaceholder": "Rechercher un membre (nom, email)…",
     "searchAria": "Rechercher un membre dans l'annuaire",
     "clearSearch": "Effacer la recherche",
-    "noMatch": "Aucun membre ne correspond à « {{query}} »."
+    "noMatch": "Aucun membre ne correspond à « {{query}} ».",
+    "assignTask": "Attribuer une tâche",
+    "seeTasks": "Voir ses tâches",
+    "seeAgenda": "Voir son agenda",
+    "seeContribution": "Voir sa contribution",
+    "removeFromOrg": "Retirer de l'entreprise"
   },
   "member": {
     "detach": "Détacher (non placé)",
@@ -457,7 +489,9 @@
     "reassigning": "Réassignation en cours…",
     "willBeRemoved": "{{name}} sera définitivement retiré de l'entreprise.",
     "copyLink": "Copier le lien vers cette fiche",
-    "copyLinkDone": "Lien copié"
+    "copyLinkDone": "Lien copié",
+    "placementHint": "Choisissez son nouveau responsable direct dans la pyramide.",
+    "placementEmpty": "Aucune destination possible."
   },
   "okrCategory": {
     "new": "Nouvelle catégorie",
@@ -473,7 +507,9 @@
     "empty": "Aucun objectif",
     "emptyManager": "Créez un objectif pour aligner l'équipe.",
     "emptyMember": "Un manager doit créer un objectif.",
-    "emptyCategory": "Aucun objectif dans cette catégorie"
+    "emptyCategory": "Aucun objectif dans cette catégorie",
+    "newObjective": "Nouvel objectif",
+    "seeAll": "Voir tous les objectifs"
   },
   "switcher": {
     "myOrgs": "Mes entreprises",
@@ -517,7 +553,11 @@
   },
   "comments": {
     "loading": "Chargement…",
-    "placeholder": "Écrire un commentaire… (@ pour mentionner)"
+    "placeholder": "Écrire un commentaire… (@ pour mentionner)",
+    "empty": "Aucun commentaire — lancez la discussion. Tapez « @ » pour mentionner un membre.",
+    "deleteAria": "Supprimer ce commentaire",
+    "mentionAria": "Mentionner un membre",
+    "sendAria": "Envoyer le commentaire"
   },
   "leaveDialog": {
     "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation."
@@ -532,10 +572,19 @@
     "nextPeriod": "Période suivante",
     "teamTasks": "Tâches d'équipe",
     "close": "Fermer l'agenda",
-    "addTaskFor": "Ajouter une tâche pour {{name}}"
+    "addTaskFor": "Ajouter une tâche pour {{name}}",
+    "managerHint": "Vous gérez cet agenda — créez, glissez ses tâches, déplacez ou modifiez ses événements.",
+    "today": "Aujourd'hui",
+    "dragHint": "Glissez une tâche sur le calendrier pour la planifier.",
+    "noTasks": "Aucune tâche d'équipe assignée.",
+    "tasksTitle": "Tâches"
   },
   "common": {
-    "close": "Fermer"
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "deleteAction": "Supprimer"
   },
   "tabs": {
     "overview": "Aperçu",

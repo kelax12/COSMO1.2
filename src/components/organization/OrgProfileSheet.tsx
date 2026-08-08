@@ -92,7 +92,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={18} aria-hidden="true" />
@@ -186,7 +186,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             type="button"

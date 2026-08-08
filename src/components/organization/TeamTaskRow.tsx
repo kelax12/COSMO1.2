@@ -5,6 +5,7 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
+import { useT } from '@/i18n/useT';
 
 interface TeamTaskRowProps {
   task: TeamTask;
@@ -27,6 +28,7 @@ const TeamTaskRow = ({
   task, members, onToggleComplete, onReassign, onDelete, onOpen,
   density = 'comfortable', selectable = false, selected = false, onToggleSelect,
 }: TeamTaskRowProps) => {
+  const { t } = useT('org');
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
   const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
@@ -86,7 +88,7 @@ const TeamTaskRow = ({
             <AlignLeft
               size={12}
               className="inline-block ml-1.5 align-[-1px] text-[rgb(var(--color-text-muted))]"
-              aria-label="Contient une description"
+              aria-label={t('taskModal.hasDescription')}
             />
           )}
         </span>

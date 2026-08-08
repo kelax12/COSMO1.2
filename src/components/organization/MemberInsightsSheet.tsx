@@ -129,7 +129,7 @@ const MemberInsightsSheet = ({ orgId, member, initialTab, canEdit = false, onClo
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
           >
             <X size={18} aria-hidden="true" />
@@ -253,15 +253,18 @@ const TaskRow = ({ task, canEdit, onEdit }: { task: TeamTask; canEdit: boolean; 
   );
 };
 
-const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => (
-  <button
-    type="button"
-    onClick={onAddTask}
-    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-sm font-semibold text-[rgb(var(--color-text-secondary))]"
-  >
-    <Plus size={14} aria-hidden="true" /> Ajouter une tâche
-  </button>
-);
+const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => {
+  const { t } = useT('org');
+  return (
+    <button
+      type="button"
+      onClick={onAddTask}
+      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-sm font-semibold text-[rgb(var(--color-text-secondary))]"
+    >
+      <Plus size={14} aria-hidden="true" /> {t('insights.addTask')}
+    </button>
+  );
+};
 
 const TasksView = ({
   open, done, canEdit, onAddTask, onEditTask,

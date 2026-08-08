@@ -148,7 +148,7 @@ const TeamTaskModal = ({
           <button
             onClick={onClose}
             disabled={pending}
-            aria-label="Fermer le formulaire"
+            aria-label={t('taskModal.closeForm')}
             className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
             style={{ color: 'rgb(var(--color-text-muted))' }}
           >
@@ -175,7 +175,7 @@ const TeamTaskModal = ({
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); setError(null); }}
-                placeholder="Que faut-il faire ?"
+                placeholder={t('taskModal.namePlaceholder')}
                 autoFocus
                 maxLength={500}
                 className={inputClass}
@@ -266,7 +266,7 @@ const TeamTaskModal = ({
                   max={100000}
                   value={estimatedTime}
                   onChange={(e) => setEstimatedTime(e.target.value)}
-                  placeholder="Ex : 45"
+                  placeholder={t('taskModal.timePlaceholder')}
                   className={inputClass}
                   style={inputStyle}
                 />
@@ -357,12 +357,12 @@ const TeamTaskModal = ({
               disabled={pending}
               className="min-h-11 w-full sm:w-auto text-red-500 hover:text-red-600 hover:bg-red-500/10"
             >
-              <Trash2 size={16} data-icon="inline-start" /> Supprimer
+              <Trash2 size={16} data-icon="inline-start" /> {t('common.deleteAction')}
             </Button>
           ) : <span className="hidden sm:block" />}
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
             <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
