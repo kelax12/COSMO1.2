@@ -214,7 +214,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
               {months.map((month) => (
                 <span
                   key={month.label}
-                  className="absolute top-0 text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] whitespace-nowrap"
+                  className="absolute top-0 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] whitespace-nowrap"
                   style={{ left: `${month.offsetPercent}%` }}
                 >
                   {month.label}
@@ -290,7 +290,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                           <button
                             type="button"
                             aria-label={t('projects.timelineUnscheduledAria', { count: row.unscheduled.length })}
-                            className="self-start inline-flex items-center gap-1 pl-1.5 pr-2 h-[18px] rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-semibold whitespace-nowrap hover:bg-amber-500/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                            className="self-start inline-flex items-center gap-1 pl-1.5 pr-2 h-[18px] rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-caption font-semibold whitespace-nowrap hover:bg-amber-500/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           >
                             <CalendarOff size={10} aria-hidden="true" />
                             {tp('projects.timelineUnscheduled', row.unscheduled.length)}
@@ -312,7 +312,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                                   >
                                     <span className="block text-xs text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
                                     {groupBy === 'assignee' && taskProject && (
-                                      <span className="block text-[10px] text-[rgb(var(--color-text-muted))] truncate">{taskProject.name}</span>
+                                      <span className="block text-caption text-[rgb(var(--color-text-muted))] truncate">{taskProject.name}</span>
                                     )}
                                   </button>
                                 </li>
@@ -373,7 +373,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                                     seul recours. */}
                                 {showLabel && (
                                   <span
-                                    className={`absolute top-1/2 -translate-y-1/2 text-[10px] font-medium text-[rgb(var(--color-text-secondary))] whitespace-nowrap max-w-[140px] truncate ${
+                                    className={`absolute top-1/2 -translate-y-1/2 text-caption font-medium text-[rgb(var(--color-text-secondary))] whitespace-nowrap max-w-[140px] truncate ${
                                       flipLeft ? 'right-[calc(100%+6px)] text-right' : 'left-[calc(100%+6px)]'
                                     }`}
                                     aria-hidden="true"
@@ -398,11 +398,11 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                               className="w-56 p-3"
                             >
                               <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1.5 text-caption font-bold text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
                                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} aria-hidden="true" />
                                   {priority.label}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold whitespace-nowrap ${marker.overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                                <span className={`inline-flex items-center gap-1 text-caption font-semibold whitespace-nowrap ${marker.overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
                                   <CalendarClock size={11} aria-hidden="true" />
                                   {format(deadline, 'd MMM', { locale: getDateLocale() })}
                                 </span>
@@ -419,13 +419,13 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                                       </span>
                                     ))}
                                     {assignees.overflow > 0 && (
-                                      <span className="w-5 h-5 rounded-full ring-1 ring-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
+                                      <span className="w-5 h-5 rounded-full ring-1 ring-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] flex items-center justify-center text-caption font-bold text-[rgb(var(--color-text-muted))]">
                                         +{assignees.overflow}
                                       </span>
                                     )}
                                   </span>
                                 ) : null}
-                                <span className={`text-[11px] truncate ${assignees.avatars.length === 0 ? 'italic text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-secondary))] font-medium'}`}>
+                                <span className={`text-caption truncate ${assignees.avatars.length === 0 ? 'italic text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-secondary))] font-medium'}`}>
                                   {assignees.label}
                                 </span>
                               </div>
