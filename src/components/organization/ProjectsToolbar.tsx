@@ -35,7 +35,14 @@ interface ProjectsToolbarProps {
   updatePrefs: (patch: Partial<ProjectsUiPrefs>) => void;
   isManager: boolean;
   onNewProject: () => void;
+  /** Ouvre la création d'équipe — n'existe que si le sélecteur d'équipe est
+   *  affiché (au moins une équipe déjà créée). */
+  onCreateTeam: () => void;
 }
+
+/** Valeur sentinelle du `<select>` équipe : jamais un vrai `teamId`, jamais
+ *  écrite dans `teamFilter` — n'ouvre que la création. */
+const CREATE_TEAM_VALUE = '__create_team__';
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
  *  toutes, et leur `title` n'apparaît jamais sur écran tactile. */
@@ -83,7 +90,7 @@ const FilterChip = ({ label, removeLabel, onRemove }: {
 );
 
 const ProjectsToolbar = ({
-  members, teams, currentUserId, prefs, updatePrefs, isManager, onNewProject,
+  members, teams, currentUserId, prefs, updatePrefs, isManager, onNewProject, onCreateTeam,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
   // La barre ne porte QUE le périmètre, la vue et la création. Les deux réglages
@@ -228,7 +235,14 @@ const ProjectsToolbar = ({
               <span className="relative inline-flex items-center">
                 <select
                   value={teamFilter}
-                  onChange={(e) => updatePrefs({ teamFilter: e.target.value })}
+                  onChange={(e) => {
+                    // Sentinelle : n'écrit jamais le filtre, ouvre juste la
+                    // création. Le <select> reste contrôlé par `teamFilter`
+                    // (inchangé), React le refait donc pointer sur l'option
+                    // précédente au rendu suivant.
+                    if (e.target.value === CREATE_TEAM_VALUE) { onCreateTeam(); return; }
+                    updatePrefs({ teamFilter: e.target.value });
+                  }}
                   aria-label={t('projects.filterTeam')}
                   className="appearance-none h-9 pl-2.5 pr-6 bg-[rgb(var(--color-surface))] text-sm font-medium text-[rgb(var(--color-text-primary))] max-w-[9rem] cursor-pointer"
                 >
@@ -237,6 +251,9 @@ const ProjectsToolbar = ({
                   {teams.map((tm) => (
                     <option key={tm.id} value={tm.id}>{tm.name}</option>
                   ))}
+                  {isManager && (
+                    <option value={CREATE_TEAM_VALUE}>{t('projects.createTeamOption')}</option>
+                  )}
                 </select>
                 <ChevronDown
                   size={12}

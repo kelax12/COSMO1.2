@@ -242,6 +242,7 @@
     "filterTeam": "Filtrer par équipe",
     "allTeams": "Toutes les équipes",
     "orgNoTeam": "Entreprise (sans équipe)",
+    "createTeamOption": "+ Créer une équipe",
     "kanbanByAssignee": "Vue kanban par assigné",
     "empty": "Aucun projet",
     "createProject": "Créer un projet",
