@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, UserPlus, Check, X, User, Users, Send, Bell, Settings, Trash2, ArrowLeft, ListChecks } from 'lucide-react';
+import { Inbox, UserPlus, Check, X, Send, Settings, Trash2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
@@ -32,7 +32,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
 import RemoveFriendConfirm from './RemoveFriendConfirm';
 import { useT } from '@/i18n/useT';
@@ -317,37 +316,36 @@ const InboxMenu: React.FC = () => {
   // ── Popover ────────────────────────────────────────────────────────────
   const popoverInner = (
     <>
+      {/* Sobre : pas d'icône décorative dans l'en-tête (Inbox/Users) — la
+          navigation (retour, réglages) reste, elle est fonctionnelle. Le
+          compte est un chiffre neutre, pas une pastille colorée. */}
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center gap-2">
         {showManageFriends ? (
           <>
             <button
               onClick={() => setShowManageFriends(false)}
-              className="-ml-1 w-11 h-11 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="-ml-1 w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
               aria-label={t('inbox.backToInbox')}
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
-            <Users size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.myFriends')}</span>
+            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.myFriends')}</span>
             {friends.length > 0 && (
-              <span className="ml-auto text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))]">
+              <span className="ml-auto text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                 {friends.length}
               </span>
             )}
           </>
         ) : (
           <>
-            <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{tTasks('inbox.label')}</span>
+            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{tTasks('inbox.label')}</span>
             <div className="ml-auto flex items-center gap-2">
               {total > 0 && (
-                <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                  {total} en attente
-                </span>
+                <span className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">{total}</span>
               )}
               <button
                 onClick={() => setShowManageFriends(true)}
-                className="w-11 h-11 md:w-7 md:h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                 aria-label={t('inbox.manageFriends')}
                 title={t('inbox.manageFriends')}
               >
@@ -362,45 +360,29 @@ const InboxMenu: React.FC = () => {
         {/* ── Gérer mes amis ── */}
         {showManageFriends && (
           friends.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
-                <Users size={18} className="text-slate-400" aria-hidden="true" />
-              </div>
-              <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{t('inbox.noFriend')}</p>
-              <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <div className="px-4 py-9 text-center">
+              <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{t('inbox.noFriend')}</p>
+              <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
                 {t('inbox.noFriendHint')}
               </p>
             </div>
           ) : (
-            <div className="px-3 py-3 space-y-2">
+            <div className="divide-y divide-[rgb(var(--color-border))]">
               {friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className="p-3"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
-                      {isImageAvatar(friend.avatar) ? (
-                        <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
-                      ) : isEmojiAvatar(friend.avatar) ? (
-                        <span className="text-lg leading-none" aria-hidden="true">{friend.avatar}</span>
-                      ) : (
-                        <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{friend.name}</p>
-                      <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 truncate">{friend.email}</p>
-                    </div>
-                    <button
-                      onClick={() => setFriendToRemove({ id: friend.id, name: friend.name })}
-                      disabled={removeFriendMutation.isPending}
-                      className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
-                      aria-label={`Retirer ${friend.name} de vos amis`}
-                    >
-                      <Trash2 size={15} aria-hidden="true" />
-                    </button>
+                <div key={friend.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{friend.name}</p>
+                    <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] truncate">{friend.email}</p>
                   </div>
+                  <button
+                    onClick={() => setFriendToRemove({ id: friend.id, name: friend.name })}
+                    disabled={removeFriendMutation.isPending}
+                    title={t('inbox.removeFriendShort')}
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-red-500 disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
+                    aria-label={`Retirer ${friend.name} de vos amis`}
+                  >
+                    <Trash2 size={15} aria-hidden="true" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -408,69 +390,54 @@ const InboxMenu: React.FC = () => {
         )}
 
         {!showManageFriends && total === 0 && (
-          <div className="px-4 py-8 text-center">
-            <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
-              <Bell size={18} className="text-slate-400" aria-hidden="true" />
-            </div>
-            <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{tTasks('inbox.allClear')}</p>
-            <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Aucune demande, tâche ou liste en attente.
+          <div className="px-4 py-9 text-center">
+            <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{tTasks('inbox.allClear')}</p>
+            <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
+              {t('inbox.allClearHint')}
             </p>
           </div>
         )}
 
         {/* ── Demandes d'amis ── */}
         {!showManageFriends && incomingRequests.length > 0 && (
-          <div className="px-3 pt-3">
-            <p className="px-1 text-caption sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-              Demandes d'amis ({incomingRequests.length})
+          <div>
+            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
+              {t('inbox.friendRequests', { count: incomingRequests.length })}
             </p>
-            <div className="space-y-2">
+            <div className="divide-y divide-[rgb(var(--color-border))]">
               {incomingRequests.map((req: PendingFriendRequest) => {
                 const timeAgo = req.sentAt
                   ? formatDistanceToNow(new Date(req.sentAt), { locale: getDateLocale(), addSuffix: true })
                   : '';
                 return (
-                  <div
-                    key={req.id}
-                    className="p-3"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
-                        {isImageAvatar(req.senderAvatar) ? (
-                          <img src={req.senderAvatar} alt="" className="w-full h-full object-cover" />
-                        ) : isEmojiAvatar(req.senderAvatar) ? (
-                          <span className="text-lg leading-none" aria-hidden="true">{req.senderAvatar}</span>
-                        ) : (
-                          <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                          {req.senderName || prettyName(req.senderEmail)}
-                        </p>
-                        <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 truncate">
-                          {req.senderEmail}{timeAgo ? ` · ${timeAgo}` : ''}
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        <button
-                          onClick={() => handleAcceptFriend(req.id)}
-                          disabled={acceptFriendMutation.isPending}
-                          className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                          aria-label={`Accepter la demande d'ami de ${prettyName(req.senderEmail)}`}
-                        >
-                          <Check size={15} aria-hidden="true" />
-                        </button>
-                        <button
-                          onClick={() => handleRejectFriend(req.id)}
-                          disabled={rejectFriendMutation.isPending}
-                          className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                          aria-label={`Refuser la demande d'ami de ${prettyName(req.senderEmail)}`}
-                        >
-                          <X size={15} aria-hidden="true" />
-                        </button>
-                      </div>
+                  <div key={req.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                        {req.senderName || prettyName(req.senderEmail)}
+                      </p>
+                      <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] truncate">
+                        {req.senderEmail}{timeAgo ? ` · ${timeAgo}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button
+                        onClick={() => handleAcceptFriend(req.id)}
+                        disabled={acceptFriendMutation.isPending}
+                        title={tTasks('inbox.accept')}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        aria-label={`Accepter la demande d'ami de ${prettyName(req.senderEmail)}`}
+                      >
+                        <Check size={15} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() => handleRejectFriend(req.id)}
+                        disabled={rejectFriendMutation.isPending}
+                        title={tTasks('inbox.refuse')}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        aria-label={`Refuser la demande d'ami de ${prettyName(req.senderEmail)}`}
+                      >
+                        <X size={15} aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
                 );
@@ -482,54 +449,41 @@ const InboxMenu: React.FC = () => {
         {/* ── Tâches à accepter ── */}
         {!showManageFriends && tasksToAccept.length > 0 && (
           <div className="px-3 pt-3 pb-1">
-            <p className="px-1 text-caption sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
               {tTasks('inbox.sharedTasks', { count: tasksToAccept.length })}
             </p>
-            <div className="space-y-2">
+            <div className="divide-y divide-[rgb(var(--color-border))]">
               {tasksToAccept.map((task) => {
                 const sharer = sharerOf(task);
-                const sharerAvatar = sharer?.avatar;
                 const sharerName = sharer?.name ?? task.sharedBy;
                 return (
-                <div
-                  key={task.id}
-                  className="p-3"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 overflow-hidden">
-                      {isImageAvatar(sharerAvatar) ? (
-                        <img src={sharerAvatar} alt="" className="w-full h-full object-cover" />
-                      ) : isEmojiAvatar(sharerAvatar) ? (
-                        <span className="text-lg leading-none" aria-hidden="true">{sharerAvatar}</span>
-                      ) : (
-                        <User size={15} className="text-slate-500 dark:text-slate-300" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                        {task.name}
-                      </p>
-                      <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 truncate">
-                        {t('inbox.receivedFrom', { name: sharerName ?? '' })}
-                      </p>
-                    </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleAcceptTask(task)}
-                        className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                        aria-label={tTasks('inbox.acceptTask', { name: task.name })}
-                      >
-                        <Check size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        onClick={() => handleRejectTask(task)}
-                        disabled={unshareTaskMutation.isPending}
-                        className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-[rgb(var(--color-border))] hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        aria-label={tTasks('inbox.refuseTask', { name: task.name })}
-                      >
-                        <X size={15} aria-hidden="true" />
-                      </button>
-                    </div>
+                <div key={task.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                      {task.name}
+                    </p>
+                    <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] truncate">
+                      {sharerName}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                      onClick={() => handleAcceptTask(task)}
+                      title={tTasks('inbox.accept')}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                      aria-label={tTasks('inbox.acceptTask', { name: task.name })}
+                    >
+                      <Check size={15} aria-hidden="true" />
+                    </button>
+                    <button
+                      onClick={() => handleRejectTask(task)}
+                      disabled={unshareTaskMutation.isPending}
+                      title={tTasks('inbox.refuse')}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                      aria-label={tTasks('inbox.refuseTask', { name: task.name })}
+                    >
+                      <X size={15} aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
                 );
@@ -538,58 +492,45 @@ const InboxMenu: React.FC = () => {
           </div>
         )}
 
-        {/* ── Listes partagées à accepter — identité teal (vs ambre tâches) ── */}
+        {/* ── Listes partagées à accepter ── */}
         {!showManageFriends && incomingLists.length > 0 && (
-          <div className="px-3 pt-3 pb-1">
-            <p className="px-1 text-caption sm:text-xs font-semibold uppercase tracking-wide mb-2 text-teal-600 dark:text-teal-400">
+          <div>
+            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
               {tTasks('inbox.sharedLists', { count: incomingLists.length })}
             </p>
-            <div className="space-y-2">
+            <div className="divide-y divide-[rgb(var(--color-border))]">
               {incomingLists.map((grant) => {
                 const sharer = listSharerOf(grant);
-                const sharerAvatar = sharer?.avatar;
-                const sharerName = sharer?.name ?? grant.sharedByName ?? 'un collaborateur';
+                const sharerName = sharer?.name ?? grant.sharedByName ?? tTasks('inbox.anonymousSharer');
                 return (
-                <div
-                  key={grant.id}
-                  className="p-3 rounded-xl border border-teal-300 dark:border-teal-700/60 bg-teal-50 dark:bg-teal-900/20"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0 overflow-hidden">
-                      {isImageAvatar(sharerAvatar) ? (
-                        <img src={sharerAvatar} alt="" className="w-full h-full object-cover" />
-                      ) : isEmojiAvatar(sharerAvatar) ? (
-                        <span className="text-lg leading-none" aria-hidden="true">{sharerAvatar}</span>
-                      ) : (
-                        <ListChecks size={15} className="text-teal-600 dark:text-teal-300" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                        {grant.name}
-                      </p>
-                      <p className="text-caption sm:text-xs truncate text-teal-700 dark:text-teal-300">
-                        {tp('inbox.receivedFromWithCount', grant.tasks.length, { name: sharerName })}
-                      </p>
-                    </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleAcceptList(grant)}
-                        disabled={acceptSharedListMutation.isPending}
-                        className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                        aria-label={tTasks('inbox.acceptList', { name: grant.name })}
-                      >
-                        <Check size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        onClick={() => handleRejectList(grant)}
-                        disabled={refuseSharedListMutation.isPending}
-                        className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-teal-300 dark:border-teal-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        aria-label={tTasks('inbox.refuseList', { name: grant.name })}
-                      >
-                        <X size={15} aria-hidden="true" />
-                      </button>
-                    </div>
+                <div key={grant.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                      {grant.name}
+                    </p>
+                    <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                      {tp('inbox.receivedFromWithCount', grant.tasks.length, { name: sharerName })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                      onClick={() => handleAcceptList(grant)}
+                      disabled={acceptSharedListMutation.isPending}
+                      title={tTasks('inbox.accept')}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                      aria-label={tTasks('inbox.acceptList', { name: grant.name })}
+                    >
+                      <Check size={15} aria-hidden="true" />
+                    </button>
+                    <button
+                      onClick={() => handleRejectList(grant)}
+                      disabled={refuseSharedListMutation.isPending}
+                      title={tTasks('inbox.refuse')}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                      aria-label={tTasks('inbox.refuseList', { name: grant.name })}
+                    >
+                      <X size={15} aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
                 );
@@ -598,58 +539,46 @@ const InboxMenu: React.FC = () => {
           </div>
         )}
 
-        {/* ── Demandes d'adhésion entreprise (admin) — identité indigo ── */}
+        {/* ── Demandes d'adhésion entreprise (admin) ── */}
         {!showManageFriends && pendingJoinRequests.length > 0 && (
-          <div className="px-3 pt-3 pb-1">
-            <p className="px-1 text-caption sm:text-xs font-semibold uppercase tracking-wide mb-2 text-indigo-600 dark:text-indigo-400">
+          <div>
+            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
               {t('inbox.joinRequests', { count: pendingJoinRequests.length })}
             </p>
-            <div className="space-y-2">
+            <div className="divide-y divide-[rgb(var(--color-border))]">
               {pendingJoinRequests.map((req) => {
                 const timeAgo = req.requestedAt
                   ? formatDistanceToNow(new Date(req.requestedAt), { locale: getDateLocale(), addSuffix: true })
                   : '';
                 return (
-                  <div
-                    key={req.id}
-                    className="p-3 rounded-xl border border-indigo-300 dark:border-indigo-700/60 bg-indigo-50 dark:bg-indigo-900/20"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 overflow-hidden">
-                        {isImageAvatar(req.requesterAvatar) ? (
-                          <img src={req.requesterAvatar} alt="" className="w-full h-full object-cover" />
-                        ) : isEmojiAvatar(req.requesterAvatar) ? (
-                          <span className="text-lg leading-none" aria-hidden="true">{req.requesterAvatar}</span>
-                        ) : (
-                          <User size={15} className="text-indigo-600 dark:text-indigo-300" aria-hidden="true" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                          {req.requesterName || 'Utilisateur'}
-                        </p>
-                        <p className="text-caption sm:text-xs truncate text-indigo-700 dark:text-indigo-300">
-                          Souhaite rejoindre{timeAgo ? ` · ${timeAgo}` : ''}
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        <button
-                          onClick={() => handleRespondJoin(req.id, true)}
-                          disabled={respondJoinRequestMutation.isPending}
-                          className="w-11 h-11 md:w-9 md:h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                          aria-label={t('inbox.acceptJoin', { name: req.requesterName || t('inbox.someone') })}
-                        >
-                          <Check size={15} aria-hidden="true" />
-                        </button>
-                        <button
-                          onClick={() => handleRespondJoin(req.id, false)}
-                          disabled={respondJoinRequestMutation.isPending}
-                          className="w-11 h-11 md:w-9 md:h-9 rounded-lg border border-indigo-300 dark:border-indigo-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                          aria-label={t('inbox.refuseJoin', { name: req.requesterName || t('inbox.someone') })}
-                        >
-                          <X size={15} aria-hidden="true" />
-                        </button>
-                      </div>
+                  <div key={req.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                        {req.requesterName || t('inbox.someone')}
+                      </p>
+                      <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                        {t('inbox.wantsToJoin')}{timeAgo ? ` · ${timeAgo}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button
+                        onClick={() => handleRespondJoin(req.id, true)}
+                        disabled={respondJoinRequestMutation.isPending}
+                        title={tTasks('inbox.accept')}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        aria-label={t('inbox.acceptJoin', { name: req.requesterName || t('inbox.someone') })}
+                      >
+                        <Check size={15} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() => handleRespondJoin(req.id, false)}
+                        disabled={respondJoinRequestMutation.isPending}
+                        title={tTasks('inbox.refuse')}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        aria-label={t('inbox.refuseJoin', { name: req.requesterName || t('inbox.someone') })}
+                      >
+                        <X size={15} aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
                 );

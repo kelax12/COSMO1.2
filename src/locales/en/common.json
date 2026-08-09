@@ -228,14 +228,17 @@
     "manageFriends": "Manage my friends",
     "noFriend": "No friends yet",
     "noFriendHint": "Add a friend to start collaborating.",
-    "receivedFrom": "From {{name}}",
-    "receivedFromWithCount_one": "From {{name}} · {{count}} task",
-    "receivedFromWithCount_other": "From {{name}} · {{count}} tasks",
+    "receivedFromWithCount_one": "{{name}} · {{count}} task",
+    "receivedFromWithCount_other": "{{name}} · {{count}} tasks",
     "joinRequests": "Join requests ({{count}})",
     "acceptJoin": "Accept the join request from {{name}}",
     "refuseJoin": "Decline the join request from {{name}}",
     "someone": "this user",
-    "friendEmailAria": "Friend's email to invite"
+    "friendEmailAria": "Friend's email to invite",
+    "friendRequests": "Friend requests ({{count}})",
+    "removeFriendShort": "Remove",
+    "allClearHint": "No pending requests, tasks, or lists.",
+    "wantsToJoin": "Wants to join"
   },
   "collaborator": {
     "sent": "Sent",
