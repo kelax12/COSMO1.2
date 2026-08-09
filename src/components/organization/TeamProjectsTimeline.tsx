@@ -337,10 +337,6 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                       const gapAfter = next ? next.offsetPercent - marker.offsetPercent : Infinity;
                       const showLabel = Math.min(gapBefore, gapAfter) >= LABEL_GAP_PERCENT;
                       const flipLeft = marker.offsetPercent > 80;
-                      // Alignement de la card de survol : centrée par défaut,
-                      // ancrée au bord près des extrémités pour ne pas déborder
-                      // de la piste (même logique que le libellé inline).
-                      const cardAlign = marker.offsetPercent < 15 ? 'left' : marker.offsetPercent > 85 ? 'right' : 'center';
                       const priority = PRIORITY_META[marker.task.priority] ?? PRIORITY_META[3];
                       const assignees = assigneeSummary(marker.task.assigneeIds);
 
@@ -350,47 +346,56 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                           className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
                           style={{ left: `${marker.offsetPercent}%` }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => onOpenTask(marker.task)}
-                            onMouseEnter={() => scheduleHoverOpen(marker.task.id)}
-                            onMouseLeave={scheduleHoverClose}
-                            onFocus={() => { cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
-                            onBlur={closeHoverNow}
-                            aria-label={t('projects.timelineMarker', {
-                              name: marker.task.name,
-                              date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
-                            })}
-                            className={`relative block w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-surface))] transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${dotClass}`}
-                          >
-                            {/* Nom en clair quand la place le permet (point 2) —
-                                sinon la card de survol / l'aria-label restent le
-                                seul recours. */}
-                            {showLabel && (
-                              <span
-                                className={`absolute top-1/2 -translate-y-1/2 text-[10px] font-medium text-[rgb(var(--color-text-secondary))] whitespace-nowrap max-w-[140px] truncate ${
-                                  flipLeft ? 'right-[calc(100%+6px)] text-right' : 'left-[calc(100%+6px)]'
-                                }`}
-                                aria-hidden="true"
+                          {/* Card de survol en `Popover` (Portal Radix) : la piste
+                              défile avec `overflow-x-auto`, qui borne aussi l'axe Y
+                              (règle CSS — fixer un seul axe rend l'autre `auto`) et
+                              rognait le haut d'une card en `position: absolute`
+                              classique. Le Portal en sort ; `open` est piloté par le
+                              survol, sans `onOpenChange` : le clic sur le point garde
+                              son comportement (ouvrir la tâche), pas de bascule ici. */}
+                          <Popover open={hoverTaskId === marker.task.id}>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => onOpenTask(marker.task)}
+                                onMouseEnter={() => scheduleHoverOpen(marker.task.id)}
+                                onMouseLeave={scheduleHoverClose}
+                                onFocus={() => { cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
+                                onBlur={closeHoverNow}
+                                aria-label={t('projects.timelineMarker', {
+                                  name: marker.task.name,
+                                  date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
+                                })}
+                                className={`relative block w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-surface))] transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${dotClass}`}
                               >
-                                {marker.task.name}
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Card de survol — desktop uniquement (souris), purement
-                              informative : cliquer le point ouvre directement la
-                              tâche, cette card ne porte aucune action. */}
-                          {hoverTaskId === marker.task.id && (
-                            <div
-                              aria-hidden="true"
+                                {/* Nom en clair quand la place le permet (point 2) —
+                                    sinon la card de survol / l'aria-label restent le
+                                    seul recours. */}
+                                {showLabel && (
+                                  <span
+                                    className={`absolute top-1/2 -translate-y-1/2 text-[10px] font-medium text-[rgb(var(--color-text-secondary))] whitespace-nowrap max-w-[140px] truncate ${
+                                      flipLeft ? 'right-[calc(100%+6px)] text-right' : 'left-[calc(100%+6px)]'
+                                    }`}
+                                    aria-hidden="true"
+                                  >
+                                    {marker.task.name}
+                                  </span>
+                                )}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              side="top"
+                              align="center"
+                              sideOffset={10}
+                              collisionPadding={12}
+                              // Purement informatif — ne doit jamais voler le focus
+                              // au survol (comportement attendu d'un tooltip, pas
+                              // d'une vraie popover ouverte par clic/clavier).
+                              onOpenAutoFocus={(e) => e.preventDefault()}
+                              onCloseAutoFocus={(e) => e.preventDefault()}
                               onMouseEnter={cancelHoverTimer}
                               onMouseLeave={scheduleHoverClose}
-                              className={`absolute bottom-[calc(100%+10px)] w-56 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg p-3 z-20 ${
-                                cardAlign === 'center' ? 'left-1/2 -translate-x-1/2'
-                                  : cardAlign === 'left' ? 'left-0'
-                                    : 'right-0'
-                              }`}
+                              className="w-56 p-3"
                             >
                               <div className="flex items-center justify-between gap-2 mb-1.5">
                                 <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
@@ -424,8 +429,8 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                                   {assignees.label}
                                 </span>
                               </div>
-                            </div>
-                          )}
+                            </PopoverContent>
+                          </Popover>
                         </span>
                       );
                     })}
