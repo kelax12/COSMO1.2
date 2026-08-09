@@ -81,7 +81,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                     <button key={view} onClick={() => handleViewChange(view)}
                       className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
                         currentView === view
-                          ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                          ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
                           : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                       }`}>
                       {view === 'timeGridDay' ? t('view.day') : view === 'timeGridWeek' ? t('view.week') : t('view.month')}

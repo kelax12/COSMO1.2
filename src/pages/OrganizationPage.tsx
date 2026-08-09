@@ -232,7 +232,7 @@ const OrganizationPage = () => {
               <Icon size={16} aria-hidden="true" /> {t(labelKey)}
               {badge > 0 && (
                 <span
-                  className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[rgb(var(--color-accent))] text-white text-caption font-bold inline-flex items-center justify-center"
+                  className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center"
                   aria-label={tp('page.badgeCount', badge)}
                 >
                   {badge}

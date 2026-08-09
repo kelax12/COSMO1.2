@@ -332,7 +332,7 @@ export const TaskRow = React.memo(({
             </span>
           )}
           {task.sharedBy ? (
-            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
+            <span className="text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
             <span className="flex items-center gap-1 shrink-0">
               {(collaboratorsByTask.get(task.id) ?? [])
@@ -343,7 +343,7 @@ export const TaskRow = React.memo(({
                 .map(({ id, friend }) => (
                   <span
                     key={id}
-                    className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full"
+                    className="text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full"
                     title={friend.name}
                   >
                     {friend.name}

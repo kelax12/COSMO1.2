@@ -563,7 +563,7 @@ const SettingsPage: React.FC = () => {
                             aria-pressed={sign === '+'}
                             className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold transition-colors ${
                               sign === '+'
-                                ? 'bg-[rgb(var(--color-accent))] text-white'
+                                ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                                 : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                             }`}
                           >
@@ -575,7 +575,7 @@ const SettingsPage: React.FC = () => {
                             aria-pressed={sign === '-'}
                             className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold border-l border-[rgb(var(--color-border))] transition-colors ${
                               sign === '-'
-                                ? 'bg-[rgb(var(--color-accent))] text-white'
+                                ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                                 : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                             }`}
                           >

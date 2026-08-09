@@ -287,7 +287,7 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
                 aria-pressed={view === id}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   view === id
-                    ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
                     : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                 }`}
               >

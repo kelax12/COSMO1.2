@@ -104,7 +104,7 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
       >
         <Bell size={18} aria-hidden="true" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[rgb(var(--color-accent))] text-white text-caption font-bold inline-flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

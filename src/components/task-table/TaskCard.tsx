@@ -249,12 +249,12 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           <span
             className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
               selectedForListIds.includes(task.id)
-                ? 'bg-[rgb(var(--color-accent))] border-[rgb(var(--color-accent))]'
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                 : 'border-slate-400 dark:border-slate-500'
             }`}
           >
             {selectedForListIds.includes(task.id) && (
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -275,12 +275,12 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           <span
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
               task.completed
-                ? 'bg-[rgb(var(--color-accent))] border-[rgb(var(--color-accent))]'
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                 : 'border-[rgb(var(--color-text-muted))]'
             }`}
           >
             {task.completed && (
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
