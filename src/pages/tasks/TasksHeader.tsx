@@ -48,7 +48,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggl
               data-tutorial-id="tasks-calendar-toggle"
               className={
                 showDeadlineCalendar
-                  ? 'bg-[rgb(var(--color-accent))] text-white'
+                  ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                   : ''
               }
             >
