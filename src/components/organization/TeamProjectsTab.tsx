@@ -462,7 +462,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
               : setTaskModal({ mode: 'create', projectId: activeProjects[0]?.id, assigneeIds: [] })
           }
           groupBy={kanbanGroupBy}
-          onSetGroupBy={(next) => updatePrefs({ kanbanGroupBy: next })}
           onSetStatus={setStatus}
         />
       ) : (

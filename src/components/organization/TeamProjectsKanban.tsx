@@ -5,7 +5,7 @@ import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 import {
-  projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks,
+  projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks, sortCompletedTasks,
   STATUS_ORDER, STATUS_META,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
@@ -21,13 +21,11 @@ interface TeamProjectsKanbanProps {
   onOpenTask: (task: TeamTask) => void;
   /** Ouvre le sheet « attribuer / créer » pour une colonne (null = non assignées). */
   onAddToColumn: (memberId: string | null) => void;
-  /** Axe des colonnes : charge par personne, ou flux par statut (mig. 091). */
+  /** Axe des colonnes : charge par personne, ou flux par statut (mig. 091).
+   *  Le contrôle qui le change vit dans ProjectsToolbar, juste à côté de
+   *  l'onglet « Tableau » — pas ici : loin sous les colonnes, il passait
+   *  inaperçu (l'utilisateur pouvait rater la fonctionnalité en entier). */
   groupBy: 'assignee' | 'status';
-  /** Change l'axe des colonnes. Le contrôle vit ICI, au-dessus des colonnes
-   *  qu'il gouverne : dans la barre du haut il apparaissait en cours de route
-   *  (donc décalait les boutons voisins) et « Statut / Assigné » y flottait
-   *  sans verbe — on ne savait pas s'il triait, filtrait ou regroupait. */
-  onSetGroupBy: (groupBy: 'assignee' | 'status') => void;
   /** Change le statut d'une tâche (glisser-déposer en mode `status`). */
   onSetStatus: (task: TeamTask, status: TeamTaskStatus) => void;
 }
@@ -45,11 +43,18 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetGroupBy, onSetStatus }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus }: TeamProjectsKanbanProps) => {
   const { t } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
+  // La colonne « Terminée » (mode Statut) montre les tâches COMPLÉTÉES —
+  // `openTasks` les exclut par construction. Sans cette liste séparée, tout
+  // dépôt dans « Terminée » faisait disparaître la carte du kanban entier :
+  // la mutation passait bien `status: 'done'` (le repository synchronise
+  // `completed: true`), mais `tasksOf('done')` filtrait sur `openTasks`, qui
+  // ne contient jamais rien de complété.
+  const doneTasks = useMemo(() => sortCompletedTasks(tasks.filter((t) => t.completed)), [tasks]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
 
   // Colonnes : par statut (flux) ou par personne (charge).
@@ -80,7 +85,10 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
   }, [members, openTasks, t, groupBy]);
 
   const tasksOf = (colId: string) => {
-    if (groupBy === 'status') return openTasks.filter((t) => t.status === colId);
+    if (groupBy === 'status') {
+      if (colId === 'done') return doneTasks;
+      return openTasks.filter((t) => t.status === colId);
+    }
     return colId === KANBAN_UNASSIGNED
       ? openTasks.filter((t) => t.assigneeIds.length === 0)
       : openTasks.filter((t) => t.assigneeIds.includes(colId));
@@ -92,7 +100,10 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
     let payload: DragPayload | null = null;
     try { payload = JSON.parse(e.dataTransfer.getData('text/plain')) as DragPayload; } catch { /* drag externe */ }
     if (!payload) return;
-    const task = openTasks.find((t) => t.id === payload!.taskId);
+    // Cherche dans TOUTES les tâches, pas seulement `openTasks` : une carte
+    // tirée depuis « Terminée » est complétée, donc absente d'`openTasks` —
+    // la chercher là la rendait introuvable, et le drop ne faisait rien.
+    const task = tasks.find((t) => t.id === payload!.taskId);
     if (!task || colId === payload.from) return;
 
     // En mode flux, déposer change le STATUT et rien d'autre : l'assignation
@@ -108,34 +119,8 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
     onSetAssignees(task, next);
   };
 
-  const axisBtn = (value: 'status' | 'assignee', label: string) => (
-    <button
-      type="button"
-      onClick={() => onSetGroupBy(value)}
-      aria-pressed={groupBy === value}
-      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 ${
-        groupBy === value
-          ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-          : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   return (
-    <div className="space-y-2.5">
-      {/* Le mot « Colonnes : » manquait — sans lui, « Statut / Assigné » ne se
-          lisait pas comme une phrase. */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('projects.columnsLabel')}</span>
-        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
-          {axisBtn('status', t('projects.groupByStatus'))}
-          {axisBtn('assignee', t('projects.groupByAssignee'))}
-        </div>
-      </div>
-
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
+    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
       {columns.map((col) => {
         const colTasks = tasksOf(col.id);
         const overdue = colTasks.filter(isTaskOverdue).length;
@@ -247,7 +232,6 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
           </div>
         );
       })}
-      </div>
     </div>
   );
 };
