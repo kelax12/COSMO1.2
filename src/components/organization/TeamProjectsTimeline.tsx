@@ -34,6 +34,9 @@ const LABEL_GAP_PERCENT = 9;
 /** Délai avant d'ouvrir la card de survol — laisse balayer plusieurs jalons
  *  rapprochés sans qu'une card clignote sous le curseur à chaque pixel. */
 const HOVER_OPEN_DELAY_MS = 120;
+/** Délai avant de la refermer — la card flotte à quelques pixels du point ;
+ *  sans ce délai, traverser cet espace pour l'atteindre la referme en route. */
+const HOVER_CLOSE_DELAY_MS = 150;
 
 const zoomBtn = 'h-7 px-2 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
 const zoomOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
@@ -77,8 +80,18 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     hoverTimerRef.current = setTimeout(() => setHoverTaskId(taskId), HOVER_OPEN_DELAY_MS);
   };
-  const cancelHover = () => {
+  // Fermeture différée : quitter le point pour rejoindre la card (quelques
+  // pixels plus haut) traverse un blanc — sans délai, ce blanc referme la
+  // card avant que la souris n'y arrive.
+  const scheduleHoverClose = () => {
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => setHoverTaskId(null), HOVER_CLOSE_DELAY_MS);
+  };
+  const cancelHoverTimer = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+  };
+  const closeHoverNow = () => {
+    cancelHoverTimer();
     setHoverTaskId(null);
   };
 
@@ -341,9 +354,9 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                             type="button"
                             onClick={() => onOpenTask(marker.task)}
                             onMouseEnter={() => scheduleHoverOpen(marker.task.id)}
-                            onMouseLeave={cancelHover}
-                            onFocus={() => setHoverTaskId(marker.task.id)}
-                            onBlur={cancelHover}
+                            onMouseLeave={scheduleHoverClose}
+                            onFocus={() => { cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
+                            onBlur={closeHoverNow}
                             aria-label={t('projects.timelineMarker', {
                               name: marker.task.name,
                               date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
@@ -371,8 +384,8 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                           {hoverTaskId === marker.task.id && (
                             <div
                               aria-hidden="true"
-                              onMouseEnter={() => setHoverTaskId(marker.task.id)}
-                              onMouseLeave={cancelHover}
+                              onMouseEnter={cancelHoverTimer}
+                              onMouseLeave={scheduleHoverClose}
                               className={`absolute bottom-[calc(100%+10px)] w-56 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg p-3 z-20 ${
                                 cardAlign === 'center' ? 'left-1/2 -translate-x-1/2'
                                   : cardAlign === 'left' ? 'left-0'
