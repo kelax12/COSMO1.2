@@ -231,15 +231,18 @@
     "manageFriends": "Gérer mes amis",
     "noFriend": "Aucun ami",
     "noFriendHint": "Ajoutez un ami pour commencer à collaborer.",
-    "receivedFrom": "Reçu de {{name}}",
-    "receivedFromWithCount_one": "Reçu de {{name}} · {{count}} tâche",
-    "receivedFromWithCount_many": "Reçu de {{name}} · {{count}} de tâches",
-    "receivedFromWithCount_other": "Reçu de {{name}} · {{count}} tâches",
+    "receivedFromWithCount_one": "{{name}} · {{count}} tâche",
+    "receivedFromWithCount_many": "{{name}} · {{count}} de tâches",
+    "receivedFromWithCount_other": "{{name}} · {{count}} tâches",
     "joinRequests": "Demandes d'adhésion ({{count}})",
     "acceptJoin": "Accepter la demande d'adhésion de {{name}}",
     "refuseJoin": "Refuser la demande d'adhésion de {{name}}",
     "someone": "cet utilisateur",
-    "friendEmailAria": "Email de l'ami à inviter"
+    "friendEmailAria": "Email de l'ami à inviter",
+    "friendRequests": "Demandes d'amis ({{count}})",
+    "removeFriendShort": "Retirer",
+    "allClearHint": "Aucune demande, tâche ou liste en attente.",
+    "wantsToJoin": "Souhaite rejoindre"
   },
   "collaborator": {
     "sent": "Envoyé",
