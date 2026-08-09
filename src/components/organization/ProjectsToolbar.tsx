@@ -91,7 +91,7 @@ const ProjectsToolbar = ({
   // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
   // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
   // affiche le compte et n'existe que s'il y a des archives.
-  const { assigneeFilter, teamFilter, view, statusFilter } = prefs;
+  const { assigneeFilter, teamFilter, view, statusFilter, kanbanGroupBy } = prefs;
 
   // Le périmètre a TROIS branches, pas deux. L'ancienne barre n'en montrait que
   // deux : choisir un collègue laissait « Toutes » et « Mes tâches » également
@@ -259,6 +259,37 @@ const ProjectsToolbar = ({
             <ViewTab active={view === 'kanban'} onClick={() => updatePrefs({ view: 'kanban' })} label={t('projects.viewKanban')} Icon={SquareKanban} />
             <ViewTab active={view === 'timeline'} onClick={() => updatePrefs({ view: 'timeline' })} label={t('projects.viewTimeline')} Icon={CalendarRange} />
           </div>
+
+          {/* Axe des colonnes du Tableau — juste à côté de l'onglet qui le
+              montre, pas loin en dessous : c'est ce qui le rendait invisible.
+              N'existe QUE quand « Tableau » est actif, disparaît sinon. */}
+          {view === 'kanban' && (
+            <div className="inline-flex items-center gap-1.5">
+              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{t('projects.columnsLabel')}</span>
+              <div
+                className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
+                role="group"
+                aria-label={t('projects.columnsLabel')}
+              >
+                <button
+                  type="button"
+                  onClick={() => updatePrefs({ kanbanGroupBy: 'status' })}
+                  aria-pressed={kanbanGroupBy === 'status'}
+                  className={`${segBase} ${kanbanGroupBy === 'status' ? segOn : segOff}`}
+                >
+                  {t('projects.groupByStatus')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updatePrefs({ kanbanGroupBy: 'assignee' })}
+                  aria-pressed={kanbanGroupBy === 'assignee'}
+                  className={`${segBase} ${kanbanGroupBy === 'assignee' ? segOn : segOff}`}
+                >
+                  {t('projects.groupByAssignee')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* La seule action créative de la page — et donc le seul bouton plein.
               L'état vide proposait déjà cet indigo : la barre s'aligne dessus
