@@ -277,7 +277,7 @@
     "timelineUnscheduledAria": "{{count}} task(s) without a deadline — click to set a date",
     "timelineUnscheduledTitle": "Unscheduled",
     "timelineDeadlineLabel": "Due {{date}}",
-    "timelineOpenTask": "Open task",
+    "timelineUnassignedTask": "Unassigned",
     "timelineZoomLabel": "Zoom:",
     "timelineZoomMonth": "1 month",
     "timelineZoomQuarter": "3 months",

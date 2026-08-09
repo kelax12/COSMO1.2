@@ -293,7 +293,7 @@
     "timelineUnscheduledAria": "{{count}} tâche(s) sans échéance — cliquer pour les dater",
     "timelineUnscheduledTitle": "Sans date",
     "timelineDeadlineLabel": "Échéance le {{date}}",
-    "timelineOpenTask": "Ouvrir la tâche",
+    "timelineUnassignedTask": "Non assignée",
     "timelineZoomLabel": "Zoom :",
     "timelineZoomMonth": "1 mois",
     "timelineZoomQuarter": "3 mois",
