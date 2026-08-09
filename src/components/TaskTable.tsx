@@ -416,7 +416,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('bookmarked')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'bookmarked' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'bookmarked' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             {activeQuickFilter === 'bookmarked' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
             <span className="hidden sm:inline">{activeQuickFilter === 'bookmarked' ? tCommon('actions.all') : t('table.quickFilter.bookmarked')}</span>
@@ -426,7 +426,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('completed')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'completed' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'completed' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <CheckCircle2 size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">{t('table.quickFilter.completed')}</span>
@@ -436,7 +436,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('overdue')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'overdue' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'overdue' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <AlertTriangle size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">{t('table.quickFilter.overdue')}</span>
@@ -446,7 +446,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <Button
             variant="outline"
             onClick={() => toggleQuickFilter('collaboration')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
           >
             <Users size={20} data-icon="inline-start" />
             <span className="hidden sm:inline">{t('table.quickFilter.collaboration')}</span>
@@ -457,7 +457,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             <Button
               variant="outline"
               onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-              className={`flex items-center gap-2 ${selectMode ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-[rgb(var(--color-accent-solid))]' : ''}`}
+              className={`flex items-center gap-2 ${selectMode ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
             >
               <CheckSquare size={20} data-icon="inline-start" />
               <span>{selectMode ? t('table.cancelSelect') : t('table.select')}</span>

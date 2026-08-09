@@ -302,7 +302,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 /* Vue « Partager » : destinataire → simple « Fermer » ;
                    propriétaire → « Enregistrer » les partages modifiés. */
                 !isTaskOwner ? (
-                  <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0">
+                  <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0">
                     Fermer
                   </Button>
                 ) : (
@@ -318,7 +318,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                       className={`min-h-11 w-full sm:w-auto ${
                         isLoading || !hasChanges
                           ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                          : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
+                          : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
                       }`}
                     >
                       {isLoading ? (
@@ -345,7 +345,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 className={`min-h-11 w-full sm:w-auto ${
                   isLoading || !isFormValid() || (!hasChanges && !isCreating)
                     ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                    : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
+                    : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
                 }`}
               >
                 {isLoading ? (

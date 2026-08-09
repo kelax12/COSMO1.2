@@ -125,7 +125,7 @@ const CookieBanner: React.FC = () => {
                 className="
                   flex-1 h-[42px] rounded-xl
                   bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))]
-                  text-white
+                  text-[rgb(var(--color-accent-solid-foreground))]
                   text-[13px] font-semibold
                   transition-colors active:scale-[0.97] transform-gpu
                   shadow-sm shadow-blue-500/30

@@ -435,7 +435,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       type="submit"
                       form="habit-form"
                       size="lg"
-                      className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0 gap-2 sm:w-auto"
+                      className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0 gap-2 sm:w-auto"
                     >
                       <Check size={16} />
                       {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
