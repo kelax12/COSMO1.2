@@ -20,7 +20,7 @@ import {
   type CreateTeamTaskInput,
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
-import { useOrgTeams } from '@/modules/org-teams';
+import { useOrgTeams, useCreateOrgTeam, useAddTeamMember } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
@@ -33,6 +33,7 @@ import TeamProjectsKanban from './TeamProjectsKanban';
 import TeamProjectsTimeline from './TeamProjectsTimeline';
 import TeamTaskModal from './TeamTaskModal';
 import NewTeamProjectModal from './NewTeamProjectModal';
+import CreateTeamModal from './CreateTeamModal';
 import AssignTaskSheet from './AssignTaskSheet';
 import BulkActionsBar from './BulkActionsBar';
 import { useT } from '@/i18n/useT';
@@ -43,6 +44,8 @@ interface TeamProjectsTabProps {
   currentUserId?: string;
   /** Manager/admin : peut créer des projets. */
   isManager: boolean;
+  /** Admin : peut ajouter n'importe qui à une équipe créée depuis ici (miroir RLS). */
+  isAdmin: boolean;
 }
 
 /** État du modal de tâche : création (préréglages) ou édition. */
@@ -105,10 +108,11 @@ const StatPill = ({ active, onClick, label, tone, children }: {
   );
 };
 
-const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
+const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
   const { t, tp } = useT('org');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   const [showNewProject, setShowNewProject] = useState(false);
+  const [showNewTeam, setShowNewTeam] = useState(false);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
   // Colonne kanban (membre) ciblée par le « + ». La colonne « Non assignées »
   // ne passe PLUS par ici : avec `member = null`, la sheet ne proposait qu'un
@@ -124,6 +128,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
+  const createTeam = useCreateOrgTeam(orgId);
+  const addTeamMember = useAddTeamMember(orgId);
 
   const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
 
@@ -183,6 +189,18 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     for (const t of draftTasks) {
       await createTask.mutateAsync({ projectId: project.id, name: t.name, assigneeIds: t.assigneeIds });
     }
+  };
+
+  // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis — même
+  // séquence que TeamsSection (onglet Pyramide). La filtre équipe bascule
+  // dessus aussitôt : créer une équipe pour ne pas la voir serait un geste
+  // à vide.
+  const handleCreateTeamFull = async (input: { name: string; color: string }, memberIds: string[]) => {
+    const team = await createTeam.mutateAsync(input);
+    for (const userId of memberIds) {
+      await addTeamMember.mutateAsync({ teamId: team.id, userId });
+    }
+    updatePrefs({ teamFilter: team.id });
   };
 
   const toggleComplete = (task: TeamTask) =>
@@ -409,6 +427,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         updatePrefs={updatePrefs}
         isManager={isManager}
         onNewProject={() => setShowNewProject(true)}
+        onCreateTeam={() => setShowNewTeam(true)}
       />
 
       {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
@@ -419,6 +438,18 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
           defaultTeamId={teamFilter && teamFilter !== 'org' ? teamFilter : ''}
           onSubmit={handleCreateProjectFull}
           onClose={() => setShowNewProject(false)}
+        />
+      )}
+
+      {/* Popup nouvelle équipe — depuis le sélecteur d'équipe de la barre
+          d'outils (même formulaire que l'onglet Pyramide). */}
+      {isManager && showNewTeam && (
+        <CreateTeamModal
+          members={members}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onSubmit={handleCreateTeamFull}
+          onClose={() => setShowNewTeam(false)}
         />
       )}
 

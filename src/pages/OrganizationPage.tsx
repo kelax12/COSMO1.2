@@ -259,7 +259,7 @@ const OrganizationPage = () => {
         />
       )}
       {tab === 'projects' && (
-        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
+        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
       )}
       {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} isManager={isManager} />}
 
