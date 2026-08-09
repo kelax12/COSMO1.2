@@ -91,7 +91,7 @@ const ProjectsToolbar = ({
   // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
   // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
   // affiche le compte et n'existe que s'il y a des archives.
-  const { assigneeFilter, teamFilter, view, statusFilter, kanbanGroupBy } = prefs;
+  const { assigneeFilter, teamFilter, view, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
 
   // Le périmètre a TROIS branches, pas deux. L'ancienne barre n'en montrait que
   // deux : choisir un collègue laissait « Toutes » et « Mes tâches » également
@@ -284,6 +284,36 @@ const ProjectsToolbar = ({
                   onClick={() => updatePrefs({ kanbanGroupBy: 'assignee' })}
                   aria-pressed={kanbanGroupBy === 'assignee'}
                   className={`${segBase} ${kanbanGroupBy === 'assignee' ? segOn : segOff}`}
+                >
+                  {t('projects.groupByAssignee')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Axe des lignes du Planning — même geste, même vocabulaire que
+              « Colonnes » ci-dessus. N'existe QUE quand « Planning » est actif. */}
+          {view === 'timeline' && (
+            <div className="inline-flex items-center gap-1.5">
+              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{t('projects.rowsLabel')}</span>
+              <div
+                className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
+                role="group"
+                aria-label={t('projects.rowsLabel')}
+              >
+                <button
+                  type="button"
+                  onClick={() => updatePrefs({ timelineGroupBy: 'project' })}
+                  aria-pressed={timelineGroupBy === 'project'}
+                  className={`${segBase} ${timelineGroupBy === 'project' ? segOn : segOff}`}
+                >
+                  {t('projects.groupByProject')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updatePrefs({ timelineGroupBy: 'assignee' })}
+                  aria-pressed={timelineGroupBy === 'assignee'}
+                  className={`${segBase} ${timelineGroupBy === 'assignee' ? segOn : segOff}`}
                 >
                   {t('projects.groupByAssignee')}
                 </button>
