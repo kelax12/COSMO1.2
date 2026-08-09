@@ -134,6 +134,8 @@ export interface ProjectsUiPrefs {
   statusFilter: TaskStatusFilter;
   /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
   kanbanGroupBy: 'assignee' | 'status';
+  /** Axe des lignes du Planning : une ligne par projet, ou par personne. */
+  timelineGroupBy: 'project' | 'assignee';
 }
 
 const DEFAULT_PREFS: ProjectsUiPrefs = {
@@ -147,6 +149,10 @@ const DEFAULT_PREFS: ProjectsUiPrefs = {
   // personne reste à un clic, mais elle répond à « qui fait quoi », pas à
   // « où en est-on » — et c'est la seconde question qu'un kanban doit servir.
   kanbanGroupBy: 'status',
+  // Par défaut, PAR PROJET : c'est la lecture qui répond à « où en est ce
+  // projet », la question la plus fréquente en ouvrant le Planning. « Par
+  // personne » répond à « qui est chargé quand » et reste à un clic.
+  timelineGroupBy: 'project',
 };
 
 const prefsKey = (orgId: string) => `cosmo_org_projects_ui_${orgId}`;

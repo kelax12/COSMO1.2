@@ -125,7 +125,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
 
-  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, kanbanGroupBy } = prefs;
+  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
 
   // Un second clic sur la pastille active retire le filtre.
   const toggleStatus = (next: TaskStatusFilter) =>
@@ -445,6 +445,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         <TeamProjectsTimeline
           projects={activeProjects}
           tasks={visibleTasks}
+          members={members}
+          groupBy={timelineGroupBy}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
         />
       ) : view === 'kanban' ? (

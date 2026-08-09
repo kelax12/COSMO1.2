@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   timelineRange, timelineWeeks, timelineRows, todayOffsetPercent,
+  timelineWindow, timelineMonths, timelineRowsByAssignee, inWindowOrUnscheduled,
+  UNASSIGNED_ID,
 } from './timeline.helpers';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 
@@ -19,6 +21,9 @@ const project = (over: Partial<TeamProject>): TeamProject => ({
   id: 'p1', orgId: 'o', name: 'Projet', color: 'blue',
   createdBy: 'u1', createdAt: '2026-07-01T00:00:00Z', ...over,
 });
+
+const differenceInWeeks = (range: { start: Date; end: Date }): number =>
+  Math.round((range.end.getTime() - range.start.getTime()) / (7 * 24 * 60 * 60 * 1000));
 
 describe('timelineRange', () => {
   it('couvre au minimum 4 semaines', () => {
@@ -154,6 +159,128 @@ describe('timelineRows', () => {
     );
     expect(rows[0].markers[0].offsetPercent).toBeLessThanOrEqual(100);
     expect(rows[0].markers[0].offsetPercent).toBeGreaterThanOrEqual(0);
+  });
+
+  it('garde un projet dont toutes les tâches ouvertes sont sans date (point 1)', () => {
+    const rows = timelineRows(
+      [task({ id: 'a', deadline: '' }), task({ id: 'b', deadline: '' })],
+      [project({})],
+      range,
+      NOW,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].markers).toHaveLength(0);
+    expect(rows[0].unscheduled.map((t) => t.id)).toEqual(['a', 'b']);
+  });
+
+  it('sépare jalons datés et tâches sans date sur le même projet', () => {
+    const rows = timelineRows(
+      [task({ id: 'dated', deadline: '2026-07-20' }), task({ id: 'nodate', deadline: '' })],
+      [project({})],
+      range,
+      NOW,
+    );
+    expect(rows[0].markers.map((m) => m.task.id)).toEqual(['dated']);
+    expect(rows[0].unscheduled.map((t) => t.id)).toEqual(['nodate']);
+  });
+});
+
+describe('timelineWindow', () => {
+  const full = timelineRange([task({ deadline: '2027-03-01' })], NOW);
+
+  it('« all » renvoie la fenêtre complète telle quelle', () => {
+    expect(timelineWindow(full, 'all', NOW)).toEqual(full);
+  });
+
+  it('« default » couvre 8 semaines, « month » 4, « quarter » 13', () => {
+    expect(timelineWindow(full, 'default', NOW).days).toBe(8 * 7);
+    expect(timelineWindow(full, 'month', NOW).days).toBe(4 * 7);
+    expect(timelineWindow(full, 'quarter', NOW).days).toBe(13 * 7);
+  });
+
+  it('reste ancré près d\'aujourd\'hui même si la fenêtre complète part loin dans le passé', () => {
+    const past = timelineRange([task({ deadline: '2025-01-01' })], NOW);
+    const win = timelineWindow(past, 'default', NOW);
+    // Aujourd'hui (15 juillet 2026) doit rester dans la fenêtre bornée.
+    expect(win.start.getTime()).toBeLessThanOrEqual(NOW.getTime());
+    expect(win.end.getTime()).toBeGreaterThanOrEqual(NOW.getTime());
+    expect(differenceInWeeks(win)).toBeLessThanOrEqual(9);
+  });
+});
+
+describe('inWindowOrUnscheduled', () => {
+  const win = timelineWindow(timelineRange([], NOW), 'default', NOW);
+
+  it('garde toujours une tâche sans date', () => {
+    expect(inWindowOrUnscheduled(task({ deadline: '' }), win)).toBe(true);
+  });
+
+  it('garde une tâche datée dans la fenêtre', () => {
+    expect(inWindowOrUnscheduled(task({ deadline: '2026-07-20' }), win)).toBe(true);
+  });
+
+  it('écarte une tâche datée hors fenêtre', () => {
+    expect(inWindowOrUnscheduled(task({ deadline: '2030-01-01' }), win)).toBe(false);
+  });
+});
+
+describe('timelineMonths', () => {
+  it('ne produit rien sous ~6 semaines', () => {
+    expect(timelineMonths(timelineRange([], NOW))).toHaveLength(0);
+  });
+
+  it('produit un bandeau par mois couvert au-delà de 6 semaines', () => {
+    const wide = timelineWindow(timelineRange([], NOW), 'quarter', NOW);
+    const months = timelineMonths(wide);
+    expect(months.length).toBeGreaterThan(1);
+    expect(months[0].offsetPercent).toBe(0);
+  });
+});
+
+describe('timelineRowsByAssignee', () => {
+  const activeIds = new Set(['p1']);
+  const range = timelineRange([task({ deadline: '2026-07-20' })], NOW);
+
+  it('place une tâche datée sur la ligne de son assigné', () => {
+    const rows = timelineRowsByAssignee(
+      [task({ id: 'a', deadline: '2026-07-20', assigneeIds: ['u1'] })],
+      activeIds,
+      range,
+      NOW,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].assigneeId).toBe('u1');
+    expect(rows[0].markers[0].task.id).toBe('a');
+  });
+
+  it('duplique une tâche multi-assignée sur chaque ligne, comme le Tableau', () => {
+    const rows = timelineRowsByAssignee(
+      [task({ id: 'a', deadline: '2026-07-20', assigneeIds: ['u1', 'u2'] })],
+      activeIds,
+      range,
+      NOW,
+    );
+    expect(rows.map((r) => r.assigneeId).sort()).toEqual(['u1', 'u2']);
+  });
+
+  it('regroupe les tâches sans assigné sous UNASSIGNED_ID', () => {
+    const rows = timelineRowsByAssignee(
+      [task({ id: 'a', deadline: '2026-07-20', assigneeIds: [] })],
+      activeIds,
+      range,
+      NOW,
+    );
+    expect(rows[0].assigneeId).toBe(UNASSIGNED_ID);
+  });
+
+  it('ignore les tâches de projets hors périmètre', () => {
+    const rows = timelineRowsByAssignee(
+      [task({ id: 'a', projectId: 'other', deadline: '2026-07-20', assigneeIds: ['u1'] })],
+      activeIds,
+      range,
+      NOW,
+    );
+    expect(rows).toHaveLength(0);
   });
 });
 
