@@ -150,16 +150,23 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   );
 
   if (menuContent) {
+    // asChild : évite de rendre un <button> natif, dont le chrome par défaut
+    // du navigateur (appearance: button) grossit visuellement l'item par
+    // rapport aux <a> voisins que .sidebar-item ne redéfinit pas.
     return (
       <DropdownMenu>
-        <DropdownMenuTrigger
-          className={`sidebar-item w-full ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
-          onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
-          onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
-          aria-label={label}
-        >
-          {content}
+        <DropdownMenuTrigger asChild>
+          <div
+            role="button"
+            tabIndex={0}
+            className={`sidebar-item cursor-pointer ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+            style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
+            onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
+            onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
+            aria-label={label}
+          >
+            {content}
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side={collapsed ? 'right' : 'bottom'} className="w-56">
           {menuContent}
