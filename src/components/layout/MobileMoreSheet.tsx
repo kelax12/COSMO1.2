@@ -1,13 +1,20 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2 } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useBilling } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useActiveOrganization } from '@/modules/organizations';
-import OrgSwitcher from '@/components/organization/OrgSwitcher';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { useActiveModules, type ModuleKey } from '@/modules/ui-states';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
@@ -38,9 +45,10 @@ const links: SheetLink[] = [
 
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
   const { t } = useT('common');
+  const { t: tOrg } = useT('org');
   const { user, logout } = useAuth();
   const { isPremium } = useBilling();
-  const { activeOrg: myOrg, organizations } = useActiveOrganization();
+  const { activeOrg: myOrg, organizations, setActiveOrgId } = useActiveOrganization();
   const activeModules = useActiveModules();
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,24 +167,14 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                 </button>
               </div>
 
-              {/* — Switcher multi-org (si plusieurs entreprises) — */}
-              {organizations.length > 1 && (
-                <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm p-3">
-                  <OrgSwitcher />
-                </div>
-              )}
-
               {/* — Navigation links — */}
               <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-                {visibleLinks.map(({ to, labelKey, icon: Icon, iconBg, descriptionKey }, idx) => (
-                  <React.Fragment key={to}>
-                    {idx > 0 && (
-                      <div className="h-px bg-[rgb(var(--color-border))] ml-[68px]" />
-                    )}
+                {visibleLinks.map(({ to, labelKey, icon: Icon, iconBg, descriptionKey }, idx) => {
+                  const row = (
                     <button
                       type="button"
                       onPointerDown={() => prefetchRoute(to)}
-                      onClick={() => handleNav(to)}
+                      onClick={to === '/entreprise' && organizations.length > 1 ? undefined : () => handleNav(to)}
                       className={[
                         'w-full flex items-center gap-3.5 px-4 min-h-[60px] text-left transition-colors',
                         'active:bg-[rgb(var(--color-hover))]',
@@ -204,8 +202,41 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
                       <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
                     </button>
-                  </React.Fragment>
-                ))}
+                  );
+
+                  return (
+                    <React.Fragment key={to}>
+                      {idx > 0 && (
+                        <div className="h-px bg-[rgb(var(--color-border))] ml-[68px]" />
+                      )}
+                      {/* Plusieurs organisations : le tap ouvre le choix au lieu de
+                          naviguer directement (une seule entrée « Entreprise »). */}
+                      {to === '/entreprise' && organizations.length > 1 ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>{row}</DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>{tOrg('switcher.myOrgs')}</DropdownMenuLabel>
+                            {organizations.map((org) => (
+                              <DropdownMenuItem
+                                key={org.id}
+                                onClick={() => { setActiveOrgId(org.id); handleNav('/entreprise'); }}
+                              >
+                                <span className="truncate">{org.name}</span>
+                                <span className="ml-auto flex items-center gap-1.5">
+                                  {org.id === myOrg?.id && <Check size={14} aria-hidden="true" />}
+                                </span>
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleNav('/entreprise/onboarding')}>
+                              <Plus size={14} aria-hidden="true" /> {tOrg('switcher.createOrJoin')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : row}
+                    </React.Fragment>
+                  );
+                })}
               </div>
 
               {/* — Logout — */}

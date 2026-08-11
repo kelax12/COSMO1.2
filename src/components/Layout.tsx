@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router';
+import { Outlet, NavLink, useMatch, useResolvedPath, useLocation, useNavigate } from 'react-router';
 import { useLastVisitedPage } from '@/modules/ui-states';
 import { useTasks } from '@/modules/tasks';
 import { prefetchRoute } from '@/lib/route-prefetch';
@@ -17,18 +17,26 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
-  Plus } from
+  Plus,
+  Check } from
   'lucide-react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
-import OrgSwitcher from '@/components/organization/OrgSwitcher';
 import { useActiveModules } from '@/modules/ui-states';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
@@ -83,6 +91,12 @@ interface NavItemLinkProps {
    */
   badgeAriaLabel?: string;
   end?: boolean;
+  /**
+   * Si fourni, le clic n'effectue plus la navigation directe : il ouvre ce
+   * menu déroulant à la place (ex. choix de l'organisation active avant
+   * d'entrer dans l'espace Entreprise).
+   */
+  menuContent?: React.ReactNode;
 }
 
 const NavItemLink: React.FC<NavItemLinkProps> = ({
@@ -96,6 +110,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   badgeVariant = 'alert',
   badgeAriaLabel,
   end,
+  menuContent,
 }) => {
   const [iconHovered, setIconHovered] = useState(false);
   const [groupHovered, setGroupHovered] = useState(false);
@@ -104,17 +119,8 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   const isActive = !!match;
   const isColored = iconHovered || groupHovered || isActive;
 
-  return (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
-      }
-      style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
-      onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
-      onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
-    >
+  const content = (
+    <>
       <div
         className="nav-item-icon min-w-[20px] flex items-center justify-center relative"
         onMouseEnter={() => setIconHovered(true)}
@@ -140,6 +146,40 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
         )}
       </div>
       {!collapsed && <span className="ml-3 truncate">{label}</span>}
+    </>
+  );
+
+  if (menuContent) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className={`sidebar-item w-full ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+          style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
+          onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
+          onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
+          aria-label={label}
+        >
+          {content}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side={collapsed ? 'right' : 'bottom'} className="w-56">
+          {menuContent}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
+      }
+      style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
+      onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
+      onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
+    >
+      {content}
     </NavLink>
   );
 };
@@ -168,11 +208,13 @@ const PAGE_TITLE_KEYS: Record<string, KeyOf<'common'>> = {
 
 const Layout: React.FC = () => {
   const { t, tp } = useT('common');
+  const { t: tOrg } = useT('org');
   const isMobile = useIsMobile();
   const pendingRequestCount = usePendingRequestCount();
   const orgNotificationCount = useOrgNotificationCount();
   // Entrée « Entreprise » visible uniquement pour les membres d'une organisation.
-  const { activeOrg: myOrg, organizations } = useActiveOrganization();
+  const { activeOrg: myOrg, organizations, setActiveOrgId } = useActiveOrganization();
+  const navigate = useNavigate();
   // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
   // Tâches. La disparition du badge (0 restant) est la récompense.
   const { data: allTasks = [] } = useTasks();
@@ -248,14 +290,37 @@ const NavItems = () =>
       )}
 
       {myOrg && (
-        <>
-          <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
-            hoverColor="#6366f1" collapsed={isCollapsed}
-            badge={orgNotificationCount}
-            badgeAriaLabel={tp('nav.badge.orgNotification', orgNotificationCount)} />
-          {/* Switcher multi-org — affiché seulement si plusieurs entreprises */}
-          {organizations.length > 1 && <OrgSwitcher collapsed={isCollapsed} />}
-        </>
+        <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
+          hoverColor="#6366f1" collapsed={isCollapsed}
+          badge={orgNotificationCount}
+          badgeAriaLabel={tp('nav.badge.orgNotification', orgNotificationCount)}
+          // Plusieurs organisations : le clic ouvre le choix au lieu de naviguer
+          // directement (une seule icône « Entreprise » dans la nav — #plan).
+          menuContent={organizations.length > 1 ? (
+            <>
+              <DropdownMenuLabel>{tOrg('switcher.myOrgs')}</DropdownMenuLabel>
+              {organizations.map((org) => (
+                <DropdownMenuItem
+                  key={org.id}
+                  onClick={() => { setActiveOrgId(org.id); navigate('/entreprise'); }}
+                >
+                  <span className="truncate">{org.name}</span>
+                  <span className="ml-auto flex items-center gap-1.5">
+                    {org.myRole === 'admin' && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        {tOrg('common.adminBadge')}
+                      </span>
+                    )}
+                    {org.id === myOrg?.id && <Check size={14} aria-hidden="true" />}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/entreprise/onboarding')}>
+                <Plus size={14} aria-hidden="true" /> {tOrg('switcher.createOrJoin')}
+              </DropdownMenuItem>
+            </>
+          ) : undefined} />
       )}
     </>;
 
