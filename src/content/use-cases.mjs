@@ -19,8 +19,18 @@ export const USE_CASES = [
 <li><strong>La prospection devient une habitude, pas une résolution.</strong> « 3 prises de contact par semaine » suivie avec heatmap et streak : la régularité qui remplit le pipeline se construit comme une habitude sportive.</li>
 <li><strong>Des OKR trimestriels pour piloter l'activité.</strong> « Atteindre X € de CA récurrent », « signer 2 clients dans le nouveau créneau » : vos objectifs de gérant vivent à côté de vos tâches de producteur, et la progression se calcule seule.</li>
 </ul>
+<h2>Une semaine type, organisée dans Cosmo</h2>
+<p>Le lundi matin, quinze minutes suffisent : vous passez en revue les livrables de la semaine, vous leur donnez une priorité de 1 à 5, puis vous les glissez dans l'agenda. Ce dernier geste est le plus important — c'est lui qui vous dit, avant de vous engager auprès d'un client, si la semaine tient réellement. Un vendredi de livraison qui compte déjà onze heures de travail bloqué n'accueillera pas la « petite retouche urgente » sans casser autre chose.</p>
+<p>En cours de semaine, les demandes entrantes deviennent des tâches datées plutôt que des messages qu'on garde en tête. Le vendredi, la revue prend un quart d'heure : ce qui a été livré, où est parti le temps par client, et où en sont vos objectifs du trimestre. C'est aussi le moment où la <a href="/blog/tableau-de-bord-productivite">lecture du tableau de bord</a> vous évite de découvrir en fin de trimestre que la prospection n'a jamais eu lieu.</p>
+
+<h2>Le piège de la facturation au forfait</h2>
+<p>La plupart des freelances sous-estiment leurs projets au forfait, non par manque d'expérience mais par absence de données : sans mesure du temps réellement passé, on tarifie sur une impression, et l'impression oublie systématiquement les allers-retours, les réunions de cadrage et les reprises. Une catégorie par client, plus quelques semaines de time-blocking, suffisent à révéler l'écart entre le temps facturé et le temps vécu. C'est souvent la donnée qui justifie la première vraie augmentation de tarif — et elle se lit dans les statistiques, pas dans un tableur tenu à la main.</p>
+
+<h2>Et la partie « chef d'entreprise » ?</h2>
+<p>C'est celle qui saute en premier quand la production déborde, alors qu'elle décide de votre activité dans six mois. Deux leviers concrets : une <strong>habitude de prospection</strong> (« 3 prises de contact par semaine ») qui se suit avec une heatmap plutôt qu'avec de la bonne volonté, et des <a href="/blog/methode-okr-exemples">OKR trimestriels</a> qui écrivent noir sur blanc ce que vous visez — chiffre d'affaires récurrent, diversification, montée en gamme. Le simple fait qu'ils soient visibles sur le même écran que vos tâches du jour change la façon dont vous arbitrez.</p>
+
 <h2>Pourquoi gratuit ?</h2>
-<p>Les fonctionnalités principales de Cosmo sont gratuites, sans limite de projets ni de clients. Pour un indépendant, c'est un poste de dépense en moins — et la <a href="/">démo s'essaie sans créer de compte</a>, avec 12 mois de données réalistes pour juger sur pièce en deux minutes.</p>`,
+<p>Les fonctionnalités principales de Cosmo sont gratuites, sans limite de projets ni de clients. Pour un indépendant, c'est un poste de dépense en moins — et la <a href="/">démo s'essaie sans créer de compte</a>, avec 12 mois de données réalistes pour juger sur pièce en deux minutes. Si vous partez d'un système éclaté entre trois outils, l'article sur la <a href="/blog/gestion-du-temps-efficace">gestion du temps efficace</a> décrit l'ordre dans lequel les regrouper sans tout casser.</p>`,
   },
   {
     slug: 'pour-etudiants',
@@ -40,6 +50,17 @@ export const USE_CASES = [
 <li><strong>Les habitudes portent le long terme.</strong> 30 minutes d'anglais, relire ses notes le soir même, 3 séances de sport : la heatmap 26 semaines — la durée exacte d'un semestre — montre votre régularité mieux que n'importe quelle bonne intention.</li>
 <li><strong>Un OKR par semestre.</strong> « Valider le semestre proprement » avec des résultats clés mesurables (moyenne cible, zéro rattrapage, mémoire rendu en avance) : vous savez en semaine 6 si vous êtes sur la trajectoire, pas en semaine 15.</li>
 </ul>
+<h2>Organiser une semaine de cours</h2>
+<p>Le dimanche soir, dix minutes : vous listez ce qui doit avancer cette semaine (un TD, un chapitre à revoir, un dossier de groupe), vous datez, puis vous placez les créneaux de travail dans l'agenda entre les cours. L'intérêt n'est pas la beauté du planning — c'est de constater tout de suite qu'il reste six heures libres, pas quinze. Mieux vaut le savoir dimanche que jeudi soir.</p>
+<p>Le reste de la semaine, vous cochez. Et à la fin, vous regardez deux choses : ce qui a été fait, et ce que vous aviez planifié sans le faire. Ce second chiffre est le plus instructif — il vous apprend, en trois ou quatre semaines, combien d'heures de travail personnel vous tenez réellement. Toute la planification suivante devient réaliste à partir de là.</p>
+
+<h2>Préparer un partiel sans tout compresser</h2>
+<p>La révision de dernière minute échoue pour une raison mécanique : la mémoire a besoin de répétitions espacées, pas d'une longue session. Concrètement, un partiel dans cinq semaines se prépare en plaçant dès maintenant des créneaux de révision courts et récurrents, une matière par créneau — le <a href="/blog/time-blocking-guide">time-blocking</a> sert exactement à ça. La différence avec « je réviserai régulièrement » est qu'un créneau existe dans l'agenda et se défend contre les sollicitations, alors qu'une intention n'existe nulle part.</p>
+<p>Pour les projets de groupe, le partage de tâches évite le fil de discussion où personne ne sait qui fait quoi : une tâche, un responsable, une échéance visible par tous. C'est gratuit, et ça n'impose à personne de créer un compte sur un outil de plus.</p>
+
+<h2>Les habitudes qui font la différence sur un semestre</h2>
+<p>Un semestre est un projet de quatre mois, et ce sont les comportements répétés qui l'emportent sur les coups d'accélérateur. Relire ses notes le soir même du cours, trente minutes de langue, deux ou trois séances de sport : ces routines pèsent plus lourd sur la moyenne finale qu'une semaine de bachotage. La heatmap sur 26 semaines — soit la durée exacte d'un semestre — montre votre régularité réelle, et le <a href="/blog/suivi-des-habitudes">taux de complétion</a> vous dit en semaine 4 si une habitude était trop ambitieuse, pendant qu'il est encore temps de la réduire.</p>
+
 <h2>Vraiment gratuit, vraiment sans friction</h2>
 <p>Pas de carte bancaire, pas d'essai de 14 jours : les fonctionnalités principales sont gratuites, point. Cosmo fonctionne dans le navigateur de votre téléphone comme sur l'ordi de la BU, sans installation. <a href="/">Testez la démo sans inscription</a> — deux minutes suffisent pour voir si le système vous parle.</p>`,
   },
@@ -61,6 +82,17 @@ export const USE_CASES = [
 <li><strong>Le partage de tâches, sans usine à gaz.</strong> Partagez une tâche avec un collaborateur en rôle Lecteur ou Éditeur, suivez l'avancement depuis votre dashboard, discutez dans le contexte de la tâche — sans déployer un outil de gestion de projet de plus.</li>
 <li><strong>Les statistiques révèlent votre vraie semaine.</strong> Temps passé par catégorie (réunions, 1:1, production, stratégie) : la donnée qui manque à chaque conversation sur « la charge ».</li>
 </ul>
+<h2>Reprendre le contrôle de sa semaine</h2>
+<p>Un agenda de manager se remplit par défaut : si vous ne posez rien, d'autres le font. La contre-mesure est simple et impopulaire — bloquer d'abord vos créneaux de travail non interruptible, avant que la semaine ne se remplisse, et les traiter comme des rendez-vous réels. Deux blocs de deux heures protégés valent mieux que dix intentions dispersées entre deux réunions.</p>
+<p>Le second levier est la revue hebdomadaire : vingt minutes le vendredi pour regarder ce qui a avancé, où est parti le temps par catégorie, et où en sont les objectifs. C'est court, et c'est ce qui vous évite d'arriver au point trimestriel en reconstituant l'histoire de mémoire. Le <a href="/blog/tableau-de-bord-productivite">tableau de bord</a> fournit les chiffres sans ressaisie.</p>
+
+<h2>Faire vivre les OKR entre deux revues</h2>
+<p>Le problème des OKR en entreprise n'est presque jamais leur formulation — c'est qu'ils sont rédigés en début de trimestre puis rouverts la veille de la revue. Entre les deux, les décisions quotidiennes se prennent sans eux, et l'écart se découvre trop tard pour être corrigé.</p>
+<p>Y remédier demande une seule chose : que les objectifs soient visibles au même endroit que les tâches. Quand la progression de chaque résultat clé se met à jour au fil de l'eau et s'affiche sur le dashboard, le point du lundi se prépare en cinq minutes avec des chiffres réels, et un objectif en dérive se repère à mi-parcours — au moment où il est encore possible d'arbitrer entre accélérer et renoncer explicitement. Si la méthode est nouvelle pour votre équipe, l'article <a href="/blog/okr-vs-smart-vs-kpi">OKR, SMART ou KPI</a> clarifie ce que chaque cadre sait faire et ne sait pas faire.</p>
+
+<h2>Suivre l'équipe sans surveiller</h2>
+<p>Le partage de tâches en rôle Lecteur ou Éditeur donne la visibilité nécessaire sans transformer l'outil en dispositif de contrôle : vous voyez l'avancement de ce qui a été explicitement partagé, pas l'activité de chacun. La distinction compte — un outil vécu comme une surveillance est renseigné a minima, et cesse rapidement d'être fiable. Cette collaboration est gratuite chez Cosmo, ce qui évite d'avoir à justifier des licences pour tester une méthode sur un trimestre.</p>
+
 <h2>Commencez par vous</h2>
 <p>Le meilleur argument pour diffuser une méthode à son équipe, c'est de l'incarner un trimestre. <a href="/">Essayez la démo sans inscription</a>, posez vos OKR du trimestre en 15 minutes, et jugez sur vos propres résultats — c'est gratuit.</p>`,
   },
