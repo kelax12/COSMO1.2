@@ -15,7 +15,9 @@ const BlogArticlePage: React.FC = () => {
   const article = slug ? getArticle(slug) : undefined;
 
   useSeoMeta({
-    title: article ? `${article.metaTitle} | Blog Cosmo` : 'Blog Cosmo',
+    // Sans suffixe de marque — doit rester identique au prérendu
+    // (prerender.mjs → ROUTES des articles), sinon le titre change au mount.
+    title: article ? article.metaTitle : 'Blog Cosmo',
     description: article?.description,
     canonical: article ? `https://thecosmo.app/blog/${article.slug}` : undefined,
   });
