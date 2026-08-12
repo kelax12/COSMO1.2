@@ -5,11 +5,13 @@
 
 ## Vue d'ensemble
 
+> **Mise à jour du 2026-08-12 (même jour)** : les trois P0 sont **livrés**. Voir la section [« Ce qui a été livré »](#ce-qui-a-été-livré-2026-08-12) en fin de document pour le détail et les décisions prises.
+
 | # | Manquement | Gravité | Débloque |
 |---|---|---|---|
-| 1 | Seeds de démo incomplets (sous-tâches, labels posés, historique, notifications) | 🔴 P0 | #2, #3 — impossible de capturer ce que la démo ne montre pas |
-| 2 | Aucune page marketing du mode entreprise | 🔴 P0 | Toute l'acquisition B2B |
-| 3 | Aucune page pricing entreprise (tarifs codés, jamais affichés) | 🔴 P0 | Conversion |
+| 1 | ~~Seeds de démo incomplets~~ ✅ **livré** | 🔴 P0 | #2, #3 — impossible de capturer ce que la démo ne montre pas |
+| 2 | ~~Aucune page marketing du mode entreprise~~ ✅ **livré** | 🔴 P0 | Toute l'acquisition B2B |
+| 3 | ~~Aucune page pricing entreprise~~ ✅ **livré** (sans montants, cf. décision) | 🔴 P0 | Conversion |
 | 4 | i18n incomplet (~10 fichiers avec du FR en dur) | 🟠 P1 | Marché non francophone |
 | 5 | Onboarding post-création partiel (checklist admin-only) | 🟠 P1 | Activation / rétention |
 | 6 | Aucune page sécurité / confiance | 🟠 P1 | Vente aux orgs > 20 pers. |
@@ -188,6 +190,50 @@ Ces trois corrections doivent être reportées dans le rapport principal avant t
 ```
 
 Le premier lot (#1 → #2 → #3) est celui qui transforme un produit invisible en produit vendable. Les autres améliorent un chemin qui, aujourd'hui, n'existe pas encore.
+
+---
+
+## Ce qui a été livré (2026-08-12)
+
+Les trois P0 sont faits, vérifiés au navigateur en mode démo.
+
+### #1 — Seeds de démo
+
+`src/modules/team-projects/local.repository.ts` et `src/modules/organizations/notifications.ts`.
+
+| Jeu | Avant | Après |
+|---|---|---|
+| Sous-tâches | 0 | 10, sur 3 tâches — un cas vide, un partiel (2/4), un complet (3/3) |
+| Associations tâche ↔ label | 0 | 12, sur 10 tâches, dont 2 tâches à double label |
+| Historique d'activité | 0 | 9 entrées sur 6 jours |
+| Notifications org | `[]` en dur | 4 (3 non lues), avec un vrai store localStorage |
+
+Trois points qui ne se lisent pas dans le diff :
+
+- **Le journal d'activité reprend le format exact du trigger** de la mig. 094 : statut brut, priorité en texte, assignés joints par virgules, `name` sans valeurs. Reformater côté démo aurait fait diverger le seul écran censé prouver que le journal est fidèle. *Effet de bord constaté : la production affiche donc des UUID bruts pour les assignés et les projets — défaut de rendu réel, signalé séparément.*
+- **L'entrée de deadline devait repousser la date, pas l'avancer.** `isPostponement` (`weekly-review.helpers.ts`) teste `newValue > oldValue` ; ma première version avançait l'échéance et l'étape « ce qui a dérapé » de la revue hebdo restait vide. Corrigé en déplaçant le glissement sur une tâche dont l'échéance réelle est future.
+- **Les notifications ne sont plus une liste vide mais un store réel** : `useMarkNotificationsRead` écrit maintenant en démo, avec la même sémantique qu'en prod (ne réécrit que les non-lues). Sans ça la cloche se serait ouverte sans jamais se vider. Les 4 seeds pointent toutes vers des tâches qui existent, et un 4ᵉ commentaire a été ajouté pour que la notification « mention » renvoie à un vrai commentaire.
+
+### #2 + #3 — Page marketing `/pour-equipes`
+
+Ajoutée dans `src/content/use-cases.mjs` — donc **zéro route à inventer** : `UseCasePage`, `prerender.mjs`, le sitemap et `llms.txt` la prennent en charge automatiquement.
+
+- **966 mots prérendus** (référence du chantier SEO précédent : 639), 7 sections, 4 liens internes.
+- `metaTitle` 60 caractères, description 156, canonical correct, présente au sitemap (17 URLs) et à `llms.txt`.
+- Slug déclaré en trois langues dans `route-slugs.json` (`pour-equipes` / `for-teams` / `para-equipos`), route ajoutée dans `App.tsx`, lien ajouté aux deux footers (React et prérendu) avec la clé `footer.teams` en FR et EN.
+- La section « équipe » de `/pour-managers` pointe désormais vers cette page au lieu de s'arrêter au partage 1-à-1.
+
+**Décisions prises avec Axel :**
+
+1. **Pas de montants publiés.** La page met en avant « gratuit jusqu'à cinq personnes, sans fonctionnalité bridée » et s'arrête là. Les paliers 20 €/100 € restent internes tant que la date d'activation n'est pas tranchée — un prix indexé par Google est difficile à reprendre.
+2. **Slug `pour-equipes`**, par symétrie avec les trois pages existantes.
+
+### Défauts pré-existants découverts en vérifiant
+
+Aucun des deux n'est causé par ce lot ; les deux sont signalés séparément.
+
+- **Historique de tâche : valeurs brutes à l'écran.** Statuts en anglais technique, UUID d'assignés et de projets. Le journal en base est correct, c'est le rendu qui ne résout rien.
+- **Pages use-case cassées hors français.** `UseCasePage` compare le pathname au slug FR ; sous `/en/`, `getUseCase` renvoie `undefined` et la page redirige silencieusement vers l'accueil. Vaut pour les quatre pages, pas seulement la nouvelle.
 
 ---
 

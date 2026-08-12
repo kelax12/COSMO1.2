@@ -23,6 +23,7 @@ const LandingFooter: React.FC = () => {
               <Link to="/pour-freelances" className="hover:text-white transition-colors">{t('footer.freelancers')}</Link>
               <Link to="/pour-etudiants" className="hover:text-white transition-colors">{t('footer.students')}</Link>
               <Link to="/pour-managers" className="hover:text-white transition-colors">{t('footer.managers')}</Link>
+              <Link to="/pour-equipes" className="hover:text-white transition-colors">{t('footer.teams')}</Link>
               <Link to="/a-propos" className="hover:text-white transition-colors">{t('footer.about')}</Link>
               {/* Ancre in-page (scroll vers la FAQ) — reste un <a href="#..."> */}
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
