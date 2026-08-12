@@ -383,6 +383,14 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
         <h2>Piloter ses objectifs avec la méthode OKR</h2>
         <p>La <a href="/blog/methode-okr-exemples">méthode OKR</a>, popularisée par Intel puis Google, structure un objectif ambitieux en 2 à 5 résultats clés mesurables. Cosmo calcule la progression de chaque résultat clé et de l'objectif global, et archive chaque complétion pour construire votre historique. Ce que la plupart des outils OKR ne font pas : ici, vos objectifs trimestriels cohabitent avec vos tâches quotidiennes, ce qui rend visible l'écart entre ce que vous visez et ce sur quoi vous passez réellement vos journées.</p>
 
+        <h2>À quoi ça ressemble</h2>
+        <p>Trois écrans de l'application, en mode démo :</p>
+        <p>
+          <img src="/screenshots/dashboard.png" width="1280" height="800" alt="Tableau de bord Cosmo : tâches complétées, événements d'agenda, résultats clés atteints et habitudes du jour réunis sur un seul écran" />
+          <img src="/screenshots/taches.png" width="1280" height="800" alt="Gestionnaire de tâches Cosmo : listes d'accès rapide, filtres par priorité et catégorie, tâches en retard signalées" />
+          <img src="/screenshots/habitudes.png" width="1280" height="800" alt="Suivi d'habitudes Cosmo : tableau hebdomadaire des habitudes cochées avec série de jours consécutifs pour chacune" />
+        </p>
+
         <h2>Un tableau de bord qui relie les quatre</h2>
         <p>Le dashboard réunit l'avancement du jour, les habitudes à cocher, les prochains événements et la courbe des résultats clés atteints. La page Statistiques va plus loin : temps investi par catégorie, évolution sur la période, comparaison entre modules. C'est le tableau de bord de productivité qui manque quand chaque outil ne connaît qu'un quart de votre activité.</p>
 
