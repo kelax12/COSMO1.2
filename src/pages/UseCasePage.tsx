@@ -2,20 +2,30 @@ import React from 'react';
 import { Link, Navigate, useLocation } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
-import { getUseCase } from '@/content/use-cases.mjs';
+import { resolveUseCase } from '@/content/use-cases.locale';
+import { canonicalUrl } from '@/i18n/routes';
+import { useLocale } from '@/i18n/store';
 import { useT } from '@/i18n/useT';
 
-// Page use-case commerciale (/pour-freelances, /pour-etudiants, /pour-managers).
+// Page use-case commerciale (/pour-freelances, /pour-etudiants, /pour-managers,
+// /pour-equipes) et leurs équivalents /en/ et /es/.
 // Contenu dans src/content/use-cases.mjs — même pattern que le blog.
 const UseCasePage: React.FC = () => {
   const { t } = useT('landing');
+  const locale = useLocale();
+  // Le `basename` du routeur a déjà retiré le préfixe de locale : sous `/en/`,
+  // le pathname vaut `/for-teams`. La résolution du slug doit donc couvrir les
+  // trois langues — cf. `resolveUseCase`.
   const slug = useLocation().pathname.replace(/^\//, '');
-  const useCase = getUseCase(slug);
+  const useCase = resolveUseCase(slug);
 
   useSeoMeta({
     title: useCase ? `${useCase.metaTitle} | Cosmo` : 'Cosmo',
     description: useCase?.description,
-    canonical: useCase ? `https://thecosmo.app/${useCase.slug}` : undefined,
+    // `canonicalUrl` traduit le slug FR du registre vers la locale servie et
+    // repose le préfixe : sans ça, `/en/for-teams` se déclarait canonique vers
+    // l'URL française.
+    canonical: useCase ? canonicalUrl(`/${useCase.slug}`, locale) : undefined,
   });
 
   if (!useCase) return <Navigate to="/" replace />;

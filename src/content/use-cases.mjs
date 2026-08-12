@@ -131,4 +131,8 @@ export const USE_CASES = [
   },
 ];
 
-export const getUseCase = (slug) => USE_CASES.find((u) => u.slug === slug);
+// Pas de `getUseCase(slug)` ici : les entrées ne portent que le slug FR, alors
+// que l'URL servie peut être anglaise ou espagnole. Une recherche par égalité
+// de slug renvoyait `undefined` hors français et la page redirigeait vers
+// l'accueil. La résolution vit dans `use-cases.locale.ts`, qui passe par
+// l'index de slugs multilingue de `src/i18n/routes.ts`.

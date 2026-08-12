@@ -11,4 +11,3 @@ export interface UseCase {
 }
 
 export declare const USE_CASES: UseCase[];
-export declare const getUseCase: (slug: string) => UseCase | undefined;
