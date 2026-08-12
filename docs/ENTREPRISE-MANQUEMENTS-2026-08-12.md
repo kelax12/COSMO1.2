@@ -54,7 +54,9 @@ Conséquence directe : quatre fonctionnalités réelles (sous-tâches, labels, h
 - **Nuance importante** : `pour-managers` existe, mais vend le produit **personnel** (partage de tâches 1-à-1, OKR perso, time-blocking). Elle ne mentionne ni la pyramide, ni l'agenda managérial, ni les statistiques d'équipe, ni les projets d'équipe. Un manager de PME qui atterrit dessus ne découvre pas le mode entreprise.
 
 **Plan.**
-1. **Nouvelle page use-case `pour-equipes`** (ou `logiciel-gestion-equipe`) dans `src/content/use-cases.mjs` — même structure que les 3 existantes (`slug`, `metaTitle`, `description`, `lead`, `html`), donc **zéro nouvelle route à créer** : `UseCasePage.tsx` + `getUseCase()` la servent automatiquement, et `prerender.mjs` la prérend. C'est le chemin le moins coûteux et le plus cohérent avec l'existant.
+1. **Nouvelle page use-case `pour-equipes`** (ou `logiciel-gestion-equipe`) dans `src/content/use-cases.mjs` — même structure que les 3 existantes (`slug`, `metaTitle`, `description`, `lead`, `html`), donc **aucun composant de page à écrire** : `UseCasePage.tsx` la sert et `prerender.mjs` la prérend. C'est le chemin le moins coûteux et le plus cohérent avec l'existant.
+
+   > *Corrigé après coup (2026-08-12) : « zéro route à créer » était inexact, et ce raccourci a masqué le bug ci-dessous. Une nouvelle page use-case demande **trois** ajouts, pas un : l'entrée dans `use-cases.mjs`, le slug dans les trois langues dans `src/i18n/route-slugs.json`, et la `<Route>` dans `src/App.tsx`. La résolution du contenu passe désormais par `resolveUseCase()` (`src/content/use-cases.locale.ts`), pas par `getUseCase()`, qui a été supprimé.*
 2. Contenu structuré sur les 4 briques les plus vendeuses (§3.1 pyramide, §3.6 agenda managérial, §3.7 statistiques, §3.8 revue hebdo), titrées sur la douleur, pas sur la fonctionnalité.
 3. **Réécrire la section équipe de `pour-managers`** pour pointer vers la nouvelle page, au lieu de s'arrêter au partage de tâches 1-à-1.
 4. Ajouter un bloc « Pour votre équipe » dans `SolutionsSection.tsx` ou `FeaturesSection.tsx` de la landing, avec CTA vers la nouvelle page.
@@ -232,8 +234,23 @@ Ajoutée dans `src/content/use-cases.mjs` — donc **zéro route à inventer** :
 
 Aucun des deux n'est causé par ce lot ; les deux sont signalés séparément.
 
-- **Historique de tâche : valeurs brutes à l'écran.** Statuts en anglais technique, UUID d'assignés et de projets. Le journal en base est correct, c'est le rendu qui ne résout rien.
-- **Pages use-case cassées hors français.** `UseCasePage` compare le pathname au slug FR ; sous `/en/`, `getUseCase` renvoie `undefined` et la page redirige silencieusement vers l'accueil. Vaut pour les quatre pages, pas seulement la nouvelle.
+- **Historique de tâche : valeurs brutes à l'écran.** Statuts en anglais technique, UUID d'assignés et de projets. Le journal en base est correct, c'est le rendu qui ne résout rien. — *ouvert*
+- ~~**Pages use-case cassées hors français.**~~ **Corrigé le 2026-08-12** — voir ci-dessous.
+
+#### Correctif : pages use-case hors français (2026-08-12)
+
+`UseCasePage` résolvait son contenu en comparant le pathname au slug FR de `use-cases.mjs`. Le `basename` du routeur ayant déjà retiré le préfixe de locale, le pathname vaut `/for-teams` sous `/en/` : `getUseCase` renvoyait `undefined` et la page faisait `<Navigate to="/" replace />`. Les quatre pages étaient inaccessibles dans toute langue autre que le français.
+
+- **Résolution du slug** — nouveau `resolveUseCase(slug)` dans `src/content/use-cases.locale.ts`, qui passe des deux côtés par `routeIdFromSlug` (`src/i18n/routes.ts`) : `for-teams` et `pour-equipes` se réduisent tous deux à `teams`. Le module est **séparé du registre** parce que `use-cases.mjs` doit rester importable par `prerender.mjs` sous Node brut, sans bundler — il ne peut pas importer du TypeScript.
+- **`getUseCase` supprimé** de `use-cases.mjs` et de `use-cases.d.mts`. Plus aucun appelant, et c'était l'API qui invitait à refaire l'erreur : une recherche par égalité de slug ne peut pas être correcte tant que les entrées ne portent que le slug FR.
+- **Canonical localisé** — `canonicalUrl(\`/${useCase.slug}\`, locale)` au lieu de la chaîne `https://thecosmo.app/${useCase.slug}` codée en dur, qui pointait vers l'URL française depuis toute langue.
+- **Tests** — `src/content/use-cases.locale.test.ts` : résolution des 4 use-cases × `ALL_LOCALES` (l'espagnol inclus, pour que l'ouverture de la langue ne rouvre pas le bug), `undefined` sur un slug inconnu **et** sur `a-propos` (slug traduit connu mais servi par une autre page), et les trois canonicals de `teams`.
+
+**Le contenu reste français** : décision prise avec Axel de ne pas traduire maintenant. Traduire les quatre corps (~1200-1500 mots chacun, en + es) n'ouvrirait pas l'indexation pour autant, puisque `INDEXABLE_LOCALES` couvre toute la surface publique et pas seulement les use-cases. `/en/` et `/es/` gardent donc leur `noindex` dans `vercel.json` — pas de duplicate content — et la traduction reste groupée dans la phase 5 du chantier i18n. Quand elle arrivera, c'est `use-cases.mjs` qui devra porter son contenu par locale ; le routage, lui, n'aura plus rien à changer.
+
+> `/es/…` répond toujours 404 : l'espagnol n'est pas dans `SUPPORTED_LOCALES` (`['fr','en']`). C'est indépendant de ce bug, et `resolveUseCase` est déjà prêt pour le jour où la langue s'ouvre.
+
+Vérifié : les quatre `/en/for-*` rendent leur page avec le bon canonical et `lang="en"`, `/pour-managers` inchangé, `lint`/`tsc`/`i18n:check` à 0 erreur, suite 1285/1285.
 
 ---
 
