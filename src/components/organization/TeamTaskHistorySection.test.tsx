@@ -66,6 +66,12 @@ describe('TeamTaskHistorySection', () => {
     expect(container.textContent).not.toContain('1111');
   });
 
+  it('affiche les libellés de priorité, pas les nombres nus', () => {
+    const { container } = renderWith([entry({ field: 'priority', oldValue: '3', newValue: '4' })]);
+    expect(container.textContent).toContain('P3 · Normale');
+    expect(container.textContent).toContain('P4 · Basse');
+  });
+
   it('rend « aucun » quand tous les assignés ont été retirés', () => {
     // `array_to_string` d'un tableau vide écrit '' — pas un blanc à l'écran.
     renderWith([entry({ field: 'assignees', oldValue: 'user-lucas', newValue: '' })]);
