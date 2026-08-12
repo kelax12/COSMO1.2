@@ -373,6 +373,8 @@
     "historyFrom": "from {{from}}",
     "historyTo": "to {{to}}",
     "historyUnknownActor": "Someone",
+    "historyRemovedMember": "a removed member",
+    "historyRemovedProject": "a deleted project",
     "historyNone": "none",
     "closeForm": "Close form",
     "namePlaceholder": "What needs doing?",

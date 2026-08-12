@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   filterByStatus, sumEstimatedTime, formatDuration, groupByStatus, STATUS_ORDER,
-  subtaskProgress,
+  subtaskProgress, resolveActivityValue,
 } from './team-projects.helpers';
 import type { TeamTask } from '@/modules/team-projects';
 
@@ -143,5 +143,50 @@ describe('subtaskProgress', () => {
 
   it("arrondit à l'entier le plus proche", () => {
     expect(subtaskProgress([{ completed: true }, { completed: false }, { completed: false }])).toBe(33);
+  });
+});
+
+describe('resolveActivityValue', () => {
+  const resolvers = {
+    statusLabel: (s: string) => ({ todo: 'À faire', in_progress: 'En cours' }[s] ?? s),
+    memberName: (id: string) => ({ 'user-lucas': 'Lucas', 'user-camille': 'Camille' }[id] ?? 'un membre retiré'),
+    projectName: (id: string) => ({ 'p1': 'Refonte site' }[id] ?? 'un projet supprimé'),
+  };
+
+  it('traduit un statut technique en libellé', () => {
+    expect(resolveActivityValue('status', 'in_progress', resolvers)).toBe('En cours');
+  });
+
+  it('laisse passer un statut inconnu plutôt que de le masquer', () => {
+    // Un statut ajouté en base avant le front doit rester lisible tel quel.
+    expect(resolveActivityValue('status', 'archived', resolvers)).toBe('archived');
+  });
+
+  it('résout une liste d’assignés en noms', () => {
+    expect(resolveActivityValue('assignees', 'user-lucas,user-camille', resolvers))
+      .toBe('Lucas, Camille');
+  });
+
+  it('replie sur un libellé lisible pour un membre supprimé', () => {
+    expect(resolveActivityValue('assignees', 'user-lucas,00000000-0000-0000-0000-000000000000', resolvers))
+      .toBe('Lucas, un membre retiré');
+  });
+
+  it('résout un id de projet en nom, avec repli si supprimé', () => {
+    expect(resolveActivityValue('project', 'p1', resolvers)).toBe('Refonte site');
+    expect(resolveActivityValue('project', 'p-disparu', resolvers)).toBe('un projet supprimé');
+  });
+
+  it('renvoie null sur une valeur absente ou vide', () => {
+    // `array_to_string` d'un tableau vide donne '' : « plus aucun assigné »,
+    // que l'appelant rend par son propre libellé « aucun ».
+    expect(resolveActivityValue('assignees', '', resolvers)).toBeNull();
+    expect(resolveActivityValue('assignees', ',,', resolvers)).toBeNull();
+    expect(resolveActivityValue('deadline', null, resolvers)).toBeNull();
+  });
+
+  it('laisse deadline et priority tels quels', () => {
+    expect(resolveActivityValue('deadline', '2026-08-15', resolvers)).toBe('2026-08-15');
+    expect(resolveActivityValue('priority', '4', resolvers)).toBe('4');
   });
 });

@@ -5,7 +5,7 @@
 
 import { useCallback, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
-import type { TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import type { TeamActivityField, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 
 // ─── Couleurs de projet (champ TeamProject.color) ────────────────────
 
@@ -235,4 +235,53 @@ export const subtaskProgress = (subtasks: { completed: boolean }[]): number | nu
   if (subtasks.length === 0) return null;
   const done = subtasks.filter((s) => s.completed).length;
   return Math.round((done / subtasks.length) * 100);
+};
+
+// ─── Historique (mig. 094) : rendu des valeurs brutes ────────────────
+
+/** Résolveurs injectés — le helper reste pur, l'i18n vit dans le composant. */
+export interface ActivityValueResolvers {
+  /** Libellé d'un statut de flux ('in_progress' → « En cours »). */
+  statusLabel: (status: string) => string;
+  /** Nom d'un membre par `userId`, repli lisible si le membre n'existe plus. */
+  memberName: (userId: string) => string;
+  /** Nom d'un projet par id, repli lisible si le projet n'existe plus. */
+  projectName: (projectId: string) => string;
+}
+
+/**
+ * Traduit une valeur du journal `team_task_activity` pour l'affichage.
+ *
+ * Le trigger écrit volontairement des valeurs BRUTES (identifiant de statut,
+ * UUID de membres joints par des virgules, UUID de projet) : un journal
+ * append-only doit rester vrai même si un libellé, une langue ou un nom de
+ * projet change plus tard. La résolution appartient donc à la couche de rendu,
+ * pas à la base — c'est ce que fait cette fonction.
+ *
+ * Renvoie `null` quand la valeur est absente ou vide (aucun assigné, aucune
+ * échéance) : l'appelant affiche alors son propre libellé « aucun ».
+ */
+export const resolveActivityValue = (
+  field: TeamActivityField,
+  value: string | null,
+  resolvers: ActivityValueResolvers,
+): string | null => {
+  const raw = value?.trim() ?? '';
+  if (raw === '') return null;
+
+  switch (field) {
+    case 'status':
+      return resolvers.statusLabel(raw);
+    case 'assignees': {
+      // `array_to_string(assignee_ids, ',')` — liste possiblement vide, et
+      // pouvant citer un membre parti depuis (d'où le repli côté résolveur).
+      const names = raw.split(',').map((id) => id.trim()).filter(Boolean).map(resolvers.memberName);
+      return names.length > 0 ? names.join(', ') : null;
+    }
+    case 'project':
+      return resolvers.projectName(raw);
+    default:
+      // deadline / priority : déjà lisibles telles quelles.
+      return raw;
+  }
 };

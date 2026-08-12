@@ -329,7 +329,7 @@ const TeamTaskModal = ({
             <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
               <TeamTaskLabelsSection orgId={task.orgId} taskId={task.id} isManager={isManager} />
               <TeamSubtasksSection taskId={task.id} />
-              <TeamTaskHistorySection taskId={task.id} members={members} />
+              <TeamTaskHistorySection taskId={task.id} members={members} projects={projects} />
             </div>
           )}
 
