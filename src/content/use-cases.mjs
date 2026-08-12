@@ -94,7 +94,40 @@ export const USE_CASES = [
 <p>Le partage de tâches en rôle Lecteur ou Éditeur donne la visibilité nécessaire sans transformer l'outil en dispositif de contrôle : vous voyez l'avancement de ce qui a été explicitement partagé, pas l'activité de chacun. La distinction compte — un outil vécu comme une surveillance est renseigné a minima, et cesse rapidement d'être fiable. Cette collaboration est gratuite chez Cosmo, ce qui évite d'avoir à justifier des licences pour tester une méthode sur un trimestre.</p>
 
 <h2>Commencez par vous</h2>
-<p>Le meilleur argument pour diffuser une méthode à son équipe, c'est de l'incarner un trimestre. <a href="/">Essayez la démo sans inscription</a>, posez vos OKR du trimestre en 15 minutes, et jugez sur vos propres résultats — c'est gratuit.</p>`,
+<p>Le meilleur argument pour diffuser une méthode à son équipe, c'est de l'incarner un trimestre. <a href="/">Essayez la démo sans inscription</a>, posez vos OKR du trimestre en 15 minutes, et jugez sur vos propres résultats — c'est gratuit. Quand la méthode est validée et que vous voulez embarquer tout le monde, le <a href="/pour-equipes">mode entreprise</a> prend le relais : organigramme, projets d'équipe et statistiques de pilotage.</p>`,
+  },
+  {
+    slug: 'pour-equipes',
+    audience: 'équipes',
+    title: "L'application de gestion d'équipe pour les PME et les studios",
+    metaTitle: "App de gestion d'équipe : projets, OKR et pilotage",
+    description:
+      "Organigramme automatique, projets d'équipe, OKR pondérés et statistiques de pilotage dans une seule app. Gratuit jusqu'à 5 personnes, démo sans inscription.",
+    lead: "Dans la plupart des équipes, le travail vit dans un outil et le pilotage dans un autre : les tâches d'un côté, un tableur d'objectifs et un organigramme oublié de l'autre. Cosmo réunit les deux, sans imposer un déploiement de six mois.",
+    html: `
+<h2>Deux outils, deux vérités</h2>
+<p>Le scénario est presque toujours le même. Chacun gère ses tâches dans son coin — une app perso, un carnet, une liste dans la messagerie. L'équipe, elle, a un outil de gestion de projet où l'on note ce qui doit être partagé. Résultat : personne n'a sa journée complète sur un seul écran, et le manager reconstitue l'état d'avancement en posant la question à cinq personnes.</p>
+<p>Le coût de cette double saisie ne se voit pas dans un budget, mais il se paie tous les jours : des tâches oubliées parce qu'elles étaient dans l'autre outil, un point hebdomadaire qui sert à collecter de l'information plutôt qu'à décider, et des objectifs trimestriels qui vivent dans un slide revu deux fois par an.</p>
+<h2>Ce que Cosmo apporte à une équipe</h2>
+<ul>
+<li><strong>Un organigramme qui se dessine tout seul.</strong> Chaque personne est rattachée à un responsable au moment de son arrivée, et la structure se construit d'elle-même. Pas de fiche RH à remplir, pas de tableau à tenir à jour — et c'est cette même structure qui détermine ensuite qui voit quoi.</li>
+<li><strong>Les tâches d'équipe arrivent dans la to-do de chacun.</strong> Une tâche assignée depuis le tableau de l'équipe apparaît directement dans la liste personnelle de la personne concernée. Une seule app à ouvrir le matin, pas deux.</li>
+<li><strong>Des OKR d'équipe qui ne mentent pas.</strong> Chaque résultat clé porte un poids : trois objectifs faciles atteints ne font plus passer un trimestre pour réussi quand le quatrième, le seul qui comptait, n'a pas bougé.</li>
+<li><strong>Le pilotage sans reporting à préparer.</strong> Charge par personne, taux de complétion, vélocité hebdomadaire, retards, avancement des objectifs : les chiffres sont là en permanence, et s'exportent quand il faut les présenter ailleurs.</li>
+</ul>
+<h2>L'organigramme sert enfin à quelque chose</h2>
+<p>Dans la plupart des outils, l'organigramme est une image : joli sur l'intranet, sans effet sur le travail réel. Ici, il est le mécanisme central. Rattacher quelqu'un à un responsable ouvre à ce dernier ce qu'il lui faut pour l'accompagner — la charge de la personne, ses tâches en retard, son planning — et rien d'autre. Un responsable intermédiaire voit son périmètre, jamais celui du voisin, sans qu'aucune permission n'ait été configurée à la main.</p>
+<p>À côté de cette ligne hiérarchique, des équipes transverses regroupent les gens par projet ou par pôle, indépendamment de qui reporte à qui. C'est ce qui permet à un chef de projet de piloter un chantier avec des personnes qui ne sont pas dans son équipe, sans dupliquer l'organisation ni créer un espace de travail par département.</p>
+<h2>Voir le planning de son équipe sans le demander</h2>
+<p>« Tu es dispo jeudi ? » reste l'une des questions les plus coûteuses d'une semaine de travail, surtout à distance. Un responsable accède directement à l'agenda de son équipe et y cale ce qui doit l'être, sans aller-retour. Le contenu des évènements marqués comme personnels reste privé : seul le créneau apparaît. Cette limite n'est pas un détail — un outil vécu comme une surveillance est renseigné a minima, et cesse très vite d'être fiable.</p>
+<h2>La revue du lundi, préparée avant la réunion</h2>
+<p>Un parcours guidé reprend ce qui s'est passé la semaine écoulée — ce qui a avancé, ce qui a glissé, qui est surchargé — et se termine par des décisions à prendre plutôt que par un tableau à interpréter. Trois minutes seul devant l'écran remplacent une bonne partie de la demi-heure passée à collecter l'information en réunion. Le temps récupéré ne disparaît pas : il retourne à la conversation qui justifiait la réunion au départ.</p>
+<p>Pour les objectifs, le principe est le même que pour les tâches : ils ne survivent que s'ils sont visibles au même endroit que le travail quotidien. Si la méthode est nouvelle pour votre équipe, l'article <a href="/blog/okr-vs-smart-vs-kpi">OKR, SMART ou KPI</a> clarifie ce que chaque cadre sait faire, et le <a href="/blog/template-okr-gratuit">modèle d'OKR gratuit</a> donne une base à adapter.</p>
+<h2>Suivre l'équipe sans la surveiller</h2>
+<p>La séparation entre ce qui est partagé et ce qui reste privé est posée dans le produit, pas laissée à la bonne volonté de chacun. Les projets rattachés à une équipe restent invisibles aux autres, le contenu des agendas personnels ne remonte jamais, et chaque personne qui rejoint une organisation voit, avant de valider, ce que celle-ci pourra observer de son travail. Le cloisonnement est appliqué au niveau des données elles-mêmes : ce n'est pas l'affichage qui masque, c'est l'accès qui est refusé.</p>
+<h2>Gratuit jusqu'à cinq personnes</h2>
+<p>Une équipe de moins de cinq personnes utilise le mode entreprise gratuitement, sans fonctionnalité bridée ni période d'essai à surveiller : l'organigramme, les projets, les OKR et les statistiques sont tous inclus. C'est assez pour qu'une équipe fondatrice, un pôle ou un premier projet pilote juge sur pièce avant d'embarquer le reste de l'entreprise.</p>
+<p><a href="/">La démo s'essaie sans créer de compte</a> : une organisation fictive de six personnes, avec ses projets, ses objectifs et son organigramme déjà remplis, pour se faire une idée en deux minutes. Si vous êtes seul responsable pour l'instant, la page <a href="/pour-managers">pour les managers</a> décrit le même produit du point de vue individuel.</p>`,
   },
 ];
 

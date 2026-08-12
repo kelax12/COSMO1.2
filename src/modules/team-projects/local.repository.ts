@@ -25,6 +25,7 @@ import {
   UpdateTeamLabelInput,
   TeamTaskLabel,
   TeamTaskActivity,
+  TeamActivityField,
   CreateTeamTaskCommentInput,
 } from './types';
 import {
@@ -138,6 +139,99 @@ const DEMO_COMMENTS: TeamTaskComment[] = [
   { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma — retours bienvenus !', mentions: [], createdAt: iso(-4) },
   { id: 'comment-seed-2', taskId: 'ttask-1', authorId: DEMO_USER_ID, body: '@Marie Dupont super base, je préfère la variante B pour le hero.', mentions: ['friend-1'], createdAt: iso(-3) },
   { id: 'comment-seed-3', taskId: 'ttask-8', authorId: 'friend-2', body: 'Le planning presse est calé, reste à valider le budget.', mentions: [], createdAt: iso(-2) },
+  // Adossé à la notification « mention » seedée dans le module organizations :
+  // une notification qui pointe vers un commentaire inexistant serait un leurre.
+  { id: 'comment-seed-4', taskId: 'ttask-8', authorId: 'friend-1', body: 'Il me faut ton avis sur le calendrier avant vendredi, tu peux jeter un œil ?', mentions: [DEMO_USER_ID], createdAt: iso(-1) },
+];
+
+/**
+ * Sous-tâches de démo (mig. 092).
+ *
+ * Trois tâches couvrant les trois états que la barre de progression sait
+ * rendre — aucune cochée, partiellement cochée, entièrement cochée. Une seule
+ * tâche seedée ne montrerait qu'un tiers du composant.
+ */
+const st = (id: string, taskId: string, title: string, completed: boolean, position: number): TeamSubtask => ({
+  id, taskId, title, completed, position, createdBy: DEMO_USER_ID, createdAt: iso(-6 + position),
+});
+
+const DEMO_SUBTASKS: TeamSubtask[] = [
+  // ttask-1 « Maquettes de la page d'accueil » — 2/4, progression partielle.
+  st('sub-seed-1', 'ttask-1', 'Moodboard et références', true, 0),
+  st('sub-seed-2', 'ttask-1', 'Wireframes basse fidélité', true, 1),
+  st('sub-seed-3', 'ttask-1', 'Variante A du hero', false, 2),
+  st('sub-seed-4', 'ttask-1', 'Variante B du hero', false, 3),
+  // ttask-2 « Intégration du header responsive » — 1/3.
+  st('sub-seed-5', 'ttask-2', 'Breakpoints mobile', true, 0),
+  st('sub-seed-6', 'ttask-2', 'Menu burger accessible', false, 1),
+  st('sub-seed-7', 'ttask-2', 'Tests sur Safari iOS', false, 2),
+  // ttask-10 « Préparer la démo investisseurs » — 3/3, checklist terminée.
+  st('sub-seed-8', 'ttask-10', 'Script de la démo', true, 0),
+  st('sub-seed-9', 'ttask-10', 'Jeu de données de démonstration', true, 1),
+  st('sub-seed-10', 'ttask-10', 'Répétition chronométrée', true, 2),
+];
+
+/**
+ * Associations tâche ↔ label (mig. 093).
+ *
+ * Le vocabulaire seul ne se voit nulle part : les labels n'apparaissent sur le
+ * kanban et dans les filtres que POSÉS sur des tâches. Deux tâches en portent
+ * deux, pour que le cas multi-labels soit visible sans avoir à le créer.
+ */
+const DEMO_TASK_LABELS: TeamTaskLabel[] = [
+  { taskId: 'ttask-1', labelId: 'lbl-client' },
+  { taskId: 'ttask-2', labelId: 'lbl-tech' },
+  { taskId: 'ttask-3', labelId: 'lbl-bug' },
+  { taskId: 'ttask-3', labelId: 'lbl-urgent' },
+  { taskId: 'ttask-4', labelId: 'lbl-tech' },
+  { taskId: 'ttask-5', labelId: 'lbl-client' },
+  { taskId: 'ttask-8', labelId: 'lbl-client' },
+  { taskId: 'ttask-8', labelId: 'lbl-urgent' },
+  { taskId: 'ttask-9', labelId: 'lbl-client' },
+  { taskId: 'ttask-11', labelId: 'lbl-tech' },
+  { taskId: 'ttask-12', labelId: 'lbl-client' },
+  { taskId: 'ttask-18', labelId: 'lbl-urgent' },
+];
+
+/**
+ * Journal d'activité de démo (mig. 094).
+ *
+ * Les valeurs reprennent EXACTEMENT le format écrit par le trigger
+ * `log_team_task_activity` : statut brut, priorité en texte, date en texte,
+ * assignés joints par des virgules, et `name` sans valeurs. Reformater ici
+ * ferait diverger la démo de la production sur le seul écran censé prouver
+ * que le journal est fidèle.
+ *
+ * La fenêtre est volontairement récente : `getOrgActivity` alimente aussi la
+ * revue hebdomadaire, qui ne regarde que les sept derniers jours.
+ */
+const act = (
+  id: string,
+  taskId: string,
+  actorId: string | null,
+  field: TeamActivityField,
+  oldValue: string | null,
+  newValue: string | null,
+  dayOffset: number,
+): TeamTaskActivity => ({
+  id, taskId, orgId: DEMO_ORG_ID, actorId, field, oldValue, newValue, createdAt: iso(dayOffset),
+});
+
+const DEMO_ACTIVITY: TeamTaskActivity[] = [
+  act('act-seed-1', 'ttask-1', 'friend-1', 'status', 'todo', 'in_progress', -6),
+  act('act-seed-2', 'ttask-1', DEMO_USER_ID, 'priority', '3', '4', -5),
+  act('act-seed-3', 'ttask-2', 'friend-2', 'status', 'todo', 'in_progress', -5),
+  act('act-seed-4', 'ttask-3', 'friend-3', 'status', 'in_progress', 'blocked', -4),
+  // Échéance REPOUSSÉE (ancienne < nouvelle) : c'est le sens que
+  // `isPostponement` reconnaît, et la seule forme qui alimente l'étape « ce qui
+  // a dérapé » de la revue hebdomadaire. Les valeurs encadrent la deadline
+  // réelle de la tâche — un journal qui finirait sur une autre date que celle
+  // affichée serait incohérent.
+  act('act-seed-5', 'ttask-4', 'user-lucas', 'deadline', dateStr(3), dateStr(8), -4),
+  act('act-seed-6', 'ttask-4', DEMO_USER_ID, 'assignees', 'user-lucas', 'user-lucas,user-camille', -3),
+  act('act-seed-7', 'ttask-10', DEMO_USER_ID, 'name', null, null, -2),
+  act('act-seed-8', 'ttask-18', 'friend-3', 'status', 'todo', 'blocked', -2),
+  act('act-seed-9', 'ttask-6', 'friend-1', 'status', 'review', 'done', -1),
 ];
 
 function readOrSeed<T>(key: string, seed: T): T {
@@ -328,7 +422,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   // ─── Sous-tâches (mig. 092) ────────────────────────────────────────
 
   private getSubtasksArray(): TeamSubtask[] {
-    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, []);
+    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, DEMO_SUBTASKS);
   }
   private saveSubtasks(s: TeamSubtask[]): void {
     localStorage.setItem(TEAM_TASK_SUBTASKS_STORAGE_KEY, JSON.stringify(s));
@@ -381,7 +475,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     localStorage.setItem(TEAM_LABELS_STORAGE_KEY, JSON.stringify(l));
   }
   private getTaskLabelsArray(): TeamTaskLabel[] {
-    return readOrSeed<TeamTaskLabel[]>(TEAM_TASK_LABELS_STORAGE_KEY, []);
+    return readOrSeed<TeamTaskLabel[]>(TEAM_TASK_LABELS_STORAGE_KEY, DEMO_TASK_LABELS);
   }
   private saveTaskLabels(tl: TeamTaskLabel[]): void {
     localStorage.setItem(TEAM_TASK_LABELS_STORAGE_KEY, JSON.stringify(tl));
@@ -452,14 +546,14 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
    * c'est ce qui garde la même propriété append-only des deux côtés.
    */
   async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> {
-    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, [])
+    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY)
       .filter((a) => a.taskId === taskId)
       .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
   }
 
   /** Même contrat qu'en production : borné à l'org et à la fenêtre demandée. */
   async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {
-    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, [])
+    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY)
       .filter((a) => a.orgId === orgId && a.createdAt >= since)
       .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
   }

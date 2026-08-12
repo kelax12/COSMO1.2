@@ -415,6 +415,7 @@ const staticFooterNav = (locale) => {
     link('/pour-freelances', 'Pour les freelances'),
     link('/pour-etudiants', 'Pour les étudiants'),
     link('/pour-managers', 'Pour les managers'),
+    link('/pour-equipes', 'Pour les équipes'),
     link('/a-propos', 'À propos'),
     link('/signup', 'Inscription gratuite'),
     link('/login', 'Connexion'),
