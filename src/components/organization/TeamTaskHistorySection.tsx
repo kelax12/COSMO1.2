@@ -5,7 +5,7 @@ import { useTeamTaskActivity, type TeamActivityField, type TeamProject } from '@
 import type { OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
-import { STATUS_META, resolveActivityValue } from './team-projects.helpers';
+import { STATUS_META, PRIORITY_META, resolveActivityValue } from './team-projects.helpers';
 import type { TeamTaskStatus } from '@/modules/team-projects';
 
 interface TeamTaskHistorySectionProps {
@@ -57,6 +57,8 @@ const TeamTaskHistorySection = ({ taskId, members, projects }: TeamTaskHistorySe
     projectName: (projectId: string) =>
       projects.find((p) => p.id === projectId)?.name
         ?? t('taskModal.historyRemovedProject'),
+    // Mêmes libellés que le sélecteur de priorité de la modale (PRIORITY_META).
+    priorityLabel: (priority: string) => PRIORITY_META[Number(priority)]?.label ?? priority,
   };
 
   return (

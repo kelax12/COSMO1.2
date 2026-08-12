@@ -151,6 +151,7 @@ describe('resolveActivityValue', () => {
     statusLabel: (s: string) => ({ todo: 'À faire', in_progress: 'En cours' }[s] ?? s),
     memberName: (id: string) => ({ 'user-lucas': 'Lucas', 'user-camille': 'Camille' }[id] ?? 'un membre retiré'),
     projectName: (id: string) => ({ 'p1': 'Refonte site' }[id] ?? 'un projet supprimé'),
+    priorityLabel: (p: string) => ({ '3': 'P3 · Normale', '4': 'P4 · Basse' }[p] ?? p),
   };
 
   it('traduit un statut technique en libellé', () => {
@@ -185,8 +186,15 @@ describe('resolveActivityValue', () => {
     expect(resolveActivityValue('deadline', null, resolvers)).toBeNull();
   });
 
-  it('laisse deadline et priority tels quels', () => {
+  it('traduit une priorité numérique en libellé', () => {
+    expect(resolveActivityValue('priority', '4', resolvers)).toBe('P4 · Basse');
+  });
+
+  it('laisse passer une priorité hors barème plutôt que de la masquer', () => {
+    expect(resolveActivityValue('priority', '9', resolvers)).toBe('9');
+  });
+
+  it('laisse la deadline telle quelle', () => {
     expect(resolveActivityValue('deadline', '2026-08-15', resolvers)).toBe('2026-08-15');
-    expect(resolveActivityValue('priority', '4', resolvers)).toBe('4');
   });
 });

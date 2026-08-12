@@ -247,6 +247,8 @@ export interface ActivityValueResolvers {
   memberName: (userId: string) => string;
   /** Nom d'un projet par id, repli lisible si le projet n'existe plus. */
   projectName: (projectId: string) => string;
+  /** Libellé d'une priorité ('4' → « P4 · Basse »). */
+  priorityLabel: (priority: string) => string;
 }
 
 /**
@@ -280,8 +282,10 @@ export const resolveActivityValue = (
     }
     case 'project':
       return resolvers.projectName(raw);
+    case 'priority':
+      return resolvers.priorityLabel(raw);
     default:
-      // deadline / priority : déjà lisibles telles quelles.
+      // deadline : déjà lisible telle quelle.
       return raw;
   }
 };
