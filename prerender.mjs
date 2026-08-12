@@ -144,14 +144,20 @@ const ROUTES = [
     ],
     content: {
       fr: `<h1>Guide d'utilisation de Cosmo</h1>
-        <p>Découvrez comment tirer le meilleur de Cosmo, l'application de productivité tout-en-un.</p>
-        <h2>Prise en main</h2><p>Créez un compte gratuit ou essayez le mode démo sans inscription.</p>
-        <h2>Tâches</h2><p>Créez des tâches avec priorités, catégories, deadlines et listes.</p>
-        <h2>Habitudes</h2><p>Suivez vos habitudes avec une heatmap 26 semaines et des streaks.</p>
-        <h2>Agenda</h2><p>Planifiez par time-blocking en glissant vos tâches dans le calendrier.</p>
-        <h2>OKR</h2><p>Définissez des objectifs ambitieux et mesurez vos résultats clés.</p>
-        <h2>Statistiques</h2><p>Analysez votre temps sur tous vos modules.</p>
-        <p><a href="/">Retour à l'accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+        <p>Ce guide couvre les six zones de Cosmo, dans l'ordre où on les découvre en pratique. Comptez une quinzaine de minutes pour tout parcourir — mais rien n'oblige à tout mettre en place le premier jour : les tâches seules suffisent à démarrer utilement.</p>
+        <h2>Prise en main</h2>
+        <p>Deux entrées possibles. Le <strong>mode démo</strong> ouvre l'application complète sans inscription, pré-remplie de 12 mois de données : c'est la bonne façon d'explorer sans rien construire. Le <strong>compte gratuit</strong> se crée en trente secondes, par email ou via Google, et vos données vous suivent alors d'un appareil à l'autre. Au premier login, Cosmo demande quels modules afficher : gardez-en peu au début, tout se réactive plus tard dans Réglages → Modules.</p>
+        <h2>Tâches</h2>
+        <p>Le socle. Une tâche porte un nom, une description, une priorité de 1 à 5, une catégorie colorée, une échéance et une liste. Les filtres se combinent pour isoler ce qui compte maintenant ; les listes servent aux regroupements durables (un client, un projet, un cours). Une tâche récurrente se régénère automatiquement quand vous la cochez, et les sous-tâches découpent ce qui est trop gros pour être commencé. Le partage se fait par email, en rôle Lecteur ou Éditeur — gratuitement.</p>
+        <h2>Habitudes</h2>
+        <p>Créez l'habitude, choisissez sa fréquence (quotidienne, hebdomadaire ou jours précis), puis cochez au fil des jours. La heatmap 26 semaines montre la régularité réelle, le streak compte les jours consécutifs et le taux de complétion situe la période en cours. Conseil qui change tout : deux ou trois habitudes maximum au démarrage, quitte à en ajouter dans un mois. Une liste de quinze habitudes se solde à peu près toujours par un abandon global.</p>
+        <h2>Agenda</h2>
+        <p>L'agenda accepte des événements classiques, mais son intérêt est ailleurs : glissez une tâche depuis le panneau latéral vers un créneau, l'événement se crée et reste lié à la tâche. C'est le <a href="/blog/time-blocking-guide">time-blocking</a>, et c'est ce qui transforme une liste d'intentions en semaine réaliste. Vues jour, semaine et mois ; les événements récurrents se gèrent depuis la même fiche.</p>
+        <h2>OKR</h2>
+        <p>Un objectif qualitatif, 2 à 5 résultats clés chiffrés. Vous mettez à jour la valeur courante d'un résultat clé, Cosmo recalcule la progression de l'objectif et enregistre chaque complétion dans votre historique — c'est cette trace qui alimente le graphique du dashboard. Si vous débutez avec la méthode, l'article <a href="/blog/methode-okr-exemples">méthode OKR et 15 exemples</a> donne des formulations prêtes à adapter.</p>
+        <h2>Statistiques</h2>
+        <p>Temps investi par catégorie, évolution sur la période choisie, comparaison entre modules. C'est la page à ouvrir en fin de semaine ou de mois : elle répond à « où est parti mon temps ? » avec des chiffres plutôt qu'avec une impression, et c'est souvent là que se décide le prochain ajustement.</p>
+        <p><a href="/">Retour à l'accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Le blog</a></p>`,
     },
   },
   {
@@ -181,9 +187,25 @@ const ROUTES = [
     content: {
       fr: `<h1>À propos de Cosmo</h1>
         <p>Cosmo est une application de productivité française, gratuite et tout-en-un : tâches, habitudes, agenda avec time-blocking et OKR connectés dans un seul écosystème. Produit indépendant, développé en France.</p>
+
+        <h2>Pourquoi Cosmo existe</h2>
+        <p>La plupart des gens organisés utilisent trois ou quatre outils : un gestionnaire de tâches, un traqueur d'habitudes, un agenda, et un tableur pour les objectifs annuels qu'on rouvre deux fois par an. Chacun fait bien son travail, aucun ne voit l'ensemble. Résultat : les objectifs de fond n'ont aucun poids face à l'urgence du jour, parce qu'ils ne sont écrits nulle part où on regarde tous les matins.</p>
+        <p>Cosmo est né de ce constat. Réunir les quatre dans un seul produit ne relève pas de la commodité : c'est ce qui permet à un objectif trimestriel de descendre en tâches concrètes, à une tâche de recevoir un vrai créneau dans l'agenda, et aux statistiques de montrer l'écart entre ce que vous visez et ce que vous faites. Aucun de ces liens n'est possible quand les données vivent dans quatre applications séparées.</p>
+
+        <h2>Nos partis pris</h2>
+        <ul>
+          <li><strong>Gratuit pour l'essentiel.</strong> Tâches, habitudes, agenda, OKR, statistiques et partage de tâches sont gratuits, sans carte bancaire ni essai à durée limitée. La collaboration en particulier restera gratuite : une app d'organisation qui fait payer le fait d'inviter quelqu'un se prive de la seule chose qui la rend utile à plusieurs.</li>
+          <li><strong>Utilisable en deux minutes.</strong> Le mode démo ouvre l'application complète, pré-remplie de 12 mois de données réalistes, sans compte ni email. On juge un outil d'organisation chargé, pas devant un écran vide.</li>
+          <li><strong>Mobile d'abord.</strong> Cosmo se conçoit d'abord pour un téléphone tenu à une main, puis s'élargit à l'écran d'ordinateur — pas l'inverse. Aucune installation : tout fonctionne dans le navigateur.</li>
+          <li><strong>Vos données vous appartiennent.</strong> Stockage Supabase avec Row Level Security : chaque ligne est cloisonnée à son propriétaire au niveau de la base, pas seulement dans l'interface. En mode démo, rien ne quitte votre navigateur. Suppression de compte définitive et complète, sur demande depuis les réglages.</li>
+        </ul>
+
         <h2>Cosmo, The Cosmo App ou thecosmo ?</h2>
-        <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app » — c'est toujours nous. Cosmo est une application web sans téléchargement ; son seul site officiel est thecosmo.app.</p>
-        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a></p>`,
+        <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app » — c'est toujours nous. Plusieurs autres produits sans rapport portent le nom « Cosmo » (une radio allemande, des applications mobiles diverses) : Cosmo est une application web de productivité, sans téléchargement, et son seul site officiel est thecosmo.app.</p>
+
+        <h2>Nous écrire</h2>
+        <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à axellongattepro@gmail.com — les retours d'utilisateurs orientent réellement la feuille de route.</p>
+        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a> · <a href="/guide">Guide d'utilisation</a></p>`,
     },
   },
   {
@@ -214,12 +236,14 @@ const ROUTES = [
       },
     ],
     content: {
+      // Chaque article sort en <h2> plutôt qu'en <li> : l'index n'avait
+      // AUCUN titre de niveau 2 dans le HTML prérendu, donc aucune structure
+      // exploitable pour un crawler sans JS.
       fr: `<h1>Le blog Cosmo</h1>
-        <p>Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité personnelle.</p>
-        <ul>
-          ${ARTICLES.map((a) => `<li><a href="/blog/${a.slug}">${a.title}</a> — ${a.description}</li>`).join('\n          ')}
-        </ul>
-        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+        <p>Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. ${ARTICLES.length} articles, écrits pour être utiles sans avoir à installer quoi que ce soit.</p>
+        ${ARTICLES.map((a) => `<h2><a href="/blog/${a.slug}">${a.title}</a></h2>
+        <p>${a.description} <a href="/blog/${a.slug}">Lire l'article</a> — ${a.readingMinutes} min de lecture.</p>`).join('\n        ')}
+        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/rss.xml">Flux RSS</a></p>`,
     },
   },
   // Articles de blog — contenu complet visible (src/content/blog/*.mjs).
@@ -228,7 +252,10 @@ const ROUTES = [
   // n'existe pas est une erreur Search Console.
   ...ARTICLES.map((a) => ({
     path: `/blog/${a.slug}`,
-    meta: { fr: { title: `${a.metaTitle} | Blog Cosmo`, description: a.description } },
+    // Pas de suffixe de marque : « | Blog Cosmo » coûtait 12 caractères et
+    // poussait 6 titres au-delà des ~60 affichés par Google (donc tronqués).
+    // Google affiche de toute façon le nom du site sous le titre.
+    meta: { fr: { title: a.metaTitle, description: a.description } },
     extraLd: () => [
       {
         obj: {
@@ -330,19 +357,38 @@ const ROUTES = [
 // ── Helpers de réécriture ────────────────────────────────────────────────
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
-// Contenu statique de la home (miroir de l'ancien <noscript> d'index.html).
+// Contenu statique de la home.
+//
+// ⚠ Ce bloc n'est PAS décoratif : c'est la seule version de la home que voient
+// les crawlers qui n'exécutent pas JavaScript (GPTBot, ClaudeBot,
+// PerplexityBot, la plupart des outils d'audit SEO, et Googlebot avant son
+// passage de rendu). Il faisait 161 mots au 2026-08-12 — soit un résumé de
+// trois phrases là où la page React en développe dix fois plus.
+//
+// Règle : chaque section décrit une capacité RÉELLE du produit. Un bloc SEO qui
+// promet ce que l'app ne fait pas se paie en rebond, donc en classement.
 const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1>
-        <p>Cosmo est une application de productivité gratuite qui centralise la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results).</p>
-        <h2>Fonctionnalités principales</h2>
-        <ul>
-          <li><strong>Gestionnaire de tâches</strong> — priorités, catégories colorées, deadlines, listes et filtres avancés</li>
-          <li><strong>Suivi d'habitudes</strong> — heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
-          <li><strong>Agenda avec time-blocking</strong> — glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
-          <li><strong>OKR (Objectives &amp; Key Results)</strong> — méthode utilisée par Google, Intel et Netflix</li>
-          <li><strong>Statistiques multi-modules</strong> — analysez votre temps sur tâches, habitudes, agenda et OKR</li>
-          <li><strong>Mode démo instantané</strong> — aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
-        </ul>
-        <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`;
+        <p>Cosmo est une application de productivité gratuite qui réunit quatre outils habituellement séparés : la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results). L'idée de départ est simple : vos tâches du jour, vos routines et vos objectifs de fond décrivent la même vie, ils n'ont aucune raison de vivre dans trois applications qui s'ignorent.</p>
+        <p>Tout fonctionne dans le navigateur, sur ordinateur comme sur mobile, sans installation. Vous pouvez <a href="/">essayer la démo sans créer de compte</a> : elle s'ouvre pré-remplie avec 12 mois de données réalistes — 100 tâches, 100 habitudes, environ 150 événements d'agenda et 8 OKR — de quoi juger le produit chargé plutôt que face à un écran vide.</p>
+
+        <h2>Gérer ses tâches sans se noyer</h2>
+        <p>Chaque tâche porte une priorité de 1 à 5, une catégorie colorée, une échéance et, si besoin, une liste. Les filtres croisent ces critères pour répondre à la seule question qui compte le matin : qu'est-ce que je fais maintenant ? Les tâches récurrentes se régénèrent automatiquement une fois cochées, les sous-tâches découpent ce qui est trop gros, et la recherche retrouve n'importe quel élément instantanément. Les tâches se partagent aussi avec d'autres utilisateurs, en lecture ou en édition — cette collaboration est gratuite et le restera.</p>
+
+        <h2>Suivre ses habitudes et voir sa régularité</h2>
+        <p>Une habitude se définit par sa fréquence : quotidienne, hebdomadaire, ou sur des jours précis. Vous cochez, Cosmo mesure. La heatmap sur 26 semaines, dans l'esprit du graphe de contributions GitHub, rend la régularité visible d'un coup d'œil — bien mieux qu'un chiffre isolé. Le streak compte vos jours consécutifs, le taux de complétion situe la période en cours par rapport aux précédentes. La règle qui marche : commencer par deux ou trois habitudes, pas quinze.</p>
+
+        <h2>Le time-blocking, pour que le planning devienne réel</h2>
+        <p>Une tâche sans créneau reste une intention. L'agenda de Cosmo accepte le glisser-déposer depuis le panneau des tâches : vous déposez « rédiger la proposition » mardi à 14 h, l'événement se crée et reste lié à la tâche. Vues jour, semaine et mois, gestion des événements récurrents. L'intérêt du time-blocking n'est pas cosmétique — il confronte votre liste à la seule ressource vraiment limitée, les heures disponibles dans la semaine.</p>
+
+        <h2>Piloter ses objectifs avec la méthode OKR</h2>
+        <p>La <a href="/blog/methode-okr-exemples">méthode OKR</a>, popularisée par Intel puis Google, structure un objectif ambitieux en 2 à 5 résultats clés mesurables. Cosmo calcule la progression de chaque résultat clé et de l'objectif global, et archive chaque complétion pour construire votre historique. Ce que la plupart des outils OKR ne font pas : ici, vos objectifs trimestriels cohabitent avec vos tâches quotidiennes, ce qui rend visible l'écart entre ce que vous visez et ce sur quoi vous passez réellement vos journées.</p>
+
+        <h2>Un tableau de bord qui relie les quatre</h2>
+        <p>Le dashboard réunit l'avancement du jour, les habitudes à cocher, les prochains événements et la courbe des résultats clés atteints. La page Statistiques va plus loin : temps investi par catégorie, évolution sur la période, comparaison entre modules. C'est le tableau de bord de productivité qui manque quand chaque outil ne connaît qu'un quart de votre activité.</p>
+
+        <h2>Combien ça coûte ?</h2>
+        <p>Les fonctionnalités principales — tâches, habitudes, agenda, OKR, statistiques, partage — sont gratuites, sans carte bancaire ni essai limité dans le temps. Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre que vous n'y accède. En mode démo, rien ne quitte votre navigateur.</p>
+        <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a> · <a href="/blog">Le blog Cosmo</a></p>`;
 
 // Maillage interne statique commun, ajouté au bas de #seo-fallback sur TOUTES
 // les routes (y compris la home) — Ahrefs (et les crawlers sans JS) ne suivent

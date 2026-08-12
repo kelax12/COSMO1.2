@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Socle du sitemap : uniquement les pages qui n'ont PAS de registre les
+  générant. Le reste (blog, use-cases, /a-propos) est ajouté au build par
+  prerender.mjs, avec le lastmod du jour.
+
+  Volontairement ABSENTES (2026-08-12) :
+   - /signup, /login  → pages transactionnelles sans contenu propre. Elles
+     restent crawlables et reçoivent des liens internes, mais un sitemap
+     n'a de sens que pour des pages qu'on veut voir classées.
+   - /cgu, /mentions-legales, /politique-confidentialite → noindex via
+     X-Robots-Tag (vercel.json). Déclarer dans le sitemap une URL qu'on
+     désindexe est une contradiction que Search Console signale.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://thecosmo.app/</loc>
@@ -11,35 +24,5 @@
     <lastmod>2026-05-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://thecosmo.app/signup</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://thecosmo.app/login</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://thecosmo.app/cgu</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  <url>
-    <loc>https://thecosmo.app/mentions-legales</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  <url>
-    <loc>https://thecosmo.app/politique-confidentialite</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
   </url>
 </urlset>

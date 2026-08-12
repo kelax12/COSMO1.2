@@ -10,8 +10,23 @@ import { article as templateOkr } from './template-okr-gratuit.mjs';
 import { article as eisenhower } from './matrice-eisenhower.mjs';
 import { article as okrVsSmart } from './okr-vs-smart-vs-kpi.mjs';
 import { article as glossaire } from './glossaire-productivite.mjs';
+import { article as tableauDeBord } from './tableau-de-bord-productivite.mjs';
+import { article as gestionDuTemps } from './gestion-du-temps-efficace.mjs';
+import { article as suiviHabitudes } from './suivi-des-habitudes.mjs';
 
 // Ordre = du plus récent au plus ancien (affichage index + sitemap).
-export const ARTICLES = [eisenhower, okrVsSmart, glossaire, templateOkr, timeBlocking, tempsHabitude, methodeOkr, cosmoVsTodoist];
+export const ARTICLES = [
+  tableauDeBord,
+  gestionDuTemps,
+  suiviHabitudes,
+  eisenhower,
+  okrVsSmart,
+  glossaire,
+  templateOkr,
+  timeBlocking,
+  tempsHabitude,
+  methodeOkr,
+  cosmoVsTodoist,
+];
 
 export const getArticle = (slug) => ARTICLES.find((a) => a.slug === slug);

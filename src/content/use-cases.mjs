@@ -5,7 +5,7 @@ export const USE_CASES = [
     slug: 'pour-freelances',
     audience: 'freelances',
     title: "L'application de productivité pensée pour les freelances",
-    metaTitle: 'App de productivité pour freelance : tâches, temps, objectifs',
+    metaTitle: 'App de productivité freelance : tâches et objectifs',
     description:
       'Freelance : gérez clients, deadlines, prospection et objectifs trimestriels dans une seule app gratuite. Time-blocking natif, démo sans inscription.',
     lead: "Être freelance, c'est porter tous les rôles à la fois : la production, la prospection, l'administratif, la stratégie. Votre outil d'organisation doit suivre — sans vous coûter un abonnement de plus.",
@@ -26,7 +26,7 @@ export const USE_CASES = [
     slug: 'pour-etudiants',
     audience: 'étudiants',
     title: "L'application de productivité gratuite pour les étudiants",
-    metaTitle: 'App de productivité étudiant (gratuite) : révisions, deadlines',
+    metaTitle: 'App de productivité étudiant : révisions et deadlines',
     description:
       "Étudiant : organisez cours, révisions et deadlines avec le time-blocking, construisez des habitudes de travail durables. 100 % gratuit, sans carte bancaire.",
     lead: "Entre les cours, les partiels, les projets de groupe et un job à côté, le problème n'est pas le manque de motivation — c'est l'absence de système. Et un budget étudiant n'a pas de place pour un abonnement productivité.",
@@ -47,7 +47,7 @@ export const USE_CASES = [
     slug: 'pour-managers',
     audience: 'managers',
     title: "L'application de productivité pour managers et chefs d'équipe",
-    metaTitle: 'App de productivité manager : OKR, priorités, temps protégé',
+    metaTitle: 'App de productivité manager : OKR et priorités',
     description:
       "Manager : pilotez vos OKR, protégez votre temps de travail profond entre les réunions et suivez les tâches partagées avec votre équipe. Gratuit.",
     lead: "Le paradoxe du manager : plus vous êtes sollicité, moins il reste de temps pour le travail qui justifie votre poste — la stratégie, les décisions, les gens. Reprendre ce temps est un problème d'outillage autant que de discipline.",

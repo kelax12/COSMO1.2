@@ -1,16 +1,5 @@
 User-agent: *
 Allow: /
-Allow: /guide
-Allow: /blog
-Allow: /a-propos
-Allow: /pour-freelances
-Allow: /pour-etudiants
-Allow: /pour-managers
-Allow: /login
-Allow: /signup
-Allow: /cgu
-Allow: /mentions-legales
-Allow: /politique-confidentialite
 Disallow: /dashboard
 Disallow: /tasks
 Disallow: /agenda
@@ -22,8 +11,14 @@ Disallow: /premium
 Disallow: /entreprise
 Disallow: /admin
 
+# Les `Allow:` explicites par page ont été retirés le 2026-08-12 : `Allow: /`
+# les rendait tous redondants, et la liste devait être tenue à jour à chaque
+# nouvelle page publique — une source d'oubli silencieux.
+
 # /invite/ et /org-invite/ ne sont volontairement PAS bloqués ici :
 # ils sont désindexés via le header X-Robots-Tag (vercel.json), que Google
-# ne pourrait pas voir si le crawl était interdit.
+# ne pourrait pas voir si le crawl était interdit. Même raison pour les pages
+# légales (/cgu, /mentions-legales, /politique-confidentialite) : noindex par
+# header, crawl autorisé.
 
 Sitemap: https://thecosmo.app/sitemap.xml
