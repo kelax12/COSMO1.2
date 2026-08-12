@@ -1,14 +1,18 @@
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { History } from 'lucide-react';
-import { useTeamTaskActivity, type TeamActivityField } from '@/modules/team-projects';
+import { useTeamTaskActivity, type TeamActivityField, type TeamProject } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import { STATUS_META, resolveActivityValue } from './team-projects.helpers';
+import type { TeamTaskStatus } from '@/modules/team-projects';
 
 interface TeamTaskHistorySectionProps {
   taskId: string;
   members: OrgMember[];
+  /** Projets de l'org — sert à rendre lisible l'UUID écrit par le trigger. */
+  projects: TeamProject[];
 }
 
 /** Clé de libellé par champ journalisé — le trigger n'écrit que ces six-là. */
@@ -28,7 +32,7 @@ const FIELD_KEYS: Record<TeamActivityField, KeyOf<'org'>> = {
  * questions sans réponse jusqu'ici : le flux d'activité existant est dérivé de
  * l'état COURANT des tâches, il ne voit donc que ce qui est encore vrai.
  */
-const TeamTaskHistorySection = ({ taskId, members }: TeamTaskHistorySectionProps) => {
+const TeamTaskHistorySection = ({ taskId, members, projects }: TeamTaskHistorySectionProps) => {
   const { t } = useT('org');
   const { data: entries = [] } = useTeamTaskActivity(taskId);
 
@@ -36,6 +40,23 @@ const TeamTaskHistorySection = ({ taskId, members }: TeamTaskHistorySectionProps
     if (!userId) return t('taskModal.historyUnknownActor');
     return members.find((m) => m.userId === userId)?.displayName
       ?? t('taskModal.historyUnknownActor');
+  };
+
+  // Le journal stocke des valeurs brutes (statut technique, UUID) — c'est le
+  // bon choix côté base (append-only, indépendant des libellés du moment) ;
+  // la traduction se fait donc ici, au rendu. Un membre ou un projet supprimé
+  // depuis n'a plus de nom : on affiche un repli plutôt qu'un blanc.
+  const resolvers = {
+    statusLabel: (status: string) => {
+      const meta = STATUS_META[status as TeamTaskStatus];
+      return meta ? t(meta.labelKey as Parameters<typeof t>[0]) : status;
+    },
+    memberName: (userId: string) =>
+      members.find((m) => m.userId === userId)?.displayName
+        ?? t('taskModal.historyRemovedMember'),
+    projectName: (projectId: string) =>
+      projects.find((p) => p.id === projectId)?.name
+        ?? t('taskModal.historyRemovedProject'),
   };
 
   return (
@@ -56,6 +77,8 @@ const TeamTaskHistorySection = ({ taskId, members }: TeamTaskHistorySectionProps
             // savoir que le titre a changé suffit, stocker les anciens libellés
             // ferait du journal une copie du contenu (charge RGPD).
             const showValues = entry.field !== 'name';
+            const oldLabel = resolveActivityValue(entry.field, entry.oldValue, resolvers);
+            const newLabel = resolveActivityValue(entry.field, entry.newValue, resolvers);
             return (
               <li key={entry.id} className="text-xs text-[rgb(var(--color-text-secondary))]">
                 <span className="text-[rgb(var(--color-text-primary))] font-medium">
@@ -64,9 +87,9 @@ const TeamTaskHistorySection = ({ taskId, members }: TeamTaskHistorySectionProps
                 {labelKey ? t(labelKey) : entry.field}
                 {showValues && (
                   <>
-                    {entry.oldValue ? ` ${t('taskModal.historyFrom', { from: entry.oldValue })}` : ''}
-                    {entry.newValue
-                      ? ` ${t('taskModal.historyTo', { to: entry.newValue })}`
+                    {oldLabel ? ` ${t('taskModal.historyFrom', { from: oldLabel })}` : ''}
+                    {newLabel
+                      ? ` ${t('taskModal.historyTo', { to: newLabel })}`
                       : ` ${t('taskModal.historyTo', { to: t('taskModal.historyNone') })}`}
                   </>
                 )}

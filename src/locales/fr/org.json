@@ -389,6 +389,8 @@
     "historyFrom": "de {{from}}",
     "historyTo": "à {{to}}",
     "historyUnknownActor": "Quelqu'un",
+    "historyRemovedMember": "un membre retiré",
+    "historyRemovedProject": "un projet supprimé",
     "historyNone": "aucune",
     "closeForm": "Fermer le formulaire",
     "namePlaceholder": "Que faut-il faire ?",
