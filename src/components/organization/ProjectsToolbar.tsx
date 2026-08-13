@@ -12,7 +12,7 @@
 // les commentaires le disent au cas par cas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, X, ChevronDown } from 'lucide-react';
+import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, Users, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -39,10 +39,6 @@ interface ProjectsToolbarProps {
    *  affiché (au moins une équipe déjà créée). */
   onCreateTeam: () => void;
 }
-
-/** Valeur sentinelle du `<select>` équipe : jamais un vrai `teamId`, jamais
- *  écrite dans `teamFilter` — n'ouvre que la création. */
-const CREATE_TEAM_VALUE = '__create_team__';
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
  *  toutes, et leur `title` n'apparaît jamais sur écran tactile. */
@@ -216,53 +212,59 @@ const ProjectsToolbar = ({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
 
-          {/* Le libellé nomme l'axe : « Toutes les équipes » seul ne disait pas
-              de quoi il parlait au milieu de trois autres filtres.
-
-              Le <select> N'EST PAS enveloppé dans un conteneur bordé : une
-              règle globale (index.css, « Global Input Styles ») pose déjà
-              `border` + `rounded-lg` en `!important` sur TOUT <select> de
-              l'app — un `border-0` local ne peut pas gagner contre un
-              `!important`, d'où le double liséré observé. Le pattern déjà en
-              place ailleurs (TaskFilter, TaskSidebar) laisse le <select>
-              porter sa propre bordure ; on s'y aligne au lieu de la
-              recouvrir d'une seconde. */}
-          {teams.length > 0 && (
-            <label className="inline-flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-muted))]">
-              <span className="hidden sm:inline">{t('projects.teamLabel')}</span>
-              <span className="relative inline-flex items-center">
-                <select
-                  value={teamFilter}
-                  onChange={(e) => {
-                    // Sentinelle : n'écrit jamais le filtre, ouvre juste la
-                    // création. Le <select> reste contrôlé par `teamFilter`
-                    // (inchangé), React le refait donc pointer sur l'option
-                    // précédente au rendu suivant.
-                    if (e.target.value === CREATE_TEAM_VALUE) { onCreateTeam(); return; }
-                    updatePrefs({ teamFilter: e.target.value });
-                  }}
+            {/* 4ᵉ segment : équipe, même grammaire que « Une personne » — un
+                menu dont le déclencheur porte l'état sélectionné. Avant, ce
+                filtre vivait dans un `<select>` séparé hors du groupe : rien
+                ne disait qu'il appartenait au même axe « qu'est-ce que je
+                regarde ? » que Tout / Moi / Une personne. */}
+            {teams.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   aria-label={t('projects.filterTeam')}
-                  className="appearance-none h-9 pl-2.5 pr-6 bg-[rgb(var(--color-surface))] text-sm font-medium text-[rgb(var(--color-text-primary))] max-w-[9rem] cursor-pointer"
+                  aria-pressed={teamFilter !== ''}
+                  className={`${segBase} inline-flex items-center gap-1.5 ${teamFilter !== '' ? segOn : segOff}`}
                 >
-                  <option value="">{t('projects.allTeams')}</option>
-                  <option value="org">{t('projects.orgNoTeam')}</option>
+                  <Users size={14} aria-hidden="true" />
+                  <span className="hidden sm:inline max-w-[100px] truncate">
+                    {teamFilter === '' ? t('projects.teamLabel') : teamLabel}
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
+                  <DropdownMenuLabel>{t('projects.filterTeam')}</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: '' })}>
+                    <span className="text-[rgb(var(--color-text-muted))]">{t('projects.allTeams')}</span>
+                    {teamFilter === '' && (
+                      <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: 'org' })}>
+                    <span>{t('projects.orgNoTeam')}</span>
+                    {teamFilter === 'org' && (
+                      <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   {teams.map((tm) => (
-                    <option key={tm.id} value={tm.id}>{tm.name}</option>
+                    <DropdownMenuItem key={tm.id} onClick={() => updatePrefs({ teamFilter: tm.id })}>
+                      <span className="truncate">{tm.name}</span>
+                      {tm.id === teamFilter && (
+                        <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
+                      )}
+                    </DropdownMenuItem>
                   ))}
                   {isManager && (
-                    <option value={CREATE_TEAM_VALUE}>{t('projects.createTeamOption')}</option>
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onCreateTeam}>
+                        <span className="text-indigo-600 dark:text-indigo-400">{t('projects.createTeamOption')}</span>
+                      </DropdownMenuItem>
+                    </>
                   )}
-                </select>
-                <ChevronDown
-                  size={12}
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-2 text-[rgb(var(--color-text-muted))]"
-                />
-              </span>
-            </label>
-          )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {/* ── Vue, réglages rares, action primaire ───────────────── */}
