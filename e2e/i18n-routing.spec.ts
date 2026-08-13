@@ -27,9 +27,16 @@ async function withoutStoredLocale(page: Page) {
  *
  * Un `getByText(/404/)` matcherait n'importe quel « 404 » de la landing ou du
  * blog — un test qui passe pour la mauvaise raison est pire qu'un test absent.
+ *
+ * ⚠️ Le libellé est TRADUIT, et ces tests visitent justement des URL sous
+ * préfixe de locale : sous `/en/`, la 404 s'affiche en anglais. La version
+ * française seule faisait échouer `/en/a-propos tombe en 404` alors que l'app
+ * rendait bien la 404 — l'assertion était aveugle à la locale, pas le routeur.
+ * C'est la limite du seul cas où ce fichier s'autorise un libellé (cf. son
+ * en-tête) : il doit alors les couvrir tous.
  */
 const notFoundHeading = (page: Page) =>
-  page.getByRole('heading', { name: /page introuvable/i });
+  page.getByRole('heading', { name: /page introuvable|page not found/i });
 
 /** Force la langue annoncée par le navigateur, pour tester la détection auto. */
 async function withNavigatorLanguage(page: Page, language: string) {
