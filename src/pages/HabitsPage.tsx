@@ -274,12 +274,15 @@ const HabitsPage: React.FC = () => {
       </motion.button>
 
       {/* Tutoriel page Habitudes — variante adaptée au viewport */}
-      {/* accentColor en jaune foncé : #EAB308 ne passait pas le contraste AA (1.9:1, le pire relevé) avec le texte blanc du bouton "Suivant" */}
+      {/* accentColor = jaune clair d'origine (décoratif : anneau, dots, bordure — pas de texte dessus).
+          buttonColor = variante foncée AA-safe (#EAB308 ne passait pas le contraste 1.9:1 avec le texte
+          blanc du bouton "Suivant") — réservée aux éléments avec texte blanc. */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#A16207"
+        accentColor="#EAB308"
+        buttonColor="#A16207"
       />
 
       {/* Bannière pub quotidienne NON bloquante (#50) — la page reste

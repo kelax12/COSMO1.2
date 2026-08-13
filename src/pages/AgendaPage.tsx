@@ -887,12 +887,14 @@ const AgendaPage: React.FC = () => {
       />
 
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
-      {/* accentColor en rouge foncé : #EF4444 ne passait pas le contraste AA (3.8:1) avec le texte blanc du bouton "Suivant" */}
+      {/* accentColor = rouge clair d'origine (décoratif). buttonColor = variante foncée AA-safe
+          (#EF4444 ne passait pas le contraste AA 3.8:1 avec le texte blanc) — réservée au texte blanc. */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#DC2626"
+        accentColor="#EF4444"
+        buttonColor="#DC2626"
       />
     </motion.div>
   );
