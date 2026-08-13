@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useDemoBridge } from '@/lib/hooks/use-demo-bridge';
 import { recordFallbackSource } from '@/lib/attribution';
 import { useT } from '@/i18n/useT';
@@ -48,14 +48,9 @@ const DemoBridgePrompt: React.FC = () => {
         >
           <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl shadow-gray-200/80 dark:shadow-black/40 overflow-hidden">
             <div className="flex items-start justify-between px-4 pt-4 pb-3 gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-[8px] bg-[rgb(var(--color-accent-solid))]/10 flex items-center justify-center shrink-0">
-                  <Sparkles size={16} className="text-[rgb(var(--color-accent-solid))]" aria-hidden="true" />
-                </div>
-                <span className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))]">
-                  {t('demoBridge.title')}
-                </span>
-              </div>
+              <span className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))]">
+                {t('demoBridge.title')}
+              </span>
               <button
                 type="button"
                 onClick={snooze}
