@@ -40,6 +40,7 @@ import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
 import { useActiveModules } from '@/modules/ui-states';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
+import DemoBridgePrompt from './DemoBridgePrompt';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
@@ -351,6 +352,10 @@ const NavItems = () =>
   // n'existaient tout simplement pas sur mobile).
   const globalOverlays = (
     <>
+      {/* Pont démo → compte : proposé au visiteur démo engagé (90 s ou 3ᵉ
+          création). Monté ici pour n'exister qu'une fois, mobile et desktop
+          partageant ce fragment. */}
+      <DemoBridgePrompt />
       {/* Quick-add global (touche N / FAB éclair) — lazy */}
       <Suspense fallback={null}>
         <QuickAddBar />

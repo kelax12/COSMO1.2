@@ -130,6 +130,14 @@
     "rest": " pour démarrer avec vos vraies données, synchronisées partout.",
     "hide": "Masquer la bannière démo"
   },
+  "demoBridge": {
+    "aria": "Créer un compte COSMO",
+    "title": "Gardez votre organisation",
+    "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils — c'est gratuit.",
+    "disclaimer": "Les données de cette démo ne sont pas transférées : votre compte repart d'une page blanche.",
+    "cta": "Créer mon compte",
+    "later": "Plus tard"
+  },
   "notFound": {
     "title": "Page introuvable",
     "body": "Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse, ou repartez de l'accueil.",

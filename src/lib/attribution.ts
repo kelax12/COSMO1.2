@@ -92,6 +92,27 @@ export function readFirstTouch(): FirstTouch | null {
 }
 
 /**
+ * Pose une source de repli si — et seulement si — aucune attribution valide
+ * n'existe déjà.
+ *
+ * Sert aux canaux qui ne passent pas par une URL trackée : typiquement une
+ * inscription lancée depuis le mode démo (`'demo'`). Une vraie campagne
+ * (`?ref=tiktok`) prime TOUJOURS — c'est elle qui a amené le visiteur, la démo
+ * n'est qu'une étape de son parcours.
+ */
+export function recordFallbackSource(source: string): void {
+  try {
+    if (readFirstTouch()) return;
+    const clean = normalizeSourceValue(source);
+    if (!clean) return;
+    const entry: FirstTouch = { source: clean, ts: Date.now() };
+    localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(entry));
+  } catch {
+    /* localStorage indisponible — l'inscription doit aboutir quand même. */
+  }
+}
+
+/**
  * Lit `?ref=` / `utm_*` dans l'URL courante et stocke la source si — et
  * seulement si — aucune attribution valide n'existe déjà.
  *

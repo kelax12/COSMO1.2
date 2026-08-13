@@ -5,6 +5,7 @@ import { getEventsRepository } from '@/lib/repository.factory';
 import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 import { eventsKeys } from './constants';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -76,6 +77,8 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: (input: CreateEventInput) => repository.create(input),
     onSuccess: (newEvent) => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       // Ajoute aux caches list-like (cache complet + toutes les fenêtres).
       queryClient.setQueriesData<CalendarEvent[]>(
         { queryKey: eventsKeys.lists() },

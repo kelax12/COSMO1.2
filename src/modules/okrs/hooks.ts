@@ -14,6 +14,7 @@ import { krCompletionKeys } from '@/modules/kr-completions/constants';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createOKRSchema, updateOKRSchema } from './okr.schema';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -131,6 +132,8 @@ export const useCreateOkr = () => {
       return repository.create(input);
     },
     onSuccess: () => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       invalidateAllOKRQueries(queryClient);
     },
     onError: (error: Error) => {

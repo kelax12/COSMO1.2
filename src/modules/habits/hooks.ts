@@ -8,6 +8,7 @@ import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
 // Repository - Via centralized factory (demo/production mode)
 const useHabitsRepository = (): IHabitsRepository => {
@@ -49,6 +50,8 @@ export const useCreateHabit = () => {
   return useMutation({
     mutationFn: (input: CreateHabitInput) => repository.createHabit(input),
     onSuccess: () => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
     },
     onError: (error: Error) => {
