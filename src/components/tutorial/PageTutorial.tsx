@@ -21,17 +21,18 @@ interface PageTutorialProps {
   /** isOpen / close fournis par useTutorial */
   isOpen: boolean;
   onClose: () => void;
-  /** Couleur d'accent décorative (anneau spotlight, flèche, bordures, dots). Défaut bleu. */
+  /** Couleur d'accent — bordures, spotlight, flèche, fond des boutons/ghosts. Défaut bleu. */
   accentColor?: string;
-  /** Couleur de fond pour le texte blanc (bouton "Suivant", ghost de drag) — doit rester AA-safe. Défaut = accentColor. */
-  buttonColor?: string;
+  /** Couleur du texte porté par accentColor (bouton "Suivant", ghost de drag).
+      'white' par défaut ; passer une teinte sombre si accentColor est trop claire
+      pour offrir un contraste AA suffisant en blanc (ex. jaune, vert clair, rouge clair). */
+  buttonTextColor?: string;
 }
 
 // ───────────────────────────────────────────────────────────────────
 // Composant principal
 // ───────────────────────────────────────────────────────────────────
-const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, accentColor = '#3B82F6', buttonColor }) => {
-  const btnColor = buttonColor ?? accentColor;
+const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, accentColor = '#3B82F6', buttonTextColor = 'white' }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [dragGhost, setDragGhost] = useState<{ from: TargetRect; to: TargetRect } | null>(null);
@@ -454,9 +455,9 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
               className="absolute pointer-events-none rounded-lg shadow-2xl flex items-center justify-start px-2.5 overflow-hidden"
               style={{
                 width: GHOST_W,
-                background: `linear-gradient(135deg, ${btnColor}, ${btnColor}cc)`,
-                border: `2px solid ${btnColor}`,
-                color: 'white',
+                background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
+                border: `2px solid ${accentColor}`,
+                color: buttonTextColor,
                 fontWeight: 700,
                 fontSize: 12,
               }}
@@ -559,11 +560,11 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
             style={{
               background: ghost.isDashed
                 ? `${accentColor}33`
-                : `linear-gradient(135deg, ${btnColor}, ${btnColor}dd)`,
+                : `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
               border: ghost.isDashed
                 ? `2px dashed ${accentColor}`
-                : `2px solid ${btnColor}`,
-              color: 'white',
+                : `2px solid ${accentColor}`,
+              color: buttonTextColor,
               fontWeight: 700,
               fontSize: 11,
               padding: '4px 6px',
@@ -588,7 +589,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
           totalSteps={totalSteps}
           visibleSteps={visibleSteps}
           accentColor={accentColor}
-          buttonColor={btnColor}
+          buttonTextColor={buttonTextColor}
           cardStyle={cardStyle}
           onClose={handleClose}
           onPrev={handlePrev}
