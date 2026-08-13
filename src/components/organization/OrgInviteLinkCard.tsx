@@ -7,6 +7,13 @@ import { useT } from '@/i18n/useT';
 interface OrgInviteLinkCardProps {
   orgId: string;
   /**
+   * Quota de sièges atteint ET facturation appliquée : générer un lien serait
+   * un piège — le serveur refuserait l'entrée AU MOMENT DU CLIC de l'invité
+   * (`seat_limit_reached`), c'est-à-dire chez quelqu'un qui n'a aucun moyen
+   * de comprendre pourquoi ni d'y remédier.
+   */
+  seatsFull?: boolean;
+  /**
    * auth.users.id sous lequel la nouvelle personne sera rattachée (l'utilisateur
    * courant). La policy INSERT org_invite_links autorise « sous soi ».
    */
@@ -19,7 +26,7 @@ interface OrgInviteLinkCardProps {
  * qui fait entrer un NOUVEAU directement dans l'entreprise, rattaché à
  * l'utilisateur courant (le lien vaut approbation — pas de validation admin).
  */
-const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
+const OrgInviteLinkCard = ({ orgId, managerId, seatsFull = false }: OrgInviteLinkCardProps) => {
   const { t } = useT('org');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -54,6 +61,11 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
         {t('invite.linkHint')}
       </p>
+      {seatsFull && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 mb-3" role="status">
+          {t('invite.seatsFullLink')}
+        </p>
+      )}
       {inviteUrl ? (
         <div className="flex items-center gap-2">
           <code className="flex-1 min-w-0 text-[11px] px-3 py-2.5 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] truncate">
@@ -70,7 +82,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
           <button
             type="button"
             onClick={generateLink}
-            disabled={createLink.isPending}
+            disabled={createLink.isPending || seatsFull}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] hover:text-indigo-500 flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors disabled:opacity-50 shrink-0"
             aria-label={t('invite.generateNewLink')}
             title={t('invite.generateNewLink')}
@@ -82,7 +94,7 @@ const OrgInviteLinkCard = ({ orgId, managerId }: OrgInviteLinkCardProps) => {
         <button
           type="button"
           onClick={generateLink}
-          disabled={createLink.isPending}
+          disabled={createLink.isPending || seatsFull}
           className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
         >
           {createLink.isPending ? t('invite.generating') : t('invite.generateLink')}

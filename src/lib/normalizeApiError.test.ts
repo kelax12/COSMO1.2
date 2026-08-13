@@ -55,3 +55,49 @@ describe('normalizeApiError — never leaks raw server message (V7)', () => {
     expect(out.originalMessage).toBe('boom');
   });
 });
+
+describe("normalizeApiError - erreurs metier des fonctions SQL (RAISE EXCEPTION)", () => {
+  // PostgREST renvoie TOUJOURS P0001 pour un RAISE EXCEPTION : l'identifiant
+  // metier n'est que dans `message`. Sans relais, ces refus tombaient tous sur
+  // le message generique.
+  it.each([
+    ["seat_limit_reached", "places"],
+    ["expired_link", "expiré"],
+    ["invalid_link", "valide"],
+    ["own_link", "propre lien"],
+    ["not_org_admin", "administrateurs"],
+  ])("promeut %s en code metier", (identifier, fragment) => {
+    const out = normalizeApiError({ code: "P0001", message: identifier });
+    expect(out.code).toBe(identifier);
+    expect(out.message).toContain(fragment);
+  });
+
+  it("ne promeut PAS un identifiant absent du catalogue", () => {
+    const out = normalizeApiError({ code: "P0001", message: "some_unknown_thing" });
+    expect(out.code).toBe("P0001");
+    expect(out.message).toBe("Une erreur inattendue est survenue.");
+  });
+
+  // La garantie V7/N1 doit tenir : une phrase Postgres n'est pas un
+  // identifiant, elle ne doit jamais servir de cle ni finir a l'ecran.
+  it("ne promeut PAS une phrase Postgres et ne la rend jamais", () => {
+    const raw = 'duplicate key value violates unique constraint "org_members_pkey"';
+    const out = normalizeApiError({ code: "P0001", message: raw });
+    expect(out.code).toBe("P0001");
+    expect(out.message).toBe("Une erreur inattendue est survenue.");
+    expect(out.message).not.toContain("org_members_pkey");
+    expect(out.originalMessage).toBe(raw);
+  });
+
+  it("laisse gagner un code deja whiteliste sur le contenu du message", () => {
+    const out = normalizeApiError({ code: "23505", message: "expired_link" });
+    expect(out.code).toBe("23505");
+    expect(out.message).toBe("Cette ressource existe déjà.");
+  });
+
+  it("fonctionne aussi sur la forme imbriquee { error: { code, message } }", () => {
+    const out = normalizeApiError({ error: { code: "P0001", message: "seat_limit_reached" } });
+    expect(out.code).toBe("seat_limit_reached");
+    expect(out.message).toContain("places");
+  });
+});

@@ -7,6 +7,8 @@ import { useT } from '@/i18n/useT';
 interface OrgJoinCodeCardProps {
   code: string;
   orgId: string;
+  /** Quota atteint : une demande faite avec ce code serait refusée à l'acceptation. */
+  seatsFull?: boolean;
   /** Admin : peut régénérer le code (invalide l'ancien). */
   isAdmin?: boolean;
 }
@@ -15,7 +17,7 @@ interface OrgJoinCodeCardProps {
  * Carte « Code d'invitation » — visible par tous les membres, copiable.
  * Le code circule pour inviter ; l'admin valide chaque demande (pattern inbox).
  */
-const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps) => {
+const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: OrgJoinCodeCardProps) => {
   const { t } = useT('org');
   const [copied, setCopied] = useState(false);
   const regenerateMutation = useRegenerateJoinCode();
@@ -42,6 +44,11 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false }: OrgJoinCodeCardProps)
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
         {t('invite.codeHint')}
       </p>
+      {seatsFull && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 mb-3" role="status">
+          {t('invite.seatsFullCode')}
+        </p>
+      )}
       <div className="flex items-center gap-2">
         <code className="flex-1 text-base font-bold tracking-widest px-3 py-2.5 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center">
           {code}
