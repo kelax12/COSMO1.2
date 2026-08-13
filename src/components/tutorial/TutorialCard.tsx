@@ -10,8 +10,9 @@ interface TutorialCardProps {
   totalSteps: number;
   visibleSteps: TutorialStep[];
   accentColor: string;
-  /** Couleur du fond du bouton "Suivant" (texte blanc dessus) — AA-safe, peut différer de accentColor. */
-  buttonColor: string;
+  /** Couleur du texte du bouton "Suivant" — 'white' par défaut, ou une teinte sombre
+      quand accentColor est trop claire pour offrir un contraste AA suffisant en blanc. */
+  buttonTextColor: string;
   cardStyle: React.CSSProperties;
   onClose: () => void;
   onPrev: () => void;
@@ -27,7 +28,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
   totalSteps,
   visibleSteps,
   accentColor,
-  buttonColor,
+  buttonTextColor,
   cardStyle,
   onClose,
   onPrev,
@@ -101,8 +102,8 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
         <button
           type="button"
           onClick={onNext}
-          className="px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-bold text-sm text-white shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform flex items-center gap-1.5"
-          style={{ backgroundColor: buttonColor }}
+          className="px-4 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-bold text-sm shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform flex items-center gap-1.5"
+          style={{ backgroundColor: accentColor, color: buttonTextColor }}
         >
           {stepIndex === totalSteps - 1 ? t('tutorial.done') : t('tutorial.next')}
           {stepIndex < totalSteps - 1 && <ArrowRight size={14} />}
