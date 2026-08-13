@@ -274,16 +274,11 @@ const HabitsPage: React.FC = () => {
       </motion.button>
 
       {/* Tutoriel page Habitudes — variante adaptée au viewport */}
-      {/* accentColor = jaune de la charte graphique (Habitudes), inchangé partout (anneau,
-          dots, bordure, bouton "Suivant"). Texte du bouton en sombre plutôt qu'en blanc :
-          #EAB308 ne passait pas le contraste AA (1.9:1) avec du texte blanc, mais un texte
-          sombre dessus passe largement (~10:1). */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#EAB308"
-        buttonTextColor="#1a1a1a"
       />
 
       {/* Bannière pub quotidienne NON bloquante (#50) — la page reste

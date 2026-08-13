@@ -887,15 +887,11 @@ const AgendaPage: React.FC = () => {
       />
 
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
-      {/* accentColor = rouge de la charte graphique (Agenda), inchangé partout. Texte du bouton en
-          sombre plutôt qu'en blanc : #EF4444 ne passait pas le contraste AA (3.8:1) avec du texte
-          blanc, mais un texte sombre dessus passe largement (~5.6:1). */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#EF4444"
-        buttonTextColor="#1a1a1a"
       />
     </motion.div>
   );

@@ -498,15 +498,11 @@ const OKRPage: React.FC = () => {
       </motion.button>
 
       {/* Tutoriel page OKR — variante adaptée au viewport */}
-      {/* accentColor = vert de la charte graphique (OKR), inchangé partout. Texte du bouton en
-          sombre plutôt qu'en blanc : #22C55E ne passait pas le contraste AA (2.3:1) avec du texte
-          blanc, mais un texte sombre dessus passe largement (~9:1). */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
         accentColor="#22C55E"
-        buttonTextColor="#1a1a1a"
       />
 
       {/* Check-in hebdo — accessible manuellement en mode démo (en prod il
