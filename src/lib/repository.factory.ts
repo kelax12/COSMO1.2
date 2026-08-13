@@ -352,9 +352,14 @@ export function clearDemoStorage(): void {
   // démo. Sans cette entrée, le balayage `cosmo_*` l'effaçait — un utilisateur
   // qui passait l'app en anglais puis entrait en démo se retrouvait en
   // français, sans comprendre pourquoi.
+  // cosmo_first_touch : source d'acquisition (src/lib/attribution.ts). Le
+  // parcours le plus fréquent du plan d'acquisition est « lien ?ref=canal →
+  // Essayer la démo → inscription » : sans cette entrée, le sweep effacerait
+  // l'attribution juste avant l'inscription qu'elle doit expliquer.
   const PRESERVE_KEYS = new Set([
     'cosmo_cookie_consent',
     'cosmo_demo_device_id',
+    'cosmo_first_touch',
     LOCALE_STORAGE_KEY,
   ]);
   LEGACY_KEYS.forEach(key => localStorage.removeItem(key));

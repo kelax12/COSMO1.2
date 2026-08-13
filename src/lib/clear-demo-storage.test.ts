@@ -40,6 +40,20 @@ describe('clearDemoStorage (B21 prefix sweep)', () => {
     expect(localStorage.getItem('cosmo_demo_tasks')).toBeNull();
   });
 
+  it("préserve l'attribution first-touch (cosmo_first_touch)", () => {
+    // Parcours le plus fréquent du plan d'acquisition : lien ?ref=canal →
+    // « Essayer la démo » → inscription. Si le sweep effaçait la clé, chaque
+    // inscription passée par la démo serait attribuée à « inconnu ».
+    const entry = JSON.stringify({ source: 'tiktok', ts: Date.now() });
+    localStorage.setItem('cosmo_first_touch', entry);
+    localStorage.setItem('cosmo_demo_tasks', '[]');
+
+    clearDemoStorage();
+
+    expect(localStorage.getItem('cosmo_first_touch')).toBe(entry);
+    expect(localStorage.getItem('cosmo_demo_tasks')).toBeNull();
+  });
+
   it('préserve la langue choisie (i18n)', () => {
     // La langue est un réglage d'INTERFACE, pas une donnée de démo. Le balayage
     // `cosmo_*` l'effaçait : un utilisateur qui passait l'app en anglais puis
