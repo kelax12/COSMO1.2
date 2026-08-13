@@ -121,7 +121,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                     key={task.id}
                     type="button"
                     onClick={() => { onAssign(task); onClose(); }}
-                    aria-label={`Attribuer la tâche ${task.name}`}
+                    aria-label={t('projects.assignTaskAria', { name: task.name })}
                     className="w-full text-left rounded-xl border border-transparent hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] px-3 py-2 transition-colors"
                   >
                     <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</p>

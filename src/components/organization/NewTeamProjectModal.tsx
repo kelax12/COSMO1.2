@@ -38,7 +38,7 @@ const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(v
  * liste de tâches initiales, chacune assignable à des membres.
  */
 const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose }: NewTeamProjectModalProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const [name, setName] = useState('');
   const [color, setColor] = useState('blue');
   const [teamId, setTeamId] = useState(defaultTeamId ?? '');
@@ -81,7 +81,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
 
   const handleSubmit = async () => {
     if (pending) return;
-    if (!name.trim()) { setError('Le nom du projet est requis'); return; }
+    if (!name.trim()) { setError(t('project.nameRequired')); return; }
     setPending(true);
     setError(null);
     // Une tâche en cours de saisie non ajoutée est incluse (évite la perte).
@@ -234,7 +234,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
             <p className="mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {teamId
                 ? t('project.teamHint')
-                : 'Visible par toute l\'entreprise.'}
+                : t('project.visibleWholeOrg')}
             </p>
           </div>
 
@@ -247,7 +247,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
 
             {tasks.length > 0 && (
               <ul className="space-y-1.5 mb-2">
-                {tasks.map((t, i) => (
+                {tasks.map((draft, i) => (
                   <li
                     key={i}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg border"
@@ -255,17 +255,17 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_META[3].dot}`} aria-hidden="true" />
                     <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                      {t.name}
+                      {draft.name}
                     </span>
-                    {t.assigneeIds.length > 0 && (
+                    {draft.assigneeIds.length > 0 && (
                       <span className="text-[11px] shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        {t.assigneeIds.length} assigné{t.assigneeIds.length > 1 ? 's' : ''}
+                        {tp('assign.assigneeCount', draft.assigneeIds.length)}
                       </span>
                     )}
                     <button
                       type="button"
                       onClick={() => removeTask(i)}
-                      aria-label={`Retirer la tâche ${t.name}`}
+                      aria-label={t('projects.removeTaskAria', { name: draft.name })}
                       className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 shrink-0"
                     >
                       <Trash2 size={14} aria-hidden="true" />
@@ -331,7 +331,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 <span>{t('project.creating')}</span>
               </>
             ) : (
-              tasks.length > 0 ? `Créer le projet (${tasks.length} tâche${tasks.length > 1 ? 's' : ''})` : 'Créer le projet'
+              tasks.length > 0 ? tp('project.createWithTasks', tasks.length) : t('project.create')
             )}
           </Button>
         </div>

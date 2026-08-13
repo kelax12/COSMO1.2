@@ -28,7 +28,12 @@
     "memberOf": "partie de",
     "goToOrg": "Accéder à mon entreprise",
     "orCreateAnother": "— ou en créer/rejoindre une autre —",
-    "later": "Plus tard, accéder à l'application"
+    "later": "Plus tard, accéder à l'application",
+    "title": "Votre espace entreprise",
+    "memberOfOrg": "Vous faites partie de {{name}}.",
+    "memberOfCount_one": "Vous faites partie de {{count}} entreprise.",
+    "memberOfCount_other": "Vous faites partie de {{count}} entreprises.",
+    "memberOfCount_many": "Vous faites partie de {{count}} d'entreprises."
   },
   "claim": {
     "backHome": "Retour à l'accueil Cosmo",
@@ -39,7 +44,9 @@
     "createAccount": "Créer un compte",
     "invitedText": "On vous invite à rejoindre une entreprise sur COSMO, directement à votre place dans l'équipe.",
     "joining": "Adhésion…",
-    "join": "Rejoindre l'entreprise"
+    "join": "Rejoindre l'entreprise",
+    "joined": "Vous avez rejoint {{name}} !",
+    "signIn": "Se connecter"
   },
   "createJoin": {
     "codeCopied": "Code copié",
@@ -54,7 +61,9 @@
     "joinOrg": "Rejoindre une entreprise",
     "joinOrgHint": "Saisissez le code d'invitation reçu de votre administrateur.",
     "creating": "Création…",
-    "createCta": "Créer l'entreprise"
+    "createCta": "Créer l'entreprise",
+    "sendRequest": "Envoyer la demande",
+    "sending": "Envoi…"
   },
   "invite": {
     "linkCopied": "Lien copié",
@@ -100,7 +109,7 @@
     "unplaced": "Non placés ({{count}})",
     "unplacedHintAdmin": "Ces membres ne sont rattachés à personne. Placez-les dans la pyramide.",
     "unplacedHintMember": "Ces membres ne sont rattachés à personne. Un administrateur doit les placer.",
-    "intro": "La pyramide représente qui travaille avec qui : chaque membre est rattaché à un",
+    "intro": "La pyramide représente qui travaille avec qui : chaque membre est rattaché à un responsable direct (N+1). Invitez vos collaborateurs pour la construire.",
     "results_one": "{{count}} résultat",
     "results_many": "{{count}} de résultats",
     "results_other": "{{count}} résultats",
@@ -138,7 +147,14 @@
     "overlayHint": "Colore les cartes selon le temps estimé restant",
     "seeTasksAction": "Voir ses tâches",
     "emptyTitle": "Votre pyramide est vide",
-    "inviteFirst": "Inviter votre premier collaborateur"
+    "inviteFirst": "Inviter votre premier collaborateur",
+    "workloadTitle_one": "{{duration}} · {{count}} ouverte",
+    "workloadTitle_other": "{{duration}} · {{count}} ouvertes",
+    "workloadTitleOverdue_one": "{{duration}} · {{count}} ouverte · {{overdue}} en retard",
+    "workloadTitleOverdue_other": "{{duration}} · {{count}} ouvertes · {{overdue}} en retard",
+    "workloadTitle_many": "{{duration}} · {{count}} d'ouvertes",
+    "workloadTitleOverdue_many": "{{duration}} · {{count}} d'ouvertes · {{overdue}} en retard",
+    "dragHint": "Glisser {{name}} dans la pyramide"
   },
   "overview": {
     "completed": "Terminées",
@@ -202,7 +218,13 @@
     "noDeadline": "Aucune échéance datée.",
     "stepInvite": "Inviter des membres",
     "myTasksSection": "Mes tâches ({{count}})",
-    "orgDeadlines": "Prochaines échéances de l'entreprise"
+    "orgDeadlines": "Prochaines échéances de l'entreprise",
+    "stepTeam": "Créer une première équipe",
+    "welcomeTitle": "Bienvenue dans l'espace de votre entreprise",
+    "welcomeIntro": "Rien ne vous est encore assigné. En attendant, voici par où commencer.",
+    "hintProjects": "Voir les projets de l'équipe",
+    "hintMembers": "Découvrir qui fait quoi dans l'annuaire",
+    "hintOkr": "Suivre les objectifs de votre équipe"
   },
   "okrModal": {
     "edit": "Modifier l'objectif",
@@ -228,7 +250,8 @@
     "save": "Enregistrer",
     "create": "Créer",
     "descPlaceholder": "Facultatif…",
-    "wholeOrg": "Toute l'entreprise"
+    "wholeOrg": "Toute l'entreprise",
+    "visibilityWholeOrg": "Objectif visible par tous les membres de l'entreprise."
   },
   "projects": {
     "taskDeleted": "Tâche supprimée",
@@ -329,7 +352,16 @@
     "chipOpen": "Ouvertes",
     "chipOverdue": "En retard",
     "chipDone": "Terminées cette semaine",
-    "selectHint": "Sélectionnez des tâches"
+    "selectHint": "Sélectionnez des tâches",
+    "markComplete": "Marquer comme terminée",
+    "markIncomplete": "Marquer comme non terminée",
+    "deadlineOverdue": "{{date}} · en retard",
+    "editTaskAria": "Modifier la tâche {{name}}",
+    "deleteTaskAria": "Supprimer la tâche {{name}}",
+    "assignTaskAria": "Attribuer la tâche {{name}}",
+    "removeTaskAria": "Retirer la tâche {{name}}",
+    "noTaskForFilter": "Aucune tâche pour ce filtre.",
+    "noTask": "Aucune tâche."
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -345,7 +377,10 @@
     "completionRate": "Taux de complétion",
     "tasksDone": "Tâches terminées",
     "progress": "Progression",
-    "addTask": "Ajouter une tâche"
+    "addTask": "Ajouter une tâche",
+    "inProgress": "En cours ({{count}})",
+    "inProgressShort": "En cours",
+    "overdueShort": "En retard"
   },
   "taskModal": {
     "newAria": "Nouvelle tâche d'équipe",
@@ -395,7 +430,10 @@
     "closeForm": "Fermer le formulaire",
     "namePlaceholder": "Que faut-il faire ?",
     "timePlaceholder": "Ex : 45",
-    "hasDescription": "Contient une description"
+    "hasDescription": "Contient une description",
+    "assignTask": "Assigner la tâche",
+    "nameRequired": "Le nom de la tâche est requis",
+    "projectRequired": "Choisissez un projet"
   },
   "team": {
     "newTeam": "Nouvelle équipe",
@@ -445,7 +483,23 @@
     "restore": "Restaurer",
     "archive": "Archiver",
     "renameAria": "Renommer le projet",
-    "initialTasks": "Tâches initiales (optionnel)"
+    "initialTasks": "Tâches initiales (optionnel)",
+    "nameRequired": "Le nom du projet est requis",
+    "createWithTasks_one": "Créer le projet ({{count}} tâche)",
+    "createWithTasks_other": "Créer le projet ({{count}} tâches)",
+    "overdueBadge": "{{count}} en retard",
+    "overdueTitle_one": "{{count}} tâche en retard",
+    "overdueTitle_other": "{{count}} tâches en retard",
+    "memberOpen_one": "{{name}} — {{count}} tâche ouverte",
+    "memberOpen_other": "{{name}} — {{count}} tâches ouvertes",
+    "memberOpenOverdue_one": "{{name}} — {{count}} tâche ouverte, {{overdue}} en retard",
+    "memberOpenOverdue_other": "{{name}} — {{count}} tâches ouvertes, {{overdue}} en retard",
+    "createWithTasks_many": "Créer le projet ({{count}} de tâches)",
+    "overdueTitle_many": "{{count}} de tâches en retard",
+    "memberOpen_many": "{{name}} — {{count}} de tâches ouvertes",
+    "memberOpenOverdue_many": "{{name}} — {{count}} de tâches ouvertes, {{overdue}} en retard",
+    "visibleWholeOrg": "Visible par toute l'entreprise.",
+    "actionsAria": "Actions du projet {{name}}"
   },
   "deleteOrg": {
     "irreversible": "Cette action est irréversible.",
@@ -456,7 +510,9 @@
     "teamsErased": "Les équipes, invitations et la pyramide sont effacées.",
     "personalSafe": "Les données personnelles des membres ne sont pas affectées.",
     "confirmPrefix": "Pour confirmer, tapez",
-    "confirmSuffix": "ci-dessous :"
+    "confirmSuffix": "ci-dessous :",
+    "confirmAction": "Supprimer cette entreprise",
+    "deleting": "Suppression…"
   },
   "consent": {
     "visibility": "Les membres voient votre nom, votre avatar et votre activité sur les projets d'équipe (tâches, commentaires).",
@@ -472,7 +528,11 @@
     "sector": "Secteur d'activité",
     "sectorPlaceholder": "Design & Tech, Artisanat, Santé…",
     "unsupportedFormat": "Format non supporté (JPEG, PNG, WebP, GIF)",
-    "tooLarge": "Image trop grande (500 Ko max)"
+    "tooLarge": "Image trop grande (500 Ko max)",
+    "avatarChange": "Changer l'image de l'entreprise",
+    "fileInvalid": "Fichier invalide",
+    "imageUnreadable": "Image illisible",
+    "changeImage": "Changer l'image"
   },
   "assign": {
     "assignTo": "Attribuer une tâche à {{name}}",
@@ -491,7 +551,12 @@
     "picker": "Assigner à",
     "unassignAll": "Tout désassigner",
     "searchExisting": "Rechercher une tâche existante",
-    "searchPlaceholder": "Rechercher une tâche…"
+    "searchPlaceholder": "Rechercher une tâche…",
+    "assignMembers": "Assigner des membres",
+    "assignShort": "Assigner",
+    "assigneeCount_one": "{{count}} assigné",
+    "assigneeCount_many": "{{count}} d'assignés",
+    "assigneeCount_other": "{{count}} assignés"
   },
   "directory": {
     "searchPlaceholder": "Rechercher un membre (nom, email)…",
@@ -530,7 +595,10 @@
     "tabProfile": "Profil",
     "tabTasks": "Tâches",
     "tabContribution": "Contribution",
-    "tabAgenda": "Agenda"
+    "tabAgenda": "Agenda",
+    "removeTitle": "Retirer {{name}}",
+    "removeFromOrgAction": "Retirer de l'entreprise",
+    "removing": "Retrait…"
   },
   "okrCategory": {
     "new": "Nouvelle catégorie",
@@ -548,7 +616,8 @@
     "emptyMember": "Un manager doit créer un objectif.",
     "emptyCategory": "Aucun objectif dans cette catégorie",
     "newObjective": "Nouvel objectif",
-    "seeAll": "Voir tous les objectifs"
+    "seeAll": "Voir tous les objectifs",
+    "currentValueAria": "Valeur actuelle de {{title}}"
   },
   "switcher": {
     "myOrgs": "Mes entreprises",
@@ -563,7 +632,8 @@
     "title": "Activité de l'équipe",
     "theTeam": "L'équipe",
     "completed": " a terminé ",
-    "created": " a créé "
+    "created": " a créé ",
+    "someMember": "Un membre"
   },
   "kanban": {
     "unassigned": "Non assignées",
@@ -572,11 +642,17 @@
     "addUnassigned": "Ajouter une tâche non assignée",
     "assignOrCreate": "Attribuer ou créer une tâche",
     "dropHere": "Déposez une tâche ici",
-    "alsoAssigned": "Aussi assignée à {{names}}"
+    "alsoAssigned": "Aussi assignée à {{names}}",
+    "overdueBadge": "{{count}} retard",
+    "overdueTitle_one": "{{count}} tâche en retard",
+    "overdueTitle_other": "{{count}} tâches en retard",
+    "overdueTitle_many": "{{count}} de tâches en retard",
+    "editTask": "Modifier la tâche {{name}}",
+    "editTaskOverdue": "Modifier la tâche {{name}} (en retard)"
   },
   "transfer": {
     "title": "Transférer la propriété de {{org}}",
-    "body": "Le membre choisi devient propriétaire et administrateur. Vous restez administrateur, mais seul le nouveau propriétaire pourra transférer à nouveau.",
+    "body": "Le membre choisi devient propriétaire et administrateur. Vous restez administrateur, mais seul le nouveau propriétaire pourra transférer à nouveau ou supprimer l'entreprise.",
     "newOwner": "Nouveau propriétaire",
     "choose": "Choisir un membre…",
     "pending": "Transfert…",
@@ -588,7 +664,11 @@
     "empty": "Aucune donnée.",
     "legendCompleted": "terminées",
     "legendInProgress": "en cours",
-    "legendOverdue": "en retard"
+    "legendOverdue": "en retard",
+    "overdueTasks": "Tâches en retard ({{count}})",
+    "taskTotal_one": "{{count}} tâche · {{period}}",
+    "taskTotal_many": "{{count}} de tâches · {{period}}",
+    "taskTotal_other": "{{count}} tâches · {{period}}"
   },
   "comments": {
     "loading": "Chargement…",
@@ -596,7 +676,8 @@
     "empty": "Aucun commentaire — lancez la discussion. Tapez « @ » pour mentionner un membre.",
     "deleteAria": "Supprimer ce commentaire",
     "mentionAria": "Mentionner un membre",
-    "sendAria": "Envoyer le commentaire"
+    "sendAria": "Envoyer le commentaire",
+    "formerMember": "Ancien membre"
   },
   "leaveDialog": {
     "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation."
@@ -652,7 +733,9 @@
     "deleteOrgAria": "Supprimer l'entreprise {{name}}",
     "deleteOkrConfirm": "Supprimer l'objectif « {{title}} » ?",
     "deleteOkrAria": "Supprimer l'objectif {{title}}",
-    "editOkrAria": "Modifier l'objectif {{title}}"
+    "editOkrAria": "Modifier l'objectif {{title}}",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…"
   },
   "tabs": {
     "overview": "Aperçu",
@@ -721,5 +804,11 @@
     "kindAssigned": "Une tâche vous a été assignée",
     "kindMention": "Vous avez été mentionné dans un commentaire",
     "kindOverdue": "Une de vos tâches est en retard"
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "adminShort": "Admin",
+    "manager": "Manager",
+    "member": "Membre"
   }
 }

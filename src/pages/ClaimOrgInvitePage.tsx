@@ -6,6 +6,7 @@ import OrgConsentNotice from '@/components/organization/OrgConsentNotice';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useClaimOrgInvite } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { NAME_SLOT, splitAroundName } from '@/i18n/name-slot';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,6 +23,8 @@ const ClaimOrgInvitePage = () => {
   const [consent, setConsent] = useState(false);
   const [joinedOrg, setJoinedOrg] = useState<string | null>(null);
   const claimMutation = useClaimOrgInvite();
+
+  const [joinedBefore, joinedAfter] = splitAroundName(t('claim.joined', { name: NAME_SLOT }));
 
   const validToken = !!token && UUID_RE.test(token);
 
@@ -53,7 +56,9 @@ const ClaimOrgInvitePage = () => {
         {joinedOrg ? (
           <div className="space-y-4 text-center">
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Vous avez rejoint <span className="font-semibold text-[rgb(var(--color-text-primary))]">{joinedOrg}</span> !
+              {joinedBefore}
+              <span className="font-semibold text-[rgb(var(--color-text-primary))]">{joinedOrg}</span>
+              {joinedAfter}
             </p>
             <button
               type="button"
@@ -91,7 +96,7 @@ const ClaimOrgInvitePage = () => {
               onClick={() => navigate(`/login?redirect=/org-invite/${token}`)}
               className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all"
             >
-              Se connecter
+              {t('claim.signIn')}
             </button>
             <button
               type="button"

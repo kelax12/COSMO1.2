@@ -51,19 +51,20 @@ interface MemberDirectoryProps {
 // subordonné). Le badge est purement informatif — la position ne se modifie
 // QUE depuis la pyramide (#1 : plus de changement de rôle depuis l'annuaire).
 const BADGE_META = {
-  admin: { label: 'Admin', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
-  manager: { label: 'Manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-[rgb(var(--color-accent-solid))]/10' },
-  member: { label: 'Membre', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
+  admin: { labelKey: 'roles.adminShort', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
+  manager: { labelKey: 'roles.manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-[rgb(var(--color-accent-solid))]/10' },
+  member: { labelKey: 'roles.member', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
 } as const;
 
 /** Normalisation pour la recherche : minuscules, sans accents (diacritiques combinants). */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
-  const { label, Icon, className } = BADGE_META[kind];
+  const { t } = useT('org');
+  const { labelKey, Icon, className } = BADGE_META[kind];
   return (
     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`}>
-      <Icon size={11} aria-hidden="true" /> {label}
+      <Icon size={11} aria-hidden="true" /> {t(labelKey)}
     </span>
   );
 };

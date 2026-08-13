@@ -342,7 +342,16 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
           {myWorkload && myWorkload.open > 0 && (
             <span
               className="flex items-center gap-1 mt-0.5"
-              title={`${formatDuration(myWorkload.estimatedMinutes)} · ${myWorkload.open} ouverte(s)${myWorkload.overdue > 0 ? ` · ${myWorkload.overdue} en retard` : ''}`}
+              title={
+                myWorkload.overdue > 0
+                  ? tp('pyramid.workloadTitleOverdue', myWorkload.open, {
+                      duration: formatDuration(myWorkload.estimatedMinutes),
+                      overdue: myWorkload.overdue,
+                    })
+                  : tp('pyramid.workloadTitle', myWorkload.open, {
+                      duration: formatDuration(myWorkload.estimatedMinutes),
+                    })
+              }
             >
               <span className="w-10 h-1 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden shrink-0">
                 <span
@@ -1064,7 +1073,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           </p>
           <p className="text-sm text-[rgb(var(--color-text-muted))] max-w-sm mb-5">
             {t('pyramid.intro')}
-            responsable direct (N+1). Invitez vos collaborateurs pour la construire.
           </p>
           {selfMember && canEdit && (
             <button
@@ -1324,7 +1332,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                           : undefined
                       }
                       style={isAdmin ? { touchAction: 'none' } : undefined}
-                      title={isAdmin ? `Glisser ${m.displayName} dans la pyramide` : undefined}
+                      title={isAdmin ? t('pyramid.dragHint', { name: m.displayName }) : undefined}
                       className={`flex items-center gap-2 rounded-xl border bg-[rgb(var(--color-surface))] px-2.5 py-2 transition-colors ${
                         isBeingDragged
                           ? 'border-indigo-400 ring-2 ring-indigo-400/30 opacity-40'

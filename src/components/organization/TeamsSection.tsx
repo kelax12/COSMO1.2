@@ -146,7 +146,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                       <span key={uid} className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] pl-1 pr-2 py-0.5">
                         <MemberAvatar avatar={m.avatar} size={20} />
                         <span className="text-xs text-[rgb(var(--color-text-primary))]">
-                          {uid === currentUserId ? 'Vous' : m.displayName.split(' ')[0]}
+                          {uid === currentUserId ? t('common.youBadge') : m.displayName.split(' ')[0]}
                         </span>
                         {canManageThisTeam && (
                           <button
@@ -177,7 +177,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                             onClick={() => addMember.mutate({ teamId: team.id, userId: m.userId })}
                           >
                             <MemberAvatar avatar={m.avatar} size={20} />
-                            <span className="truncate">{m.userId === currentUserId ? 'Vous' : m.displayName}</span>
+                            <span className="truncate">{m.userId === currentUserId ? t('common.youBadge') : m.displayName}</span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>

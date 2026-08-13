@@ -4,6 +4,7 @@ import Logo from '@/components/Logo';
 import CreateOrJoinOrganization from '@/components/organization/CreateOrJoinOrganization';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { NAME_SLOT, splitAroundName } from '@/i18n/name-slot';
 
 /**
  * Onboarding entreprise — affiché juste après une inscription « Entreprise »
@@ -14,9 +15,13 @@ import { useT } from '@/i18n/useT';
  * d'entreprise et n'a pas besoin de la nav applicative.
  */
 const OrganizationOnboardingPage = () => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const navigate = useNavigate();
   const { activeOrg, organizations, isLoading } = useActiveOrganization();
+
+  const [orgSentenceBefore, orgSentenceAfter] = splitAroundName(
+    t('onboarding.memberOfOrg', { name: NAME_SLOT }),
+  );
 
   return (
     <main
@@ -27,7 +32,7 @@ const OrganizationOnboardingPage = () => {
       <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
-            Votre espace entreprise
+            {t('onboarding.title')}
           </h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
             {t('onboarding.intro')}
@@ -39,9 +44,15 @@ const OrganizationOnboardingPage = () => {
         {!isLoading && activeOrg && (
           <div className="mb-6 space-y-3 text-center">
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Vous faites {organizations.length > 1 ? `partie de ${organizations.length} entreprises` : (
-                <>{t('onboarding.memberOf')} <span className="font-semibold text-[rgb(var(--color-text-primary))]">{activeOrg.name}</span></>
-              )}.
+              {organizations.length > 1 ? (
+                tp('onboarding.memberOfCount', organizations.length)
+              ) : (
+                <>
+                  {orgSentenceBefore}
+                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{activeOrg.name}</span>
+                  {orgSentenceAfter}
+                </>
+              )}
             </p>
             <button
               type="button"

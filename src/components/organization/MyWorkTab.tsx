@@ -13,6 +13,7 @@ import {
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
+import { useOrgTeams } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import {
   projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration,
@@ -67,6 +68,44 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
 /** Étape de la checklist de démarrage (reco #3, admins d'une org jeune). */
 interface StartStep { id: string; label: string; done: boolean; tab: string; }
 
+/**
+ * Accueil d'un membre qui vient d'arriver et à qui rien n'est encore assigné.
+ *
+ * La checklist de démarrage ne s'adresse qu'aux admins — un membre simple
+ * atterrissait donc sur un écran vide sans savoir quoi en faire. Trois portes
+ * d'entrée suffisent : ce que fait l'équipe, qui est qui, et où vont les
+ * objectifs.
+ */
+const NewcomerHints = () => {
+  const { t } = useT('org');
+  const navigate = useNavigate();
+  const hints: { id: string; label: string; tab: string }[] = [
+    { id: 'projects', label: t('myWork.hintProjects'), tab: 'projects' },
+    { id: 'members', label: t('myWork.hintMembers'), tab: 'members' },
+    { id: 'okr', label: t('myWork.hintOkr'), tab: 'okr' },
+  ];
+  return (
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('myWork.welcomeTitle')}</h3>
+      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 mb-3">{t('myWork.welcomeIntro')}</p>
+      <ul className="space-y-1">
+        {hints.map((h) => (
+          <li key={h.id}>
+            <button
+              type="button"
+              onClick={() => navigate(`/entreprise?tab=${h.tab}`)}
+              className="w-full flex items-center gap-2.5 py-2 px-2 rounded-xl text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
+            >
+              <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+              <span className="text-sm text-[rgb(var(--color-text-secondary))]">{h.label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
   const { t } = useT('org');
   const navigate = useNavigate();
@@ -115,6 +154,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: tasks = [] } = useTeamTasks(orgId);
   const { data: okrs = [] } = useTeamOKRs(orgId);
+  const { data: teams = [] } = useOrgTeams(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
 
@@ -171,16 +211,27 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   }, [tasks, okrs, activeProjectIds, projectById]);
 
   // Checklist de démarrage (reco #3) — admins uniquement, masquée dès que
-  // les 4 étapes sont faites.
+  // toutes les étapes sont faites.
+  //
+  // « Créer une équipe » passe AVANT « créer un projet » : un projet rattaché
+  // après coup demande un geste de plus, et c'est le rattachement qui porte
+  // tout le cloisonnement de visibilité.
   const isAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
   const startSteps = useMemo<StartStep[]>(() => [
-    { id: 'project', label: t('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
     { id: 'invite', label: t('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
+    { id: 'team', label: t('myWork.stepTeam'), done: teams.length > 0, tab: 'members' },
+    { id: 'project', label: t('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
     { id: 'pyramid', label: t('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
     { id: 'okr', label: t('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
     // `t` en dépendance : les libellés de la checklist sont traduits ici.
-  ], [activeProjects.length, members, okrs.length, t]);
+  ], [activeProjects.length, members, okrs.length, teams.length, t]);
   const showChecklist = isAdmin && startSteps.some((s) => !s.done);
+
+  // Un membre non-admin n'a AUCUN guidage : il arrive sur un écran vide sans
+  // savoir ce qu'il peut y faire, et la checklist ci-dessus lui est fermée
+  // (les 5 étapes demandent des droits d'admin). Tant qu'aucune tâche ne lui
+  // est assignée, on lui dit au moins où regarder.
+  const showNewcomerHints = !isAdmin && mine.length === 0;
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
@@ -190,6 +241,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   return (
     <div className="space-y-5">
       {showChecklist && <StartChecklist steps={startSteps} />}
+      {showNewcomerHints && <NewcomerHints />}
 
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard

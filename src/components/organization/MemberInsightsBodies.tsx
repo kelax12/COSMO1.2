@@ -184,7 +184,7 @@ const TaskRow = ({ task, canEdit, onEdit }: { task: TeamTask; canEdit: boolean; 
       <button
         type="button"
         onClick={() => onEdit(task)}
-        aria-label={`Modifier la tâche ${task.name}`}
+        aria-label={t('projects.editTaskAria', { name: task.name })}
         className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
       >
         {content}
@@ -225,7 +225,7 @@ const TasksView = ({
       <AddTaskButton onAddTask={onAddTask} />
       <section>
         <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-          En cours ({open.length})
+          {t('insights.inProgress', { count: open.length })}
         </h3>
         {open.length === 0 ? (
           <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.noOpenTask')}</p>
@@ -268,8 +268,8 @@ const ContributionView = ({ total, done, open, overdue, completionRate }: {
       <div className="grid grid-cols-2 gap-3">
         <StatBlock value={`${completionRate}%`} label={t('insights.completionRate')} tone="text-emerald-500" />
         <StatBlock value={String(done)} label={t('insights.tasksDone')} tone="text-[rgb(var(--color-text-primary))]" />
-        <StatBlock value={String(open)} label="En cours" tone="text-indigo-500" />
-        <StatBlock value={String(overdue)} label="En retard" tone={overdue > 0 ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'} />
+        <StatBlock value={String(open)} label={t('insights.inProgressShort')} tone="text-indigo-500" />
+        <StatBlock value={String(overdue)} label={t('insights.overdueShort')} tone={overdue > 0 ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'} />
       </div>
       {/* Barre de progression complétées / total */}
       <div>

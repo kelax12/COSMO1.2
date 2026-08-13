@@ -69,7 +69,7 @@ const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) =
  * direct » (jauge de l'état courant, pas une activité datée).
  */
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   // Configs de graphique construites au RENDU : elles portent des libellés
   // traduits, une constante de module les figerait au premier import.
   const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
@@ -209,7 +209,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
-        title={`${summary.total} tâche${summary.total > 1 ? 's' : ''} · ${periodHint}`}
+        title={tp('summary.taskTotal', summary.total, { period: periodHint })}
         completed={summary.completed}
         inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
         overdue={summary.overdueCount}
@@ -351,7 +351,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
           <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/50 dark:bg-red-900/10 p-4 sm:p-5">
             <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3">
-              Tâches en retard ({overdueTasks.length})
+              {t('summary.overdueTasks', { count: overdueTasks.length })}
             </h3>
             <ul className="space-y-1.5">
               {overdueTasks.slice(0, 6).map((t) => {

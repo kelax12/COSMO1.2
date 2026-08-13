@@ -169,7 +169,11 @@
     "q9": "Is my data secure?",
     "a9": "Your data is stored on Supabase with Row Level Security: nobody else can reach your tasks or habits. The app's pages (dashboard, tasks, etc.) are blocked for search crawlers in robots.txt. In demo mode, data stays in your browser (localStorage) and never touches our servers.",
     "q10": "Can I use Cosmo without an internet connection?",
-    "a10": "In demo mode, all data is stored locally in your browser — no connection needed after the initial load. With an account, a 24-hour localStorage cache lets you consult your recent tasks and habits even on a shaky connection."
+    "a10": "In demo mode, all data is stored locally in your browser — no connection needed after the initial load. With an account, a 24-hour localStorage cache lets you consult your recent tasks and habits even on a shaky connection.",
+    "q11": "Will my team members feel monitored?",
+    "a11": "No, and that is a design decision. A manager sees their team's workload, tasks and calendar slots, but never the content of events marked as personal. Statistics cover team tasks, not individual activity. Everyone also sees, before joining a company, exactly what it will be able to observe about their work.",
+    "q12": "How is data separated between teams?",
+    "a12": "Separation is enforced at the database level, not just in the interface: a project or objective attached to one team stays inaccessible to the others, even if the interface has a bug. A mid-level manager only sees themselves and the people reporting to them, directly or not — with no permissions to configure by hand."
   },
   "footer": {
     "rights": "© 2026 All rights reserved.",

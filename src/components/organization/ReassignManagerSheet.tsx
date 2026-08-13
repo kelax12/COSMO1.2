@@ -79,11 +79,15 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
           <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
-              {isMe ? 'Vous' : m.displayName}
+              {isMe ? t('common.youBadge') : m.displayName}
               {m.userId === member.userId ? t('member.toRemove') : ''}
             </span>
             <span className="block text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-              {m.role === 'admin' ? 'Admin' : isManagerOf(members, m.userId) ? 'Manager' : 'Membre'}
+              {m.role === 'admin'
+                ? t('roles.adminShort')
+                : isManagerOf(members, m.userId)
+                  ? t('roles.manager')
+                  : t('roles.member')}
             </span>
           </span>
         </button>
@@ -106,7 +110,7 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
         <div className="flex items-start justify-between gap-2 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
           <div className="min-w-0">
             <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-              Retirer {member.displayName}
+              {t('member.removeTitle', { name: member.displayName })}
             </h2>
             <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
               {tp('member.reassignHint', directReports.length)}

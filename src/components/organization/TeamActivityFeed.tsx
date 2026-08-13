@@ -94,7 +94,7 @@ const TeamActivityFeed = ({ tasks, projects, members }: TeamActivityFeedProps) =
                 </>
               ) : (
                 <>
-                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{item.actorName ?? 'Un membre'}</span>
+                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{item.actorName ?? t('activity.someMember')}</span>
                   {t('activity.created')}
                 </>
               )}

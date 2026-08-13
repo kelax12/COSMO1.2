@@ -60,7 +60,7 @@ const TeamProjectCard = ({
   onUpdateProject, onStartSelect,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -147,9 +147,9 @@ const TeamProjectCard = ({
           {overdueCount > 0 && !archived && (
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 shrink-0"
-              title={`${overdueCount} tâche${overdueCount > 1 ? 's' : ''} en retard`}
+              title={tp('project.overdueTitle', overdueCount)}
             >
-              {overdueCount} en retard
+              {t('project.overdueBadge', { count: overdueCount })}
             </span>
           )}
           {restEstimated > 0 && !archived && (
@@ -169,7 +169,11 @@ const TeamProjectCard = ({
                   <span
                     key={member.userId}
                     className="rounded-full ring-2 ring-[rgb(var(--color-surface))]"
-                    title={`${member.displayName} — ${open} tâche${open > 1 ? 's' : ''} ouverte${open > 1 ? 's' : ''}${overdue > 0 ? `, ${overdue} en retard` : ''}`}
+                    title={
+                      overdue > 0
+                        ? tp('project.memberOpenOverdue', open, { name: member.displayName, overdue })
+                        : tp('project.memberOpen', open, { name: member.displayName })
+                    }
                   >
                     <MemberAvatar avatar={member.avatar} name={member.displayName} size={22} />
                   </span>
@@ -199,7 +203,7 @@ const TeamProjectCard = ({
         {(isManager || !!onStartSelect) && (
           <DropdownMenu>
             <DropdownMenuTrigger
-              aria-label={`Actions du projet ${project.name}`}
+              aria-label={t('project.actionsAria', { name: project.name })}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
               <MoreHorizontal size={16} aria-hidden="true" />
@@ -294,7 +298,7 @@ const TeamProjectCard = ({
           {tasks.length === 0 && (
             <div className="px-3 py-3 flex items-center gap-3">
               <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                {assigneeFiltered ? 'Aucune tâche pour ce filtre.' : 'Aucune tâche.'}
+                {assigneeFiltered ? t('projects.noTaskForFilter') : t('projects.noTask')}
               </p>
               {!assigneeFiltered && !archived && (
                 <button
