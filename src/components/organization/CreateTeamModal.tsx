@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, Check, UsersRound } from 'lucide-react';
+import { X, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
@@ -92,8 +92,8 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
           className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
-          <h2 className="text-base sm:text-lg font-semibold inline-flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            <UsersRound size={18} className="text-blue-500" aria-hidden="true" /> {t('team.newTeam')}
+          <h2 className="text-base sm:text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            {t('team.newTeam')}
           </h2>
           <button
             onClick={onClose}
