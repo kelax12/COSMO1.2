@@ -67,6 +67,42 @@ export const useShareLink = (taskId: string, enabled: boolean) => {
   });
 };
 
+export interface PreviewShareLinkResult {
+  expired: boolean;
+  /** `profiles.display_name` du partageur — jamais son email. NULL si non renseigné. */
+  owner_name: string | null;
+  task_name: string | null;
+}
+
+/**
+ * Aperçu ANONYME d'un lien d'invitation (RPC `preview_share_link`, mig. 098).
+ *
+ * Sert à afficher « X vous invite à collaborer sur Y » AVANT l'inscription.
+ * Ne consomme pas le lien : le claim reste à `useClaimShareLink`, déclenché
+ * par `ShareInviteClaimer` une fois l'utilisateur authentifié.
+ *
+ * Un lien inconnu et un lien expiré renvoient la même réponse (`expired`) —
+ * la RPC ne distingue volontairement pas les deux.
+ */
+export const usePreviewShareLink = (token: string | undefined, enabled: boolean) => {
+  return useQuery({
+    queryKey: [...friendKeys.all, 'shareLinkPreview', token],
+    queryFn: async (): Promise<PreviewShareLinkResult> => {
+      const { data, error } = await supabase.rpc('preview_share_link', { p_token: token });
+      if (error) throw normalizeApiError(error);
+      const result = data as Partial<PreviewShareLinkResult> | null;
+      return {
+        expired: result?.expired !== false,
+        owner_name: result?.owner_name ?? null,
+        task_name: result?.task_name ?? null,
+      };
+    },
+    enabled: enabled && isValidInviteToken(token),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+};
+
 /** Claim d'un lien d'invitation (RPC SECURITY DEFINER, mig. 046). */
 export const useClaimShareLink = () => {
   return useMutation({

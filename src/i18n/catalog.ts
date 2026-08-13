@@ -53,6 +53,7 @@ import frErrors from '@/locales/fr/errors.json';
 import frEventModal from '@/locales/fr/eventModal.json';
 import frGuide from '@/locales/fr/guide.json';
 import frHabits from '@/locales/fr/habits.json';
+import frInvite from '@/locales/fr/invite.json';
 import frLanding from '@/locales/fr/landing.json';
 import frOkr from '@/locales/fr/okr.json';
 import frOrg from '@/locales/fr/org.json';
@@ -82,6 +83,8 @@ interface CatalogShapes {
   eventModal: typeof frEventModal;
   /** Habitudes — liste, tableau de suivi, modale, actions, mur-pub. */
   habits: typeof frHabits;
+  /** Page publique `/invite/:token` — contexte d'une invitation de partage. */
+  invite: typeof frInvite;
   /** OKR — page, cartes, catégories, modales, check-in hebdo. */
   okr: typeof frOkr;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
@@ -154,6 +157,7 @@ registry[DEFAULT_LOCALE] = {
   eventModal: frEventModal as CatalogNode,
   guide: frGuide as CatalogNode,
   habits: frHabits as CatalogNode,
+  invite: frInvite as CatalogNode,
   okr: frOkr as CatalogNode,
   landing: frLanding as CatalogNode,
   org: frOrg as CatalogNode,

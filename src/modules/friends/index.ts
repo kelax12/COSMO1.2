@@ -82,8 +82,9 @@ export {
 export {
   useShareLink,
   useClaimShareLink,
+  usePreviewShareLink,
   buildInviteUrl,
   isValidInviteToken,
   PENDING_INVITE_STORAGE_KEY,
 } from './share-link.hooks';
-export type { ClaimShareLinkResult } from './share-link.hooks';
+export type { ClaimShareLinkResult, PreviewShareLinkResult } from './share-link.hooks';
