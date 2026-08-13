@@ -11,7 +11,14 @@
     "invalid_api_key": "Could not connect to the AI services.",
     "NETWORK_ERROR": "Network connection lost or unstable.",
     "TIMEOUT": "Request timed out. Check your connection.",
-    "GENERIC_ERROR": "Something went wrong."
+    "GENERIC_ERROR": "Something went wrong.",
+    "seat_limit_reached": "This company has reached its seat limit. An administrator needs to upgrade the plan before adding a member.",
+    "expired_link": "This invitation link has expired. Ask the person who invited you for a new one.",
+    "invalid_link": "This invitation link is not valid or has already been used.",
+    "own_link": "You cannot use your own invitation link.",
+    "not_org_admin": "This action is restricted to company administrators.",
+    "not_authenticated": "You must be signed in to perform this action.",
+    "forbidden": "You do not have the required permissions for this action."
   },
   "validation": {
     "fallback": "Invalid data",

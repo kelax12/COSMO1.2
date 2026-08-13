@@ -11,7 +11,14 @@
     "invalid_api_key": "Erreur de connexion aux services AI.",
     "NETWORK_ERROR": "Connexion réseau perdue ou instable.",
     "TIMEOUT": "Délai d'attente dépassé. Vérifie ta connexion.",
-    "GENERIC_ERROR": "Une erreur inattendue est survenue."
+    "GENERIC_ERROR": "Une erreur inattendue est survenue.",
+    "seat_limit_reached": "Cette entreprise a atteint son nombre de places. Un administrateur doit faire évoluer l'abonnement pour ajouter un membre.",
+    "expired_link": "Ce lien d'invitation a expiré. Demandez-en un nouveau à la personne qui vous a invité.",
+    "invalid_link": "Ce lien d'invitation n'est pas valide ou a déjà été utilisé.",
+    "own_link": "Vous ne pouvez pas utiliser votre propre lien d'invitation.",
+    "not_org_admin": "Cette action est réservée aux administrateurs de l'entreprise.",
+    "not_authenticated": "Vous devez être connecté pour effectuer cette action.",
+    "forbidden": "Vous n'avez pas les droits nécessaires pour cette action."
   },
   "validation": {
     "fallback": "Données invalides",

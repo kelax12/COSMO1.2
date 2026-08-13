@@ -85,7 +85,10 @@
     "permanentCodeHint": "Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un administrateur valide sa demande (elle arrive non placée dans la pyramide).",
     "copyLinkAria": "Copier le lien d'invitation",
     "copyCodeAria": "Copier le code d'invitation",
-    "orgCodeTitle": "Code d'invitation de l'entreprise"
+    "orgCodeTitle": "Code d'invitation de l'entreprise",
+    "seatsFullTitle": "Places épuisées",
+    "seatsFullLink": "Cette entreprise a atteint son nombre de places : un nouveau membre ne pourrait pas rejoindre avec ce lien. Faites évoluer l'abonnement pour en ajouter.",
+    "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée."
   },
   "pyramid": {
     "directReports_one": ", {{count}} subordonné direct",

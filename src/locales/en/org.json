@@ -81,7 +81,10 @@
     "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the pyramid).",
     "copyLinkAria": "Copy invitation link",
     "copyCodeAria": "Copy invitation code",
-    "orgCodeTitle": "Organization invitation code"
+    "orgCodeTitle": "Organization invitation code",
+    "seatsFullTitle": "No seats left",
+    "seatsFullLink": "This company has reached its seat limit: a new member could not join with this link. Upgrade the plan to add more.",
+    "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted."
   },
   "pyramid": {
     "directReports_one": ", {{count}} direct report",

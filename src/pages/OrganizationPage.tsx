@@ -105,6 +105,13 @@ const OrganizationPage = () => {
   // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
   const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
 
+  // Quota de sièges RÉELLEMENT bloquant : le gate serveur (`org_seats_allowed`,
+  // mig. 067) ne refuse que si le drapeau `enterprise_seat_limit` est activé en
+  // base. Tant que la facturation est dormante, les portes d'entrée restent
+  // ouvertes — mais le jour où le drapeau passe à true, un clic sur « inviter »
+  // partirait vers un `seat_limit_reached` sans que rien ne l'ait annoncé.
+  const seatsFull = ENTERPRISE_BILLING_ENFORCED && members.length >= ORG_FREE_SEATS;
+
   let bannerDismissed = seatsBannerDismissed;
   try {
     bannerDismissed = bannerDismissed || !!localStorage.getItem(seatsBannerKey(myOrg.id));
@@ -275,8 +282,8 @@ const OrganizationPage = () => {
               restait visible pour tout le monde et un simple membre recevrait
               désormais une erreur 403 au clic. */}
           <div className={`grid gap-4 items-start ${isManager ? 'md:grid-cols-2' : ''}`}>
-            <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
-            {isManager && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} />}
+            <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} seatsFull={seatsFull} />
+            {isManager && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} seatsFull={seatsFull} />}
           </div>
 
           <TeamsSection
