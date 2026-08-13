@@ -15,8 +15,8 @@
 | 4 | ~~i18n incomplet~~ ✅ **livré** (~30 chaînes, pas ~10) | 🟠 P1 | Marché non francophone |
 | 5 | ~~Onboarding post-création partiel~~ ✅ **livré** | 🟠 P1 | Activation / rétention |
 | 6 | ~~Aucune surface publique sur la confidentialité~~ ✅ **livré** | 🟠 P1 | Vente aux orgs > 20 pers. |
-| 7 | Plafond de sièges : gate serveur réel mais UI non préparée | 🟡 P2 | Activation de la facturation |
-| 8 | Stripe entreprise inexistant | 🟡 P2 | Encaissement réel |
+| 7 | ~~Plafond de sièges : UI non préparée~~ ✅ **livré** (+ 6 autres erreurs métier) | 🟡 P2 | Activation de la facturation |
+| 8 | Stripe entreprise inexistant — **laissé ouvert volontairement** | 🟡 P2 | Encaissement réel |
 | 9 | Pas d'événements d'entreprise partagés | 🔵 P3 | Argument « agenda d'entreprise » |
 
 L'ordre n'est pas anodin : **#1 conditionne #2 et #3**. Une fonctionnalité que la démo ne sait pas montrer ne peut ni être capturée pour une landing page, ni être testée par un prospect.
@@ -263,6 +263,30 @@ Le document recommandait de **ne pas** écrire une page « Sécurité » par ant
 - « Comment les données sont-elles cloisonnées entre les équipes ? »
 
 Ce sont les deux objections systématiques en cycle de vente B2B, et elles n'avaient jusqu'ici **aucune** surface publique.
+
+---
+
+## Ce qui a été livré — P2 (2026-08-13)
+
+### #7 — Le problème était plus large que le quota
+
+En cherchant comment traduire `seat_limit_reached`, j'ai trouvé la vraie cause : nos fonctions SQL signalent tous leurs refus par `RAISE EXCEPTION 'identifiant'`. PostgREST renvoie alors **toujours le même code** (`P0001`) et met l'identifiant dans le champ message. Comme la whitelist de `normalizeApiError` est indexée par code, **les sept erreurs métier** tombaient sur « une erreur inattendue est survenue » :
+
+`seat_limit_reached` · `expired_link` · `invalid_link` · `own_link` · `not_org_admin` · `not_authenticated` · `forbidden`
+
+Les deux plus coûteuses n'ont rien à voir avec la facturation : **`expired_link` et `invalid_link` sont sur le flux de lien d'invitation**, c'est-à-dire la porte d'entrée principale de l'onboarding. Quelqu'un qui cliquait sur un lien périmé recevait un message générique, sans savoir qu'il lui suffisait d'en redemander un.
+
+`normalizeApiError` promeut désormais l'identifiant en code **quand il est whitelisté**. Le texte serveur ne sert **que de clé de recherche**, jamais d'affichage : la garantie V7/N1 (ne jamais rendre `error.message`) tient, et un test le prouve avec une vraie phrase Postgres (`duplicate key value violates unique constraint "org_members_pkey"`) qui ne doit ni être promue ni fuir à l'écran. 7 clés ajoutées dans `errors.json` FR + EN, 6 tests.
+
+**La garde UI.** Le gate serveur `org_seats_allowed` (mig. 067) est réel mais dort tant que `billing_flags.enterprise_seat_limit` n'est pas activé. Le jour où il passe à `true`, un clic sur « générer un lien » partait vers un `seat_limit_reached` — et pour un lien, **l'échec ne tombe pas chez l'admin mais chez l'invité**, qui n'a aucun moyen de comprendre ni d'y remédier. Les deux portes d'entrée (code permanent et lien) annoncent maintenant le quota et désactivent le CTA.
+
+Vérifié au navigateur **dans les deux états**, en basculant temporairement le drapeau : quota atteint → messages affichés et bouton désactivé ; drapeau remis à `false` → aucun avertissement, bouton actif, bannière informative. `premium-config.ts` est inchangé (vérifié identique à `HEAD` avant commit).
+
+### #8 — Laissé ouvert, volontairement
+
+Trois dépendances que je ne peux pas satisfaire : les price IDs à créer dans le compte Stripe, les secrets Supabase/Vercel, et la migration à appliquer. À quoi s'ajoute le prérequis déjà identifié — **le Stripe personnel lui-même n'est pas finalisé** (`PREMIUM_ENFORCED = false`, cf. `docs/POST-AUDIT-GUIDE.md` option C).
+
+Tout construire maintenant produirait du code non testable de bout en bout, sur une fonctionnalité qui n'a rien à encaisser tant que l'acquisition n'a pas commencé. Décision prise avec Axel le 2026-08-13 : **on s'arrête là**. Le plan de la section #8 reste valable tel quel le jour où la traction le justifie.
 
 ---
 
