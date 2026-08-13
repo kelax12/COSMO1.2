@@ -116,3 +116,6 @@ skills-lock.json
 
 # Captures d audit visuel locales (jamais versionnees)
 visual-audit-*/
+
+# Cache de l outil graphify (AST, index, rapports générés — pas du code)
+graphify-out/
