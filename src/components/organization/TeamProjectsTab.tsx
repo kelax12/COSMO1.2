@@ -156,16 +156,23 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const overdueCount = statsTasks.filter(isTaskOverdue).length;
   const doneThisWeek = completedThisWeek(statsTasks);
 
-  // Vue filtrée : assigné (dropdown) PUIS statut (pastilles). Les compteurs des
-  // pastilles restent calculés sur `statsTasks`, NON filtré — sinon cliquer
-  // « en retard » ferait tomber son propre compteur à sa valeur filtrée, et on
-  // ne pourrait plus savoir combien il y en a réellement.
+  // Vue filtrée : équipe (déjà dans `statsTasks`) PUIS assigné (dropdown) PUIS
+  // statut (pastilles). Partir de `statsTasks` et non `allTasks` est
+  // nécessaire : Liste et Planning ne laissaient pas ce trou car ils
+  // itèrent tâche par tâche sur `activeProjects` (déjà filtrés par équipe),
+  // mais le Tableau affiche `visibleTasks` tel quel, toutes équipes
+  // confondues, si la base ne l'est pas déjà.
+  //
+  // Les compteurs des pastilles restent calculés sur `statsTasks` NON filtré
+  // par assigné/statut — sinon cliquer « en retard » ferait tomber son propre
+  // compteur à sa valeur filtrée, et on ne pourrait plus savoir combien il y
+  // en a réellement.
   const visibleTasks = useMemo(() => {
     const byAssignee = assigneeFilter
-      ? allTasks.filter((t) => t.assigneeIds.includes(assigneeFilter))
-      : allTasks;
+      ? statsTasks.filter((t) => t.assigneeIds.includes(assigneeFilter))
+      : statsTasks;
     return filterByStatus(byAssignee, statusFilter);
-  }, [allTasks, assigneeFilter, statusFilter]);
+  }, [statsTasks, assigneeFilter, statusFilter]);
 
   /** Reste à faire estimé sur le périmètre visible (tâches ouvertes). */
   const totalEstimated = useMemo(
