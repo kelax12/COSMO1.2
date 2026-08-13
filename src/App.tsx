@@ -306,12 +306,22 @@ const App: React.FC = () => {
             {/* Popup d'invitation de partage — niveau App pour survivre aux
                 changements de route (claim après login OU fin d'inscription). */}
             <ShareInviteClaimer />
-            <Suspense fallback={null}>
-              <CommandPalette />
-            </Suspense>
-            <Suspense fallback={null}>
-              <ModuleOnboarding />
-            </Suspense>
+            {/* AppErrorBoundary ici, PAS seulement le Suspense : un chunk périmé
+                (déploiement récent, vieil index.html en cache) fait échouer ce
+                lazy() en dehors de toute route — sans boundary à ce niveau,
+                l'erreur remonte jusqu'à la racine et blanchit TOUTE l'app,
+                alors que la palette de commandes n'est qu'un raccourci
+                secondaire (Ctrl/Cmd+K). */}
+            <AppErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <CommandPalette />
+              </Suspense>
+            </AppErrorBoundary>
+            <AppErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <ModuleOnboarding />
+              </Suspense>
+            </AppErrorBoundary>
             <Analytics />
             </MotionConfig>
           </TooltipProvider>

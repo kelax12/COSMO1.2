@@ -4,7 +4,13 @@ import { appModeStore } from '@/lib/app-mode.store';
 import { getTranslator } from '@/i18n/useT';
 import { localeStore } from '@/i18n/store';
 
-interface Props { children: ReactNode }
+interface Props {
+  children: ReactNode;
+  /** Rendu de repli custom — `null` pour échouer silencieusement (widget
+   *  secondaire non essentiel) au lieu de l'écran d'erreur plein cadre par
+   *  défaut, prévu pour une PAGE entière. */
+  fallback?: ReactNode;
+}
 interface State { hasError: boolean; error: Error | null }
 
 export class AppErrorBoundary extends Component<Props, State> {
@@ -27,6 +33,7 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      if ('fallback' in this.props) return this.props.fallback;
       // Composant CLASSE : pas de hooks, donc pas de `useT`. On lit la locale
       // dans le store au moment du rendu — c'est exactement le cas d'usage de
       // `getTranslator`. Résoudre au niveau du module figerait la langue au

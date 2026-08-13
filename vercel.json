@@ -3,7 +3,7 @@
     { "source": "/welcome", "destination": "/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|fonts/|screenshots/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
