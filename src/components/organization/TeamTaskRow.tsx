@@ -53,7 +53,7 @@ const TeamTaskRow = ({
       <button
         type="button"
         onClick={() => onToggleComplete(task)}
-        aria-label={task.completed ? 'Marquer comme non terminée' : 'Marquer comme terminée'}
+        aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
         aria-pressed={task.completed}
         className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
           task.completed
@@ -76,7 +76,7 @@ const TeamTaskRow = ({
         type="button"
         onClick={() => onOpen(task)}
         className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
-        aria-label={`Modifier la tâche ${task.name}`}
+        aria-label={t('projects.editTaskAria', { name: task.name })}
       >
         <span className={`block text-sm truncate ${task.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
           {task.name}
@@ -91,8 +91,11 @@ const TeamTaskRow = ({
         {deadlineDate && (
           <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
             <CalendarClock size={11} aria-hidden="true" />
-            {format(deadlineDate, 'd MMM', { locale: getDateLocale() })}
-            {overdue && ' · en retard'}
+            {overdue
+              ? t('projects.deadlineOverdue', {
+                  date: format(deadlineDate, 'd MMM', { locale: getDateLocale() }),
+                })
+              : format(deadlineDate, 'd MMM', { locale: getDateLocale() })}
           </span>
         )}
       </button>
@@ -109,7 +112,7 @@ const TeamTaskRow = ({
       <button
         type="button"
         onClick={() => onDelete(task)}
-        aria-label={`Supprimer la tâche ${task.name}`}
+        aria-label={t('projects.deleteTaskAria', { name: task.name })}
         className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all"
       >
         <Trash2 size={15} aria-hidden="true" />

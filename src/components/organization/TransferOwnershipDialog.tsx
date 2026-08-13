@@ -38,7 +38,6 @@ const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCa
           </AlertDialogTitle>
           <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
             {t('transfer.body')}
-            nouveau ou supprimer l'entreprise.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">

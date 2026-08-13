@@ -45,7 +45,7 @@ const ConfirmRemoveMemberDialog = ({ member, pending, onConfirm, onCancel }: Con
           onClick={onConfirm}
           className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
         >
-          {pending ? 'Retrait…' : 'Retirer de l\'entreprise'}
+          {pending ? t('member.removing') : t('member.removeFromOrgAction')}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

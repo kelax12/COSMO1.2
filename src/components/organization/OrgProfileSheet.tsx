@@ -41,7 +41,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
-      if (!result.startsWith('data:image/')) { toast.error('Fichier invalide'); return; }
+      if (!result.startsWith('data:image/')) { toast.error(t('profile.fileInvalid')); return; }
       const img = new Image();
       img.onload = () => {
         const dims = computeAvatarDimensions(img.width, img.height);
@@ -55,7 +55,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
             : result,
         );
       };
-      img.onerror = () => toast.error('Image illisible');
+      img.onerror = () => toast.error(t('profile.imageUnreadable'));
       img.src = result;
     };
     reader.readAsDataURL(file);
@@ -105,7 +105,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Changer l'image de l'entreprise"
+              aria-label={t('profile.avatarChange')}
               className="relative group/av w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] shrink-0"
             >
               {shownAvatar ? (
@@ -123,7 +123,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
                 onClick={() => fileInputRef.current?.click()}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
               >
-                <Camera size={12} aria-hidden="true" /> Changer l'image
+                <Camera size={12} aria-hidden="true" /> {t('profile.changeImage')}
               </button>
               {shownAvatar && (
                 <button
@@ -194,7 +194,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
             disabled={name.trim().length < 2 || updateMutation.isPending}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
-            {updateMutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
+            {updateMutation.isPending ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>

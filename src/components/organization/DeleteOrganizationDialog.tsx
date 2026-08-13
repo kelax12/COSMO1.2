@@ -84,7 +84,7 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
             disabled={!match || pending}
             className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {pending ? 'Suppression…' : 'Supprimer cette entreprise'}
+            {pending ? t('deleteOrg.deleting') : t('deleteOrg.confirmAction')}
           </button>
         </div>
       </div>

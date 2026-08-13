@@ -179,7 +179,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
                       >
                         <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
                         <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {m.userId === currentUserId ? 'Vous' : m.displayName}
+                          {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
                         </span>
                         <span
                           className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${

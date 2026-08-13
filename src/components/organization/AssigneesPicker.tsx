@@ -41,7 +41,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
 
   const label = assigned.length
     ? t('assign.assignedTo', { names: assigned.map((m) => m.displayName).join(', ') })
-    : 'Assigner des membres';
+    : t('assign.assignMembers');
 
   return (
     <DropdownMenu>
@@ -49,7 +49,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
         disabled={disabled}
         className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50"
         aria-label={label}
-        title={assigned.length ? assigned.map((m) => m.displayName).join(', ') : 'Assigner'}
+        title={assigned.length ? assigned.map((m) => m.displayName).join(', ') : t('assign.assignShort')}
       >
         {assigned.length === 0 ? (
           <span className="w-7 h-7 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-muted))]">

@@ -169,7 +169,11 @@
     "q9": "Mes données sont-elles sécurisées ?",
     "a9": "Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre ne peut accéder à vos tâches ou habitudes. Les pages de l'application (dashboard, tâches, etc.) sont bloquées pour les robots de recherche dans robots.txt. En mode démo, les données restent dans votre navigateur (localStorage) et ne transitent pas par nos serveurs.",
     "q10": "Peut-on utiliser Cosmo sans connexion internet ?",
-    "a10": "En mode démo, toutes les données sont stockées localement dans votre navigateur — aucune connexion requise après le chargement initial. En mode compte, un cache localStorage 24 heures permet de consulter vos tâches et habitudes récentes même avec une connexion instable."
+    "a10": "En mode démo, toutes les données sont stockées localement dans votre navigateur — aucune connexion requise après le chargement initial. En mode compte, un cache localStorage 24 heures permet de consulter vos tâches et habitudes récentes même avec une connexion instable.",
+    "q11": "Mes collaborateurs vont-ils se sentir surveillés ?",
+    "a11": "Non, et c'est un choix de conception. Un responsable voit la charge, les tâches et les créneaux d'agenda de son équipe, mais jamais le contenu des évènements marqués comme personnels. Les statistiques portent sur les tâches d'équipe, pas sur l'activité individuelle. Chaque personne voit d'ailleurs, avant de rejoindre une entreprise, exactement ce que celle-ci pourra observer de son travail.",
+    "q12": "Comment les données sont-elles cloisonnées entre les équipes ?",
+    "a12": "Le cloisonnement est appliqué au niveau de la base de données, pas seulement à l'affichage : un projet ou un objectif rattaché à une équipe reste inaccessible aux autres, même en cas de bug d'interface. Un responsable intermédiaire ne voit que lui-même et les personnes qui lui reportent, directement ou non — sans aucune permission à configurer à la main."
   },
   "footer": {
     "rights": "© 2026 Tous droits réservés.",

@@ -220,7 +220,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               </div>
               <p className="text-muted-foreground text-xs">
                 {teamIds.length === 0
-                  ? "Objectif visible par tous les membres de l'entreprise."
+                  ? t('okrModal.visibilityWholeOrg')
                   : t('okrModal.visibilityTeams')}
               </p>
             </div>

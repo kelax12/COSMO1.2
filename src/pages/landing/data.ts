@@ -35,7 +35,11 @@ export interface FaqItemData {
 }
 
 // ── FAQ data ──────────────────────────────────────────────────────────────
-export const FAQ_ITEMS: FaqItemData[] = Array.from({ length: 10 }, (_, i) => ({
+// 12 items : les deux derniers portent sur la confidentialité en entreprise
+// (surveillance, cloisonnement entre équipes). Ils alimentent aussi le JSON-LD
+// FAQPage — c'est aujourd'hui la seule surface publique qui répond à ces deux
+// objections, systématiques dès qu'une organisation dépasse quelques personnes.
+export const FAQ_ITEMS: FaqItemData[] = Array.from({ length: 12 }, (_, i) => ({
   questionKey: `faq.q${i + 1}` as KeyOf<'landing'>,
   answerKey: `faq.a${i + 1}` as KeyOf<'landing'>,
 }));

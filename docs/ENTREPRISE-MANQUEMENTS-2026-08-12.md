@@ -12,9 +12,9 @@
 | 1 | ~~Seeds de démo incomplets~~ ✅ **livré** | 🔴 P0 | #2, #3 — impossible de capturer ce que la démo ne montre pas |
 | 2 | ~~Aucune page marketing du mode entreprise~~ ✅ **livré** | 🔴 P0 | Toute l'acquisition B2B |
 | 3 | ~~Aucune page pricing entreprise~~ ✅ **livré** (sans montants, cf. décision) | 🔴 P0 | Conversion |
-| 4 | i18n incomplet (~10 fichiers avec du FR en dur) | 🟠 P1 | Marché non francophone |
-| 5 | Onboarding post-création partiel (checklist admin-only) | 🟠 P1 | Activation / rétention |
-| 6 | Aucune page sécurité / confiance | 🟠 P1 | Vente aux orgs > 20 pers. |
+| 4 | ~~i18n incomplet~~ ✅ **livré** (~30 chaînes, pas ~10) | 🟠 P1 | Marché non francophone |
+| 5 | ~~Onboarding post-création partiel~~ ✅ **livré** | 🟠 P1 | Activation / rétention |
+| 6 | ~~Aucune surface publique sur la confidentialité~~ ✅ **livré** | 🟠 P1 | Vente aux orgs > 20 pers. |
 | 7 | Plafond de sièges : gate serveur réel mais UI non préparée | 🟡 P2 | Activation de la facturation |
 | 8 | Stripe entreprise inexistant | 🟡 P2 | Encaissement réel |
 | 9 | Pas d'événements d'entreprise partagés | 🔵 P3 | Argument « agenda d'entreprise » |
@@ -227,6 +227,44 @@ Ajoutée dans `src/content/use-cases.mjs` — donc **zéro route à inventer** :
 
 1. **Pas de montants publiés.** La page met en avant « gratuit jusqu'à cinq personnes, sans fonctionnalité bridée » et s'arrête là. Les paliers 20 €/100 € restent internes tant que la date d'activation n'est pas tranchée — un prix indexé par Google est difficile à reprendre.
 2. **Slug `pour-equipes`**, par symétrie avec les trois pages existantes.
+
+## Ce qui a été livré — P1 (2026-08-13)
+
+### #4 — i18n : ~30 chaînes, pas ~10
+
+L'estimation initiale venait d'un scan qui ne regardait que le texte JSX sur une seule ligne. Un scan complet (texte JSX multiligne **et** littéraux de chaîne : `aria-label`, `title`, messages d'erreur, `placeholder`) en a trouvé **près de trois fois plus**, réparties sur 20 fichiers.
+
+Deux catégories, et la seconde était invisible :
+
+1. **Libellés visibles** — rôles (`Administrateur` / `Manager` / `Membre`), `Enregistrer`, `Vous`, `En cours`, `En retard`, `Aucune tâche.`, boutons de confirmation.
+2. **Chaînes d'accessibilité et tooltips** — `aria-label={\`Modifier la tâche ${task.name}\`}`, `title={\`${overdue} tâche(s) en retard\`}`, messages de validation. Invisibles à l'œil, mais ce sont exactement celles que lit un lecteur d'écran : un utilisateur anglophone non-voyant recevait l'interface en français.
+
+**Deux bugs de rendu trouvés au passage** — des phrases coupées en deux lors d'une extraction précédente, dont la moitié était restée en dur dans le JSX :
+
+- `TransferOwnershipDialog` affichait « …pourra transférer **à nouveau. nouveau ou supprimer** l'entreprise. » — mot dupliqué, phrase cassée, visible par tout admin ouvrant le dialogue de transfert. Corrigé et vérifié au navigateur.
+- `PyramidTab` assemblait sa phrase d'introduction à partir du catalogue + une queue en dur. Le rendu français était juste par chance ; toute autre langue produisait une phrase tronquée.
+
+**Un piège de code** : dans `NewTeamProjectModal`, la variable de boucle `tasks.map((t, i) => …)` masquait le traducteur `t`. Aucune traduction n'était possible dans ce bloc — et rien n'échouait, le code compilait. Paramètre renommé en `draft`.
+
+Toutes les phrases contenant une valeur mise en forme (nom d'entreprise en gras) passent désormais par `src/i18n/name-slot.ts` : le message reste **entier** dans le catalogue et n'est coupé qu'à l'affichage. Assembler une phrase à partir de fragments la rend intraduisible — l'ordre des mots change d'une langue à l'autre.
+
+Résultat : `npm run i18n:check` passe à **0 erreur, 0 avertissement** (les 8 formes plurielles `_many` manquantes ont été ajoutées, conformément à la convention du projet pour le français des grands nombres).
+
+### #5 — Onboarding
+
+- **5ᵉ étape « Créer une première équipe »**, placée **avant** « créer un projet » : un projet rattaché après coup demande un geste de plus, et c'est le rattachement qui porte tout le cloisonnement de visibilité.
+- **Bloc d'accueil pour les non-admins** (`NewcomerHints` dans `MyWorkTab`) : la checklist existante est réservée aux admins, un membre simple arrivait donc sur un écran vide. Trois portes d'entrée — projets de l'équipe, annuaire, objectifs — affichées tant qu'aucune tâche ne lui est assignée.
+
+### #6 — Confidentialité : deux entrées FAQ plutôt qu'une page
+
+Le document recommandait de **ne pas** écrire une page « Sécurité » par anticipation, et la section « Suivre l'équipe sans la surveiller » de `/pour-equipes` couvrait déjà le sujet côté marketing. L'apport ici est ailleurs : deux entrées ajoutées à la FAQ de la landing (FR + EN), qui alimentent aussi le **JSON-LD `FAQPage`** — donc éligibles aux résultats enrichis Google.
+
+- « Mes collaborateurs vont-ils se sentir surveillés ? »
+- « Comment les données sont-elles cloisonnées entre les équipes ? »
+
+Ce sont les deux objections systématiques en cycle de vente B2B, et elles n'avaient jusqu'ici **aucune** surface publique.
+
+---
 
 ### Défauts pré-existants découverts en vérifiant
 

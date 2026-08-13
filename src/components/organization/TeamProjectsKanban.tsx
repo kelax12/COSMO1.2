@@ -44,7 +44,7 @@ interface DragPayload {
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
 const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus }: TeamProjectsKanbanProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
@@ -147,7 +147,12 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
               <span className="ml-auto flex items-center gap-1 shrink-0">
                 <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                   {colTasks.length}
-                  {overdue > 0 && <span className="text-red-500 font-semibold" title={`${overdue} tâche${overdue > 1 ? 's' : ''} en retard`}> · {overdue} retard</span>}
+                  {overdue > 0 && (
+                    <span className="text-red-500 font-semibold" title={tp('kanban.overdueTitle', overdue)}>
+                      {' · '}
+                      {t('kanban.overdueBadge', { count: overdue })}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"
@@ -184,7 +189,11 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                       e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, from: col.id } satisfies DragPayload))
                     }
                     onClick={() => onOpenTask(task)}
-                    aria-label={`Modifier la tâche ${task.name}${overdueTask ? ' (en retard)' : ''}`}
+                    aria-label={
+                      overdueTask
+                        ? t('kanban.editTaskOverdue', { name: task.name })
+                        : t('kanban.editTask', { name: task.name })
+                    }
                     className={`w-full text-left rounded-xl border px-3 py-2 transition-colors cursor-grab active:cursor-grabbing ${
                       overdueTask
                         ? 'border-red-400/60 dark:border-red-700/60 bg-red-50 dark:bg-red-900/25 hover:border-red-500'
@@ -201,10 +210,15 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                       )}
                       {/* Co-assignés (tâche partagée entre plusieurs personnes) */}
                       {coAssignees.length > 0 && (
-                        <span className="flex -space-x-1 shrink-0" title={`Aussi assignée à ${coAssignees
-                          .map((id) => members.find((m) => m.userId === id)?.displayName)
-                          .filter(Boolean)
-                          .join(', ')}`}>
+                        <span
+                          className="flex -space-x-1 shrink-0"
+                          title={t('kanban.alsoAssigned', {
+                            names: coAssignees
+                              .map((id) => members.find((m) => m.userId === id)?.displayName)
+                              .filter(Boolean)
+                              .join(', '),
+                          })}
+                        >
                           {coAssignees.slice(0, 2).map((id) => {
                             const m = members.find((x) => x.userId === id);
                             return m ? (

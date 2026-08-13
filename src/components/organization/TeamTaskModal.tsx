@@ -90,8 +90,8 @@ const TeamTaskModal = ({
 
   const handleSave = async () => {
     if (pending) return;
-    if (!name.trim()) { setError('Le nom de la tâche est requis'); return; }
-    if (!projectId) { setError('Choisissez un projet'); return; }
+    if (!name.trim()) { setError(t('taskModal.nameRequired')); return; }
+    if (!projectId) { setError(t('taskModal.projectRequired')); return; }
     setPending(true);
     setError(null);
     const minutes = estimatedTime.trim() === '' ? undefined : Number(estimatedTime);
@@ -283,7 +283,7 @@ const TeamTaskModal = ({
                 style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
                 <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />
-                Assigner la tâche
+                {t('taskModal.assignTask')}
                 {assigneeIds.length > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
                     {assigneeIds.length}

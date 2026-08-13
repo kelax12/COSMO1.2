@@ -4,11 +4,12 @@ import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 import { useT } from '@/i18n/useT';
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrateur',
-  manager: 'Manager',
-  member: 'Membre',
-};
+/** Clé de libellé par rôle stocké — « manager » est dérivé, jamais stocké. */
+const ROLE_KEYS = {
+  admin: 'roles.admin',
+  manager: 'roles.manager',
+  member: 'roles.member',
+} as const;
 
 /**
  * Section « Entreprise » des Réglages (onglet Profil).
@@ -38,7 +39,7 @@ const OrganizationSettingsCard = () => {
           <div>
             <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{myOrg.name}</p>
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
-              {ROLE_LABELS[myOrg.myRole] ?? 'Membre'}
+              {t(ROLE_KEYS[myOrg.myRole as keyof typeof ROLE_KEYS] ?? 'roles.member')}
             </p>
           </div>
           <button

@@ -227,7 +227,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             disabled={!code.trim() || !consent || requestJoinMutation.isPending}
             className={primaryBtn}
           >
-            {requestJoinMutation.isPending ? 'Envoi…' : 'Envoyer la demande'}
+            {requestJoinMutation.isPending ? t('createJoin.sending') : t('createJoin.sendRequest')}
           </button>
         </div>
       )}

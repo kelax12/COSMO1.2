@@ -88,7 +88,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xs font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                      {author?.displayName ?? 'Ancien membre'}
+                      {author?.displayName ?? t('comments.formerMember')}
                     </span>
                     <span className="text-[10px] shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: getDateLocale() })}
