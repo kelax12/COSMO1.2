@@ -498,12 +498,14 @@ const OKRPage: React.FC = () => {
       </motion.button>
 
       {/* Tutoriel page OKR — variante adaptée au viewport */}
-      {/* accentColor en vert foncé : #22C55E ne passait pas le contraste AA (2.3:1) avec le texte blanc du bouton "Suivant" */}
+      {/* accentColor = vert clair d'origine (décoratif). buttonColor = variante foncée AA-safe
+          (#22C55E ne passait pas le contraste AA 2.3:1 avec le texte blanc) — réservée au texte blanc. */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#15803D"
+        accentColor="#22C55E"
+        buttonColor="#15803D"
       />
 
       {/* Check-in hebdo — accessible manuellement en mode démo (en prod il

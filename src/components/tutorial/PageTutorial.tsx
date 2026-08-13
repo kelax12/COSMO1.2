@@ -21,14 +21,17 @@ interface PageTutorialProps {
   /** isOpen / close fournis par useTutorial */
   isOpen: boolean;
   onClose: () => void;
-  /** Couleur d'accent (anneau spotlight, flèche, boutons). Défaut bleu. */
+  /** Couleur d'accent décorative (anneau spotlight, flèche, bordures, dots). Défaut bleu. */
   accentColor?: string;
+  /** Couleur de fond pour le texte blanc (bouton "Suivant", ghost de drag) — doit rester AA-safe. Défaut = accentColor. */
+  buttonColor?: string;
 }
 
 // ───────────────────────────────────────────────────────────────────
 // Composant principal
 // ───────────────────────────────────────────────────────────────────
-const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, accentColor = '#3B82F6' }) => {
+const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, accentColor = '#3B82F6', buttonColor }) => {
+  const btnColor = buttonColor ?? accentColor;
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [dragGhost, setDragGhost] = useState<{ from: TargetRect; to: TargetRect } | null>(null);
@@ -451,8 +454,8 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
               className="absolute pointer-events-none rounded-lg shadow-2xl flex items-center justify-start px-2.5 overflow-hidden"
               style={{
                 width: GHOST_W,
-                background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
-                border: `2px solid ${accentColor}`,
+                background: `linear-gradient(135deg, ${btnColor}, ${btnColor}cc)`,
+                border: `2px solid ${btnColor}`,
                 color: 'white',
                 fontWeight: 700,
                 fontSize: 12,
@@ -556,10 +559,10 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
             style={{
               background: ghost.isDashed
                 ? `${accentColor}33`
-                : `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
+                : `linear-gradient(135deg, ${btnColor}, ${btnColor}dd)`,
               border: ghost.isDashed
                 ? `2px dashed ${accentColor}`
-                : `2px solid ${accentColor}`,
+                : `2px solid ${btnColor}`,
               color: 'white',
               fontWeight: 700,
               fontSize: 11,
@@ -585,6 +588,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
           totalSteps={totalSteps}
           visibleSteps={visibleSteps}
           accentColor={accentColor}
+          buttonColor={btnColor}
           cardStyle={cardStyle}
           onClose={handleClose}
           onPrev={handlePrev}
