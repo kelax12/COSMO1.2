@@ -503,6 +503,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           }
           groupBy={kanbanGroupBy}
           onSetStatus={setStatus}
+          assigneeFilter={assigneeFilter}
         />
       ) : (
         <>
