@@ -1,6 +1,7 @@
 import { ITasksRepository, ToggleCompleteResult } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { localizeSeed } from '@/lib/seed-i18n';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -90,12 +91,33 @@ const DEMO_TASKS: Task[] = [
   },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. `sharedBy` (nom de personne)
+// n'est PAS traduit : un nom propre n'est pas une langue.
+const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
+  t001: { name: '2025 annual review', description: 'Full review + 2026 plan' },
+  t002: { name: 'Prepare Q1 2026 presentation', description: '3-month results + projections' },
+  t013: { name: 'Send invoice to Dupont client', description: 'Overdue invoice, follow up with client' },
+  t003: { name: 'Q1 2026 security audit', description: 'Pentest + CVE fixes' },
+  t004: { name: 'Update npm dependencies', description: 'Major upgrade + breaking changes' },
+  t005: { name: 'Read "Accelerate"', description: 'Forsgren — DORA DevOps metrics' },
+  t006: { name: 'Deep learning course on Coursera', description: 'Neural networks + CNN + RNN' },
+  t007: { name: 'Prepare mortgage application', description: 'Documents + simulation + banks' },
+  t008: { name: 'Look for a new apartment', description: 'Criteria + viewings + budget cap' },
+  t009: { name: '2026 annual check-up', description: 'Check-up + vaccines + renewals' },
+  t010: { name: 'Daily stretching routine', description: 'Mobility + post-workout recovery' },
+  t011: { name: 'Review the pitch deck', description: 'Incorporate feedback before Monday' },
+  t012: { name: 'Test the mobile prototype', description: 'Onboarding flow + UX feedback' },
+  'shared-001': { name: 'Review the monthly report', description: 'Check figures and add comments' },
+  'shared-002': { name: 'Prepare the kickoff meeting', description: 'Agenda + slides + invitations' },
+};
+
 export class LocalStorageTasksRepository implements ITasksRepository {
   private getTasks(): Task[] {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
-      this.saveTasks(DEMO_TASKS);
-      return DEMO_TASKS;
+      const seeded = localizeSeed(DEMO_TASKS, DEMO_TASKS_EN);
+      this.saveTasks(seeded);
+      return seeded;
     }
     return JSON.parse(data);
   }

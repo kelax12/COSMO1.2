@@ -4,6 +4,7 @@
 
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { CATEGORIES_STORAGE_KEY } from './constants';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -16,6 +17,16 @@ const DEMO_CATEGORIES: Category[] = [
   { id: 'cat-4', name: 'Apprentissage', color: '#8B5CF6' },
   { id: 'cat-5', name: 'Projets', color: '#F97316' },
 ];
+
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Ces labels sont la source
+// unique du nom de catégorie : task.category / habit ne stockent qu'un id.
+const DEMO_CATEGORIES_EN: Record<string, Partial<Category>> = {
+  'cat-1': { name: 'Work' },
+  'cat-2': { name: 'Personal' },
+  'cat-3': { name: 'Health' },
+  'cat-4': { name: 'Learning' },
+  'cat-5': { name: 'Projects' },
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
@@ -43,8 +54,9 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
   private getCategories(): Category[] {
     const data = localStorage.getItem(CATEGORIES_STORAGE_KEY);
     if (!data) {
-      this.saveCategories(DEMO_CATEGORIES);
-      return DEMO_CATEGORIES;
+      const seeded = localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN);
+      this.saveCategories(seeded);
+      return seeded;
     }
     return JSON.parse(data);
   }

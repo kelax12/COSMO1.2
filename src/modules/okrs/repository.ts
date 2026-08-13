@@ -8,6 +8,7 @@ import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
 import { KRCompletion } from '@/modules/kr-completions/types';
+import { isEnglishSeed } from '@/lib/seed-i18n';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -152,6 +153,102 @@ function createDemoOkrs(): OKR[] {
   ];
 }
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Structure imbriquée (titre de
+// l'OKR + titres de ses key results) : la fusion générique par id top-level
+// ne suffit pas, d'où ce merge dédié plutôt que `localizeSeed`.
+const DEMO_OKRS_EN: Record<string, { title: string; description: string; keyResults: Record<string, string> }> = {
+  'okr-1': {
+    title: 'Improve my productivity Q2 2026',
+    description: 'Become more efficient in my daily tasks',
+    keyResults: {
+      'kr-1': 'Complete 90% of planned tasks',
+      'kr-2': 'Cut distractions by 50%',
+      'kr-3': 'Daily Pomodoro method',
+    },
+  },
+  'okr-2': {
+    title: 'Master machine learning',
+    description: 'Build solid ML/AI skills',
+    keyResults: {
+      'kr-4': 'Finish the Coursera specialization',
+      'kr-5': 'Ship 2 ML projects to production',
+      'kr-6': 'Top 20% in Kaggle competitions',
+    },
+  },
+  'okr-3': {
+    title: 'Health & wellbeing 2026',
+    description: 'Adopt and maintain a healthy lifestyle',
+    keyResults: {
+      'kr-7': 'Exercise 4x a week',
+      'kr-8': 'Sleep 7h30+ per night',
+      'kr-9': '5 fruits/veggies a day',
+    },
+  },
+  'okr-4': {
+    title: 'Launch COSMO v1.2 to production',
+    description: 'Build and ship version 1.2',
+    keyResults: {
+      'kr-10': 'Ship the 5 new features',
+      'kr-11': 'Deploy to Vercel',
+      'kr-12': 'Reach 100 beta users',
+    },
+  },
+  'okr-5': {
+    title: 'App performance optimization',
+    description: 'Cut load times and improve the Lighthouse score',
+    keyResults: {
+      'kr-13': 'Lighthouse score > 90',
+      'kr-14': 'Cut bundle size by 30%',
+      'kr-15': 'TTI < 2s on mobile',
+    },
+  },
+  'okr-6': {
+    title: 'COSMO v1 user growth',
+    description: 'Acquire the first active users',
+    keyResults: {
+      'kr-16': 'Reach 200 active users',
+      'kr-17': 'NPS score above 40',
+      'kr-18': 'D30 retention > 40%',
+    },
+  },
+  'okr-7': {
+    title: 'Technical excellence Q3 2025',
+    description: 'Improve code quality and performance',
+    keyResults: {
+      'kr-19': 'Test coverage > 80%',
+      'kr-20': 'Load time < 1.5s',
+      'kr-21': 'Zero critical vulnerabilities',
+    },
+  },
+  'okr-8': {
+    title: 'Wellbeing & health H1 2025',
+    description: 'Build lasting healthy habits',
+    keyResults: {
+      'kr-22': 'Exercise 3x a week for 6 months',
+      'kr-23': '5000 pages read in 6 months',
+      'kr-24': 'Daily meditation — 90-day streak',
+    },
+  },
+};
+
+/** Applique DEMO_OKRS_EN sur le seed français quand la locale est anglaise. */
+function localizeOkrs(okrs: OKR[]): OKR[] {
+  if (!isEnglishSeed()) return okrs;
+  return okrs.map((okr) => {
+    const patch = DEMO_OKRS_EN[okr.id];
+    if (!patch) return okr;
+    return {
+      ...okr,
+      title: patch.title,
+      description: patch.description,
+      keyResults: okr.keyResults.map((kr) => ({
+        ...kr,
+        title: patch.keyResults[kr.id] ?? kr.title,
+      })),
+    };
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
 // ═══════════════════════════════════════════════════════════════════
@@ -196,7 +293,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   private getOKRs(): OKR[] {
     const data = localStorage.getItem(OKRS_STORAGE_KEY);
     if (!data) {
-      const demo = createDemoOkrs();
+      const demo = localizeOkrs(createDemoOkrs());
       this.saveOKRs(demo);
       return demo;
     }
