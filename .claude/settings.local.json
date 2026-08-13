@@ -394,7 +394,9 @@
       "Bash(cd /c/Users/Axel/.claude/skills-library/design/design && grep -rno \"ai-artist\\\\|ai-multimodal\\\\|chrome-devtools\\\\|project-management\\\\|assets-organizing\\\\|/ckm:\\\\|/ck:\" --include=\"*.md\" . | grep -v _claude-nested | cut -d: -f1 | sort | uniq -c | sort -rn | head -10; echo \"=== refs a des skills externes dans REFERENCE.md ===\"; grep -l \"Skill\\\\b\\\\|skill tool\\\\|invoke\" banner-design/REFERENCE.md brand/REFERENCE.md 2>/dev/null; echo \"=== deprecated superpowers ===\"; ls /c/Users/Axel/.claude/skills/superpowers/skills/ | head -30)",
       "Bash(xargs -I {} basename {})",
       "Bash(xargs ls -1)",
-      "Bash(grep -n -i \"three\\\\|3d\\\\|webgl\\\\|shader\\\\|typegpu\" C:/Users/Axel/.claude/skills/hyperframes-animation/SKILL.md | head -15; echo ====; grep -n -i \"three\\\\|3d\\\\|shader\\\\|particle\\\\|depth\" C:/Users/Axel/.claude/skills/hyperframes-keyframes/SKILL.md | head -10)"
+      "Bash(grep -n -i \"three\\\\|3d\\\\|webgl\\\\|shader\\\\|typegpu\" C:/Users/Axel/.claude/skills/hyperframes-animation/SKILL.md | head -15; echo ====; grep -n -i \"three\\\\|3d\\\\|shader\\\\|particle\\\\|depth\" C:/Users/Axel/.claude/skills/hyperframes-keyframes/SKILL.md | head -10)",
+      "Bash(git commit -q -m 'docs: rapport complet mode entreprise + strategie d acquisition *)",
+      "Bash(git push *)"
     ]
   },
   "enabledMcpjsonServers": [
