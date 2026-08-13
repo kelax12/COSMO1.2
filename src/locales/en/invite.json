@@ -1,0 +1,25 @@
+{
+  "backHome": "Back to home",
+  "loading": "Opening the invitation…",
+  "someone": "Someone",
+  "heading": "{{name}} is inviting you to collaborate",
+  "onTask": "on “{{task}}”",
+  "benefits": {
+    "title": "With COSMO, you can:",
+    "collaborate": "Follow this task together, in real time",
+    "organize": "Keep your tasks, calendar and habits in one place",
+    "free": "Get started for free, no credit card"
+  },
+  "cta": "Create my free account",
+  "hasAccount": "I already have an account",
+  "invalid": {
+    "title": "Invalid link",
+    "text": "This invitation link isn't valid. Check that you copied all of it.",
+    "cta": "Discover COSMO"
+  },
+  "expired": {
+    "title": "Link expired",
+    "text": "This invitation link has expired. Ask the person who sent it for a new one.",
+    "cta": "Discover COSMO"
+  }
+}
