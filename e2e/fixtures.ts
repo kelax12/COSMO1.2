@@ -59,7 +59,29 @@ export const test = base.extend<{ demoPage: Page }>({
     //    test d'un serveur Vite froid son rendu dépasse largement 10 s.
     const demoBtn = page.getByRole('button', { name: /essayer.*sans inscription/i }).first();
     await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
-    await demoBtn.click();
+    // Deux faux positifs d'actionnabilité se cumulent sur la landing :
+    //   - « element is not stable » : les animations GSAP d'entrée bougent
+    //     encore le CTA quand Playwright vérifie sa position ;
+    //   - « <header> subtree intercepts pointer events » : le `scrolling into
+    //     view` de Playwright amène le CTA SOUS le header sticky
+    //     (`sticky top-0 z-50`), qui capte alors le clic.
+    // On remonte en haut pour dégager le header, puis on retombe si besoin sur
+    // un dispatch direct. `{ force: true }` ne suffit PAS ici : il saute le
+    // test d'interception mais tape toujours au point central — c'est-à-dire
+    // sur le header — et la navigation n'avait donc jamais lieu.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    try {
+      await demoBtn.click({ timeout: 15_000 });
+    } catch {
+      // Le clic peut avoir DÉCLENCHÉ la navigation puis rejeté quand même
+      // (la page se démonte sous les vérifications post-clic de Playwright).
+      // Sans ce garde, on relançait un clic sur un bouton déjà disparu — qui
+      // n'aboutit jamais et bloque le test jusqu'au timeout (observé : 60 s
+      // à 2 min figés au lieu d'un échec net).
+      if (!/\/dashboard/.test(page.url())) {
+        await demoBtn.dispatchEvent('click');
+      }
+    }
 
     // 3. Attendre le dashboard
     await page.waitForURL(/\/dashboard/, { timeout: 20_000 });
@@ -129,12 +151,32 @@ export const TASK_TOGGLE_UNCHECKED = '[aria-label="Marquer comme complétée"]';
 export const TASK_TOGGLE_CHECKED = '[aria-label="Marquer comme non complétée"]';
 
 /**
- * Navigation SPA viewport-aware : clique le lien VISIBLE (sidebar desktop ou
- * tab bar mobile). `.first()` seul peut résoudre un lien caché par le CSS
- * responsive (sidebar `hidden` sur mobile) → timeout. Sur mobile, les sections
- * absentes de la tab bar (OKR, Statistiques…) vivent dans le sheet « Plus » —
- * on l'ouvre d'abord. On privilégie le clic (il teste au passage que le lien de
- * nav existe et pointe au bon endroit) plutôt que page.goto().
+ * Si le clic vient d'ouvrir un menu déroulant (Radix `role="menu"`), clique
+ * le premier item.
+ *
+ * Cas réel : « Entreprise » — la démo place l'utilisateur dans DEUX
+ * organisations (Nova Studio + Atelier Lune, cf. `organizations/local.repository.ts`),
+ * donc `NavItemLink` (Layout.tsx) rend un `role="button"` déclenchant un
+ * `DropdownMenu` de choix d'organisation, PAS un `<a>` de navigation directe —
+ * sur desktop ET mobile, c'est le comportement voulu (plusieurs organisations
+ * → il faut choisir). Peu importe laquelle pour un test qui vérifie juste que
+ * `/entreprise` rend sans erreur : le premier item convient.
+ */
+async function clickThroughOrgMenuIfAny(page: Page): Promise<void> {
+  const menuItem = page.getByRole('menuitem').first();
+  if (await menuItem.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await menuItem.click();
+  }
+}
+
+/**
+ * Navigation SPA viewport-aware : clique le lien ou bouton VISIBLE (sidebar
+ * desktop ou tab bar mobile). `.first()` seul peut résoudre un contrôle caché
+ * par le CSS responsive (sidebar `hidden` sur mobile) → timeout. Sur mobile,
+ * les sections absentes de la tab bar (OKR, Statistiques…) vivent dans le
+ * sheet « Plus » — on l'ouvre d'abord. On privilégie le clic (il teste au
+ * passage que le contrôle de nav existe et pointe au bon endroit) plutôt que
+ * page.goto().
  * NB : le mode démo SURVIT à un full reload (`cosmo_demo_active`, cf.
  * app-mode.store.ts) — l'ancien avertissement « goto = perte du mode démo »
  * était périmé ; goto reste utilisable pour une route sans lien de nav.
@@ -145,28 +187,51 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
     try {
       await visibleLink.click({ timeout: 10_000 });
     } catch {
+      // Même garde que le CTA démo (cf. plus haut) : le premier clic peut
+      // avoir abouti et navigué avant de rejeter — sans ce check, le clic
+      // forcé retente sur un lien déjà démonté et bloque jusqu'au timeout.
+      if (urlPattern.test(page.url())) return;
       // WebKit/Windows : les animations continues (curseur TextType, charts)
       // font flapper le check « stable » de Playwright sur la tab bar fixe.
-      // Le lien est visible et cliquable — on force le dispatch.
-      await visibleLink.click({ force: true });
+      // Le lien est visible et cliquable — on force le dispatch. Timeout
+      // explicite : un `force` sans timeout hérite du timeout du TEST entier
+      // et un lien redevenu inaccessible entre-temps bloquait jusqu'à 2 min
+      // au lieu d'échouer proprement.
+      await visibleLink.click({ force: true, timeout: 10_000 });
     }
-  } else {
-    // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
-    // Les items du sheet sont des <button> (navigate()), pas des <a>.
-    await page.getByRole('button', { name: /plus d'options/i }).click();
-    // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
-    // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
-    // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
-    // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
-    // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
-    const sheet = page.locator('[data-mobile-more-sheet]');
-    await sheet.waitFor({ state: 'visible', timeout: 10_000 });
-    const sheetItem = sheet
-      .getByRole('link', { name })
-      .or(sheet.getByRole('button', { name }))
-      .filter({ visible: true })
-      .first();
-    await sheetItem.click({ timeout: 10_000 });
+    await clickThroughOrgMenuIfAny(page);
+    await page.waitForURL(urlPattern);
+    return;
   }
+
+  // Pas de <a> visible : sur desktop, certaines entrées de nav (Entreprise
+  // avec plusieurs organisations démo) sont un role="button" qui ouvre un
+  // menu au lieu de naviguer directement — cf. clickThroughOrgMenuIfAny.
+  const visibleButton = page.getByRole('button', { name }).filter({ visible: true }).first();
+  if (await visibleButton.isVisible().catch(() => false)) {
+    await visibleButton.click({ timeout: 10_000 });
+    await clickThroughOrgMenuIfAny(page);
+    await page.waitForURL(urlPattern, { timeout: 10_000 });
+    return;
+  }
+
+  // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
+  // Les items du sheet sont des <button> (navigate()), pas des <a> — sauf
+  // « Entreprise » multi-org, qui est elle aussi un déclencheur de menu.
+  await page.getByRole('button', { name: /plus d'options/i }).click();
+  // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
+  // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
+  // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
+  // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
+  // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
+  const sheet = page.locator('[data-mobile-more-sheet]');
+  await sheet.waitFor({ state: 'visible', timeout: 10_000 });
+  const sheetItem = sheet
+    .getByRole('link', { name })
+    .or(sheet.getByRole('button', { name }))
+    .filter({ visible: true })
+    .first();
+  await sheetItem.click({ timeout: 10_000 });
+  await clickThroughOrgMenuIfAny(page);
   await page.waitForURL(urlPattern);
 }

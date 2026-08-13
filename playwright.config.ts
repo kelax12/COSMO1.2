@@ -32,9 +32,33 @@ export default defineConfig({
     // pour réutiliser un dev server existant sans en redémarrer un.
     // Override via PLAYWRIGHT_BASE_URL si besoin.
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    // ─── Locale du navigateur : française, comme l'utilisateur cible ───
+    //
+    // Sans ça, Chromium et WebKit annoncent `en-US`. Depuis la phase 2 i18n,
+    // la racine `/` redirige alors vers `/en/` et la landing rend en anglais —
+    // or toutes les fixtures et la plupart des sélecteurs sont écrits en
+    // français (« Essayer maintenant — sans inscription »). Résultat : les ~55
+    // tests passant par le mode démo échouaient dans la fixture, sur les deux
+    // projets, avec un `TimeoutError` qui ressemblait à un sélecteur cassé.
+    //
+    // L'app est 100 % française (cf. CLAUDE.md) : un navigateur francophone est
+    // la configuration NORMALE, pas un cas particulier. Les tests qui vérifient
+    // la détection automatique de langue (e2e/i18n-routing.spec.ts) surchargent
+    // eux-mêmes `navigator.language` via `addInitScript` — ils restent donc
+    // indépendants de ce réglage, et c'est ce qui rend ce défaut sans danger.
+    locale: 'fr-FR',
+    timezoneId: 'Europe/Paris',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // `retain-on-failure` ENREGISTRE tout et jette après coup : chaque test paie
+    // la capture, et la fermeture du contexte attend le flush du .webm. Mesuré
+    // sur cette machine : fixture démo à 12,8 s sans vidéo contre 55,4 s avec,
+    // plus 21 s de flush — soit un test à 3 min au lieu de 30 s, et un budget
+    // vidéo de ~30 min sur les 82 tests.
+    // `on-first-retry` s'aligne sur `trace` : rien en local (retries=0), et une
+    // vidéo en CI (retries=2) sur la 2ᵉ tentative d'un test qui échoue — donc
+    // la même valeur de diagnostic là où on en a besoin, sans la taxe partout.
+    video: 'on-first-retry',
   },
   projects: [
     {
