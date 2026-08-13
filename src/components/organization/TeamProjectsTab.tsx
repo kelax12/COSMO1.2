@@ -483,7 +483,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       ) : view === 'kanban' ? (
         <TeamProjectsKanban
           projects={activeProjects}
-          tasks={statsTasks}
+          tasks={visibleTasks}
           members={members}
           onSetAssignees={setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
