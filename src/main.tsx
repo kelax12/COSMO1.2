@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
+import { captureFirstTouch } from './lib/attribution';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
@@ -97,6 +98,13 @@ performance.mark('cosmo:boot');
 try {
   applyTheme(document.documentElement, resolveInitialTheme());
 } catch { /* localStorage/matchMedia inaccessibles (navigation privée stricte) */ }
+
+// Attribution first-touch — AVANT l'amorçage i18n, qui fait un `replaceState`
+// susceptible de réécrire l'URL : la query string doit encore être celle que
+// le visiteur a réellement ouverte.
+try {
+  captureFirstTouch();
+} catch { /* l'analytics ne doit jamais empêcher l'app de démarrer */ }
 
 // ──────────────────────────────────────────────────────────────────
 // Amorçage i18n — locale, canonicalisation d'URL et `basename` du routeur.

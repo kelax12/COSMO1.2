@@ -8,6 +8,7 @@ import { habitKeys } from '../../modules/habits/constants';
 import { withTimeout } from '../../lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '../../lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '../../lib/demo-metrics';
+import { readFirstTouch } from '@/lib/attribution';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 
@@ -405,6 +406,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
     }
     exitDemoIfActive();
+    // Source d'acquisition first-touch (src/lib/attribution.ts). Déjà normalisée
+    // et validée : le trigger la re-valide de son côté (mig. 097), la metadata
+    // étant contrôlée par le client.
+    const firstTouch = readFirstTouch();
     try {
       const { error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -415,6 +420,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Lu par le trigger handle_new_user_profile (mig. 060) avec garde
             // stricte : toute valeur ≠ 'business' retombe en 'personal'.
             account_type: accountType === 'business' ? 'business' : 'personal',
+            ...(firstTouch
+              ? {
+                  acquisition_source: firstTouch.source,
+                  ...(firstTouch.campaign ? { acquisition_campaign: firstTouch.campaign } : {}),
+                }
+              : {}),
           },
         },
       });
