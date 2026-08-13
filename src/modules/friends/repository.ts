@@ -4,6 +4,7 @@
 
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant } from './types';
 import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY, SHARED_LISTS_STORAGE_KEY } from './constants';
+import { isEnglishSeed } from '@/lib/seed-i18n';
 
 /** Id de l'utilisateur démo — utilisé pour distinguer partages entrants/sortants. */
 const DEMO_USER_ID = 'demo-user';
@@ -58,6 +59,27 @@ const DEMO_INCOMING_SHARED_LISTS: SharedListGrant[] = [
     ],
   },
 ];
+
+/**
+ * Overlay anglais de la liste partagée entrante — cf. src/lib/seed-i18n.ts.
+ * Les noms de personnes (`sharedByName`) ne sont PAS traduits : un nom propre
+ * n'est pas une langue.
+ */
+function localizeIncomingSharedLists(lists: SharedListGrant[]): SharedListGrant[] {
+  if (!isEnglishSeed()) return lists;
+  return lists.map((list) => {
+    if (list.id !== 'shared-list-demo-1') return list;
+    return {
+      ...list,
+      name: 'Weekend groceries',
+      tasks: [
+        { ...list.tasks[0], name: 'Fruits & vegetables', category: 'Personal' },
+        { ...list.tasks[1], name: 'Bread & pastries', category: 'Personal' },
+        { ...list.tasks[2], name: 'Household supplies', category: 'Personal' },
+      ],
+    };
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
@@ -362,14 +384,14 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   private getSharedListsArray(): SharedListGrant[] {
     const data = localStorage.getItem(SHARED_LISTS_STORAGE_KEY);
     if (!data) {
-      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[];
+      const seed = localizeIncomingSharedLists(JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[]);
       localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }
     try {
       return JSON.parse(data) as SharedListGrant[];
     } catch {
-      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[];
+      const seed = localizeIncomingSharedLists(JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[]);
       localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }

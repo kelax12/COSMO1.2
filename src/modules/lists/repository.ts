@@ -4,6 +4,7 @@
 
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { LISTS_STORAGE_KEY } from './constants';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -47,6 +48,14 @@ const DEMO_LISTS: TaskList[] = [
   },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_LISTS_EN: Record<string, Partial<TaskList>> = {
+  'list-1': { name: 'Urgent' },
+  'list-2': { name: 'Work' },
+  'list-3-smart-overdue': { name: 'Overdue' },
+  'list-4-smart-priority': { name: 'High priority' },
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
 // ═══════════════════════════════════════════════════════════════════
@@ -78,8 +87,9 @@ export class LocalStorageListsRepository implements IListsRepository {
   private getLists(): TaskList[] {
     const data = localStorage.getItem(LISTS_STORAGE_KEY);
     if (!data) {
-      this.saveLists(DEMO_LISTS);
-      return DEMO_LISTS;
+      const seeded = localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);
+      this.saveLists(seeded);
+      return seeded;
     }
     return JSON.parse(data);
   }

@@ -40,3 +40,20 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
   'cat-4': 'Apprentissage',
   'cat-5': 'Projets',
 };
+
+/**
+ * Overlay anglais — ce registre est un DOUBLON du nom de catégorie (déjà
+ * porté par `src/modules/categories/repository.ts`, seeded en localStorage et
+ * localisé via `seed-i18n.ts`), gardé ici pour compat descendante. Sans cette
+ * variante, un visiteur anglophone voyait « Travail »/« Projets » dans le
+ * panneau « Tâches disponibles » de l'Agenda alors que le reste de l'app
+ * (filtre catégories, tâches, OKR) était bien en anglais — cf.
+ * `useColorSettings()`, seul point de lecture de ce registre.
+ */
+export const DEFAULT_COLOR_SETTINGS_EN: ColorSettings = {
+  'cat-1': 'Work',
+  'cat-2': 'Personal',
+  'cat-3': 'Health',
+  'cat-4': 'Learning',
+  'cat-5': 'Projects',
+};

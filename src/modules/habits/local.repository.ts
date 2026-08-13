@@ -1,6 +1,7 @@
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -73,12 +74,27 @@ const DEMO_HABITS: Habit[] = [
   h('h010','Veille technologique', 'Lire Hacker News + Reddit tech',        '#F97316','🔭',  15,  -80, 0.82, 287),
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_HABITS_EN: Record<string, Partial<Habit>> = {
+  h001: { name: 'Meditation', description: '15 min of mindfulness' },
+  h002: { name: 'Journaling', description: "Write down today's thoughts" },
+  h003: { name: 'Running', description: '30 min run' },
+  h004: { name: 'Daily walk', description: '8000 steps minimum' },
+  h005: { name: 'Drink 2L of water', description: '2 liters of water a day' },
+  h006: { name: '5 fruits & veggies', description: 'At least 5 servings a day' },
+  h007: { name: 'Pomodoro technique', description: '4 sessions of 25 min focus' },
+  h008: { name: 'Morning agenda review', description: 'Plan the day in 5 min' },
+  h009: { name: 'Duolingo', description: '15 min of language practice' },
+  h010: { name: 'Tech watch', description: 'Read Hacker News + tech Reddit' },
+};
+
 export class LocalStorageHabitsRepository implements IHabitsRepository {
   private getHabits(): Habit[] {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
-      this.saveHabits(DEMO_HABITS);
-      return DEMO_HABITS;
+      const seeded = localizeSeed(DEMO_HABITS, DEMO_HABITS_EN);
+      this.saveHabits(seeded);
+      return seeded;
     }
     return JSON.parse(data);
   }

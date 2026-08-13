@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useLocale } from '@/i18n/store';
 import { ColorSettings, PriorityRange, TaskSortPref, TaskSortPrefs } from './types';
 import {
   FAVORITE_COLORS_KEY,
@@ -13,6 +14,7 @@ import {
   DEFAULT_FAVORITE_COLORS,
   DEFAULT_PRIORITY_RANGE,
   DEFAULT_COLOR_SETTINGS,
+  DEFAULT_COLOR_SETTINGS_EN,
 } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -210,7 +212,11 @@ if (typeof window !== 'undefined') {
 export const useColorSettings = () => {
   // For now, color settings are static and derived from categories
   // In the future, this could be dynamic based on user preferences
-  const colorSettings = useMemo<ColorSettings>(() => DEFAULT_COLOR_SETTINGS, []);
+  const locale = useLocale();
+  const colorSettings = useMemo<ColorSettings>(
+    () => (locale === 'en' ? DEFAULT_COLOR_SETTINGS_EN : DEFAULT_COLOR_SETTINGS),
+    [locale]
+  );
 
   return { colorSettings };
 };
