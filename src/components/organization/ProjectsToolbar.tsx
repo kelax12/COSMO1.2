@@ -158,18 +158,18 @@ const ProjectsToolbar = ({
           <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
             <button
               type="button"
-              onClick={() => updatePrefs({ assigneeFilter: null })}
-              aria-pressed={scopeIsAll}
-              className={`${segBase} ${scopeIsAll ? segOn : segOff}`}
+              onClick={() => updatePrefs({ assigneeFilter: null, teamFilter: '' })}
+              aria-pressed={scopeIsAll && teamFilter === ''}
+              className={`${segBase} ${scopeIsAll && teamFilter === '' ? segOn : segOff}`}
             >
               {t('projects.scopeAll')}
             </button>
             {currentUserId && (
               <button
                 type="button"
-                onClick={() => updatePrefs({ assigneeFilter: currentUserId })}
-                aria-pressed={scopeIsMine}
-                className={`${segBase} ${scopeIsMine ? segOn : segOff}`}
+                onClick={() => updatePrefs({ assigneeFilter: currentUserId, teamFilter: '' })}
+                aria-pressed={scopeIsMine && teamFilter === ''}
+                className={`${segBase} ${scopeIsMine && teamFilter === '' ? segOn : segOff}`}
               >
                 {t('projects.scopeMine')}
               </button>
@@ -180,10 +180,10 @@ const ProjectsToolbar = ({
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label={t('projects.filterAssignee')}
-                aria-pressed={scopeIsMember}
-                className={`${segBase} inline-flex items-center gap-1.5 ${scopeIsMember ? segOn : segOff}`}
+                aria-pressed={scopeIsMember && teamFilter === ''}
+                className={`${segBase} inline-flex items-center gap-1.5 ${scopeIsMember && teamFilter === '' ? segOn : segOff}`}
               >
-                {scopeIsMember && filteredMember ? (
+                {scopeIsMember && teamFilter === '' && filteredMember ? (
                   <>
                     <MemberAvatar avatar={filteredMember.avatar} name={filteredMember.displayName} size={18} />
                     <span className="max-w-[100px] truncate">{filteredMember.displayName}</span>
@@ -197,12 +197,12 @@ const ProjectsToolbar = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
                 <DropdownMenuLabel>{t('projects.seeTasksOf')}</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null })}>
+                <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null, teamFilter: '' })}>
                   <span className="text-[rgb(var(--color-text-muted))]">{t('projects.everyone')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {members.map((m) => (
-                  <DropdownMenuItem key={m.userId} onClick={() => updatePrefs({ assigneeFilter: m.userId })}>
+                  <DropdownMenuItem key={m.userId} onClick={() => updatePrefs({ assigneeFilter: m.userId, teamFilter: '' })}>
                     <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
                     <span className="truncate">{m.userId === currentUserId ? t('projects.you') : m.displayName}</span>
                     {m.userId === assigneeFilter && (
@@ -238,7 +238,7 @@ const ProjectsToolbar = ({
                       <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
                     )}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: 'org' })}>
+                  <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: 'org', assigneeFilter: null })}>
                     <span>{t('projects.orgNoTeam')}</span>
                     {teamFilter === 'org' && (
                       <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
@@ -246,7 +246,7 @@ const ProjectsToolbar = ({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   {teams.map((tm) => (
-                    <DropdownMenuItem key={tm.id} onClick={() => updatePrefs({ teamFilter: tm.id })}>
+                    <DropdownMenuItem key={tm.id} onClick={() => updatePrefs({ teamFilter: tm.id, assigneeFilter: null })}>
                       <span className="truncate">{tm.name}</span>
                       {tm.id === teamFilter && (
                         <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
