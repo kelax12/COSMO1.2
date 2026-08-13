@@ -35,9 +35,17 @@ export const test = base.extend<{ demoPage: Page }>({
     //    'refused' = option la plus respectueuse (aucun cookie non essentiel).
     //    Cette clé est préservée par clearDemoStorage() (PRESERVE_KEYS), elle
     //    survit donc au loginDemo() qui balaye le reste des clés cosmo_*.
+    //    Neutraliser aussi le pont démo → compte : il apparaît au bout de 90 s
+    //    d'usage démo OU à la 3ᵉ création, en carte ancrée en bas (au-dessus de
+    //    la MobileTabBar). Un test long ou qui crée 3 entités le verrait
+    //    surgir et intercepter des clics — exactement le mode d'échec que la
+    //    bannière cookies a déjà provoqué sur les 27 tests mobile-safari.
+    //    Comme `cosmo_cookie_consent`, cette clé est dans PRESERVE_KEYS : elle
+    //    survit au clearDemoStorage() du loginDemo().
     await page.evaluate(() => {
       try {
         localStorage.setItem('cosmo_cookie_consent', 'refused');
+        localStorage.setItem('cosmo_demo_bridge_snooze', String(Date.now() + 86_400_000));
       } catch { /* ignore */ }
     });
 

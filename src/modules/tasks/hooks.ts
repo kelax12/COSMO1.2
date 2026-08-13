@@ -13,6 +13,7 @@ import { PaginationParams } from '@/lib/pagination.types';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createTaskSchema, updateTaskSchema } from './task.schema';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
 /**
  * Filet de sécurité si le canal Realtime tombe sans se reconnaître déconnecté.
@@ -188,6 +189,8 @@ export const useCreateTask = () => {
       return repository.create(input);
     },
     onSuccess: (newTask) => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       // Injecte directement dans le cache sans refetch réseau
       queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
         if (!old) return [newTask];

@@ -127,6 +127,14 @@
     "rest": " to start with your real data, synced everywhere.",
     "hide": "Hide the demo banner"
   },
+  "demoBridge": {
+    "aria": "Create a COSMO account",
+    "title": "Keep your setup",
+    "text": "You've just built yourself a real system. Create your account to have it on every device — it's free.",
+    "disclaimer": "This demo's data isn't transferred: your account starts from a clean slate.",
+    "cta": "Create my account",
+    "later": "Later"
+  },
   "notFound": {
     "title": "Page not found",
     "body": "This page doesn't exist or has moved. Check the address, or head back home.",

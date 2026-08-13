@@ -356,10 +356,18 @@ export function clearDemoStorage(): void {
   // parcours le plus fréquent du plan d'acquisition est « lien ?ref=canal →
   // Essayer la démo → inscription » : sans cette entrée, le sweep effacerait
   // l'attribution juste avant l'inscription qu'elle doit expliquer.
+  // cosmo_demo_bridge_snooze : report du pont démo → compte
+  // (src/lib/hooks/use-demo-bridge.ts). Un refus doit tenir 24 h. Sans cette
+  // entrée, fermer la carte puis relancer la démo la ferait revenir aussitôt —
+  // le bug B05 à nouveau, appliqué à une sollicitation commerciale cette fois.
+  // Le COMPTEUR d'engagement (cosmo_demo_creations / cosmo_demo_started_at)
+  // n'est volontairement PAS préservé : une nouvelle démo est un nouveau
+  // visiteur, son engagement repart de zéro.
   const PRESERVE_KEYS = new Set([
     'cosmo_cookie_consent',
     'cosmo_demo_device_id',
     'cosmo_first_touch',
+    'cosmo_demo_bridge_snooze',
     LOCALE_STORAGE_KEY,
   ]);
   LEGACY_KEYS.forEach(key => localStorage.removeItem(key));

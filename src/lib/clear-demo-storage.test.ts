@@ -54,6 +54,21 @@ describe('clearDemoStorage (B21 prefix sweep)', () => {
     expect(localStorage.getItem('cosmo_demo_tasks')).toBeNull();
   });
 
+  it('préserve le report du pont démo, mais PAS le compteur d’engagement', () => {
+    // Un refus doit tenir 24 h à travers les relances de démo (bug B05).
+    // L'engagement, lui, doit repartir de zéro : une nouvelle session démo est
+    // un nouveau visiteur.
+    localStorage.setItem('cosmo_demo_bridge_snooze', '9999999999999');
+    localStorage.setItem('cosmo_demo_creations', '5');
+    localStorage.setItem('cosmo_demo_started_at', '1700000000000');
+
+    clearDemoStorage();
+
+    expect(localStorage.getItem('cosmo_demo_bridge_snooze')).toBe('9999999999999');
+    expect(localStorage.getItem('cosmo_demo_creations')).toBeNull();
+    expect(localStorage.getItem('cosmo_demo_started_at')).toBeNull();
+  });
+
   it('préserve la langue choisie (i18n)', () => {
     // La langue est un réglage d'INTERFACE, pas une donnée de démo. Le balayage
     // `cosmo_*` l'effaçait : un utilisateur qui passait l'app en anglais puis

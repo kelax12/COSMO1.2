@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   captureFirstTouch,
   readFirstTouch,
+  recordFallbackSource,
   normalizeSourceValue,
   FIRST_TOUCH_STORAGE_KEY,
 } from './attribution';
@@ -99,6 +100,41 @@ describe('captureFirstTouch', () => {
     });
     setSearch('?ref=tiktok');
     expect(() => captureFirstTouch()).not.toThrow();
+    spy.mockRestore();
+  });
+});
+
+describe('recordFallbackSource', () => {
+  it('pose la source quand rien n’est attribué', () => {
+    recordFallbackSource('demo');
+    expect(readFirstTouch()?.source).toBe('demo');
+  });
+
+  it('ne PRIME JAMAIS sur une campagne réelle', () => {
+    // Un visiteur venu de ?ref=tiktok qui passe par la démo reste attribué à
+    // TikTok : c'est TikTok qui l'a amené, la démo n'est qu'une étape.
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    recordFallbackSource('demo');
+    expect(readFirstTouch()?.source).toBe('tiktok');
+  });
+
+  it('remplace une attribution expirée', () => {
+    storeAged('tiktok', 31);
+    recordFallbackSource('demo');
+    expect(readFirstTouch()?.source).toBe('demo');
+  });
+
+  it('rejette une source non conforme', () => {
+    recordFallbackSource('pas valide !');
+    expect(readFirstTouch()).toBeNull();
+  });
+
+  it('ne jette pas si localStorage est indisponible', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    expect(() => recordFallbackSource('demo')).not.toThrow();
     spy.mockRestore();
   });
 });

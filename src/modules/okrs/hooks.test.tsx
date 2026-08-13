@@ -12,7 +12,13 @@ const fakeRepo = {
 };
 
 vi.mock('@/lib/repository.factory', () => ({ getOKRsRepository: () => fakeRepo }));
-vi.mock('@/lib/app-mode.store', () => ({ useIsDemo: () => true }));
+// `appModeStore` est requis en plus de `useIsDemo` : les hooks de création
+// comptent l'engagement démo (src/lib/demo-engagement.ts), qui lit le store
+// directement. Un mock partiel casserait l'import du module testé.
+vi.mock('@/lib/app-mode.store', () => ({
+  useIsDemo: () => true,
+  appModeStore: { isDemo: true, setDemo: vi.fn() },
+}));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { useOkrs, useCreateOkr, useDeleteOkr, useUpdateKeyResult } from './hooks';
