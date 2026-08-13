@@ -28,6 +28,11 @@ interface TeamProjectsKanbanProps {
   groupBy: 'assignee' | 'status';
   /** Change le statut d'une tâche (glisser-déposer en mode `status`). */
   onSetStatus: (task: TeamTask, status: TeamTaskStatus) => void;
+  /** Filtre « assigné » actif (ProjectsToolbar) — null = tout le monde. En mode
+   *  `assignee`, réduit les colonnes à la seule personne filtrée : sinon le
+   *  Tableau réaffichait TOUTES les colonnes (toutes vides sauf une), rendant
+   *  le filtre actif illisible à côté d'un mur de colonnes non pertinentes. */
+  assigneeFilter?: string | null;
 }
 
 export const KANBAN_UNASSIGNED = '__unassigned__';
@@ -43,7 +48,7 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus, assigneeFilter }: TeamProjectsKanbanProps) => {
   const { t, tp } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -69,6 +74,14 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
         member: null as OrgMember | null,
       }));
     }
+    // Une personne filtrée (ProjectsToolbar) : une seule colonne, la sienne.
+    // `tasks` est déjà réduit à cette personne en amont (visibleTasks) — sans
+    // ce court-circuit, toutes les autres colonnes restaient affichées, mais
+    // vides, à côté de l'unique colonne pertinente.
+    if (assigneeFilter) {
+      const member = members.find((m) => m.userId === assigneeFilter) ?? null;
+      return [{ id: assigneeFilter, label: member?.displayName ?? assigneeFilter, member }];
+    }
     const counts = new Map<string, number>();
     for (const t of openTasks) {
       if (t.assigneeIds.length === 0) counts.set(KANBAN_UNASSIGNED, (counts.get(KANBAN_UNASSIGNED) ?? 0) + 1);
@@ -82,7 +95,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
       ...memberCols.map((m) => ({ id: m.userId, label: m.displayName, member: m as OrgMember | null })),
     ];
     // `t` en dépendance : les libellés de colonne sont traduits ici.
-  }, [members, openTasks, t, groupBy]);
+  }, [members, openTasks, t, groupBy, assigneeFilter]);
 
   const tasksOf = (colId: string) => {
     if (groupBy === 'status') {
