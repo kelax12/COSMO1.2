@@ -1,5 +1,13 @@
 # Scalabilité — état, décisions et runbook
 
+> ⚠️ **Les chiffres et mesures de ce document datent du 2026-06-10** (audit architecture, §6) et
+> n'ont pas été re-mesurés depuis. Les **décisions** et le **runbook** restent valides ; les
+> **volumétries** sont à revérifier avant de s'en servir pour dimensionner quoi que ce soit.
+> Depuis, deux changements majeurs ont modifié le profil de charge :
+> `get_my_tasks()` (mig. 085, supprime le Seq Scan global) et le passage du sondage 15 s au
+> Realtime (mig. 087/089, ≈ 58 Mo/mois/utilisateur d'egress économisés) — cf.
+> [`PERFORMANCE.md`](./PERFORMANCE.md).
+
 > Issu de l'audit architecture 2026-06-10, section 6. Ce document trace ce qui a
 > été corrigé **en code**, ce qui est **bloqué par une contrainte produit**, et
 > ce qui relève de l'**infrastructure** (Supabase / Vercel) hors de ce dépôt.

@@ -1,5 +1,10 @@
 # Guide opérationnel — 4 chantiers post-audit COSMO
 
+> **Toujours d'actualité au 2026-08-14** : `PREMIUM_ENFORCED` vaut bien `false`
+> (`src/modules/billing/premium-config.ts`) et Stripe n'est pas finalisé — ce guide décrit donc
+> encore le chemin de réactivation à suivre. Les commandes et références de fichiers ont été
+> revérifiées à cette date.
+
 > Issu de l'audit technique du 2026-06-21. Guide pas-à-pas pour exécuter les 4
 > actions prioritaires identifiées comme **hors du périmètre d'un fix automatique**.
 > Voir aussi : `docs/DEPLOYMENT.md`, `faille.md`, `CLAUDE.md → Modèle Premium`.
@@ -83,7 +88,7 @@ de config Auth, **pas du code** → rien à committer.
 flag `localStorage` daté (`useDailyAdGate('habits')`), pas par `isPremium()`.
 Conséquence : un gratuit qui regarde **une** pub gagne un token **permanent** →
 débloque aussi les **stats** à vie. Le seul vrai différenciateur payant actuel est
-« sans pub ». Réf. : `CLAUDE.md → Modèle Premium`, `premium-model-refonte.md`.
+« sans pub ». Réf. : `CLAUDE.md → Modèle Premium`.
 
 ⚠️ Ce point est une **décision de produit**, pas un bug à patcher. Ce guide structure
 la décision ; il ne tranche pas à ta place.
@@ -132,7 +137,7 @@ B seulement si le modèle à crédits devient un vrai besoin. **Ne pas** câbler
 tokens (B) tant que premium-abonnement et premium-token ne sont pas dissociés.
 
 ### Décision à acter
-Écrire le choix retenu dans `premium-model-refonte.md` + `CLAUDE.md → Modèle Premium`
+Écrire le choix retenu dans `CLAUDE.md → Modèle Premium`
 avec la date, pour que la dette « assumée » devienne une décision tracée.
 
 ---
@@ -230,7 +235,7 @@ les injecter dans l'env du step `test:rls`.)
 |---|---|
 | 1 | `pg_indexes` montre `idx_share_links_owner_id` (✔ déjà fait) ; `get_advisors(performance)` sans le finding FK |
 | 2 | `get_advisors(security)` sans `auth_leaked_password_protection` ; signup avec mdp compromis refusé |
-| 3 | Décision écrite dans `premium-model-refonte.md` + `CLAUDE.md` ; si Option A : `StatisticsPage` reste gated après une pub, abonné Stripe ne voit pas le mur |
+| 3 | Décision écrite dans `CLAUDE.md → Modèle Premium` ; si Option A : `StatisticsPage` reste gated après une pub, abonné Stripe ne voit pas le mur |
 | 4 | `npm run test:rls` vert en local + job CI `rls-integration` vert ; un test qui retire une policy doit faire échouer le harnais (test du filet) |
 
 ## Notes

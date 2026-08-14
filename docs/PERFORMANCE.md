@@ -1,26 +1,34 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-État après audit 2026-05-30 ([`../audit-perf.md`](../audit-perf.md)) — **entry chunk 124 kB (34 kB gzip)**, First Load Landing 474 kB (145 kB gzip).
-
 ## Vendor chunks isolés (commenter toute modif)
+
+**Tailles réelles, `npm run build` du 2026-08-14** (brut / gzip) :
 
 | Chunk | Contenu | Taille (gzip) | Quand chargé |
 |---|---|---|---|
-| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | Toujours (entry) |
-| `vendor-router` | react-router | 22 kB (8 kB) | Toujours (entry, split pour parallel HTTP/2) |
-| `vendor-radix` | @radix-ui/* | 101 kB (31 kB) | Toujours |
-| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | Toujours (entry — extrait pour cache CDN) |
-| `vendor-sentry` | @sentry/react | 82 kB (28 kB) | Toujours (entry — extrait pour cache CDN) |
-| `vendor-animation` | framer-motion | 137 kB (45 kB) | Toujours |
-| `vendor-utils` | date-fns + lucide-react | 48 kB (15 kB) | Toujours |
+| `index` (app) | code applicatif partagé | **438 kB (124 kB)** | Toujours |
+| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | Toujours |
+| `vendor-router` | react-router | 38 kB (14 kB) | Toujours (split pour parallel HTTP/2) |
+| `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | Toujours |
+| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-sentry` | @sentry/react | 140 kB (47 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-animation` | framer-motion | 146 kB (49 kB) | Toujours |
+| `vendor-utils` | date-fns + lucide-react | 71 kB (21 kB) | Toujours |
 | `vendor-query` | @tanstack/* | 55 kB (16 kB) | Toujours |
-| `vendor-charts` | **recharts + d3-* + victory-vendor** | 374 kB (110 kB) | **Lazy** (StatisticsPage, DashboardChart, scroll bottom Landing) |
+| `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
 | `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
+| `vendor-gsap` | gsap + plugins | 133 kB (52 kB) | **Lazy** (LandingPage uniquement) |
+
+> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-14) :
+> le chunk `index` est à 438 kB brut / 124 kB gzip. Sous le budget gzip (< 150 kB) mais la marge
+> s'est réduite — c'est le poste à surveiller, pas les vendors.
+> Recharts n'est **plus** importé par la landing (`AppWindowShowcase` l'exclut volontairement du
+> hero) : `StatsShowcase` ne vit plus que dans `GuidePage`, en `React.lazy`.
 
 ## Règles non négociables
 
 - ❌ **Ne jamais importer Recharts ou un composant qui l'utilise (DashboardChart/StatsShowcase) sans `React.lazy`** — sinon il retombe dans le chunk du caller et pollue le critical path. Faille P-2.
-- ❌ **Ne pas réintroduire GSAP** — supprimé (P-1), Framer Motion couvre tous les cas. Cursor blink → CSS keyframe.
+- ⚠️ **GSAP : réintroduit en 2026-07, landing page uniquement.** L'ancienne règle « ne jamais réintroduire GSAP » (finding P-1, 2026-05) **ne s'applique plus** : la lib est de retour derrière le point d'entrée unique `src/lib/gsap.ts`, isolée dans le chunk `vendor-gsap` que seule la `LandingPage` (lazy) charge. Contrainte maintenue : **aucun import GSAP hors landing**, et jamais `import { gsap } from 'gsap'` en direct.
 - ❌ **Toute nouvelle dep > 50 kB minified doit être ajoutée à `manualChunks`** avec une règle explicite et commentée.
 - ✅ `lucide-react` : imports nominaux uniquement (`import { Icon } from 'lucide-react'`). Jamais `import * as`.
 - ✅ `date-fns/locale/fr` : import nominal. Jamais `import * as locales`.
@@ -28,8 +36,9 @@
 
 ## Budget bundle (objectif)
 
-- Entry chunk : **< 150 kB gzip** (actuellement ~50 kB — large marge).
-- Chaque chunk lazy : **< 80 kB gzip** (exception documentée : `vendor-charts` 110 kB gzip, `vendor-calendar` 85 kB gzip).
+- Chunk `index` : **< 150 kB gzip** (au 2026-08-14 : **124 kB** — marge réduite, à surveiller).
+- Chaque chunk lazy : **< 80 kB gzip**. Exceptions documentées : `vendor-charts` (116 kB),
+  `vendor-calendar` (85 kB), `vendor-gsap` (52 kB).
 
 > **`vendor-calendar` : 76 → 85 kB gzip (2026-08-02, i18n Agenda).** `AgendaPage`
 > importe `@fullcalendar/core/locales-all` (+9 kB gzip). Sans données de locale,
@@ -38,7 +47,19 @@
 > langue (~1 kB) — obligerait à éditer `AgendaPage.tsx` à chaque nouvelle
 > langue, ce que le socle i18n évite partout ailleurs (cf. `src/i18n/catalog.ts`).
 > Coût assumé : le chunk est lazy et ne concerne que `/agenda`.
-- Si `npm run build` warning ré-apparaît sur `index` > 400 kB → audit P-2/P-3 régressé.
+- Le warning Vite `> 400 kB` sur `index` est **déjà là** et ne signale pas une régression du split
+  charts (les vendors sont bien isolés) : c'est le code applicatif qui a grossi (mode entreprise,
+  i18n). Si tu veux le faire baisser, la cible est le découpage des grosses pages, pas `manualChunks`.
+
+## Résiduels connus (audit perf du 2026-05-29, revérifiés le 2026-08-14)
+
+- **Lighthouse CI toujours absent** — aucun job ne mesure LCP/TBT/CLS par route. Reste à câbler.
+- **`vendor-charts` reste le plus gros lazy** (116 kB gzip). Le grief d'origine (« chargé au scroll
+  de la landing ») est **caduc** : la landing n'importe plus Recharts. Une migration `visx`/`chart.js`
+  n'a donc plus d'urgence.
+- **13 fichiers source dépassent 600 LOC**, le plus gros étant
+  `src/components/organization/PyramidTab.tsx` (1455 lignes). L'objectif « aucun fichier > 600 LOC »
+  du refactor de juin 2026 **n'est plus tenu** — impact surtout sur la maintenabilité et le chunk `index`.
 
 ## Limites de requêtes
 
@@ -69,7 +90,7 @@ Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto
 
 ## Ne jamais faire — Performance
 
-- ❌ Réintroduire `gsap` (supprimé P-1) — utiliser Framer Motion ou CSS keyframes.
+- ❌ Importer `gsap` hors de la landing page, ou en direct depuis `'gsap'` — passer par `@/lib/gsap` (chunk `vendor-gsap`, cf. CLAUDE.md). Partout ailleurs : Framer Motion ou CSS keyframes.
 - ❌ Importer un composant Recharts sans `React.lazy` — fait retomber `vendor-charts` (374 kB) dans le critical path.
 - ❌ Ajouter une dépendance > 50 kB minified sans règle `manualChunks`.
 - ❌ Importer `* as locales` de `date-fns/locale` ou `* as Icons` de `lucide-react` — casse le tree-shaking.

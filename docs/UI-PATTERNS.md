@@ -68,9 +68,11 @@ Supprimée pour tous les modes (add/edit/convert) — elle dupliquait des infos 
    ```
 2. **Planifier dans l'agenda** : ouvre `EventModal` en mode `'add'` (pré-remplit date à aujourd'hui + start 12:00 + end basé sur estimatedTime). Avec `lockedFields={['title', 'startDate']}`.
 
-## SocialRequests — point unique pour la validation collaborative
+## InboxMenu — point unique pour la validation collaborative
 
-`src/components/SocialRequests.tsx` (Dashboard column droite) est le **seul** endroit pour valider : demandes d'amis reçues + tâches assignées par d'autres.
+`src/components/InboxMenu.tsx` est le **seul** endroit pour valider : demandes d'amis reçues +
+tâches assignées par d'autres. (Il a remplacé l'ancien `SocialRequests.tsx` de la colonne droite
+du Dashboard, supprimé depuis.)
 
 Pour les tâches : filtre `t.isCollaborative && t.sharedBy && t.sharedBy !== user?.name`. Accepter = `{ sharedBy: undefined, isCollaborative: true }`. Refuser = `{ sharedBy: undefined, isCollaborative: false, collaborators: [] }`.
 
@@ -200,7 +202,7 @@ Toute nouvelle modif doit s'ajouter dans cette table.
 - ❌ Popover positionné en `absolute` dans une barre `overflow-x-auto` — utiliser `createPortal` + `position: fixed`
 - ❌ Stocker la liste virtuelle « Aujourd'hui » dans la table `lists` — filtre dynamique `tasksDueToday()`, sentinel `VIRTUAL_TODAY_ID`
 - ❌ `Reorder.Group` avec React Query : `values={lists}` directement — maintenir un state local `orderedLists`
-- ❌ Recréer un 2ème composant qui valide les tâches assignées — **SocialRequests est le point unique**
+- ❌ Recréer un 2ème composant qui valide les tâches assignées — **InboxMenu est le point unique**
 
 ### 🧭 Tutoriels & onboarding
 - ❌ Recréer un overlay d'onboarding bloquant à l'entrée en mode démo (supprimé par c170e37)

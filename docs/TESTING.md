@@ -12,7 +12,17 @@
 >   son périmètre ne tient qu'à sa logique, donc il doit être testé contre une
 >   vraie base, pas mocké.
 >
-> Suite complète au 2026-08-07 : **1133 tests**, tous verts.
+> **Suite unitaire au 2026-08-14 : 1362 tests / 131 fichiers, tous verts** (`npm test`, mesuré en local, ~7 min).
+> Un échec est donc une vraie régression, pas un test pré-existant cassé.
+>
+> 🔴 **`npm run test:coverage` échoue (exit 1) sur `main`** — mesuré le 2026-08-14.
+> Les 1362 tests passent ; ce sont les **seuils** qui ne sont pas atteints : 13 erreurs,
+> dont 2 globales (functions 21,43 % < 45 %, branches 21,62 % < 60 %) et 11 par fichier
+> (`avatar-upload.ts`, `supabase.repository.ts`, `mappers.ts`, `hooks.derived.ts`,
+> `app-mode.store.ts`, `useDebounce.ts`, `i18n/locale.ts`, `i18n/routes.ts`).
+> Couverture globale réelle : **statements 26,4 % · branches 21,6 % · functions 21,4 % · lines 27,0 %**.
+> Conséquence : le job CI `lint-test-build` est rouge tant que ce n'est pas traité —
+> **ne pas conclure d'un échec de `test:coverage` que ta modification l'a cassé**, mesure la baseline d'abord.
 
 ## Vitest — tests unitaires de logique métier pure
 
@@ -51,9 +61,14 @@ npm run test:e2e:report  # rapport HTML
 **Avant le premier run** : `npx playwright install chromium webkit` (le project
 `mobile-safari` utilise WebKit).
 
-**29 tests × 2 projects = 58** (`chromium` = Desktop Chrome, `mobile-safari` =
-iPhone 12). Les 3 tests de `demo-touch-gestures.spec.ts` sont `skip` sur
-chromium (viewport ≥ 768 px).
+**41 tests × 2 projects = 82** (`chromium` = Desktop Chrome, `mobile-safari` =
+iPhone 12), répartis sur 11 specs (au 2026-08-14). Les 3 tests de
+`demo-touch-gestures.spec.ts` sont `skip` sur chromium (viewport ≥ 768 px).
+La CI ne joue que le project `chromium`.
+
+Les fichiers `e2e/rls/*.test.ts` ne sont **pas** des specs Playwright : ce sont
+des tests Vitest d'intégration (`npm run test:rls`, job CI `rls-integration`,
+stack Supabase locale).
 
 **Architecture** :
 - `e2e/fixtures.ts` : fixture `demoPage`. Clean localStorage/cookies → pose
@@ -88,7 +103,17 @@ chromium (viewport ≥ 768 px).
   rappel « N en retard » ne se ferme pas seul : ne jamais cliquer un point fixe
   en haut de l'écran.
 
-**Folder `src/__test__/`** — ancien Vitest jamais activé. Ignoré par ESLint.
+## i18n — gardes de catalogues
+
+```bash
+npm run i18n:check  # parité des clés fr ↔ en (bloquant CI). Manquante ET orpheline = erreur.
+npm run i18n:scan   # détecte les chaînes en dur non externalisées
+```
+
+`fr` est le catalogue de référence : le moteur retombe clé par clé sur lui, donc
+un catalogue traduit incomplet n'affiche jamais de clé brute — et ne se voit pas
+non plus. `i18n:check` est la seule protection réelle contre un catalogue parti
+en prod à moitié traduit. Locales présentes : **fr, en** (`src/locales/`).
 
 ## Playwright A11y — `e2e/a11y-audit.spec.ts`
 
@@ -106,11 +131,14 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   (roadmap A-7/A-8/A-10). Une régression `critical` casse donc la CI : c'est ce
   guard qui a détecté le `button-name` manquant sur l'avatar de `SettingsPage`.
 
-## CI (`.github/workflows/ci.yml`, 3 jobs)
+## CI (`.github/workflows/ci.yml`, 4 jobs)
 
-- `lint-test-build` (lint, `tsc -b`, `validate:migrations`, `test:coverage`, build)
-- `audit` (`npm audit --omit=dev --audit-level=high` — bloque sur CVE prod)
-- `e2e`
+- `lint-test-build` — lint, `tsc -b`, `validate:migrations`, `check:rls`,
+  `i18n:check`, `test:coverage` (seuils par fichier), build
+- `audit` — `npm audit --omit=dev --audit-level=high` (bloque sur CVE prod)
+- `e2e` — Playwright, project `chromium` uniquement
+- `rls-integration` — stack Supabase locale (`supabase start`), rejoue **toutes**
+  les migrations sur base vierge (`scripts/apply-migrations.mjs`) puis `npm run test:rls`
 - `concurrency` annule les runs obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
 - Runbook deploy/rollback : [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
@@ -121,7 +149,7 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
 2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant CI)
 3. ✅ `npm run build` → succès. Aucun chunk first-paint > **150 kB gzip** (sauf `vendor-charts` lazy attendu).
-4. ✅ `npm run test:e2e` → **58 tests** (29 × 2 projects), 3 skip attendus
+4. ✅ `npm run test:e2e` → **82 tests** (41 × 2 projects), 3 skip attendus
    (gestes tactiles sur chromium). Port 3000 — vérifier qu'aucun dev server
    périmé ne le squatte (`reuseExistingServer`).
 5. ✅ **Smoke test mobile preview** 375×812 : login démo → Dashboard, créer/compléter une tâche (clic + swipe droit), navigation Tab bar, rien caché derrière la MobileTabBar.

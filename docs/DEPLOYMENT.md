@@ -3,7 +3,7 @@
 Procédures opérationnelles : déployer, appliquer une migration DB, rollback,
 réagir à un incident. À lire avant toute mise en prod.
 
-> Sécurité des secrets & rotation : voir `CLAUDE.md → Rotation des secrets`.
+> Sécurité des secrets & rotation : voir [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets).
 > Failles connues / posture : `faille.md`.
 
 ---
@@ -20,7 +20,7 @@ réagir à un incident. À lire avant toute mise en prod.
 Un `git push origin main` déclenche la CI **et** le déploiement Vercel du
 **front uniquement**. La base de données n'est **jamais** touchée par ce push.
 
-### Gates locales avant push (cf. `CLAUDE.md → Checklist avant push prod`)
+### Gates locales avant push (cf. [`TESTING.md → Checklist avant push prod`](./TESTING.md#checklist-avant-push-prod))
 ```bash
 npm run lint            # 0 erreur
 npx tsc -b              # 0 erreur
@@ -129,7 +129,7 @@ supabase db push
 #   apply_migration(project_id, name, query)  puis vérifier le schéma.
 ```
 
-Règles (cf. `CLAUDE.md → Avant tout commit qui touche supabase/migration`) :
+Règles (cf. [`SECURITY.md → Avant tout commit qui touche supabase/migration`](./SECURITY.md#avant-tout-commit-qui-touche-supabasemigrationsql)) :
 - Idempotent : `CREATE OR REPLACE`, `ADD COLUMN IF NOT EXISTS`, `DROP POLICY IF EXISTS … CREATE POLICY`.
 - `WITH CHECK` sur tout `UPDATE` ; `SET search_path` sur tout `SECURITY DEFINER`.
 - Après application : `get_advisors(security)` ne doit pas révéler de **nouveau** warning.
@@ -168,7 +168,7 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 3. **Erreurs DB / RLS** → logs Supabase (`get_logs`) + `get_advisors`.
 4. **Webhook Stripe** → table `processed_stripe_events` + logs de l'Edge
    Function `stripe-webhook`.
-5. **Fuite de secret suspectée** → `CLAUDE.md → Rotation des secrets` (rotation
+5. **Fuite de secret suspectée** → [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets) (rotation
    immédiate + invalidation des sessions).
 
 ---
