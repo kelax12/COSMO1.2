@@ -1,222 +1,233 @@
-# Scalabilité — état, décisions et runbook
+# Scalabilité — audit mesuré, décisions et runbook
 
-> ⚠️ **Les chiffres et mesures de ce document datent du 2026-06-10** (audit architecture, §6) et
-> n'ont pas été re-mesurés depuis. Les **décisions** et le **runbook** restent valides ; les
-> **volumétries** sont à revérifier avant de s'en servir pour dimensionner quoi que ce soit.
-> Depuis, deux changements majeurs ont modifié le profil de charge :
-> `get_my_tasks()` (mig. 085, supprime le Seq Scan global) et le passage du sondage 15 s au
-> Realtime (mig. 087/089, ≈ 58 Mo/mois/utilisateur d'egress économisés) — cf.
-> [`PERFORMANCE.md`](./PERFORMANCE.md).
+**Audit refait le 2026-08-14** contre la prod (`ykeugqfgklejcdbrmawy`, Postgres 17.6, eu-west-1)
+et contre le code de `main`. Remplace l'édition du 2026-06-10, dont les volumétries étaient
+périmées et dont une conclusion s'est révélée fausse.
 
-> Issu de l'audit architecture 2026-06-10, section 6. Ce document trace ce qui a
-> été corrigé **en code**, ce qui est **bloqué par une contrainte produit**, et
-> ce qui relève de l'**infrastructure** (Supabase / Vercel) hors de ce dépôt.
->
-> Contrainte de l'itération : **aucune modification de l'UI ni de l'UX.** Seuls
-> les gains 100 % invisibles (payload réseau) ont été appliqués en code.
+Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
+[§10 Runbook](#10-runbook--refaire-cet-audit).
 
 ---
 
-## 1. Appliqué en code (gain invisible, zéro régression UX)
+## 1. Volumétrie réelle (2026-08-14)
 
-### Trim des colonnes sur les lectures de liste `tasks`
-`src/modules/tasks/supabase.repository.ts` — `getByDate` et `getFiltered`
-passaient `select('*')`, ramenant `description` (texte long) et
-`collaborator_validations` (JSONB) inutiles pour des vues liste.
+| Métrique | Valeur |
+|---|---|
+| Taille base | **18 Mo** |
+| Comptes | **27** au total, **4** créés sur 30 j, **0 actif sur 7 j** |
+| Table la plus grosse (métier) | `tasks` — 710 lignes, 504 ko |
+| Profondeur max par compte | **289 tâches**, 128 événements (moyenne : 39 tâches) |
+| Plafond applicatif | `MAX_ROWS = 5000` lignes par `getAll()` |
 
-- Source unique de colonnes : constante `TASK_LIST_COLUMNS` (réutilisée par
-  `getAll` / `getByDate` / `getFiltered`) → plus de drift.
-- `getById` conserve `select('*')` : c'est le chemin détail qu'utilise la
-  TaskModal, il a besoin du payload complet.
-- Consommateurs vérifiés (`DeadlineCalendar`, `TasksSummary` via
-  `usePendingTasks`) : aucun ne lit `description` / `collaboratorValidations`.
-- Tests mappers + hooks tasks verts (35/35), `tsc -b` + lint OK.
-
----
-
-## 2. Bloqué par la contrainte « pas de régression UX » (dette à lever séparément)
-
-Les lectures de liste de **events / habits / okrs** ne sont **PAS** trimmées,
-volontairement.
-
-**Raison** : ces 3 modules n'ont pas de séparation liste/détail. Leur modale
-d'édition **réutilise la ligne déjà chargée par `getAll`** (les hooks unitaires
-`useHabit` / `useOkr` / event single ne sont consommés nulle part). Comme leurs
-mappers lisent `description` / `notes`, trimmer leur `getAll` viderait ces champs
-**dans la modale d'édition** = régression UX → interdit.
-
-**Prérequis pour débloquer le gain** (refactor séparé, hors « no-UX ») :
-1. Faire pointer chaque modale d'édition (Event / Habit / OKR) sur un
-   `getById`-backed hook (`useEvent` / `useHabit` / `useOkr`) au lieu de la
-   ligne de liste.
-2. Une fois la modale alimentée par `getById` (`select('*')`), trimmer le
-   `getAll` correspondant sur le modèle de `TASK_LIST_COLUMNS`.
-
-Gain attendu : réduction du payload `getAll` des 3 modules les plus volumineux
-(events ~150 lignes seed, habits, okrs) — c'est le plus gros levier restant.
+**Conclusion de cadrage : il n'y a aucune charge.** La base est à 0,1 % du plafond du plan Free.
+Tout ce qui suit est donc **structurel** — des coûts qui ne se voient pas aujourd'hui et qui
+deviennent bloquants à volume. Les mesurer maintenant est le seul moyen de les voir.
 
 ---
 
-## 3. True pagination UI — projet séparé, **pas** un quick-fix
+## 2. 🔴 Le coût RLS du mode entreprise — mesuré, non corrigé
 
-`useTasksInfinite` / `getPage` existent (`src/modules/tasks/`) mais **ne sont
-câblés sur aucune page**. Les brancher naïvement casserait l'UX actuelle.
+**C'est le finding principal de cet audit, et il est nouveau.**
 
-**Cause** : tout `TasksPage` calcule en mémoire, sur le dataset **complet** :
-- compteurs par chip (`TasksPage.tsx:295`),
-- liste virtuelle « Aujourd'hui » (`tasksDueToday`),
-- smart lists (`overdue` / `this-week` / `high-priority`, `tasksInList`),
-- filtres + tri client.
+Les policies du mode entreprise s'appuient sur des fonctions SQL `STABLE SECURITY DEFINER`
+appelées **avec une colonne de la ligne en argument** :
 
-Avec une liste paginée, ces calculs ne verraient que la page chargée → compteurs
-faux, smart lists incomplètes. Le rendu est déjà virtualisé
-(`@tanstack/react-virtual` au-delà de 50 items) : la perf d'affichage n'est
-**pas** le problème ; le payload de `getAll` (plafond `MAX_ROWS = 5000`) l'est.
+```sql
+-- policy team_tasks_select
+USING (can_access_team_project(project_id))
+```
 
-**Pour livrer la vraie pagination, il faut d'abord** pousser filtres / smart
-rules / tri / **comptage** côté SQL (PostgREST), puis câbler `useTasksInfinite`.
-C'est une refonte du data-layer de `TasksPage` (god component 728 LOC), à
-spécifier indépendamment. Plafond actuel par compte ≈ 5000 tâches.
+Un prédicat qui appelle une fonction sur une colonne **ne peut pas être servi par un index** :
+Postgres doit lire **toute la table** et évaluer la fonction **pour chaque ligne**. Et
+`can_access_team_project` n'est pas une fonction bon marché — elle enchaîne, par ligne :
+`is_org_member` + `is_org_admin` + un `EXISTS` sur `org_team_members` + `get_subtree()`,
+qui est une **CTE récursive** sur `organization_members`.
+
+**Mesuré en prod, sous le rôle `authenticated`, plans à chaud :**
+
+| Lecture | Plan | Coût mesuré | Coût par ligne scannée |
+|---|---|---|---|
+| `select * from team_tasks` | `Seq Scan` + `Filter: can_access_team_project(project_id)` | 26 buffers, **1,49 ms** pour **7 lignes** | **3,7 buffers** |
+| `select * from team_projects` | `Seq Scan` + `Filter: can_access_team_project(id)` | 17 buffers, 1,09 ms pour 4 lignes | 4,3 buffers |
+| `select * from tasks` (RLS perso) | `Seq Scan` + filtre `OR` | 47 buffers, 0,53 ms pour **710 lignes** | **0,066 buffer** |
+
+Le prédicat RLS entreprise coûte donc **≈ 60 fois plus cher par ligne** que celui du périmètre
+personnel, et il est appliqué à toute la table à chaque lecture. Confirmation indépendante par
+les compteurs cumulés : `organization_members` totalise **1 144 966 `seq_scan`** pour **11 lignes**
+— c'est la fréquence d'appel des helpers, pas un problème de plan.
+
+**Projection linéaire** (le seul modèle valide ici, le coût est proportionnel aux lignes scannées) :
+
+| `team_tasks` dans l'org | Latence estimée d'une lecture de liste |
+|---|---|
+| 100 | ~21 ms |
+| 1 000 | ~210 ms |
+| 10 000 | **~2,1 s** |
+
+**C'est exactement la classe de bug corrigée pour `tasks` par la mig. 085**, reproduite sur les
+tables entreprise. Le correctif est connu et éprouvé : exprimer l'appartenance en **jointure
+indexable** dans une RPC dédiée (`get_my_team_tasks()`), au lieu d'un prédicat-fonction par ligne.
+Les policies restent en place en défense en profondeur, comme pour `get_my_tasks()`.
+
+> Les index nécessaires **existent déjà** : `organization_members_pkey` est `(org_id, user_id)`,
+> `org_team_members_pkey` est `(team_id, user_id)`. Le problème n'est pas l'indexation de la table
+> d'appartenance, c'est que la forme du prédicat interdit d'utiliser un index **sur la table lue**.
 
 ---
 
-## 4. Infrastructure (hors dépôt — Supabase / Vercel)
+## 3. 🟠 Le sondage périodique n'a été supprimé que sur `tasks`
 
-Non modifiable par le code applicatif. À traiter dans les dashboards.
+L'audit du 2026-08-07 a remplacé le `refetchInterval` de 15 s de `useTasks` par du Realtime
+(≈ 58 Mo/mois/utilisateur d'egress économisés). **Les 8 autres sondages sont toujours là** :
 
-| Item | Action | Quand |
+| Module | Intervalle | Nombre de hooks |
 |---|---|---|
-| **Connection pooling** | Vérifier que la prod utilise l'URL **pooler** Supabase (PgBouncer, port 6543, mode transaction) pour absorber les pics de connexions serverless. | Avant montée en charge |
-| **Read replicas** | Activer une replica lecture (plan Supabase ≥ requis) pour décharger les `getAll`/stats. App déjà compatible (lectures séparées des écritures dans les repos). | À ×100 utilisateurs |
-| **Plan tier Postgres** | Le scaling est vertical : monter l'instance Supabase quand CPU/IO DB saturent. Surveiller via `get_advisors` + métriques projet. | Réactif (alerting) |
-| **Cache serveur (Redis)** | **Différé.** Pas de besoin mesuré ; React Query couvre le cache client. N'introduire qu'avec une métrique justifiant le coût opérationnel. | YAGNI |
-| **File d'attente / async** | **Différé.** Tout est synchrone request/response ; le webhook Stripe est idempotent et suffit. Introduire une queue seulement si des traitements lourds apparaissent. | YAGNI |
-| **CDN** | OK — assets Vercel immuables (`/assets/* max-age=31536000`). Rien à faire. | ✅ |
+| `friends` | 15 s (×2), 20 s (×2) | 4 |
+| `organizations` | 20 s | 2 |
+| `team-projects` | 20 s | 1 |
+| `team-okrs` | 30 s | 1 |
+| `tasks` | 5 min (filet de sécurité) | 1 |
+
+Un utilisateur qui laisse l'espace entreprise ouvert émet donc **≈ 24 requêtes par minute**, soit
+~1 400 par heure d'onglet ouvert — **avant** toute interaction. À 1 000 utilisateurs actifs
+simultanés : ~24 000 requêtes/minute, dont chacune paie le coût RLS du §2.
+
+Les payloads sont petits (membres, demandes d'amis), donc l'egress n'est pas le sujet ici — c'est
+le **nombre de requêtes** et le CPU DB. Un seul canal Realtime existe aujourd'hui
+(`shared-tasks:<userId>`) ; le mécanisme est en place, il reste à l'étendre aux notifications
+d'organisation.
 
 ---
 
-## 5. Dépendance mono-fournisseur — plan de sortie (audit P1)
+## 4. 🟡 Payload des `getAll()` — dette identifiée en 2026-06, toujours ouverte
 
-Supabase est à la fois l'auth, la DB, les Edge Functions et la frontière de
-sécurité (RLS). Un incident fournisseur = panne totale. On ne « code » pas la
-sortie aujourd'hui (YAGNI), mais on maintient les conditions qui la rendent
-possible en jours plutôt qu'en mois :
+Vérifié dans le code le 2026-08-14 :
 
-| Actif | Portabilité actuelle | Geste qui la préserve |
-|---|---|---|
-| **Données** | Postgres standard, schéma 100 % versionné (`supabase/migration/`) | Export `pg_dump` mensuel hors Supabase (cf. `DEPLOYMENT.md §7`) |
-| **Accès données** | Pattern repository : 8 interfaces `I*Repository`, 2 implémentations chacune | ❌ Ne jamais appeler `supabase.from()` hors d'un repository |
-| **Auth** | Standard GoTrue (JWT) ; `useAuth` est l'unique façade | Migration possible vers tout IdP OIDC ; les `user_id` UUID survivent à un export `auth.users` |
-| **Edge Functions** | Deno standard, 3 fonctions, zéro API propriétaire hors `supabase-js` | Portables vers Deno Deploy / Cloudflare Workers avec un client PG |
-| **RLS (sécurité)** | ⚠️ Le point dur : la sécurité EST le SQL Postgres | Toute cible de sortie doit être un Postgres (RDS, Neon, autohébergé) — les policies se réimportent telles quelles |
+- ✅ **`tasks` est trimmé** : `TASK_LIST_COLUMNS` est bien la source unique des colonnes de liste,
+  et sert aussi la RPC `get_my_tasks`. `getById` garde `select('*')` pour la modale.
+- ❌ **`events`, `habits`, `okrs`, `friends`, `categories` sont toujours en `select('*')`.**
 
-**Décision** : pas d'abstraction supplémentaire (le coût dépasserait le risque).
-Le plan = Postgres-vers-Postgres + façades existantes. Réévaluer si Supabase
-change sa tarification ou si l'app dépasse ~10 k utilisateurs actifs.
-
-## 6. Items explicitement différés (décisions, pas des oublis)
-
-| Item audit | Statut | Pourquoi |
-|---|---|---|
-| God-components > 600 LOC (P2) | 🔁 Track continu `#6 refactor` (TaskModal, LandingPage, OKRModal, OKRPage faits) | Un split par PR, avec tests — pas un lot unique risqué |
-| Vraie pagination UI (P2) | 📋 Projet séparé (cf. §3) | Exige le passage des filtres/compteurs côté SQL ; plafond actuel 5 000 items/compte acceptable |
-| Prerender maison → SSR/SSG (P3) | ❄️ Gelé | Migration de framework complète ; à reconsidérer si le SEO devient un canal d'acquisition mesuré |
-| Cache Redis / file d'attente | ❄️ YAGNI | Aucun besoin mesuré ; React Query + webhook idempotent suffisent |
-
-## 7. Capacité estimée (rappel audit)
-
-- **×10 utilisateurs** : ✅ sans modification.
-- **×100 utilisateurs** : 🟡 pooling + replica + report charts Dashboard.
-- **×1000 utilisateurs** : 🔴 nécessite §2 (trim généralisé) **et** §3 (vraie
-  pagination server-side). Le code tiendrait ; le frein réel est la profondeur
-  de données **par compte**, pas la concurrence.
+La raison d'origine tient toujours : ces modules n'ont pas de séparation liste/détail, leur modale
+d'édition réutilise la ligne chargée par `getAll`, donc trimmer viderait des champs dans la modale.
+Le prérequis reste le même : faire pointer chaque modale sur un hook `getById` avant de trimmer.
 
 ---
 
-## 8. Coût RLS collaboration — mesuré (audit P0, 2026-06-22)
+## 5. 🟡 Pagination UI — toujours non câblée
 
-**Question** : le chemin de lecture collaboratif (`tasks` filtré par RLS avec le
-sous-`EXISTS` sur `shared_tasks`) tient-il à l'échelle ? Jusqu'ici **non prouvé**.
+`useTasksInfinite` / `getPage` existent et ne sont consommés par **aucune page** (vérifié :
+zéro occurrence dans `src/**/*.tsx`). Le plafond reste `MAX_ROWS = 5000` par compte, pour un
+maximum observé de **289**. Marge : ×17.
 
-**Méthode** : `EXPLAIN` sous le rôle `authenticated` (impersonation via
-`request.jwt.claims`) sur la prod, avant/après la mig. 049. Le benchmark sous
-gros volume sur **branche éphémère** était prévu mais **indisponible**
-(branching = plan Pro ; le projet est en Free) ; seeding de la prod écarté
-(sécurité). Mesure donc sur le plan réel + advisors live.
+Ce n'est toujours pas un quick-fix : `TasksPage` calcule compteurs par chip, smart lists
+(`overdue` / `this-week` / `high-priority`) et tri **en mémoire sur le dataset complet**. Paginer
+sans pousser filtres, tri et comptage côté SQL donnerait des compteurs faux et des smart lists
+incomplètes. Le rendu, lui, est déjà virtualisé au-delà de 50 items — l'affichage n'est pas le
+problème, le payload l'est.
 
-**Constats** :
+---
 
-1. **Postgres folde déjà les policies permissives en un OR unique.** Le plan de
-   `SELECT … FROM tasks` montre :
-   `Filter: (uid = user_id) OR (id = ANY (hashed SubPlan))`.
-   Le sous-`EXISTS` sur `shared_tasks` est **hashé (calculé UNE fois)**, pas
-   ré-évalué par ligne → le coût lecture collaboratif est **déjà maîtrisé**.
-2. **Index en place** : `idx_tasks_user_id` (branche own) et
-   `idx_shared_tasks_friend_task (friend_id, task_id)` (mig. 020, branche
-   partage, index-only) → à volume réel le planner peut basculer le `Seq Scan`
-   (choisi ici car table minuscule) en `BitmapOr` de deux index.
-3. **Advisor `multiple_permissive_policies`** : signalé sur `tasks`
-   (SELECT/UPDATE) et `friend_requests` (SELECT/UPDATE). Deux policies
-   permissives par rôle+action = surcoût d'évaluation RLS par requête.
+## 6. Leçon de méthode — mesurer à froid puis à chaud
 
-**Action (mig. 049)** : fusion de chaque paire de policies permissives en **une
-policy `OR` unique** (sémantique 1:1, cf. `docs/SECURITY.md`).
+En mesurant `get_my_tasks()` j'ai d'abord obtenu **1 014 buffers / 18,5 ms**, contre
+**47 buffers / 0,53 ms** pour la lecture directe. Lu tel quel, ce chiffre disait « la mig. 085 a
+rendu les choses 35× pires ».
 
-**Résultat vérifié en live** :
-- `pg_policies` : **2 → 1** policy permissive par action (tasks + friend_requests).
-- `get_advisors(performance)` : **plus aucun** `multiple_permissive_policies`.
-- Plan `EXPLAIN` **identique** avant/après → **zéro régression** (Postgres
-  produisait déjà le même OR ; le gain est l'évaluation d'1 policy au lieu de 2
-  + le lint éteint).
+C'était un **artefact de mesure** : premier appel dans une session neuve, donc compilation du plan
+de la fonction incluse. Les deux appels suivants dans la même transaction donnent
+**18 buffers / 0,90 ms**, et le corps de la fonction planifie bien en
+`Index Scan using idx_tasks_user_id` + `Index Scan using tasks_pkey` — exactement ce que la
+mig. 085 annonçait. **La mig. 085 est confirmée bonne.**
 
-> ## ⛔ CETTE CONCLUSION ÉTAIT FAUSSE — corrigée le 2026-08-07
->
-> Le texte ci-dessous concluait que « le coût RLS collaboration n'est **pas** un
-> goulot » et que « à volume réel le planner peut basculer le `Seq Scan` en
-> `BitmapOr` de deux index ». **Le planner ne bascule pas.** Mesuré en prod sous
-> le rôle `authenticated` le 2026-08-07 :
->
-> ```
-> Limit
->   ->  Sort  (Sort Key: created_at DESC, id DESC)
->         ->  Seq Scan on tasks                      ← ❌ table GLOBALE
->               Filter: (uid = user_id) OR (ANY (id = (hashed SubPlan 9).col1))
-> ```
->
-> Deux erreurs dans le raisonnement d'origine :
->
-> 1. **« Le sous-plan est hashé, donc c'est maîtrisé »** — vrai, mais hors
->    sujet. Ce qui coûte n'est pas le sous-plan : c'est que le `OR` empêche
->    d'utiliser `idx_tasks_user_id` pour ATTEINDRE les lignes. Postgres lit donc
->    toute la table, puis applique le filtre. Le coût croît avec le volume
->    **total de la plateforme**, pas avec celui du compte.
-> 2. **« Le planner basculera en `BitmapOr` à volume réel »** — hypothèse jamais
->    vérifiée, et fausse ici. Un `BitmapOr` supposerait deux chemins d'index sur
->    la MÊME table ; la seconde branche passe par `shared_tasks`, ce que le
->    planner résout en `hashed SubPlan`, pas en bitmap. S'ajoute l'`ORDER BY
->    created_at DESC` + `LIMIT` : sans index utilisable, il faut trier toute la
->    table avant de prendre les 1000 premières lignes.
->
-> **Leçon de méthode** : cette section a été écrite sur la base d'un `EXPLAIN`
-> réel, mais son interprétation reposait sur une projection (« à volume réel… »)
-> présentée comme un acquis. Une doc qui rassure sans mesurer empêche de
-> re-regarder. C'est ce qui a maintenu ce défaut pendant six semaines.
->
-> **Correctif (mig. 085)** : la lecture passe par la RPC `get_my_tasks()`, qui
-> exprime les deux ensembles en `UNION` de deux branches indexables. Plan
-> obtenu : `Index Scan using idx_tasks_user_id` + `Index Scan using tasks_pkey`.
-> Détail complet : `AUDIT-ARCHITECTURE-2026-08-07.md`.
->
-> ⚠️ Les policies RLS restent **inchangées** (défense en profondeur). Toute
-> lecture de liste sur `tasks` doit passer par la RPC — cf. CLAUDE.md.
+Deux règles à retenir pour tout futur audit :
 
-~~**Conclusion** : le coût RLS collaboration n'est **pas** un goulot à l'échelle
-visée — les index (020/044/048) + le fold OR + le sous-plan hashé le
-maintiennent linéaire et indexable.~~ Le vrai frein scalabilité reste la
-**profondeur de données par compte** (§3 pagination) — mais la RLS **en était
-un aussi**, jusqu'à la mig. 085.
+1. **Toujours mesurer à chaud** (appeler deux fois avant d'`EXPLAIN`), sinon on mesure le
+   planificateur, pas la requête.
+2. Le coût de plan à froid n'est pas nul pour autant : ~18 ms au premier appel dans une connexion
+   neuve. Avec un pooler en mode transaction, cela arrive plus souvent qu'on ne le croit — c'est
+   un argument de plus pour le pooling **persistant**, pas contre la RPC.
 
-> **Index `unused` résiduels** (advisor INFO) : `idx_tasks_deadline`,
-> `idx_subscriptions_stripe_customer_id`, `idx_friends_*`, `idx_kr_completions_*`,
-> `idx_share_links_owner_id` — **conservés volontairement** (décision mig. 044 :
-> chemins d'accès réels devenant chauds à volume, ou FK ON DELETE CASCADE).
+C'est le même piège que l'édition précédente de ce document, où la conclusion « le planner
+basculera en `BitmapOr` à volume réel » — une projection jamais vérifiée — avait masqué un
+`Seq Scan` global pendant six semaines.
+
+---
+
+## 7. Index — 43 jamais utilisés
+
+Les advisors remontent 43 `unused_index`, en très grande majorité sur les tables entreprise
+(`org_notifications` ×5, `team_task_*`, `org_invite_links` ×4, `team_okr_teams`…) et sur des FK
+`created_by` / `added_by`.
+
+**Décision : on ne supprime rien.** Ces index sont soit des chemins d'accès qui deviennent chauds
+à volume, soit des FK `ON DELETE CASCADE` (où l'absence d'index transforme chaque suppression en
+scan complet de la table enfant). Sur 18 Mo de base, leur coût d'écriture est négligeable. À
+réévaluer seulement si le volume d'écriture devient un point chaud mesuré.
+
+Aucun advisor `multiple_permissive_policies` ni `auth_rls_initplan` : les acquis des mig. 049 et
+085 tiennent.
+
+---
+
+## 8. Infrastructure (hors dépôt)
+
+| Item | État | Action |
+|---|---|---|
+| **Plan Postgres** | Free — **bloquant A-9** (pas de PITR, restauration jamais testée) | Passer en Pro, cf. [`../faille.md`](../faille.md) |
+| **Connection pooling** | Non vérifié depuis ce dépôt | Confirmer que la prod utilise l'URL pooler (PgBouncer 6543, mode transaction) — d'autant plus important vu §6 |
+| **Read replicas** | Non activées (plan) | À ×100 utilisateurs actifs. L'app est déjà compatible : lectures et écritures sont séparées dans les repos |
+| **CDN** | ✅ OK | Assets Vercel immuables (`max-age=31536000`) |
+| **Cache serveur (Redis)** | ❄️ YAGNI | React Query couvre le cache client ; aucun besoin mesuré |
+| **File d'attente** | ❄️ YAGNI | Tout est synchrone ; le webhook Stripe est idempotent |
+
+---
+
+## 9. Capacité — estimation révisée
+
+L'ancienne édition raisonnait « ×10 / ×100 / ×1000 utilisateurs ». C'est le mauvais axe : le frein
+n'est pas le nombre de comptes, c'est **le volume par organisation** et **le nombre de requêtes
+par utilisateur actif**.
+
+| Scénario | Verdict |
+|---|---|
+| **×10 comptes perso** (270) | ✅ Sans modification. |
+| **×100 comptes perso** (2 700) | 🟡 Tient. Prévoir le pooling et surveiller le CPU DB. |
+| **Une organisation de 50 personnes, ~2 000 team_tasks** | 🔴 **Ne tient pas confortablement** — chaque lecture de liste paie ~420 ms de RLS (§2). C'est le scénario du plan d'acquisition B2B. |
+| **1 000 utilisateurs actifs simultanés** | 🔴 ~24 000 req/min de sondage seul (§3), chacune payant le coût RLS. |
+
+**Ordre de traitement recommandé** : §2 (RPC entreprise indexable) d'abord — c'est le seul finding
+qui bloque le cas d'usage que le produit cherche à vendre. Puis §3 (Realtime sur les hooks
+d'organisation). §4 et §5 restent de la dette confortable tant qu'on est à 289 lignes par compte.
+
+---
+
+## 10. Runbook — refaire cet audit
+
+Toutes les mesures ci-dessus se rejouent en lecture seule. **Ne jamais écrire depuis le MCP.**
+
+```sql
+-- Volumétrie et usage par table
+select relname, n_live_tup, pg_size_pretty(pg_total_relation_size(relid)) as total,
+       seq_scan, idx_scan
+from pg_stat_user_tables order by pg_total_relation_size(relid) desc limit 40;
+
+-- Profondeur par compte (le vrai frein)
+select max(c), round(avg(c)) from (select count(*) c from tasks group by user_id) t;
+
+-- Coût réel d'un prédicat RLS, sous le bon rôle et À CHAUD
+begin;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}';
+select count(*) from team_tasks;          -- 1er appel : compile le plan
+select count(*) from team_tasks;          -- 2e : réchauffe
+explain (analyze, buffers) select * from team_tasks;   -- 3e : la mesure
+rollback;
+```
+
+Lecture du résultat : diviser `Buffers: shared hit` par le nombre de lignes **scannées**
+(`rows` + `Rows Removed by Filter`), pas par les lignes retournées. C'est ce ratio qui se projette
+linéairement, et lui seul.
+
+Côté code, les quatre points à revérifier : `TASK_LIST_COLUMNS` toujours unique source de colonnes,
+`select('*')` restants dans les repos, `refetchInterval` (`grep -rn "refetchInterval:" src`), et
+consommateurs de `useTasksInfinite`.

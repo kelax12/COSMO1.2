@@ -70,6 +70,12 @@
 > Vaut pour `getAll`, `getByDate`, `getFiltered` **et** `getPage`.
 > Exception : `getById` (accès par clé primaire).
 
+> **🔴 Tables entreprise : prédicat RLS non indexable** (mesuré le 2026-08-14).
+> `team_tasks` / `team_projects` sont filtrées par `can_access_team_project(...)` — une fonction
+> appelée par ligne, donc `Seq Scan` obligatoire + CTE récursive à chaque ligne. **≈ 60× le coût
+> par ligne** du prédicat de `tasks`. Même classe de bug que celle corrigée par la mig. 085, pas
+> encore traitée. Mesures, projections et correctif : [`SCALABILITY.md`](./SCALABILITY.md) §2.
+
 > **📡 Collaboration : Realtime, pas sondage** (mig. 089). Le `refetchInterval`
 > de 15 s sur `useTasks` coûtait ≈ 58 Mo/mois/utilisateur d'egress Supabase.
 > `useSharedTasksRealtime` (monté une fois dans `App.tsx`) écoute
