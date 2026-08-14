@@ -182,6 +182,36 @@ Aucun advisor `multiple_permissive_policies` ni `auth_rls_initplan` : les acquis
 
 ---
 
+## 8bis. Coûts — audit du 2026-08-14 (jamais fait avant)
+
+**Coût actuel : 0 €/mois.** Vérifié via l'API Supabase : organisation `cosmo` en plan **Free**,
+coût projet à **0**. Vercel n'est pas interrogeable depuis ce dépôt (connecteur non autorisé), mais
+le projet tient largement dans le palier gratuit au vu du trafic mesuré.
+
+**Consommation contre les plafonds du plan Free** :
+
+| Ressource | Consommé | Plafond Free | Marge |
+|---|---|---|---|
+| Base de données | **18 Mo** | 500 Mo | ×27 |
+| Comptes | 27 | 50 000 MAU | ×1 850 |
+| Egress | non mesurable depuis le dépôt | 5 Go/mois | à surveiller |
+
+**Le problème n'est pas le coût, c'est ce que le plan gratuit ne fournit pas** : ni PITR, ni
+rétention de backup sérieuse, ni branches de base de données — c'est le bloquant **A-9** de
+[`../faille.md`](../faille.md). Le passage au plan payant n'est donc pas une décision de
+capacité mais de **résilience** : aujourd'hui, une erreur de manipulation en prod n'est pas
+rattrapable.
+
+⚠️ **Je ne cite volontairement aucun tarif** : les grilles changent, et une doc qui affirme un
+prix périme plus vite qu'elle ne sert. Le montant est à lire sur la page de tarification Supabase
+au moment de la décision. Ce que cet audit établit, c'est que **le coût d'infrastructure n'est pas
+un obstacle à ce stade** — 0 € aujourd'hui, et la seule dépense justifiée est celle qui achète la
+capacité de restaurer.
+
+Deux postes à surveiller quand le trafic viendra, tous deux déjà quantifiés ailleurs dans ce
+document : l'**egress** (§3, ~24 requêtes/minute par onglet entreprise ouvert) et le **CPU
+base** (§2, coût RLS par ligne scannée).
+
 ## 9. Capacité — estimation révisée
 
 L'ancienne édition raisonnait « ×10 / ×100 / ×1000 utilisateurs ». C'est le mauvais axe : le frein
