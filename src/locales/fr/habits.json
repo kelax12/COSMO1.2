@@ -69,5 +69,22 @@
     "reconnect": "Veuillez vous reconnecter.",
     "alreadySubscribed": "Vous avez déjà un abonnement actif.",
     "paymentError": "Erreur paiement — réessayez."
-  }
+  },
+  "recapCta": "Bilan",
+  "recapSheetTitle": "Bilan de la semaine",
+  "recapSheetSubtitle": "Une image prête à partager. Aucun nom de tâche ni d'habitude n'y figure.",
+  "recapTitle": "Ma semaine",
+  "recapTasks": "tâches terminées",
+  "recapStreak": "série en cours",
+  "recapStreakUnit": "jours",
+  "recapTime": "temps investi",
+  "recapHabits": "habitudes suivies",
+  "recapShare": "Partager",
+  "recapDownload": "Télécharger",
+  "recapClose": "Fermer",
+  "recapRendering": "Génération de l'image…",
+  "recapEmpty": "Image indisponible",
+  "recapAlt": "Bilan de la semaine : heatmap d'habitudes, tâches terminées, série en cours",
+  "recapShareText": "Mon bilan de la semaine sur Cosmo.",
+  "recapImageCta": "Essayez sans inscription"
 }

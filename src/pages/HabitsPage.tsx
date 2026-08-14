@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router';
-import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
+import { Plus, Calendar, Grid3X3, List, TrendingUp, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeading } from '@/components/ui/typography';
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,10 @@ import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
 import HabitsAdGate from '@/components/HabitsAdGate';
 
+// Bilan hebdo partageable : chargé seulement quand on l'ouvre (le moteur de
+// rendu canvas ne doit peser sur aucun écran — cf. docs/PERFORMANCE.md).
+const WeeklyRecapSheet = React.lazy(() => import('@/components/share/WeeklyRecapSheet'));
+
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
@@ -42,6 +46,7 @@ const HabitsPage: React.FC = () => {
   const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
   const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetch());
   const [showModal, setShowModal] = useState(false);
+  const [showRecap, setShowRecap] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
 
@@ -148,6 +153,24 @@ const HabitsPage: React.FC = () => {
                 </motion.button>
               ))}
             </div>
+          )}
+
+          {habits.length > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowRecap(true)}
+              title={t('recapSheetTitle')}
+              aria-label={t('recapSheetTitle')}
+              className="flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium border transition-colors"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+                color: 'rgb(var(--color-text-secondary))',
+              }}
+            >
+              <Share2 size={15} />
+              <span className="hidden sm:inline">{t('recapCta')}</span>
+            </motion.button>
           )}
 
           <motion.button
@@ -261,6 +284,13 @@ const HabitsPage: React.FC = () => {
       )}
 
       <HabitModal isOpen={showModal} onClose={() => setShowModal(false)} />
+
+      {/* Bilan hebdo partageable — monté uniquement après ouverture (lazy). */}
+      {showRecap && (
+        <React.Suspense fallback={null}>
+          <WeeklyRecapSheet open={showRecap} onClose={() => setShowRecap(false)} />
+        </React.Suspense>
+      )}
 
       {/* FAB Nouvelle habitude — mobile only */}
       <motion.button
