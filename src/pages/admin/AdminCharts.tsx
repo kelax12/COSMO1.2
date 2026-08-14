@@ -11,6 +11,7 @@ import {
   ComposedChart,
   Pie,
   PieChart,
+  ReferenceLine,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -150,6 +151,77 @@ export const SignupsChart: React.FC<{ data: AdminChartPoint[] }> = ({ data }) =>
         dataKey="total"
         type="monotone"
         fill="url(#adminTotalFill)"
+        fillOpacity={1}
+        stroke="var(--color-total)"
+        strokeWidth={2.5}
+        dot={false}
+        activeDot={{ r: 5, strokeWidth: 2 }}
+      />
+    </ComposedChart>
+  </ChartContainer>
+);
+
+/**
+ * Inscriptions par jour empilées par canal d'acquisition (mig. 099).
+ * `sources` fixe l'ordre des piles ; les couleurs suivent PALETTE, dans le
+ * même ordre que le tableau « inscriptions par canal » de la page.
+ */
+export const SourceStackChart: React.FC<{ data: AdminChartPoint[]; sources: string[] }> = ({
+  data,
+  sources,
+}) => {
+  const config = Object.fromEntries(
+    sources.map((s, i) => [s, { label: s, color: PALETTE[i % PALETTE.length] }])
+  ) satisfies ChartConfig;
+  return (
+    <ChartContainer config={config} className="h-[260px] w-full" style={{ aspectRatio: 'auto' }}>
+      <BarChart data={data} margin={{ left: 4, right: 12, top: 16, bottom: 0 }}>
+        <CartesianGrid vertical={false} />
+        <XAxis dataKey="label" {...axisProps} minTickGap={24} />
+        <YAxis {...axisProps} width={36} allowDecimals={false} />
+        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+        {sources.map((s, i) => (
+          <Bar
+            key={s}
+            dataKey={s}
+            stackId="sources"
+            fill={PALETTE[i % PALETTE.length]}
+            radius={i === sources.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+            maxBarSize={24}
+          />
+        ))}
+      </BarChart>
+    </ChartContainer>
+  );
+};
+
+const goalConfig = {
+  total: { label: 'Total comptes', color: '#3b82f6' },
+} satisfies ChartConfig;
+
+/**
+ * Courbe cumulée d'inscriptions cadrée sur l'objectif : l'axe Y monte
+ * jusqu'à `goal`, donc l'écart restant se lit directement (une courbe
+ * auto-scalée donnerait l'illusion d'être arrivé).
+ */
+export const GoalChart: React.FC<{ data: AdminChartPoint[]; goal: number }> = ({ data, goal }) => (
+  <ChartContainer config={goalConfig} className="h-[260px] w-full" style={{ aspectRatio: 'auto' }}>
+    <ComposedChart data={data} margin={{ left: 4, right: 12, top: 16, bottom: 0 }}>
+      <defs>
+        <linearGradient id="adminGoalFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="var(--color-total)" stopOpacity={0.3} />
+          <stop offset="95%" stopColor="var(--color-total)" stopOpacity={0.02} />
+        </linearGradient>
+      </defs>
+      <CartesianGrid vertical={false} />
+      <XAxis dataKey="label" {...axisProps} minTickGap={24} />
+      <YAxis {...axisProps} width={44} allowDecimals={false} domain={[0, goal]} />
+      <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+      <ReferenceLine y={goal} stroke="#ef4444" strokeDasharray="4 4" />
+      <Area
+        dataKey="total"
+        type="monotone"
+        fill="url(#adminGoalFill)"
         fillOpacity={1}
         stroke="var(--color-total)"
         strokeWidth={2.5}

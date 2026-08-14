@@ -55,6 +55,31 @@ interface RawAdminStats {
   };
   retention_j7?: Array<{ week?: string; signups?: number; retained?: number }>;
   stickiness?: { dau?: number; mau?: number };
+  // ── v3 (mig. 099) ───────────────────────────────────────────────────
+  signups_by_source?: Record<string, number>;
+  signups_by_source_by_day?: Array<{ day?: string; source?: string; count?: number }>;
+  activation_48h?: {
+    activated?: number;
+    total?: number;
+    by_source?: Record<string, { activated?: number; total?: number }>;
+  };
+  retention_d7_by_source?: Record<string, { signups?: number; retained?: number }>;
+  orgs?: {
+    total?: number;
+    with_3plus_members?: number;
+    created_30d?: number;
+    with_3plus_members_30d?: number;
+  };
+}
+
+/** Mappe un Record<string, T> en normalisant chaque valeur (jamais de spread). */
+function mapRecord<TRaw, TOut>(
+  raw: Record<string, TRaw> | undefined,
+  map: (value: TRaw) => TOut
+): Record<string, TOut> {
+  const out: Record<string, TOut> = {};
+  for (const [key, value] of Object.entries(raw ?? {})) out[key] = map(value);
+  return out;
 }
 
 function mapDailyPoints(raw: RawDailyPoint[] | undefined): DailyPoint[] {
@@ -119,6 +144,30 @@ export async function fetchAdminStats(): Promise<AdminStats> {
     stickiness: {
       dau: raw.stickiness?.dau ?? 0,
       mau: raw.stickiness?.mau ?? 0,
+    },
+    signupsBySource: mapRecord(raw.signups_by_source, (n) => Number(n) || 0),
+    signupsBySourceByDay: (raw.signups_by_source_by_day ?? []).map((p) => ({
+      day: p.day ?? '',
+      source: p.source ?? 'unknown',
+      count: p.count ?? 0,
+    })),
+    activation48h: {
+      activated: raw.activation_48h?.activated ?? 0,
+      total: raw.activation_48h?.total ?? 0,
+      bySource: mapRecord(raw.activation_48h?.by_source, (v) => ({
+        activated: v?.activated ?? 0,
+        total: v?.total ?? 0,
+      })),
+    },
+    retentionD7BySource: mapRecord(raw.retention_d7_by_source, (v) => ({
+      signups: v?.signups ?? 0,
+      retained: v?.retained ?? 0,
+    })),
+    orgs: {
+      total: raw.orgs?.total ?? 0,
+      with3plusMembers: raw.orgs?.with_3plus_members ?? 0,
+      created30d: raw.orgs?.created_30d ?? 0,
+      with3plusMembers30d: raw.orgs?.with_3plus_members_30d ?? 0,
     },
   };
 }

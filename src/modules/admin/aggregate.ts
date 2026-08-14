@@ -1,7 +1,7 @@
 // Helpers purs d'agrégation des séries quotidiennes du dashboard admin.
 // Tout travaille sur des strings 'YYYY-MM-DD' — jamais new Date('YYYY-MM-DD')
 // (parse UTC piégeux) : les conversions passent par des composantes locales.
-import type { DailyPoint } from './types';
+import type { DailyPoint, SourceDailyPoint } from './types';
 
 export type Granularity = 'day' | 'week';
 
@@ -66,6 +66,57 @@ export function aggregateWeekly(points: DailyPoint[]): DailyPoint[] {
   return [...buckets.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([day, count]) => ({ day, count }));
+}
+
+/** Canal fourre-tout des séries empilées, au-delà des `max` premiers. */
+export const OTHER_SOURCE = 'autres';
+
+/** Ligne d'une série empilée : un jour, puis une clé numérique par canal. */
+export interface SourceStackRow {
+  day: string;
+  [source: string]: string | number;
+}
+
+/**
+ * Canaux triés par volume décroissant (puis alphabétique, pour un ordre
+ * stable d'un rendu à l'autre). Au-delà de `max`, les canaux résiduels sont
+ * remplacés par OTHER_SOURCE — au-delà de 6 piles un graphe empilé ne se lit
+ * plus.
+ */
+export function rankSources(bySource: Record<string, number>, max = 5): string[] {
+  const ranked = Object.entries(bySource)
+    .filter(([, count]) => count > 0)
+    .sort(([aKey, aCount], [bKey, bCount]) => bCount - aCount || aKey.localeCompare(bKey))
+    .map(([source]) => source);
+  if (ranked.length <= max) return ranked;
+  return [...ranked.slice(0, max), OTHER_SOURCE];
+}
+
+/**
+ * Série empilée : une ligne par jour, une clé par canal de `sources`
+ * (0 si le canal n'a rien produit ce jour-là — recharts a besoin de la clé).
+ * Tout canal hors liste est agrégé sous OTHER_SOURCE s'il y figure, sinon
+ * ignoré.
+ */
+export function stackBySource(points: SourceDailyPoint[], sources: string[]): SourceStackRow[] {
+  const known = new Set(sources);
+  const hasOther = known.has(OTHER_SOURCE);
+  const byDay = new Map<string, Record<string, number>>();
+
+  for (const p of points) {
+    const key = known.has(p.source) ? p.source : hasOther ? OTHER_SOURCE : null;
+    if (key === null) continue;
+    let row = byDay.get(p.day);
+    if (!row) {
+      row = Object.fromEntries(sources.map((s) => [s, 0]));
+      byDay.set(p.day, row);
+    }
+    row[key] += p.count;
+  }
+
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, row]) => ({ day, ...row }));
 }
 
 /** Somme cumulée (courbe « total de comptes » à partir des signups/jour). */
