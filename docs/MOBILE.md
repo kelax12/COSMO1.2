@@ -1,5 +1,100 @@
 # Mobile-first — patterns et conventions
 
+## Audit mobile / direction artistique — 2026-08-14
+
+**Méthode** : mesures DOM/CSS sur l'app en mode démo (viewport 375×812) + comptage statique de
+l'adhérence au design system. Remplace les trois audits du 2026-07-25 archivés
+([impeccable](./archive/AUDIT-IMPECCABLE-MOBILE-2026-07-25.md),
+[design-skill](./archive/AUDIT-DESIGN-SKILL-MOBILE-2026-07-25.md),
+[DA brief](./archive/MOBILE-DA-BRIEF.md)), 161 commits plus tôt.
+
+### 🔴 1. Sous `prefers-reduced-motion`, deux bannières sortent de l'écran
+
+**Mesuré** : avec `prefers-reduced-motion: reduce` actif, deux `<aside>` en `position: fixed`
+conservent `transform: matrix(1, 0, 0, 1, 0, 120)` — un décalage de **120 px vers le bas qui ne
+disparaît jamais**, même 2,5 s après le chargement. Conséquence sur `/entreprise` en 375×812 : le
+bouton **« Créer mon compte »** de la bannière démo est à `bottom: 835` pour un viewport de 812.
+Il est **hors écran et inatteignable** — l'élément étant `fixed`, aucun scroll ne le ramène.
+
+Composants touchés : `CookieBanner.tsx`, `DemoBridgePrompt.tsx`.
+
+**Mécanisme** : `App.tsx` monte `<MotionConfig reducedMotion="user">`, ce qui neutralise les
+animations de **transform**. Un composant écrit `initial={{ y: 120 }} animate={{ y: 0 }}` compte
+sur l'animation pour atteindre sa position finale ; l'animation ne jouant pas, la valeur `initial`
+**reste appliquée**. Le réglage censé aider les utilisateurs sensibles au mouvement casse donc la
+mise en page pour eux — et pour eux seuls, ce qui explique que le bug ait survécu : il est
+invisible sur une machine sans le réglage.
+
+⚠️ Le pattern à risque (`initial` avec `x`/`y` non nul sur un élément `fixed` ou `sticky`) est
+présent dans **plus de 20 fichiers** (`CommandPalette`, `QuickAddBar`, `InboxMenu`,
+`SmartListMenu`, `HabitsAdGate`, `ColorSettingsModal`…). Tous ne sont pas cassés — seuls le sont
+ceux dont la **position finale** dépend du transform plutôt que du CSS.
+
+**Correction** : la position finale doit venir du CSS (`bottom-[…]`), l'animation ne doit porter
+que sur l'opacité — ou déclarer le décalage d'entrée dans une variante neutralisée par
+`useReducedMotion()`. **Règle** : ne jamais faire dépendre une position d'arrivée d'une animation
+de transform.
+
+### 🟠 2. Le design system mobile n'a jamais été adopté
+
+Les primitives de `src/components/mobile/` ont été créées en juillet 2026 pour unifier le rendu
+mobile. Comptage au 2026-08-14 :
+
+| Primitive | Consommateurs |
+|---|---|
+| `MobileHeader` | 2 (`TasksHeader`, `TasksInboxMenu`) |
+| `TouchTarget` | 2 (les mêmes) |
+| `BottomSheet` | 2 (`PremiumPage`, `WeeklyRecapSheet`) |
+| `Segmented` | 2 (`MobileAgenda`, `ThemeToggle`) |
+| `SectionHeader` | 2 (`primitives.tsx`, `GuidePage`) |
+| `MobileScreen` | **0** |
+| `ListRow` | **0** |
+
+Et sur l'échelle typographique fermée (`text-display/title/headline/body/label/caption`) :
+**169 usages contre 1 487 usages de Tailwind brut** (`text-xs` → `text-5xl`), soit **10 %
+d'adhérence**.
+
+La migration s'était volontairement limitée à la page Tâches, en vitrine. Elle ne s'est jamais
+poursuivie, et deux primitives n'ont jamais servi. Résultat : il n'y a pas un langage visuel
+mobile mais **deux** — la page Tâches, et tout le reste. C'est la cause structurelle du finding
+« quatre tailles de titre » relevé dans [`UI-PATTERNS.md`](./UI-PATTERNS.md).
+
+**Correction** : soit finir la migration page par page, soit supprimer `MobileScreen` et `ListRow`
+et assumer que les primitives ne couvrent que Tâches. L'état intermédiaire actuel est le pire des
+trois : il coûte de la maintenance sans rendre de cohérence.
+
+### 🟠 3. Onze bottom-sheets réimplémentés à la main, et cinq mentent sur leur geste
+
+`docs/MOBILE.md` (plus bas) présente `BottomSheet` comme « réutilisée telle quelle par toute
+nouvelle feuille modale » et documente **une** exception (`AdModal`). La réalité mesurée :
+**11 feuilles réimplémentent le pattern à la main** contre 2 qui utilisent la primitive.
+
+Pire que la duplication, leur comportement diverge :
+
+| | Poignée de glissement | Glisser-pour-fermer |
+|---|---|---|
+| `ColorSettingsModal`, `HabitModal`, `MobileMoreSheet`, `PremiumGateModal` | ✅ | ✅ |
+| `CreateTeamModal`, `NewTeamProjectModal`, `RecurrenceDaysModal`, `TeamTaskModal`, `DeleteObjectiveConfirm` | ✅ | ❌ |
+| `LoginModal` | ❌ | ✅ |
+| `ShareInviteClaimer` | ❌ | ❌ |
+
+**Cinq feuilles affichent une poignée de glissement qui ne fait rien** — une affordance qui promet
+un geste inexistant, ce qui est moins bon que de ne rien afficher. Une en a le geste sans le
+signaler. Les trois modales du mode entreprise sont toutes dans le groupe « poignée sans geste ».
+
+**Correction** : migrer ces 11 feuilles sur `BottomSheet`, ou au minimum aligner poignée et geste.
+Et corriger la phrase de ce document, qui décrit une règle que le code ne suit pas.
+
+### ✅ Vérifié sain
+
+- **Zones sûres** : 9 pages réservent `env(safe-area-inset-bottom)`. L'absence sur `/agenda` est
+  **intentionnelle et commentée dans le code** (le conteneur `flex-1` s'arrête déjà au-dessus de
+  la tab bar ; l'ancien `pb-64px` volait 64 px à la grille pour rien).
+- **Fond des feuilles** : `backdrop-blur` présent sur les 11, cohérent.
+- **Tokens de thème** : aucune couleur Tailwind en dur dans l'app (cf. `UI-PATTERNS.md`).
+- **Débordement horizontal** : zéro sur les 8 routes testées en 375 px.
+
+
 > **Aucun bug mobile ouvert connu au 2026-08-14.** L'ancien fichier `a-faire.md` listait 5 points :
 > 4 sont corrigés, le 5ᵉ est une limitation plateforme (pas de `navigator.vibrate()` sur Safari iOS —
 > le code garde un `if (navigator.vibrate)`, no-op propre sur iOS). Les leçons de test tactile qui en

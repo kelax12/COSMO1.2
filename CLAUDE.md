@@ -570,6 +570,18 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
 - ❌ Importer `gsap` directement ou l'utiliser hors landing — passer par `@/lib/gsap`
 - ❌ Appeler `toast` depuis les repositories ou `normalizeApiError`
 
+### Animations
+
+- ❌ **Ne jamais faire dépendre une position finale d'une animation de transform.**
+  `App.tsx` monte `<MotionConfig reducedMotion="user">` : chez un utilisateur en
+  `prefers-reduced-motion`, les animations de transform ne jouent pas et la valeur `initial`
+  **reste appliquée**. Un `initial={{ y: 120 }} animate={{ y: 0 }}` sur un élément `fixed` le
+  laisse 120 px trop bas, définitivement. Mesuré le 2026-08-14 sur `CookieBanner` et
+  `DemoBridgePrompt` : leur CTA sortait de l'écran. La position vient du CSS, l'animation ne
+  porte que sur l'opacité. Détail : [`docs/MOBILE.md`](./docs/MOBILE.md).
+- ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
+  s'affiche pas », vérifier ce réglage avant de suspecter le code.
+
 ### Logique métier
 
 - ❌ Modifier `recordKRCompletion()` sans vérifier le graphique dashboard (démo ET prod)
