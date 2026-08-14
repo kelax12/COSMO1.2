@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Cookie, X, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { useT } from '@/i18n/useT';
+import { useSlideUpEntrance } from '@/lib/motion-safe';
 
 type CookieConsent = 'accepted' | 'refused' | null;
 
@@ -12,6 +13,7 @@ const CookieBanner: React.FC = () => {
   const { t } = useT('common');
   const [consent, setConsent] = useState<CookieConsent>(null);
   const [visible, setVisible] = useState(false);
+  const entrance = useSlideUpEntrance();
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as CookieConsent;
@@ -41,9 +43,7 @@ const CookieBanner: React.FC = () => {
       {visible && (
         <motion.aside
           aria-label={t('cookies.banner')}
-          initial={{ y: 120, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
+          {...entrance}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-[200]"
         >
