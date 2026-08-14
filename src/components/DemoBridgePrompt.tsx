@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { useDemoBridge } from '@/lib/hooks/use-demo-bridge';
 import { recordFallbackSource } from '@/lib/attribution';
 import { useT } from '@/i18n/useT';
+import { useSlideUpEntrance } from '@/lib/motion-safe';
 
 /**
  * Pont démo → compte : propose la création de compte à un visiteur démo
@@ -21,6 +22,7 @@ const DemoBridgePrompt: React.FC = () => {
   const { t } = useT('common');
   const navigate = useNavigate();
   const { visible, snooze } = useDemoBridge();
+  const entrance = useSlideUpEntrance();
 
   const handleSignup = () => {
     // Canal d'acquisition « démo ». `recordFallbackSource` ne pose la valeur que
@@ -36,9 +38,7 @@ const DemoBridgePrompt: React.FC = () => {
       {visible && (
         <motion.aside
           aria-label={t('demoBridge.aria')}
-          initial={{ y: 120, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
+          {...entrance}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           // Même ancrage que CookieBanner : au-dessus de la MobileTabBar (64 px
           // + safe-area) sur mobile, carte en bas à droite sur desktop. z-[190]
