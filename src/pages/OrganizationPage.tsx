@@ -219,7 +219,7 @@ const OrganizationPage = () => {
       )}
 
       {/* Onglets */}
-      <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto overflow-y-hidden hide-scrollbar">
+      <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 pb-0.5 overflow-x-auto hide-scrollbar">
         {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
           // Seuls Projets (tâches nouvellement assignées) et Membres (demandes
           // d'adhésion en attente) portent un compteur.
