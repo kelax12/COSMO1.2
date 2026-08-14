@@ -209,10 +209,25 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
   // menu au lieu de naviguer directement — cf. clickThroughOrgMenuIfAny.
   const visibleButton = page.getByRole('button', { name }).filter({ visible: true }).first();
   if (await visibleButton.isVisible().catch(() => false)) {
-    await visibleButton.click({ timeout: 10_000 });
-    await clickThroughOrgMenuIfAny(page);
-    await page.waitForURL(urlPattern, { timeout: 10_000 });
-    return;
+    // ⚠️ Ce déclencheur peut se DÉTACHER en boucle : le trigger d'organisation
+    // est re-rendu par les données de nav qui arrivent (notifications d'org,
+    // badges), et Playwright re-résout alors indéfiniment jusqu'au timeout
+    // (« element was detached from the DOM, retrying » — échec mobile-safari
+    // observé sur /entreprise). Un échec ici n'est donc PAS une preuve que la
+    // nav est cassée : on retombe sur le sheet « Plus », qui est le chemin
+    // légitime sur mobile de toute façon.
+    try {
+      await visibleButton.click({ timeout: 10_000 });
+      await clickThroughOrgMenuIfAny(page);
+      await page.waitForURL(urlPattern, { timeout: 10_000 });
+      return;
+    } catch {
+      if (urlPattern.test(page.url())) return;
+      // Le clic a pu ouvrir le menu d'organisation avant d'échouer : un menu
+      // Radix resté ouvert capterait le clic suivant sur « Plus ».
+      await page.keyboard.press('Escape').catch(() => {});
+      // On continue vers le chemin mobile ci-dessous.
+    }
   }
 
   // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
