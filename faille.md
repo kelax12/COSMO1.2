@@ -12,6 +12,20 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
+## Gardes automatiques — état au 2026-08-14
+
+| Garde | Résultat |
+|---|---|
+| `npm run check:rls` | ✅ **114 policies analysées sur 57 migrations, 0 violation** |
+| `npm run validate:migrations` | ✅ 100 fichiers, 0 erreur, 3 avertissements — tous sur `007` et `010`, préexistants |
+| Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), ~40 WARN `security_definer_function_executable` (cf. finding helpers) |
+| Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée |
+
+Les deux fonctions exécutables par `anon` — `preview_share_link(uuid)` et
+`record_demo_visit(uuid)` — sont **intentionnelles** : la première alimente l'aperçu d'un lien
+d'invitation avant connexion, la seconde compte les visites de démo. Toutes deux prennent un UUID
+non devinable en argument. Rien à corriger, mais à ne pas « nettoyer » par erreur.
+
 ## État global
 
 **Aucun finding High ou Critical exploitable** (dernière passe complète : 2026-08-08, migrations
@@ -21,6 +35,52 @@ Un seul **bloquant** subsiste, et c'est un point de **résilience**, pas une fai
 Supabase `free`. Tout le reste est du réglage de console Supabase.
 
 ---
+
+## 🟠 Ouvert — fuite inter-organisations par les helpers RLS (2026-08-14)
+
+**Nouveau finding, PoC validé en prod.** Les fonctions helper qui portent la RLS du mode
+entreprise sont `SECURITY DEFINER` **et exposées comme RPC PostgREST** à tout utilisateur
+authentifié (`/rest/v1/rpc/get_subtree`, `…/org_admin_count`, `…/has_subordinates`). Elles n'ont
+jamais été conçues pour être appelées directement : ce sont des prédicats internes.
+
+Or `SECURITY DEFINER` signifie « sans RLS », et aucune ne vérifie que l'appelant appartient à
+l'organisation demandée.
+
+**PoC** — utilisateur membre de la seule organisation « entreprisetest », interrogeant une
+organisation étrangère dont il connaît l'UUID :
+
+| Appel | Résultat |
+|---|---|
+| `select … from organization_members where org_id = <étrangère>` | **0 ligne** ✅ la RLS fait son travail |
+| `get_subtree(<org étrangère>, <root>)` | **8 UUID de membres** 🔴 |
+| `org_admin_count(<org étrangère>)` | **1** 🔴 |
+| `has_subordinates(<org étrangère>, <tiers>)` | **true** 🔴 |
+| `is_org_member(<org étrangère>)` | false ✅ (ne parle que de soi) |
+| `shares_org_with(<tiers>)` | false ✅ |
+
+**Impact** : la table est protégée, les fonctions la contournent. Ce qui fuit, ce sont des UUID et
+une structure hiérarchique — pas des emails ni des noms. L'UUID d'organisation n'étant pas
+devinable (v4), le scénario réaliste n'est pas l'attaque à l'aveugle mais la **révocation
+incomplète** : un membre exclu d'une organisation en connaît l'UUID et conserve indéfiniment la
+capacité d'énumérer ses membres et de suivre sa hiérarchie.
+
+**Sévérité** : moyenne. Isolation inter-organisations violée, sans donnée personnelle directe.
+
+**Correction recommandée** : déplacer les helpers dans un schéma non exposé par PostgREST
+(`private`), les policies continuant de les appeler en qualifié. Cela règle d'un coup les ~40
+avertissements `security_definer_function_executable` de l'advisor. À défaut, ajouter un contrôle
+d'autorisation en tête de chaque helper qui accepte un `p_org` en argument (`get_subtree`,
+`org_admin_count`, `has_subordinates`, `is_above`, `manages_user`).
+⚠️ Un simple `REVOKE EXECUTE FROM authenticated` **casserait les policies** : elles sont évaluées
+avec le rôle courant, qui a donc besoin du droit `EXECUTE`.
+
+C'est la même classe que le finding A-5 (« une RPC `SECURITY DEFINER` n'est pas protégée par la
+RLS, son périmètre ne tient qu'à sa logique ») — appliquée cette fois aux helpers, qu'on n'avait
+pas regardés parce qu'ils ne ressemblent pas à une API.
+
+> **Note de méthode** : mon premier PoC concluait à tort à une fuite plus large — l'utilisateur
+> test appartenait en réalité aux **deux** organisations. Toujours vérifier l'appartenance réelle
+> du compte d'attaque avant de conclure.
 
 ## 🔴 Ouvert — bloquant
 

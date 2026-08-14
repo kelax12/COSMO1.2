@@ -18,6 +18,7 @@ Guide de travail dans ce dépôt. **Vérifié dans le code le 2026-08-14.**
 | Doc vivant | Quand la lire |
 |---|---|
 | [`docs/README.md`](./docs/README.md) | Carte complète : quel doc pour quelle zone |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié (audit 2026-08-14) |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
 | [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
@@ -278,7 +279,8 @@ Comportement **quand `PREMIUM_ENFORCED = true`** :
 ```typescript
 import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
 import { useFriends, useSendFriendRequest, useShareTask, useFriendRequests } from '@/modules/friends';
-import { useMessages } from '@/modules/user';
+// ⚠️ `useMessages` (@/modules/user) existe mais n'a AUCUN consommateur (2026-08-14) — ne pas
+// l'ajouter à une page sans vérifier qu'il fait bien ce qu'on attend.
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
