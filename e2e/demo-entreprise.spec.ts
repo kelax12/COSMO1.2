@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { test, expect, navTo } from './fixtures';
 
 /**
@@ -9,6 +10,19 @@ import { test, expect, navTo } from './fixtures';
  * échéances entreprise), le modal de tâche s'ouvre avec son fil de
  * commentaires, l'onglet Membres liste l'annuaire et les cartes d'invitation.
  */
+/**
+ * Onglet de la barre entreprise (OrganizationPage).
+ *
+ * ⚠️ Ne PAS ancrer sur la fin du libellé (`/^projets$/i`) : depuis les badges
+ * de nouveautés (vague 1 entreprise, 2026-08-08), le compteur porte un
+ * `aria-label` (« 3 nouveautés ») qui entre dans le NOM ACCESSIBLE du bouton —
+ * lequel vaut donc « Projets 3 nouveautés » dès qu'il y a du neuf dans la
+ * démo. Les deux tests qui ancraient la fin tournaient jusqu'au timeout.
+ * On ancre au début : « Nouveau projet » ne matche pas, le badge ne gêne plus.
+ */
+const orgTab = (page: Page, label: RegExp) =>
+  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+
 test.describe('Espace entreprise (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
@@ -17,7 +31,7 @@ test.describe('Espace entreprise (démo)', () => {
 
     // Header org + onglets
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('button', { name: /aperçu/i }).filter({ visible: true }).first()).toBeVisible();
+    await expect(orgTab(page, /^aperçu/i)).toBeVisible();
 
     // Sections de l'Aperçu (reco #2 + #11)
     await expect(page.getByRole('heading', { name: /activité de l'équipe/i })).toBeVisible();
@@ -31,11 +45,11 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     // Projets
-    await page.getByRole('button', { name: /^projets$/i }).filter({ visible: true }).first().click();
+    await orgTab(page, /^projets/i).click();
     await page.waitForURL(/tab=projects/);
 
     // OKR — le bouton « Nouvel objectif » confirme le contenu de l'onglet
-    await page.getByRole('button', { name: /^okr$/i }).filter({ visible: true }).first().click();
+    await orgTab(page, /^okr/i).click();
     await page.waitForURL(/tab=okr/);
     await expect(
       page.getByRole('button', { name: /nouvel objectif/i }).filter({ visible: true }).first()
@@ -71,7 +85,7 @@ test.describe('Espace entreprise (démo)', () => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole('button', { name: /^membres$/i }).filter({ visible: true }).first().click();
+    await orgTab(page, /^membres/i).click();
     await page.waitForURL(/tab=members/);
 
     // Annuaire des 6 membres seedés + les deux moyens d'inviter
