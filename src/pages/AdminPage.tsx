@@ -14,6 +14,9 @@ import {
   fillMissingDays,
   aggregateWeekly,
   toCumulative,
+  rankSources,
+  stackBySource,
+  ACQUISITION_GOALS,
   type DailyPoint,
   type Granularity,
 } from '@/modules/admin';
@@ -36,6 +39,12 @@ const CountBars = React.lazy(() =>
 );
 const Donut = React.lazy(() =>
   import('./admin/AdminCharts').then((m) => ({ default: m.Donut }))
+);
+const SourceStackChart = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.SourceStackChart }))
+);
+const GoalChart = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.GoalChart }))
 );
 
 // 'YYYY-MM-DD' → Date locale (jamais new Date('YYYY-MM-DD') : parse UTC).
@@ -65,10 +74,23 @@ const pct = (part: number, total: number): string =>
 const pctNum = (part: number, total: number): number =>
   total > 0 ? Math.round((100 * part) / total) : 0;
 
-const KpiCard: React.FC<{ label: string; value: string; hint?: string }> = ({ label, value, hint }) => (
-  <div className="card p-5">
+const KpiCard: React.FC<{ label: string; value: string; hint?: string; highlight?: boolean }> = ({
+  label,
+  value,
+  hint,
+  highlight,
+}) => (
+  <div
+    className="card p-5"
+    style={highlight ? { borderColor: 'rgb(var(--color-accent))', borderWidth: 2 } : undefined}
+  >
     <p className="text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{label}</p>
-    <p className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{value}</p>
+    <p
+      className="text-xl font-bold"
+      style={{ color: highlight ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-primary))' }}
+    >
+      {value}
+    </p>
     {hint && (
       <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{hint}</p>
     )}
@@ -145,6 +167,27 @@ const AdminPage: React.FC = () => {
   }
 
   const { totals, demo, usage, adoption, activation24h, tasksCompletion, collaboration, stickiness } = data;
+  const { activation48h, orgs, retentionD7BySource } = data;
+
+  // ── Plan d'acquisition 30 j (mig. 099) ───────────────────────────────
+  // Canaux triés par volume : c'est cet ordre qui pilote « couper / doubler ».
+  const sources = rankSources(data.signupsBySource);
+  const sourceRows = sources.map((source) => {
+    const signupsCount =
+      source === 'autres'
+        ? totals.users - sources.reduce((s, k) => s + (data.signupsBySource[k] ?? 0), 0)
+        : (data.signupsBySource[source] ?? 0);
+    const act = activation48h.bySource[source];
+    const ret = retentionD7BySource[source];
+    return { source, signups: signupsCount, activation: act, retention: ret };
+  });
+
+  // Série empilée : 60 derniers jours renseignés, au-delà le graphe est illisible.
+  const stackRows = stackBySource(data.signupsBySourceByDay, sources).slice(-60);
+  const stackPoints: AdminChartPoint[] = stackRows.map(({ day, ...counts }) => ({
+    label: formatLabel(day, 'day'),
+    ...counts,
+  }));
 
   // ── Données des graphiques (dérivées, pas de useMemo : calculs triviaux) ──
   // Répartition de l'activité : segments exclusifs qui somment au total.
@@ -211,6 +254,89 @@ const AdminPage: React.FC = () => {
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
           {t('generatedAt', { date: format(new Date(data.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: getDateLocale() }) })}
         </p>
+      </div>
+
+      {/* Plan d'acquisition 30 jours — la lecture du matin */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <KpiCard
+          label={t('goalUsers')}
+          value={`${totals.users} / ${ACQUISITION_GOALS.users}`}
+          hint={pct(totals.users, ACQUISITION_GOALS.users)}
+        />
+        <KpiCard
+          label={t('goalOrgs')}
+          value={`${orgs.with3plusMembers} / ${ACQUISITION_GOALS.orgs}`}
+          hint={t('goalOrgsHint', { total: orgs.total, created: orgs.created30d })}
+          highlight
+        />
+        <KpiCard
+          label={t('activation48h')}
+          value={pct(activation48h.activated, activation48h.total)}
+          hint={t('activationHint48h', { count: activation48h.activated, total: activation48h.total })}
+        />
+        <KpiCard
+          label={t('topChannel')}
+          value={sourceRows[0] ? sourceRows[0].source : '—'}
+          hint={sourceRows[0] ? t('topChannelHint', { count: sourceRows[0].signups }) : undefined}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <ChartCard title={t('goalChart')} note={t('goalChartNote', { goal: ACQUISITION_GOALS.users })}>
+          {signups && <GoalChart data={signups.points} goal={ACQUISITION_GOALS.users} />}
+        </ChartCard>
+        <ChartCard title={t('signupsBySource')} note={t('signupsBySourceNote')}>
+          {stackPoints.length > 0 ? (
+            <SourceStackChart data={stackPoints} sources={sources} />
+          ) : (
+            <EmptyChart>{t('noSignup')}</EmptyChart>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Tableau « inscriptions par canal » — trié par volume décroissant */}
+      <div className="card p-4 md:p-6 mb-8">
+        <h2 className="font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('channels')}</h2>
+        <p className="text-xs mb-3" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('channelsNote')}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr style={{ color: 'rgb(var(--color-text-muted))' }}>
+                <th className="text-left font-medium py-2 pr-4">{t('channel')}</th>
+                <th className="text-right font-medium py-2 px-4">{t('signupsCol')}</th>
+                <th className="text-right font-medium py-2 px-4">{t('shareCol')}</th>
+                <th className="text-right font-medium py-2 px-4">{t('activation48hCol')}</th>
+                <th className="text-right font-medium py-2 pl-4">{t('retentionD7Col')}</th>
+              </tr>
+            </thead>
+            <tbody style={{ color: 'rgb(var(--color-text-primary))' }}>
+              {sourceRows.map((row) => (
+                <tr key={row.source} style={{ borderTop: '1px solid rgb(var(--color-border))' }}>
+                  <td className="py-2 pr-4 font-medium">{row.source}</td>
+                  <td className="py-2 px-4 text-right tabular-nums">{row.signups}</td>
+                  <td className="py-2 px-4 text-right tabular-nums" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                    {pct(row.signups, totals.users)}
+                  </td>
+                  <td className="py-2 px-4 text-right tabular-nums">
+                    {row.activation ? pct(row.activation.activated, row.activation.total) : '—'}
+                  </td>
+                  <td className="py-2 pl-4 text-right tabular-nums">
+                    {row.retention && row.retention.signups > 0
+                      ? pct(row.retention.retained, row.retention.signups)
+                      : '—'}
+                  </td>
+                </tr>
+              ))}
+              {sourceRows.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    {t('noSignup')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Croissance */}

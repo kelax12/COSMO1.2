@@ -63,6 +63,36 @@ export interface AdminUsageStats {
   sharedTasks: number;
 }
 
+/** Point d'une série quotidienne ventilée par canal d'acquisition (mig. 099). */
+export interface SourceDailyPoint {
+  day: string;
+  /** Canal normalisé (`?ref=`), ou 'unknown' si l'inscription n'est pas attribuée. */
+  source: string;
+  count: number;
+}
+
+/** Activation 48 h : globale + ventilée par canal (mig. 099). */
+export interface AdminActivation48h extends AdminActivation {
+  bySource: Record<string, AdminActivation>;
+}
+
+/** Rétention J+7 d'un canal, sur les seules cohortes dont la fenêtre est écoulée. */
+export interface SourceRetention {
+  signups: number;
+  retained: number;
+}
+
+/**
+ * Organisations. L'objectif « 10 Entreprise » se compte en `with3plusMembers` :
+ * une org à 1 membre est un compte perso avec un chapeau.
+ */
+export interface AdminOrgs {
+  total: number;
+  with3plusMembers: number;
+  created30d: number;
+  with3plusMembers30d: number;
+}
+
 export interface AdminStats {
   generatedAt: string;
   totals: AdminTotals;
@@ -77,4 +107,10 @@ export interface AdminStats {
   collaboration: AdminCollaboration;
   retentionJ7: RetentionCohort[];
   stickiness: AdminStickiness;
+  // ── v3 (mig. 099) — pack acquisition ───────────────────────────────
+  signupsBySource: Record<string, number>;
+  signupsBySourceByDay: SourceDailyPoint[];
+  activation48h: AdminActivation48h;
+  retentionD7BySource: Record<string, SourceRetention>;
+  orgs: AdminOrgs;
 }
