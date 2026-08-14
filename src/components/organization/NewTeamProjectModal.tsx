@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type { CreateTeamProjectInput } from '@/modules/team-projects';
-import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META, projectColor } from './team-projects.helpers';
-import { PROJECT_TEMPLATES, type ProjectTemplate } from './project-templates';
+import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
 import { useT } from '@/i18n/useT';
 
@@ -47,27 +46,6 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
   const [composerAssignees, setComposerAssignees] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [appliedTemplate, setAppliedTemplate] = useState<string | null>(null);
-
-  /**
-   * Applique un gabarit. On n'écrase le nom que s'il est vide ou s'il provient
-   * d'un gabarit précédent : quelqu'un qui a déjà tapé son propre titre puis
-   * clique sur un gabarit pour récupérer ses tâches ne doit pas le perdre.
-   */
-  const applyTemplate = (tpl: ProjectTemplate) => {
-    const nameIsFree = name.trim() === '' || appliedTemplate !== null;
-    if (nameIsFree) setName(t(tpl.labelKey));
-    setColor(tpl.color);
-    setTasks(tpl.taskKeys.map((key) => ({ name: t(key), assigneeIds: [] })));
-    setAppliedTemplate(tpl.id);
-    setError(null);
-  };
-
-  const clearTemplate = () => {
-    setName('');
-    setTasks([]);
-    setAppliedTemplate(null);
-  };
 
   const addTask = () => {
     const n = composerName.trim();
@@ -139,45 +117,6 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
               {error}
             </div>
           )}
-
-          {/* Gabarits — un projet vide part rarement de rien. Applique nom,
-              couleur et tâches initiales ; tout reste modifiable ensuite. */}
-          <div>
-            <span className={labelClass} style={labelStyle}>{t('templates.pickLabel')}</span>
-            <div className="flex flex-wrap gap-1.5">
-              {PROJECT_TEMPLATES.map((tpl) => {
-                const active = appliedTemplate === tpl.id;
-                return (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    onClick={() => applyTemplate(tpl)}
-                    aria-pressed={active}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                      active
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
-                        : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                    }`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${projectColor(tpl.color).dot}`}
-                      aria-hidden="true"
-                    />
-                    {t(tpl.labelKey)}
-                  </button>
-                );
-              })}
-              {appliedTemplate && (
-                <button
-                  type="button"
-                  onClick={clearTemplate}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
-                >
-                  <X size={12} aria-hidden="true" /> {t('templates.clear')}
-                </button>
-              )}
-            </div>
-          </div>
 
           {/* Nom */}
           <div>
