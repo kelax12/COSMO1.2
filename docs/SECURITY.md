@@ -1,6 +1,7 @@
 # Sécurité — COSMO
 
-> Source de vérité historique des failles : [`../faille.md`](../faille.md) (failles à chaud) + [`../faille-archive.md`](../faille-archive.md) (failles closes archivées).
+> Sécurité : [`../faille.md`](../faille.md) = findings **ouverts** + priorités (source de vérité) ·
+> [`archive/faille-historique.md`](./archive/faille-historique.md) = historique des corrections (archive, non maintenue).
 > Ce document = règles permanentes à respecter. Les codes `(V1)`, `(N9)`, `(M-6)`… réfèrent aux fiches `faille.md`.
 
 ## Règles de sécurité (non négociables)

@@ -1,6 +1,9 @@
 # Mobile-first — patterns et conventions
 
-> **Avant de toucher une page mobile** : consulter [`../a-faire.md`](../a-faire.md) — bugs/régressions mobile non résolus (notamment le panneau de couleur swipe TaskCard).
+> **Aucun bug mobile ouvert connu au 2026-08-14.** L'ancien fichier `a-faire.md` listait 5 points :
+> 4 sont corrigés, le 5ᵉ est une limitation plateforme (pas de `navigator.vibrate()` sur Safari iOS —
+> le code garde un `if (navigator.vibrate)`, no-op propre sur iOS). Les leçons de test tactile qui en
+> sont issues vivent désormais dans [`TESTING.md`](./TESTING.md) (§Playwright E2E).
 
 ## Breakpoint et hook
 

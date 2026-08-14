@@ -3,7 +3,7 @@
 Permet à Claude Code de lire tes tâches / habitudes / agenda / OKR et d'écrire
 un sous-ensemble limité, depuis ce dépôt, sur ce PC.
 
-Conception : [`docs/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./superpowers/specs/2026-07-27-cosmo-cli-agent-design.md)
+Conception (archive) : [`docs/archive/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./archive/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md)
 
 ## Mise en route
 
