@@ -23,16 +23,33 @@ export const PREMIUM_ENFORCED = false;
 // La devise reste l'EUR dans toutes les langues : la facturation est en euros,
 // il n'y a aucune conversion. Seule la PRÉSENTATION change.
 export const PREMIUM_MONTHLY_EUR = 3.5;
+// ⚠️ Anciens paliers (2026-07-10, 2 tranches) — remplacés par
+// ENTERPRISE_PRICING_TIERS ci-dessous (2026-08-14, 4 tranches). Gardés
+// pour ne rien casser tant qu'ils sont référencés (bannière `org.freemiumInfo`
+// fr/en, texte figé) ; à retirer quand cette bannière sera réécrite sur les
+// nouveaux paliers.
 export const ENTERPRISE_TIER_1_EUR = 20;
 export const ENTERPRISE_TIER_2_EUR = 100;
 
-// ─── Facturation entreprise (v2 — dormante, Stripe non finalisé) ─────
+// ─── Facturation entreprise (v3 — dormante, Stripe non finalisé) ─────
 //
-// Pricing décidé 2026-07-10 : FORFAIT PAR ENTREPRISE — gratuit < 5
-// collaborateurs, 20 €/mois de 5 à 50, 100 €/mois au-delà. Pas d'essai
-// (le palier gratuit EST l'essai). Non-paiement = blocage des AJOUTS de
-// membres uniquement (jamais de prise d'otage des données).
+// Pricing décidé 2026-08-14 (demande Axel) : FORFAIT PAR ENTREPRISE selon le
+// nombre de membres, palier gratuit inclus (le palier gratuit EST l'essai).
+// Remplace le pricing v2 (2 tranches, 2026-07-10) ci-dessus. `EnterprisePaywall`
+// (src/pages/EnterprisePaywallPage.tsx) affiche ces paliers ; le composant
+// existe mais n'est câblé dans AUCUNE route ni AUCUN lien de nav — à faire
+// lors de l'activation réelle du paywall entreprise (avec le blocage serveur
+// et le passage de ENTERPRISE_BILLING_ENFORCED à true).
 //
+// `maxMembers: null` = tranche « et plus », pas de plafond.
+export const ENTERPRISE_PRICING_TIERS = [
+  { minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
+  { minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
+  { minMembers: 10, maxMembers: 20, priceEurPerMonth: 50 },
+  { minMembers: 20, maxMembers: 50, priceEurPerMonth: 100 },
+  { minMembers: 50, maxMembers: null, priceEurPerMonth: 200 },
+] as const;
+
 //  false → aucune limite appliquée ; la bannière informative s'affiche à
 //          partir de ORG_FREE_SEATS membres (préparation du marché).
 //  true  → le client masque/désactive les CTA d'ajout au-delà du quota ;
