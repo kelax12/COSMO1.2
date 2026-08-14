@@ -20,7 +20,7 @@ confrontés au code à cette date).
 | [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes — **+ dette UI/UX mesurée le 2026-08-14** |
 | [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gate axe-core |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge — **audit remesuré le 2026-08-14**, avec runbook reproductible |

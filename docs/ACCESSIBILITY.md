@@ -17,6 +17,11 @@ L'audit d'origine listait A-1 → A-11. Vérifié dans le code le **2026-08-14**
 | A-10 | `CookieBanner` hors landmark | ✅ Corrigé — `motion.aside` + `aria-label` |
 | A-11 | `heading-order` OKR (`h3` après `h1`) | ❓ **Non prouvé** — marginal, déjà absent des scans suivants |
 
+**Cibles tactiles — mesuré le 2026-08-14** (viewport 375 px, mode démo) : 18 cibles sous 44×44 sur
+`/tasks`, 22 sur `/entreprise`. Les plus petites sont des boutons icône seule à **24×24**
+(« Masquer cette information »), 28×28 et 36×36 ; les chips de filtre sont à 40 px de haut.
+Détail et priorisation : [`UI-PATTERNS.md`](./UI-PATTERNS.md) §Dette UI/UX ouverte.
+
 Restent ouverts par ailleurs : audit dédié `/agenda` (FullCalendar, pattern ARIA non trivial),
 audit dédié modals (focus trap, ESC, `aria-modal`), audit clavier complet, VoiceOver iOS sur vrai device.
 Objectif de durcissement : passer la gate de `critical` à `serious` une fois A-8 tranché.

@@ -1,5 +1,111 @@
 # Patterns UI — COSMO
 
+## Dette UI/UX ouverte — audit du 2026-08-14
+
+**Méthode** : mesures DOM/CSS sur l'app en mode démo (`npm run dev`), viewports 375×812 et
+1280×720, 8 routes protégées. Les captures d'écran n'étaient pas disponibles : cet audit porte
+donc sur ce qui est **mesurable** (géométrie, troncatures, tailles de cible, z-index, tokens),
+pas sur l'esthétique ni l'équilibre visuel. Il remplace les findings de
+[`archive/AUDIT-UI-2026-07-14.md`](./archive/AUDIT-UI-2026-07-14.md), dont **7 des 16 points sont
+corrigés** (FAB masquant le CTA Paramètres, chaîne morte OKRModal, `AddCategoryButton` extrait,
+placeholder quick-add mobile, libellé « 365 jours », marges `mb-1.5`, `data-tutorial-id` du FAB).
+
+### 🟠 1. Le titre de page a quatre tailles différentes sur mobile
+
+Mesuré, viewport 375 px :
+
+| Page | Taille du `h1` | Implémentation |
+|---|---|---|
+| `/tasks` | **28 px** | `MobileHeader` (échelle fermée, `text-display`) |
+| `/habits`, `/okr`, `/statistics`, `/settings` | 24 px | `PageHeading variant="standard"` |
+| `/dashboard` | 22 px | `PageHeading variant="hero"` (`text-title`) |
+| `/entreprise` | **18 px** | `PageHeading variant="compact"` |
+
+`src/components/mobile/MobileHeader.tsx` a été créé **précisément pour supprimer cette
+incohérence** — son propre commentaire cite « trois échelles pour la même fonction ». Il n'a
+qu'**un seul consommateur sur sept pages** (`TasksHeader`). La migration s'est arrêtée après la
+page vitrine, donc le composant a ajouté une quatrième échelle au lieu d'en retirer trois.
+
+**Correction** : migrer les 6 pages restantes vers `MobileHeader`, puis retirer les variantes
+`hero` / `compact` de `PageHeading` (qui redevient le titre desktop). ~2 h.
+
+### 🟠 2. Les titres de tâches sont tronqués jusqu'à 44 % sur mobile
+
+Sur `/tasks` en 375 px : **12 titres tronqués**, le pire à **124 px pour 220 px nécessaires**
+(« Préparer présentation Q1 2026 »). Les cartes accordent 124–152 px au titre, soit ~40 % de la
+largeur d'écran. L'ellipse est un pattern légitime, mais à ce ratio l'utilisateur ne peut plus
+distinguer deux tâches au libellé proche — la liste de tâches est l'écran principal du produit.
+
+Même symptôme sur `/entreprise` (6 titres, jusqu'à 32 %) et `/okr`.
+
+**Correction** : arbitrer la répartition de la largeur dans la carte mobile (badges de priorité et
+métadonnées avant le titre), ou passer le titre sur deux lignes (`line-clamp-2`). ~1 h.
+
+### 🟡 3. Tableau Habitudes — colonne partielle : le correctif précédent ne pouvait pas marcher
+
+Mesuré : `scrollLeft = 233,6 px`, la colonne « dim. 9 » est visible sur **30 px de 52**.
+
+L'audit du 2026-07-14 recommandait du scroll-snap. **Il a été appliqué** (`snap-x snap-proximity
+scroll-pl-[140px]` sur le conteneur, `snap-start` sur les `<th>`) et le symptôme persiste, parce
+que la cause n'est pas le snap : `HabitTable.tsx:30` force `scrollLeft = scrollWidth` au montage
+(pour afficher aujourd'hui), ce qui atterrit sur la **limite de scroll** — une position que le
+snap ne peut pas corriger. Et la largeur disponible (334 − 143 de colonne collante = 191 px) n'est
+pas un multiple de 52 px : il reste 3,67 colonnes.
+
+**Correction** : rendre la largeur des colonnes de jour élastique pour qu'un nombre entier tienne
+dans l'espace disponible, plutôt que `min-w-[40px] md:min-w-[50px]` fixe. Le snap devient alors
+utile au lieu d'être décoratif.
+
+### 🟡 4. Huit valeurs de z-index hors barème
+
+L'[échelle documentée plus bas](#échelle-z-index-audit-2026-07) définit 7 paliers. Le code en
+utilise **21**. Les 8 valeurs hors barème, chacune dans un seul composant :
+
+| Valeur | Composant |
+|---|---|
+| `z-[90]` | `ColorSettingsModal.tsx` |
+| `z-[110]` | `CategoryManager.tsx` |
+| `z-[150]` | `WeeklyCheckinModal.tsx` |
+| `z-[190]` | `DemoBridgePrompt.tsx` |
+| `z-[250]` | `ShareInviteClaimer.tsx` |
+| `z-[300]` | `AdModal.tsx` |
+| `z-[500]` | `PageTutorial.tsx` |
+| `z-[10000]` | `AssigneesPicker.tsx`, `RemoveFriendConfirm.tsx` |
+
+Aucun bug d'empilement constaté aujourd'hui, mais la table a été publiée **et n'a pas tenu** :
+chaque nouveau composant a repris l'habitude de choisir sa valeur. Une échelle qui n'est pas
+vérifiée par un lint ne tient pas — même leçon que les invariants RLS et `check:rls`.
+
+**Correction** : mapper ces 8 composants sur les paliers existants, puis ajouter une règle ESLint
+`no-restricted-syntax` sur `z-[…]` hors liste. ~1 h 30.
+
+### 🟡 5. Résidus de l'audit précédent
+
+- **`Bricolage Grotesque` en dur** dans `SettingsPage.tsx:893` (`style={{ fontFamily }}`). Le
+  `<link>` Google Fonts a bien été retiré — la police n'est donc **plus chargée** et ce `h3`
+  retombe sur la police système. Une déclaration morte qui donne un rendu différent des autres
+  titres. Supprimer la ligne. 5 min.
+- **`hover:text-blue-700` sans variante dark** : `ColorSettingsModal.tsx:163` et
+  `EventModalFormDesktop.tsx:342`. En thème sombre, le contraste **baisse** au survol.
+  Ajouter `dark:hover:text-blue-300`. 10 min.
+
+### 🟡 6. Cibles tactiles sous 44 px
+
+18 sur `/tasks`, 22 sur `/entreprise`. Les plus petites sont des boutons icône seule :
+24×24 (« Masquer cette information »), 28×28 (« Modifier le profil »), 36×36 (notifications).
+La règle du projet est ≥ 44×44 ([`ACCESSIBILITY.md`](./ACCESSIBILITY.md)). Les chips de filtre
+sont à 40 px de haut — juste sous la barre.
+
+### ✅ Vérifié sain (ne pas re-suspecter)
+
+- **Aucun débordement horizontal** sur les 8 routes, en 375 px comme en 1280 px.
+- **Réactivité du thème** : les seules couleurs Tailwind en dur restantes (`bg-white`,
+  `text-slate-900`) sont sur les pages marketing publiques, sombres par construction — c'est
+  intentionnel. Le correctif de tokens du 2026-07-23 tient dans l'app.
+- **Page Statistiques mobile** : zéro troncature.
+- **FAB** : ne masque plus rien ; `SettingsPage` a bien le padding bas réservé, et l'identifiant
+  de tutoriel est désormais dédié (`global-quick-add-fab`).
+
 ## Listes — modèle étendu (types, smart, virtuelle)
 
 `src/modules/lists/types.ts` — `TaskList` étendu avec 4 champs optionnels (rétro-compatibles) :
