@@ -69,5 +69,22 @@
     "reconnect": "Please sign in again.",
     "alreadySubscribed": "You already have an active subscription.",
     "paymentError": "Payment error — please try again."
-  }
+  },
+  "recapCta": "Recap",
+  "recapSheetTitle": "Weekly recap",
+  "recapSheetSubtitle": "A ready-to-share image. No task or habit name appears on it.",
+  "recapTitle": "My week",
+  "recapTasks": "tasks completed",
+  "recapStreak": "current streak",
+  "recapStreakUnit": "days",
+  "recapTime": "time invested",
+  "recapHabits": "habits tracked",
+  "recapShare": "Share",
+  "recapDownload": "Download",
+  "recapClose": "Close",
+  "recapRendering": "Rendering the image…",
+  "recapEmpty": "Image unavailable",
+  "recapAlt": "Weekly recap: habit heatmap, tasks completed, current streak",
+  "recapShareText": "My week on Cosmo.",
+  "recapImageCta": "Try it, no sign-up"
 }
