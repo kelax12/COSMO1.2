@@ -414,6 +414,13 @@ supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
 policies RLS restent en place (défense en profondeur) ; l'isolation est prouvée par
 `e2e/rls/get-my-tasks.test.ts`. Exception légitime : `getById` (accès par clé primaire).
 
+> 🔴 **Les tables entreprise ont le même défaut, non corrigé.** `team_tasks` et `team_projects`
+> sont filtrées par `USING (can_access_team_project(...))` : un prédicat-fonction sur une colonne
+> **ne peut pas utiliser d'index**, donc chaque lecture scanne toute la table et évalue une CTE
+> récursive par ligne. Mesuré en prod le 2026-08-14 : **≈ 60× le coût par ligne** du prédicat de
+> `tasks`. Ne pas ajouter de nouvelle table entreprise sur ce modèle — exprimer l'appartenance en
+> **jointure indexable** dans une RPC. Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+
 ## 🔁 Récurrence des tâches — serveur uniquement
 
 La génération de l'occurrence suivante appartient à `toggle_task_complete_v2` (mig. 086), **pas
