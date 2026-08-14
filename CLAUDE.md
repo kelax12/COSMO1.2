@@ -22,6 +22,7 @@ Guide de travail dans ce dépôt. **Vérifié dans le code le 2026-08-14.**
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
 | [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
 | [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle |
+| [`docs/SEO.md`](./docs/SEO.md) | Prérendu, sitemap, `robots.txt`, hreflang, ouvrir une langue à l'indexation |
 | [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) | a11y WCAG/EAA, aria, contraste |
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
@@ -520,6 +521,11 @@ t('project.name')                // clé plate dans le namespace
 - Le préfixe de locale est porté par le `basename` du routeur, **figé au montage** — changer de
   langue implique un rechargement complet (cf. `src/i18n/bootstrap.ts`).
 - Les dates passent par `src/i18n/format.ts` (locale date-fns alignée sur la locale active).
+- ⚠️ **« Servie » ≠ « indexable »** : `SUPPORTED_LOCALES` (`src/i18n/locale.ts`) ouvre une langue
+  aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. `en` est
+  servie mais **pas indexable**, parce que le corps des pages est encore en français. Ne jamais
+  ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le contenu — procédure complète
+  dans [`docs/SEO.md`](./docs/SEO.md).
 - ❌ **Ne jamais identifier une erreur par son message en français** — il est traduit.
 - ❌ Ne jamais concaténer des fragments traduits : une clé = une phrase complète.
 
