@@ -24,6 +24,8 @@ Guide de travail dans ce dépôt. **Vérifié dans le code le 2026-08-14.**
 | [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
 | [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle |
 | [`docs/SEO.md`](./docs/SEO.md) | Prérendu, sitemap, `robots.txt`, hreflang, ouvrir une langue à l'indexation |
+| [`docs/I18N.md`](./docs/I18N.md) | Qualité des traductions, périmètre réellement bilingue |
+| [`docs/RGPD.md`](./docs/RGPD.md) | Données personnelles, effacement, rétention, conformité B2B |
 | [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) | a11y WCAG/EAA, aria, contraste |
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |

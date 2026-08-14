@@ -15,6 +15,46 @@
 > **Suite unitaire au 2026-08-14 : 1362 tests / 131 fichiers, tous verts** (`npm test`, mesuré en local, ~7 min).
 > Un échec est donc une vraie régression, pas un test pré-existant cassé.
 >
+> ## Audit de couverture — 2026-08-14
+>
+> **La gate est rouge par construction, pas par régression.** Les seuils globaux se donnent une
+> règle explicite dans `vitest.config.ts` : « posé **sous** le réel mesuré […] à remonter au fil
+> des phases (**jamais au-dessus du mesuré courant**) ». Deux d'entre eux la violent :
+>
+> | Seuil global | Valeur exigée | Réel mesuré | Verdict |
+> |---|---|---|---|
+> | `lines` | 10 % | **27,0 %** | ✅ conforme à la règle |
+> | `statements` | 10 % | **26,4 %** | ✅ conforme |
+> | `functions` | **45 %** | **21,4 %** | ❌ posé 2× au-dessus du réel |
+> | `branches` | **60 %** | **21,6 %** | ❌ posé 3× au-dessus du réel |
+>
+> Les seuils par fichier, eux, sont proches de leur cible — sauf un décrochage net :
+>
+> | Fichier | Exigé | Mesuré |
+> |---|---|---|
+> | `src/modules/**/mappers.ts` | 95 % statements | 94 % (à 1 point) |
+> | `src/modules/**/supabase.repository.ts` | 65 % statements | 58,7 % |
+> | `src/lib/avatar-upload.ts` | **100 %** lines | **61 %** (fonctions : 40 %) |
+> | `src/lib/hooks/useDebounce.ts` | 80 % branches | 41 % |
+> | `src/modules/tasks/hooks.derived.ts` | 85 % branches | 56,5 % |
+>
+> **Diagnostic** : la couverture réelle (~26 %) n'a pas chuté ; ce sont `functions` et `branches`
+> qui ont été fixés à un niveau ambitionné plutôt que mesuré, et `avatar-upload.ts` qui a perdu
+> ses tests après la pose d'un seuil à 100 %.
+>
+> **Deux façons de repasser au vert, et elles ne se valent pas** :
+> 1. **Aligner les deux seuils globaux sur le réel** (functions 20, branches 20) et les remonter
+>    par paliers. Rétablit la CI en 5 minutes et respecte enfin la règle que le fichier énonce.
+> 2. Écrire les tests manquants. C'est le bon objectif de fond, mais passer de 21 % à 45 % de
+>    fonctions couvertes n'est pas un correctif de CI, c'est un chantier.
+>
+> Faire (1) maintenant et (2) ensuite. Une gate rouge en permanence ne protège plus de rien : elle
+> apprend à ignorer le rouge.
+>
+> **Priorité de test, si on écrit des tests** : les repositories Supabase (frontière de sécurité
+> anti-mass-assignment, à 58,7 %) et `avatar-upload.ts` (validation MIME + redimensionnement, qui
+> neutralise les SVG piégés — à 40 % de fonctions couvertes).
+
 > 🔴 **`npm run test:coverage` échoue (exit 1) sur `main`** — mesuré le 2026-08-14.
 > Les 1362 tests passent ; ce sont les **seuils** qui ne sont pas atteints : 13 erreurs,
 > dont 2 globales (functions 21,43 % < 45 %, branches 21,62 % < 60 %) et 11 par fichier
