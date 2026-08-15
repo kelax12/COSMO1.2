@@ -209,6 +209,42 @@ const ROUTES = [
     },
   },
   {
+    // Track entreprise de la landing. Il a son propre chemin — donc son propre
+    // titre, sa propre description et son propre corps indexable — parce que
+    // « Cosmo pour une organisation » et « Cosmo pour moi » ne répondent pas à
+    // la même requête. Le contenu ci-dessous reprend les arguments du track
+    // (src/pages/landing/entreprise/) : à retoucher si la copie change.
+    path: '/entreprise-presentation',
+    meta: fromCatalog('enterprisePresentation'),
+    extraLd: (locale) => [
+      {
+        obj: breadcrumb('Cosmo Entreprise', '/entreprise-presentation', locale),
+        id: 'entreprise-breadcrumb',
+      },
+    ],
+    content: {
+      fr: `<h1>Cosmo Entreprise — votre organigramme est votre moteur d'exécution</h1>
+        <p>Cosmo Entreprise fait de votre pyramide managériale la structure vivante de vos projets, de vos OKR et de vos statistiques d'équipe. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà : ce n'est pas un outil de plus à faire adopter.</p>
+
+        <h2>Le périmètre découle de la hiérarchie</h2>
+        <p>Chaque membre a un manager. De ce seul lien découlent les accès : un manager voit son sous-arbre complet — ses équipes, leurs projets, leurs OKR, leurs statistiques — sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
+
+        <h2>Six onglets de pilotage</h2>
+        <p><strong>Aperçu</strong> : l'activité de vos équipes, la charge du moment et ce qui vient de bouger. <strong>Organigramme</strong> : la hiérarchie complète, éditable — rattacher un membre, réassigner un manager, transférer la propriété. <strong>Projets</strong> : kanban ou frise chronologique, avec tâches d'équipe, sous-tâches, labels, commentaires et historique. <strong>OKR</strong> : objectifs d'équipe, résultats clés chiffrés et catégories propres à votre organisation. <strong>Statistiques</strong> : vélocité, tendance et temps investi, sur toute l'organisation pour une direction et sur son périmètre pour un manager. <strong>Membres</strong> : annuaire, fiches, agenda et charge de chacun, avec invitation par code ou par lien.</p>
+
+        <h2>Des objectifs qui descendent, des preuves qui remontent</h2>
+        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup — c'est ce qui rend la courbe du tableau de bord opposable en comité.</p>
+
+        <h2>Sécurité, confidentialité et réversibilité</h2>
+        <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
+
+        <h2>Tarifs</h2>
+        <p>Un forfait par organisation, pas par siège : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
+
+        <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
+    },
+  },
+  {
     path: '/blog',
     meta: fromCatalog('blog'),
     // Les ARTICLES restent français : le schéma Blog reste donc en fr-FR quelle
@@ -396,6 +432,8 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
 
         <h2>Combien ça coûte ?</h2>
         <p>Les fonctionnalités principales — tâches, habitudes, agenda, OKR, statistiques, partage — sont gratuites, sans carte bancaire ni essai limité dans le temps. Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre que vous n'y accède. En mode démo, rien ne quitte votre navigateur.</p>
+        <h2>Et pour une organisation ?</h2>
+        <p>Cosmo existe aussi en mode entreprise : votre pyramide managériale y structure les projets, les OKR et les statistiques d'équipe, et le périmètre de chacun découle de la hiérarchie réelle plutôt que de partages faits à la main. Chaque collaborateur conserve le Cosmo personnel décrit ci-dessus. C'est gratuit jusqu'à 5 membres — <a href="/entreprise-presentation">découvrir Cosmo Entreprise</a>.</p>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a> · <a href="/blog">Le blog Cosmo</a></p>`;
 
 // Maillage interne statique commun, ajouté au bas de #seo-fallback sur TOUTES
@@ -411,6 +449,7 @@ const staticFooterNav = (locale) => {
   const link = (path, label) => `<a href="${localizePath(path, locale)}">${label}</a>`;
   return `<p>${[
     link('/guide', "Guide d'utilisation"),
+    link('/entreprise-presentation', 'Cosmo Entreprise'),
     link('/blog', 'Blog'),
     link('/pour-freelances', 'Pour les freelances'),
     link('/pour-etudiants', 'Pour les étudiants'),
@@ -572,6 +611,14 @@ try {
   };
 
   const generated =
+    // Priorité 0.9 : c'est la page qui porte l'offre payante, juste sous la home.
+    sitemapGroup(
+      '/entreprise-presentation',
+      localesOf('/entreprise-presentation'),
+      TODAY,
+      'monthly',
+      '0.9'
+    ) +
     sitemapGroup('/a-propos', localesOf('/a-propos'), TODAY, 'yearly', '0.5') +
     sitemapGroup('/blog', localesOf('/blog'), TODAY, 'weekly', '0.8') +
     ARTICLES.map((a) =>

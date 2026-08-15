@@ -9,6 +9,7 @@ import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { isTimeoutError } from '@/lib/withTimeout';
 import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
+
 import { getLastVisitedPage } from '@/modules/ui-states';
 import { useSharedTasksRealtime } from '@/modules/tasks/useSharedTasksRealtime';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
@@ -181,6 +182,15 @@ const RequireModule: React.FC<{ module: ModuleKey; children: React.ReactNode }> 
   return <>{children}</>;
 };
 
+/**
+ * Racine publique — la landing, servie sur deux chemins.
+ *
+ * `/` sert le parcours perso, `/entreprise-presentation` le parcours
+ * entreprise. Les deux rendent le MÊME composant à la même profondeur : React
+ * réconcilie par type, donc passer de l'un à l'autre ne remonte pas la page et
+ * l'état de la landing (parcours affiché, transition en cours) survit à la
+ * navigation. Un utilisateur connecté est redirigé dans l'app, dans les deux cas.
+ */
 const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return null;
@@ -236,6 +246,10 @@ const AppRoutes = () => {
         relatifs ; seul le SLUG change selon la langue servie. Conséquence
         voulue : `/en/about` répond, `/en/a-propos` tombe en 404 — une seule URL
         canonique par langue et par page. */}
+    <Route
+      path={routeSlug('enterprisePresentation', activeLocale)}
+      element={<RootRoute />}
+    />
     <Route path={routeSlug('about', activeLocale)} element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
     <Route path={routeSlug('freelancers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
     <Route path={routeSlug('students', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
