@@ -116,6 +116,14 @@ prouve rien dans un sens ou dans l'autre.
    registres. Le fichier source ne contient que les pages sans registre.
 5. Un `<h1>` et un seul. Un `alt` sur chaque image.
 
+> **Cas particulier : `/entreprise-presentation`** (2026-08-15). Cette route rend le **même
+> composant que `/`** (`LandingPage`), avec le parcours entreprise au lieu du parcours perso.
+> Elle a donc son propre `<h1>`, ses propres méta et son propre bloc `content` dans
+> `prerender.mjs` — 492 mots indexables — parce que « Cosmo pour une organisation » et « Cosmo
+> pour moi » ne répondent pas à la même requête. Priorité sitemap 0.9, juste sous la home.
+> ⚠️ Le corps prérendu reprend les arguments du track : **le retoucher quand la copie de
+> `src/pages/landing/entreprise/` change**, sinon le prérendu ment sur ce que la page affiche.
+
 ### Ouvrir une langue à l'indexation
 
 Dans cet ordre, sinon on publie du duplicate content :

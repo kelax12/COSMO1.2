@@ -19,6 +19,11 @@ const LandingFooter: React.FC = () => {
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400 flex-wrap justify-center md:justify-end">
               <Link to="/guide" className="hover:text-white transition-colors">{t('footer.guide')}</Link>
+              {/* La page qui porte l'offre payante : elle mérite un lien
+                  permanent, y compris depuis le parcours perso. */}
+              <Link to="/entreprise-presentation" className="text-cyan-300 hover:text-cyan-200 transition-colors">
+                {t('footer.enterprise')}
+              </Link>
               <Link to="/blog" className="hover:text-white transition-colors">{t('footer.blog')}</Link>
               <Link to="/pour-freelances" className="hover:text-white transition-colors">{t('footer.freelancers')}</Link>
               <Link to="/pour-etudiants" className="hover:text-white transition-colors">{t('footer.students')}</Link>

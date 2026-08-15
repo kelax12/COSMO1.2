@@ -5,7 +5,8 @@
     "startFree": "Commencer gratuitement",
     "solutions": "Solutions",
     "guide": "Guide",
-    "login": "Se connecter"
+    "login": "Se connecter",
+    "faq": "FAQ"
   },
   "hero": {
     "line1": "Toute votre productivité,",
@@ -189,7 +190,8 @@
     "login": "Connexion",
     "legalNotice": "Mentions légales",
     "privacy": "Confidentialité",
-    "terms": "CGU"
+    "terms": "CGU",
+    "enterprise": "Cosmo Entreprise"
   },
   "about": {
     "metaTitle": "À propos de Cosmo — qui sommes-nous ?",
@@ -234,5 +236,185 @@
     "title": "Le blog Cosmo",
     "readNext": "À lire ensuite",
     "tryFree": "Essayez Cosmo gratuitement"
+  },
+  "enterprise": {
+    "gateway": {
+      "eyebrow": "Un produit, deux terrains",
+      "title": "Vous venez pour vous, ou pour votre organisation ?",
+      "hint": "Vous pourrez basculer à tout moment depuis l'en-tête.",
+      "enter": "Entrer",
+      "perso": {
+        "kicker": "Cosmo Perso",
+        "title": "Pour moi",
+        "desc": "Tâches, agenda, habitudes et OKR personnels. Gratuit, sans installation, prêt en un clic.",
+        "f1": "Time-blocking et récurrences",
+        "f2": "Habitudes et séries",
+        "f3": "Partage de tâches entre proches",
+        "aria": "Afficher la présentation du mode personnel"
+      },
+      "entreprise": {
+        "kicker": "Cosmo Entreprise",
+        "title": "Pour mon organisation",
+        "desc": "Votre pyramide managériale devient la structure vivante de vos projets, de vos OKR et de vos statistiques.",
+        "f1": "Organigramme et périmètres",
+        "f2": "Projets, OKR et charge d'équipe",
+        "f3": "Statistiques par périmètre",
+        "aria": "Afficher la présentation du mode entreprise"
+      }
+    },
+    "switcher": {
+      "label": "Choisir la présentation à afficher",
+      "perso": "Perso",
+      "entreprise": "Entreprise"
+    },
+    "nav": {
+      "pyramid": "Organigramme",
+      "cockpit": "Cockpit",
+      "okr": "OKR",
+      "security": "Sécurité",
+      "pricing": "Tarifs"
+    },
+    "hero": {
+      "badge": "Mode entreprise — disponible aujourd'hui",
+      "line1": "Votre organigramme",
+      "line2": "n'est pas un slide.",
+      "line3": "C'est votre moteur d'exécution.",
+      "subtitle": "Cosmo Entreprise fait de votre pyramide managériale la structure vivante de vos projets, de vos OKR et de vos statistiques. Et chaque collaborateur garde le Cosmo personnel qu'il utilise déjà.",
+      "cta": "Ouvrir la démo entreprise",
+      "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
+      "ctaSecondary": "Voir les tarifs",
+      "reassurance": "Jusqu'à 5 membres gratuitement · sans carte bancaire · réversible à tout moment",
+      "scroll": "Dérouler"
+    },
+    "proof": {
+      "m1": "membres gratuits, sans carte",
+      "m2": "onglets de pilotage, un écran",
+      "m3": "nouvel outil à faire adopter",
+      "m4": "des accès dérivés de l'organigramme"
+    },
+    "problem": {
+      "eyebrow": "Le constat",
+      "title": "Trois raisons pour lesquelles vos outils d'équipe ne tiennent pas.",
+      "p1t": "Ils sont plats",
+      "p1d": "Un tableau partagé ne sait pas qui manage qui. Alors on rejoue la hiérarchie à la main, en droits d'accès — et elle est fausse dès la première réorganisation.",
+      "p2t": "Ils arrivent en trop",
+      "p2d": "Le énième espace collaboratif ne sera pas ouvert le lundi matin. L'adoption ne se décrète pas en réunion de lancement.",
+      "p3t": "Ils comptent trop tard",
+      "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est trop tard pour la rééquilibrer.",
+      "pivot": "Cosmo prend le problème par l'autre bout : il part de votre organigramme."
+    },
+    "pyramid": {
+      "eyebrow": "01 — La primitive",
+      "title": "L'organigramme est la structure. Pas la décoration.",
+      "subtitle": "Chaque membre a un manager. De ce seul lien découlent les périmètres : ce qu'on voit, ce qu'on assigne, ce qu'on mesure. Déplacez quelqu'un dans la pyramide, tous ses accès suivent.",
+      "hint": "Survolez un membre pour éclairer son périmètre.",
+      "legendScope": "Périmètre du manager survolé",
+      "legendOut": "Hors périmètre",
+      "b1t": "Périmètre automatique",
+      "b1d": "Un manager voit son sous-arbre complet — ses équipes, leurs projets, leurs OKR, leurs statistiques. Rien à cocher, rien à maintenir.",
+      "b2t": "Réorganisation sans migration",
+      "b2d": "Un changement de rattachement suffit. Les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien.",
+      "b3t": "Cloisonnement par construction",
+      "b3d": "Deux branches sœurs ne se voient pas. La règle est appliquée en base de données, pas dans l'interface.",
+      "roleCeo": "Direction",
+      "roleLead": "Manager",
+      "roleMember": "Membre"
+    },
+    "cockpit": {
+      "eyebrow": "02 — Le cockpit",
+      "title": "Six onglets. Un seul écran de pilotage.",
+      "subtitle": "L'espace entreprise, tel qu'il est livré aujourd'hui. Faites défiler pour le parcourir.",
+      "t1": "Aperçu",
+      "d1": "L'activité de vos équipes, la charge du moment et ce qui vient de bouger — sans ouvrir un rapport.",
+      "t2": "Organigramme",
+      "d2": "La hiérarchie complète, éditable. Rattacher un membre, réassigner un manager, transférer la propriété.",
+      "t3": "Projets",
+      "d3": "Kanban ou frise chronologique, au choix. Tâches d'équipe, sous-tâches, labels, commentaires, historique.",
+      "t4": "OKR",
+      "d4": "Objectifs d'équipe, résultats clés chiffrés et catégories propres à votre organisation.",
+      "t5": "Statistiques",
+      "d5": "Vélocité, tendance et temps investi. Toute l'organisation pour une direction, son périmètre pour un manager.",
+      "t6": "Membres",
+      "d6": "Annuaire, fiches, agenda et charge de chacun. Invitation par code ou par lien.",
+      "mockActivity": "Activité récente",
+      "mockWorkload": "Charge des équipes",
+      "mockDone": "terminées",
+      "mockLate": "en retard",
+      "mockTodo": "À faire",
+      "mockDoing": "En cours",
+      "mockReview": "En revue",
+      "mockVelocity": "Vélocité",
+      "mockTrend": "Tendance",
+      "mockWeek": "sem."
+    },
+    "okr": {
+      "eyebrow": "03 — L'alignement",
+      "title": "Des objectifs qui descendent, des preuves qui remontent.",
+      "subtitle": "Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Rien ne se perd entre deux niveaux.",
+      "orgLabel": "Objectif d'organisation",
+      "teamLabel": "OKR d'équipe",
+      "krLabel": "Résultats clés",
+      "b1": "Chaque équipe accroche ses OKR à un objectif commun, dans les catégories que vous définissez.",
+      "b2": "Les résultats clés portent un chiffre et une cible — pas une intention.",
+      "b3": "Chaque résultat clé atteint est journalisé à la date où il l'a été.",
+      "journalTitle": "Journal inaltérable",
+      "journalBody": "Un résultat clé atteint ne peut pas être réécrit après coup. C'est ce qui rend la courbe de votre tableau de bord opposable en comité."
+    },
+    "security": {
+      "eyebrow": "04 — La confiance",
+      "title": "Les questions qu'on vous posera en comité.",
+      "subtitle": "Nous y répondons ici, avant qu'elles bloquent le déploiement.",
+      "s1t": "Isolation en base de données",
+      "s1d": "Chaque table est protégée par des politiques d'accès évaluées côté serveur. Une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime.",
+      "s2t": "Aucune surveillance déguisée",
+      "s2d": "Un manager voit le travail de son périmètre, pas la vie privée de ses collaborateurs. Les tâches, habitudes et agenda personnels d'un membre ne remontent jamais à sa hiérarchie.",
+      "s3t": "Conformité RGPD",
+      "s3d": "Effacement du compte réellement exécuté côté serveur, rétention documentée, consentement explicite à l'entrée dans une organisation. Aucune donnée revendue.",
+      "s4t": "Réversibilité",
+      "s4d": "Vous partez quand vous voulez. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support."
+    },
+    "pricing": {
+      "eyebrow": "05 — Le tarif",
+      "title": "Un forfait par organisation. Pas par siège.",
+      "subtitle": "Le prix suit le palier atteint, et rien d'autre. Pas de module à débloquer, pas de devis à attendre.",
+      "sliderLabel": "Combien êtes-vous ?",
+      "sliderAria": "Nombre de membres de votre organisation",
+      "membersUnit": "membres",
+      "perMonth": "/ mois",
+      "free": "Gratuit",
+      "yourTier": "Votre palier",
+      "tierRange": "{{min}} à {{max}} membres",
+      "tierOpen": "{{min}} membres et plus",
+      "includedTitle": "Inclus dans tous les paliers, y compris le gratuit",
+      "i1": "Organigramme et périmètres, sans limite de profondeur",
+      "i2": "Projets et OKR d'équipe illimités",
+      "i3": "Statistiques par périmètre managérial",
+      "i4": "Un Cosmo personnel pour chaque membre",
+      "i5": "Sans engagement, résiliable à tout moment",
+      "autoAdjust": "Le forfait s'ajuste tout seul quand l'organisation grandit, et redescend si l'effectif baisse. Aucune action de votre part.",
+      "cta": "Créer mon organisation",
+      "ctaNote": "Gratuit jusqu'à 5 membres — commencez sans nous parler."
+    },
+    "faq": {
+      "title": "Questions d'organisation",
+      "q1": "Mes collaborateurs doivent-ils créer un nouveau compte ?",
+      "a1": "Non. Un membre rejoint votre organisation avec le compte Cosmo qu'il a déjà, par code ou par lien d'invitation. Son espace personnel reste séparé et lui appartient.",
+      "q2": "Un manager peut-il voir les tâches personnelles de son équipe ?",
+      "a2": "Non. Le périmètre managérial porte sur le travail d'équipe : projets, tâches assignées, OKR, statistiques collectives. Les tâches, habitudes et agenda personnels d'un membre ne sont jamais exposés à sa hiérarchie.",
+      "q3": "Deux équipes peuvent-elles travailler sans se voir ?",
+      "a3": "Oui, c'est le comportement par défaut. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données — pas seulement masquée dans l'interface.",
+      "q4": "Que se passe-t-il si nous dépassons un palier ?",
+      "a4": "Le forfait passe au palier suivant automatiquement. Rien n'est bloqué, rien n'est à redemander, et vous redescendez si l'effectif baisse.",
+      "q5": "Peut-on essayer sans engager l'entreprise ?",
+      "a5": "Oui. Créez une organisation jusqu'à cinq membres, gratuitement et sans carte bancaire. C'est le produit complet, pas une version bridée."
+    },
+    "cta": {
+      "line1": "Votre organisation exécute déjà.",
+      "line2": "Donnez-lui la structure qui va avec.",
+      "subtitle": "Créez votre organisation en une minute, invitez votre première équipe, et regardez votre organigramme prendre vie.",
+      "primary": "Créer mon organisation",
+      "secondary": "Ouvrir la démo entreprise",
+      "note": "Gratuit jusqu'à 5 membres · sans carte bancaire"
+    }
   }
 }

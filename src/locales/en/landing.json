@@ -5,7 +5,8 @@
     "startFree": "Get started for free",
     "solutions": "Solutions",
     "guide": "Guide",
-    "login": "Sign in"
+    "login": "Sign in",
+    "faq": "FAQ"
   },
   "hero": {
     "line1": "All your productivity,",
@@ -189,7 +190,8 @@
     "login": "Sign in",
     "legalNotice": "Legal notice",
     "privacy": "Privacy",
-    "terms": "Terms"
+    "terms": "Terms",
+    "enterprise": "Cosmo for Companies"
   },
   "about": {
     "metaTitle": "About Cosmo — who are we?",
@@ -234,5 +236,185 @@
     "title": "The Cosmo blog",
     "readNext": "Read next",
     "tryFree": "Try Cosmo for free"
+  },
+  "enterprise": {
+    "gateway": {
+      "eyebrow": "One product, two grounds",
+      "title": "Are you here for yourself, or for your organisation?",
+      "hint": "You can switch at any time from the header.",
+      "enter": "Enter",
+      "perso": {
+        "kicker": "Cosmo Personal",
+        "title": "For me",
+        "desc": "Personal tasks, calendar, habits and OKRs. Free, nothing to install, ready in one click.",
+        "f1": "Time-blocking and recurrence",
+        "f2": "Habits and streaks",
+        "f3": "Task sharing with people you trust",
+        "aria": "Show the personal mode presentation"
+      },
+      "entreprise": {
+        "kicker": "Cosmo for Companies",
+        "title": "For my organisation",
+        "desc": "Your reporting lines become the living structure behind your projects, your OKRs and your statistics.",
+        "f1": "Org chart and scopes",
+        "f2": "Projects, OKRs and team workload",
+        "f3": "Statistics per scope",
+        "aria": "Show the company mode presentation"
+      }
+    },
+    "switcher": {
+      "label": "Choose which presentation to display",
+      "perso": "Personal",
+      "entreprise": "Companies"
+    },
+    "nav": {
+      "pyramid": "Org chart",
+      "cockpit": "Cockpit",
+      "okr": "OKRs",
+      "security": "Security",
+      "pricing": "Pricing"
+    },
+    "hero": {
+      "badge": "Company mode — available today",
+      "line1": "Your org chart",
+      "line2": "is not a slide.",
+      "line3": "It is your execution engine.",
+      "subtitle": "Cosmo for Companies turns your reporting lines into the living structure behind your projects, your OKRs and your statistics. And every teammate keeps the personal Cosmo they already use.",
+      "cta": "Open the company demo",
+      "ctaAria": "Open the company mode demonstration, no sign-up required",
+      "ctaSecondary": "See pricing",
+      "reassurance": "Up to 5 members free · no credit card · reversible at any time",
+      "scroll": "Scroll"
+    },
+    "proof": {
+      "m1": "members free, no card",
+      "m2": "control tabs, one screen",
+      "m3": "new tool to get adopted",
+      "m4": "of access derived from the org chart"
+    },
+    "problem": {
+      "eyebrow": "The diagnosis",
+      "title": "Three reasons your team tools never stick.",
+      "p1t": "They are flat",
+      "p1d": "A shared board has no idea who reports to whom. So the hierarchy gets replayed by hand, as access rights — and it is wrong the day after the first reorg.",
+      "p2t": "They arrive on top",
+      "p2d": "Yet another collaborative space will not be opened on Monday morning. Adoption is not decided in a kickoff meeting.",
+      "p3t": "They count too late",
+      "p3d": "An overloaded team is discovered in a steering committee, at the exact moment it is too late to rebalance it.",
+      "pivot": "Cosmo takes the problem from the other end: it starts from your org chart."
+    },
+    "pyramid": {
+      "eyebrow": "01 — The primitive",
+      "title": "The org chart is the structure. Not the decoration.",
+      "subtitle": "Every member has a manager. From that single link everything follows: what you see, what you assign, what you measure. Move someone in the pyramid and their access moves with them.",
+      "hint": "Hover a member to light up their scope.",
+      "legendScope": "Scope of the hovered manager",
+      "legendOut": "Out of scope",
+      "b1t": "Automatic scope",
+      "b1d": "A manager sees their whole subtree — their teams, their projects, their OKRs, their statistics. Nothing to tick, nothing to maintain.",
+      "b2t": "Reorg without migration",
+      "b2d": "Changing one reporting line is enough. Rights are not copied anywhere: they are recomputed from the link.",
+      "b3t": "Partitioned by construction",
+      "b3d": "Two sibling branches cannot see each other. The rule is enforced in the database, not in the interface.",
+      "roleCeo": "Leadership",
+      "roleLead": "Manager",
+      "roleMember": "Member"
+    },
+    "cockpit": {
+      "eyebrow": "02 — The cockpit",
+      "title": "Six tabs. One control screen.",
+      "subtitle": "The company workspace, exactly as it ships today. Scroll to walk through it.",
+      "t1": "Overview",
+      "d1": "Your teams' activity, the current workload and what just moved — without opening a report.",
+      "t2": "Org chart",
+      "d2": "The full hierarchy, editable. Attach a member, reassign a manager, transfer ownership.",
+      "t3": "Projects",
+      "d3": "Kanban or timeline, your call. Team tasks, subtasks, labels, comments, history.",
+      "t4": "OKRs",
+      "d4": "Team objectives, quantified key results and categories that belong to your organisation.",
+      "t5": "Statistics",
+      "d5": "Velocity, trend and time invested. The whole organisation for leadership, their own scope for a manager.",
+      "t6": "Members",
+      "d6": "Directory, profiles, calendar and workload for each person. Invitation by code or by link.",
+      "mockActivity": "Recent activity",
+      "mockWorkload": "Team workload",
+      "mockDone": "done",
+      "mockLate": "overdue",
+      "mockTodo": "To do",
+      "mockDoing": "In progress",
+      "mockReview": "In review",
+      "mockVelocity": "Velocity",
+      "mockTrend": "Trend",
+      "mockWeek": "wk"
+    },
+    "okr": {
+      "eyebrow": "03 — Alignment",
+      "title": "Objectives that come down, evidence that comes back up.",
+      "subtitle": "One organisation objective breaks down into team OKRs, and each OKR into quantified key results. Nothing is lost between two levels.",
+      "orgLabel": "Organisation objective",
+      "teamLabel": "Team OKR",
+      "krLabel": "Key results",
+      "b1": "Each team hooks its OKRs onto a shared objective, in the categories you define.",
+      "b2": "Key results carry a number and a target — not an intention.",
+      "b3": "Every key result reached is journalled on the date it was reached.",
+      "journalTitle": "Tamper-proof journal",
+      "journalBody": "A key result that has been reached cannot be rewritten afterwards. That is what makes your dashboard curve defensible in a steering committee."
+    },
+    "security": {
+      "eyebrow": "04 — Trust",
+      "title": "The questions your committee will ask.",
+      "subtitle": "We answer them here, before they block the rollout.",
+      "s1t": "Database-level isolation",
+      "s1d": "Every table is protected by access policies evaluated server-side. A request forged from the browser returns nothing more than a legitimate one.",
+      "s2t": "No disguised surveillance",
+      "s2d": "A manager sees the work in their scope, not their teammates' private lives. A member's personal tasks, habits and calendar are never exposed to their management chain.",
+      "s3t": "GDPR compliance",
+      "s3d": "Account deletion genuinely executed server-side, documented retention, explicit consent when joining an organisation. No data resold.",
+      "s4t": "Reversibility",
+      "s4d": "You leave whenever you want. Ownership transfer and organisation deletion are in the interface, not in a support ticket."
+    },
+    "pricing": {
+      "eyebrow": "05 — Pricing",
+      "title": "One plan per organisation. Not per seat.",
+      "subtitle": "The price follows the tier you reach, and nothing else. No module to unlock, no quote to wait for.",
+      "sliderLabel": "How many are you?",
+      "sliderAria": "Number of members in your organisation",
+      "membersUnit": "members",
+      "perMonth": "/ month",
+      "free": "Free",
+      "yourTier": "Your tier",
+      "tierRange": "{{min}} to {{max}} members",
+      "tierOpen": "{{min}} members and up",
+      "includedTitle": "Included in every tier, free one included",
+      "i1": "Org chart and scopes, no depth limit",
+      "i2": "Unlimited team projects and OKRs",
+      "i3": "Statistics per management scope",
+      "i4": "A personal Cosmo for every member",
+      "i5": "No commitment, cancel at any time",
+      "autoAdjust": "The plan adjusts itself when the organisation grows, and steps back down when headcount drops. Nothing for you to do.",
+      "cta": "Create my organisation",
+      "ctaNote": "Free up to 5 members — start without talking to us."
+    },
+    "faq": {
+      "title": "Organisation questions",
+      "q1": "Do my teammates need to create a new account?",
+      "a1": "No. A member joins your organisation with the Cosmo account they already have, by code or by invitation link. Their personal space stays separate and stays theirs.",
+      "q2": "Can a manager see their team's personal tasks?",
+      "a2": "No. The management scope covers team work: projects, assigned tasks, OKRs, collective statistics. A member's personal tasks, habits and calendar are never exposed to their management chain.",
+      "q3": "Can two teams work without seeing each other?",
+      "a3": "Yes, that is the default. Two sibling branches of the org chart are partitioned, and the rule is enforced in the database — not merely hidden in the interface.",
+      "q4": "What happens if we go past a tier?",
+      "a4": "The plan moves to the next tier automatically. Nothing is blocked, nothing has to be requested again, and you step back down if headcount drops.",
+      "q5": "Can we try without committing the company?",
+      "a5": "Yes. Create an organisation of up to five members, free and without a credit card. It is the complete product, not a crippled version."
+    },
+    "cta": {
+      "line1": "Your organisation already executes.",
+      "line2": "Give it the structure to match.",
+      "subtitle": "Create your organisation in a minute, invite your first team, and watch your org chart come alive.",
+      "primary": "Create my organisation",
+      "secondary": "Open the company demo",
+      "note": "Free up to 5 members · no credit card"
+    }
   }
 }

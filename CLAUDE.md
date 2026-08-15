@@ -327,7 +327,8 @@ export type User = {
 
 | Route | Page | Accès |
 |---|---|---|
-| `/` | LandingPage, redirige `/dashboard` si connecté | public |
+| `/` | LandingPage — **parcours perso**, redirige `/dashboard` si connecté | public |
+| `/entreprise-presentation` (slug localisé) | **même composant `LandingPage`**, parcours entreprise | public |
 | `/login` · `/signup` · `/forgot-password` · `/reset-password` | Auth | public |
 | `/guide` · `/blog` · `/blog/:slug` | Contenu SEO | public |
 | slugs localisés (à-propos, freelances, étudiants, managers, équipes, mentions légales, confidentialité, CGU) | via `routeSlug(key, locale)` — cf. `src/i18n/routes.ts` | public |
@@ -341,6 +342,29 @@ export type User = {
 | `*` | **NotFoundPage** (pas de redirect) | — |
 
 Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErrorBoundary`.
+
+### Landing — deux parcours exclusifs (2026-08-15)
+
+La landing n'est plus une page linéaire. Après le header, un **aiguillage**
+(`landing/LandingGateway`) fait choisir entre deux parcours **mutuellement exclusifs** :
+
+| Parcours | Composant | Servi par | DA |
+|---|---|---|---|
+| perso | `landing/PersoTrack` | `/` | slate-900, bleu → violet → fuchsia |
+| entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#08090C`, cyan `#22D3EE`, or `#F5B942` |
+
+- Le parcours affiché est **dérivé de l'URL**, pas d'un état local (`useLandingTrack`) : le
+  bouton retour marche sans code de synchronisation. Les deux routes rendent le **même
+  composant à la même profondeur**, donc basculer ne remonte pas la page.
+- `TrackSwitcher` (header) et `TrackAnchors` (sommaire collant, par parcours) garantissent
+  qu'on ne peut jamais rester coincé dans un parcours. Les listes d'ancres vivent dans
+  `landing/anchors.ts` — une par track, pour qu'aucun lien ne vise une section absente.
+- ❌ **Ne jamais ajouter une section entreprise dans `PersoTrack`** (ni l'inverse) : la
+  séparation des deux parcours EST la structure de la page.
+- ⚠️ Les tarifs affichés viennent de `ENTERPRISE_PRICING_TIERS` — **jamais de montant en dur** :
+  la landing et le produit doivent annoncer le même prix le jour de l'activation du paywall.
+  Et le montant n'est **pas** animé par un compteur à ressort (il passerait par 48 € avant de
+  se poser sur 50 €).
 
 ---
 

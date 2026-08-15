@@ -19,6 +19,10 @@
     "title": "About Cosmo — who we are",
     "description": "Why Cosmo exists: a free, independent productivity app bringing tasks, habits, calendar and OKRs into a single ecosystem."
   },
+  "enterprisePresentation": {
+    "title": "Cosmo for Companies — your org chart as an execution engine",
+    "description": "Team projects, OKRs and statistics structured by your reporting lines. Free up to 5 members, no credit card. Every teammate keeps their personal Cosmo."
+  },
   "blog": {
     "title": "Cosmo blog — Productivity, OKRs, habits and time-blocking",
     "description": "Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. From the Cosmo team."
