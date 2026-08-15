@@ -316,9 +316,9 @@
       "b2d": "Un changement de rattachement suffit. Les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien.",
       "b3t": "Cloisonnement par construction",
       "b3d": "Deux branches sœurs ne se voient pas. La règle est appliquée en base de données, pas dans l'interface.",
-      "roleCeo": "Direction",
       "roleLead": "Manager",
-      "roleMember": "Membre"
+      "roleMember": "Membre",
+      "roleAdmin": "Admin"
     },
     "cockpit": {
       "eyebrow": "02 — Le cockpit",
@@ -345,7 +345,13 @@
       "mockReview": "En revue",
       "mockVelocity": "Vélocité",
       "mockTrend": "Tendance",
-      "mockWeek": "sem."
+      "mockWeek": "sem.",
+      "a1": "Onglet Aperçu de l'espace entreprise Cosmo : mes tâches assignées, mes échéances et le fil d'activité de l'équipe.",
+      "a2": "Onglet Pyramide : l'organigramme de l'organisation, chaque membre rattaché à son manager, éditable au glisser-déposer.",
+      "a3": "Onglet Projets : les projets par équipe, leurs tâches, échéances et personnes assignées, en vue liste, tableau ou planning.",
+      "a4": "Onglet OKR : les objectifs d'équipe et leurs résultats clés chiffrés, avec leur progression.",
+      "a5": "Onglet Statistiques : vélocité, tendance et temps investi par l'organisation.",
+      "a6": "Onglet Membres : l'annuaire de l'organisation, avec le rôle et la charge de chaque personne."
     },
     "okr": {
       "eyebrow": "03 — L'alignement",

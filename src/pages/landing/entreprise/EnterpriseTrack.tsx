@@ -37,11 +37,7 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister })
       {/* Sommaire du parcours : accès direct aux tarifs pour le visiteur pressé. */}
       <TrackAnchors track="entreprise" label={t('enterprise.gateway.entreprise.title')} />
 
-      {/* La barre d'ancres est `sticky` : elle est retirée du flux au-dessus du
-          hero, qui remonte donc de sa hauteur. On la compense ici. */}
-      <div className="lg:-mt-12">
-        <EnterpriseHero onDemo={onDemo} />
-      </div>
+      <EnterpriseHero onDemo={onDemo} />
 
       <ProofBand />
       <ProblemSection />

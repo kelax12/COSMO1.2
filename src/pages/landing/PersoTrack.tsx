@@ -311,7 +311,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           que le sélecteur de parcours n'en prenne le centre. */}
       <TrackAnchors track="perso" label={t('enterprise.gateway.perso.title')} />
 
-      <section ref={heroRef} className="relative pt-10 pb-20 lg:-mt-12 lg:pt-16 lg:pb-28 overflow-hidden">
+      <section ref={heroRef} className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
         {/* ── Fond ambiant : grille masquée + noise + aurores + halo conique ── */}
         <div className="absolute inset-0 -z-10" aria-hidden="true">
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}

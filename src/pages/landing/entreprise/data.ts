@@ -2,45 +2,124 @@
 //
 // Même règle que `src/pages/landing/data.ts` : ce module est évalué au premier
 // import, donc il ne contient AUCUN texte traduisible — uniquement des clés de
-// catalogue et de la géométrie. Les prénoms de l'organigramme font exception :
-// ce sont des noms propres fictifs, identiques dans toutes les langues.
+// catalogue, de la géométrie et des chemins d'images.
+//
+// ⚠️ Les membres et les captures décrivent la MÊME organisation de démonstration
+// (« Nova Studio », seed de `src/modules/organizations/local.repository.ts`) que
+// celle ouverte par le bouton « Ouvrir la démo entreprise ». C'est volontaire :
+// le visiteur retrouve exactement les écrans et les noms qu'il vient de voir.
+// Si le seed démo change, cette liste et les captures doivent suivre.
 
 import type { KeyOf } from '@/i18n/catalog';
 
-/** Un nœud de l'organigramme de démonstration. */
+/** Un nœud de l'organigramme — calqué sur un membre réel du seed démo. */
 export interface PyramidNode {
   id: string;
-  /** Prénom fictif affiché sous le nœud. */
+  /** Nom affiché, identique au seed démo. */
   name: string;
+  /** Initiales de l'avatar, comme dans l'application. */
+  initials: string;
+  /** Classes Tailwind de l'avatar, reprises des couleurs de l'app. */
+  avatarClass: string;
+  /** Clé du rôle (`admin` / `manager` / `membre`). */
+  roleKey: KeyOf<'landing'>;
+  /** Équipe d'appartenance — la pastille de couleur à droite du rôle. */
+  teamClass: string;
   /** `null` pour la racine. */
   parent: string | null;
-  /** Niveau hiérarchique — pilote la couleur et le libellé de rôle. */
-  level: 0 | 1 | 2;
-  /** Coordonnées dans le `viewBox` du SVG (0 0 900 420). */
+  /** Position dans le cadre, en pourcentage (x = centre de la carte). */
   x: number;
   y: number;
 }
 
 /**
- * Organigramme de démonstration : 1 direction, 3 managers, 7 membres.
+ * Pyramide « Nova Studio » telle qu'elle est livrée en démo :
+ *   Vous (admin)
+ *   ├── Marie Dupont (manager)
+ *   │   ├── Jean Martin
+ *   │   └── Sophie Bernard
+ *   └── Lucas Moreau
  *
- * Trois branches suffisent à montrer ce qui compte — qu'une branche s'illumine
- * entièrement au survol de son manager, et que les deux autres s'éteignent.
+ * Camille Richard, non placée dans le seed, est volontairement absente : la
+ * landing montre la règle de périmètre, pas le flux de placement.
  */
 export const PYRAMID_NODES: PyramidNode[] = [
-  { id: 'dir', name: 'Alix', parent: null, level: 0, x: 450, y: 56 },
-
-  { id: 'm1', name: 'Léa', parent: 'dir', level: 1, x: 150, y: 210 },
-  { id: 'm2', name: 'Sam', parent: 'dir', level: 1, x: 450, y: 210 },
-  { id: 'm3', name: 'Nour', parent: 'dir', level: 1, x: 750, y: 210 },
-
-  { id: 'c1', name: 'Ilan', parent: 'm1', level: 2, x: 62, y: 364 },
-  { id: 'c2', name: 'Maya', parent: 'm1', level: 2, x: 238, y: 364 },
-  { id: 'c3', name: 'Théo', parent: 'm2', level: 2, x: 362, y: 364 },
-  { id: 'c4', name: 'Zoé', parent: 'm2', level: 2, x: 538, y: 364 },
-  { id: 'c5', name: 'Adam', parent: 'm3', level: 2, x: 662, y: 364 },
-  { id: 'c6', name: 'Rim', parent: 'm3', level: 2, x: 838, y: 364 },
+  {
+    id: 'vous',
+    name: 'Vous',
+    initials: 'V',
+    avatarClass: 'bg-emerald-500',
+    roleKey: 'enterprise.pyramid.roleAdmin',
+    teamClass: 'bg-transparent',
+    parent: null,
+    x: 50,
+    y: 8,
+  },
+  {
+    id: 'marie',
+    name: 'Marie Dupont',
+    initials: 'MD',
+    avatarClass: 'bg-emerald-500',
+    roleKey: 'enterprise.pyramid.roleLead',
+    teamClass: 'bg-fuchsia-500',
+    parent: 'vous',
+    x: 30,
+    y: 45,
+  },
+  {
+    id: 'lucas',
+    name: 'Lucas Moreau',
+    initials: 'LM',
+    avatarClass: 'bg-pink-600',
+    roleKey: 'enterprise.pyramid.roleMember',
+    teamClass: 'bg-blue-500',
+    parent: 'vous',
+    x: 74,
+    y: 45,
+  },
+  {
+    id: 'jean',
+    name: 'Jean Martin',
+    initials: 'JM',
+    avatarClass: 'bg-blue-600',
+    roleKey: 'enterprise.pyramid.roleMember',
+    teamClass: 'bg-blue-500',
+    parent: 'marie',
+    x: 15,
+    y: 82,
+  },
+  {
+    id: 'sophie',
+    name: 'Sophie Bernard',
+    initials: 'SB',
+    avatarClass: 'bg-emerald-500',
+    roleKey: 'enterprise.pyramid.roleMember',
+    teamClass: 'bg-fuchsia-500',
+    parent: 'marie',
+    x: 45,
+    y: 82,
+  },
 ];
+
+/**
+ * Nœuds en parcours préfixe, avec leur profondeur.
+ *
+ * Sert au rendu mobile de l'organigramme : sous 768 px, les cartes positionnées
+ * en pourcentage se chevauchent (mesuré à 390 px), donc la pyramide s'y déplie
+ * en arbre indenté. Même information, même règle de périmètre.
+ */
+export function pyramidTree(): { node: PyramidNode; depth: number }[] {
+  const out: { node: PyramidNode; depth: number }[] = [];
+  const visit = (parentId: string | null, depth: number) => {
+    for (const node of PYRAMID_NODES) {
+      if (node.parent !== parentId) continue;
+      out.push({ node, depth });
+      visit(node.id, depth + 1);
+    }
+  };
+  visit(null, 0);
+  return out;
+}
 
 /** Descendants d'un nœud, lui-même inclus — le « périmètre » d'un manager. */
 export function subtreeOf(nodeId: string): Set<string> {
@@ -57,16 +136,62 @@ export interface CockpitTab {
   id: string;
   labelKey: KeyOf<'landing'>;
   descriptionKey: KeyOf<'landing'>;
+  /** Capture réelle de l'onglet (mode démo, thème noir). */
+  image: string;
+  altKey: KeyOf<'landing'>;
 }
 
+const shot = (name: string) => `/screenshots/entreprise/${name}.webp`;
+
 export const COCKPIT_TABS: CockpitTab[] = [
-  { id: 'overview', labelKey: 'enterprise.cockpit.t1', descriptionKey: 'enterprise.cockpit.d1' },
-  { id: 'pyramid', labelKey: 'enterprise.cockpit.t2', descriptionKey: 'enterprise.cockpit.d2' },
-  { id: 'projects', labelKey: 'enterprise.cockpit.t3', descriptionKey: 'enterprise.cockpit.d3' },
-  { id: 'okr', labelKey: 'enterprise.cockpit.t4', descriptionKey: 'enterprise.cockpit.d4' },
-  { id: 'stats', labelKey: 'enterprise.cockpit.t5', descriptionKey: 'enterprise.cockpit.d5' },
-  { id: 'members', labelKey: 'enterprise.cockpit.t6', descriptionKey: 'enterprise.cockpit.d6' },
+  {
+    id: 'overview',
+    labelKey: 'enterprise.cockpit.t1',
+    descriptionKey: 'enterprise.cockpit.d1',
+    image: shot('apercu'),
+    altKey: 'enterprise.cockpit.a1',
+  },
+  {
+    id: 'pyramid',
+    labelKey: 'enterprise.cockpit.t2',
+    descriptionKey: 'enterprise.cockpit.d2',
+    image: shot('pyramide'),
+    altKey: 'enterprise.cockpit.a2',
+  },
+  {
+    id: 'projects',
+    labelKey: 'enterprise.cockpit.t3',
+    descriptionKey: 'enterprise.cockpit.d3',
+    image: shot('projets'),
+    altKey: 'enterprise.cockpit.a3',
+  },
+  {
+    id: 'okr',
+    labelKey: 'enterprise.cockpit.t4',
+    descriptionKey: 'enterprise.cockpit.d4',
+    image: shot('okr'),
+    altKey: 'enterprise.cockpit.a4',
+  },
+  {
+    id: 'stats',
+    labelKey: 'enterprise.cockpit.t5',
+    descriptionKey: 'enterprise.cockpit.d5',
+    image: shot('statistiques'),
+    altKey: 'enterprise.cockpit.a5',
+  },
+  {
+    id: 'members',
+    labelKey: 'enterprise.cockpit.t6',
+    descriptionKey: 'enterprise.cockpit.d6',
+    image: shot('membres'),
+    altKey: 'enterprise.cockpit.a6',
+  },
 ];
+
+/** Les trois écrans qui défilent dans le hero — les mêmes captures réelles. */
+export const HERO_SHOTS = ['projects', 'okr', 'stats'].map(
+  (id) => COCKPIT_TABS.find((tab) => tab.id === id)!,
+);
 
 /** Les quatre chiffres du bandeau de preuve, sous le hero. */
 export interface ProofMetric {

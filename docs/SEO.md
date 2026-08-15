@@ -124,6 +124,26 @@ prouve rien dans un sens ou dans l'autre.
 > ⚠️ Le corps prérendu reprend les arguments du track : **le retoucher quand la copie de
 > `src/pages/landing/entreprise/` change**, sinon le prérendu ment sur ce que la page affiche.
 
+### Reprendre les captures de la landing entreprise
+
+`public/screenshots/entreprise/*.webp` sont de **vraies captures** de l'espace entreprise, prises
+sur l'application en mode démo. Elles sont affichées par `landing/entreprise/AppShot` (hero et
+section cockpit) et référencées dans le prérendu de `/entreprise-presentation`.
+
+> ⚠️ Une capture périmée ment sur le produit. À reprendre dès que l'UI entreprise change.
+
+Procédure (Playwright, dev server sur le port de `dev-verify`) :
+
+1. `localStorage.theme = 'noir'` **avant** le login démo — la landing est graphite, une capture
+   en thème clair y fait une tache blanche.
+2. `loginDemo()` puis `/entreprise`, et fermer le bandeau démo, l'avis de tarification et
+   replier la barre latérale : on ne montre que le produit.
+3. Viewport **1280 de large** et cadrage depuis la barre d'onglets, en 16/10. La largeur compte :
+   au-delà, l'UI devient trop petite une fois réduite à la taille d'affichage et le texte n'est
+   plus lisible.
+4. Encoder en WebP 1500 px (`ffmpeg -c:v libwebp -quality 80`) — l'ensemble tient sous 250 kB.
+5. Mettre à jour les `alt` (`enterprise.cockpit.a1…a6`) si le contenu des écrans a changé.
+
 ### Ouvrir une langue à l'indexation
 
 Dans cet ordre, sinon on publie du duplicate content :
