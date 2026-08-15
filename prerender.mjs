@@ -229,6 +229,14 @@ const ROUTES = [
         <h2>Le périmètre découle de la hiérarchie</h2>
         <p>Chaque membre a un manager. De ce seul lien découlent les accès : un manager voit son sous-arbre complet — ses équipes, leurs projets, leurs OKR, leurs statistiques — sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
 
+        <h2>À quoi ressemble l'espace entreprise</h2>
+        <p>Trois onglets de l'espace entreprise, en mode démo :</p>
+        <p>
+          <img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="Onglet Pyramide de Cosmo Entreprise : l'organigramme de l'organisation, chaque membre rattaché à son manager" />
+          <img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="Onglet Projets de Cosmo Entreprise : les projets par équipe avec leurs tâches, échéances et personnes assignées" />
+          <img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="Onglet Statistiques de Cosmo Entreprise : progression des OKR et charge de travail de chaque membre de l'équipe" />
+        </p>
+
         <h2>Six onglets de pilotage</h2>
         <p><strong>Aperçu</strong> : l'activité de vos équipes, la charge du moment et ce qui vient de bouger. <strong>Organigramme</strong> : la hiérarchie complète, éditable — rattacher un membre, réassigner un manager, transférer la propriété. <strong>Projets</strong> : kanban ou frise chronologique, avec tâches d'équipe, sous-tâches, labels, commentaires et historique. <strong>OKR</strong> : objectifs d'équipe, résultats clés chiffrés et catégories propres à votre organisation. <strong>Statistiques</strong> : vélocité, tendance et temps investi, sur toute l'organisation pour une direction et sur son périmètre pour un manager. <strong>Membres</strong> : annuaire, fiches, agenda et charge de chacun, avec invitation par code ou par lien.</p>
 

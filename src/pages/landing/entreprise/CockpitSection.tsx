@@ -3,12 +3,16 @@ import { useReducedMotion } from 'framer-motion';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import CockpitMock, { MockFrame } from './CockpitMock';
+import AppShot from './AppShot';
 import { COCKPIT_TABS } from './data';
 
 /**
  * Section « cockpit » — les six onglets de l'espace entreprise, parcourus au
  * scroll dans une scène épinglée.
+ *
+ * Ce que le visiteur voit ici sont les **vraies captures** de l'application en
+ * mode démo (cf. `AppShot`), pas des schémas : la démonstration ne vaut que si
+ * l'écran montré est celui qu'il obtiendra en cliquant.
  *
  * Deux rendus, choisis à la volée :
  *   • épinglé (desktop, mouvement autorisé) — la scène reste fixe pendant que
@@ -76,12 +80,27 @@ const PinnedCockpit: React.FC = () => {
             setActive((current) => (current === index ? current : index));
           },
         });
+
+        // Dérive lente de la pile de captures pendant toute la traversée : la
+        // scène est épinglée, ce léger mouvement l'empêche de paraître figée.
+        gsap.fromTo(
+          '.cockpit-screens',
+          { yPercent: 2.5 },
+          {
+            yPercent: -2.5,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: wrapperRef.current,
+              start: 'top top',
+              end: () => `+=${steps * 100}%`,
+              scrub: true,
+            },
+          },
+        );
       });
     },
     { scope: wrapperRef },
   );
-
-
 
   return (
     <div ref={wrapperRef}>
@@ -90,7 +109,7 @@ const PinnedCockpit: React.FC = () => {
           le header avec un grand vide en dessous. Le `pt-28` réserve la place
           du header flottant et de la barre d'ancres. */}
       <div className="cockpit-stage mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-center px-4 pb-10 pt-28 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="grid items-center gap-10 lg:grid-cols-[0.58fr_1.42fr]">
           {/* Rail des onglets : l'onglet courant est éclairé, les autres restent
               lisibles pour montrer qu'il y en a six. */}
           <ol className="flex flex-col gap-1">
@@ -137,23 +156,31 @@ const PinnedCockpit: React.FC = () => {
             })}
           </ol>
 
-          {/* Scène : la maquette de l'onglet courant, en fondu. */}
-          <div className="relative h-[24rem] lg:h-[28rem]">
+          {/* Scène : la capture de l'onglet courant, en fondu enchaîné. */}
+          <div className="cockpit-screens relative aspect-[16/10]">
             <div
-              className="pointer-events-none absolute -inset-8 rounded-[2rem] bg-[radial-gradient(ellipse_60%_60%_at_50%_50%,rgba(34,211,238,0.1),transparent_70%)]"
+              className="pointer-events-none absolute -inset-10 rounded-[2.5rem] bg-[radial-gradient(ellipse_60%_60%_at_50%_50%,rgba(34,211,238,0.12),transparent_70%)]"
               aria-hidden="true"
             />
             {COCKPIT_TABS.map((item, index) => (
               <div
                 key={item.id}
                 aria-hidden={index !== active}
-                className={`absolute inset-0 transition-opacity duration-500 ${
-                  index === active ? 'opacity-100' : 'pointer-events-none opacity-0'
+                // Le zoom léger de la capture entrante donne le sentiment
+                // qu'elle « arrive » ; l'inactive reste à l'échelle 1,01 pour
+                // que la transition ne parte jamais de zéro.
+                className={`absolute inset-0 transition-[opacity,transform] duration-500 ease-out ${
+                  index === active
+                    ? 'scale-100 opacity-100'
+                    : 'pointer-events-none scale-[1.015] opacity-0'
                 }`}
               >
-                <MockFrame label={t(item.labelKey)}>
-                  <CockpitMock tabId={item.id} />
-                </MockFrame>
+                <AppShot
+                  src={item.image}
+                  alt={t(item.altKey)}
+                  label={t(item.labelKey)}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
               </div>
             ))}
           </div>
@@ -179,12 +206,9 @@ const PinnedCockpit: React.FC = () => {
 const StackedCockpit: React.FC = () => {
   const { t } = useT('landing');
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
       {COCKPIT_TABS.map((item, index) => (
-        <article
-          key={item.id}
-          className="grid gap-5 rounded-xl border border-white/[0.08] bg-[#0A0C11] p-5 sm:grid-cols-2 sm:items-center"
-        >
+        <article key={item.id} className="grid gap-5 sm:grid-cols-2 sm:items-center sm:gap-7">
           <div>
             <span className="font-mono text-caption tabular-nums text-cyan-400">
               {String(index + 1).padStart(2, '0')}
@@ -192,10 +216,8 @@ const StackedCockpit: React.FC = () => {
             <h3 className="mb-2 mt-1 text-lg font-semibold text-white">{t(item.labelKey)}</h3>
             <p className="text-sm leading-relaxed text-slate-400">{t(item.descriptionKey)}</p>
           </div>
-          <div className="h-52">
-            <MockFrame label={t(item.labelKey)}>
-              <CockpitMock tabId={item.id} />
-            </MockFrame>
+          <div className="aspect-[16/10]">
+            <AppShot src={item.image} alt={t(item.altKey)} label={t(item.labelKey)} />
           </div>
         </article>
       ))}

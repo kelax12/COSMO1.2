@@ -1,7 +1,9 @@
 import React, { Suspense, lazy, useRef } from 'react';
-import { ArrowRight, BarChart3, FolderKanban, Target } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import CardSwap, { Card } from '@/components/reactbits/CardSwap';
+import AppShot from './AppShot';
+import { HERO_SHOTS } from './data';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
@@ -18,8 +20,8 @@ interface EnterpriseHeroProps {
 /**
  * Hero du track entreprise — la première seconde doit dire « ce n'est plus le
  * même produit ». Rayons volumétriques cyan sur graphite, titre en trois
- * lignes masquées, et une pile de cartes qui fait défiler les trois écrans qui
- * intéressent un décideur.
+ * lignes masquées, et une pile qui fait défiler les VRAIES captures des trois
+ * écrans qui intéressent un décideur : Projets, OKR, Statistiques.
  */
 const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
   const { t } = useT('landing');
@@ -195,22 +197,20 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
             className="relative hidden h-[26rem] w-full lg:mr-28 lg:block xl:mr-20"
             aria-hidden="true"
           >
-            <CardSwap width={380} height={272} cardDistance={44} verticalDistance={54} delay={3800} skewAmount={5} pauseOnHover>
-              <Card customClass="!bg-[#0C0F14] !border-white/10 rounded-2xl overflow-hidden">
-                <HeroCard icon={<FolderKanban size={14} />} title={t('enterprise.cockpit.t3')}>
-                  <KanbanPeek />
-                </HeroCard>
-              </Card>
-              <Card customClass="!bg-[#0C0F14] !border-white/10 rounded-2xl overflow-hidden">
-                <HeroCard icon={<Target size={14} />} title={t('enterprise.cockpit.t4')}>
-                  <OkrPeek />
-                </HeroCard>
-              </Card>
-              <Card customClass="!bg-[#0C0F14] !border-white/10 rounded-2xl overflow-hidden">
-                <HeroCard icon={<BarChart3 size={14} />} title={t('enterprise.cockpit.t5')}>
-                  <StatsPeek />
-                </HeroCard>
-              </Card>
+            <CardSwap width={392} height={272} cardDistance={44} verticalDistance={54} delay={3800} skewAmount={5} pauseOnHover>
+              {HERO_SHOTS.map((tab, index) => (
+                <Card key={tab.id} customClass="!border-0 !bg-transparent overflow-visible">
+                  <AppShot
+                    src={tab.image}
+                    alt={t(tab.altKey)}
+                    label={t(tab.labelKey)}
+                    // La première carte de la pile est visible dès le premier
+                    // paint du hero : la charger paresseusement la ferait
+                    // apparaître en retard, au milieu de l'animation d'entrée.
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                  />
+                </Card>
+              ))}
             </CardSwap>
           </div>
         </div>
@@ -218,74 +218,5 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
     </section>
   );
 };
-
-/** Chrome commun des cartes du hero : barre de titre + corps. */
-const HeroCard: React.FC<React.PropsWithChildren<{ icon: React.ReactNode; title: string }>> = ({
-  icon,
-  title,
-  children,
-}) => (
-  <div className="flex h-full flex-col">
-    <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-3 text-cyan-300">
-      {icon}
-      <span className="font-mono text-caption uppercase tracking-[0.2em]">{title}</span>
-      <span className="ml-auto flex gap-1">
-        {['bg-white/15', 'bg-white/15', 'bg-cyan-400/50'].map((c, i) => (
-          <span key={i} className={`h-1.5 w-1.5 rounded-full ${c}`} />
-        ))}
-      </span>
-    </div>
-    <div className="flex-1 p-4">{children}</div>
-  </div>
-);
-
-const KanbanPeek: React.FC = () => (
-  <div className="grid h-full grid-cols-3 gap-2">
-    {[3, 2, 1].map((count, col) => (
-      <div key={col} className="flex flex-col gap-1.5 rounded-lg bg-white/[0.03] p-1.5">
-        <div className="h-1 w-8 rounded-full bg-white/15" />
-        {Array.from({ length: count }, (_, i) => (
-          <div key={i} className="space-y-1 rounded-md border border-white/[0.06] bg-[#11151C] p-2">
-            <div className="h-1 w-full rounded-full bg-white/20" />
-            <div className="h-1 w-2/3 rounded-full bg-white/10" />
-            <div className={`h-1 w-6 rounded-full ${col === 1 ? 'bg-cyan-400/70' : 'bg-white/10'}`} />
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
-);
-
-const OkrPeek: React.FC = () => (
-  <div className="flex h-full flex-col justify-center gap-3">
-    {[
-      { w: '78%', c: 'bg-cyan-400' },
-      { w: '46%', c: 'bg-cyan-400/70' },
-      { w: '92%', c: 'bg-[#F5B942]' },
-    ].map(({ w, c }, i) => (
-      <div key={i} className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <div className="h-1.5 w-24 rounded-full bg-white/20" />
-          <span className="font-mono text-caption text-slate-500">{w}</span>
-        </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-          <div className={`h-full rounded-full ${c}`} style={{ width: w }} />
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-const StatsPeek: React.FC = () => (
-  <div className="flex h-full items-end gap-1.5">
-    {[38, 55, 42, 70, 61, 88, 74, 96].map((h, i) => (
-      <div
-        key={i}
-        className={`flex-1 rounded-sm ${i > 5 ? 'bg-cyan-400' : 'bg-cyan-400/25'}`}
-        style={{ height: `${h}%` }}
-      />
-    ))}
-  </div>
-);
 
 export default EnterpriseHero;

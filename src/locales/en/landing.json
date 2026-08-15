@@ -316,9 +316,9 @@
       "b2d": "Changing one reporting line is enough. Rights are not copied anywhere: they are recomputed from the link.",
       "b3t": "Partitioned by construction",
       "b3d": "Two sibling branches cannot see each other. The rule is enforced in the database, not in the interface.",
-      "roleCeo": "Leadership",
       "roleLead": "Manager",
-      "roleMember": "Member"
+      "roleMember": "Member",
+      "roleAdmin": "Admin"
     },
     "cockpit": {
       "eyebrow": "02 — The cockpit",
@@ -345,7 +345,13 @@
       "mockReview": "In review",
       "mockVelocity": "Velocity",
       "mockTrend": "Trend",
-      "mockWeek": "wk"
+      "mockWeek": "wk",
+      "a1": "Overview tab of the Cosmo company workspace: my assigned tasks, my deadlines and the team activity feed.",
+      "a2": "Org chart tab: the organisation hierarchy, every member attached to their manager, editable by drag and drop.",
+      "a3": "Projects tab: projects per team with their tasks, deadlines and assignees, as a list, board or timeline.",
+      "a4": "OKR tab: team objectives and their quantified key results, with progress.",
+      "a5": "Statistics tab: velocity, trend and time invested across the organisation.",
+      "a6": "Members tab: the organisation directory, with each person role and workload."
     },
     "okr": {
       "eyebrow": "03 — Alignment",
