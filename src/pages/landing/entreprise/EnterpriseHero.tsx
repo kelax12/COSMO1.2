@@ -197,7 +197,25 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
             className="relative hidden h-[26rem] w-full lg:mr-28 lg:block xl:mr-20"
             aria-hidden="true"
           >
-            <CardSwap width={392} height={272} cardDistance={44} verticalDistance={54} delay={3800} skewAmount={5} pauseOnHover>
+            {/* Pas de `pauseOnHover` : la pile occupe tout le quart droit du
+                hero, et `mouseenter` y arrête la rotation JUSQU'AU `mouseleave`.
+                Un visiteur qui lit le hero avec la souris posée à droite — ou
+                qui scrolle à la molette sans bouger le curseur — voit une pile
+                définitivement figée. Ces cartes ne contiennent aucun lien, la
+                mise en pause au survol n'apportait donc rien.
+
+                `easing="linear"` (0,8 s) plutôt que l'élastique par défaut
+                (~4,6 s) : au-delà de `delay`, deux timelines se chevauchent sur
+                les mêmes éléments et se disputent leurs transforms. */}
+            <CardSwap
+              width={392}
+              height={272}
+              cardDistance={44}
+              verticalDistance={54}
+              delay={3800}
+              skewAmount={5}
+              easing="linear"
+            >
               {HERO_SHOTS.map((tab, index) => (
                 <Card key={tab.id} customClass="!border-0 !bg-transparent overflow-visible">
                   <AppShot
