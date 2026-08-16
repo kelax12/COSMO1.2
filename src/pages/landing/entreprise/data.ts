@@ -193,7 +193,17 @@ export const HERO_SHOTS = ['projects', 'okr', 'stats'].map(
   (id) => COCKPIT_TABS.find((tab) => tab.id === id)!,
 );
 
-/** Les quatre chiffres du bandeau de preuve, sous le hero. */
+/**
+ * Les deux chiffres du bandeau de preuve, sous le hero.
+ *
+ * ⚠️ N'y mettre que des faits VÉRIFIABLES sur le produit. Le bandeau en a
+ * compté quatre : un « 0 nouvel outil à faire adopter » — un compteur qui
+ * s'anime de 0 à 0, donc qui ne montre rien — et un « 100 % des accès dérivés
+ * de l'organigramme », tautologie déguisée en mesure. Un chiffre rhétorique
+ * dans un compteur animé est exactement ce qui fait lire une page comme
+ * générée. Les deux qui restent se vérifient : 5 sièges dans le palier gratuit
+ * (`ENTERPRISE_PRICING_TIERS`), 6 onglets dans `COCKPIT_TABS`.
+ */
 export interface ProofMetric {
   value: number;
   suffix?: string;
@@ -203,8 +213,6 @@ export interface ProofMetric {
 export const PROOF_METRICS: ProofMetric[] = [
   { value: 5, labelKey: 'enterprise.proof.m1' },
   { value: 6, labelKey: 'enterprise.proof.m2' },
-  { value: 0, labelKey: 'enterprise.proof.m3' },
-  { value: 100, suffix: '%', labelKey: 'enterprise.proof.m4' },
 ];
 
 /** Les quatre garanties de la section sécurité. */

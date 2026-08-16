@@ -224,7 +224,7 @@ const ROUTES = [
     ],
     content: {
       fr: `<h1>Cosmo Entreprise — votre organigramme est votre moteur d'exécution</h1>
-        <p>Cosmo Entreprise fait de votre pyramide managériale la structure vivante de vos projets, de vos OKR et de vos statistiques d'équipe. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà : ce n'est pas un outil de plus à faire adopter.</p>
+        <p>Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme : ce qu'il voit, ce qu'on lui assigne, ce qu'on mesure. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà, ce qui évite d'avoir un outil de plus à faire adopter.</p>
 
         <h2>Le périmètre découle de la hiérarchie</h2>
         <p>Chaque membre a un manager. De ce seul lien découlent les accès : un manager voit son sous-arbre complet — ses équipes, leurs projets, leurs OKR, leurs statistiques — sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
@@ -247,7 +247,7 @@ const ROUTES = [
         <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
 
         <h2>Tarifs</h2>
-        <p>Un forfait par organisation, pas par siège : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
+        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
 
         <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
     },

@@ -31,9 +31,6 @@ const SecuritySection: React.FC = () => {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-12 max-w-3xl">
-          <span className="mb-4 block font-mono text-caption uppercase tracking-[0.3em] text-cyan-400/80">
-            {t('enterprise.security.eyebrow')}
-          </span>
           <h2
             id="security-title"
             className="mb-5 text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl lg:text-5xl"

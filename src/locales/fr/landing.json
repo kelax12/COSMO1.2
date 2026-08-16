@@ -28,9 +28,9 @@
     "demo": "Mode démo gratuit"
   },
   "cta": {
-    "line1": "Prêt à révolutionner",
-    "line2": "votre productivité ?",
-    "subtitle": "Rejoignez des milliers de professionnels qui ont déjà transformé leur façon de travailler avec Cosmo",
+    "line1": "Commencez par la démo.",
+    "line2": "Le compte peut attendre.",
+    "subtitle": "Ouvrez la démo, elle est déjà remplie. Vous jugerez sur pièces.",
     "statsAria": "Contenu de la démo : 100 tâches, 100 habitudes, 150 événements",
     "tasks": "tâches",
     "habits": "habitudes",
@@ -255,7 +255,7 @@
       "entreprise": {
         "kicker": "Cosmo Entreprise",
         "title": "Pour mon organisation",
-        "desc": "Votre pyramide managériale devient la structure vivante de vos projets, de vos OKR et de vos statistiques.",
+        "desc": "Projets, OKR et statistiques d'équipe, structurés par votre organigramme.",
         "f1": "Organigramme et périmètres",
         "f2": "Projets, OKR et charge d'équipe",
         "f3": "Statistiques par périmètre",
@@ -279,7 +279,7 @@
       "line1": "Votre organigramme",
       "line2": "n'est pas un slide.",
       "line3": "C'est votre moteur d'exécution.",
-      "subtitle": "Cosmo Entreprise fait de votre pyramide managériale la structure vivante de vos projets, de vos OKR et de vos statistiques. Et chaque collaborateur garde le Cosmo personnel qu'il utilise déjà.",
+      "subtitle": "Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme. Et chaque collaborateur garde le Cosmo personnel qu'il utilise déjà.",
       "cta": "Ouvrir la démo entreprise",
       "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
       "ctaSecondary": "Voir les tarifs",
@@ -287,13 +287,10 @@
       "scroll": "Dérouler"
     },
     "proof": {
-      "m1": "membres gratuits, sans carte",
-      "m2": "onglets de pilotage, un écran",
-      "m3": "nouvel outil à faire adopter",
-      "m4": "des accès dérivés de l'organigramme"
+      "m1": "membres inclus dans le palier gratuit",
+      "m2": "onglets de pilotage, un seul écran"
     },
     "problem": {
-      "eyebrow": "Le constat",
       "title": "Trois raisons pour lesquelles vos outils d'équipe ne tiennent pas.",
       "p1t": "Ils sont plats",
       "p1d": "Un tableau partagé ne sait pas qui manage qui. Alors on rejoue la hiérarchie à la main, en droits d'accès — et elle est fausse dès la première réorganisation.",
@@ -301,11 +298,10 @@
       "p2d": "Le énième espace collaboratif ne sera pas ouvert le lundi matin. L'adoption ne se décrète pas en réunion de lancement.",
       "p3t": "Ils comptent trop tard",
       "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est trop tard pour la rééquilibrer.",
-      "pivot": "Cosmo prend le problème par l'autre bout : il part de votre organigramme."
+      "pivot": "Cosmo part de votre organigramme."
     },
     "pyramid": {
-      "eyebrow": "01 — La primitive",
-      "title": "L'organigramme est la structure. Pas la décoration.",
+      "title": "Qui manage qui décide qui voit quoi.",
       "subtitle": "Chaque membre a un manager. De ce seul lien découlent les périmètres : ce qu'on voit, ce qu'on assigne, ce qu'on mesure. Déplacez quelqu'un dans la pyramide, tous ses accès suivent.",
       "hint": "Survolez un membre pour éclairer son périmètre.",
       "legendScope": "Périmètre du manager survolé",
@@ -321,7 +317,6 @@
       "roleAdmin": "Admin"
     },
     "cockpit": {
-      "eyebrow": "02 — Le cockpit",
       "title": "Six onglets. Un seul écran de pilotage.",
       "subtitle": "L'espace entreprise, tel qu'il est livré aujourd'hui. Faites défiler pour le parcourir.",
       "t1": "Aperçu",
@@ -354,20 +349,18 @@
       "a6": "Onglet Membres : l'annuaire de l'organisation, avec le rôle et la charge de chaque personne."
     },
     "okr": {
-      "eyebrow": "03 — L'alignement",
-      "title": "Des objectifs qui descendent, des preuves qui remontent.",
+      "title": "Un objectif d'organisation, décliné jusqu'au résultat clé.",
       "subtitle": "Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Rien ne se perd entre deux niveaux.",
       "orgLabel": "Objectif d'organisation",
       "teamLabel": "OKR d'équipe",
       "krLabel": "Résultats clés",
       "b1": "Chaque équipe accroche ses OKR à un objectif commun, dans les catégories que vous définissez.",
-      "b2": "Les résultats clés portent un chiffre et une cible — pas une intention.",
+      "b2": "Les résultats clés portent un chiffre et une cible.",
       "b3": "Chaque résultat clé atteint est journalisé à la date où il l'a été.",
       "journalTitle": "Journal inaltérable",
       "journalBody": "Un résultat clé atteint ne peut pas être réécrit après coup. C'est ce qui rend la courbe de votre tableau de bord opposable en comité."
     },
     "security": {
-      "eyebrow": "04 — La confiance",
       "title": "Les questions qu'on vous posera en comité.",
       "subtitle": "Nous y répondons ici, avant qu'elles bloquent le déploiement.",
       "s1t": "Isolation en base de données",
@@ -380,9 +373,8 @@
       "s4d": "Vous partez quand vous voulez. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support."
     },
     "pricing": {
-      "eyebrow": "05 — Le tarif",
-      "title": "Un forfait par organisation. Pas par siège.",
-      "subtitle": "Le prix suit le palier atteint, et rien d'autre. Pas de module à débloquer, pas de devis à attendre.",
+      "title": "20 € par mois pour dix personnes.",
+      "subtitle": "Le forfait couvre toute l'organisation, quel que soit le nombre de projets. Le prix suit le palier atteint : pas de module à débloquer, pas de devis à attendre.",
       "sliderLabel": "Combien êtes-vous ?",
       "sliderAria": "Nombre de membres de votre organisation",
       "membersUnit": "membres",

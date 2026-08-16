@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { localizePath, routeSlug, stripLocalePrefix } from '@/i18n/routes';
+import { routeSlug, stripLocalePrefix } from '@/i18n/routes';
 import { useLocale } from '@/i18n/store';
 
 /** Les deux parcours de la landing. Ils sont mutuellement exclusifs. */
@@ -44,9 +44,11 @@ export function useLandingTrack() {
   const selectTrack = useCallback(
     (next: LandingTrack) => {
       if (next === track) return;
-      navigate(
-        localizePath(next === 'entreprise' ? `/${routeSlug('enterprisePresentation', 'fr')}` : '/', locale),
-      );
+      // Chemin SANS préfixe de locale : `navigate()` route à l'intérieur du
+      // `basename` déjà posé par le routeur (`/en`, `/es`…), qui ajoute lui-même
+      // le préfixe. Le préfixer ici en plus produirait `/en/en/...` (cf.
+      // `src/i18n/bootstrap.ts`, en-tête « Pourquoi basename »).
+      navigate(next === 'entreprise' ? `/${routeSlug('enterprisePresentation', locale)}` : '/');
     },
     [track, navigate, locale],
   );

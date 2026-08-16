@@ -8,7 +8,15 @@ type Tier = (typeof ENTERPRISE_PRICING_TIERS)[number];
 
 /** Effectif maximum du curseur — au-delà, tout le monde est dans le dernier palier. */
 const SLIDER_MAX = 80;
-const SLIDER_DEFAULT = 12;
+/**
+ * Position de départ du curseur : dix membres.
+ *
+ * Ce n'est pas arbitraire — le titre de la section annonce « 20 € par mois pour
+ * dix personnes », et dix membres tombent dans le palier 5-10 à 20 €. Le
+ * curseur montre donc, au premier coup d'œil, exactement le cas énoncé par le
+ * titre. Changer l'un sans l'autre ferait cohabiter deux prix à l'écran.
+ */
+const SLIDER_DEFAULT = 10;
 
 const INCLUDED: KeyOf<'landing'>[] = [
   'enterprise.pricing.i1',
@@ -66,9 +74,6 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-12 max-w-3xl">
-          <span className="mb-4 block font-mono text-caption uppercase tracking-[0.3em] text-[#F5B942]">
-            {t('enterprise.pricing.eyebrow')}
-          </span>
           <h2
             id="pricing-title"
             className="mb-5 text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl lg:text-5xl"
