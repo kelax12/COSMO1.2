@@ -46,9 +46,6 @@ const SecuritySection: React.FC = () => {
               spotlightColor="rgba(34, 211, 238, 0.12)"
               className="!rounded-xl !border-white/[0.08] !bg-[#0A0C11] !p-7 transition-colors duration-300 hover:!border-cyan-300/25"
             >
-              {/* Filet cyan plutôt qu'un pictogramme : il tient le même rôle
-                  d'accroche visuelle sans prétendre illustrer une garantie. */}
-              <span className="mb-5 block h-px w-10 bg-cyan-300/40" aria-hidden="true" />
               <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
             </SpotlightCard>

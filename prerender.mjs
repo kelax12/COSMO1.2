@@ -232,24 +232,24 @@ const ROUTES = [
     ],
     content: {
       fr: `<h1>Cosmo Entreprise, votre organigramme est votre moteur d'exécution</h1>
-        <p>Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme : ce qu'il voit, ce qu'on lui assigne, ce qu'on mesure. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà, ce qui évite d'avoir un outil de plus à faire adopter.</p>
+        <p>Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme : ce qu'il voit, ce qu'on lui assigne, ce qu'on mesure. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà, ce qui évite d'avoir un outil de plus à faire adopter. La mise en place tient en quatre étapes.</p>
 
-        <h2>Le périmètre découle de la hiérarchie</h2>
-        <p>Chaque membre a un manager. De ce seul lien découlent les accès : un manager voit son sous-arbre complet (ses équipes, leurs projets, leurs OKR, leurs statistiques) sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
+        <h2>Étape 1 : invitez votre équipe et regroupez-la</h2>
+        <p>Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, par code d'organisation ou par lien à usage unique, et vous le rattachez à son responsable. Vous créez ensuite autant d'équipes que nécessaire et y placez les personnes que vous voulez, une même personne pouvant appartenir à plusieurs équipes. De ce seul lien de rattachement découlent les accès : un responsable voit son sous-arbre complet (ses équipes, leurs projets, leurs objectifs, leurs statistiques) sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien.</p>
+        <p>L'organigramme n'est pas un trombinoscope, c'est l'écran depuis lequel on suit chaque personne : ouvrir sa fiche donne ses tâches en cours, sa charge et son agenda. Un responsable peut créer, déplacer et modifier les événements de l'agenda des personnes qui lui reportent ; ce qu'elles ont marqué comme personnel reste privé, seul le créneau apparaît. Deux branches sœurs de l'organigramme, elles, sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
+        <p><img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="Onglet Pyramide de Cosmo Entreprise : l'organigramme de l'organisation, chaque membre rattaché à son manager" /></p>
 
-        <h2>À quoi ressemble l'espace entreprise</h2>
-        <p>Trois onglets de l'espace entreprise, en mode démo :</p>
-        <p>
-          <img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="Onglet Pyramide de Cosmo Entreprise : l'organigramme de l'organisation, chaque membre rattaché à son manager" />
-          <img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="Onglet Projets de Cosmo Entreprise : les projets par équipe avec leurs tâches, échéances et personnes assignées" />
-          <img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="Onglet Statistiques de Cosmo Entreprise : progression des OKR et charge de travail de chaque membre de l'équipe" />
-        </p>
+        <h2>Étape 2 : créez vos projets et attribuez-les à l'échelle voulue</h2>
+        <p>Un projet appartient à une équipe et rassemble ses tâches. Vous les assignez à une personne ou à plusieurs, dans tout votre périmètre, et chacune les retrouve dans son propre Cosmo à côté de ses tâches personnelles. Kanban pour savoir où en est chaque tâche, frise chronologique pour voir arriver les échéances, avec sous-tâches, labels, commentaires à mentions et historique des modifications.</p>
+        <p><img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="Onglet Projets de Cosmo Entreprise : les projets par équipe avec leurs tâches, échéances et personnes assignées" /></p>
 
-        <h2>Six onglets de pilotage</h2>
-        <p><strong>Aperçu</strong> : l'activité de vos équipes, la charge du moment et ce qui vient de bouger. <strong>Organigramme</strong> : la hiérarchie complète et éditable : rattacher un membre, réassigner un manager, transférer la propriété. <strong>Projets</strong> : kanban ou frise chronologique, avec tâches d'équipe, sous-tâches, labels, commentaires et historique. <strong>OKR</strong> : objectifs d'équipe, résultats clés chiffrés et catégories propres à votre organisation. <strong>Statistiques</strong> : vélocité, tendance et temps investi, sur toute l'organisation pour une direction et sur son périmètre pour un manager. <strong>Membres</strong> : annuaire, fiches, agenda et charge de chacun, avec invitation par code ou par lien.</p>
+        <h2>Étape 3 : posez vos objectifs, à toutes les échelles</h2>
+        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés : le même mécanisme à chaque niveau, dans les catégories que vous définissez. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup, c'est ce qui rend la courbe du tableau de bord opposable en comité.</p>
+        <p><img src="/screenshots/entreprise/okr.webp" width="1500" height="938" alt="Onglet OKR de Cosmo Entreprise : les objectifs d'équipe et leurs résultats clés chiffrés, avec leur progression" /></p>
 
-        <h2>Des objectifs qui descendent, des preuves qui remontent</h2>
-        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup, c'est ce qui rend la courbe du tableau de bord opposable en comité.</p>
+        <h2>Étape 4 : suivez la progression de chacun</h2>
+        <p>L'onglet Statistiques répond à la question du lundi matin : qui avance, qui décroche, qui est surchargé. Vélocité et tendance sur la période comparée aux précédentes, tâches ouvertes et retards de chaque membre, temps investi agrégé par équipe et par projet. Une direction lit toute l'organisation, un responsable lit son périmètre, et c'est le rattachement posé à l'étape 1 qui le décide. L'aperçu, lui, ouvre chaque journée : vos tâches assignées, vos échéances et ce qui vient de bouger chez vos équipes.</p>
+        <p><img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="Onglet Statistiques de Cosmo Entreprise : progression des OKR et charge de travail de chaque membre de l'équipe" /></p>
 
         <h2>Sécurité, confidentialité et réversibilité</h2>
         <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
