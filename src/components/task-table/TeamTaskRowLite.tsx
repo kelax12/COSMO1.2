@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import { Link } from 'react-router';
-import { Pencil, UsersRound, ArrowUpRight } from 'lucide-react';
+import { UsersRound, ArrowUpRight } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { isTaskOverdue, projectColor } from '../organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
@@ -28,7 +28,7 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
 
   return (
     <tr
-      className="animate-fade-in transition-colors cursor-pointer bg-indigo-500/[0.04] hover:bg-indigo-500/[0.08] dark:bg-indigo-500/[0.06] dark:hover:bg-indigo-500/10"
+      className="animate-fade-in transition-colors cursor-pointer bg-indigo-500/[0.09] hover:bg-indigo-500/[0.15] dark:bg-indigo-500/[0.16] dark:hover:bg-indigo-500/[0.22]"
       onClick={() => onEdit(task)}
       style={{ borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
     >
@@ -56,7 +56,7 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
       </td>
       <td className="px-2 py-4">
         <div className="flex justify-center">
-          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
+          <span className={`w-4 h-4 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
         </div>
       </td>
       <td className={`font-medium px-2 py-4 text-base ${task.completed ? 'line-through' : ''}`}
@@ -88,15 +88,6 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
       </td>
       <td onClick={(e) => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
         <div className="flex items-center justify-center gap-1">
-          <button
-            type="button"
-            onClick={() => onEdit(task)}
-            aria-label={t('team.editAria', { name: task.name })}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
-            style={{ color: 'rgb(var(--color-text-muted))' }}
-          >
-            <Pencil size={16} />
-          </button>
           <Link
             to="/entreprise"
             onClick={(e) => e.stopPropagation()}
