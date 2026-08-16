@@ -3,7 +3,7 @@
     "label": "Langue",
     "description": "Langue de l'interface",
     "sectionSubtitle": "Choisissez la langue dans laquelle l'application s'affiche.",
-    "reloadNotice": "La page est rechargée pour appliquer la langue partout — dates et formats de nombres compris."
+    "reloadNotice": "La page est rechargée pour appliquer la langue partout, dates et formats de nombres compris."
   },
   "nav": {
     "dashboard": "Accueil",
@@ -85,7 +85,7 @@
     "sendFailed": "L'envoi a échoué. Réessayez dans un instant.",
     "resetTitle": "Nouveau mot de passe",
     "resetLinkInvalid": "Ce lien est invalide ou a expiré.",
-    "resetFailed": "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré — refaites une demande.",
+    "resetFailed": "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré. Refaites une demande.",
     "welcomeBack": "Bon retour !",
     "joinCosmo": "Rejoignez Cosmo",
     "redirecting": "Redirection...",
@@ -106,7 +106,7 @@
   },
   "theme": {
     "label": "Thème de l'interface",
-    "title": "Thème : {{name}} — cliquer pour changer",
+    "title": "Thème : {{name}}, cliquer pour changer",
     "aria": "Thème actuel : {{name}}. Cliquer pour changer.",
     "light": "Clair",
     "dark": "Sombre",
@@ -125,7 +125,7 @@
   "demoBanner": {
     "aria": "Mode démo",
     "label": "Mode démo",
-    "text": " — données d'exemple, locales à cet appareil. ",
+    "text": " : données d'exemple, locales à cet appareil. ",
     "createAccount": "Créez un compte",
     "rest": " pour démarrer avec vos vraies données, synchronisées partout.",
     "hide": "Masquer la bannière démo"
@@ -133,7 +133,7 @@
   "demoBridge": {
     "aria": "Créer un compte COSMO",
     "title": "Gardez votre organisation",
-    "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils — c'est gratuit.",
+    "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils, c'est gratuit.",
     "disclaimer": "Les données de cette démo ne sont pas transférées : votre compte repart d'une page blanche.",
     "cta": "Créer mon compte",
     "later": "Plus tard"
@@ -195,7 +195,7 @@
     "availableAfterCreate": "Disponible après la création",
     "generatingLink": "Génération du lien…",
     "copied": "Lien d'invitation copié !",
-    "copyFailed": "Impossible de copier — sélectionnez le lien manuellement.",
+    "copyFailed": "Impossible de copier. Sélectionnez le lien manuellement.",
     "hint": "Toute personne avec ce lien pourra rejoindre la tâche, même sans compte (valable 7 jours).",
     "creating": "Création…",
     "generate": "Générer le lien",

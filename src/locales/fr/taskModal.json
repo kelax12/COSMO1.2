@@ -13,7 +13,7 @@
     "savingDots": "Enregistrement..."
   },
   "fields": {
-    "moreOptions": "Plus d'options — échéance, catégorie, priorité, durée, listes",
+    "moreOptions": "Plus d'options : échéance, catégorie, priorité, durée, listes",
     "priority": "Priorité",
     "prioritySelect": "Sélectionner la priorité de la tâche",
     "priorityPlaceholder": "Choisir une priorité",

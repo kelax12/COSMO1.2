@@ -108,7 +108,7 @@ export const Donut: React.FC<{ data: LabeledValue[] }> = ({ data }) => {
         {data.map((d, i) => (
           <span key={d.label} className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PALETTE[i % PALETTE.length] }} />
-            {d.label} — <strong style={{ color: 'rgb(var(--color-text-primary))' }}>{d.value}</strong>
+            {d.label} : <strong style={{ color: 'rgb(var(--color-text-primary))' }}>{d.value}</strong>
             {total > 0 && <span style={{ color: 'rgb(var(--color-text-muted))' }}>({Math.round((100 * d.value) / total)}%)</span>}
           </span>
         ))}

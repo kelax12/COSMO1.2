@@ -1,6 +1,6 @@
 {
   "root": {
-    "title": "Cosmo — Tasks, habits and OKRs in one free app",
+    "title": "Cosmo: tasks, habits and OKRs in one free app",
     "description": "Tasks, habits, calendar and OKRs together in one free app. Try the demo without signing up, preloaded with 12 months of data."
   },
   "guide": {
@@ -16,15 +16,15 @@
     "description": "Log in to Cosmo to pick up your tasks, habits, calendar and OKRs. Quick access with email and password or Google sign-in."
   },
   "about": {
-    "title": "About Cosmo — who we are",
+    "title": "About Cosmo: who we are",
     "description": "Why Cosmo exists: a free, independent productivity app bringing tasks, habits, calendar and OKRs into a single ecosystem."
   },
   "enterprisePresentation": {
-    "title": "Cosmo for Companies — your org chart as an execution engine",
+    "title": "Cosmo for Companies: your org chart as an execution engine",
     "description": "Team projects, OKRs and statistics structured by your reporting lines. Free up to 5 members, no credit card. Every teammate keeps their personal Cosmo."
   },
   "blog": {
-    "title": "Cosmo blog — Productivity, OKRs, habits and time-blocking",
+    "title": "Cosmo blog: productivity, OKRs, habits and time-blocking",
     "description": "Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. From the Cosmo team."
   },
   "terms": {

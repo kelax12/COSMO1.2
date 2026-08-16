@@ -22,7 +22,7 @@
     <meta name="format-detection" content="telephone=no" />
 
     <!-- Primary SEO -->
-    <title>Cosmo — Tâches, habitudes et OKR dans une seule app gratuite</title>
+    <title>Cosmo, Tâches, habitudes et OKR dans une seule app gratuite</title>
     <meta name="description" content="Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription, avec 12 mois de données pré-remplies." />
     <meta name="author" content="Cosmo" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
@@ -33,7 +33,7 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Cosmo" />
-    <meta property="og:title" content="Cosmo — Tâches, habitudes et OKR dans une seule app gratuite" />
+    <meta property="og:title" content="Cosmo, Tâches, habitudes et OKR dans une seule app gratuite" />
     <meta property="og:description" content="Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription." />
     <meta property="og:url" content="https://thecosmo.app/" />
     <meta property="og:image" content="https://thecosmo.app/og-card.png" />
@@ -57,7 +57,7 @@
     <!-- ───────────────────────────────────────────────────────────────────
          Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
 
-         La CSP de vercel.json est `script-src 'self'` — sans 'unsafe-inline'
+         La CSP de vercel.json est `script-src 'self'`, sans 'unsafe-inline'
          ni nonce : tout <script> inline est bloqué en prod (et seulement en
          prod, le serveur de dev n'envoie pas la CSP). Masquer le bloc SEO en
          JS marcherait donc en local et échouerait silencieusement en ligne.
@@ -65,11 +65,11 @@
 
          Règle du jeu :
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
-           puis React l'efface tout seul — createRoot().render() vide les
+           puis React l'efface tout seul, createRoot().render() vide les
            enfants de #root au premier commit. Aucun code à synchroniser.
          - #seo-fallback (injecté par prerender.mjs dans dist/) reste dans le
            HTML pour les crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
-           PerplexityBot…) — ils lisent le balisage, pas le CSS — mais n'est
+           PerplexityBot…), ils lisent le balisage, pas le CSS, mais n'est
            jamais peint par un navigateur.
          - <noscript> ci-dessous : JS désactivé = pas de SPA possible, on rend
            donc le contenu SEO visible et on retire le spinner (sinon l'écran
@@ -81,7 +81,7 @@
       @keyframes boot-spin{to{transform:rotate(360deg)}}
       @media (prefers-color-scheme:dark){#boot-screen{background:#0f172a}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#818cf8}}
       /* Mobile démarre toujours en thème Noir (palette GitHub), cf. src/lib/theme.ts →
-         defaultTheme() — indépendant de la préférence système, d'où la règle après
+         defaultTheme(), indépendant de la préférence système, d'où la règle après
          (et non combinée avec prefers-color-scheme:dark) pour gagner y compris en clair. */
       @media (max-width:767px){#boot-screen{background:#24292e}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#58a6ff}}
       @media (prefers-reduced-motion:reduce){#boot-screen .ring{animation-duration:2.4s}}
@@ -129,7 +129,7 @@
         "Gestion de tâches avec priorités 1-5 et catégories colorées",
         "Suivi d'habitudes avec heatmap 26 semaines et streaks",
         "Agenda intégré avec time-blocking par glisser-déposer",
-        "OKR (Objectives & Key Results) — méthode Google, Intel, Netflix",
+        "OKR (Objectives & Key Results) : méthode Google, Intel, Netflix",
         "Statistiques multi-modules : tâches, habitudes, agenda, OKR",
         "Collaboration et partage de tâches en équipe",
         "Mode démo sans inscription avec 100 tâches et données réalistes",
@@ -230,12 +230,12 @@
         <p>Cosmo est une application de productivité gratuite qui centralise la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results).</p>
         <h2>Fonctionnalités principales</h2>
         <ul>
-          <li><strong>Gestionnaire de tâches</strong> — priorités, catégories colorées, deadlines, listes et filtres avancés</li>
-          <li><strong>Suivi d'habitudes</strong> — heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
-          <li><strong>Agenda avec time-blocking</strong> — glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
-          <li><strong>OKR (Objectives &amp; Key Results)</strong> — méthode utilisée par Google, Intel et Netflix</li>
-          <li><strong>Statistiques multi-modules</strong> — analysez votre temps sur tâches, habitudes, agenda et OKR</li>
-          <li><strong>Mode démo instantané</strong> — aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
+          <li><strong>Gestionnaire de tâches</strong> : priorités, catégories colorées, deadlines, listes et filtres avancés</li>
+          <li><strong>Suivi d'habitudes</strong> : heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
+          <li><strong>Agenda avec time-blocking</strong> : glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
+          <li><strong>OKR (Objectives &amp; Key Results)</strong> : méthode utilisée par Google, Intel et Netflix</li>
+          <li><strong>Statistiques multi-modules</strong> : analysez votre temps sur tâches, habitudes, agenda et OKR</li>
+          <li><strong>Mode démo instantané</strong> : aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
         </ul>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>
       </div>

@@ -52,7 +52,7 @@ const HabitEveningReminder = () => {
           onClick={() => { dismiss(); navigate('/habits'); }}
           className="flex-1 text-left text-sm font-medium text-amber-800 dark:text-amber-200 hover:underline underline-offset-2"
         >
-          {remaining.length} habitude{remaining.length > 1 ? 's' : ''} pas encore cochée{remaining.length > 1 ? 's' : ''} aujourd'hui — voir
+          {remaining.length} habitude{remaining.length > 1 ? 's' : ''} pas encore cochée{remaining.length > 1 ? 's' : ''} aujourd'hui, voir
         </button>
         <button
           type="button"

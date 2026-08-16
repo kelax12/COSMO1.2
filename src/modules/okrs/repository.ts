@@ -145,7 +145,7 @@ function createDemoOkrs(): OKR[] {
     keyResults: [
       { id: 'kr-22', title: 'Sport 3x par semaine pendant 6 mois', currentValue: 72,   targetValue: 72,   unit: 'séances', completed: true, estimatedTime: 60,  completedAt: completedAt(-160) },
       { id: 'kr-23', title: '5000 pages lues en 6 mois',           currentValue: 5240, targetValue: 5000, unit: 'pages',   completed: true, estimatedTime: 0,   completedAt: completedAt(-165) },
-      { id: 'kr-24', title: 'Méditation quotidienne — streak 90j', currentValue: 94,   targetValue: 90,   unit: 'jours',   completed: true, estimatedTime: 15,  completedAt: completedAt(-170) },
+      { id: 'kr-24', title: 'Méditation quotidienne, streak 90j', currentValue: 94,   targetValue: 90,   unit: 'jours',   completed: true, estimatedTime: 15,  completedAt: completedAt(-170) },
     ],
     startDate: getDate(-430),
     endDate: getDate(-250),
@@ -226,7 +226,7 @@ const DEMO_OKRS_EN: Record<string, { title: string; description: string; keyResu
     keyResults: {
       'kr-22': 'Exercise 3x a week for 6 months',
       'kr-23': '5000 pages read in 6 months',
-      'kr-24': 'Daily meditation — 90-day streak',
+      'kr-24': 'Daily meditation, 90-day streak',
     },
   },
 };

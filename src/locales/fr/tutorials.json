@@ -23,7 +23,7 @@
     "step1Desc": "Vue verticale par jour, optimisée pour le scroll au pouce. Touchez les zones surlignées pour découvrir l'essentiel.",
     "step2Desc": "Faites glisser horizontalement pour parcourir vos prochaines journées. Touchez une date pour la centrer dans la grille ci-dessous.",
     "step3Desc": "Jour pour le détail heure par heure, 2J pour comparer deux jours, Mois pour le contexte large. Bascule en un toucher.",
-    "step4Desc": "Ce bouton ouvre le panneau de vos tâches non planifiées. Touchez-en une puis « Planifier dans l'agenda » — le glisser-déposer est réservé au desktop.",
+    "step4Desc": "Ce bouton ouvre le panneau de vos tâches non planifiées. Touchez-en une puis « Planifier dans l'agenda ». Le glisser-déposer est réservé au desktop.",
     "step5Desc": "Le bouton « + » en bas de l'écran ouvre le formulaire en bottom-sheet, pré-rempli à l'heure courante du jour sélectionné.",
     "step6Desc": "Maintenez votre doigt sur une plage horaire vide dans la grille pour créer un événement directement à cette heure."
   },
@@ -67,7 +67,7 @@
     "step5Title": "Le lien stratégique : tâches → KR",
     "step1Desc": "OKR = Objective (un cap ambitieux) + Key Results (3-5 indicateurs chiffrés). La méthode des startups pour avancer dans la bonne direction.",
     "step2Desc": "Faites glisser les chips horizontalement pour filtrer vos objectifs (Travail, Perso, Santé…). Touchez « Tous » pour réinitialiser.",
-    "step3Desc": "Le bouton flottant en bas à droite ouvre le formulaire. Définissez 3 à 5 KR mesurables — pas plus, sinon vous diluez votre énergie.",
+    "step3Desc": "Le bouton flottant en bas à droite ouvre le formulaire. Définissez 3 à 5 KR mesurables, pas plus, sinon vous diluez votre énergie.",
     "step4Desc": "Tapez la carte pour ouvrir le détail. La jauge à droite indique la santé globale. Chaque KR a sa barre de progression, ajustable au tap.",
     "step5Desc": "Astuce : créez d'abord vos OKR. Ensuite, créez des tâches qui font progresser un KR. Votre dashboard reflètera l'avancement réel."
   },
@@ -93,7 +93,7 @@
     "step5Title": "Créer une tâche",
     "step6Title": "Geste : glisser à droite pour valider",
     "step7Title": "Plus simple : le bouton « … »",
-    "step1Desc": "Ici vous gérez toutes vos tâches. 7 étapes pour découvrir les gestes mobiles — swipe, tap long, bouton « … ».",
+    "step1Desc": "Ici vous gérez toutes vos tâches. 7 étapes pour découvrir les gestes mobiles : swipe, tap long, bouton « … ».",
     "step2Desc": "Vos listes (Travail, Courses, Voyage…) se trouvent ici. Touchez une liste pour filtrer. Faites glisser le carrousel pour voir toutes vos listes.",
     "step3Desc": "Tapez pour chercher. Touchez « + d'options » pour révéler les filtres rapides : Favoris, Terminées, En retard, Collaboration.",
     "step4Desc": "Affiche vos échéances sur une semaine. Touchez ce bouton pour l'afficher ou le masquer.",

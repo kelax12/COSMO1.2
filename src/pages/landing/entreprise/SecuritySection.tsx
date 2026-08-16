@@ -1,10 +1,7 @@
 import React from 'react';
-import { Database, EyeOff, ScrollText, Undo2 } from 'lucide-react';
 import SpotlightCard from '@/components/reactbits/SpotlightCard';
 import { useT } from '@/i18n/useT';
 import { SECURITY_POINTS } from './data';
-
-const ICONS = [Database, EyeOff, ScrollText, Undo2];
 
 /**
  * Section « confiance » — les quatre objections qui bloquent un déploiement.
@@ -43,22 +40,19 @@ const SecuritySection: React.FC = () => {
         </header>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {SECURITY_POINTS.map(({ titleKey, bodyKey }, index) => {
-            const Icon = ICONS[index];
-            return (
-              <SpotlightCard
-                key={titleKey}
-                spotlightColor="rgba(34, 211, 238, 0.12)"
-                className="!rounded-xl !border-white/[0.08] !bg-[#0A0C11] !p-7 transition-colors duration-300 hover:!border-cyan-300/25"
-              >
-                <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-400/[0.08]">
-                  <Icon size={17} className="text-cyan-300" aria-hidden="true" />
-                </div>
-                <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>
-                <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
-              </SpotlightCard>
-            );
-          })}
+          {SECURITY_POINTS.map(({ titleKey, bodyKey }) => (
+            <SpotlightCard
+              key={titleKey}
+              spotlightColor="rgba(34, 211, 238, 0.12)"
+              className="!rounded-xl !border-white/[0.08] !bg-[#0A0C11] !p-7 transition-colors duration-300 hover:!border-cyan-300/25"
+            >
+              {/* Filet cyan plutôt qu'un pictogramme : il tient le même rôle
+                  d'accroche visuelle sans prétendre illustrer une garantie. */}
+              <span className="mb-5 block h-px w-10 bg-cyan-300/40" aria-hidden="true" />
+              <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>
+              <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
+            </SpotlightCard>
+          ))}
         </div>
       </div>
     </section>

@@ -136,7 +136,7 @@ const DEMO_LABELS: TeamLabel[] = [
 ];
 
 const DEMO_COMMENTS: TeamTaskComment[] = [
-  { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma — retours bienvenus !', mentions: [], createdAt: iso(-4) },
+  { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma, retours bienvenus !', mentions: [], createdAt: iso(-4) },
   { id: 'comment-seed-2', taskId: 'ttask-1', authorId: DEMO_USER_ID, body: '@Marie Dupont super base, je préfère la variante B pour le hero.', mentions: ['friend-1'], createdAt: iso(-3) },
   { id: 'comment-seed-3', taskId: 'ttask-8', authorId: 'friend-2', body: 'Le planning presse est calé, reste à valider le budget.', mentions: [], createdAt: iso(-2) },
   // Adossé à la notification « mention » seedée dans le module organizations :

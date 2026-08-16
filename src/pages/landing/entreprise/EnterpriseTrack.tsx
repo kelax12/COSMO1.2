@@ -2,7 +2,6 @@ import React from 'react';
 import { useT } from '@/i18n/useT';
 import TrackAnchors from '../TrackAnchors';
 import EnterpriseHero from './EnterpriseHero';
-import ProofBand from './ProofBand';
 import ProblemSection from './ProblemSection';
 import PyramidSection from './PyramidSection';
 import CockpitSection from './CockpitSection';
@@ -39,7 +38,6 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister })
 
       <EnterpriseHero onDemo={onDemo} />
 
-      <ProofBand />
       <ProblemSection />
       <PyramidSection />
       <CockpitSection />

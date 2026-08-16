@@ -3,7 +3,7 @@
     "label": "Language",
     "description": "Interface language",
     "sectionSubtitle": "Choose the language the app is displayed in.",
-    "reloadNotice": "The page reloads to apply the language everywhere — including dates and number formats."
+    "reloadNotice": "The page reloads to apply the language everywhere, including dates and number formats."
   },
   "nav": {
     "dashboard": "Home",
@@ -82,7 +82,7 @@
     "sendFailed": "Sending failed. Try again in a moment.",
     "resetTitle": "New password",
     "resetLinkInvalid": "This link is invalid or has expired.",
-    "resetFailed": "Couldn't update your password. The link may have expired — request a new one.",
+    "resetFailed": "Couldn't update your password. The link may have expired. Request a new one.",
     "welcomeBack": "Welcome back!",
     "joinCosmo": "Join Cosmo",
     "redirecting": "Redirecting...",
@@ -103,7 +103,7 @@
   },
   "theme": {
     "label": "Interface theme",
-    "title": "Theme: {{name}} — click to change",
+    "title": "Theme: {{name}}, click to change",
     "aria": "Current theme: {{name}}. Click to change.",
     "light": "Light",
     "dark": "Dark",
@@ -122,7 +122,7 @@
   "demoBanner": {
     "aria": "Demo mode",
     "label": "Demo mode",
-    "text": " — sample data, local to this device. ",
+    "text": ": sample data, local to this device. ",
     "createAccount": "Create an account",
     "rest": " to start with your real data, synced everywhere.",
     "hide": "Hide the demo banner"
@@ -130,7 +130,7 @@
   "demoBridge": {
     "aria": "Create a COSMO account",
     "title": "Keep your setup",
-    "text": "You've just built yourself a real system. Create your account to have it on every device — it's free.",
+    "text": "You've just built yourself a real system. Create your account to have it on every device, it's free.",
     "disclaimer": "This demo's data isn't transferred: your account starts from a clean slate.",
     "cta": "Create my account",
     "later": "Later"
@@ -192,7 +192,7 @@
     "availableAfterCreate": "Available once created",
     "generatingLink": "Generating the link…",
     "copied": "Invitation link copied!",
-    "copyFailed": "Couldn't copy — select the link manually.",
+    "copyFailed": "Couldn't copy. Select the link manually.",
     "hint": "Anyone with this link can join the task, even without an account (valid for 7 days).",
     "creating": "Creating…",
     "generate": "Generate the link",

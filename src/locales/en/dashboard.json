@@ -12,7 +12,7 @@
   },
   "checkin": {
     "title": "Your week is waiting",
-    "subtitle": "Take stock of your goals — two minutes is enough.",
+    "subtitle": "Take stock of your goals, two minutes is enough.",
     "cta": "Check in",
     "dismiss": "Skip this week's check-in"
   },
@@ -119,7 +119,7 @@
   },
   "today": {
     "loading": "Loading…",
-    "empty": "Nothing due today — neither personal nor team.",
+    "empty": "Nothing due today, neither personal nor team.",
     "summary_one": "{{count}} task today",
     "summary_other": "{{count}} tasks today",
     "overdue_one": "{{count}} overdue",
