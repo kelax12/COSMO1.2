@@ -16,7 +16,7 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
-import { priceIdForTier, tierByKey } from '../_shared/org-tiers.ts'
+import { priceIdForTier, tierByKey, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -109,7 +109,13 @@ Deno.serve(async (req) => {
       const customer = await stripe.customers.create(
         {
           email: user.email,
-          metadata: { org_id: orgId, supabase_uid: user.id },
+          // ⚠️ La clé s'appelle `org_owner_uid`, PAS `supabase_uid`. Ce nom est
+          // délibérément évité ici : dans le webhook, `getUidFromCustomer` lit
+          // `metadata.supabase_uid` comme MARQUEUR d'un customer PARTICULIER.
+          // Poser cette clé sur le customer d'une organisation permettait à une
+          // facture d'org mal routée de se résoudre en un uid personnel, et
+          // d'écraser l'abonnement privé du propriétaire.
+          metadata: { org_id: orgId, org_owner_uid: user.id },
         },
         { idempotencyKey: `org-customer:${orgId}` },
       )
@@ -117,16 +123,33 @@ Deno.serve(async (req) => {
 
       // Upsert AVANT la session : sans ça, un retour d'erreur laisse un
       // customer Stripe orphelin et le prochain appel en recrée un (faille U1).
-      await supabaseAdmin.from('org_subscriptions').upsert(
+      //
+      // ⚠️ L'erreur n'est PAS ignorable. Cette ligne est le SEUL lien
+      // customer Stripe → organisation : sans elle, le webhook ne sait pas
+      // qu'une facture appartient à une org. Or Stripe livre fréquemment
+      // `invoice.payment_succeeded` AVANT `checkout.session.completed`, donc la
+      // toute première facture d'un client qui vient de payer serait mal
+      // routée. On échoue avant d'envoyer qui que ce soit sur la page de
+      // paiement ; l'`idempotencyKey` de `customers.create` garantit qu'un
+      // nouvel essai ne créera pas un second customer Stripe.
+      const { error: linkError } = await supabaseAdmin.from('org_subscriptions').upsert(
         {
           org_id: orgId,
           tier_key: 'free',
-          max_members: 5,
+          max_members: FREE_TIER_MAX_MEMBERS,
           status: 'active',
           stripe_customer_id: customerId,
         },
         { onConflict: 'org_id' },
       )
+      if (linkError) {
+        console.error('org_subscriptions customer link upsert error:', linkError)
+        await opsAlert(
+          'stripe-org-checkout',
+          'could not persist the Stripe customer link before checkout — session aborted to avoid a misrouted first invoice',
+        )
+        return json({ error: 'Internal server error' }, 500)
+      }
     }
 
     const priceId = priceIdForTier(tier.key, (name) => Deno.env.get(name))
