@@ -717,7 +717,8 @@
     "projects": "Projects",
     "okr": "OKRs",
     "stats": "Statistics",
-    "members": "Members"
+    "members": "Members",
+    "billing": "Billing"
   },
   "colors": {
     "indigo": "Indigo",
@@ -782,5 +783,30 @@
     "adminShort": "Admin",
     "manager": "Manager",
     "member": "Member"
+  },
+  "billing": {
+    "title": "Organization subscription",
+    "subtitle": "One price per member tier, no commitment. The free tier is the trial.",
+    "rangeUpTo": "{{min}} to {{max}} members",
+    "rangeFrom": "{{min}} members and up",
+    "perMonth": "per month",
+    "free": "Free",
+    "currentTier": "Current tier",
+    "currentTierFree": "You are on the free tier.",
+    "seatsUsed": "{{count}} members of {{quota}} seats",
+    "seatsUnlimited": "{{count}} members, unlimited seats",
+    "renewsOn": "Renews on {{date}}",
+    "discountApplied": "Promo code applied: {{code}}",
+    "statusPastDue": "The last payment failed. Current members keep full access, but no new member can be added until payment is settled.",
+    "statusCancelled": "Subscription cancelled. Current members keep full access; the seat quota is back to the free tier.",
+    "subscribe": "Choose this tier",
+    "manage": "Manage subscription",
+    "manageHint": "Payment method, invoices, tier changes and cancellation are handled on Stripe.",
+    "ownerOnly": "Billing is managed by the organization owner.",
+    "dormant": "Enterprise billing is not active yet. Everything is free for now.",
+    "checkoutSuccess": "Subscription active. Thank you!",
+    "checkoutCancelled": "Payment cancelled, nothing was charged.",
+    "alreadySubscribed": "This organization already has an active subscription. Use \"Manage subscription\" to change tier.",
+    "error": "Could not reach Stripe. Please try again shortly."
   }
 }

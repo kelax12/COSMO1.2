@@ -746,7 +746,8 @@
     "projects": "Projets",
     "okr": "OKR",
     "stats": "Statistiques",
-    "members": "Membres"
+    "members": "Membres",
+    "billing": "Abonnement"
   },
   "colors": {
     "indigo": "Indigo",
@@ -813,5 +814,30 @@
     "adminShort": "Admin",
     "manager": "Manager",
     "member": "Membre"
+  },
+  "billing": {
+    "title": "Abonnement de l'organisation",
+    "subtitle": "Un tarif par palier de membres, sans engagement. Le palier gratuit reste l'essai.",
+    "rangeUpTo": "{{min}} à {{max}} membres",
+    "rangeFrom": "{{min}} membres et plus",
+    "perMonth": "par mois",
+    "free": "Gratuit",
+    "currentTier": "Palier actuel",
+    "currentTierFree": "Vous êtes sur le palier gratuit.",
+    "seatsUsed": "{{count}} membres sur {{quota}} sièges",
+    "seatsUnlimited": "{{count}} membres, sièges illimités",
+    "renewsOn": "Renouvellement le {{date}}",
+    "discountApplied": "Code promo appliqué : {{code}}",
+    "statusPastDue": "Le dernier paiement a échoué. Les membres actuels gardent tous leurs accès, mais aucun nouveau membre ne peut être ajouté tant que le paiement n'est pas régularisé.",
+    "statusCancelled": "Abonnement résilié. Les membres actuels gardent tous leurs accès ; le quota est revenu au palier gratuit.",
+    "subscribe": "Choisir ce palier",
+    "manage": "Gérer l'abonnement",
+    "manageHint": "Carte bancaire, factures, changement de palier et résiliation se gèrent depuis Stripe.",
+    "ownerOnly": "L'abonnement est géré par le propriétaire de l'organisation.",
+    "dormant": "La facturation entreprise n'est pas encore activée. Tout est gratuit pour le moment.",
+    "checkoutSuccess": "Abonnement activé. Merci !",
+    "checkoutCancelled": "Paiement annulé, rien n'a été débité.",
+    "alreadySubscribed": "Cette organisation a déjà un abonnement actif. Utilisez « Gérer l'abonnement » pour changer de palier.",
+    "error": "Impossible de contacter Stripe. Réessayez dans un instant."
   }
 }

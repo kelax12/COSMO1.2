@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft, CreditCard } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -25,16 +25,23 @@ import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import MyWorkTab from '@/components/organization/MyWorkTab';
+import OrgBillingTab from '@/components/organization/OrgBillingTab';
 import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
 import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
-type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members';
+type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members' | 'billing';
 
 // Libellés = CLÉS : cette constante est évaluée au premier import, y écrire du
 // texte figerait les onglets en français pour toute la session.
-const TABS: { id: OrgTab; labelKey: KeyOf<'org'>; Icon: typeof Users; managerOnly?: boolean }[] = [
+const TABS: {
+  id: OrgTab;
+  labelKey: KeyOf<'org'>;
+  Icon: typeof Users;
+  managerOnly?: boolean;
+  ownerOnly?: boolean;
+}[] = [
   { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network },
   { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban },
@@ -42,6 +49,9 @@ const TABS: { id: OrgTab; labelKey: KeyOf<'org'>; Icon: typeof Users; managerOnl
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
   { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, managerOnly: true },
   { id: 'members', labelKey: 'tabs.members', Icon: Users },
+  // Facturation : propriétaire uniquement. Le vrai contrôle est côté Edge
+  // Function (`owner_id`) — ici on ne fait que ne pas proposer un écran inutile.
+  { id: 'billing', labelKey: 'tabs.billing', Icon: CreditCard, ownerOnly: true },
 ];
 
 /**
@@ -220,7 +230,7 @@ const OrganizationPage = () => {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 pb-0.5 overflow-x-auto hide-scrollbar">
-        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
+        {TABS.filter((tab) => (!tab.managerOnly || isManager) && (!tab.ownerOnly || user?.id === myOrg.ownerId)).map(({ id, labelKey, Icon }) => {
           // Seuls Projets (tâches nouvellement assignées) et Membres (demandes
           // d'adhésion en attente) portent un compteur.
           const badge = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
@@ -269,6 +279,13 @@ const OrganizationPage = () => {
         <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
       )}
       {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} isManager={isManager} />}
+      {tab === 'billing' && (
+        <OrgBillingTab
+          orgId={myOrg.id}
+          isOwner={user?.id === myOrg.ownerId}
+          memberCount={members.length}
+        />
+      )}
 
       {tab === 'members' && (
         <div className="space-y-6">
