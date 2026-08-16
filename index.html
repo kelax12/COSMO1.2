@@ -206,6 +206,12 @@
       }
     }
     </script>
+    <!-- Vesk — mesure d'audience sans cookie. Chargé sur TOUTE la SPA (app
+         incluse), donc déclaré en sous-traitant dans PolitiqueConfidentialitePage.
+         L'origine https://www.vesk.dev est autorisée dans `script-src` ET
+         `connect-src` de la CSP (vercel.json) : sans ça le script est bloqué en
+         prod uniquement, et l'absence de mesure passe inaperçue en local. -->
+    <script src="https://www.vesk.dev/a.js" data-key="676bad26713b4578aa3e002fd59ebba7"></script>
   </head>
   <body>
     <div id="root">
