@@ -513,31 +513,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
           regroupées dans TasksInboxMenu (en-tête, mobile ET desktop) — pour
           laisser toute la largeur au tableau. */}
       <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
-        {/* Tout / Perso / Entreprise — visible seulement avec une org active,
-            sinon aucune tâche d'équipe ne peut jamais apparaître ici. */}
-        {orgId && (
-          <div
-            role="group"
-            aria-label={t('table.quickFilter.scopeAria')}
-            className="inline-flex items-center rounded-lg border border-[rgb(var(--color-border))] p-0.5 self-start"
-          >
-            {(['all', 'perso', 'entreprise'] as const).map((scope) => (
-              <button
-                key={scope}
-                type="button"
-                onClick={() => setScopeFilter(scope)}
-                aria-pressed={scopeFilter === scope}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  scopeFilter === scope
-                    ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))]'
-                    : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                }`}
-              >
-                {t(`table.quickFilter.scope${scope === 'all' ? 'All' : scope === 'perso' ? 'Perso' : 'Entreprise'}`)}
-              </button>
-            ))}
-          </div>
-        )}
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
@@ -588,6 +563,32 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <CheckSquare size={20} data-icon="inline-start" />
               <span>{selectMode ? t('table.cancelSelect') : t('table.select')}</span>
             </Button>
+          )}
+
+          {/* Tout / Perso / Entreprise — visible seulement avec une org active,
+              sinon aucune tâche d'équipe ne peut jamais apparaître ici. */}
+          {orgId && (
+            <div
+              role="group"
+              aria-label={t('table.quickFilter.scopeAria')}
+              className="inline-flex items-center rounded-lg border border-[rgb(var(--color-border))] p-0.5"
+            >
+              {(['all', 'perso', 'entreprise'] as const).map((scope) => (
+                <button
+                  key={scope}
+                  type="button"
+                  onClick={() => setScopeFilter(scope)}
+                  aria-pressed={scopeFilter === scope}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    scopeFilter === scope
+                      ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))]'
+                      : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                  }`}
+                >
+                  {t(`table.quickFilter.scope${scope === 'all' ? 'All' : scope === 'perso' ? 'Perso' : 'Entreprise'}`)}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>

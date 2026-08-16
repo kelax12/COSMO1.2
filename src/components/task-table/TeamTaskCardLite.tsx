@@ -28,11 +28,11 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
       <div
         ref={ref}
         data-testid="team-task-card"
-        className="relative mb-1.5 flex items-stretch gap-3 px-3 py-2.5 rounded-card cursor-pointer bg-indigo-500/[0.05] dark:bg-indigo-500/[0.08] border border-indigo-300/40 dark:border-indigo-700/40"
+        className="relative mb-1.5 flex items-stretch gap-3 px-3 py-2.5 rounded-card cursor-pointer bg-indigo-500/[0.12] dark:bg-indigo-500/[0.20] border border-indigo-300/40 dark:border-indigo-700/40"
         style={{ minHeight: '60px' }}
         onClick={() => onEdit(task)}
       >
-        <div className={`w-1 self-stretch rounded-full shrink-0 ${color.dot}`} />
+        <div className={`w-1.5 self-stretch rounded-full shrink-0 ${color.dot}`} />
 
         <button
           onClick={(e) => { e.stopPropagation(); onToggleComplete(task); }}
