@@ -1,11 +1,23 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { ListTodo, CalendarDays, TrendingUp } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, type PyramidNode } from './data';
 import AppShot from './AppShot';
 import StepSection from './StepSection';
+
+interface PyramidSectionProps {
+  onDemo: () => void;
+}
 
 /**
  * Ce que la hiérarchie permet, une fois qu'elle est posée.
@@ -51,7 +63,7 @@ function linkPath(parent: PyramidNode, child: PyramidNode): string {
  * survoler un manager éteint tout ce qui sort de son sous-arbre, ce qu'une
  * image ne peut pas montrer. La capture de l'écran réel ferme la section.
  */
-const PyramidSection: React.FC = () => {
+const PyramidSection: React.FC<PyramidSectionProps> = ({ onDemo }) => {
   const { t } = useT('landing');
   const rootRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -177,6 +189,7 @@ const PyramidSection: React.FC = () => {
                     roleLabel={t(node.roleKey)}
                     onEnter={() => setFocusedId(node.id)}
                     onLeave={() => setFocusedId(null)}
+                    onDemo={onDemo}
                   />
                 </li>
               ))}
@@ -233,6 +246,7 @@ const PyramidSection: React.FC = () => {
                   roleLabel={t(node.roleKey)}
                   onEnter={() => setFocusedId(node.id)}
                   onLeave={() => setFocusedId(null)}
+                  onDemo={onDemo}
                 />
               ))}
             </div>
@@ -292,6 +306,8 @@ interface PyramidCardProps {
   roleLabel: string;
   onEnter: () => void;
   onLeave: () => void;
+  /** Ouvre la démo entreprise — cible des trois options du menu. */
+  onDemo: () => void;
 }
 
 /**
@@ -299,7 +315,10 @@ interface PyramidCardProps {
  * initiales, nom, puis rôle en petites capitales suivi de la pastille d'équipe.
  *
  * C'est un `<button>` réel : le périmètre s'éclaire aussi au clavier, pas
- * seulement à la souris.
+ * seulement à la souris. Le clic ouvre les MÊMES options que le menu « ⋯ » de
+ * l'onglet Pyramide réel (tâches / agenda / contribution) : la pyramide de la
+ * landing ne se contente pas de ressembler à l'organigramme, elle donne accès
+ * aux mêmes gestes.
  */
 const PyramidCard: React.FC<PyramidCardProps> = ({
   node,
@@ -309,46 +328,86 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
   roleLabel,
   onEnter,
   onLeave,
-}) => (
-  <button
-    type="button"
-    onMouseEnter={onEnter}
-    onMouseLeave={onLeave}
-    onFocus={onEnter}
-    onBlur={onLeave}
-    aria-label={`${node.name}, ${roleLabel}`}
-    // `-translate-x-1/2 -translate-y-1/2` est un centrage STATIQUE en CSS, pas
-    // une animation : il n'est donc pas concerné par le garde-fou
-    // reduced-motion (aucune valeur `initial` de Framer ne peut le figer).
-    className={`pyramid-card flex items-center gap-3 whitespace-nowrap rounded-xl border px-3 py-2.5 text-left transition-[opacity,border-color,box-shadow] duration-300 focus-visible:outline-none sm:px-4 sm:py-3 ${
-      layout === 'absolute' ? 'absolute -translate-x-1/2 -translate-y-1/2' : ''
-    } ${
-      pointed
-        ? 'border-cyan-300/70 bg-[#12161D] shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_32px_-8px_rgba(34,211,238,0.7)]'
-        : 'border-white/[0.1] bg-[#111318]'
-    }`}
-    style={
-      layout === 'absolute'
-        ? { left: `${node.x}%`, top: `${node.y}%`, opacity: lit ? 1 : 0.2 }
-        : { opacity: lit ? 1 : 0.2 }
-    }
-  >
-    <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-bold text-white sm:h-9 sm:w-9 ${node.avatarClass}`}
-      aria-hidden="true"
+  onDemo,
+}) => {
+  const { t } = useT('landing');
+
+  const button = (
+    <button
+      type="button"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={onLeave}
+      aria-label={t('enterprise.pyramid.menuAria', { name: node.name })}
+      // `-translate-x-1/2 -translate-y-1/2` est un centrage STATIQUE en CSS, pas
+      // une animation : il n'est donc pas concerné par le garde-fou
+      // reduced-motion (aucune valeur `initial` de Framer ne peut le figer).
+      className={`pyramid-card flex items-center gap-3 whitespace-nowrap rounded-xl border px-3 py-2.5 text-left transition-[opacity,border-color,box-shadow] duration-300 focus-visible:outline-none sm:px-4 sm:py-3 ${
+        layout === 'absolute' ? 'absolute -translate-x-1/2 -translate-y-1/2' : ''
+      } ${
+        pointed
+          ? 'border-cyan-300/70 bg-[#12161D] shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_32px_-8px_rgba(34,211,238,0.7)]'
+          : 'border-white/[0.1] bg-[#111318]'
+      }`}
+      style={
+        layout === 'absolute'
+          ? { left: `${node.x}%`, top: `${node.y}%`, opacity: lit ? 1 : 0.2 }
+          : { opacity: lit ? 1 : 0.2 }
+      }
     >
-      {node.initials}
-    </span>
-    <span className="flex flex-col gap-0.5">
-      <span className="text-xs font-semibold leading-none text-white sm:text-sm">{node.name}</span>
-      <span className="flex items-center gap-1.5">
-        <span className="font-mono text-caption uppercase tracking-[0.14em] text-slate-500">
-          {roleLabel}
-        </span>
-        <span className={`h-1.5 w-1.5 rounded-full ${node.teamClass}`} aria-hidden="true" />
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-bold text-white sm:h-9 sm:w-9 ${node.avatarClass}`}
+        aria-hidden="true"
+      >
+        {node.initials}
       </span>
-    </span>
-  </button>
-);
+      <span className="flex flex-col gap-0.5">
+        <span className="text-xs font-semibold leading-none text-white sm:text-sm">{node.name}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="font-mono text-caption uppercase tracking-[0.14em] text-slate-500">
+            {roleLabel}
+          </span>
+          <span className={`h-1.5 w-1.5 rounded-full ${node.teamClass}`} aria-hidden="true" />
+        </span>
+      </span>
+    </button>
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="center"
+        className="w-64 border-white/[0.1] bg-[#12161D] text-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.7)]"
+      >
+        <DropdownMenuLabel className="text-slate-500">
+          {t('enterprise.pyramid.menuLabel', { name: node.name })}
+        </DropdownMenuLabel>
+        <DropdownMenuItem
+          onClick={onDemo}
+          className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
+        >
+          <ListTodo size={14} className="text-cyan-300" aria-hidden="true" />
+          {t('enterprise.pyramid.menuTasks')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onDemo}
+          className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
+        >
+          <CalendarDays size={14} className="text-cyan-300" aria-hidden="true" />
+          {t('enterprise.pyramid.menuAgenda')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onDemo}
+          className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
+        >
+          <TrendingUp size={14} className="text-cyan-300" aria-hidden="true" />
+          {t('enterprise.pyramid.menuContribution')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export default PyramidSection;

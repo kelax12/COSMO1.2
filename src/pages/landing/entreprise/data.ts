@@ -154,6 +154,8 @@ export const SHOTS: Record<string, AppShotRef> = {
   pyramid: { id: 'pyramid', labelKey: 'enterprise.shot.pyramid', image: shot('pyramide'), altKey: 'enterprise.shot.pyramidAlt' },
   members: { id: 'members', labelKey: 'enterprise.shot.members', image: shot('membres'), altKey: 'enterprise.shot.membersAlt' },
   projects: { id: 'projects', labelKey: 'enterprise.shot.projects', image: shot('projets'), altKey: 'enterprise.shot.projectsAlt' },
+  projectsKanban: { id: 'projectsKanban', labelKey: 'enterprise.shot.projectsKanban', image: shot('projets-kanban'), altKey: 'enterprise.shot.projectsKanbanAlt' },
+  projectsPlanning: { id: 'projectsPlanning', labelKey: 'enterprise.shot.projectsPlanning', image: shot('projets-planning'), altKey: 'enterprise.shot.projectsPlanningAlt' },
   okr: { id: 'okr', labelKey: 'enterprise.shot.okr', image: shot('okr'), altKey: 'enterprise.shot.okrAlt' },
   stats: { id: 'stats', labelKey: 'enterprise.shot.stats', image: shot('statistiques'), altKey: 'enterprise.shot.statsAlt' },
 };

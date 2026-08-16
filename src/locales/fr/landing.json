@@ -287,6 +287,10 @@
       "membersAlt": "Onglet Membres : l'annuaire de l'organisation, avec le rôle et la charge de chaque personne.",
       "projects": "Projets",
       "projectsAlt": "Onglet Projets : les projets par équipe, leurs tâches, échéances et personnes assignées, en vue liste, tableau ou planning.",
+      "projectsKanban": "Projets — vue Tableau",
+      "projectsKanbanAlt": "Onglet Projets en vue Tableau : les tâches réparties par statut, de À faire à Bloquée.",
+      "projectsPlanning": "Projets — vue Planning",
+      "projectsPlanningAlt": "Onglet Projets en vue Planning : les tâches positionnées sur le calendrier, à leur échéance.",
       "okr": "OKR",
       "okrAlt": "Onglet OKR : les objectifs d'équipe et leurs résultats clés chiffrés, avec leur progression.",
       "stats": "Statistiques",
@@ -310,8 +314,7 @@
       "p2t": "Ils arrivent en trop",
       "p2d": "Le énième espace collaboratif ne sera pas ouvert le lundi matin. L'adoption ne se décrète pas en réunion de lancement.",
       "p3t": "Ils comptent trop tard",
-      "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est trop tard pour la rééquilibrer.",
-      "pivot": "Cosmo part de votre organigramme."
+      "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est trop tard pour la rééquilibrer."
     },
     "pyramid": {
       "title": "Invitez votre équipe. L'organigramme se dessine tout seul.",
@@ -322,9 +325,14 @@
       "g2d": "Chaque membre a un responsable. C'est ce lien, et lui seul, qui décide de ce que chacun voit et de ce qu'il peut faire.",
       "g3t": "Regroupez en équipes",
       "g3d": "Créez autant d'équipes que nécessaire et placez-y les personnes que vous voulez. Une même personne peut appartenir à plusieurs équipes.",
-      "hint": "Survolez un membre pour éclairer son périmètre.",
+      "hint": "Survolez un membre pour éclairer son périmètre, cliquez pour voir ce que vous pouvez faire depuis sa fiche.",
       "legendScope": "Périmètre du manager survolé",
       "legendOut": "Hors périmètre",
+      "menuLabel": "Depuis la fiche de {{name}}",
+      "menuTasks": "Voir ses tâches",
+      "menuAgenda": "Voir son agenda",
+      "menuContribution": "Voir sa contribution",
+      "menuAria": "Actions disponibles pour {{name}}",
       "b1t": "Le périmètre suit la hiérarchie",
       "b1d": "Un responsable voit son sous-arbre complet : ses équipes, leurs projets, leurs objectifs, leurs statistiques. Rien à cocher, rien à maintenir.",
       "b2t": "Managez depuis l'organigramme",
@@ -345,7 +353,11 @@
       "p2t": "Kanban ou frise chronologique",
       "p2d": "Le kanban pour savoir où en est chaque tâche, la frise pour voir arriver les échéances. Même projet, deux lectures.",
       "p3t": "Le contexte reste dans la tâche",
-      "p3d": "Labels, commentaires avec mentions et historique des modifications. La décision se retrouve où elle a été prise, pas dans une messagerie."
+      "p3d": "Labels, commentaires avec mentions et historique des modifications. La décision se retrouve où elle a été prise, pas dans une messagerie.",
+      "viewList": "Liste",
+      "viewKanban": "Tableau",
+      "viewPlanning": "Planning",
+      "scrollHint": "Continuez à défiler pour changer de vue"
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",

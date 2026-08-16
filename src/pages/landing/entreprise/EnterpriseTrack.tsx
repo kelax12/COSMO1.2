@@ -47,7 +47,7 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister })
       <ProblemSection />
 
       {/* Les quatre étapes de mise en place, dans l'ordre où on les fait. */}
-      <PyramidSection />
+      <PyramidSection onDemo={onDemo} />
       <ProjectsSection />
       <OkrSection />
       <ProgressSection />
