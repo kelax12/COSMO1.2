@@ -38,7 +38,13 @@ CREATE TABLE IF NOT EXISTS public.org_subscriptions (
   status                 TEXT NOT NULL DEFAULT 'active'
                            CHECK (status IN ('active', 'past_due', 'cancelled')),
   current_period_end     TIMESTAMPTZ,
-  stripe_customer_id     TEXT,
+  -- UNIQUE : exigence de CORRECTION, pas d'hygiène. Le webhook Stripe remonte
+  -- l'organisation depuis le customer (`orgIdFromInvoice`) — les invoices ne
+  -- portent pas nos metadata. Cette lecture est un `maybeSingle()` : deux
+  -- organisations partageant un customer la feraient ÉCHOUER, et une facture
+  -- d'organisation partirait alors sur la branche de l'abonnement particulier.
+  -- L'unicité est donc ce qui garantit que « customer → org » est une fonction.
+  stripe_customer_id     TEXT UNIQUE,
   stripe_subscription_id TEXT UNIQUE,
   -- Code promo réellement appliqué, INFORMATIF uniquement : aucun montant
   -- n'est recalculé côté COSMO, Stripe fait foi sur ce qui est facturé.
@@ -47,9 +53,13 @@ CREATE TABLE IF NOT EXISTS public.org_subscriptions (
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Le webhook retrouve l'org depuis le customer Stripe (events sans metadata).
-CREATE INDEX IF NOT EXISTS idx_org_subscriptions_stripe_customer
-  ON public.org_subscriptions(stripe_customer_id);
+-- Le webhook retrouve l'org depuis le customer Stripe (events sans metadata) ;
+-- l'index qui sert cette lecture est désormais celui créé automatiquement par
+-- la contrainte UNIQUE ci-dessus. L'index simple d'origine ferait doublon
+-- exact : même colonne, même btree, coût d'écriture doublé pour zéro gain en
+-- lecture. On le retire (et ce DROP rattrape une base où il aurait déjà été
+-- créé par une version antérieure de cette migration).
+DROP INDEX IF EXISTS public.idx_org_subscriptions_stripe_customer;
 
 DROP TRIGGER IF EXISTS trg_org_subscriptions_updated_at ON public.org_subscriptions;
 CREATE TRIGGER trg_org_subscriptions_updated_at
