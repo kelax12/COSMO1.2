@@ -70,7 +70,8 @@ le quota d'une org lisible en une requête SQL le jour d'un litige client.
 ### Réécriture de `org_seats_allowed(p_org)`
 
 Signature et appelants inchangés — la fonction est **déjà** le point d'application, appelée par
-`claim_org_invite` et `approve_join_request` (mig. 084, 087). Rien à recâbler.
+`claim_org_invite` (dernière redéfinition en mig. 087) et `respond_join_request` (dernière
+redéfinition en mig. 067). Rien à recâbler.
 
 ```
 si billing_flags['enterprise_seat_limit'] != true  → true          (gate dormant, comportement actuel)
