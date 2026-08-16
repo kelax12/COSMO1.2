@@ -151,7 +151,7 @@ const ModuleOnboarding: React.FC = () => {
                     type="button"
                     role="checkbox"
                     aria-checked={isOn}
-                    aria-label={`${card.label} — ${card.description}`}
+                    aria-label={`${card.label} : ${card.description}`}
                     onClick={() => toggle(key)}
                     className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/50 ${
                       isOn

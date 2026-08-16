@@ -13,7 +13,7 @@
     "savingDots": "Saving..."
   },
   "fields": {
-    "moreOptions": "More options — due date, category, priority, duration, lists",
+    "moreOptions": "More options: due date, category, priority, duration, lists",
     "priority": "Priority",
     "prioritySelect": "Select the task priority",
     "priorityPlaceholder": "Choose a priority",

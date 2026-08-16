@@ -89,7 +89,7 @@ const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
                   <div
                     className="mt-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
                     role="img"
-                    aria-label={`${row.name} — ${toneLabel}, ${tp('overview.workloadOpen', row.open)}`}
+                    aria-label={`${row.name} : ${toneLabel}, ${tp('overview.workloadOpen', row.open)}`}
                   >
                     <div
                       className={`h-full rounded-full ${barClass} transition-all`}

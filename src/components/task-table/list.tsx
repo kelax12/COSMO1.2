@@ -25,8 +25,15 @@ import { Task } from "@/modules/tasks";
 import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
+import { TeamTaskCardLite } from "./TeamTaskCardLite";
 import { isTaskOverdue, formatDeadlineSmart, formatDuration } from "./helpers";
 import { useT } from '@/i18n/useT';
+import type { TeamProject, TeamTask } from "@/modules/team-projects";
+
+// Ligne unifiée perso/entreprise — même liste, deux rendus distincts.
+export type UnifiedTaskRow =
+  | { kind: 'perso'; id: string; task: Task }
+  | { kind: 'entreprise'; id: string; task: TeamTask; project: TeamProject | undefined };
 
 // Re-export des formatters pour compat avec d'éventuels imports existants.
 export { formatDate, formatDeadlineSmart, formatDuration } from "./helpers";
@@ -41,7 +48,7 @@ const VIRTUALIZE_THRESHOLD = 50;
 const ESTIMATED_CARD_HEIGHT = 76; // mesuré : ~68px card + 8px mb-2
 
 interface VirtualizedTaskListProps {
-  tasks: Task[];
+  rows: UnifiedTaskRow[];
   addToListMode: boolean;
   selectedForListIds: string[];
   onToggleTaskForList?: (id: string) => void;
@@ -57,10 +64,12 @@ interface VirtualizedTaskListProps {
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
+  onToggleTeamComplete: (task: TeamTask) => void;
+  onEditTeamTask: (task: TeamTask) => void;
 }
 
 export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
-  const { tasks } = props;
+  const { rows } = props;
   const listRef = useRef<HTMLDivElement>(null);
 
   const cardProps = (task: Task) => ({
@@ -82,23 +91,35 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
     friends: props.friends,
   });
 
+  const renderRow = (row: UnifiedTaskRow, index: number, refProp?: React.Ref<HTMLDivElement>) =>
+    row.kind === 'perso'
+      ? <TaskCard key={row.id} ref={refProp} {...cardProps(row.task)} isFirst={index === 0} />
+      : (
+        <TeamTaskCardLite
+          key={row.id}
+          ref={refProp}
+          task={row.task}
+          project={row.project}
+          onToggleComplete={props.onToggleTeamComplete}
+          onEdit={props.onEditTeamTask}
+        />
+      );
+
   // useWindowVirtualizer : le scroll est sur la fenêtre (les pages COSMO
   // scrollent au niveau document, pas dans un container fixe). Offset retire
   // la position absolue de la liste relative au top de la page.
   const virtualizer = useWindowVirtualizer({
-    count: tasks.length,
+    count: rows.length,
     estimateSize: () => ESTIMATED_CARD_HEIGHT,
     overscan: 5,
     scrollMargin: listRef.current?.offsetTop ?? 0,
   });
 
   // En dessous du seuil, garder AnimatePresence pour les anims
-  if (tasks.length < VIRTUALIZE_THRESHOLD) {
+  if (rows.length < VIRTUALIZE_THRESHOLD) {
     return (
       <AnimatePresence mode="popLayout">
-        {tasks.map((task, index) => (
-          <TaskCard key={task.id} {...cardProps(task)} isFirst={index === 0} />
-        ))}
+        {rows.map((row, index) => renderRow(row, index))}
       </AnimatePresence>
     );
   }
@@ -116,10 +137,10 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
       }}
     >
       {items.map(virtualItem => {
-        const task = tasks[virtualItem.index];
+        const row = rows[virtualItem.index];
         return (
           <div
-            key={task.id}
+            key={row.id}
             data-index={virtualItem.index}
             ref={virtualizer.measureElement}
             style={{
@@ -130,7 +151,7 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
               transform: `translateY(${virtualItem.start - (listRef.current?.offsetTop ?? 0)}px)`,
             }}
           >
-            <TaskCard {...cardProps(task)} isFirst={virtualItem.index === 0} />
+            {renderRow(row, virtualItem.index)}
           </div>
         );
       })}

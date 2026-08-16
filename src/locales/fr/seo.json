@@ -1,6 +1,6 @@
 {
   "root": {
-    "title": "Cosmo — Tâches, habitudes et OKR dans une seule app gratuite",
+    "title": "Cosmo : tâches, habitudes et OKR dans une seule app gratuite",
     "description": "Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription, avec 12 mois de données pré-remplies."
   },
   "guide": {
@@ -16,15 +16,15 @@
     "description": "Connectez-vous à Cosmo pour retrouver vos tâches, habitudes, agenda et OKR. Accès rapide via email/mot de passe ou connexion Google, en quelques secondes."
   },
   "about": {
-    "title": "À propos de Cosmo — qui sommes-nous ?",
+    "title": "À propos de Cosmo : qui sommes-nous ?",
     "description": "Pourquoi Cosmo existe : une application de productivité française, gratuite, qui réunit tâches, habitudes, agenda et OKR dans un seul écosystème."
   },
   "enterprisePresentation": {
-    "title": "Cosmo Entreprise — l'organigramme devient votre moteur d'exécution",
+    "title": "Cosmo Entreprise : l'organigramme devient votre moteur d'exécution",
     "description": "Projets, OKR et statistiques d'équipe structurés par votre pyramide managériale. Gratuit jusqu'à 5 membres, sans carte bancaire. Chaque collaborateur garde son Cosmo personnel."
   },
   "blog": {
-    "title": "Blog Cosmo — Productivité, OKR, habitudes et time-blocking",
+    "title": "Blog Cosmo : productivité, OKR, habitudes et time-blocking",
     "description": "Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo."
   },
   "terms": {

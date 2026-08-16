@@ -21,14 +21,14 @@
     "heading": "Informations personnelles",
     "emailLabel": "Adresse email",
     "emailPlaceholder": "votre@email.com",
-    "emailManaged": "Email géré par votre connexion externe — non modifiable ici.",
+    "emailManaged": "Email géré par votre connexion externe, non modifiable ici.",
     "nameEmpty": "Le nom ne peut pas être vide",
     "emailEmpty": "L'email ne peut pas être vide",
     "updatedDemo": "Profil mis à jour (mode démo)",
     "updateFailed": "Impossible de mettre à jour le profil",
     "emailTaken": "Cette adresse email est déjà utilisée par un autre compte.",
     "tooManyAttempts": "Trop de tentatives. Réessayez dans quelques minutes.",
-    "updatedCheckMail": "Profil mis à jour — vérifiez votre boîte mail pour confirmer le changement d'email.",
+    "updatedCheckMail": "Profil mis à jour. Vérifiez votre boîte mail pour confirmer le changement d'email.",
     "updated": "Profil mis à jour !",
     "photoUpdated": "Photo de profil mise à jour",
     "photoDeleted": "Photo supprimée",
@@ -64,7 +64,7 @@
     "deleteAccountBody": "Cette action est irréversible. Toutes vos données (tâches, habitudes, OKRs, événements, amis) seront supprimées définitivement. Tapez \"DELETE\" pour confirmer.",
     "demoAccountCleared": "Compte démo effacé",
     "deleteFailed": "La suppression automatique a échoué",
-    "deleteFailedHint": "Contactez axellongattepro@gmail.com — votre demande sera traitée manuellement.",
+    "deleteFailedHint": "Contactez axellongattepro@gmail.com, votre demande sera traitée manuellement.",
     "accountDeleted": "Compte supprimé",
     "networkError": "Erreur réseau",
     "networkErrorHint": "Réessayez ou contactez axellongattepro@gmail.com."
@@ -111,11 +111,11 @@
   "help": {
     "intro": "Tout ce qu'il faut savoir pour maîtriser chaque fonctionnalité de Cosmo.",
     "guideTitle": "Guide complet",
-    "guideHint": "Tâches, Agenda, Habitudes, OKR, Statistiques, Premium — tout y est.",
+    "guideHint": "Tâches, Agenda, Habitudes, OKR, Statistiques, Premium : tout y est.",
     "supportTitle": "Besoin d'aide ?",
     "supportHint": "Notre équipe répond sous 24h.",
     "adminTitle": "Stats COSMO",
-    "adminHint": "Croissance, activité et conversion — réservé admin."
+    "adminHint": "Croissance, activité et conversion, réservé admin."
   },
   "data": {
     "title": "Mes données",
@@ -135,6 +135,6 @@
     "exportingAll": "Export de toutes vos données en cours…",
     "exportingAllHint": "{{count}} éléments répartis dans 4 fichiers CSV",
     "importNotice": "Import depuis Todoist / Notion / TickTick",
-    "importNoticeRest": " — bientôt disponible. En attendant, vous pouvez exporter vos données depuis l'app source en CSV puis nous contacter pour l'import manuel."
+    "importNoticeRest": " : bientôt disponible. En attendant, vous pouvez exporter vos données depuis l'app source en CSV puis nous contacter pour l'import manuel."
   }
 }

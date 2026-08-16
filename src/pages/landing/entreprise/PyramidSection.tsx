@@ -1,16 +1,37 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Layers, Network, ShieldCheck } from 'lucide-react';
+import { ListTodo, CalendarDays, TrendingUp } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { PYRAMID_NODES, pyramidTree, subtreeOf, type PyramidNode } from './data';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, type PyramidNode } from './data';
+import AppShot from './AppShot';
+import StepSection from './StepSection';
 
-/** Les trois conséquences concrètes du périmètre déduit de la hiérarchie. */
-const PYRAMID_BENEFITS: { Icon: typeof Network; titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
-  { Icon: Network, titleKey: 'enterprise.pyramid.b1t', bodyKey: 'enterprise.pyramid.b1d' },
-  { Icon: Layers, titleKey: 'enterprise.pyramid.b2t', bodyKey: 'enterprise.pyramid.b2d' },
-  { Icon: ShieldCheck, titleKey: 'enterprise.pyramid.b3t', bodyKey: 'enterprise.pyramid.b3d' },
+interface PyramidSectionProps {
+  onDemo: () => void;
+}
+
+/**
+ * Ce que la hiérarchie permet, une fois qu'elle est posée.
+ *
+ * L'organigramme n'est pas un trombinoscope : c'est depuis lui qu'on manage
+ * chaque personne. Les deux premières cartes disent la règle (périmètre,
+ * réorganisation), les deux suivantes disent les gestes quotidiens qu'elle
+ * autorise — c'est ce qui manquait à la page.
+ */
+const PYRAMID_BENEFITS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+  { titleKey: 'enterprise.pyramid.b1t', bodyKey: 'enterprise.pyramid.b1d' },
+  { titleKey: 'enterprise.pyramid.b2t', bodyKey: 'enterprise.pyramid.b2d' },
+  { titleKey: 'enterprise.pyramid.b3t', bodyKey: 'enterprise.pyramid.b3d' },
+  { titleKey: 'enterprise.pyramid.b4t', bodyKey: 'enterprise.pyramid.b4d' },
 ];
 
 /** Demi-hauteur d'une carte, en % du cadre — sert à accrocher les liens. */
@@ -28,20 +49,23 @@ function linkPath(parent: PyramidNode, child: PyramidNode): string {
 }
 
 /**
- * Section « organigramme » — la démonstration du seul argument qui n'existe
- * nulle part ailleurs : le périmètre de chacun est DÉDUIT de la hiérarchie.
+ * Étape 1 — inviter, rattacher, regrouper.
  *
- * Les cartes reproduisent celles de l'onglet Pyramide de l'application —
- * mêmes membres que le seed démo (« Nova Studio »), même mise en forme
- * (avatar à initiales, rôle en petites capitales, pastille d'équipe). C'est une
- * reproduction plutôt qu'une capture parce que la section doit être
- * INTERACTIVE : survoler un manager éteint tout ce qui sort de son sous-arbre,
- * ce qu'une image ne peut pas montrer. La capture de l'écran réel, elle, est
- * dans la section « cockpit » juste en dessous.
+ * C'est le premier geste réel : sans personne dans l'organisation, aucune des
+ * trois étapes suivantes n'existe. La section démontre au passage le seul
+ * argument qu'on ne trouve nulle part ailleurs : le périmètre de chacun est
+ * DÉDUIT de la hiérarchie, et c'est depuis l'organigramme qu'on suit chaque
+ * personne.
+ *
+ * Les cartes reproduisent celles de l'onglet Pyramide de l'application (mêmes
+ * membres que le seed démo « Nova Studio », même mise en forme). C'est une
+ * reproduction plutôt qu'une capture parce que la scène doit être INTERACTIVE :
+ * survoler un manager éteint tout ce qui sort de son sous-arbre, ce qu'une
+ * image ne peut pas montrer. La capture de l'écran réel ferme la section.
  */
-const PyramidSection: React.FC = () => {
+const PyramidSection: React.FC<PyramidSectionProps> = ({ onDemo }) => {
   const { t } = useT('landing');
-  const rootRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
@@ -110,27 +134,30 @@ const PyramidSection: React.FC = () => {
   );
 
   return (
-    <section
-      ref={rootRef}
-      id="organigramme"
-      className="relative scroll-mt-40 border-t border-white/[0.06] py-24 lg:py-32"
-      aria-labelledby="pyramid-title"
+    <StepSection
+      id="equipes"
+      step={1}
+      titleKey="enterprise.pyramid.title"
+      subtitleKey="enterprise.pyramid.subtitle"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-14 max-w-3xl">
-          <span className="mb-4 block font-mono text-caption uppercase tracking-[0.3em] text-cyan-400/80">
-            {t('enterprise.pyramid.eyebrow')}
-          </span>
-          <h2
-            id="pyramid-title"
-            className="mb-5 text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl lg:text-5xl"
-          >
-            {t('enterprise.pyramid.title')}
-          </h2>
-          <p className="text-base leading-relaxed text-slate-400 lg:text-lg">
-            {t('enterprise.pyramid.subtitle')}
-          </p>
-        </header>
+      <div ref={rootRef}>
+        {/* Comment on démarre, avant de montrer le résultat : on invite, on
+            rattache, on regroupe. Trois gestes, pas une configuration. */}
+        <ol className="mb-8 grid gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.06] sm:grid-cols-3">
+          {(['g1', 'g2', 'g3'] as const).map((key, index) => (
+            <li key={key} className="bg-[#0A0C11] p-6">
+              <span className="mb-3 block font-mono text-caption tabular-nums text-slate-600">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <h3 className="mb-2 text-sm font-semibold text-white">
+                {t(`enterprise.pyramid.${key}t` as 'enterprise.pyramid.g1t')}
+              </h3>
+              <p className="text-sm leading-relaxed text-slate-500">
+                {t(`enterprise.pyramid.${key}d` as 'enterprise.pyramid.g1d')}
+              </p>
+            </li>
+          ))}
+        </ol>
 
         {/* ── La scène : l'organigramme interactif ── */}
         <div className="pyramid-stage relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-4 sm:p-6">
@@ -162,6 +189,7 @@ const PyramidSection: React.FC = () => {
                     roleLabel={t(node.roleKey)}
                     onEnter={() => setFocusedId(node.id)}
                     onLeave={() => setFocusedId(null)}
+                    onDemo={onDemo}
                   />
                 </li>
               ))}
@@ -218,6 +246,7 @@ const PyramidSection: React.FC = () => {
                   roleLabel={t(node.roleKey)}
                   onEnter={() => setFocusedId(node.id)}
                   onLeave={() => setFocusedId(null)}
+                  onDemo={onDemo}
                 />
               ))}
             </div>
@@ -241,21 +270,30 @@ const PyramidSection: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Les trois conséquences concrètes ── */}
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {PYRAMID_BENEFITS.map(({ Icon, titleKey, bodyKey }) => (
+        {/* ── Ce que l'organigramme vous permet de faire, concrètement ── */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          {PYRAMID_BENEFITS.map(({ titleKey, bodyKey }) => (
             <div
               key={titleKey}
               className="rounded-xl border border-white/[0.08] bg-[#0A0C11] p-6 transition-colors duration-300 hover:border-cyan-300/25"
             >
-              <Icon size={18} className="mb-4 text-cyan-400" aria-hidden="true" />
               <h3 className="mb-2 text-sm font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
             </div>
           ))}
         </div>
+
+        {/* La capture de l'onglet réel, à la fin de l'étape : la scène
+            au-dessus démontre la RÈGLE, l'écran montre le produit livré. */}
+        <div className="mt-8 aspect-[16/10] max-w-4xl">
+          <AppShot
+            src={SHOTS.members.image}
+            alt={t(SHOTS.members.altKey)}
+            label={t(SHOTS.members.labelKey)}
+          />
+        </div>
       </div>
-    </section>
+    </StepSection>
   );
 };
 
@@ -268,6 +306,8 @@ interface PyramidCardProps {
   roleLabel: string;
   onEnter: () => void;
   onLeave: () => void;
+  /** Ouvre la démo entreprise — cible des trois options du menu. */
+  onDemo: () => void;
 }
 
 /**
@@ -275,7 +315,10 @@ interface PyramidCardProps {
  * initiales, nom, puis rôle en petites capitales suivi de la pastille d'équipe.
  *
  * C'est un `<button>` réel : le périmètre s'éclaire aussi au clavier, pas
- * seulement à la souris.
+ * seulement à la souris. Le clic ouvre les MÊMES options que le menu « ⋯ » de
+ * l'onglet Pyramide réel (tâches / agenda / contribution) : la pyramide de la
+ * landing ne se contente pas de ressembler à l'organigramme, elle donne accès
+ * aux mêmes gestes.
  */
 const PyramidCard: React.FC<PyramidCardProps> = ({
   node,
@@ -285,46 +328,86 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
   roleLabel,
   onEnter,
   onLeave,
-}) => (
-  <button
-    type="button"
-    onMouseEnter={onEnter}
-    onMouseLeave={onLeave}
-    onFocus={onEnter}
-    onBlur={onLeave}
-    aria-label={`${node.name} — ${roleLabel}`}
-    // `-translate-x-1/2 -translate-y-1/2` est un centrage STATIQUE en CSS, pas
-    // une animation : il n'est donc pas concerné par le garde-fou
-    // reduced-motion (aucune valeur `initial` de Framer ne peut le figer).
-    className={`pyramid-card flex items-center gap-3 whitespace-nowrap rounded-xl border px-3 py-2.5 text-left transition-[opacity,border-color,box-shadow] duration-300 focus-visible:outline-none sm:px-4 sm:py-3 ${
-      layout === 'absolute' ? 'absolute -translate-x-1/2 -translate-y-1/2' : ''
-    } ${
-      pointed
-        ? 'border-cyan-300/70 bg-[#12161D] shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_32px_-8px_rgba(34,211,238,0.7)]'
-        : 'border-white/[0.1] bg-[#111318]'
-    }`}
-    style={
-      layout === 'absolute'
-        ? { left: `${node.x}%`, top: `${node.y}%`, opacity: lit ? 1 : 0.2 }
-        : { opacity: lit ? 1 : 0.2 }
-    }
-  >
-    <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-bold text-white sm:h-9 sm:w-9 ${node.avatarClass}`}
-      aria-hidden="true"
+  onDemo,
+}) => {
+  const { t } = useT('landing');
+
+  const button = (
+    <button
+      type="button"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={onLeave}
+      aria-label={t('enterprise.pyramid.menuAria', { name: node.name })}
+      // `-translate-x-1/2 -translate-y-1/2` est un centrage STATIQUE en CSS, pas
+      // une animation : il n'est donc pas concerné par le garde-fou
+      // reduced-motion (aucune valeur `initial` de Framer ne peut le figer).
+      className={`pyramid-card flex items-center gap-3 whitespace-nowrap rounded-xl border px-3 py-2.5 text-left transition-[opacity,border-color,box-shadow] duration-300 focus-visible:outline-none sm:px-4 sm:py-3 ${
+        layout === 'absolute' ? 'absolute -translate-x-1/2 -translate-y-1/2' : ''
+      } ${
+        pointed
+          ? 'border-cyan-300/70 bg-[#12161D] shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_32px_-8px_rgba(34,211,238,0.7)]'
+          : 'border-white/[0.1] bg-[#111318]'
+      }`}
+      style={
+        layout === 'absolute'
+          ? { left: `${node.x}%`, top: `${node.y}%`, opacity: lit ? 1 : 0.2 }
+          : { opacity: lit ? 1 : 0.2 }
+      }
     >
-      {node.initials}
-    </span>
-    <span className="flex flex-col gap-0.5">
-      <span className="text-xs font-semibold leading-none text-white sm:text-sm">{node.name}</span>
-      <span className="flex items-center gap-1.5">
-        <span className="font-mono text-caption uppercase tracking-[0.14em] text-slate-500">
-          {roleLabel}
-        </span>
-        <span className={`h-1.5 w-1.5 rounded-full ${node.teamClass}`} aria-hidden="true" />
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-bold text-white sm:h-9 sm:w-9 ${node.avatarClass}`}
+        aria-hidden="true"
+      >
+        {node.initials}
       </span>
-    </span>
-  </button>
-);
+      <span className="flex flex-col gap-0.5">
+        <span className="text-xs font-semibold leading-none text-white sm:text-sm">{node.name}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="font-mono text-caption uppercase tracking-[0.14em] text-slate-500">
+            {roleLabel}
+          </span>
+          <span className={`h-1.5 w-1.5 rounded-full ${node.teamClass}`} aria-hidden="true" />
+        </span>
+      </span>
+    </button>
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="center"
+        className="w-64 border-white/[0.1] bg-[#12161D] text-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.7)]"
+      >
+        <DropdownMenuLabel className="text-slate-500">
+          {t('enterprise.pyramid.menuLabel', { name: node.name })}
+        </DropdownMenuLabel>
+        <DropdownMenuItem
+          onClick={onDemo}
+          className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
+        >
+          <ListTodo size={14} className="text-cyan-300" aria-hidden="true" />
+          {t('enterprise.pyramid.menuTasks')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onDemo}
+          className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
+        >
+          <CalendarDays size={14} className="text-cyan-300" aria-hidden="true" />
+          {t('enterprise.pyramid.menuAgenda')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={onDemo}
+          className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
+        >
+          <TrendingUp size={14} className="text-cyan-300" aria-hidden="true" />
+          {t('enterprise.pyramid.menuContribution')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export default PyramidSection;

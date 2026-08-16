@@ -33,6 +33,12 @@ export const PROJECT_COLOR_NAMES = Object.keys(PROJECT_COLORS);
 export const projectColor = (color: string): ProjectColorDef =>
   PROJECT_COLORS[color] ?? PROJECT_COLORS.blue;
 
+// ─── Fusion avec la page Tâches perso ─────────────────────────────────
+
+/** Tâches d'équipe assignées à `userId` — toutes, sans filtre de statut. */
+export const myAssignedTasks = (tasks: TeamTask[], userId: string): TeamTask[] =>
+  tasks.filter((t) => t.assigneeIds.includes(userId));
+
 // ─── Priorités (1..5) ────────────────────────────────────────────────
 
 export const PRIORITY_META: Record<number, { dot: string; label: string }> = {

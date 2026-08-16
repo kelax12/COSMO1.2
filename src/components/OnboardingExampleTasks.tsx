@@ -16,7 +16,7 @@ const todayLocal = () => new Date().toLocaleDateString('en-CA');
 const EXAMPLE_TASKS = [
   {
     name: '✓ Coche-moi pour valider ta première tâche',
-    description: 'Clique sur le rond à gauche — un toast « Annuler » te permet toujours de revenir en arrière.',
+    description: 'Clique sur le rond à gauche : un toast « Annuler » te permet toujours de revenir en arrière.',
     priority: 3,
   },
   {
@@ -26,7 +26,7 @@ const EXAMPLE_TASKS = [
   },
   {
     name: '👥 Partage-moi avec un ami',
-    description: 'Ouvre cette tâche puis « Copier le lien » — toute personne avec le lien peut rejoindre la tâche.',
+    description: 'Ouvre cette tâche puis « Copier le lien » : toute personne avec le lien peut rejoindre la tâche.',
     priority: 0,
   },
 ];

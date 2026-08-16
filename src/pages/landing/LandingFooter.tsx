@@ -14,7 +14,7 @@ const LandingFooter: React.FC = () => {
                 <img src="/logo.png" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain" />
               </div>
               <span className="text-lg font-bold text-white">Cosmo</span>
-              <span className="text-slate-600 hidden sm:inline">—</span>
+              <span className="text-slate-600 hidden sm:inline">·</span>
               <span className="text-slate-400 text-sm hidden sm:inline">{t('footer.rights')}</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-400 flex-wrap justify-center md:justify-end">

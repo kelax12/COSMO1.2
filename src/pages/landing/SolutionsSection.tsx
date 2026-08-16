@@ -67,7 +67,7 @@ const UseCaseCardContent: React.FC<{
         {useCase.featureKeys.map((featureKey, i) => (
           <li key={i} className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
             <span className="select-none mt-[2px]" style={{ color: useCase.accent }}>
-              —
+              ·
             </span>
             <span>{t(featureKey)}</span>
           </li>

@@ -23,7 +23,7 @@
     "step1Desc": "A vertical day view, built for thumb scrolling. Tap the highlighted areas to discover the essentials.",
     "step2Desc": "Swipe horizontally to browse your upcoming days. Tap a date to centre it in the grid below.",
     "step3Desc": "Day for hour-by-hour detail, 2D to compare two days, Month for wider context. One tap to switch.",
-    "step4Desc": "This button opens the panel with your unscheduled tasks. Tap one, then “Schedule in the calendar” — drag and drop is desktop only.",
+    "step4Desc": "This button opens the panel with your unscheduled tasks. Tap one, then “Schedule in the calendar”. Drag and drop is desktop only.",
     "step5Desc": "The “+” button at the bottom of the screen opens the form in a bottom sheet, pre-filled with the current time on the selected day.",
     "step6Desc": "Press and hold an empty time range in the grid to create an event right at that hour."
   },
@@ -67,7 +67,7 @@
     "step5Title": "The strategic link: tasks → KRs",
     "step1Desc": "OKR = Objective (an ambitious direction) + Key Results (3-5 numeric indicators). The startup method for moving the right way.",
     "step2Desc": "Swipe the chips sideways to filter your objectives (Work, Personal, Health…). Tap “All” to reset.",
-    "step3Desc": "The floating button at the bottom right opens the form. Set 3 to 5 measurable KRs — no more, or you spread yourself thin.",
+    "step3Desc": "The floating button at the bottom right opens the form. Set 3 to 5 measurable KRs, no more, or you spread yourself thin.",
     "step4Desc": "Tap the card to open the details. The gauge on the right shows overall health. Each KR has its own progress bar, adjustable with a tap.",
     "step5Desc": "Tip: create your OKRs first. Then create tasks that move a KR forward. Your dashboard will reflect real progress."
   },
@@ -93,7 +93,7 @@
     "step5Title": "Create a task",
     "step6Title": "Gesture: swipe right to complete",
     "step7Title": "Simpler still: the “…” button",
-    "step1Desc": "This is where you run all your tasks. 7 steps to learn the mobile gestures — swipe, long press, the “…” button.",
+    "step1Desc": "This is where you run all your tasks. 7 steps to learn the mobile gestures: swipe, long press, the “…” button.",
     "step2Desc": "Your lists (Work, Shopping, Travel…) live here. Tap a list to filter. Swipe the carousel to see them all.",
     "step3Desc": "Tap to search. Touch “+ options” to reveal the quick filters: Starred, Done, Overdue, Shared.",
     "step4Desc": "Shows your due dates across a week. Tap this button to show or hide it.",

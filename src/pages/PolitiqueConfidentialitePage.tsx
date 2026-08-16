@@ -51,7 +51,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               <strong className="text-white">Données sociales :</strong> liste d'amis, demandes d'amitié, tâches partagées avec d'autres utilisateurs
             </li>
             <li>
-              <strong className="text-white">Données d'abonnement :</strong> statut Premium, tokens, date de fin d'abonnement — les données bancaires sont gérées exclusivement par Stripe, Cosmo n'y a pas accès
+              <strong className="text-white">Données d'abonnement :</strong> statut Premium, tokens, date de fin d'abonnement. Les données bancaires sont gérées exclusivement par Stripe, Cosmo n'y a pas accès
             </li>
             <li>
               <strong className="text-white">Données techniques :</strong> informations de session Supabase (token d'authentification, date de dernière connexion)
@@ -60,7 +60,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
           <p className="mt-3">
             <strong className="text-white">Mesure d'audience :</strong> Cosmo utilise Vesk, un outil de mesure d'audience
             sans cookie. Vesk n'écrit rien sur votre appareil et ne construit aucun profil publicitaire. Il enregistre, à
-            chaque page consultée, l'adresse de la page, la page d'où vous venez, votre adresse IP et votre navigateur —
+            chaque page consultée, l'adresse de la page, la page d'où vous venez, votre adresse IP et votre navigateur
             l'adresse IP et le navigateur sont des données personnelles, même sans cookie. Ces données ne sont pas
             rattachées à votre compte Cosmo et ne sont jamais recoupées avec vos tâches, habitudes ou OKR.
           </p>
@@ -113,11 +113,11 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         <Section title="7. Partage des données">
           <p>Vos données peuvent transiter via les sous-traitants suivants :</p>
           <ul className="list-disc list-inside space-y-2 mt-2">
-            <li><strong className="text-white">Supabase</strong> — base de données et authentification (serveurs en UE disponibles)</li>
-            <li><strong className="text-white">Vercel</strong> — hébergement du frontend (CDN mondial)</li>
-            <li><strong className="text-white">Stripe</strong> — traitement sécurisé des paiements</li>
-            <li><strong className="text-white">Google</strong> — uniquement si vous utilisez la connexion Google OAuth</li>
-            <li><strong className="text-white">Vesk</strong> — mesure d'audience sans cookie (adresse de la page, page référente, adresse IP, navigateur)</li>
+            <li><strong className="text-white">Supabase</strong> : base de données et authentification (serveurs en UE disponibles)</li>
+            <li><strong className="text-white">Vercel</strong> : hébergement du frontend (CDN mondial)</li>
+            <li><strong className="text-white">Stripe</strong> : traitement sécurisé des paiements</li>
+            <li><strong className="text-white">Google</strong> : uniquement si vous utilisez la connexion Google OAuth</li>
+            <li><strong className="text-white">Vesk</strong> : mesure d'audience sans cookie (adresse de la page, page référente, adresse IP, navigateur)</li>
           </ul>
           <p className="mt-3">Aucune donnée n'est vendue à des tiers. Aucun partage à des fins publicitaires ou marketing.</p>
         </Section>
@@ -125,12 +125,12 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         <Section title="8. Vos droits (RGPD)">
           <p>Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :</p>
           <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong className="text-white">Droit d'accès</strong> — obtenir une copie de vos données personnelles</li>
-            <li><strong className="text-white">Droit de rectification</strong> — corriger des informations inexactes depuis les paramètres</li>
-            <li><strong className="text-white">Droit à l'effacement</strong> — supprimer votre compte et toutes vos données</li>
-            <li><strong className="text-white">Droit à la portabilité</strong> — exporter vos données dans un format lisible</li>
-            <li><strong className="text-white">Droit d'opposition</strong> — s'opposer à certains traitements</li>
-            <li><strong className="text-white">Droit à la limitation</strong> — restreindre le traitement dans certains cas</li>
+            <li><strong className="text-white">Droit d'accès</strong> : obtenir une copie de vos données personnelles</li>
+            <li><strong className="text-white">Droit de rectification</strong> : corriger des informations inexactes depuis les paramètres</li>
+            <li><strong className="text-white">Droit à l'effacement</strong> : supprimer votre compte et toutes vos données</li>
+            <li><strong className="text-white">Droit à la portabilité</strong> : exporter vos données dans un format lisible</li>
+            <li><strong className="text-white">Droit d'opposition</strong> : s'opposer à certains traitements</li>
+            <li><strong className="text-white">Droit à la limitation</strong> : restreindre le traitement dans certains cas</li>
           </ul>
           <p className="mt-3">Pour exercer ces droits : <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>. Réponse sous 30 jours.</p>
           <p className="mt-2">Vous pouvez également saisir la <strong className="text-white">CNIL</strong> : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.cnil.fr</a></p>
@@ -138,7 +138,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
 
         <Section title="9. Sécurité">
           <p>
-            Toutes les communications entre votre navigateur et nos serveurs sont chiffrées via HTTPS/TLS. Les mots de passe sont stockés sous forme hachée (bcrypt via Supabase Auth). L'accès aux données est protégé par des politiques Row Level Security (RLS) côté base de données — chaque utilisateur n'accède qu'à ses propres données.
+            Toutes les communications entre votre navigateur et nos serveurs sont chiffrées via HTTPS/TLS. Les mots de passe sont stockés sous forme hachée (bcrypt via Supabase Auth). L'accès aux données est protégé par des politiques Row Level Security (RLS) côté base de données : chaque utilisateur n'accède qu'à ses propres données.
           </p>
         </Section>
 

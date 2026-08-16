@@ -47,7 +47,6 @@ import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
 import TasksErrorState from './tasks/TasksErrorState';
-import TeamAssignedSection from './tasks/TeamAssignedSection';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useT } from '@/i18n/useT';
 
@@ -618,11 +617,9 @@ const TasksPage: React.FC = () => {
                   selectedForListIds={selectedTasksForList}
                   onToggleTaskForList={toggleTaskForList}
                   showQuickFilters={showQuickFilters}
+                  searchTerm={searchTerm}
                 />
                 )}
-
-                {/* Tâches d'équipe assignées (catégories auto par projet) */}
-                {!showCompleted && !selectingTasksForListId && <TeamAssignedSection />}
               </motion.div>
             </div>
           </motion.div>

@@ -79,7 +79,11 @@
       "completedShort": "Done",
       "overdue": "Overdue",
       "collaboration": "Shared",
-      "collaborationShort": "Shared"
+      "collaborationShort": "Shared",
+      "scopeAria": "Filter by scope: all, personal or company",
+      "scopeAll": "All",
+      "scopePerso": "Personal",
+      "scopeEntreprise": "Company"
     },
     "select": "Select",
     "cancelSelect": "Cancel",
@@ -168,8 +172,8 @@
     "createdAt": "By creation date",
     "name": "By name",
     "category": "By category",
-    "asc": "Ascending — click for descending",
-    "desc": "Descending — click for ascending",
+    "asc": "Ascending, click for descending",
+    "desc": "Descending, click for ascending",
     "ascTitle": "Ascending order",
     "descTitle": "Descending order",
     "reset": "Reset",

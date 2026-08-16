@@ -12,7 +12,7 @@ const formatArticleDate = (iso: string) =>
 const BlogIndexPage: React.FC = () => {
   const { t } = useT('landing');
   useSeoMeta({
-    title: 'Blog Cosmo — Productivité, OKR, habitudes et time-blocking',
+    title: 'Blog Cosmo : productivité, OKR, habitudes et time-blocking',
     description:
       'Guides pratiques sur la méthode OKR, le suivi d’habitudes, le time-blocking et la productivité personnelle. Par l’équipe de Cosmo.',
     canonical: 'https://thecosmo.app/blog',
@@ -36,7 +36,7 @@ const BlogIndexPage: React.FC = () => {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-white">{t('blog.title')}</h1>
         <p className="text-slate-400 mb-12">
-          Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité — sans bullshit.
+          Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité, sans bullshit.
         </p>
 
         <div className="space-y-6">

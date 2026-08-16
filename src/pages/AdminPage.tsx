@@ -69,7 +69,7 @@ const bucketize = (points: DailyPoint[], today: string) => {
 };
 
 const pct = (part: number, total: number): string =>
-  total > 0 ? `${Math.round((100 * part) / total)}%` : '—';
+  total > 0 ? `${Math.round((100 * part) / total)}%` : '·';
 
 const pctNum = (part: number, total: number): number =>
   total > 0 ? Math.round((100 * part) / total) : 0;
@@ -234,7 +234,7 @@ const AdminPage: React.FC = () => {
 
   const demoData: LabeledValue[] = [
     { label: t('demoVisitors'), value: demo.visitors },
-    { label: t('accountsCreated'), value: demo.converted, hint: t('demoConverted', { count: demo.converted, pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '—' }) },
+    { label: t('accountsCreated'), value: demo.converted, hint: t('demoConverted', { count: demo.converted, pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '·' }) },
   ];
 
   // Cohortes rétention : les 12 dernières semaines, ordre chronologique.
@@ -276,7 +276,7 @@ const AdminPage: React.FC = () => {
         />
         <KpiCard
           label={t('topChannel')}
-          value={sourceRows[0] ? sourceRows[0].source : '—'}
+          value={sourceRows[0] ? sourceRows[0].source : '·'}
           hint={sourceRows[0] ? t('topChannelHint', { count: sourceRows[0].signups }) : undefined}
         />
       </div>
@@ -318,12 +318,12 @@ const AdminPage: React.FC = () => {
                     {pct(row.signups, totals.users)}
                   </td>
                   <td className="py-2 px-4 text-right tabular-nums">
-                    {row.activation ? pct(row.activation.activated, row.activation.total) : '—'}
+                    {row.activation ? pct(row.activation.activated, row.activation.total) : '·'}
                   </td>
                   <td className="py-2 pl-4 text-right tabular-nums">
                     {row.retention && row.retention.signups > 0
                       ? pct(row.retention.retained, row.retention.signups)
-                      : '—'}
+                      : '·'}
                   </td>
                 </tr>
               ))}
@@ -398,7 +398,7 @@ const AdminPage: React.FC = () => {
           <CountBars data={collabData} />
         </ChartCard>
 
-        <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '—' })}>
+        <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '·' })}>
           <CountBars data={demoData} />
         </ChartCard>
         <ChartCard

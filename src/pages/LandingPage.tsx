@@ -6,7 +6,6 @@ import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import LoginModal from '@/components/LoginModal';
 import { useFaqSchema } from './landing/faq-schema';
 import LandingFooter from './landing/LandingFooter';
-import LandingGateway from './landing/LandingGateway';
 import TrackSwitcher from './landing/TrackSwitcher';
 import PersoTrack from './landing/PersoTrack';
 import { useLandingTrack, type LandingTrack } from './landing/use-landing-track';
@@ -25,9 +24,8 @@ const EnterpriseTrack = lazy(() => import('./landing/entreprise/EnterpriseTrack'
  *
  * Ce composant ne contient plus le contenu marketing : il orchestre. Le
  * contenu vit dans `landing/PersoTrack` et `landing/entreprise/EnterpriseTrack`,
- * choisis par l'aiguillage (`LandingGateway`) et par le sélecteur du header
- * (`TrackSwitcher`). Le parcours affiché est dérivé de l'URL, pas d'un état
- * local : cf. `useLandingTrack`.
+ * choisis par le sélecteur du header (`TrackSwitcher`). Le parcours affiché
+ * est dérivé de l'URL, pas d'un état local : cf. `useLandingTrack`.
  */
 const LandingPage: React.FC = () => {
   const { t } = useT('landing');
@@ -290,10 +288,7 @@ const LandingPage: React.FC = () => {
       {/* A11y: wrap entire content in <main> landmark — axe-core flagged
           162 nodes "not contained by landmarks" on this page. */}
       <main>
-        <LandingGateway track={track} onSelect={handleSelectTrack} />
-
-        {/* Le parcours choisi. `id="track"` est la cible du défilement après
-            un clic sur une porte de l'aiguillage. */}
+        {/* Le parcours choisi. */}
         <div id="track" className="relative scroll-mt-20">
           {/* Voile de transition : couvre la bascule d'un parcours à l'autre.
               Il n'anime QUE l'opacité — un voile porté par un transform

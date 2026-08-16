@@ -19,8 +19,8 @@
     "nextPeriod": "Période suivante",
     "sinceCreation": "Depuis la création",
     "weekOf": "Semaine du {{date}}",
-    "dayCell": "{{name}} — {{date}}",
-    "dayCellDone": "{{name}} — {{date}} (complétée)"
+    "dayCell": "{{name}}, {{date}}",
+    "dayCellDone": "{{name}}, {{date}} (complétée)"
   },
   "modal": {
     "namePlaceholder": "Nom de l'habitude",
@@ -64,11 +64,11 @@
     "support": "Soutenir Cosmo",
     "hideForToday": "Masquer pour aujourd'hui",
     "credited": "+1 jour Premium crédité ! Bonne journée.",
-    "dailyLimit": "Limite quotidienne de pubs atteinte — accès accordé pour aujourd'hui.",
-    "creditError": "Erreur lors du crédit — accès accordé tout de même.",
+    "dailyLimit": "Limite quotidienne de pubs atteinte. Accès accordé pour aujourd'hui.",
+    "creditError": "Erreur lors du crédit. Accès accordé tout de même.",
     "reconnect": "Veuillez vous reconnecter.",
     "alreadySubscribed": "Vous avez déjà un abonnement actif.",
-    "paymentError": "Erreur paiement — réessayez."
+    "paymentError": "Erreur paiement. Réessayez."
   },
   "recapCta": "Bilan",
   "recapSheetTitle": "Bilan de la semaine",
