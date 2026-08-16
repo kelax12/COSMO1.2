@@ -58,9 +58,6 @@ const ProblemSection: React.FC = () => {
     <section ref={rootRef} className="relative border-t border-white/[0.06] py-24 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-12 max-w-3xl">
-          <span className="mb-4 block font-mono text-caption uppercase tracking-[0.3em] text-slate-600">
-            {t('enterprise.problem.eyebrow')}
-          </span>
           <h2 className="text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl">
             {t('enterprise.problem.title')}
           </h2>

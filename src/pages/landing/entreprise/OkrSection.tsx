@@ -51,9 +51,6 @@ const OkrSection: React.FC = () => {
         <div className="grid gap-14 lg:grid-cols-2 lg:gap-16">
           {/* ── Le discours ── */}
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <span className="mb-4 block font-mono text-caption uppercase tracking-[0.3em] text-cyan-400/80">
-              {t('enterprise.okr.eyebrow')}
-            </span>
             <h2
               id="okr-title"
               className="mb-5 text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl lg:text-[2.75rem]"

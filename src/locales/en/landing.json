@@ -28,9 +28,9 @@
     "demo": "Free demo mode"
   },
   "cta": {
-    "line1": "Ready to transform",
-    "line2": "your productivity?",
-    "subtitle": "Join thousands of professionals who have already changed the way they work with Cosmo",
+    "line1": "Start with the demo.",
+    "line2": "The account can wait.",
+    "subtitle": "Open the demo — it comes already filled. Judge it on the evidence.",
     "statsAria": "Demo contents: 100 tasks, 100 habits, 150 events",
     "tasks": "tasks",
     "habits": "habits",
@@ -255,7 +255,7 @@
       "entreprise": {
         "kicker": "Cosmo for Companies",
         "title": "For my organisation",
-        "desc": "Your reporting lines become the living structure behind your projects, your OKRs and your statistics.",
+        "desc": "Team projects, OKRs and statistics, structured by your org chart.",
         "f1": "Org chart and scopes",
         "f2": "Projects, OKRs and team workload",
         "f3": "Statistics per scope",
@@ -279,7 +279,7 @@
       "line1": "Your org chart",
       "line2": "is not a slide.",
       "line3": "It is your execution engine.",
-      "subtitle": "Cosmo for Companies turns your reporting lines into the living structure behind your projects, your OKRs and your statistics. And every teammate keeps the personal Cosmo they already use.",
+      "subtitle": "In Cosmo for Companies, what each person can reach follows from your org chart. And every teammate keeps the personal Cosmo they already use.",
       "cta": "Open the company demo",
       "ctaAria": "Open the company mode demonstration, no sign-up required",
       "ctaSecondary": "See pricing",
@@ -287,13 +287,10 @@
       "scroll": "Scroll"
     },
     "proof": {
-      "m1": "members free, no card",
-      "m2": "control tabs, one screen",
-      "m3": "new tool to get adopted",
-      "m4": "of access derived from the org chart"
+      "m1": "members included in the free tier",
+      "m2": "control tabs, one single screen"
     },
     "problem": {
-      "eyebrow": "The diagnosis",
       "title": "Three reasons your team tools never stick.",
       "p1t": "They are flat",
       "p1d": "A shared board has no idea who reports to whom. So the hierarchy gets replayed by hand, as access rights — and it is wrong the day after the first reorg.",
@@ -301,11 +298,10 @@
       "p2d": "Yet another collaborative space will not be opened on Monday morning. Adoption is not decided in a kickoff meeting.",
       "p3t": "They count too late",
       "p3d": "An overloaded team is discovered in a steering committee, at the exact moment it is too late to rebalance it.",
-      "pivot": "Cosmo takes the problem from the other end: it starts from your org chart."
+      "pivot": "Cosmo starts from your org chart."
     },
     "pyramid": {
-      "eyebrow": "01 — The primitive",
-      "title": "The org chart is the structure. Not the decoration.",
+      "title": "Who reports to whom decides who sees what.",
       "subtitle": "Every member has a manager. From that single link everything follows: what you see, what you assign, what you measure. Move someone in the pyramid and their access moves with them.",
       "hint": "Hover a member to light up their scope.",
       "legendScope": "Scope of the hovered manager",
@@ -321,7 +317,6 @@
       "roleAdmin": "Admin"
     },
     "cockpit": {
-      "eyebrow": "02 — The cockpit",
       "title": "Six tabs. One control screen.",
       "subtitle": "The company workspace, exactly as it ships today. Scroll to walk through it.",
       "t1": "Overview",
@@ -354,20 +349,18 @@
       "a6": "Members tab: the organisation directory, with each person role and workload."
     },
     "okr": {
-      "eyebrow": "03 — Alignment",
-      "title": "Objectives that come down, evidence that comes back up.",
+      "title": "One organisation objective, broken down to the key result.",
       "subtitle": "One organisation objective breaks down into team OKRs, and each OKR into quantified key results. Nothing is lost between two levels.",
       "orgLabel": "Organisation objective",
       "teamLabel": "Team OKR",
       "krLabel": "Key results",
       "b1": "Each team hooks its OKRs onto a shared objective, in the categories you define.",
-      "b2": "Key results carry a number and a target — not an intention.",
+      "b2": "Key results carry a number and a target.",
       "b3": "Every key result reached is journalled on the date it was reached.",
       "journalTitle": "Tamper-proof journal",
       "journalBody": "A key result that has been reached cannot be rewritten afterwards. That is what makes your dashboard curve defensible in a steering committee."
     },
     "security": {
-      "eyebrow": "04 — Trust",
       "title": "The questions your committee will ask.",
       "subtitle": "We answer them here, before they block the rollout.",
       "s1t": "Database-level isolation",
@@ -380,9 +373,8 @@
       "s4d": "You leave whenever you want. Ownership transfer and organisation deletion are in the interface, not in a support ticket."
     },
     "pricing": {
-      "eyebrow": "05 — Pricing",
-      "title": "One plan per organisation. Not per seat.",
-      "subtitle": "The price follows the tier you reach, and nothing else. No module to unlock, no quote to wait for.",
+      "title": "20 € a month for ten people.",
+      "subtitle": "The plan covers the whole organisation, whatever the number of projects. The price follows the tier you reach: no module to unlock, no quote to wait for.",
       "sliderLabel": "How many are you?",
       "sliderAria": "Number of members in your organisation",
       "membersUnit": "members",
