@@ -273,7 +273,7 @@ git commit -m "feat(billing): mapping partage des paliers entreprise, verrouille
 **Files:**
 - Create: `supabase/migration/101_org_subscriptions.sql`
 
-**Contexte indispensable :** `org_seats_allowed(p_org)` existe déjà (mig. 067) avec un `< 5` écrit en dur. Elle est appelée par `claim_org_invite` (mig. 087, la version courante) et `approve_join_request` (mig. 084). **On ne touche à aucun appelant** — seul le corps de la fonction change. C'est ce qui rend cette migration sûre : le point d'application est déjà en place et déjà testé.
+**Contexte indispensable :** `org_seats_allowed(p_org)` existe déjà (mig. 067) avec un `< 5` écrit en dur. Elle est appelée par `claim_org_invite` (dernière redéfinition en mig. 087) et `respond_join_request` (dernière redéfinition en mig. 067). **On ne touche à aucun appelant** — seul le corps de la fonction change. C'est ce qui rend cette migration sûre : le point d'application est déjà en place et déjà testé.
 
 - [ ] **Step 1: Écrire la migration**
 
@@ -356,7 +356,7 @@ GRANT SELECT ON public.org_subscriptions TO authenticated;
 -- ─── Quota de sièges : le stub devient réel ─────────────────────────
 --
 -- Signature et appelants INCHANGÉS (`claim_org_invite` mig. 087,
--- `approve_join_request` mig. 084). Seul le corps change.
+-- `respond_join_request` mig. 067). Seul le corps change.
 --
 -- Sémantique du quota : `COUNT(membres) < max_members`. Un palier
 -- « 10 à 20 membres » autorise donc jusqu'à 20 membres inclus — identique à
