@@ -69,6 +69,13 @@ export default defineConfig({
               id.includes('node_modules/@gsap')) {
             return 'vendor-gsap';
           }
+          // OGL : micro-runtime WebGL (~25 kB gzip) utilisé par UN seul
+          // composant, le fond `LightRays` du hero entreprise, lui-même
+          // React.lazy dans la landing. Chunk séparé pour qu'il ne parte
+          // jamais avec `vendor-gsap` (chargé, lui, dès le track perso).
+          if (id.includes('node_modules/ogl')) {
+            return 'vendor-ogl';
+          }
           if (id.includes('node_modules/recharts') ||
               id.includes('node_modules/d3-') ||
               id.includes('node_modules/victory-vendor')) {

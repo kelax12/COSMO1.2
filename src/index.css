@@ -1459,3 +1459,71 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   vertical-align: top;
 }
 .blog-prose td:first-child { color: #e2e8f0; font-weight: 500; }
+
+/* ── Curseur du simulateur de tarif entreprise (landing) ────────────────────
+   `input[type=range]` n'a aucun style commun entre navigateurs : sans ces
+   règles, WebKit affiche sa piste bleue système, ce qui casse la palette
+   graphite/cyan du track entreprise. La piste est peinte en dégradé, la
+   poignée en pastille cyan avec un halo au survol. */
+.ent-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgba(34, 211, 238, 0.55), rgba(245, 185, 66, 0.5));
+  outline: none;
+}
+
+.ent-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #22d3ee;
+  border: 3px solid #08090c;
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.6), 0 0 16px -2px rgba(34, 211, 238, 0.8);
+  cursor: grab;
+  transition: box-shadow 200ms ease;
+}
+
+.ent-range::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.9), 0 0 22px 0 rgba(34, 211, 238, 0.9);
+}
+
+.ent-range::-webkit-slider-thumb:active { cursor: grabbing; }
+
+.ent-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #22d3ee;
+  border: 3px solid #08090c;
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.6), 0 0 16px -2px rgba(34, 211, 238, 0.8);
+  cursor: grab;
+}
+
+.ent-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.ent-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.45), 0 0 22px 0 rgba(34, 211, 238, 0.9);
+}
+
+/* Pulsation du montant quand le curseur change de palier. Le prix affiché est
+   toujours la valeur exacte : seule la couleur bouge, jamais le chiffre. */
+.ent-price {
+  animation: ent-price-flash 520ms ease-out;
+}
+
+@keyframes ent-price-flash {
+  0%   { color: #22d3ee; }
+  100% { color: inherit; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ent-price { animation: none; }
+}

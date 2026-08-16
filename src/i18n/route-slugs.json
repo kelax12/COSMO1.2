@@ -1,10 +1,47 @@
 {
-  "about": { "fr": "a-propos", "en": "about", "es": "acerca-de" },
-  "freelancers": { "fr": "pour-freelances", "en": "for-freelancers", "es": "para-freelancers" },
-  "students": { "fr": "pour-etudiants", "en": "for-students", "es": "para-estudiantes" },
-  "managers": { "fr": "pour-managers", "en": "for-managers", "es": "para-managers" },
-  "teams": { "fr": "pour-equipes", "en": "for-teams", "es": "para-equipos" },
-  "legalNotice": { "fr": "mentions-legales", "en": "legal-notice", "es": "aviso-legal" },
-  "privacy": { "fr": "politique-confidentialite", "en": "privacy-policy", "es": "politica-privacidad" },
-  "terms": { "fr": "cgu", "en": "terms", "es": "condiciones" }
+  "about": {
+    "fr": "a-propos",
+    "en": "about",
+    "es": "acerca-de"
+  },
+  "enterprisePresentation": {
+    "fr": "entreprise-presentation",
+    "en": "for-companies",
+    "es": "para-empresas"
+  },
+  "freelancers": {
+    "fr": "pour-freelances",
+    "en": "for-freelancers",
+    "es": "para-freelancers"
+  },
+  "students": {
+    "fr": "pour-etudiants",
+    "en": "for-students",
+    "es": "para-estudiantes"
+  },
+  "managers": {
+    "fr": "pour-managers",
+    "en": "for-managers",
+    "es": "para-managers"
+  },
+  "teams": {
+    "fr": "pour-equipes",
+    "en": "for-teams",
+    "es": "para-equipos"
+  },
+  "legalNotice": {
+    "fr": "mentions-legales",
+    "en": "legal-notice",
+    "es": "aviso-legal"
+  },
+  "privacy": {
+    "fr": "politique-confidentialite",
+    "en": "privacy-policy",
+    "es": "politica-privacidad"
+  },
+  "terms": {
+    "fr": "cgu",
+    "en": "terms",
+    "es": "condiciones"
+  }
 }

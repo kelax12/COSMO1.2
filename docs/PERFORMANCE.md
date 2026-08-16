@@ -2,11 +2,11 @@
 
 ## Vendor chunks isolés (commenter toute modif)
 
-**Tailles réelles, `npm run build` du 2026-08-14** (brut / gzip) :
+**Tailles réelles, `npm run build` du 2026-08-15** (brut / gzip) :
 
 | Chunk | Contenu | Taille (gzip) | Quand chargé |
 |---|---|---|---|
-| `index` (app) | code applicatif partagé | **438 kB (124 kB)** | Toujours |
+| `index` (app) | code applicatif partagé | **448 kB (128 kB)** | Toujours |
 | `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | Toujours |
 | `vendor-router` | react-router | 38 kB (14 kB) | Toujours (split pour parallel HTTP/2) |
 | `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | Toujours |
@@ -17,10 +17,16 @@
 | `vendor-query` | @tanstack/* | 55 kB (16 kB) | Toujours |
 | `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
 | `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
-| `vendor-gsap` | gsap + plugins | 133 kB (52 kB) | **Lazy** (LandingPage uniquement) |
+| `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
+| `vendor-ogl` | ogl — micro-runtime WebGL | 44 kB (13 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
+| `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | **Lazy** (`/`) |
+| `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
 
-> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-14) :
-> le chunk `index` est à 438 kB brut / 124 kB gzip. Sous le budget gzip (< 150 kB) mais la marge
+> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-15) :
+> le chunk `index` est à 448 kB brut / 128 kB gzip. La hausse depuis les 124 kB du 2026-08-14
+> **ne vient pas du track entreprise** : vérifié par `grep` sur le chunk construit, aucun de ses
+> symboles (`gate-panel`, `pyramid-stage`, `ent-hero-line`) n'y figure — il vit dans
+> `LandingPage` et `EnterpriseTrack`, tous deux lazy. Sous le budget gzip (< 150 kB) mais la marge
 > s'est réduite — c'est le poste à surveiller, pas les vendors.
 > Recharts n'est **plus** importé par la landing (`AppWindowShowcase` l'exclut volontairement du
 > hero) : `StatsShowcase` ne vit plus que dans `GuidePage`, en `React.lazy`.

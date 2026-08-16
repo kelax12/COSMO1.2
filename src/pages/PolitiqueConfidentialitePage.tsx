@@ -57,8 +57,16 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               <strong className="text-white">Données techniques :</strong> informations de session Supabase (token d'authentification, date de dernière connexion)
             </li>
           </ul>
+          <p className="mt-3">
+            <strong className="text-white">Mesure d'audience :</strong> Cosmo utilise Vesk, un outil de mesure d'audience
+            sans cookie. Vesk n'écrit rien sur votre appareil et ne construit aucun profil publicitaire. Il enregistre, à
+            chaque page consultée, l'adresse de la page, la page d'où vous venez, votre adresse IP et votre navigateur —
+            l'adresse IP et le navigateur sont des données personnelles, même sans cookie. Ces données ne sont pas
+            rattachées à votre compte Cosmo et ne sont jamais recoupées avec vos tâches, habitudes ou OKR.
+          </p>
           <p className="mt-3 text-slate-400 text-sm">
-            Cosmo ne collecte pas de données comportementales ni analytiques. Aucun outil de tracking tiers (Google Analytics, Mixpanel, Hotjar, etc.) n'est utilisé.
+            Aucun autre outil de tracking tiers (Google Analytics, Mixpanel, Hotjar, etc.) n'est utilisé, et aucune donnée
+            comportementale n'est collectée à l'intérieur de l'application au-delà de cette mesure d'audience.
           </p>
         </Section>
 
@@ -89,7 +97,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
           <p>Le traitement de vos données repose sur :</p>
           <ul className="list-disc list-inside space-y-1 mt-2">
             <li><strong className="text-white">Exécution du contrat</strong> pour toutes les données nécessaires au fonctionnement du service</li>
-            <li><strong className="text-white">Intérêt légitime</strong> pour la sécurité de l'application</li>
+            <li><strong className="text-white">Intérêt légitime</strong> pour la sécurité de l'application et pour la mesure d'audience sans cookie (Vesk), limitée à des statistiques de fréquentation</li>
             <li><strong className="text-white">Consentement</strong> pour les cookies non essentiels (si applicable)</li>
           </ul>
         </Section>
@@ -109,6 +117,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <li><strong className="text-white">Vercel</strong> — hébergement du frontend (CDN mondial)</li>
             <li><strong className="text-white">Stripe</strong> — traitement sécurisé des paiements</li>
             <li><strong className="text-white">Google</strong> — uniquement si vous utilisez la connexion Google OAuth</li>
+            <li><strong className="text-white">Vesk</strong> — mesure d'audience sans cookie (adresse de la page, page référente, adresse IP, navigateur)</li>
           </ul>
           <p className="mt-3">Aucune donnée n'est vendue à des tiers. Aucun partage à des fins publicitaires ou marketing.</p>
         </Section>
@@ -140,7 +149,11 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <li>Préférences de l'interface stockées en localStorage (thème, filtres)</li>
             <li>Choix du consentement cookie stocké en localStorage</li>
           </ul>
-          <p className="mt-2 text-slate-400 text-sm">Aucun cookie publicitaire ou de tracking tiers n'est déposé sur votre appareil.</p>
+          <p className="mt-2 text-slate-400 text-sm">
+            Aucun cookie publicitaire ou de tracking tiers n'est déposé sur votre appareil. Notre outil de mesure
+            d'audience (Vesk) fonctionne sans cookie et n'écrit rien sur votre appareil : il ne nécessite donc pas votre
+            consentement préalable au titre de l'article 82 de la loi Informatique et Libertés.
+          </p>
         </Section>
 
         <Section title="11. Modifications">
