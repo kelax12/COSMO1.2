@@ -5,7 +5,7 @@ import type { KeyOf } from '@/i18n/catalog';
 
 // Pas de pictogramme décoratif : une icône générique posée en tête de carte ne
 // dit rien que le titre ne dise déjà, et c'est le tic visuel qui fait lire une
-// page comme générée. Le rang suffit à structurer la lecture.
+// page comme générée. Le titre porte seul.
 const PROBLEMS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
   { titleKey: 'enterprise.problem.p1t', bodyKey: 'enterprise.problem.p1d' },
   { titleKey: 'enterprise.problem.p2t', bodyKey: 'enterprise.problem.p2d' },
@@ -66,11 +66,8 @@ const ProblemSection: React.FC = () => {
         </header>
 
         <div className="problem-grid grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] md:grid-cols-3">
-          {PROBLEMS.map(({ titleKey, bodyKey }, index) => (
+          {PROBLEMS.map(({ titleKey, bodyKey }) => (
             <article key={titleKey} className="problem-card bg-[#0A0C11] p-7 lg:p-9">
-              <span className="mb-6 block font-mono text-xs tracking-[0.25em] text-slate-600" aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
               <h3 className="mb-3 text-lg font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
             </article>

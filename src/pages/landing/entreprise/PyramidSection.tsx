@@ -3,13 +3,23 @@ import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { PYRAMID_NODES, pyramidTree, subtreeOf, type PyramidNode } from './data';
+import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, type PyramidNode } from './data';
+import AppShot from './AppShot';
+import StepSection from './StepSection';
 
-/** Les trois conséquences concrètes du périmètre déduit de la hiérarchie. */
+/**
+ * Ce que la hiérarchie permet, une fois qu'elle est posée.
+ *
+ * L'organigramme n'est pas un trombinoscope : c'est depuis lui qu'on manage
+ * chaque personne. Les deux premières cartes disent la règle (périmètre,
+ * réorganisation), les deux suivantes disent les gestes quotidiens qu'elle
+ * autorise — c'est ce qui manquait à la page.
+ */
 const PYRAMID_BENEFITS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
   { titleKey: 'enterprise.pyramid.b1t', bodyKey: 'enterprise.pyramid.b1d' },
   { titleKey: 'enterprise.pyramid.b2t', bodyKey: 'enterprise.pyramid.b2d' },
   { titleKey: 'enterprise.pyramid.b3t', bodyKey: 'enterprise.pyramid.b3d' },
+  { titleKey: 'enterprise.pyramid.b4t', bodyKey: 'enterprise.pyramid.b4d' },
 ];
 
 /** Demi-hauteur d'une carte, en % du cadre — sert à accrocher les liens. */
@@ -27,20 +37,23 @@ function linkPath(parent: PyramidNode, child: PyramidNode): string {
 }
 
 /**
- * Section « organigramme » — la démonstration du seul argument qui n'existe
- * nulle part ailleurs : le périmètre de chacun est DÉDUIT de la hiérarchie.
+ * Étape 1 — inviter, rattacher, regrouper.
  *
- * Les cartes reproduisent celles de l'onglet Pyramide de l'application —
- * mêmes membres que le seed démo (« Nova Studio »), même mise en forme
- * (avatar à initiales, rôle en petites capitales, pastille d'équipe). C'est une
- * reproduction plutôt qu'une capture parce que la section doit être
- * INTERACTIVE : survoler un manager éteint tout ce qui sort de son sous-arbre,
- * ce qu'une image ne peut pas montrer. La capture de l'écran réel, elle, est
- * dans la section « cockpit » juste en dessous.
+ * C'est le premier geste réel : sans personne dans l'organisation, aucune des
+ * trois étapes suivantes n'existe. La section démontre au passage le seul
+ * argument qu'on ne trouve nulle part ailleurs : le périmètre de chacun est
+ * DÉDUIT de la hiérarchie, et c'est depuis l'organigramme qu'on suit chaque
+ * personne.
+ *
+ * Les cartes reproduisent celles de l'onglet Pyramide de l'application (mêmes
+ * membres que le seed démo « Nova Studio », même mise en forme). C'est une
+ * reproduction plutôt qu'une capture parce que la scène doit être INTERACTIVE :
+ * survoler un manager éteint tout ce qui sort de son sous-arbre, ce qu'une
+ * image ne peut pas montrer. La capture de l'écran réel ferme la section.
  */
 const PyramidSection: React.FC = () => {
   const { t } = useT('landing');
-  const rootRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
@@ -109,24 +122,30 @@ const PyramidSection: React.FC = () => {
   );
 
   return (
-    <section
-      ref={rootRef}
-      id="organigramme"
-      className="relative scroll-mt-40 border-t border-white/[0.06] py-24 lg:py-32"
-      aria-labelledby="pyramid-title"
+    <StepSection
+      id="equipes"
+      step={1}
+      titleKey="enterprise.pyramid.title"
+      subtitleKey="enterprise.pyramid.subtitle"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-14 max-w-3xl">
-          <h2
-            id="pyramid-title"
-            className="mb-5 text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl lg:text-5xl"
-          >
-            {t('enterprise.pyramid.title')}
-          </h2>
-          <p className="text-base leading-relaxed text-slate-400 lg:text-lg">
-            {t('enterprise.pyramid.subtitle')}
-          </p>
-        </header>
+      <div ref={rootRef}>
+        {/* Comment on démarre, avant de montrer le résultat : on invite, on
+            rattache, on regroupe. Trois gestes, pas une configuration. */}
+        <ol className="mb-8 grid gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.06] sm:grid-cols-3">
+          {(['g1', 'g2', 'g3'] as const).map((key, index) => (
+            <li key={key} className="bg-[#0A0C11] p-6">
+              <span className="mb-3 block font-mono text-caption tabular-nums text-slate-600">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <h3 className="mb-2 text-sm font-semibold text-white">
+                {t(`enterprise.pyramid.${key}t` as 'enterprise.pyramid.g1t')}
+              </h3>
+              <p className="text-sm leading-relaxed text-slate-500">
+                {t(`enterprise.pyramid.${key}d` as 'enterprise.pyramid.g1d')}
+              </p>
+            </li>
+          ))}
+        </ol>
 
         {/* ── La scène : l'organigramme interactif ── */}
         <div className="pyramid-stage relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-4 sm:p-6">
@@ -237,21 +256,30 @@ const PyramidSection: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Les trois conséquences concrètes ── */}
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        {/* ── Ce que l'organigramme vous permet de faire, concrètement ── */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {PYRAMID_BENEFITS.map(({ titleKey, bodyKey }) => (
             <div
               key={titleKey}
               className="rounded-xl border border-white/[0.08] bg-[#0A0C11] p-6 transition-colors duration-300 hover:border-cyan-300/25"
             >
-              <span className="mb-4 block h-px w-8 bg-cyan-300/40" aria-hidden="true" />
               <h3 className="mb-2 text-sm font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
             </div>
           ))}
         </div>
+
+        {/* La capture de l'onglet réel, à la fin de l'étape : la scène
+            au-dessus démontre la RÈGLE, l'écran montre le produit livré. */}
+        <div className="mt-8 aspect-[16/10] max-w-4xl">
+          <AppShot
+            src={SHOTS.members.image}
+            alt={t(SHOTS.members.altKey)}
+            label={t(SHOTS.members.labelKey)}
+          />
+        </div>
       </div>
-    </section>
+    </StepSection>
   );
 };
 

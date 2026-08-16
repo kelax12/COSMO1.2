@@ -131,11 +131,10 @@ export function subtreeOf(nodeId: string): Set<string> {
   return scope;
 }
 
-/** Les six onglets de l'espace entreprise, dans l'ordre de l'application. */
-export interface CockpitTab {
+/** Une capture réelle d'un onglet de l'espace entreprise. */
+export interface AppShotRef {
   id: string;
   labelKey: KeyOf<'landing'>;
-  descriptionKey: KeyOf<'landing'>;
   /** Capture réelle de l'onglet (mode démo, thème noir). */
   image: string;
   altKey: KeyOf<'landing'>;
@@ -143,55 +142,24 @@ export interface CockpitTab {
 
 const shot = (name: string) => `/screenshots/entreprise/${name}.webp`;
 
-export const COCKPIT_TABS: CockpitTab[] = [
-  {
-    id: 'overview',
-    labelKey: 'enterprise.cockpit.t1',
-    descriptionKey: 'enterprise.cockpit.d1',
-    image: shot('apercu'),
-    altKey: 'enterprise.cockpit.a1',
-  },
-  {
-    id: 'pyramid',
-    labelKey: 'enterprise.cockpit.t2',
-    descriptionKey: 'enterprise.cockpit.d2',
-    image: shot('pyramide'),
-    altKey: 'enterprise.cockpit.a2',
-  },
-  {
-    id: 'projects',
-    labelKey: 'enterprise.cockpit.t3',
-    descriptionKey: 'enterprise.cockpit.d3',
-    image: shot('projets'),
-    altKey: 'enterprise.cockpit.a3',
-  },
-  {
-    id: 'okr',
-    labelKey: 'enterprise.cockpit.t4',
-    descriptionKey: 'enterprise.cockpit.d4',
-    image: shot('okr'),
-    altKey: 'enterprise.cockpit.a4',
-  },
-  {
-    id: 'stats',
-    labelKey: 'enterprise.cockpit.t5',
-    descriptionKey: 'enterprise.cockpit.d5',
-    image: shot('statistiques'),
-    altKey: 'enterprise.cockpit.a5',
-  },
-  {
-    id: 'members',
-    labelKey: 'enterprise.cockpit.t6',
-    descriptionKey: 'enterprise.cockpit.d6',
-    image: shot('membres'),
-    altKey: 'enterprise.cockpit.a6',
-  },
-];
+/**
+ * Les captures, adressées par onglet.
+ *
+ * Elles ne vivent plus dans une section « visite guidée » séparée : chaque
+ * étape du parcours montre l'écran sur lequel elle se joue, au moment où on en
+ * parle. Une capture sans l'étape qui l'explique ne prouve rien.
+ */
+export const SHOTS: Record<string, AppShotRef> = {
+  overview: { id: 'overview', labelKey: 'enterprise.shot.overview', image: shot('apercu'), altKey: 'enterprise.shot.overviewAlt' },
+  pyramid: { id: 'pyramid', labelKey: 'enterprise.shot.pyramid', image: shot('pyramide'), altKey: 'enterprise.shot.pyramidAlt' },
+  members: { id: 'members', labelKey: 'enterprise.shot.members', image: shot('membres'), altKey: 'enterprise.shot.membersAlt' },
+  projects: { id: 'projects', labelKey: 'enterprise.shot.projects', image: shot('projets'), altKey: 'enterprise.shot.projectsAlt' },
+  okr: { id: 'okr', labelKey: 'enterprise.shot.okr', image: shot('okr'), altKey: 'enterprise.shot.okrAlt' },
+  stats: { id: 'stats', labelKey: 'enterprise.shot.stats', image: shot('statistiques'), altKey: 'enterprise.shot.statsAlt' },
+};
 
-/** Les trois écrans qui défilent dans le hero — les mêmes captures réelles. */
-export const HERO_SHOTS = ['projects', 'okr', 'stats'].map(
-  (id) => COCKPIT_TABS.find((tab) => tab.id === id)!,
-);
+/** Les trois écrans qui défilent dans le hero. */
+export const HERO_SHOTS = [SHOTS.projects, SHOTS.okr, SHOTS.stats];
 
 /** Les quatre garanties de la section sécurité. */
 export interface SecurityPoint {
