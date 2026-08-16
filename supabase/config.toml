@@ -20,3 +20,14 @@ verify_jwt = true
 # from the JWT, never from request body) — keep verify_jwt = true.
 [functions.delete-account]
 verify_jwt = true
+
+# stripe-org-checkout and stripe-org-portal both resolve the caller from their
+# JWT and then check they own the organization they are acting on — the org id
+# arrives in the request body and is never trusted on its own. Keep
+# verify_jwt = true: without it, an unauthenticated request would reach the
+# handler and the owner check would be comparing against a null user.
+[functions.stripe-org-checkout]
+verify_jwt = true
+
+[functions.stripe-org-portal]
+verify_jwt = true

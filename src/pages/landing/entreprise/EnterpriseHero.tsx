@@ -129,17 +129,10 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
         <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
           {/* ── Colonne gauche : la promesse ── */}
           <div className="flex flex-col items-start text-left">
-            <span
-              data-ent-hero-fade
-              className="mb-7 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-400/[0.07] px-3.5 py-1.5 font-mono text-caption uppercase tracking-[0.22em] text-cyan-300"
-            >
-              <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75 motion-reduce:hidden" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400" />
-              </span>
-              {t('enterprise.hero.badge')}
-            </span>
-
+            {/* Pas de pastille « disponible aujourd'hui » avec son point qui
+                clignote : c'est le badge que porte toute page de SaaS générée,
+                et il annonce une nouveauté là où la page doit annoncer un
+                produit. Le titre commence directement. */}
             <h1 className="mb-7 text-[2.6rem] font-bold leading-[1.02] tracking-[-0.03em] sm:text-6xl lg:text-[4.2rem]">
               <span className="ent-hero-line block text-white">{t('enterprise.hero.line1')}</span>
               <span className="ent-hero-line block text-slate-500">{t('enterprise.hero.line2')}</span>

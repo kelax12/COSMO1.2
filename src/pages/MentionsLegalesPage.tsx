@@ -44,8 +44,8 @@ const MentionsLegalesPage: React.FC = () => {
         <Section title="2. Hébergement">
           <p>L'application Cosmo est hébergée par :</p>
           <ul className="list-none space-y-1 mt-2">
-            <li><span className="text-slate-400">Frontend :</span> Vercel Inc. — 340 Pine Street, Suite 701, San Francisco, CA 94104, USA</li>
-            <li><span className="text-slate-400">Base de données :</span> Supabase Inc. — 970 Toa Payoh North, #07-04, Singapore 318992</li>
+            <li><span className="text-slate-400">Frontend :</span> Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA</li>
+            <li><span className="text-slate-400">Base de données :</span> Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992</li>
           </ul>
         </Section>
 

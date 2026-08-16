@@ -8,7 +8,10 @@ import TaskModal from './TaskModal';
 import BulkAddToListModal from './add-to-list/BulkAddToListModal';
 import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
-import { VirtualizedTaskList, TaskRow } from './task-table/list';
+import { VirtualizedTaskList, TaskRow, type UnifiedTaskRow } from './task-table/list';
+import { TeamTaskRowLite } from './task-table/TeamTaskRowLite';
+import TeamTaskModal from './organization/TeamTaskModal';
+import { myAssignedTasks } from './organization/team-projects.helpers';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -43,6 +46,8 @@ import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useU
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useT } from '@/i18n/useT';
+import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
+import { useTeamProjects, useTeamTasks, useUpdateTeamTask, type TeamTask, type UpdateTeamTaskInput } from '@/modules/team-projects';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -56,6 +61,8 @@ type TaskTableProps = {
   selectedForListIds?: string[];
   onToggleTaskForList?: (taskId: string) => void;
   showQuickFilters?: boolean;
+  /** Terme de recherche de la page — filtre aussi les tâches d'équipe fusionnées. */
+  searchTerm?: string;
 };
 
 
@@ -71,6 +78,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   selectedForListIds = [],
   onToggleTaskForList,
   showQuickFilters = true,
+  searchTerm = '',
 }) => {
   const { t, tp } = useT('tasks');
   const { t: tCommon } = useT('common');
@@ -94,6 +102,33 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const collaboratorsByTask = useCollaboratorsByTask(user?.id);
   const pendingCollaboratorTaskIds = usePendingCollaboratorTaskIds(user?.id);
   const unshareTaskMutation = useUnshareTask();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Fusion tâches d'équipe (mode entreprise) — assignées à moi, injectées
+  // dans la même liste que les tâches perso avec une distinction visuelle
+  // forte (fond indigo) et un jeu d'actions restreint (cf. TeamTaskRowLite).
+  // ═══════════════════════════════════════════════════════════════════
+  const { activeOrg } = useActiveOrganization();
+  const orgId = activeOrg?.id;
+  const { data: teamProjects = [] } = useTeamProjects(orgId);
+  const { data: allTeamTasks = [] } = useTeamTasks(orgId);
+  const { data: orgMembers = [] } = useOrgMembers(orgId);
+  const updateTeamTaskMutation = useUpdateTeamTask(orgId ?? '');
+  const [editingTeamTask, setEditingTeamTask] = useState<TeamTask | null>(null);
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'perso' | 'entreprise'>('all');
+
+  const teamProjectsById = useMemo(
+    () => new Map(teamProjects.map((p) => [p.id, p])),
+    [teamProjects],
+  );
+
+  const handleToggleTeamComplete = useCallback((task: TeamTask) => {
+    updateTeamTaskMutation.mutate({ taskId: task.id, input: { completed: !task.completed } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
+
+  const modalUpdateTeamTask = (taskId: string, input: UpdateTeamTaskInput) =>
+    updateTeamTaskMutation.mutateAsync({ taskId, input });
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -217,6 +252,72 @@ const TaskTable: React.FC<TaskTableProps> = ({
   );
 
   const sortedTasks = filteredAndSortedTasks;
+
+  // ── Tâches d'équipe assignées à moi, filtrées comme les tâches perso ──
+  // Les filtres perso (favoris/retard/collaboration) n'ont pas d'équivalent
+  // côté équipe : quand l'un d'eux est actif, on masque les tâches d'équipe
+  // plutôt que d'afficher une liste qu'aucun de ces filtres ne décrit.
+  const teamTasksVisibleForQuickFilter = activeQuickFilter === 'none' || activeQuickFilter === 'completed';
+  const teamCompletedState = activeQuickFilter === 'completed' ? true : showCompleted;
+
+  const myTeamTasks = useMemo(() => {
+    if (!user || !teamTasksVisibleForQuickFilter) return [];
+    let result = myAssignedTasks(allTeamTasks, user.id).filter((t) => t.completed === teamCompletedState);
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter((t) => t.name.toLowerCase().includes(lower));
+    }
+    result = result.filter((t) => t.priority >= priorityRange[0] && t.priority <= priorityRange[1]);
+    return result;
+  }, [allTeamTasks, user, teamTasksVisibleForQuickFilter, teamCompletedState, searchTerm, priorityRange]);
+
+  const scopedPersoTasks = useMemo(
+    () => (scopeFilter === 'entreprise' ? [] : sortedTasks),
+    [scopeFilter, sortedTasks],
+  );
+  const scopedTeamTasks = useMemo(
+    () => (scopeFilter === 'perso' ? [] : myTeamTasks),
+    [scopeFilter, myTeamTasks],
+  );
+
+  // Fusion triée : mêmes clés de tri que compareTasks (task-filtering.ts),
+  // adaptées aux deux formes (Task / TeamTask). Les champs sans équivalent
+  // côté équipe (catégorie, date de création) laissent l'ordre d'insertion
+  // (perso d'abord) — cas secondaire, non prioritaire ici.
+  const unifiedRows: UnifiedTaskRow[] = useMemo(() => {
+    const rows: UnifiedTaskRow[] = [
+      ...scopedPersoTasks.map((task) => ({ kind: 'perso' as const, id: task.id, task })),
+      ...scopedTeamTasks.map((task) => ({
+        kind: 'entreprise' as const,
+        id: task.id,
+        task,
+        project: teamProjectsById.get(task.projectId),
+      })),
+    ];
+
+    if (!localSortField) return rows;
+
+    const sortValue = (row: UnifiedTaskRow) => {
+      const t = row.task;
+      switch (localSortField) {
+        case 'name': return t.name;
+        case 'priority': return t.priority;
+        case 'deadline': return t.deadline ? new Date(t.deadline).getTime() : Number.POSITIVE_INFINITY;
+        case 'estimatedTime': return t.estimatedTime ?? 0;
+        case 'completedAt': return showCompleted && t.completedAt ? new Date(t.completedAt).getTime() : 0;
+        default: return 0;
+      }
+    };
+
+    return [...rows].sort((a, b) => {
+      const va = sortValue(a);
+      const vb = sortValue(b);
+      const comparison = typeof va === 'string' && typeof vb === 'string'
+        ? va.localeCompare(vb)
+        : (va as number) - (vb as number);
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [scopedPersoTasks, scopedTeamTasks, teamProjectsById, localSortField, sortDirection, showCompleted]);
 
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
@@ -412,6 +513,31 @@ const TaskTable: React.FC<TaskTableProps> = ({
           regroupées dans TasksInboxMenu (en-tête, mobile ET desktop) — pour
           laisser toute la largeur au tableau. */}
       <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
+        {/* Tout / Perso / Entreprise — visible seulement avec une org active,
+            sinon aucune tâche d'équipe ne peut jamais apparaître ici. */}
+        {orgId && (
+          <div
+            role="group"
+            aria-label={t('table.quickFilter.scopeAria')}
+            className="inline-flex items-center rounded-lg border border-[rgb(var(--color-border))] p-0.5 self-start"
+          >
+            {(['all', 'perso', 'entreprise'] as const).map((scope) => (
+              <button
+                key={scope}
+                type="button"
+                onClick={() => setScopeFilter(scope)}
+                aria-pressed={scopeFilter === scope}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  scopeFilter === scope
+                    ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))]'
+                    : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                }`}
+              >
+                {t(`table.quickFilter.scope${scope === 'all' ? 'All' : scope === 'perso' ? 'Perso' : 'Entreprise'}`)}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
@@ -562,10 +688,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {sortedTasks.map((task) => (
+            {unifiedRows.map((row) => row.kind === 'perso' ? (
               <TaskRow
-                key={task.id}
-                task={task}
+                key={row.id}
+                task={row.task}
                 addToListMode={effectiveAddToListMode}
                 selectedForListIds={effectiveSelectedForListIds}
                 activeQuickFilter={activeQuickFilter}
@@ -584,6 +710,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
                 friends={friends}
               />
+            ) : (
+              <TeamTaskRowLite
+                key={row.id}
+                task={row.task}
+                project={row.project}
+                onToggleComplete={handleToggleTeamComplete}
+                onEdit={setEditingTeamTask}
+              />
             ))}
           </tbody>
         </table>
@@ -592,7 +726,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
         {/* Hint de découvrabilité des gestes (affiché une fois) */}
-        {!swipeHintDismissed && !addToListMode && sortedTasks.length > 0 && (
+        {!swipeHintDismissed && !addToListMode && unifiedRows.length > 0 && (
           <div
             className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg text-xs"
             style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
@@ -613,7 +747,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </div>
         )}
         <VirtualizedTaskList
-          tasks={sortedTasks}
+          rows={unifiedRows}
           addToListMode={effectiveAddToListMode}
           selectedForListIds={effectiveSelectedForListIds}
           onToggleTaskForList={effectiveToggleForList}
@@ -629,10 +763,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
           collaboratorsByTask={collaboratorsByTask}
           pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
           friends={friends}
+          onToggleTeamComplete={handleToggleTeamComplete}
+          onEditTeamTask={setEditingTeamTask}
         />
       </div>
 
-      {sortedTasks.length === 0 && isLoadingTasks && (
+      {unifiedRows.length === 0 && isLoadingTasks && (
         <div className="space-y-2 p-2">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="h-14 rounded-xl bg-[rgb(var(--color-hover))] animate-pulse" />
@@ -640,7 +776,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
       )}
 
-      {sortedTasks.length === 0 && !isLoadingTasks && (
+      {unifiedRows.length === 0 && !isLoadingTasks && (
         <div className="text-center py-12" style={{ color: 'rgb(var(--color-text-muted))' }}>
           <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
             {showCompleted ? t('table.emptyCompleted') : t('table.empty')}
@@ -968,6 +1104,16 @@ const TaskTable: React.FC<TaskTableProps> = ({
             isOpen={true}
             onClose={() => setAddToListTask(null)}
             taskId={addToListTask}
+          />
+        )}
+
+        {editingTeamTask && (
+          <TeamTaskModal
+            task={editingTeamTask}
+            projects={teamProjects.filter((p) => !p.archivedAt)}
+            members={orgMembers}
+            onUpdate={modalUpdateTeamTask}
+            onClose={() => setEditingTeamTask(null)}
           />
         )}
     </>

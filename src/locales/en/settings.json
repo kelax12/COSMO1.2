@@ -21,14 +21,14 @@
     "heading": "Personal information",
     "emailLabel": "Email address",
     "emailPlaceholder": "you@email.com",
-    "emailManaged": "Email managed by your external sign-in — not editable here.",
+    "emailManaged": "Email managed by your external sign-in, not editable here.",
     "nameEmpty": "Your name can't be empty",
     "emailEmpty": "Your email can't be empty",
     "updatedDemo": "Profile updated (demo mode)",
     "updateFailed": "Couldn't update your profile",
     "emailTaken": "That email address is already used by another account.",
     "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
-    "updatedCheckMail": "Profile updated — check your inbox to confirm the email change.",
+    "updatedCheckMail": "Profile updated. Check your inbox to confirm the email change.",
     "updated": "Profile updated!",
     "photoUpdated": "Profile picture updated",
     "photoDeleted": "Picture deleted",
@@ -64,7 +64,7 @@
     "deleteAccountBody": "This cannot be undone. All your data (tasks, habits, OKRs, events, friends) will be permanently deleted. Type \"DELETE\" to confirm.",
     "demoAccountCleared": "Demo account cleared",
     "deleteFailed": "Automatic deletion failed",
-    "deleteFailedHint": "Contact axellongattepro@gmail.com — your request will be handled manually.",
+    "deleteFailedHint": "Contact axellongattepro@gmail.com, your request will be handled manually.",
     "accountDeleted": "Account deleted",
     "networkError": "Network error",
     "networkErrorHint": "Try again, or contact axellongattepro@gmail.com."
@@ -111,11 +111,11 @@
   "help": {
     "intro": "Everything you need to master every Cosmo feature.",
     "guideTitle": "Full guide",
-    "guideHint": "Tasks, Calendar, Habits, OKRs, Statistics, Premium — it's all there.",
+    "guideHint": "Tasks, Calendar, Habits, OKRs, Statistics, Premium: it's all there.",
     "supportTitle": "Need help?",
     "supportHint": "Our team replies within 24h.",
     "adminTitle": "Cosmo stats",
-    "adminHint": "Growth, activity and conversion — admin only."
+    "adminHint": "Growth, activity and conversion, admin only."
   },
   "data": {
     "title": "My data",
@@ -134,6 +134,6 @@
     "exportingAll": "Exporting all your data…",
     "exportingAllHint": "{{count}} items across 4 CSV files",
     "importNotice": "Import from Todoist / Notion / TickTick",
-    "importNoticeRest": " — coming soon. In the meantime, export your data from the source app as CSV and contact us for a manual import."
+    "importNoticeRest": ": coming soon. In the meantime, export your data from the source app as CSV and contact us for a manual import."
   }
 }

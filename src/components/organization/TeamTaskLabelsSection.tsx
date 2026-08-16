@@ -88,7 +88,7 @@ const TeamTaskLabelsSection = ({ orgId, taskId, isManager }: TeamTaskLabelsSecti
             <button
               type="button"
               onClick={() => toggleLabel.mutate({ taskId, labelId: label.id, attached: true })}
-              aria-label={`${t('taskModal.labelsTitle')} — ${label.name}`}
+              aria-label={`${t('taskModal.labelsTitle')} : ${label.name}`}
               className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
             >
               <X size={10} aria-hidden="true" />

@@ -82,7 +82,11 @@
       "completedShort": "Fait",
       "overdue": "Retard",
       "collaboration": "Collaboration",
-      "collaborationShort": "Collab"
+      "collaborationShort": "Collab",
+      "scopeAria": "Filtrer par portée : tout, perso ou entreprise",
+      "scopeAll": "Tout",
+      "scopePerso": "Perso",
+      "scopeEntreprise": "Entreprise"
     },
     "select": "Sélectionner",
     "cancelSelect": "Annuler",
@@ -181,8 +185,8 @@
     "createdAt": "Par date de création",
     "name": "Par nom",
     "category": "Par catégorie",
-    "asc": "Tri croissant — cliquer pour décroissant",
-    "desc": "Tri décroissant — cliquer pour croissant",
+    "asc": "Tri croissant, cliquer pour décroissant",
+    "desc": "Tri décroissant, cliquer pour croissant",
     "ascTitle": "Ordre croissant",
     "descTitle": "Ordre décroissant",
     "reset": "Réinitialiser",

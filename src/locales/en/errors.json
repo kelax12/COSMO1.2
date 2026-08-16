@@ -108,7 +108,7 @@
     "orgDeleted": "Company permanently deleted",
     "ownershipTransferred": "Ownership transferred",
     "positionUpdated": "Position updated",
-    "codeRegenerated": "New code generated — the old one no longer works",
+    "codeRegenerated": "New code generated, the old one no longer works",
     "orgProfileUpdated": "Company profile updated",
     "objectiveCreated": "Objective created",
     "objectiveUpdated": "Objective updated",

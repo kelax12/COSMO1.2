@@ -276,6 +276,44 @@ Comportement **quand `PREMIUM_ENFORCED = true`** :
 - Le client ne peut plus écrire `subscriptions` (mig. 015) : `addTokens(1)` passe par la RPC
   `credit_premium_token_from_ad` (cap 20 crédits/24 h).
 
+#### Facturation entreprise — Stripe branché, dormant (2026-08-17)
+
+`org_subscriptions` (mig. 101) porte l'abonnement d'une **organisation** : un palier
+(`ENTERPRISE_PRICING_TIERS`), un quota de sièges (`max_members`), un statut. Ne jamais la
+confondre avec `subscriptions`, qui porte l'abonnement **particulier** (jetons, `win_streak`) —
+les deux ne partagent aucune colonne.
+
+- La table n'a **aucune policy d'écriture**. Seul le webhook Stripe (`service_role`) écrit ;
+  la lecture est réservée aux membres. Pas de trigger-guard : rien n'est écrivable, il n'y a
+  rien à garder.
+- Souscription et gestion : **propriétaire de l'org uniquement**, vérifié dans
+  `stripe-org-checkout` / `stripe-org-portal`. Le front ne fait que masquer un onglet.
+- Coupons : **promotion codes Stripe natifs** (`allow_promotion_codes`). COSMO ne valide aucun
+  code et ne recalcule aucun montant — donc aucune surface de brute-force côté COSMO.
+- Le quota réel est `org_seats_allowed()` (mig. 101), déjà appelé par `claim_org_invite` et
+  `respond_join_request`. Un abonnement `past_due` ou `cancelled` retombe au palier gratuit
+  **sans jamais retirer de membre** : on bloque la croissance, on ne retire rien.
+- UI : onglet `/entreprise?tab=billing` (`OrgBillingTab`), grille `EnterpriseTierGrid`.
+  Le CTA de paiement n'est monté que si `ENTERPRISE_BILLING_ENFORCED === true` — le flag est la
+  **seule** condition, jamais « actif si les variables d'environnement existent ».
+
+Garde-fous propres à cette zone :
+
+- ❌ **Ne jamais dériver le palier des metadata Stripe.** Un changement de palier fait depuis le
+  Billing Portal ne repasse pas par notre checkout : le palier se redérive du **price ID**
+  (`tierFromPriceId`, `supabase/functions/_shared/org-tiers.ts`). Sans ça, un client paie 100 €
+  et reste bloqué au quota de 20 sièges.
+- ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.** Le
+  customer Stripe d'une org porte `org_owner_uid` (jamais `supabase_uid`) et
+  `getUidFromCustomer` refuse tout customer portant `org_id` — sinon la facture d'une entreprise
+  écrit dans l'abonnement personnel de son propriétaire, et le marqueur d'idempotence empêche
+  Stripe de réessayer.
+- ❌ **Ne jamais écrire un montant en dur** côté Deno : `_shared/org-tiers.ts` est verrouillé sur
+  `ENTERPRISE_PRICING_TIERS` par `src/modules/billing/org-tiers.parity.test.ts`.
+- Activation : `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'`,
+  puis `ENTERPRISE_BILLING_ENFORCED = true` — procédure complète dans
+  [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
+
 ### Données métier
 
 ```typescript
@@ -396,7 +434,7 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**100 migrations, dernière = `099_admin_stats_v3.sql`** (au 2026-08-14).
+**102 migrations, dernière = `101_org_subscriptions.sql`** (au 2026-08-17).
 
 Toutes les tables ont **RLS activée**. Pattern obligatoire + checklist migration →
 [`docs/SECURITY.md`](./docs/SECURITY.md).

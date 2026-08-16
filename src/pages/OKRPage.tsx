@@ -309,7 +309,7 @@ const OKRPage: React.FC = () => {
           onClick={() => setShowCheckin(true)}
           className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           aria-label="Ouvrir le check-in hebdo"
-          title="Faire le point sur vos OKR — s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
+          title="Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
         >
           <CalendarCheck size={15} />
           <span>{t('page.weeklyCheckin')}</span>

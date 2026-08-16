@@ -43,7 +43,7 @@ const DEMO_TASKS: Task[] = [
   t('t004','Mettre à jour dépendances npm',   'Màj majeure + breaking changes',           3,'cat-5',-3,   4,  null, false, 60),
 
   // ── APPRENTISSAGE (cat-4) ─────────────────────────────────────────────
-  t('t005','Lire "Accelerate"',               'Forsgren — DevOps metrics DORA',           3,'cat-4',-28, -5,  -8, true, 360),
+  t('t005','Lire "Accelerate"',               'Forsgren, DevOps metrics DORA',           3,'cat-4',-28, -5,  -8, true, 360),
   t('t006','Cours deep learning Coursera',    'Réseaux neuronaux + CNN + RNN',            3,'cat-4',-10,  50, null, false, 2400),
 
   // ── PERSONNEL (cat-2) ─────────────────────────────────────────────────
@@ -99,7 +99,7 @@ const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
   t013: { name: 'Send invoice to Dupont client', description: 'Overdue invoice, follow up with client' },
   t003: { name: 'Q1 2026 security audit', description: 'Pentest + CVE fixes' },
   t004: { name: 'Update npm dependencies', description: 'Major upgrade + breaking changes' },
-  t005: { name: 'Read "Accelerate"', description: 'Forsgren — DORA DevOps metrics' },
+  t005: { name: 'Read "Accelerate"', description: 'Forsgren, DORA DevOps metrics' },
   t006: { name: 'Deep learning course on Coursera', description: 'Neural networks + CNN + RNN' },
   t007: { name: 'Prepare mortgage application', description: 'Documents + simulation + banks' },
   t008: { name: 'Look for a new apartment', description: 'Criteria + viewings + budget cap' },

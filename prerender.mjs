@@ -55,19 +55,27 @@ const TODAY = new Date().toISOString().slice(0, 10);
 let html = readFileSync(join(DIST, 'index.html'), 'utf8');
 html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${TODAY}"`);
 
-// ── FAQ (miroir de FAQ_ITEMS dans src/pages/LandingPage.tsx — garder synchro) ──
-const FAQ_ITEMS = [
-  ['Cosmo est-il vraiment gratuit ?', "Oui. Toutes les fonctionnalités principales — tâches, habitudes, agenda, OKR et statistiques — sont entièrement gratuites. L'accès Premium (collaboration en équipe, partage de tâches) s'obtient en regardant une courte publicité, sans jamais sortir votre carte bancaire."],
-  ["Qu'est-ce que la méthode OKR et pourquoi l'utiliser ?", "La méthode OKR (Objectives & Key Results) est le système de définition d'objectifs utilisé par Google, Intel et Netflix. Un OKR = un objectif qualitatif ambitieux + 2 à 5 résultats clés mesurables. Cosmo automatise le calcul de progression et visualise votre avancement en temps réel, sans tableur."],
-  ['Quelle est la différence avec Notion ou Todoist ?', "Notion est un espace de notes très flexible mais sans structure de productivité native. Todoist est un excellent gestionnaire de tâches mais n'intègre pas les habitudes, les OKR ni le time-blocking. Cosmo est la seule application qui connecte les quatre piliers — tâches, habitudes, agenda et objectifs — dans un seul écosystème cohérent."],
-  ['Comment fonctionne le mode démo ?', "Cliquez sur « Essayer la démo » : vous accédez immédiatement à l'application complète, pré-remplie avec 100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs sur 12 mois de données réalistes. Aucun compte, aucun email demandé. Quand vous êtes convaincu(e), créez votre vrai compte en 30 secondes."],
-  ['Cosmo fonctionne-t-il sur mobile ?', "Oui. Cosmo est conçu mobile-first : interface responsive, bottom navigation bar, gestes swipe sur les tâches, bottom-sheets fluides et support du safe area iOS. L'application fonctionne dans n'importe quel navigateur mobile — Safari iOS, Chrome Android — sans téléchargement requis."],
-  ["Qu'est-ce que le time-blocking ?", "Le time-blocking consiste à réserver des créneaux horaires dans votre agenda pour travailler sur des tâches précises, plutôt que de réagir au fil de l'eau. Dans Cosmo, glissez simplement une tâche depuis le panneau latéral vers un créneau de votre calendrier : l'événement est créé automatiquement et lié à la tâche."],
-  ['Puis-je collaborer avec mon équipe ?', "Oui. Avec l'accès Premium (gratuit via publicité), envoyez des demandes d'amis par email, partagez des tâches avec un rôle Lecteur ou Éditeur, et suivez la progression de vos collaborateurs depuis votre dashboard. La messagerie contextuelle permet de discuter directement dans le contexte d'une tâche."],
-  ['Comment suivre mes habitudes efficacement ?', "Créez une habitude, définissez sa fréquence (quotidienne, hebdomadaire, jours spécifiques), puis cochez chaque jour. Cosmo affiche une heatmap 26 semaines style GitHub, calcule votre streak (série de jours consécutifs) et votre taux de complétion sur la période choisie. La règle d'or : commencez par 2 à 3 habitudes maximum."],
-  ['Mes données sont-elles sécurisées ?', "Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre ne peut accéder à vos tâches ou habitudes. Les pages de l'application (dashboard, tâches, etc.) sont bloquées pour les robots de recherche dans robots.txt. En mode démo, les données restent dans votre navigateur (localStorage) et ne transitent pas par nos serveurs."],
-  ['Peut-on utiliser Cosmo sans connexion internet ?', "En mode démo, toutes les données sont stockées localement dans votre navigateur — aucune connexion requise après le chargement initial. En mode compte, un cache localStorage 24 heures permet de consulter vos tâches et habitudes récentes même avec une connexion instable."],
-];
+// ── FAQ ───────────────────────────────────────────────────────────────────
+// LUE dans le catalogue que rend l'application (`faq.q1…qN`), pas recopiée ici.
+//
+// Les deux copies avaient divergé sans que rien ne le signale : 10 items ici
+// contre 12 dans l'app, avec des réponses différentes — dont une qui promettait
+// un « accès Premium en regardant une publicité » que le produit n'applique
+// pas (`PREMIUM_ENFORCED = false`). Google comparait donc un balisage FAQPage à
+// un contenu visible qui ne disait pas la même chose, ce qui est exactement ce
+// que la doc schema.org interdit. Une seule source, plus de synchro à tenir.
+//
+// La home n'est publiée que dans la locale par défaut tant qu'elle n'est pas
+// traduite, donc le schéma est construit depuis ce catalogue-là.
+const LANDING_FAQ = JSON.parse(
+  readFileSync(join(__dirname, 'src/locales', DEFAULT_LOCALE, 'landing.json'), 'utf8')
+).faq;
+
+const FAQ_ITEMS = Object.keys(LANDING_FAQ)
+  .filter((key) => /^q\d+$/.test(key))
+  .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+  .map((qKey) => [LANDING_FAQ[qKey], LANDING_FAQ[`a${qKey.slice(1)}`]])
+  .filter(([question, answer]) => question && answer);
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -144,17 +152,17 @@ const ROUTES = [
     ],
     content: {
       fr: `<h1>Guide d'utilisation de Cosmo</h1>
-        <p>Ce guide couvre les six zones de Cosmo, dans l'ordre où on les découvre en pratique. Comptez une quinzaine de minutes pour tout parcourir — mais rien n'oblige à tout mettre en place le premier jour : les tâches seules suffisent à démarrer utilement.</p>
+        <p>Ce guide couvre les six zones de Cosmo, dans l'ordre où on les découvre en pratique. Comptez une quinzaine de minutes pour tout parcourir, mais rien n'oblige à tout mettre en place le premier jour : les tâches seules suffisent à démarrer utilement.</p>
         <h2>Prise en main</h2>
         <p>Deux entrées possibles. Le <strong>mode démo</strong> ouvre l'application complète sans inscription, pré-remplie de 12 mois de données : c'est la bonne façon d'explorer sans rien construire. Le <strong>compte gratuit</strong> se crée en trente secondes, par email ou via Google, et vos données vous suivent alors d'un appareil à l'autre. Au premier login, Cosmo demande quels modules afficher : gardez-en peu au début, tout se réactive plus tard dans Réglages → Modules.</p>
         <h2>Tâches</h2>
-        <p>Le socle. Une tâche porte un nom, une description, une priorité de 1 à 5, une catégorie colorée, une échéance et une liste. Les filtres se combinent pour isoler ce qui compte maintenant ; les listes servent aux regroupements durables (un client, un projet, un cours). Une tâche récurrente se régénère automatiquement quand vous la cochez, et les sous-tâches découpent ce qui est trop gros pour être commencé. Le partage se fait par email, en rôle Lecteur ou Éditeur — gratuitement.</p>
+        <p>Le socle. Une tâche porte un nom, une description, une priorité de 1 à 5, une catégorie colorée, une échéance et une liste. Les filtres se combinent pour isoler ce qui compte maintenant ; les listes servent aux regroupements durables (un client, un projet, un cours). Une tâche récurrente se régénère automatiquement quand vous la cochez, et les sous-tâches découpent ce qui est trop gros pour être commencé. Le partage se fait par email, en rôle Lecteur ou Éditeur, gratuitement.</p>
         <h2>Habitudes</h2>
         <p>Créez l'habitude, choisissez sa fréquence (quotidienne, hebdomadaire ou jours précis), puis cochez au fil des jours. La heatmap 26 semaines montre la régularité réelle, le streak compte les jours consécutifs et le taux de complétion situe la période en cours. Conseil qui change tout : deux ou trois habitudes maximum au démarrage, quitte à en ajouter dans un mois. Une liste de quinze habitudes se solde à peu près toujours par un abandon global.</p>
         <h2>Agenda</h2>
         <p>L'agenda accepte des événements classiques, mais son intérêt est ailleurs : glissez une tâche depuis le panneau latéral vers un créneau, l'événement se crée et reste lié à la tâche. C'est le <a href="/blog/time-blocking-guide">time-blocking</a>, et c'est ce qui transforme une liste d'intentions en semaine réaliste. Vues jour, semaine et mois ; les événements récurrents se gèrent depuis la même fiche.</p>
         <h2>OKR</h2>
-        <p>Un objectif qualitatif, 2 à 5 résultats clés chiffrés. Vous mettez à jour la valeur courante d'un résultat clé, Cosmo recalcule la progression de l'objectif et enregistre chaque complétion dans votre historique — c'est cette trace qui alimente le graphique du dashboard. Si vous débutez avec la méthode, l'article <a href="/blog/methode-okr-exemples">méthode OKR et 15 exemples</a> donne des formulations prêtes à adapter.</p>
+        <p>Un objectif qualitatif, 2 à 5 résultats clés chiffrés. Vous mettez à jour la valeur courante d'un résultat clé, Cosmo recalcule la progression de l'objectif et enregistre chaque complétion dans votre historique, c'est cette trace qui alimente le graphique du dashboard. Si vous débutez avec la méthode, l'article <a href="/blog/methode-okr-exemples">méthode OKR et 15 exemples</a> donne des formulations prêtes à adapter.</p>
         <h2>Statistiques</h2>
         <p>Temps investi par catégorie, évolution sur la période choisie, comparaison entre modules. C'est la page à ouvrir en fin de semaine ou de mois : elle répond à « où est parti mon temps ? » avec des chiffres plutôt qu'avec une impression, et c'est souvent là que se décide le prochain ajustement.</p>
         <p><a href="/">Retour à l'accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Le blog</a></p>`,
@@ -196,15 +204,15 @@ const ROUTES = [
         <ul>
           <li><strong>Gratuit pour l'essentiel.</strong> Tâches, habitudes, agenda, OKR, statistiques et partage de tâches sont gratuits, sans carte bancaire ni essai à durée limitée. La collaboration en particulier restera gratuite : une app d'organisation qui fait payer le fait d'inviter quelqu'un se prive de la seule chose qui la rend utile à plusieurs.</li>
           <li><strong>Utilisable en deux minutes.</strong> Le mode démo ouvre l'application complète, pré-remplie de 12 mois de données réalistes, sans compte ni email. On juge un outil d'organisation chargé, pas devant un écran vide.</li>
-          <li><strong>Mobile d'abord.</strong> Cosmo se conçoit d'abord pour un téléphone tenu à une main, puis s'élargit à l'écran d'ordinateur — pas l'inverse. Aucune installation : tout fonctionne dans le navigateur.</li>
+          <li><strong>Mobile d'abord.</strong> Cosmo se conçoit d'abord pour un téléphone tenu à une main, puis s'élargit à l'écran d'ordinateur, pas l'inverse. Aucune installation : tout fonctionne dans le navigateur.</li>
           <li><strong>Vos données vous appartiennent.</strong> Stockage Supabase avec Row Level Security : chaque ligne est cloisonnée à son propriétaire au niveau de la base, pas seulement dans l'interface. En mode démo, rien ne quitte votre navigateur. Suppression de compte définitive et complète, sur demande depuis les réglages.</li>
         </ul>
 
         <h2>Cosmo, The Cosmo App ou thecosmo ?</h2>
-        <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app » — c'est toujours nous. Plusieurs autres produits sans rapport portent le nom « Cosmo » (une radio allemande, des applications mobiles diverses) : Cosmo est une application web de productivité, sans téléchargement, et son seul site officiel est thecosmo.app.</p>
+        <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app », c'est toujours nous. Plusieurs autres produits sans rapport portent le nom « Cosmo » (une radio allemande, des applications mobiles diverses) : Cosmo est une application web de productivité, sans téléchargement, et son seul site officiel est thecosmo.app.</p>
 
         <h2>Nous écrire</h2>
-        <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à axellongattepro@gmail.com — les retours d'utilisateurs orientent réellement la feuille de route.</p>
+        <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à axellongattepro@gmail.com : les retours d'utilisateurs orientent réellement la feuille de route.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a> · <a href="/guide">Guide d'utilisation</a></p>`,
     },
   },
@@ -223,31 +231,31 @@ const ROUTES = [
       },
     ],
     content: {
-      fr: `<h1>Cosmo Entreprise — votre organigramme est votre moteur d'exécution</h1>
-        <p>Cosmo Entreprise fait de votre pyramide managériale la structure vivante de vos projets, de vos OKR et de vos statistiques d'équipe. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà : ce n'est pas un outil de plus à faire adopter.</p>
+      fr: `<h1>Cosmo Entreprise, votre organigramme est votre moteur d'exécution</h1>
+        <p>Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme : ce qu'il voit, ce qu'on lui assigne, ce qu'on mesure. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà, ce qui évite d'avoir un outil de plus à faire adopter. La mise en place tient en quatre étapes.</p>
 
-        <h2>Le périmètre découle de la hiérarchie</h2>
-        <p>Chaque membre a un manager. De ce seul lien découlent les accès : un manager voit son sous-arbre complet — ses équipes, leurs projets, leurs OKR, leurs statistiques — sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
+        <h2>Étape 1 : invitez votre équipe et regroupez-la</h2>
+        <p>Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, par code d'organisation ou par lien à usage unique, et vous le rattachez à son responsable. Vous créez ensuite autant d'équipes que nécessaire et y placez les personnes que vous voulez, une même personne pouvant appartenir à plusieurs équipes. De ce seul lien de rattachement découlent les accès : un responsable voit son sous-arbre complet (ses équipes, leurs projets, leurs objectifs, leurs statistiques) sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien.</p>
+        <p>L'organigramme n'est pas un trombinoscope, c'est l'écran depuis lequel on suit chaque personne : ouvrir sa fiche donne ses tâches en cours, sa charge et son agenda. Un responsable peut créer, déplacer et modifier les événements de l'agenda des personnes qui lui reportent ; ce qu'elles ont marqué comme personnel reste privé, seul le créneau apparaît. Deux branches sœurs de l'organigramme, elles, sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
+        <p><img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="Onglet Pyramide de Cosmo Entreprise : l'organigramme de l'organisation, chaque membre rattaché à son manager" /></p>
 
-        <h2>À quoi ressemble l'espace entreprise</h2>
-        <p>Trois onglets de l'espace entreprise, en mode démo :</p>
-        <p>
-          <img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="Onglet Pyramide de Cosmo Entreprise : l'organigramme de l'organisation, chaque membre rattaché à son manager" />
-          <img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="Onglet Projets de Cosmo Entreprise : les projets par équipe avec leurs tâches, échéances et personnes assignées" />
-          <img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="Onglet Statistiques de Cosmo Entreprise : progression des OKR et charge de travail de chaque membre de l'équipe" />
-        </p>
+        <h2>Étape 2 : créez vos projets et attribuez-les à l'échelle voulue</h2>
+        <p>Un projet appartient à une équipe et rassemble ses tâches. Vous les assignez à une personne ou à plusieurs, dans tout votre périmètre, et chacune les retrouve dans son propre Cosmo à côté de ses tâches personnelles. Kanban pour savoir où en est chaque tâche, frise chronologique pour voir arriver les échéances, avec sous-tâches, labels, commentaires à mentions et historique des modifications.</p>
+        <p><img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="Onglet Projets de Cosmo Entreprise : les projets par équipe avec leurs tâches, échéances et personnes assignées" /></p>
 
-        <h2>Six onglets de pilotage</h2>
-        <p><strong>Aperçu</strong> : l'activité de vos équipes, la charge du moment et ce qui vient de bouger. <strong>Organigramme</strong> : la hiérarchie complète, éditable — rattacher un membre, réassigner un manager, transférer la propriété. <strong>Projets</strong> : kanban ou frise chronologique, avec tâches d'équipe, sous-tâches, labels, commentaires et historique. <strong>OKR</strong> : objectifs d'équipe, résultats clés chiffrés et catégories propres à votre organisation. <strong>Statistiques</strong> : vélocité, tendance et temps investi, sur toute l'organisation pour une direction et sur son périmètre pour un manager. <strong>Membres</strong> : annuaire, fiches, agenda et charge de chacun, avec invitation par code ou par lien.</p>
+        <h2>Étape 3 : posez vos objectifs, à toutes les échelles</h2>
+        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés : le même mécanisme à chaque niveau, dans les catégories que vous définissez. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup, c'est ce qui rend la courbe du tableau de bord opposable en comité.</p>
+        <p><img src="/screenshots/entreprise/okr.webp" width="1500" height="938" alt="Onglet OKR de Cosmo Entreprise : les objectifs d'équipe et leurs résultats clés chiffrés, avec leur progression" /></p>
 
-        <h2>Des objectifs qui descendent, des preuves qui remontent</h2>
-        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup — c'est ce qui rend la courbe du tableau de bord opposable en comité.</p>
+        <h2>Étape 4 : suivez la progression de chacun</h2>
+        <p>L'onglet Statistiques répond à la question du lundi matin : qui avance, qui décroche, qui est surchargé. Vélocité et tendance sur la période comparée aux précédentes, tâches ouvertes et retards de chaque membre, temps investi agrégé par équipe et par projet. Une direction lit toute l'organisation, un responsable lit son périmètre, et c'est le rattachement posé à l'étape 1 qui le décide. L'aperçu, lui, ouvre chaque journée : vos tâches assignées, vos échéances et ce qui vient de bouger chez vos équipes.</p>
+        <p><img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="Onglet Statistiques de Cosmo Entreprise : progression des OKR et charge de travail de chaque membre de l'équipe" /></p>
 
         <h2>Sécurité, confidentialité et réversibilité</h2>
         <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
 
         <h2>Tarifs</h2>
-        <p>Un forfait par organisation, pas par siège : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
+        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
 
         <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
     },
@@ -286,7 +294,7 @@ const ROUTES = [
       fr: `<h1>Le blog Cosmo</h1>
         <p>Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. ${ARTICLES.length} articles, écrits pour être utiles sans avoir à installer quoi que ce soit.</p>
         ${ARTICLES.map((a) => `<h2><a href="/blog/${a.slug}">${a.title}</a></h2>
-        <p>${a.description} <a href="/blog/${a.slug}">Lire l'article</a> — ${a.readingMinutes} min de lecture.</p>`).join('\n        ')}
+        <p>${a.description} <a href="/blog/${a.slug}">Lire l'article</a>, ${a.readingMinutes} min de lecture.</p>`).join('\n        ')}
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/rss.xml">Flux RSS</a></p>`,
     },
   },
@@ -413,16 +421,16 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 // promet ce que l'app ne fait pas se paie en rebond, donc en classement.
 const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1>
         <p>Cosmo est une application de productivité gratuite qui réunit quatre outils habituellement séparés : la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results). L'idée de départ est simple : vos tâches du jour, vos routines et vos objectifs de fond décrivent la même vie, ils n'ont aucune raison de vivre dans trois applications qui s'ignorent.</p>
-        <p>Tout fonctionne dans le navigateur, sur ordinateur comme sur mobile, sans installation. Vous pouvez <a href="/">essayer la démo sans créer de compte</a> : elle s'ouvre pré-remplie avec 12 mois de données réalistes — 100 tâches, 100 habitudes, environ 150 événements d'agenda et 8 OKR — de quoi juger le produit chargé plutôt que face à un écran vide.</p>
+        <p>Tout fonctionne dans le navigateur, sur ordinateur comme sur mobile, sans installation. Vous pouvez <a href="/">essayer la démo sans créer de compte</a> : elle s'ouvre pré-remplie avec 12 mois de données réalistes (100 tâches, 100 habitudes, environ 150 événements d'agenda et 8 OKR) : de quoi juger le produit chargé plutôt que face à un écran vide.</p>
 
         <h2>Gérer ses tâches sans se noyer</h2>
-        <p>Chaque tâche porte une priorité de 1 à 5, une catégorie colorée, une échéance et, si besoin, une liste. Les filtres croisent ces critères pour répondre à la seule question qui compte le matin : qu'est-ce que je fais maintenant ? Les tâches récurrentes se régénèrent automatiquement une fois cochées, les sous-tâches découpent ce qui est trop gros, et la recherche retrouve n'importe quel élément instantanément. Les tâches se partagent aussi avec d'autres utilisateurs, en lecture ou en édition — cette collaboration est gratuite et le restera.</p>
+        <p>Chaque tâche porte une priorité de 1 à 5, une catégorie colorée, une échéance et, si besoin, une liste. Les filtres croisent ces critères pour répondre à la seule question qui compte le matin : qu'est-ce que je fais maintenant ? Les tâches récurrentes se régénèrent automatiquement une fois cochées, les sous-tâches découpent ce qui est trop gros, et la recherche retrouve n'importe quel élément instantanément. Les tâches se partagent aussi avec d'autres utilisateurs, en lecture ou en édition, cette collaboration est gratuite et le restera.</p>
 
         <h2>Suivre ses habitudes et voir sa régularité</h2>
-        <p>Une habitude se définit par sa fréquence : quotidienne, hebdomadaire, ou sur des jours précis. Vous cochez, Cosmo mesure. La heatmap sur 26 semaines, dans l'esprit du graphe de contributions GitHub, rend la régularité visible d'un coup d'œil — bien mieux qu'un chiffre isolé. Le streak compte vos jours consécutifs, le taux de complétion situe la période en cours par rapport aux précédentes. La règle qui marche : commencer par deux ou trois habitudes, pas quinze.</p>
+        <p>Une habitude se définit par sa fréquence : quotidienne, hebdomadaire, ou sur des jours précis. Vous cochez, Cosmo mesure. La heatmap sur 26 semaines, dans l'esprit du graphe de contributions GitHub, rend la régularité visible d'un coup d'œil, bien mieux qu'un chiffre isolé. Le streak compte vos jours consécutifs, le taux de complétion situe la période en cours par rapport aux précédentes. La règle qui marche : commencer par deux ou trois habitudes, pas quinze.</p>
 
         <h2>Le time-blocking, pour que le planning devienne réel</h2>
-        <p>Une tâche sans créneau reste une intention. L'agenda de Cosmo accepte le glisser-déposer depuis le panneau des tâches : vous déposez « rédiger la proposition » mardi à 14 h, l'événement se crée et reste lié à la tâche. Vues jour, semaine et mois, gestion des événements récurrents. L'intérêt du time-blocking n'est pas cosmétique — il confronte votre liste à la seule ressource vraiment limitée, les heures disponibles dans la semaine.</p>
+        <p>Une tâche sans créneau reste une intention. L'agenda de Cosmo accepte le glisser-déposer depuis le panneau des tâches : vous déposez « rédiger la proposition » mardi à 14 h, l'événement se crée et reste lié à la tâche. Vues jour, semaine et mois, gestion des événements récurrents. L'intérêt du time-blocking n'est pas cosmétique, il confronte votre liste à la seule ressource vraiment limitée, les heures disponibles dans la semaine.</p>
 
         <h2>Piloter ses objectifs avec la méthode OKR</h2>
         <p>La <a href="/blog/methode-okr-exemples">méthode OKR</a>, popularisée par Intel puis Google, structure un objectif ambitieux en 2 à 5 résultats clés mesurables. Cosmo calcule la progression de chaque résultat clé et de l'objectif global, et archive chaque complétion pour construire votre historique. Ce que la plupart des outils OKR ne font pas : ici, vos objectifs trimestriels cohabitent avec vos tâches quotidiennes, ce qui rend visible l'écart entre ce que vous visez et ce sur quoi vous passez réellement vos journées.</p>
@@ -439,9 +447,9 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
         <p>Le dashboard réunit l'avancement du jour, les habitudes à cocher, les prochains événements et la courbe des résultats clés atteints. La page Statistiques va plus loin : temps investi par catégorie, évolution sur la période, comparaison entre modules. C'est le tableau de bord de productivité qui manque quand chaque outil ne connaît qu'un quart de votre activité.</p>
 
         <h2>Combien ça coûte ?</h2>
-        <p>Les fonctionnalités principales — tâches, habitudes, agenda, OKR, statistiques, partage — sont gratuites, sans carte bancaire ni essai limité dans le temps. Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre que vous n'y accède. En mode démo, rien ne quitte votre navigateur.</p>
+        <p>Les fonctionnalités principales (tâches, habitudes, agenda, OKR, statistiques, partage) sont gratuites, sans carte bancaire ni essai limité dans le temps. Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre que vous n'y accède. En mode démo, rien ne quitte votre navigateur.</p>
         <h2>Et pour une organisation ?</h2>
-        <p>Cosmo existe aussi en mode entreprise : votre pyramide managériale y structure les projets, les OKR et les statistiques d'équipe, et le périmètre de chacun découle de la hiérarchie réelle plutôt que de partages faits à la main. Chaque collaborateur conserve le Cosmo personnel décrit ci-dessus. C'est gratuit jusqu'à 5 membres — <a href="/entreprise-presentation">découvrir Cosmo Entreprise</a>.</p>
+        <p>Cosmo existe aussi en mode entreprise : votre pyramide managériale y structure les projets, les OKR et les statistiques d'équipe, et le périmètre de chacun découle de la hiérarchie réelle plutôt que de partages faits à la main. Chaque collaborateur conserve le Cosmo personnel décrit ci-dessus. C'est gratuit jusqu'à 5 membres, <a href="/entreprise-presentation">découvrir Cosmo Entreprise</a>.</p>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a> · <a href="/blog">Le blog Cosmo</a></p>`;
 
 // Maillage interne statique commun, ajouté au bas de #seo-fallback sur TOUTES
@@ -492,7 +500,7 @@ const staticFooterNav = (locale) => {
 function injectStaticContent(out, content, locale) {
   const marker = '<div id="root">';
   if (!out.includes(marker)) {
-    console.warn('  ⚠ marqueur <div id="root"> introuvable — contenu statique non injecté');
+    console.warn('  ⚠ marqueur <div id="root"> introuvable, contenu statique non injecté');
     return out;
   }
   out = out.replace(marker, `${marker}\n      <div id="seo-fallback">\n        ${content}\n        ${staticFooterNav(locale)}\n      </div>`);
@@ -551,7 +559,7 @@ let count = 0;
 for (const route of ROUTES) {
   const alternates = availableLocales(route);
   if (alternates.length === 0) {
-    console.warn(`  ⚠ ${route.path} — aucune locale complète (méta + contenu), route ignorée`);
+    console.warn(`  ⚠ ${route.path}, aucune locale complète (méta + contenu), route ignorée`);
     continue;
   }
   for (const locale of alternates) {
@@ -641,7 +649,7 @@ try {
   const urlCount = (generated.match(/<loc>/g) ?? []).length;
   console.log(`  sitemap → lastmod ${TODAY} + ${urlCount} URLs générées (blog, à-propos, use-cases)`);
 } catch (err) {
-  console.warn(`  ⚠ dist/sitemap.xml non enrichi — ${err.message}`);
+  console.warn(`  ⚠ dist/sitemap.xml non enrichi, ${err.message}`);
 }
 
 // ── RSS : flux du blog généré depuis ARTICLES (autodiscovery dans <head>) ──
@@ -655,7 +663,7 @@ const rssItems = [...ARTICLES]
 const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Blog Cosmo — Productivité, OKR, habitudes et time-blocking</title>
+    <title>Blog Cosmo, Productivité, OKR, habitudes et time-blocking</title>
     <link>${BASE}/blog</link>
     <atom:link href="${BASE}/rss.xml" rel="self" type="application/rss+xml" />
     <description>Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.</description>
@@ -681,7 +689,7 @@ try {
   writeFileSync(llmsPath, llms.trimEnd() + '\n' + llmsGenerated, 'utf8');
   console.log(`  llms.txt → +${ARTICLES.length} articles, +${USE_CASES.length} cas d'usage`);
 } catch {
-  console.warn('  ⚠ dist/llms.txt introuvable — llms.txt non enrichi');
+  console.warn('  ⚠ dist/llms.txt introuvable, llms.txt non enrichi');
 }
 
-console.log(`✓ prerender done — ${count} routes + home (FAQ schema + contenu statique)`);
+console.log(`✓ prerender done, ${count} routes + home (FAQ schema + contenu statique)`);

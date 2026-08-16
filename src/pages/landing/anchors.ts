@@ -23,10 +23,13 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
     { href: '#faq', labelKey: 'nav.faq' },
     { href: '/guide', labelKey: 'nav.guide' },
   ],
+  // Les quatre premières ancres SONT les quatre étapes de mise en place, dans
+  // l'ordre : le sommaire doit se lire comme la marche à suivre.
   entreprise: [
-    { href: '#organigramme', labelKey: 'enterprise.nav.pyramid' },
-    { href: '#cockpit', labelKey: 'enterprise.nav.cockpit' },
+    { href: '#equipes', labelKey: 'enterprise.nav.teams' },
+    { href: '#projets', labelKey: 'enterprise.nav.projects' },
     { href: '#okr', labelKey: 'enterprise.nav.okr' },
+    { href: '#statistiques', labelKey: 'enterprise.nav.progress' },
     { href: '#securite', labelKey: 'enterprise.nav.security' },
     { href: '#tarifs', labelKey: 'enterprise.nav.pricing' },
   ],

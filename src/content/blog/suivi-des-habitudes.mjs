@@ -14,11 +14,11 @@ export const article = {
   readingMinutes: 8,
   faq: [
     ['Quel est le meilleur indicateur pour suivre une habitude ?', "Le taux de complétion sur une période glissante (4 à 12 semaines). Il tolère les jours manqués, contrairement au streak, et reflète la régularité réelle plutôt que la performance récente."],
-    ['Le streak est-il utile ou contre-productif ?', "Les deux. Il motive tant qu'il monte, mais un streak cassé provoque souvent un abandon total — l'effet « tout ou rien ». Utilisez-le comme encouragement secondaire, jamais comme indicateur principal."],
+    ['Le streak est-il utile ou contre-productif ?', "Les deux. Il motive tant qu'il monte, mais un streak cassé provoque souvent un abandon total, l'effet « tout ou rien ». Utilisez-le comme encouragement secondaire, jamais comme indicateur principal."],
     ['Combien d’habitudes suivre en même temps ?', "Deux ou trois au démarrage. Chaque habitude supplémentaire réduit la probabilité de toutes les tenir : le facteur limitant n'est pas la motivation mais le nombre de décisions quotidiennes que le système vous demande."],
   ],
   html: `
-<p class="lead">Suivre ses habitudes, c'est cocher des cases — la partie facile. La difficulté est ailleurs : choisir <em>quoi</em> regarder. Selon l'indicateur mis en avant, le même suivi produit soit une régularité qui s'installe, soit un abandon au premier accroc. Voici ce que chaque indicateur mesure réellement, celui qu'il faut mettre au centre, et la façon de démarrer un suivi qui tienne au-delà de trois semaines.</p>
+<p class="lead">Suivre ses habitudes, c'est cocher des cases, la partie facile. La difficulté est ailleurs : choisir <em>quoi</em> regarder. Selon l'indicateur mis en avant, le même suivi produit soit une régularité qui s'installe, soit un abandon au premier accroc. Voici ce que chaque indicateur mesure réellement, celui qu'il faut mettre au centre, et la façon de démarrer un suivi qui tienne au-delà de trois semaines.</p>
 
 <h2 id="pourquoi">Pourquoi suivre, plutôt que simplement faire</h2>
 <p>Le suivi ne sert pas à se noter. Il sert à trois choses précises, et si votre système n'en fournit aucune, il ne vaut pas le temps qu'il coûte :</p>
@@ -31,23 +31,23 @@ export const article = {
 <h2 id="indicateurs">Les trois indicateurs, et ce qu'ils valent</h2>
 
 <h3>Le streak : motivant, mais fragile</h3>
-<p>Le nombre de jours consécutifs. Il fonctionne remarquablement bien tant qu'il monte — et c'est précisément son défaut. Un streak de 40 jours cassé un mardi produit chez beaucoup de gens un abandon complet, parce que l'indicateur retombe à zéro alors que la réalité, elle, vaut toujours 40 jours sur 41.</p>
+<p>Le nombre de jours consécutifs. Il fonctionne remarquablement bien tant qu'il monte, et c'est précisément son défaut. Un streak de 40 jours cassé un mardi produit chez beaucoup de gens un abandon complet, parce que l'indicateur retombe à zéro alors que la réalité, elle, vaut toujours 40 jours sur 41.</p>
 <p>Utilisez-le comme encouragement, jamais comme juge. Et si vous y êtes sensible, adoptez la règle qui a fait ses preuves : <strong>ne jamais manquer deux fois de suite</strong>. Elle conserve le bénéfice du streak sans son effet falaise.</p>
 
 <h3>Le taux de complétion : l'indicateur central</h3>
-<p>Le pourcentage de fois où l'habitude a été tenue sur une période glissante — quatre à douze semaines. C'est celui qu'il faut mettre au centre, pour une raison simple : il tolère les jours manqués sans les effacer. Une habitude à 85 % est excellente ; à 60 %, elle est réelle mais fragile ; sous 50 %, elle n'existe pas encore et demande un ajustement, pas un effort supplémentaire.</p>
+<p>Le pourcentage de fois où l'habitude a été tenue sur une période glissante, quatre à douze semaines. C'est celui qu'il faut mettre au centre, pour une raison simple : il tolère les jours manqués sans les effacer. Une habitude à 85 % est excellente ; à 60 %, elle est réelle mais fragile ; sous 50 %, elle n'existe pas encore et demande un ajustement, pas un effort supplémentaire.</p>
 <p>Sa vraie force est comparative : le taux de ce mois face à celui du mois dernier vous dit si vous progressez, ce qu'aucun compteur cumulé ne peut faire.</p>
 
 <h3>La heatmap : la vue qui révèle les motifs</h3>
-<p>Une case par jour, colorée si l'habitude a été tenue — la représentation popularisée par le graphe de contributions GitHub. Son intérêt n'est pas esthétique : elle fait apparaître des <strong>motifs</strong> qu'aucun pourcentage ne montre. Des trous systématiques le week-end, une rupture nette à chaque déplacement, une dégradation progressive après six semaines : autant d'informations qui pointent vers une cause précise, donc vers une correction possible.</p>
-<p>Sur 26 semaines — six mois, soit la durée au-delà de laquelle une habitude est généralement ancrée — la heatmap raconte une histoire lisible en trois secondes.</p>
+<p>Une case par jour, colorée si l'habitude a été tenue, la représentation popularisée par le graphe de contributions GitHub. Son intérêt n'est pas esthétique : elle fait apparaître des <strong>motifs</strong> qu'aucun pourcentage ne montre. Des trous systématiques le week-end, une rupture nette à chaque déplacement, une dégradation progressive après six semaines : autant d'informations qui pointent vers une cause précise, donc vers une correction possible.</p>
+<p>Sur 26 semaines (six mois, soit la durée au-delà de laquelle une habitude est généralement ancrée), la heatmap raconte une histoire lisible en trois secondes.</p>
 
 <h2 id="pieges">Les quatre pièges du suivi</h2>
 <ol>
 <li><strong>Trop d'habitudes en même temps.</strong> C'est de loin la cause d'échec numéro un. Chaque habitude ajoutée diminue la probabilité de toutes les tenir, parce que le coût n'est pas l'effort de chacune mais le nombre de décisions quotidiennes. Deux ou trois, pas davantage, jusqu'à ce qu'elles ne demandent plus d'y penser.</li>
 <li><strong>Des habitudes trop grosses.</strong> « Faire du sport une heure » échoue là où « mettre ses chaussures et sortir » réussit. Calibrez sur votre pire journée, pas sur votre meilleure : une habitude doit rester tenable un jour où tout va mal, sinon elle ne survivra pas à la première semaine difficile.</li>
-<li><strong>Suivre un résultat au lieu d'une action.</strong> « Perdre 4 kg » n'est pas une habitude, c'est un objectif — et il ne se coche pas quotidiennement. Suivez l'action que vous contrôlez ; le résultat relève des <a href="/blog/methode-okr-exemples">OKR</a>, avec un horizon et des indicateurs différents.</li>
-<li><strong>Confondre suivi et jugement.</strong> Un tableau majoritairement vide est une information sur le calibrage, pas un verdict sur vous. Le jour où le suivi devient une source de culpabilité, il cesse d'être un outil — et c'est à ce moment-là qu'on arrête de cocher.</li>
+<li><strong>Suivre un résultat au lieu d'une action.</strong> « Perdre 4 kg » n'est pas une habitude, c'est un objectif, et il ne se coche pas quotidiennement. Suivez l'action que vous contrôlez ; le résultat relève des <a href="/blog/methode-okr-exemples">OKR</a>, avec un horizon et des indicateurs différents.</li>
+<li><strong>Confondre suivi et jugement.</strong> Un tableau majoritairement vide est une information sur le calibrage, pas un verdict sur vous. Le jour où le suivi devient une source de culpabilité, il cesse d'être un outil, et c'est à ce moment-là qu'on arrête de cocher.</li>
 </ol>
 
 <h2 id="demarrer">Démarrer un suivi qui tient</h2>
@@ -56,20 +56,20 @@ export const article = {
 <li><strong>Attachez chacune à un déclencheur existant</strong> : après le café du matin, en fermant l'ordinateur, avant le dîner. Un horaire fixe fonctionne moins bien qu'un enchaînement avec ce que vous faites déjà.</li>
 <li><strong>Cochez au moment même</strong>, pas le soir de mémoire. Un suivi reconstitué est faux, et un suivi faux ne sert plus à décider.</li>
 <li><strong>Ne jugez rien avant trois semaines.</strong> Les deux premières mesurent l'installation, pas l'habitude.</li>
-<li><strong>À la quatrième semaine, regardez le taux de complétion</strong> et ajustez une seule chose : la taille de l'habitude, ou son moment. Jamais les deux — sinon vous ne saurez pas ce qui a fonctionné.</li>
+<li><strong>À la quatrième semaine, regardez le taux de complétion</strong> et ajustez une seule chose : la taille de l'habitude, ou son moment. Jamais les deux, sinon vous ne saurez pas ce qui a fonctionné.</li>
 </ol>
-<p>Sur la durée nécessaire avant qu'une habitude devienne automatique, l'article <a href="/blog/combien-de-temps-prendre-habitude">combien de temps pour ancrer une habitude</a> détaille ce que dit réellement la recherche — et pourquoi le chiffre de 21 jours est un mythe tenace.</p>
+<p>Sur la durée nécessaire avant qu'une habitude devienne automatique, l'article <a href="/blog/combien-de-temps-prendre-habitude">combien de temps pour ancrer une habitude</a> détaille ce que dit réellement la recherche, et pourquoi le chiffre de 21 jours est un mythe tenace.</p>
 
 <h2 id="pratique">Le suivi des habitudes dans Cosmo</h2>
-<p>Dans <a href="/">Cosmo</a>, une habitude se crée avec sa fréquence (quotidienne, hebdomadaire ou jours précis) et se coche en un geste. Les trois indicateurs de cet article sont fournis d'office : heatmap 26 semaines, streak et taux de complétion sur la période choisie — avec le taux mis en avant plutôt que le streak, exactement pour la raison décrite plus haut.</p>
+<p>Dans <a href="/">Cosmo</a>, une habitude se crée avec sa fréquence (quotidienne, hebdomadaire ou jours précis) et se coche en un geste. Les trois indicateurs de cet article sont fournis d'office : heatmap 26 semaines, streak et taux de complétion sur la période choisie, avec le taux mis en avant plutôt que le streak, exactement pour la raison décrite plus haut.</p>
 <p>Le reste vient de l'intégration : vos habitudes apparaissent sur le même <a href="/blog/tableau-de-bord-productivite">tableau de bord</a> que vos tâches du jour et vos objectifs, ce qui évite l'application de suivi supplémentaire qu'on oublie d'ouvrir au bout d'un mois. <a href="/signup">C'est gratuit</a>, et la démo s'ouvre sans inscription avec 100 habitudes et plusieurs mois d'historique pour voir à quoi ressemblent ces courbes une fois remplies.</p>
 
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Faut-il suivre ses habitudes sur papier ou dans une application ?</h3>
-<p>Le papier suffit pour deux ou trois habitudes et a l'avantage d'être immédiat. L'application devient nettement supérieure dès qu'on veut comparer des périodes ou repérer des motifs — le calcul manuel du taux de complétion est exactement le genre de corvée qui fait abandonner un suivi.</p>
+<p>Le papier suffit pour deux ou trois habitudes et a l'avantage d'être immédiat. L'application devient nettement supérieure dès qu'on veut comparer des périodes ou repérer des motifs, le calcul manuel du taux de complétion est exactement le genre de corvée qui fait abandonner un suivi.</p>
 <h3>Que faire après une longue interruption ?</h3>
 <p>Reprendre à une version réduite de l'habitude, pas à celle d'avant. Repartir au niveau d'origine après trois semaines d'arrêt échoue presque toujours, et l'échec confirme à tort qu'on « n'y arrive pas ».</p>
 <h3>Quand peut-on arrêter de suivre une habitude ?</h3>
-<p>Quand l'oublier devient inconfortable — c'est le signe que le comportement s'est automatisé. Vous pouvez alors la retirer du suivi et libérer la place pour la suivante.</p>
+<p>Quand l'oublier devient inconfortable, c'est le signe que le comportement s'est automatisé. Vous pouvez alors la retirer du suivi et libérer la place pour la suivante.</p>
 `,
 };

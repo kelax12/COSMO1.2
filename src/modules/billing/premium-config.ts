@@ -23,32 +23,46 @@ export const PREMIUM_ENFORCED = false;
 // La devise reste l'EUR dans toutes les langues : la facturation est en euros,
 // il n'y a aucune conversion. Seule la PRÉSENTATION change.
 export const PREMIUM_MONTHLY_EUR = 3.5;
-// ⚠️ Anciens paliers (2026-07-10, 2 tranches) — remplacés par
-// ENTERPRISE_PRICING_TIERS ci-dessous (2026-08-14, 4 tranches). Gardés
-// pour ne rien casser tant qu'ils sont référencés (bannière `org.freemiumInfo`
-// fr/en, texte figé) ; à retirer quand cette bannière sera réécrite sur les
-// nouveaux paliers.
-export const ENTERPRISE_TIER_1_EUR = 20;
-export const ENTERPRISE_TIER_2_EUR = 100;
+// Les anciens paliers (2026-07-10, 2 tranches) ont été retirés le 2026-08-17 :
+// la bannière `org.freemiumInfo` était leur dernier point d'ancrage et ne cite
+// plus aucun montant — elle renvoie vers l'onglet Abonnement, désormais seule
+// surface qui affiche des prix. Deux grilles tarifaires visibles sur le même
+// écran (bannière v2 + grille v3) se contredisaient.
 
-// ─── Facturation entreprise (v3 — dormante, Stripe non finalisé) ─────
+// ─── Facturation entreprise (v3 — dormante, Stripe branché) ──────────
 //
 // Pricing décidé 2026-08-14 (demande Axel) : FORFAIT PAR ENTREPRISE selon le
 // nombre de membres, palier gratuit inclus (le palier gratuit EST l'essai).
-// Remplace le pricing v2 (2 tranches, 2026-07-10) ci-dessus. `EnterprisePaywall`
-// (src/pages/EnterprisePaywallPage.tsx) affiche ces paliers ; le composant
-// existe mais n'est câblé dans AUCUNE route ni AUCUN lien de nav — à faire
-// lors de l'activation réelle du paywall entreprise (avec le blocage serveur
-// et le passage de ENTERPRISE_BILLING_ENFORCED à true).
+// Remplace le pricing v2 (2 tranches, 2026-07-10) ci-dessus.
+//
+// Ces paliers sont affichés par `EnterpriseTierGrid`
+// (src/components/organization/EnterpriseTierGrid.tsx), monté dans l'onglet
+// Abonnement de l'espace entreprise (`/entreprise?tab=billing`, propriétaire
+// uniquement). Le CTA de paiement n'est monté que si ENTERPRISE_BILLING_ENFORCED
+// vaut `true` — le flag est la SEULE condition, pour qu'on puisse dire d'un coup
+// d'œil si le produit facture ou non.
+//
+// ⚠️ Cette liste est la source de vérité des MONTANTS AFFICHÉS. Les montants
+// FACTURÉS viennent des price IDs Stripe résolus par
+// supabase/functions/_shared/org-tiers.ts, qui duplique nécessairement cette
+// grille côté Deno. `org-tiers.parity.test.ts` casse si les deux divergent :
+// sans lui, on pourrait annoncer 50 € et facturer 100 €.
 //
 // `maxMembers: null` = tranche « et plus », pas de plafond.
 export const ENTERPRISE_PRICING_TIERS = [
-  { minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
-  { minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
-  { minMembers: 10, maxMembers: 20, priceEurPerMonth: 50 },
-  { minMembers: 20, maxMembers: 50, priceEurPerMonth: 100 },
-  { minMembers: 50, maxMembers: null, priceEurPerMonth: 200 },
+  { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
+  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
+  { key: 't20', minMembers: 10, maxMembers: 20, priceEurPerMonth: 50 },
+  { key: 't50', minMembers: 20, maxMembers: 50, priceEurPerMonth: 100 },
+  { key: 'tmax', minMembers: 50, maxMembers: null, priceEurPerMonth: 200 },
 ] as const;
+
+/**
+ * Clé stable d'un palier. C'est ce que le client envoie au checkout — jamais
+ * un montant, jamais un price ID Stripe : le serveur seul fait la conversion,
+ * donc un client ne peut pas se choisir un prix.
+ */
+export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 
 //  false → aucune limite appliquée ; la bannière informative s'affiche à
 //          partir de ORG_FREE_SEATS membres (préparation du marché).
