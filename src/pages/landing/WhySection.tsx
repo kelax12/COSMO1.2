@@ -114,7 +114,7 @@ const WhySection: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <span className="why-kicker text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-5 block">
-              — Ce qui change tout —
+              Ce qui change tout
             </span>
             <h2 className="why-title text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
               <span className="text-white">{t('why.titleTop')}</span>
@@ -286,7 +286,7 @@ const WhySection: React.FC = () => {
                 {t('why.title4')}
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-md">
-                Tâches, agenda, OKR, habitudes — tout converge dans une seule vue.
+                Tâches, agenda, OKR, habitudes : tout converge dans une seule vue.
                 {t('why.desc4')}
               </p>
               {/* Mini bar chart */}

@@ -308,7 +308,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   transition={{ duration: 0.08 }}
                   className="text-[15px] text-blue-500 w-16 text-center"
                 >
-                  {formData.estimatedTime ? `${formData.estimatedTime} min` : '—'}
+                  {formData.estimatedTime ? `${formData.estimatedTime} min` : '·'}
                 </motion.span>
                 <button
                   type="button"

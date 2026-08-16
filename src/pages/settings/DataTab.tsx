@@ -75,7 +75,7 @@ export function DataTab() {
             Tout exporter
           </div>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
-            4 fichiers CSV — tâches, habitudes, agenda, OKR
+            4 fichiers CSV : tâches, habitudes, agenda, OKR
           </p>
         </div>
       </button>

@@ -115,7 +115,7 @@ const FEATURES: Feature[] = [
     titleAccent: 'à la Google',
     accentText: 'from-green-400 to-emerald-400',
     description:
-      'La méthode OKR utilisée par Google, Intel et Netflix — maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.',
+      'La méthode OKR utilisée par Google, Intel et Netflix, maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.',
     bullets: [
       'Définissez des objectifs ambitieux avec des résultats clés chiffrés',
       'Votre progression est calculée automatiquement',
@@ -160,10 +160,10 @@ const FEATURES: Feature[] = [
     titleAccent: 'multi-modules',
     accentText: 'from-violet-400 to-purple-400',
     description:
-      'Analysez votre temps investi sur tous vos modules — tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.',
+      'Analysez votre temps investi sur tous vos modules : tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.',
     bullets: [
       'Répartition du temps sur tâches, agenda, OKR et habitudes pour une meilleure clarté',
-      'Vues jour, semaine, mois, année — zoomez où vous voulez',
+      'Vues jour, semaine, mois, année : zoomez où vous voulez',
       'Suivez vos progrès depuis une unique page',
       "Visualisez votre productivité en un coup d'œil",
     ],

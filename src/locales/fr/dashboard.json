@@ -14,7 +14,7 @@
   },
   "checkin": {
     "title": "Votre semaine vous attend",
-    "subtitle": "Faites le point sur vos objectifs — 2 minutes suffisent.",
+    "subtitle": "Faites le point sur vos objectifs, 2 minutes suffisent.",
     "cta": "Faire le point",
     "dismiss": "Ignorer le check-in cette semaine"
   },
@@ -127,7 +127,7 @@
   },
   "today": {
     "loading": "Chargement…",
-    "empty": "Rien à faire aujourd'hui — ni côté perso, ni côté équipe.",
+    "empty": "Rien à faire aujourd'hui, ni côté perso, ni côté équipe.",
     "summary_one": "{{count}} tâche aujourd'hui",
     "summary_many": "{{count}} de tâches aujourd'hui",
     "summary_other": "{{count}} tâches aujourd'hui",

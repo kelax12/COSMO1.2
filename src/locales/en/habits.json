@@ -19,8 +19,8 @@
     "nextPeriod": "Next period",
     "sinceCreation": "Since the start",
     "weekOf": "Week of {{date}}",
-    "dayCell": "{{name}} — {{date}}",
-    "dayCellDone": "{{name}} — {{date}} (done)"
+    "dayCell": "{{name}}, {{date}}",
+    "dayCellDone": "{{name}}, {{date}} (done)"
   },
   "modal": {
     "namePlaceholder": "Habit name",
@@ -64,11 +64,11 @@
     "support": "Support Cosmo",
     "hideForToday": "Hide for today",
     "credited": "+1 Premium day credited! Enjoy your day.",
-    "dailyLimit": "Daily ad limit reached — access granted for today.",
-    "creditError": "Couldn't credit your day — access granted anyway.",
+    "dailyLimit": "Daily ad limit reached. Access granted for today.",
+    "creditError": "Couldn't credit your day. Access granted anyway.",
     "reconnect": "Please sign in again.",
     "alreadySubscribed": "You already have an active subscription.",
-    "paymentError": "Payment error — please try again."
+    "paymentError": "Payment error. Please try again."
   },
   "recapCta": "Recap",
   "recapSheetTitle": "Weekly recap",

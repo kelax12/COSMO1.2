@@ -49,7 +49,7 @@ const DEMO_ORGS: Organization[] = [
     joinCode: 'COSMO-DEMO42',
     ownerId: DEMO_USER_ID,
     createdAt: new Date(Date.now() - 90 * DAY).toISOString(),
-    description: 'Studio de création digitale — sites, apps et identités de marque.',
+    description: 'Studio de création digitale : sites, apps et identités de marque.',
     industry: 'Design & Tech',
   },
   {
@@ -195,7 +195,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       (m) => m.orgId === org.id && m.userId === DEMO_USER_ID,
     );
     if (isMember) throw new Error('Vous êtes déjà membre de cette entreprise');
-    throw new Error('Demande envoyée — en mode démo, utilisez les entreprises fournies');
+    throw new Error('Demande envoyée : en mode démo, utilisez les entreprises fournies');
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {

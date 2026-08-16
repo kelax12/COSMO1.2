@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Layers, Network, ShieldCheck } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -7,10 +6,10 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { PYRAMID_NODES, pyramidTree, subtreeOf, type PyramidNode } from './data';
 
 /** Les trois conséquences concrètes du périmètre déduit de la hiérarchie. */
-const PYRAMID_BENEFITS: { Icon: typeof Network; titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
-  { Icon: Network, titleKey: 'enterprise.pyramid.b1t', bodyKey: 'enterprise.pyramid.b1d' },
-  { Icon: Layers, titleKey: 'enterprise.pyramid.b2t', bodyKey: 'enterprise.pyramid.b2d' },
-  { Icon: ShieldCheck, titleKey: 'enterprise.pyramid.b3t', bodyKey: 'enterprise.pyramid.b3d' },
+const PYRAMID_BENEFITS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+  { titleKey: 'enterprise.pyramid.b1t', bodyKey: 'enterprise.pyramid.b1d' },
+  { titleKey: 'enterprise.pyramid.b2t', bodyKey: 'enterprise.pyramid.b2d' },
+  { titleKey: 'enterprise.pyramid.b3t', bodyKey: 'enterprise.pyramid.b3d' },
 ];
 
 /** Demi-hauteur d'une carte, en % du cadre — sert à accrocher les liens. */
@@ -240,12 +239,12 @@ const PyramidSection: React.FC = () => {
 
         {/* ── Les trois conséquences concrètes ── */}
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {PYRAMID_BENEFITS.map(({ Icon, titleKey, bodyKey }) => (
+          {PYRAMID_BENEFITS.map(({ titleKey, bodyKey }) => (
             <div
               key={titleKey}
               className="rounded-xl border border-white/[0.08] bg-[#0A0C11] p-6 transition-colors duration-300 hover:border-cyan-300/25"
             >
-              <Icon size={18} className="mb-4 text-cyan-400" aria-hidden="true" />
+              <span className="mb-4 block h-px w-8 bg-cyan-300/40" aria-hidden="true" />
               <h3 className="mb-2 text-sm font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
             </div>
@@ -289,7 +288,7 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
     onMouseLeave={onLeave}
     onFocus={onEnter}
     onBlur={onLeave}
-    aria-label={`${node.name} — ${roleLabel}`}
+    aria-label={`${node.name}, ${roleLabel}`}
     // `-translate-x-1/2 -translate-y-1/2` est un centrage STATIQUE en CSS, pas
     // une animation : il n'est donc pas concerné par le garde-fou
     // reduced-motion (aucune valeur `initial` de Framer ne peut le figer).

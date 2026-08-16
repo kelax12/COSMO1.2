@@ -103,7 +103,7 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             <button
               onClick={handleCheckout}
               disabled={isCheckoutLoading}
-              aria-label={`Passer Premium — ${formatCurrency(PREMIUM_MONTHLY_EUR)} par mois`}
+              aria-label={`Passer Premium : ${formatCurrency(PREMIUM_MONTHLY_EUR)} par mois`}
               className="shrink-0 min-w-touch min-h-touch sm:w-9 sm:h-9 sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-60"
             >
               {isCheckoutLoading ? (

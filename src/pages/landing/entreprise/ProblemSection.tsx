@@ -1,13 +1,15 @@
 import React, { useRef } from 'react';
-import { AlarmClock, LayoutGrid, Layers3 } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
-const PROBLEMS: { Icon: typeof LayoutGrid; titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
-  { Icon: LayoutGrid, titleKey: 'enterprise.problem.p1t', bodyKey: 'enterprise.problem.p1d' },
-  { Icon: Layers3, titleKey: 'enterprise.problem.p2t', bodyKey: 'enterprise.problem.p2d' },
-  { Icon: AlarmClock, titleKey: 'enterprise.problem.p3t', bodyKey: 'enterprise.problem.p3d' },
+// Pas de pictogramme décoratif : une icône générique posée en tête de carte ne
+// dit rien que le titre ne dise déjà, et c'est le tic visuel qui fait lire une
+// page comme générée. Le rang suffit à structurer la lecture.
+const PROBLEMS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+  { titleKey: 'enterprise.problem.p1t', bodyKey: 'enterprise.problem.p1d' },
+  { titleKey: 'enterprise.problem.p2t', bodyKey: 'enterprise.problem.p2d' },
+  { titleKey: 'enterprise.problem.p3t', bodyKey: 'enterprise.problem.p3d' },
 ];
 
 /**
@@ -64,9 +66,11 @@ const ProblemSection: React.FC = () => {
         </header>
 
         <div className="problem-grid grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] md:grid-cols-3">
-          {PROBLEMS.map(({ Icon, titleKey, bodyKey }) => (
+          {PROBLEMS.map(({ titleKey, bodyKey }, index) => (
             <article key={titleKey} className="problem-card bg-[#0A0C11] p-7 lg:p-9">
-              <Icon size={20} className="mb-6 text-slate-600" aria-hidden="true" />
+              <span className="mb-6 block font-mono text-xs tracking-[0.25em] text-slate-600" aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
               <h3 className="mb-3 text-lg font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
             </article>
