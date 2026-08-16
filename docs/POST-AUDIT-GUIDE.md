@@ -243,3 +243,105 @@ les injecter dans l'env du step `test:rls`.)
 - Point **3** = décision + petit code (Option A) ou chantier (B/C).
 - Point **4** = le seul vrai développement ; à faire **avant** toute optim RLS.
 - Aucune de ces actions ne doit passer par `supabase db push` (layout non supporté).
+
+---
+
+## Point 5 — Activer la facturation entreprise (Stripe par organisation)
+
+**Statut au 2026-08-17 : plomberie complète, livrée DORMANTE.** Table, quota serveur, trois
+Edge Functions, onglet Abonnement et coupons sont en place ; aucun euro ne peut être encaissé
+tant que les deux flags ci-dessous ne sont pas basculés. Rien n'a été exécuté ni déployé.
+
+Ce point est indépendant du point 3 (premium **particulier**) : les deux univers de facturation
+ne partagent aucune table.
+
+### 5.1 — Créer les prix et les coupons dans Stripe
+
+Quatre prix **récurrents mensuels en EUR**, un par palier payant :
+
+| Palier | Membres | Montant |
+|---|---|---|
+| `t10` | 5 à 10 | 20 € |
+| `t20` | 10 à 20 | 50 € |
+| `t50` | 20 à 50 | 100 € |
+| `tmax` | 50 et plus | 200 € |
+
+Puis les **promotion codes** voulus (montant ou %, durée, plafond d'usage, restriction produit).
+COSMO ne valide aucun code : le champ apparaît dans la page Stripe via `allow_promotion_codes`,
+et le code réellement appliqué est relu et stocké dans `org_subscriptions.discount_code` à titre
+purement informatif. Aucun montant n'est recalculé côté COSMO.
+
+### 5.2 — Secrets Supabase
+
+```bash
+supabase secrets set STRIPE_ORG_PRICE_T10=price_... \
+                     STRIPE_ORG_PRICE_T20=price_... \
+                     STRIPE_ORG_PRICE_T50=price_... \
+                     STRIPE_ORG_PRICE_TMAX=price_...
+```
+
+Un secret manquant ne fait pas facturer le mauvais palier : `stripe-org-checkout` alerte via
+`opsAlert` et renvoie `tier_unavailable`. C'est voulu — échouer bruyamment plutôt que
+silencieusement.
+
+### 5.3 — Migration et déploiement
+
+Appliquer `supabase/migration/101_org_subscriptions.sql` selon la procédure du point 1
+(⚠️ **jamais** `supabase db push`). Puis :
+
+```bash
+supabase functions deploy stripe-org-checkout
+supabase functions deploy stripe-org-portal
+supabase functions deploy stripe-webhook
+```
+
+`supabase/config.toml` déclare déjà les deux nouvelles fonctions en `verify_jwt = true`.
+Ajouter à l'endpoint webhook, s'ils n'y sont pas : `checkout.session.completed`,
+`customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`,
+`invoice.payment_failed`.
+
+### 5.4 — Recette en mode test (`stripe listen --forward-to ...`)
+
+| Cas | Attendu |
+|---|---|
+| Souscription palier 2 par le propriétaire | ligne `org_subscriptions` correcte, quota 20 |
+| Souscription tentée par un membre non propriétaire | 403, aucune session créée |
+| Souscription avec un promotion code | montant réduit chez Stripe, `discount_code` renseigné |
+| **Changement de palier depuis le portail** | `tier_key` **et** `max_members` suivent |
+| Résiliation | `status='cancelled'`, quota 5, **aucun membre expulsé** |
+| Échec de paiement | `status='past_due'`, palier **préservé** (restauré tel quel au paiement) |
+| Paiement 3-D Secure | l'état `incomplete` n'écrit rien ; l'abonnement s'active au paiement |
+| Rejeu manuel du même event | dédupliqué |
+
+Le quatrième est le plus important : c'est le seul chemin où le palier change sans passer par
+notre checkout, et une régression y ferait payer 100 € à un client resté au quota de 20 sièges.
+
+### 5.5 — Bascule
+
+```sql
+UPDATE public.billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit';
+```
+
+puis `ENTERPRISE_BILLING_ENFORCED = true` dans `src/modules/billing/premium-config.ts`, et
+déploiement du front avec les clés Stripe **live**.
+
+### 5.6 — ⚠️ À trancher AVANT la bascule : les organisations déjà au-dessus du quota
+
+Aucune organisation n'a d'abonnement aujourd'hui. À l'activation, toute org de plus de
+5 membres est **bloquée en ajout de membre du jour au lendemain**. Les membres existants
+gardent tout leur accès — on bloque la croissance, on ne retire rien — mais le blocage sera
+vécu comme une panne s'il n'est pas annoncé.
+
+Compter les organisations concernées :
+
+```sql
+SELECT o.id, o.name, COUNT(m.user_id) AS membres
+FROM public.organizations o
+JOIN public.organization_members m ON m.org_id = o.id
+GROUP BY o.id, o.name
+HAVING COUNT(m.user_id) > 5
+ORDER BY membres DESC;
+```
+
+Deux options : les prévenir avant de basculer, ou leur poser une ligne `org_subscriptions` de
+courtoisie (palier couvrant leur effectif, `status='active'`, sans abonnement Stripe).

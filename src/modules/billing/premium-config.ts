@@ -23,13 +23,11 @@ export const PREMIUM_ENFORCED = false;
 // La devise reste l'EUR dans toutes les langues : la facturation est en euros,
 // il n'y a aucune conversion. Seule la PRÉSENTATION change.
 export const PREMIUM_MONTHLY_EUR = 3.5;
-// ⚠️ Anciens paliers (2026-07-10, 2 tranches) — remplacés par
-// ENTERPRISE_PRICING_TIERS ci-dessous (2026-08-14, 4 tranches). Gardés
-// pour ne rien casser tant qu'ils sont référencés (bannière `org.freemiumInfo`
-// fr/en, texte figé) ; à retirer quand cette bannière sera réécrite sur les
-// nouveaux paliers.
-export const ENTERPRISE_TIER_1_EUR = 20;
-export const ENTERPRISE_TIER_2_EUR = 100;
+// Les anciens paliers (2026-07-10, 2 tranches) ont été retirés le 2026-08-17 :
+// la bannière `org.freemiumInfo` était leur dernier point d'ancrage et ne cite
+// plus aucun montant — elle renvoie vers l'onglet Abonnement, désormais seule
+// surface qui affiche des prix. Deux grilles tarifaires visibles sur le même
+// écran (bannière v2 + grille v3) se contredisaient.
 
 // ─── Facturation entreprise (v3 — dormante, Stripe branché) ──────────
 //
