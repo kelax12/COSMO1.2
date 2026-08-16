@@ -523,9 +523,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="cta-card bg-[rgb(var(--color-accent-solid))] to-purple-600/20 backdrop-blur-xl border border-[rgb(var(--color-accent-solid))]/30 rounded-3xl p-12 relative overflow-hidden"
+            className="cta-card bg-gradient-to-r from-[rgb(var(--color-accent-solid))]/20 to-purple-600/20 backdrop-blur-xl border border-[rgb(var(--color-accent-solid))]/30 rounded-3xl p-12 relative overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-purple-500/5 z-0"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[rgb(var(--color-accent-solid))]/5 to-purple-500/5 z-0"></div>
             {/* Halo conique rotatif (GSAP) — mouvement ambiant permanent */}
             <div
               className="cta-halo absolute -inset-[45%] opacity-25 pointer-events-none"
