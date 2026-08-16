@@ -1,6 +1,7 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { tierFromPriceId, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -59,21 +60,40 @@ Deno.serve(async (req) => {
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session
+        // Routage : une session portant `org_id` appartient à l'univers
+        // entreprise, jamais à l'abonnement particulier (et réciproquement).
+        if (session.metadata?.org_id) await handleOrgCheckoutCompleted(session)
+        else await handleCheckoutCompleted(session)
         break
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
+      }
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription
+        if (subscription.metadata?.org_id) await handleOrgSubscriptionUpdated(subscription)
+        else await handleSubscriptionUpdated(subscription)
         break
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+      }
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription
+        if (subscription.metadata?.org_id) await handleOrgSubscriptionDeleted(subscription)
+        else await handleSubscriptionDeleted(subscription)
         break
-      case 'invoice.payment_succeeded':
-        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice)
+      }
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice
+        const orgId = await orgIdFromInvoice(invoice)
+        if (orgId) await handleOrgInvoicePaid(orgId, invoice)
+        else await handleInvoicePaymentSucceeded(invoice)
         break
-      case 'invoice.payment_failed':
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+      }
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice
+        const orgId = await orgIdFromInvoice(invoice)
+        if (orgId) await handleOrgInvoiceFailed(orgId)
+        else await handleInvoicePaymentFailed(invoice)
         break
+      }
       default:
         // Ignore unhandled events
         break
@@ -295,4 +315,149 @@ async function getUidFromCustomer(customerId: string): Promise<string | null> {
   const customer = await stripe.customers.retrieve(customerId)
   if (customer.deleted) return null
   return (customer as Stripe.Customer).metadata?.supabase_uid ?? null
+}
+
+// ─── Univers ENTREPRISE ────────────────────────────────────────────
+//
+// Écrit exclusivement dans `org_subscriptions`. Aucun jeton premium, aucun
+// `win_streak` : ces notions appartiennent à l'abonnement particulier.
+
+const env = (name: string) => Deno.env.get(name)
+
+/**
+ * Les invoices ne portent pas nos metadata : on remonte à l'org par le
+ * customer Stripe, indexé (`idx_org_subscriptions_stripe_customer`).
+ * `null` = ce n'est pas une facture d'organisation.
+ */
+async function orgIdFromInvoice(invoice: Stripe.Invoice): Promise<string | null> {
+  if (!invoice.customer) return null
+  const { data } = await supabaseAdmin
+    .from('org_subscriptions')
+    .select('org_id')
+    .eq('stripe_customer_id', invoice.customer as string)
+    .maybeSingle()
+  return data?.org_id ?? null
+}
+
+async function handleOrgCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.mode !== 'subscription' || !session.subscription) return
+
+  const orgId = session.metadata?.org_id
+  if (!orgId) return
+
+  const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+
+  // Code promo réellement appliqué — INFORMATIF. On ne recalcule aucun
+  // montant : Stripe fait foi sur ce qui est facturé.
+  let discountCode: string | null = null
+  try {
+    const full = await stripe.checkout.sessions.retrieve(session.id, {
+      expand: ['total_details.breakdown.discounts.discount.promotion_code'],
+    })
+    const discount = full.total_details?.breakdown?.discounts?.[0]?.discount
+    const promo = discount?.promotion_code
+    discountCode = typeof promo === 'string' ? promo : (promo?.code ?? null)
+  } catch (err) {
+    // Un code promo non relu ne doit pas faire échouer l'activation payée.
+    console.error('org checkout: promotion code read failed:', err)
+  }
+
+  await applyOrgSubscription(orgId, subscription, session.customer as string, discountCode)
+}
+
+async function handleOrgSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const orgId = subscription.metadata?.org_id
+  if (!orgId) return
+  await applyOrgSubscription(orgId, subscription, subscription.customer as string, undefined)
+}
+
+async function handleOrgSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const orgId = subscription.metadata?.org_id
+  if (!orgId) return
+
+  // Retour au palier gratuit. AUCUN membre n'est retiré : seule la croissance
+  // de l'organisation redevient contrainte.
+  const { error } = await supabaseAdmin
+    .from('org_subscriptions')
+    .update({
+      tier_key: 'free',
+      max_members: FREE_TIER_MAX_MEMBERS,
+      status: 'cancelled',
+      current_period_end: null,
+      discount_code: null,
+    })
+    .eq('org_id', orgId)
+  if (error) throw error
+}
+
+async function handleOrgInvoicePaid(orgId: string, invoice: Stripe.Invoice) {
+  if (!invoice.subscription) return
+  const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string)
+  await applyOrgSubscription(orgId, subscription, invoice.customer as string, undefined)
+}
+
+async function handleOrgInvoiceFailed(orgId: string) {
+  // `past_due` : le quota retombe au palier gratuit (org_seats_allowed n'accorde
+  // le quota payant que sur `status = 'active'`), sans rien supprimer.
+  const { error } = await supabaseAdmin
+    .from('org_subscriptions')
+    .update({ status: 'past_due' })
+    .eq('org_id', orgId)
+  if (error) throw error
+}
+
+/**
+ * Convertit un abonnement Stripe en état de facturation d'organisation.
+ *
+ * ⚠️ LE POINT CRITIQUE DE TOUT LE SYSTÈME. Le palier est redérivé du PRICE ID
+ * porté par l'abonnement, jamais des metadata : un changement de palier fait
+ * depuis le Billing Portal ne repasse pas par notre checkout, donc les
+ * metadata `tier_key` posées à la souscription sont périmées. Sans cette
+ * redérivation, le client paie 100 € et reste bloqué au quota de 20 membres.
+ *
+ * `discountCode === undefined` = « ne pas toucher au code existant » ; `null`
+ * l'efface explicitement.
+ */
+async function applyOrgSubscription(
+  orgId: string,
+  subscription: Stripe.Subscription,
+  customerId: string,
+  discountCode: string | null | undefined,
+) {
+  const isActive = subscription.status === 'active' || subscription.status === 'trialing'
+  const priceId = subscription.items.data[0]?.price?.id ?? ''
+  const tier = tierFromPriceId(priceId, env)
+
+  if (isActive && !tier) {
+    // Price inconnu (palier retiré côté Stripe, secret désynchronisé). Écrire
+    // ici dégraderait l'organisation au palier gratuit ALORS QU'ELLE PAIE —
+    // on préfère alerter et ne rien changer.
+    await opsAlert(
+      'stripe-webhook',
+      `org subscription references an unknown price — tier not applied, seat quota left untouched`,
+    )
+    return
+  }
+
+  const payload: Record<string, unknown> = {
+    org_id: orgId,
+    tier_key: isActive && tier ? tier.key : 'free',
+    max_members: isActive && tier ? tier.maxMembers : FREE_TIER_MAX_MEMBERS,
+    status: isActive ? 'active' : 'cancelled',
+    current_period_end: isActive
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscription.id,
+  }
+  // Omis = `ON CONFLICT DO UPDATE` laisse la valeur existante intacte.
+  if (discountCode !== undefined) payload.discount_code = discountCode
+
+  const { error } = await supabaseAdmin
+    .from('org_subscriptions')
+    .upsert(payload, { onConflict: 'org_id' })
+  if (error) {
+    console.error('applyOrgSubscription upsert error:', error)
+    throw error
+  }
 }
