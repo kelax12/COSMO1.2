@@ -15,6 +15,7 @@ import {
   SyncTeamKRInput,
 } from './types';
 import { TEAM_OKRS_STORAGE_KEY } from './constants';
+import { isEnglishSeed } from '@/lib/seed-i18n';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -71,10 +72,65 @@ const DEMO_OKRS: TeamOKR[] = [
   },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. `TeamOKR` imbrique `keyResults`
+// (chacun avec son propre `id`), ce que `localizeSeed` ne parcourt pas : patch
+// ad hoc à deux niveaux plutôt que forcer le helper générique.
+const DEMO_OKRS_EN: Record<string, {
+  title?: string; description?: string; category?: string;
+  keyResults?: Record<string, { title?: string; unit?: string }>;
+}> = {
+  'tokr-1': {
+    title: 'Make the product launch a success',
+    description: 'Turn the launch into a measurable success this quarter.',
+    category: 'Growth',
+    keyResults: {
+      'tkr-1': { title: 'Reach 1,000 sign-ups', unit: 'sign-ups' },
+      'tkr-2': { title: 'Get 15 press mentions', unit: 'articles' },
+      'tkr-3': { title: '5% conversion rate', unit: '%' },
+    },
+  },
+  'tokr-2': {
+    title: 'Ship the website redesign',
+    description: 'Launch the new site, fast and accessible.',
+    category: 'Product',
+    keyResults: {
+      'tkr-4': { title: 'Lighthouse score ≥ 95', unit: 'pts' },
+      'tkr-5': { title: '100% of pages migrated', unit: '%' },
+    },
+  },
+  'tokr-3': {
+    title: 'Strengthen team culture',
+    description: 'Improve engagement and internal onboarding.',
+    category: 'Internal',
+    keyResults: {
+      'tkr-6': { title: 'Onboard 3 new hires', unit: 'people' },
+      'tkr-7': { title: 'eNPS score ≥ 40', unit: 'pts' },
+    },
+  },
+};
+
+function localizeOkrs(okrs: TeamOKR[]): TeamOKR[] {
+  if (!isEnglishSeed()) return okrs;
+  return okrs.map((okr) => {
+    const patch = DEMO_OKRS_EN[okr.id];
+    if (!patch) return okr;
+    return {
+      ...okr,
+      title: patch.title ?? okr.title,
+      description: patch.description ?? okr.description,
+      category: patch.category ?? okr.category,
+      keyResults: okr.keyResults.map((kr) => {
+        const krPatch = patch.keyResults?.[kr.id];
+        return krPatch ? { ...kr, ...krPatch } : kr;
+      }),
+    };
+  });
+}
+
 function readOrSeed(): TeamOKR[] {
   const data = localStorage.getItem(TEAM_OKRS_STORAGE_KEY);
   if (!data) {
-    const clone = JSON.parse(JSON.stringify(DEMO_OKRS)) as TeamOKR[];
+    const clone = JSON.parse(JSON.stringify(localizeOkrs(DEMO_OKRS))) as TeamOKR[];
     localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
