@@ -15,9 +15,8 @@ const PROBLEMS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
 /**
  * Le constat, avant la promesse.
  *
- * Trois objections qu'un décideur a déjà formulées lui-même, puis la bascule.
- * Les cartes montent en décalé au scroll ; la phrase de bascule est révélée mot
- * à mot pour marquer le changement de rythme.
+ * Trois objections qu'un décideur a déjà formulées lui-même. Les cartes
+ * montent en décalé au scroll.
  */
 const ProblemSection: React.FC = () => {
   const { t } = useT('landing');
@@ -35,26 +34,10 @@ const ProblemSection: React.FC = () => {
           stagger: 0.12,
           scrollTrigger: { trigger: '.problem-grid', start: 'top 82%', once: true },
         });
-
-        // Bascule : les mots s'allument un à un (opacité seule — le texte est
-        // déjà à sa place, aucun transform ne le porte).
-        gsap.fromTo(
-          '.pivot-word',
-          { opacity: 0.14 },
-          {
-            opacity: 1,
-            duration: 0.05,
-            ease: 'none',
-            stagger: 0.05,
-            scrollTrigger: { trigger: '.pivot-line', start: 'top 78%', end: 'bottom 55%', scrub: 0.5 },
-          },
-        );
       });
     },
     { scope: rootRef },
   );
-
-  const pivot = t('enterprise.problem.pivot');
 
   return (
     <section ref={rootRef} className="relative border-t border-white/[0.06] py-24 lg:py-28">
@@ -73,14 +56,6 @@ const ProblemSection: React.FC = () => {
             </article>
           ))}
         </div>
-
-        <p className="pivot-line mx-auto mt-16 max-w-3xl text-balance text-center text-xl font-medium leading-snug text-white sm:text-2xl lg:text-3xl">
-          {pivot.split(' ').map((word, index) => (
-            <span key={`${word}-${index}`} className="pivot-word">
-              {word}{' '}
-            </span>
-          ))}
-        </p>
       </div>
     </section>
   );

@@ -287,6 +287,10 @@
       "membersAlt": "Members tab: the organisation directory, with each person's role and workload.",
       "projects": "Projects",
       "projectsAlt": "Projects tab: projects per team, their tasks, deadlines and assignees, in list, board or timeline view.",
+      "projectsKanban": "Projects — Board view",
+      "projectsKanbanAlt": "Projects tab in Board view: tasks split by status, from To do to Blocked.",
+      "projectsPlanning": "Projects — Timeline view",
+      "projectsPlanningAlt": "Projects tab in Timeline view: tasks positioned on the calendar, at their deadline.",
       "okr": "OKRs",
       "okrAlt": "OKR tab: team objectives and their numeric key results, with their progress.",
       "stats": "Statistics",
@@ -310,8 +314,7 @@
       "p2t": "They are one tool too many",
       "p2d": "Yet another collaborative space will not be opened on Monday morning. Adoption is not decided in a kick-off meeting.",
       "p3t": "They count too late",
-      "p3d": "An overloaded team is discovered in a steering meeting, at the exact moment when it is too late to rebalance.",
-      "pivot": "Cosmo starts from your org chart."
+      "p3d": "An overloaded team is discovered in a steering meeting, at the exact moment when it is too late to rebalance."
     },
     "pyramid": {
       "title": "Invite your team. The org chart draws itself.",
@@ -322,9 +325,14 @@
       "g2d": "Every member has a manager. That link, and only that link, decides what each person sees and can do.",
       "g3t": "Group into teams",
       "g3d": "Create as many teams as you need and put whoever you want in them. The same person can belong to several teams.",
-      "hint": "Hover a member to light up their scope.",
+      "hint": "Hover a member to light up their scope, click to see what you can do from their file.",
       "legendScope": "Scope of the hovered manager",
       "legendOut": "Out of scope",
+      "menuLabel": "From {{name}}'s file",
+      "menuTasks": "See their tasks",
+      "menuAgenda": "See their calendar",
+      "menuContribution": "See their contribution",
+      "menuAria": "Actions available for {{name}}",
       "b1t": "Scope follows the hierarchy",
       "b1d": "A manager sees their whole subtree: their teams, their projects, their objectives, their statistics. Nothing to tick, nothing to maintain.",
       "b2t": "Manage from the org chart",
@@ -345,7 +353,11 @@
       "p2t": "Board or timeline",
       "p2d": "The board to see where each task stands, the timeline to see deadlines coming. Same project, two readings.",
       "p3t": "Context stays in the task",
-      "p3d": "Labels, comments with mentions and a change history. The decision stays where it was made, not in an inbox."
+      "p3d": "Labels, comments with mentions and a change history. The decision stays where it was made, not in an inbox.",
+      "viewList": "List",
+      "viewKanban": "Board",
+      "viewPlanning": "Timeline",
+      "scrollHint": "Keep scrolling to change view"
     },
     "okr": {
       "title": "Set your objectives, at every scale.",
