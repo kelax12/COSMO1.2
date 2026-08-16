@@ -472,6 +472,9 @@ describe('RLS — org_subscriptions (mig. 101)', () => {
   let membre: TestUser;
   let etranger: TestUser;
   let orgId: string;
+  /** Seconde org du même membre, volontairement SANS ligne d'abonnement :
+   *  c'est la seule cible sur laquelle un INSERT teste la RLS et non la PK. */
+  let orgSansAboId: string;
 
   beforeAll(async () => {
     membre = await createTestUser();
@@ -481,7 +484,9 @@ describe('RLS — org_subscriptions (mig. 101)', () => {
     // parcours de création d'organisation (couvert ailleurs).
     const { data: org, error: orgError } = await admin
       .from('organizations')
-      .insert({ name: 'Org RLS billing', owner_id: membre.id })
+      // `join_code` est NOT NULL UNIQUE sans défaut ni trigger de remplissage
+      // (mig. 060) : l'omettre fait échouer le beforeAll, pas les assertions.
+      .insert({ name: 'Org RLS billing', join_code: `rls-bill-${Date.now()}`, owner_id: membre.id })
       .select('id')
       .single();
     if (orgError) throw orgError;
@@ -498,10 +503,23 @@ describe('RLS — org_subscriptions (mig. 101)', () => {
       status: 'active',
       stripe_customer_id: 'cus_test_rls',
     });
+
+    // Seconde org du même membre, sans abonnement : cible du test d'INSERT.
+    const { data: org2, error: org2Error } = await admin
+      .from('organizations')
+      .insert({ name: 'Org RLS sans abo', join_code: `rls-noabo-${Date.now()}`, owner_id: membre.id })
+      .select('id')
+      .single();
+    if (org2Error) throw org2Error;
+    orgSansAboId = org2.id as string;
+
+    await admin
+      .from('organization_members')
+      .insert({ org_id: orgSansAboId, user_id: membre.id, role: 'admin' });
   });
 
   afterAll(async () => {
-    await admin.from('organizations').delete().eq('id', orgId);
+    await admin.from('organizations').delete().in('id', [orgId, orgSansAboId]);
     await deleteTestUsers(membre, etranger);
   });
 
@@ -552,12 +570,19 @@ describe('RLS — org_subscriptions (mig. 101)', () => {
     expect(data?.tier_key).toBe('t20');
   });
 
+  // ⚠️ L'insertion doit viser une org SANS ligne d'abonnement. Tenter d'insérer
+  // sur `orgId` échouerait sur la clé primaire même si la RLS l'autorisait :
+  // le test passerait au vert sans rien prouver sur la sécurité.
   it('un membre ne peut PAS insérer d’abonnement', async () => {
-    const { error } = await membre.client
+    await membre.client
       .from('org_subscriptions')
-      .insert({ org_id: orgId, tier_key: 'tmax', max_members: null, status: 'active' });
+      .insert({ org_id: orgSansAboId, tier_key: 'tmax', max_members: null, status: 'active' });
 
-    expect(error).not.toBeNull();
+    const { data } = await membre.client
+      .from('org_subscriptions')
+      .select('org_id')
+      .eq('org_id', orgSansAboId);
+    expect(data ?? []).toEqual([]);
   });
 
   it('un membre ne peut PAS supprimer l’abonnement', async () => {
@@ -585,7 +610,12 @@ npm run test:rls
 
 Attendu : les 6 nouveaux tests PASS, et les suites RLS existantes restent vertes.
 
-> Si `update`/`delete` renvoient `error: null` avec 0 ligne affectée au lieu d'une erreur : PostgREST peut répondre 204 quand la RLS filtre tout. Dans ce cas, remplacer l'assertion `expect(error).not.toBeNull()` par la vérification de non-modification (déjà présente dans chaque test) et ajouter `.select()` à la requête d'écriture pour forcer une réponse de représentation.
+> ⚠️ **Ne pas s'appuyer sur la forme de l'erreur.** Une table sans policy d'écriture refuse
+> l'UPDATE/DELETE par un `USING` implicite vide, et PostgREST rend alors `error: null` avec
+> 0 ligne au lieu d'une erreur. Chaque test d'écriture doit donc prouver que **rien n'a
+> changé** — relecture par un client **utilisateur**, jamais `admin` — plutôt qu'attendre un
+> `error != null`. Ajouter `.select()` à la requête d'écriture pour forcer une réponse de
+> représentation exploitable.
 
 - [ ] **Step 4: Commit**
 
