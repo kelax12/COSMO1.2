@@ -82,7 +82,11 @@
       "completedShort": "Fait",
       "overdue": "Retard",
       "collaboration": "Collaboration",
-      "collaborationShort": "Collab"
+      "collaborationShort": "Collab",
+      "scopeAria": "Filtrer par portée : tout, perso ou entreprise",
+      "scopeAll": "Tout",
+      "scopePerso": "Perso",
+      "scopeEntreprise": "Entreprise"
     },
     "select": "Sélectionner",
     "cancelSelect": "Annuler",

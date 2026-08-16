@@ -491,15 +491,14 @@ const DashboardPage: React.FC = () => {
             {statCards.map((stat, index) => (
               <motion.div
                 key={index}
-                className="relative overflow-hidden group cursor-pointer"
+                className="relative overflow-hidden"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05, type: 'spring', stiffness: 100 }}
-                whileHover={{ y: -4, scale: 1.02 }}
               >
-                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)]">
+                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
                   <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
-                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors truncate">
+                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold truncate">
                       {stat.label}
                     </p>
                     <motion.p
