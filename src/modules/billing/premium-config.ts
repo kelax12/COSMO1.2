@@ -43,12 +43,19 @@ export const ENTERPRISE_TIER_2_EUR = 100;
 //
 // `maxMembers: null` = tranche « et plus », pas de plafond.
 export const ENTERPRISE_PRICING_TIERS = [
-  { minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
-  { minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
-  { minMembers: 10, maxMembers: 20, priceEurPerMonth: 50 },
-  { minMembers: 20, maxMembers: 50, priceEurPerMonth: 100 },
-  { minMembers: 50, maxMembers: null, priceEurPerMonth: 200 },
+  { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
+  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
+  { key: 't20', minMembers: 10, maxMembers: 20, priceEurPerMonth: 50 },
+  { key: 't50', minMembers: 20, maxMembers: 50, priceEurPerMonth: 100 },
+  { key: 'tmax', minMembers: 50, maxMembers: null, priceEurPerMonth: 200 },
 ] as const;
+
+/**
+ * Clé stable d'un palier. C'est ce que le client envoie au checkout — jamais
+ * un montant, jamais un price ID Stripe : le serveur seul fait la conversion,
+ * donc un client ne peut pas se choisir un prix.
+ */
+export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 
 //  false → aucune limite appliquée ; la bannière informative s'affiche à
 //          partir de ORG_FREE_SEATS membres (préparation du marché).
