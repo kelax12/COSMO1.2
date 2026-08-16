@@ -143,8 +143,30 @@ if (params.cursor && params.cursorDate) {
 | `stripe-create-checkout` | Crée une session Checkout Stripe | CORS allowlist (`APP_URL`), upsert sur `subscriptions` (B0/N7/U1), idempotency-key `customer:${uid}` + `checkout:${uid}:${day}` (M-3) |
 | `stripe-webhook` | Reçoit les events Stripe | Signature verify, idempotence via `processed_stripe_events` (PK event.id) — **marker INSERT après handler** (M-4) pour préserver at-least-once Stripe + 500 sur erreur dedup non-23505 (M-5) + rejet non-POST (L-13) (B10/W6/N8/N9/U2) |
 | `delete-account` | Supprime compte + données utilisateur | Anon JWT pour l'identité, service_role pour purger toutes les tables user-owned + `auth.admin.deleteUser` (B9). Purge `shared_tasks` par `friend_id`/`shared_by` (M-6), abort si cleanup échoue (RGPD) |
+| `stripe-org-checkout` | Session Checkout d'une **organisation** | CORS allowlist, **owner-only** (`organizations.owner_id`) — org inexistante et non-propriétaire renvoient la **même** 403, pour ne pas confirmer l'existence d'une org dont on connaîtrait l'UUID. `allow_promotion_codes`, idempotency-keys `org-customer:${orgId}` + `org-checkout:${orgId}:${tier}:${day}`. Le customer porte `org_owner_uid`, **jamais** `supabase_uid` (cf. encadré ci-dessous) |
+| `stripe-org-portal` | Portail de facturation d'une organisation | Mêmes CORS et owner-only. Délègue à Stripe carte / factures / changement de palier / **résiliation** |
 
-> **`supabase/config.toml` obligatoire** (M-10) : `stripe-webhook` doit avoir `verify_jwt = false` (Stripe authentifie par signature, pas JWT). Les 2 autres fonctions gardent `verify_jwt = true`. Ne pas déployer sans ce fichier ou Stripe recevra 401 avant la vérification signature.
+> **`supabase/config.toml` obligatoire** (M-10) : `stripe-webhook` doit avoir `verify_jwt = false` (Stripe authentifie par signature, pas JWT). **Toutes les autres fonctions**, y compris `stripe-org-checkout` et `stripe-org-portal`, gardent `verify_jwt = true`. Ne pas déployer sans ce fichier ou Stripe recevra 401 avant la vérification signature.
+
+### Abonnement d'organisation (mig. 101)
+
+`org_subscriptions` : SELECT réservé aux membres (`is_org_member`), **aucune policy d'écriture**.
+Contrairement à `subscriptions` (mig. 013), aucun trigger-guard n'est nécessaire — il n'y a rien
+à garder quand rien n'est écrivable. Seul le `service_role` du webhook écrit.
+
+Le quota appliqué est `org_seats_allowed()` ; un abonnement `past_due` ou `cancelled` retombe au
+palier gratuit **sans jamais retirer de membre**.
+
+> 🔴 **Étanchéité des deux univers de facturation.** Un event Stripe d'organisation ne doit
+> jamais être traité par la branche particulier. Trois gardes le garantissent, et elles sont
+> solidaires : le customer Stripe d'une org porte `org_owner_uid` et non `supabase_uid` ;
+> `getUidFromCustomer` refuse tout customer portant `org_id` ; et `orgIdFromInvoice` **lève**
+> sur erreur de requête au lieu de renvoyer `null`. Sans ces trois-là, une facture d'entreprise
+> écrivait dans l'abonnement **personnel** du propriétaire — et comme le handler retournait un
+> succès, le marqueur d'idempotence était posé et Stripe ne redélivrait jamais. Défaut trouvé
+> par deux revues indépendantes le 2026-08-17, avant toute mise en service.
+
+Test d'intégration : `e2e/rls/org-subscriptions.test.ts` (nécessite la stack Supabase locale).
 
 ```bash
 supabase functions deploy stripe-create-checkout
