@@ -55,19 +55,27 @@ const TODAY = new Date().toISOString().slice(0, 10);
 let html = readFileSync(join(DIST, 'index.html'), 'utf8');
 html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${TODAY}"`);
 
-// ── FAQ (miroir de FAQ_ITEMS dans src/pages/LandingPage.tsx — garder synchro) ──
-const FAQ_ITEMS = [
-  ['Cosmo est-il vraiment gratuit ?', "Oui. Toutes les fonctionnalités principales — tâches, habitudes, agenda, OKR et statistiques — sont entièrement gratuites. L'accès Premium (collaboration en équipe, partage de tâches) s'obtient en regardant une courte publicité, sans jamais sortir votre carte bancaire."],
-  ["Qu'est-ce que la méthode OKR et pourquoi l'utiliser ?", "La méthode OKR (Objectives & Key Results) est le système de définition d'objectifs utilisé par Google, Intel et Netflix. Un OKR = un objectif qualitatif ambitieux + 2 à 5 résultats clés mesurables. Cosmo automatise le calcul de progression et visualise votre avancement en temps réel, sans tableur."],
-  ['Quelle est la différence avec Notion ou Todoist ?', "Notion est un espace de notes très flexible mais sans structure de productivité native. Todoist est un excellent gestionnaire de tâches mais n'intègre pas les habitudes, les OKR ni le time-blocking. Cosmo est la seule application qui connecte les quatre piliers — tâches, habitudes, agenda et objectifs — dans un seul écosystème cohérent."],
-  ['Comment fonctionne le mode démo ?', "Cliquez sur « Essayer la démo » : vous accédez immédiatement à l'application complète, pré-remplie avec 100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs sur 12 mois de données réalistes. Aucun compte, aucun email demandé. Quand vous êtes convaincu(e), créez votre vrai compte en 30 secondes."],
-  ['Cosmo fonctionne-t-il sur mobile ?', "Oui. Cosmo est conçu mobile-first : interface responsive, bottom navigation bar, gestes swipe sur les tâches, bottom-sheets fluides et support du safe area iOS. L'application fonctionne dans n'importe quel navigateur mobile — Safari iOS, Chrome Android — sans téléchargement requis."],
-  ["Qu'est-ce que le time-blocking ?", "Le time-blocking consiste à réserver des créneaux horaires dans votre agenda pour travailler sur des tâches précises, plutôt que de réagir au fil de l'eau. Dans Cosmo, glissez simplement une tâche depuis le panneau latéral vers un créneau de votre calendrier : l'événement est créé automatiquement et lié à la tâche."],
-  ['Puis-je collaborer avec mon équipe ?', "Oui. Avec l'accès Premium (gratuit via publicité), envoyez des demandes d'amis par email, partagez des tâches avec un rôle Lecteur ou Éditeur, et suivez la progression de vos collaborateurs depuis votre dashboard. La messagerie contextuelle permet de discuter directement dans le contexte d'une tâche."],
-  ['Comment suivre mes habitudes efficacement ?', "Créez une habitude, définissez sa fréquence (quotidienne, hebdomadaire, jours spécifiques), puis cochez chaque jour. Cosmo affiche une heatmap 26 semaines style GitHub, calcule votre streak (série de jours consécutifs) et votre taux de complétion sur la période choisie. La règle d'or : commencez par 2 à 3 habitudes maximum."],
-  ['Mes données sont-elles sécurisées ?', "Vos données sont stockées sur Supabase avec Row Level Security : personne d'autre ne peut accéder à vos tâches ou habitudes. Les pages de l'application (dashboard, tâches, etc.) sont bloquées pour les robots de recherche dans robots.txt. En mode démo, les données restent dans votre navigateur (localStorage) et ne transitent pas par nos serveurs."],
-  ['Peut-on utiliser Cosmo sans connexion internet ?', "En mode démo, toutes les données sont stockées localement dans votre navigateur — aucune connexion requise après le chargement initial. En mode compte, un cache localStorage 24 heures permet de consulter vos tâches et habitudes récentes même avec une connexion instable."],
-];
+// ── FAQ ───────────────────────────────────────────────────────────────────
+// LUE dans le catalogue que rend l'application (`faq.q1…qN`), pas recopiée ici.
+//
+// Les deux copies avaient divergé sans que rien ne le signale : 10 items ici
+// contre 12 dans l'app, avec des réponses différentes — dont une qui promettait
+// un « accès Premium en regardant une publicité » que le produit n'applique
+// pas (`PREMIUM_ENFORCED = false`). Google comparait donc un balisage FAQPage à
+// un contenu visible qui ne disait pas la même chose, ce qui est exactement ce
+// que la doc schema.org interdit. Une seule source, plus de synchro à tenir.
+//
+// La home n'est publiée que dans la locale par défaut tant qu'elle n'est pas
+// traduite, donc le schéma est construit depuis ce catalogue-là.
+const LANDING_FAQ = JSON.parse(
+  readFileSync(join(__dirname, 'src/locales', DEFAULT_LOCALE, 'landing.json'), 'utf8')
+).faq;
+
+const FAQ_ITEMS = Object.keys(LANDING_FAQ)
+  .filter((key) => /^q\d+$/.test(key))
+  .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+  .map((qKey) => [LANDING_FAQ[qKey], LANDING_FAQ[`a${qKey.slice(1)}`]])
+  .filter(([question, answer]) => question && answer);
 
 const faqSchema = {
   '@context': 'https://schema.org',
