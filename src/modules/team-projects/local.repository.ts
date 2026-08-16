@@ -35,6 +35,7 @@ import {
   TEAM_TASK_LABELS_STORAGE_KEY,
   TEAM_TASK_ACTIVITY_STORAGE_KEY,
 } from './constants';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -54,6 +55,13 @@ const DEMO_PROJECTS: TeamProject[] = [
   { id: 'tproj-2', orgId: DEMO_ORG_ID, name: 'Lancement produit', color: 'purple', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-25), teamId: 'team-design' },
   { id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15), teamId: null },
 ];
+
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_PROJECTS_EN: Record<string, Partial<TeamProject>> = {
+  'tproj-1': { name: 'Website redesign' },
+  'tproj-2': { name: 'Product launch' },
+  'tproj-3': { name: 'Internal' },
+};
 
 // Fabrique une tâche seed déterministe. Une tâche sur quatre reçoit un
 // second assigné (démonstration de la multi-assignation).
@@ -123,6 +131,31 @@ const DEMO_TASKS: TeamTask[] = [
   t('tproj-3', 'Planifier le séminaire', 5, 3, 14, false),
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Les ids `ttask-N` reprennent
+// l'ordre de déclaration ci-dessus (compteur `seq` incrémenté par `t()`).
+const DEMO_TASKS_EN: Record<string, Partial<TeamTask>> = {
+  'ttask-1': { name: 'Homepage mockups' },
+  'ttask-2': { name: 'Responsive header integration' },
+  'ttask-3': { name: 'WCAG accessibility audit' },
+  'ttask-4': { name: 'Image optimization' },
+  'ttask-5': { name: 'SEO content writing' },
+  'ttask-6': { name: 'Brand guidelines approved' },
+  'ttask-7': { name: 'Analytics setup' },
+  'ttask-8': { name: 'Communication plan' },
+  'ttask-9': { name: 'Press kit' },
+  'ttask-10': { name: 'Prepare investor demo' },
+  'ttask-11': { name: 'Teaser landing page' },
+  'ttask-12': { name: 'Social media campaign' },
+  'ttask-13': { name: 'Video agency brief' },
+  'ttask-14': { name: 'Early adopters list' },
+  'ttask-15': { name: 'New hire onboarding' },
+  'ttask-16': { name: 'Wiki update' },
+  'ttask-17': { name: 'Sprint retrospective' },
+  'ttask-18': { name: 'Q3 budget forecast' },
+  'ttask-19': { name: 'Equipment order' },
+  'ttask-20': { name: 'Plan the offsite' },
+};
+
 // Commentaires seed (mig. 082) — fil de discussion réaliste sur 2 tâches.
 /**
  * Labels de démo — la fonctionnalité doit se montrer, pas se deviner. Un
@@ -135,6 +168,12 @@ const DEMO_LABELS: TeamLabel[] = [
   { id: 'lbl-tech', orgId: DEMO_ORG_ID, name: 'Technique', color: '#8b5cf6', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. « Bug », « Client », « Urgent »
+// s'écrivent déjà pareil en anglais.
+const DEMO_LABELS_EN: Record<string, Partial<TeamLabel>> = {
+  'lbl-tech': { name: 'Technical' },
+};
+
 const DEMO_COMMENTS: TeamTaskComment[] = [
   { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma, retours bienvenus !', mentions: [], createdAt: iso(-4) },
   { id: 'comment-seed-2', taskId: 'ttask-1', authorId: DEMO_USER_ID, body: '@Marie Dupont super base, je préfère la variante B pour le hero.', mentions: ['friend-1'], createdAt: iso(-3) },
@@ -143,6 +182,15 @@ const DEMO_COMMENTS: TeamTaskComment[] = [
   // une notification qui pointe vers un commentaire inexistant serait un leurre.
   { id: 'comment-seed-4', taskId: 'ttask-8', authorId: 'friend-1', body: 'Il me faut ton avis sur le calendrier avant vendredi, tu peux jeter un œil ?', mentions: [DEMO_USER_ID], createdAt: iso(-1) },
 ];
+
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Le nom mentionné (@Marie Dupont)
+// n'est pas traduit, comme `sharedBy` dans le module tasks.
+const DEMO_COMMENTS_EN: Record<string, Partial<TeamTaskComment>> = {
+  'comment-seed-1': { body: 'First draft of the mockups is up on Figma, feedback welcome!' },
+  'comment-seed-2': { body: '@Marie Dupont great base, I prefer variant B for the hero.' },
+  'comment-seed-3': { body: 'The press schedule is locked in, budget still needs approval.' },
+  'comment-seed-4': { body: 'I need your input on the schedule before Friday, can you take a look?' },
+};
 
 /**
  * Sous-tâches de démo (mig. 092).
@@ -170,6 +218,20 @@ const DEMO_SUBTASKS: TeamSubtask[] = [
   st('sub-seed-9', 'ttask-10', 'Jeu de données de démonstration', true, 1),
   st('sub-seed-10', 'ttask-10', 'Répétition chronométrée', true, 2),
 ];
+
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_SUBTASKS_EN: Record<string, Partial<TeamSubtask>> = {
+  'sub-seed-1': { title: 'Moodboard and references' },
+  'sub-seed-2': { title: 'Low-fidelity wireframes' },
+  'sub-seed-3': { title: 'Hero variant A' },
+  'sub-seed-4': { title: 'Hero variant B' },
+  'sub-seed-5': { title: 'Mobile breakpoints' },
+  'sub-seed-6': { title: 'Accessible burger menu' },
+  'sub-seed-7': { title: 'Safari iOS testing' },
+  'sub-seed-8': { title: 'Demo script' },
+  'sub-seed-9': { title: 'Demo dataset' },
+  'sub-seed-10': { title: 'Timed rehearsal' },
+};
 
 /**
  * Associations tâche ↔ label (mig. 093).
@@ -252,7 +314,7 @@ function readOrSeed<T>(key: string, seed: T): T {
 
 export class LocalStorageTeamProjectsRepository implements ITeamProjectsRepository {
   private getProjectsArray(): TeamProject[] {
-    return readOrSeed<TeamProject[]>(TEAM_PROJECTS_STORAGE_KEY, DEMO_PROJECTS);
+    return readOrSeed<TeamProject[]>(TEAM_PROJECTS_STORAGE_KEY, localizeSeed(DEMO_PROJECTS, DEMO_PROJECTS_EN));
   }
   private saveProjects(p: TeamProject[]): void {
     localStorage.setItem(TEAM_PROJECTS_STORAGE_KEY, JSON.stringify(p));
@@ -263,7 +325,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     // (singulier) et pas `assigneeIds`. Sans ce coercion, tout consommateur
     // qui itère `assigneeIds` (kanban, contributeurs, to-do) planterait sur
     // `undefined`. On dérive le tableau du champ legacy s'il existe.
-    return readOrSeed<TeamTask[]>(TEAM_TASKS_STORAGE_KEY, DEMO_TASKS).map((t) => {
+    return readOrSeed<TeamTask[]>(TEAM_TASKS_STORAGE_KEY, localizeSeed(DEMO_TASKS, DEMO_TASKS_EN)).map((t) => {
       if (Array.isArray(t.assigneeIds)) return t;
       const legacy = (t as TeamTask & { assigneeId?: string | null }).assigneeId;
       return { ...t, assigneeIds: legacy ? [legacy] : [] };
@@ -389,7 +451,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   // ─── Commentaires (mig. 082) ───────────────────────────────────────
 
   private getCommentsArray(): TeamTaskComment[] {
-    return readOrSeed<TeamTaskComment[]>(TEAM_TASK_COMMENTS_STORAGE_KEY, DEMO_COMMENTS);
+    return readOrSeed<TeamTaskComment[]>(TEAM_TASK_COMMENTS_STORAGE_KEY, localizeSeed(DEMO_COMMENTS, DEMO_COMMENTS_EN));
   }
   private saveComments(c: TeamTaskComment[]): void {
     localStorage.setItem(TEAM_TASK_COMMENTS_STORAGE_KEY, JSON.stringify(c));
@@ -422,7 +484,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   // ─── Sous-tâches (mig. 092) ────────────────────────────────────────
 
   private getSubtasksArray(): TeamSubtask[] {
-    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, DEMO_SUBTASKS);
+    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, localizeSeed(DEMO_SUBTASKS, DEMO_SUBTASKS_EN));
   }
   private saveSubtasks(s: TeamSubtask[]): void {
     localStorage.setItem(TEAM_TASK_SUBTASKS_STORAGE_KEY, JSON.stringify(s));
@@ -469,7 +531,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   // ─── Labels (mig. 093) ─────────────────────────────────────────────
 
   private getLabelsArray(): TeamLabel[] {
-    return readOrSeed<TeamLabel[]>(TEAM_LABELS_STORAGE_KEY, DEMO_LABELS);
+    return readOrSeed<TeamLabel[]>(TEAM_LABELS_STORAGE_KEY, localizeSeed(DEMO_LABELS, DEMO_LABELS_EN));
   }
   private saveLabels(l: TeamLabel[]): void {
     localStorage.setItem(TEAM_LABELS_STORAGE_KEY, JSON.stringify(l));

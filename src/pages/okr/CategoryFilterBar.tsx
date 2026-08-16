@@ -103,7 +103,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               ? allActiveCls
               : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
           }`}>
-          Tous
+          {t('categories.all')}
         </button>
             {categories.map((category) => {
               const isHovered = hoveredCategoryId === category.id;

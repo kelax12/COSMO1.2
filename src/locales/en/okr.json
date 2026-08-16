@@ -38,6 +38,7 @@
     "progressOf": "{{title}} progress out of {{target}}"
   },
   "categories": {
+    "all": "All",
     "edit": "Edit category",
     "delete": "Delete category",
     "new": "New category",

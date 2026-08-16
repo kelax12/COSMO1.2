@@ -17,6 +17,7 @@ import {
   ORG_JOIN_REQUESTS_STORAGE_KEY,
   ORG_INVITE_LINKS_STORAGE_KEY,
 } from './constants';
+import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
 
 const DEMO_USER_ID = 'demo-user';
 export const DEMO_ORG_ID = 'org-demo-1';
@@ -98,6 +99,14 @@ const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
   },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Les noms propres (« Nova
+// Studio », « Atelier Lune ») ne sont pas traduits : ce sont des marques, pas
+// des mots de la langue.
+const DEMO_ORGS_EN: Record<string, Partial<Organization>> = {
+  [DEMO_ORG_ID]: { description: 'Digital creative studio: websites, apps and brand identities.' },
+  [DEMO_ORG_2_ID]: { description: 'Collective of ceramic artisans.', industry: 'Crafts' },
+};
+
 // Lecture défensive : clone des seeds (faille B12), JSON.parse protégé (B14).
 function readOrSeed<T>(key: string, seed: T): T {
   const data = localStorage.getItem(key);
@@ -117,7 +126,7 @@ function readOrSeed<T>(key: string, seed: T): T {
 
 export class LocalStorageOrganizationsRepository implements IOrganizationsRepository {
   private getOrgsArray(): Organization[] {
-    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, DEMO_ORGS);
+    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, localizeSeed(DEMO_ORGS, DEMO_ORGS_EN));
   }
 
   private saveOrgs(orgs: Organization[]): void {
@@ -125,7 +134,13 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   private getMembersArray(): OrgMember[] {
-    return readOrSeed<OrgMember[]>(ORG_MEMBERS_STORAGE_KEY, DEMO_MEMBERS);
+    // `OrgMember` n'a pas de champ `id` (clé composite orgId+userId) :
+    // localizeSeed ne s'applique pas telle quelle, d'où ce patch ad hoc sur
+    // le seul champ concerné (« Vous » n'est pas un nom propre).
+    const seed = isEnglishSeed()
+      ? DEMO_MEMBERS.map((m) => (m.displayName === 'Vous' ? { ...m, displayName: 'You' } : m))
+      : DEMO_MEMBERS;
+    return readOrSeed<OrgMember[]>(ORG_MEMBERS_STORAGE_KEY, seed);
   }
 
   private getRequestsArray(): OrgJoinRequest[] {
@@ -180,7 +195,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       userId: DEMO_USER_ID,
       role: 'admin',
       joinedAt: new Date().toISOString(),
-      displayName: 'Vous',
+      displayName: isEnglishSeed() ? 'You' : 'Vous',
       email: 'demo@cosmo.app',
     });
     localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));

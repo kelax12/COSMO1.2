@@ -4,6 +4,7 @@
 
 import { OrgOKRCategory, CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
 import { ORG_OKR_CATEGORIES_STORAGE_KEY } from './constants';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 export interface IOrgOKRCategoriesRepository {
   getCategories(orgId: string): Promise<OrgOKRCategory[]>;
@@ -22,10 +23,17 @@ const DEMO_CATEGORIES: OrgOKRCategory[] = [
   { id: 'okrcat-brand', orgId: DEMO_ORG_ID, name: 'Marque', color: '#ec4899', createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_CATEGORIES_EN: Record<string, Partial<OrgOKRCategory>> = {
+  'okrcat-growth': { name: 'Growth' },
+  'okrcat-product': { name: 'Product' },
+  'okrcat-brand': { name: 'Brand' },
+};
+
 function readOrSeed(): OrgOKRCategory[] {
   const data = localStorage.getItem(ORG_OKR_CATEGORIES_STORAGE_KEY);
   if (!data) {
-    const clone = JSON.parse(JSON.stringify(DEMO_CATEGORIES)) as OrgOKRCategory[];
+    const clone = JSON.parse(JSON.stringify(localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN))) as OrgOKRCategory[];
     localStorage.setItem(ORG_OKR_CATEGORIES_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
