@@ -20,14 +20,14 @@ export function isTheme(value: unknown): value is Theme {
  * Thème appliqué quand l'utilisateur n'a jamais choisi.
  *
  * Sur mobile on part sur `gris` (fond graphite + accent bleu, palette GitHub) :
- * c'est la base du design system mobile. Sur desktop on conserve le
- * comportement historique (préférence système) — le desktop n'est pas
- * concerné par la refonte mobile.
+ * c'est la base du design system mobile. Sur desktop, quand le système
+ * préfère le sombre, on part sur `noir` (OLED quasi-noir) plutôt que sur le
+ * `dark` générique — c'est le thème sombre par défaut du produit.
  */
 export function defaultTheme(): Theme {
   if (typeof window === 'undefined') return 'light';
   if (window.innerWidth < MOBILE_BREAKPOINT) return 'gris';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'noir' : 'light';
 }
 
 /**

@@ -34,9 +34,9 @@ describe('defaultTheme', () => {
     expect(defaultTheme()).toBe('gris');
   });
 
-  it('suit la préférence système sur desktop', () => {
+  it('suit la préférence système sur desktop, en noir plutôt que dark', () => {
     stubViewport({ width: 1440, prefersDark: true });
-    expect(defaultTheme()).toBe('dark');
+    expect(defaultTheme()).toBe('noir');
     stubViewport({ width: 1440, prefersDark: false });
     expect(defaultTheme()).toBe('light');
   });
