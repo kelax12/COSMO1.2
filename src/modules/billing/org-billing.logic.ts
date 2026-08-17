@@ -8,6 +8,7 @@
 // (`COUNT(membres) < quota`).
 // ═══════════════════════════════════════════════════════════════════
 import { ENTERPRISE_PRICING_TIERS, ORG_FREE_SEATS } from './premium-config';
+import type { OrgTierKey } from './premium-config';
 import type { OrgSubscription } from './org-billing.types';
 
 type Tier = (typeof ENTERPRISE_PRICING_TIERS)[number];
@@ -32,24 +33,21 @@ export function effectiveQuota(sub: OrgSubscription | null): number | null {
 }
 
 /**
- * Comment nommer le forfait courant dans l'UI.
+ * Le palier à NOMMER dans l'UI.
  *
- * Le nom est dérivé du quota RÉELLEMENT accordé (`effectiveQuota`), pas du
- * palier acheté : un abonnement impayé ou résilié affiche « gratuit », comme le
- * serveur le traite. Un libellé qui annoncerait encore le palier payant
- * mentirait sur ce que l'organisation peut faire.
+ * Dérivé du droit réellement accordé, pas du palier acheté : un abonnement
+ * impayé ou résilié affiche « Gratuit », exactement comme le serveur le traite
+ * (`effectiveQuota`). Un libellé qui annoncerait encore « Entreprise » à une
+ * organisation retombée à 5 sièges mentirait sur ce qu'elle peut faire.
  */
-export function planDescriptor(sub: OrgSubscription | null): {
-  kind: 'free' | 'seats' | 'unlimited';
-  seats: number | null;
-  /** L'abonnement demande une action du propriétaire (impayé). */
-  needsAttention: boolean;
-} {
-  const quota = effectiveQuota(sub);
-  const needsAttention = sub?.status === 'past_due';
-  if (quota === null) return { kind: 'unlimited', seats: null, needsAttention };
-  if (quota <= ORG_FREE_SEATS) return { kind: 'free', seats: quota, needsAttention };
-  return { kind: 'seats', seats: quota, needsAttention };
+export function effectiveTierKey(sub: OrgSubscription | null): OrgTierKey {
+  if (!sub || sub.status !== 'active') return 'free';
+  return sub.tierKey;
+}
+
+/** L'abonnement demande une action du propriétaire (paiement à régulariser). */
+export function needsPaymentAttention(sub: OrgSubscription | null): boolean {
+  return sub?.status === 'past_due';
 }
 
 /** Le prochain ajout de membre sera-t-il refusé par le serveur ? */

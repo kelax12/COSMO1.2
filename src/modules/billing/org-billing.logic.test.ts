@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { tierForMemberCount, effectiveQuota, isQuotaReached, planDescriptor } from './org-billing.logic';
+import {
+  tierForMemberCount,
+  effectiveQuota,
+  isQuotaReached,
+  effectiveTierKey,
+  needsPaymentAttention,
+} from './org-billing.logic';
 import type { OrgSubscription } from './org-billing.types';
 
 const sub = (over: Partial<OrgSubscription> = {}): OrgSubscription => ({
@@ -53,37 +59,39 @@ describe('effectiveQuota', () => {
   });
 });
 
-describe('planDescriptor', () => {
-  it('sans abonnement → forfait gratuit', () => {
-    expect(planDescriptor(null)).toEqual({ kind: 'free', seats: 5, needsAttention: false });
+describe('effectiveTierKey', () => {
+  it('sans abonnement → palier gratuit', () => {
+    expect(effectiveTierKey(null)).toBe('free');
   });
 
-  it('abonnement actif → forfait par sièges', () => {
-    expect(planDescriptor(sub())).toEqual({ kind: 'seats', seats: 20, needsAttention: false });
+  it('abonnement actif → son palier', () => {
+    expect(effectiveTierKey(sub())).toBe('t20');
   });
 
-  it('palier sans plafond → illimité', () => {
-    expect(planDescriptor(sub({ tierKey: 'tmax', maxMembers: null }))).toEqual({
-      kind: 'unlimited',
-      seats: null,
-      needsAttention: false,
-    });
+  it('impayé → gratuit : le nom suit le droit accordé, pas le palier acheté', () => {
+    expect(effectiveTierKey(sub({ status: 'past_due' }))).toBe('free');
   });
 
-  it('impayé → affiché comme gratuit, avec alerte : le quota accordé fait foi', () => {
-    expect(planDescriptor(sub({ status: 'past_due' }))).toEqual({
-      kind: 'free',
-      seats: 5,
-      needsAttention: true,
-    });
+  it('résilié → gratuit', () => {
+    expect(effectiveTierKey(sub({ status: 'cancelled' }))).toBe('free');
   });
 
-  it('résilié → gratuit, sans alerte (plus rien à régulariser)', () => {
-    expect(planDescriptor(sub({ status: 'cancelled' }))).toEqual({
-      kind: 'free',
-      seats: 5,
-      needsAttention: false,
-    });
+  it('dit la même chose que le quota : gratuit ⇔ quota gratuit', () => {
+    const impaye = sub({ status: 'past_due' });
+    expect(effectiveTierKey(impaye)).toBe('free');
+    expect(effectiveQuota(impaye)).toBe(5);
+  });
+});
+
+describe('needsPaymentAttention', () => {
+  it('impayé → oui', () => {
+    expect(needsPaymentAttention(sub({ status: 'past_due' }))).toBe(true);
+  });
+
+  it('actif, résilié ou absent → non (plus rien à régulariser)', () => {
+    expect(needsPaymentAttention(sub())).toBe(false);
+    expect(needsPaymentAttention(sub({ status: 'cancelled' }))).toBe(false);
+    expect(needsPaymentAttention(null)).toBe(false);
   });
 });
 

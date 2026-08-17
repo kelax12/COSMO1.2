@@ -839,10 +839,8 @@
     "alreadySubscribed": "Cette organisation a déjà un abonnement actif. Utilisez « Gérer l'abonnement » pour changer de palier.",
     "error": "Impossible de contacter Stripe. Réessayez dans un instant.",
     "back": "Espace entreprise",
-    "planFree": "Plan Gratuit",
-    "planSeats": "Plan {{seats}} sièges",
-    "planUnlimited": "Plan Illimité",
     "planHint": "Voir et faire évoluer votre forfait",
-    "planAria": "Abonnement : {{plan}}"
+    "planAria": "Abonnement : {{plan}}",
+    "planNamed": "Plan {{name}}"
   }
 }

@@ -1,7 +1,8 @@
 import { CreditCard, ChevronRight } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
-import { planDescriptor } from '@/modules/billing/org-billing.logic';
+import { effectiveTierKey, needsPaymentAttention } from '@/modules/billing/org-billing.logic';
+import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 
 interface Props {
   orgId: string;
@@ -17,21 +18,20 @@ interface Props {
  * compte qui peut souscrire ou changer de palier, et un membre n'a rien à faire
  * d'un écran de paiement qu'il ne peut pas valider.
  *
- * Le nom affiché vient de `planDescriptor`, donc du quota réellement accordé :
- * un abonnement impayé retombe visuellement sur « Gratuit » et porte un point
- * d'alerte, exactement comme le serveur le traite.
+ * Le nom affiché vient de `effectiveTierKey`, donc du droit réellement accordé :
+ * un abonnement impayé retombe sur « Gratuit » et porte un point d'alerte,
+ * exactement comme le serveur le traite.
  */
 export function OrgPlanChip({ orgId, active, onOpen }: Props) {
   const { t } = useT('org');
+  const { t: tc } = useT('common');
   const { data: subscription } = useOrgSubscription(orgId);
-  const plan = planDescriptor(subscription ?? null);
+  const sub = subscription ?? null;
+  const needsAttention = needsPaymentAttention(sub);
 
-  const name =
-    plan.kind === 'unlimited'
-      ? t('billing.planUnlimited')
-      : plan.kind === 'free'
-        ? t('billing.planFree')
-        : t('billing.planSeats', { seats: plan.seats ?? 0 });
+  // « Plan Équipe » plutôt que « Équipe » seul : dans un en-tête d'entreprise,
+  // le mot nu se lirait comme le nom d'une équipe.
+  const name = t('billing.planNamed', { name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(sub)]) });
 
   return (
     <button
@@ -48,7 +48,7 @@ export function OrgPlanChip({ orgId, active, onOpen }: Props) {
     >
       <span className="relative flex items-center">
         <CreditCard size={15} aria-hidden="true" />
-        {plan.needsAttention && (
+        {needsAttention && (
           <span
             className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500"
             aria-hidden="true"

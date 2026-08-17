@@ -256,5 +256,12 @@
     "sent": "Envoyé",
     "requestSent": "⏳ Demande d'ami envoyée",
     "awaiting": "En attente d'acceptation"
+  },
+  "orgTier": {
+    "free": "Gratuit",
+    "t10": "Équipe",
+    "t20": "Département",
+    "t50": "Entreprise",
+    "tmax": "Illimité"
   }
 }

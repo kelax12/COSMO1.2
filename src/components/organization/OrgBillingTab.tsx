@@ -6,7 +6,8 @@ import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.hooks';
-import { effectiveQuota, planDescriptor } from '@/modules/billing/org-billing.logic';
+import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
+import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
 
 interface Props {
@@ -27,6 +28,7 @@ interface Props {
  */
 export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   const { t } = useT('org');
+  const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: subscription } = useOrgSubscription(orgId);
   const checkout = useStartOrgCheckout();
@@ -45,13 +47,9 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   }, [checkoutResult, searchParams, setSearchParams, t]);
 
   const quota = effectiveQuota(subscription ?? null);
-  const plan = planDescriptor(subscription ?? null);
-  const planName =
-    plan.kind === 'unlimited'
-      ? t('billing.planUnlimited')
-      : plan.kind === 'free'
-        ? t('billing.planFree')
-        : t('billing.planSeats', { seats: plan.seats ?? 0 });
+  const planName = t('billing.planNamed', {
+    name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(subscription ?? null)]),
+  });
   const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
 
   return (
