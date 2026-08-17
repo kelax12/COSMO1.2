@@ -15,8 +15,14 @@ import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, type PyramidNode } from '
 import AppShot from './AppShot';
 import StepSection from './StepSection';
 
+/** Onglets ouvrables depuis la fiche membre — même vocabulaire que `MemberTab`
+ *  (`src/components/organization/member-sheet.helpers.ts`), sans importer le
+ *  module organisation depuis la landing (chunks séparés). */
+type PyramidMemberTab = 'tasks' | 'agenda' | 'contribution';
+
 interface PyramidSectionProps {
-  onDemo: () => void;
+  /** Ouvre la démo puis la fiche du membre réel, sur l'onglet demandé. */
+  onMemberDemo: (demoUserId: string, tab: PyramidMemberTab) => void;
 }
 
 /**
@@ -63,7 +69,7 @@ function linkPath(parent: PyramidNode, child: PyramidNode): string {
  * survoler un manager éteint tout ce qui sort de son sous-arbre, ce qu'une
  * image ne peut pas montrer. La capture de l'écran réel ferme la section.
  */
-const PyramidSection: React.FC<PyramidSectionProps> = ({ onDemo }) => {
+const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
   const { t } = useT('landing');
   const rootRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -189,7 +195,7 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onDemo }) => {
                     roleLabel={t(node.roleKey)}
                     onEnter={() => setFocusedId(node.id)}
                     onLeave={() => setFocusedId(null)}
-                    onDemo={onDemo}
+                    onMemberDemo={onMemberDemo}
                   />
                 </li>
               ))}
@@ -246,7 +252,7 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onDemo }) => {
                   roleLabel={t(node.roleKey)}
                   onEnter={() => setFocusedId(node.id)}
                   onLeave={() => setFocusedId(null)}
-                  onDemo={onDemo}
+                  onMemberDemo={onMemberDemo}
                 />
               ))}
             </div>
@@ -306,8 +312,8 @@ interface PyramidCardProps {
   roleLabel: string;
   onEnter: () => void;
   onLeave: () => void;
-  /** Ouvre la démo entreprise — cible des trois options du menu. */
-  onDemo: () => void;
+  /** Ouvre la démo puis la fiche de CE membre, sur l'onglet demandé. */
+  onMemberDemo: (demoUserId: string, tab: PyramidMemberTab) => void;
 }
 
 /**
@@ -328,7 +334,7 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
   roleLabel,
   onEnter,
   onLeave,
-  onDemo,
+  onMemberDemo,
 }) => {
   const { t } = useT('landing');
 
@@ -385,21 +391,21 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
           {t('enterprise.pyramid.menuLabel', { name: node.name })}
         </DropdownMenuLabel>
         <DropdownMenuItem
-          onClick={onDemo}
+          onClick={() => onMemberDemo(node.demoUserId, 'tasks')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <ListTodo size={14} className="text-cyan-300" aria-hidden="true" />
           {t('enterprise.pyramid.menuTasks')}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={onDemo}
+          onClick={() => onMemberDemo(node.demoUserId, 'agenda')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <CalendarDays size={14} className="text-cyan-300" aria-hidden="true" />
           {t('enterprise.pyramid.menuAgenda')}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={onDemo}
+          onClick={() => onMemberDemo(node.demoUserId, 'contribution')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <TrendingUp size={14} className="text-cyan-300" aria-hidden="true" />
