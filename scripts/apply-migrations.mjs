@@ -49,9 +49,45 @@ if (!connectionString) {
 const { default: pg } = await import('pg');
 const client = new pg.Client({ connectionString });
 
-await client.connect();
+/**
+ * Émet une annotation GitHub Actions.
+ *
+ * Les LOGS d'un run ne sont lisibles qu'authentifié — même sur un dépôt public.
+ * Les ANNOTATIONS, elles, s'affichent sur la page du job sans connexion. Sans
+ * cette ligne, un échec de replay ne dit rien de plus que « Process completed
+ * with exit code 1 » à qui n'a pas accès au dépôt, et le diagnostic est bloqué.
+ * (Vécu : ce job échoue depuis son ajout le 2026-06-21 sans qu'on sache sur
+ * quelle migration.)
+ */
+function annotate(file, message) {
+  if (!process.env.GITHUB_ACTIONS) return;
+  // Les sauts de ligne cassent une annotation : la commande workflow est
+  // délimitée par la fin de ligne. `%0A` est la forme échappée attendue.
+  const escaped = String(message).replace(/%/g, '%25').replace(/\r?\n/g, '%0A');
+  // Sans fichier (échec de connexion), pas de `file=` : une annotation qui
+  // pointe un chemin vide s'affiche sans lien et brouille la lecture.
+  const location = file ? ` file=${DIR}/${file}` : '';
+  console.log(`::error${location}::${escaped}`);
+}
+
+// La connexion échoue AVANT toute migration quand `DATABASE_URL` est mal
+// remappée depuis `supabase status -o env` (les noms de clés de la CLI ont
+// bougé au fil des versions, et le workflow installe `version: latest`).
+// Sans ce catch, l'échec sortait en rejet non géré : pas d'annotation, pas de
+// message, indiscernable d'un échec SQL.
+try {
+  await client.connect();
+} catch (err) {
+  const safe = String(err.message).replace(/:\/\/[^@]*@/, '://***@'); // jamais le mot de passe
+  console.error(`\n✖ Connexion impossible : ${safe}`);
+  annotate('', `Connexion a la base impossible (DATABASE_URL) — ${safe}`);
+  process.exit(1);
+}
+
+let current = null;
 try {
   for (const f of files) {
+    current = f;
     const sql = readFileSync(join(DIR, f), 'utf8');
     process.stdout.write(`→ ${f} ... `);
     await client.query(sql);
@@ -59,7 +95,20 @@ try {
   }
   console.log(`\n✓ ${files.length} migrations appliquées.`);
 } catch (err) {
-  console.error(`\n✖ Échec : ${err.message}`);
+  // `err.position` situe le caractère fautif dans le fichier ; `err.detail` et
+  // `err.hint` portent souvent la vraie cause (dépendance manquante, extension
+  // absente de la stack locale…). Tout remonter : c'est le seul endroit où
+  // l'information existe.
+  const detail = [
+    err.message,
+    err.detail && `detail: ${err.detail}`,
+    err.hint && `hint: ${err.hint}`,
+    err.code && `sqlstate: ${err.code}`,
+    err.position && `position: ${err.position}`,
+  ].filter(Boolean).join('\n');
+
+  console.error(`\n✖ Échec sur ${current} :\n${detail}`);
+  annotate(current, `Replay impossible sur base vierge — ${detail}`);
   process.exitCode = 1;
 } finally {
   await client.end();
