@@ -15,6 +15,13 @@ import type { KeyOf } from '@/i18n/catalog';
 /** Un nœud de l'organigramme — calqué sur un membre réel du seed démo. */
 export interface PyramidNode {
   id: string;
+  /**
+   * `userId` du membre correspondant dans le seed démo
+   * (`src/modules/organizations/local.repository.ts`) — c'est ce qui permet à
+   * un clic ici d'ouvrir la VRAIE fiche du VRAI membre une fois en démo,
+   * via le même deep-link `?member=&memberTab=` que la pyramide réelle.
+   */
+  demoUserId: string;
   /** Nom affiché, identique au seed démo. */
   name: string;
   /** Initiales de l'avatar, comme dans l'application. */
@@ -46,6 +53,7 @@ export interface PyramidNode {
 export const PYRAMID_NODES: PyramidNode[] = [
   {
     id: 'vous',
+    demoUserId: 'demo-user',
     name: 'Vous',
     initials: 'V',
     avatarClass: 'bg-emerald-500',
@@ -57,6 +65,7 @@ export const PYRAMID_NODES: PyramidNode[] = [
   },
   {
     id: 'marie',
+    demoUserId: 'friend-1',
     name: 'Marie Dupont',
     initials: 'MD',
     avatarClass: 'bg-emerald-500',
@@ -68,6 +77,7 @@ export const PYRAMID_NODES: PyramidNode[] = [
   },
   {
     id: 'lucas',
+    demoUserId: 'user-lucas',
     name: 'Lucas Moreau',
     initials: 'LM',
     avatarClass: 'bg-pink-600',
@@ -79,6 +89,7 @@ export const PYRAMID_NODES: PyramidNode[] = [
   },
   {
     id: 'jean',
+    demoUserId: 'friend-2',
     name: 'Jean Martin',
     initials: 'JM',
     avatarClass: 'bg-blue-600',
@@ -90,6 +101,7 @@ export const PYRAMID_NODES: PyramidNode[] = [
   },
   {
     id: 'sophie',
+    demoUserId: 'friend-3',
     name: 'Sophie Bernard',
     initials: 'SB',
     avatarClass: 'bg-emerald-500',

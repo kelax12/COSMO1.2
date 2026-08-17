@@ -14,6 +14,8 @@ import EnterpriseCta from './EnterpriseCta';
 
 interface EnterpriseTrackProps {
   onDemo: () => void;
+  /** Ouvre la démo puis la fiche du membre réel, sur l'onglet demandé — cf. `PyramidSection`. */
+  onMemberDemo: (demoUserId: string, tab: 'tasks' | 'agenda' | 'contribution') => void;
   onRegister: () => void;
 }
 
@@ -34,7 +36,7 @@ interface EnterpriseTrackProps {
  * est portée ici, à la racine du track : les sections héritent du fond et ne
  * repeignent que leurs propres surfaces.
  */
-const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister }) => {
+const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo, onRegister }) => {
   const { t } = useT('landing');
 
   return (
@@ -47,7 +49,7 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister })
       <ProblemSection />
 
       {/* Les quatre étapes de mise en place, dans l'ordre où on les fait. */}
-      <PyramidSection onDemo={onDemo} />
+      <PyramidSection onMemberDemo={onMemberDemo} />
       <ProjectsSection />
       <OkrSection />
       <ProgressSection />
