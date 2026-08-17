@@ -10,6 +10,19 @@ on:
 permissions:
   contents: read
 
+# ⚠️ Les `uses:` sont pinnés sur un SHA de commit 40 caractères, JAMAIS sur un
+# tag ni une branche. Un tag est repointable par le propriétaire de l'action
+# sans que rien ne bouge chez nous — c'est le vecteur des compromissions
+# tj-actions/changed-files et trivy-action. `supabase/setup-cli@v1` était même
+# une BRANCHE (refs/heads/v1), qui avance à chaque release.
+# Le dégât ici n'est pas le vol de secret (seuls l'URL et l'anon key Supabase,
+# publiques par conception, sont exposées, et aucun job ne déploie) : c'est une
+# CI qui ment. Une action compromise peut neutraliser check:rls, i18n:check ou
+# validate:migrations et faire passer un build rouge pour vert — or ces gates
+# sont la seule chose qui empêche une régression RLS de partir en prod.
+# Le commentaire `# vX.Y.Z` en fin de ligne est la version lisible ; c'est aussi
+# ce que Dependabot (ecosystem github-actions) met à jour en bumpant le SHA.
+
 # A newer push to the same ref cancels the in-progress run — saves runner
 # minutes and gives faster feedback on the latest commit.
 concurrency:
@@ -28,8 +41,8 @@ jobs:
   lint-test-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -62,7 +75,7 @@ jobs:
 
       - name: Upload coverage report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage
           path: coverage/
@@ -83,8 +96,8 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -99,8 +112,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -114,7 +127,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report
           path: playwright-report/
@@ -130,12 +143,13 @@ jobs:
   rls-integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
           cache: 'npm'
-      - uses: supabase/setup-cli@v1
+      # `@v1` était une branche, pas un tag — pinné sur le commit de v1.7.1.
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1.7.1
         with:
           version: latest
       - run: npm ci

@@ -4,11 +4,24 @@ updates:
   # Weekly security + version updates. Prod deps surface individually so a
   # CVE bump (react-router, ws, …) is easy to review; dev/test deps are
   # grouped to cut PR noise.
+  #
+  # `cooldown` : on n'accepte pas une version publiée il y a deux heures.
+  # C'est la fenêtre exploitée par les compromissions de mainteneurs (chalk /
+  # debug, sept. 2025), et le gate `npm audit --omit=dev --audit-level=high`
+  # de la CI ne la voit PAS — il se base sur les advisories publiés, or une
+  # version malveillante fraîche n'en a encore aucun. Deux débouchés qu'on
+  # ferme ici : le `postinstall` qui s'exécute sur la machine du dev (avec
+  # .env et .env.cosmo-cli à portée), et le bundle client livré par Vercel.
+  # 7 jours et pas plus : au-delà on retarderait aussi les correctifs. Les
+  # *security updates* Dependabot ne sont pas soumis au cooldown, donc les
+  # CVE continuent de passer immédiatement.
   - package-ecosystem: npm
     directory: "/"
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 8
     labels:
       - dependencies
@@ -25,10 +38,15 @@ updates:
           - patch
 
   # ── GitHub Actions ──────────────────────────────────────────────────
+  # Les `uses:` de ci.yml sont pinnés par SHA (cf. l'en-tête du workflow) :
+  # Dependabot bumpe le SHA et met à jour le commentaire `# vX.Y.Z`. Même
+  # cooldown — une action repointée est exactement le risque qu'on pinne.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     labels:
       - ci

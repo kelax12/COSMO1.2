@@ -210,7 +210,28 @@
          incluse), donc déclaré en sous-traitant dans PolitiqueConfidentialitePage.
          L'origine https://www.vesk.dev est autorisée dans `script-src` ET
          `connect-src` de la CSP (vercel.json) : sans ça le script est bloqué en
-         prod uniquement, et l'absence de mesure passe inaperçue en local. -->
+         prod uniquement, et l'absence de mesure passe inaperçue en local.
+
+         ⚠️ PAS d'attribut `integrity` ici, et c'est un ARBITRAGE, pas un oubli
+         (finding `missing-integrity`, 2026-08-17). Un tag d'analytics est mis à
+         jour par le fournisseur sans préavis : un SRI figé transformerait chaque
+         mise à jour en perte de mesure silencieuse.
+
+         Ce que ça coûte, en clair : c'est le SEUL script tiers de l'origine, et
+         `supabase.ts` monte le client en `persistSession: true` — la session
+         (access + refresh token) vit dans le localStorage, lisible par tout
+         script de l'origine. Si vesk.dev est compromis, c'est la prise de
+         contrôle des comptes connectés. Ni la RLS (l'attaquant agit AVEC le JWT
+         de l'utilisateur) ni la CSP (l'origine est autorisée en script-src et en
+         connect-src, donc exécution ET exfiltration) n'y changent quoi que ce
+         soit. C'est le même risque que celui qui a motivé le passage en PKCE,
+         cf. le commentaire de src/lib/supabase.ts.
+
+         Le vrai correctif, le jour où ce risque n'est plus acceptable, n'est PAS
+         d'ajouter un `integrity` : c'est de self-héberger le script
+         (/vendor/vesk-<hash>.js, mis à jour à la main) et de retirer
+         www.vesk.dev de `script-src`/`connect-src`. Sinon : supprimer cette
+         balise en changeant d'outil de mesure. -->
     <script src="https://www.vesk.dev/a.js" data-key="676bad26713b4578aa3e002fd59ebba7"></script>
   </head>
   <body>
