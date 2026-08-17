@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Clock, Languages,
+  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Languages,
   Calendar, Target, BarChart2,
 } from 'lucide-react';
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
@@ -487,7 +487,6 @@ const SettingsPage: React.FC = () => {
               {/* ── Fuseau horaire d'affichage ── */}
               <SectionCard>
                 <div className="flex items-center gap-2 mb-1">
-                  <Clock size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
                   <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('timezone.heading')}</h2>
                 </div>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
