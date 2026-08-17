@@ -32,11 +32,25 @@
 BEGIN;
 
 DO $$
+DECLARE
+  leftovers BIGINT;
 BEGIN
-  IF to_regclass('public.profiles_avatar_backup_084') IS NOT NULL
-     AND EXISTS (SELECT 1 FROM public.profiles_avatar_backup_084) THEN
-    RAISE EXCEPTION
-      'profiles_avatar_backup_084 n''est pas vide — restaurer les avatars avant de supprimer';
+  -- ⚠️ Le garde était écrit `to_regclass(...) IS NOT NULL AND EXISTS (SELECT 1
+  -- FROM public.profiles_avatar_backup_084)`. Ça ne protège de rien : PL/pgSQL
+  -- PLANIFIE la condition entière avant de l'évaluer, donc la référence à la
+  -- table est résolue même quand le premier opérande est faux — et la
+  -- migration échouait sur un environnement neuf (42P01), exactement le cas
+  -- que le `IF EXISTS` du DROP prétendait couvrir. C'est ce qui bloquait le
+  -- replay du job CI `rls-integration`.
+  -- Le SQL dynamique est la seule forme réellement paresseuse : rien n'est
+  -- planifié tant que la table n'existe pas.
+  IF to_regclass('public.profiles_avatar_backup_084') IS NOT NULL THEN
+    EXECUTE 'SELECT count(*) FROM public.profiles_avatar_backup_084' INTO leftovers;
+    IF leftovers > 0 THEN
+      RAISE EXCEPTION
+        'profiles_avatar_backup_084 n''est pas vide (% ligne(s)) — restaurer les avatars avant de supprimer',
+        leftovers;
+    END IF;
   END IF;
 END $$;
 
