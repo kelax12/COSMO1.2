@@ -647,12 +647,17 @@ body {
     .sidebar-item {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      /* Hauteur -8% (0.875rem -> 0.805rem). Le décalage vers la gauche (marge
-         gauche réduite, pour laisser plus de largeur au libellé) est posé en
-         JSX UNIQUEMENT à l'état déroulé — ici la marge reste symétrique, sinon
-         l'icône se recentre mal en repli (justify-center + px-0). */
-      padding: 0.805rem 1.25rem;
+      /* Écart icône/texte : -8px (0.75rem -> 0.625rem) — c'est maintenant le
+         SEUL espacement entre les deux (le `ml-3` du libellé faisait doublon
+         avec ce gap, retiré). */
+      gap: 0.625rem;
+      /* Hauteur -8% (0.875rem -> 0.805rem). Padding gauche réduit (1.25rem ->
+         0.75rem) pour rapprocher l'icône du bord — le repli garde `px-0`
+         (Tailwind, cascade après ce bloc) donc n'est pas affecté. Le décalage
+         vers la gauche (marge gauche réduite) reste posé en JSX UNIQUEMENT à
+         l'état déroulé — ici la marge reste symétrique, sinon l'icône se
+         recentre mal en repli (justify-center + px-0). */
+      padding: 0.805rem 1.25rem 0.805rem 0.75rem;
       margin: 0.25rem 0.5rem;
       color: rgb(var(--nav-item-text));
       background-color: transparent;
