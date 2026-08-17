@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -26,6 +26,7 @@ import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import OrgBillingTab from '@/components/organization/OrgBillingTab';
+import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
 import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
 import { useT } from '@/i18n/useT';
@@ -35,12 +36,16 @@ type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members' 
 
 // Libellés = CLÉS : cette constante est évaluée au premier import, y écrire du
 // texte figerait les onglets en français pour toute la session.
+//
+// ⚠️ `billing` n'est PAS un onglet : la facturation ne concerne qu'un seul
+// compte sur toute l'organisation, elle ne mérite pas une place permanente dans
+// une barre que tout le monde lit. Elle reste une vue (`?tab=billing`, URL de
+// retour de Stripe) atteinte depuis la pastille de forfait de l'en-tête.
 const TABS: {
   id: OrgTab;
   labelKey: KeyOf<'org'>;
   Icon: typeof Users;
   managerOnly?: boolean;
-  ownerOnly?: boolean;
 }[] = [
   { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network },
@@ -49,9 +54,6 @@ const TABS: {
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
   { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, managerOnly: true },
   { id: 'members', labelKey: 'tabs.members', Icon: Users },
-  // Facturation : propriétaire uniquement. Le vrai contrôle est côté Edge
-  // Function (`owner_id`) — ici on ne fait que ne pas proposer un écran inutile.
-  { id: 'billing', labelKey: 'tabs.billing', Icon: CreditCard, ownerOnly: true },
 ];
 
 /**
@@ -59,7 +61,10 @@ const TABS: {
  * routing plat cohérent avec l'app). Réservé aux membres d'une organisation :
  * un non-membre est redirigé vers le dashboard.
  */
-const TAB_IDS: readonly string[] = TABS.map((t) => t.id);
+// `billing` s'ajoute à la main : il est absent de TABS (aucun onglet) mais
+// reste une valeur d'URL valide — les Edge Functions Stripe renvoient sur
+// `/entreprise?tab=billing`, l'oublier ferait atterrir un paiement sur l'aperçu.
+const TAB_IDS: readonly string[] = [...TABS.map((t) => t.id), 'billing'];
 
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
 const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
@@ -74,7 +79,7 @@ const OrganizationPage = () => {
   // #1 — onglet actif dans l'URL (?tab=okr) : survit au refresh et se partage.
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
-  const tab: OrgTab = rawTab && TAB_IDS.includes(rawTab) ? (rawTab as OrgTab) : 'overview';
+  const urlTab: OrgTab = rawTab && TAB_IDS.includes(rawTab) ? (rawTab as OrgTab) : 'overview';
   const setTab = (id: OrgTab) =>
     setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true });
   const [editProfile, setEditProfile] = useState(false);
@@ -111,6 +116,11 @@ const OrganizationPage = () => {
   // Non-membre : pas d'espace entreprise → dashboard.
   if (!myOrg) return <Navigate to="/dashboard" replace />;
 
+  const isOwner = user?.id === myOrg.ownerId;
+  // Un membre qui arrive sur `?tab=billing` (lien partagé, ancien favori) ne
+  // voit pas un écran vide : il retombe sur l'aperçu. Le vrai contrôle reste
+  // côté Edge Function (`owner_id`).
+  const tab: OrgTab = rawTab === 'billing' && !isOwner ? 'overview' : urlTab;
   const isAdmin = myOrg.myRole === 'admin';
   // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
   const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
@@ -147,7 +157,7 @@ const OrganizationPage = () => {
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
       {/* En-tête */}
-      <header className="flex items-center gap-3 mb-6">
+      <header className="flex flex-wrap items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-primary))] shrink-0 overflow-hidden">
           {myOrg.avatarUrl ? (
             <img src={myOrg.avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -177,6 +187,21 @@ const OrganizationPage = () => {
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5 line-clamp-1">{myOrg.description}</p>
           )}
         </div>
+        {/* Forfait : visible du seul propriétaire, à côté de la cloche. C'est
+            un raccourci, pas un onglet — la facturation ne concerne qu'un
+            compte sur toute l'organisation. */}
+        {/* Mobile : la pastille passe à la ligne (`basis-full` + `order-last`)
+            plutôt que de disputer 122 px au nom de l'organisation, qui tombait
+            à 93 px de large sur un écran de 375 px — mesuré, pas supposé. */}
+        {isOwner && (
+          <div className="order-last basis-full sm:order-none sm:basis-auto">
+            <OrgPlanChip
+              orgId={myOrg.id}
+              active={tab === 'billing'}
+              onOpen={() => setTab('billing')}
+            />
+          </div>
+        )}
         {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
             dans `org_notifications` sans qu'aucun ecran ne les lise. */}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
@@ -230,7 +255,7 @@ const OrganizationPage = () => {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 pb-0.5 overflow-x-auto hide-scrollbar">
-        {TABS.filter((tab) => (!tab.managerOnly || isManager) && (!tab.ownerOnly || user?.id === myOrg.ownerId)).map(({ id, labelKey, Icon }) => {
+        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
           // Seuls Projets (tâches nouvellement assignées) et Membres (demandes
           // d'adhésion en attente) portent un compteur.
           const badge = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
@@ -282,8 +307,9 @@ const OrganizationPage = () => {
       {tab === 'billing' && (
         <OrgBillingTab
           orgId={myOrg.id}
-          isOwner={user?.id === myOrg.ownerId}
+          isOwner={isOwner}
           memberCount={members.length}
+          onBack={() => setTab('overview')}
         />
       )}
 

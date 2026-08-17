@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tierForMemberCount, effectiveQuota, isQuotaReached } from './org-billing.logic';
+import { tierForMemberCount, effectiveQuota, isQuotaReached, planDescriptor } from './org-billing.logic';
 import type { OrgSubscription } from './org-billing.types';
 
 const sub = (over: Partial<OrgSubscription> = {}): OrgSubscription => ({
@@ -50,6 +50,40 @@ describe('effectiveQuota', () => {
 
   it('palier sans plafond → null', () => {
     expect(effectiveQuota(sub({ tierKey: 'tmax', maxMembers: null }))).toBeNull();
+  });
+});
+
+describe('planDescriptor', () => {
+  it('sans abonnement → forfait gratuit', () => {
+    expect(planDescriptor(null)).toEqual({ kind: 'free', seats: 5, needsAttention: false });
+  });
+
+  it('abonnement actif → forfait par sièges', () => {
+    expect(planDescriptor(sub())).toEqual({ kind: 'seats', seats: 20, needsAttention: false });
+  });
+
+  it('palier sans plafond → illimité', () => {
+    expect(planDescriptor(sub({ tierKey: 'tmax', maxMembers: null }))).toEqual({
+      kind: 'unlimited',
+      seats: null,
+      needsAttention: false,
+    });
+  });
+
+  it('impayé → affiché comme gratuit, avec alerte : le quota accordé fait foi', () => {
+    expect(planDescriptor(sub({ status: 'past_due' }))).toEqual({
+      kind: 'free',
+      seats: 5,
+      needsAttention: true,
+    });
+  });
+
+  it('résilié → gratuit, sans alerte (plus rien à régulariser)', () => {
+    expect(planDescriptor(sub({ status: 'cancelled' }))).toEqual({
+      kind: 'free',
+      seats: 5,
+      needsAttention: false,
+    });
   });
 });
 

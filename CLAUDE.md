@@ -293,7 +293,11 @@ les deux ne partagent aucune colonne.
 - Le quota réel est `org_seats_allowed()` (mig. 101), déjà appelé par `claim_org_invite` et
   `respond_join_request`. Un abonnement `past_due` ou `cancelled` retombe au palier gratuit
   **sans jamais retirer de membre** : on bloque la croissance, on ne retire rien.
-- UI : onglet `/entreprise?tab=billing` (`OrgBillingTab`), grille `EnterpriseTierGrid`.
+- UI : vue `/entreprise?tab=billing` (`OrgBillingTab`), grille `EnterpriseTierGrid`. **Ce n'est
+  pas un onglet** — la barre d'onglets est lue par toute l'organisation alors qu'un seul compte
+  peut payer. L'entrée est la pastille de forfait de l'en-tête (`OrgPlanChip`), montée pour le
+  seul propriétaire ; `?tab=billing` reste une valeur d'URL valide (les Edge Functions Stripe y
+  renvoient) et un non-propriétaire qui l'ouvre retombe sur l'aperçu.
   Le CTA de paiement n'est monté que si `ENTERPRISE_BILLING_ENFORCED === true` — le flag est la
   **seule** condition, jamais « actif si les variables d'environnement existent ».
 
