@@ -181,7 +181,25 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
       - name: Apply migrations on fresh DB
-        run: node scripts/apply-migrations.mjs
+        run: |
+          set -o pipefail   # sans ça, le statut serait celui de `tee`, jamais celui de node
+          # Les LOGS d'un run exigent une authentification, même sur un dépôt
+          # public ; le RÉSUMÉ du job, lui, est visible de tous. Sans ce report,
+          # un échec ici n'affiche que « Process completed with exit code 1 » —
+          # c'est ce qui a rendu ce job indiagnosticable depuis le 2026-06-21.
+          # `2>&1` capture aussi un crash de Node (module absent, parse), qui
+          # sort AVANT toute annotation applicative.
+          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations sur base vierge — échec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
       - name: Run RLS integration tests
         run: npm run test:rls
       - name: Stop Supabase stack
