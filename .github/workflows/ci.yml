@@ -161,6 +161,19 @@ jobs:
           # `supabase status -o env` émet API_URL/ANON_KEY/SERVICE_ROLE_KEY/DB_URL.
           # On les remappe vers les noms attendus par le loader et le harnais.
           set -a; . ./supabase.env; set +a
+
+          # ⚠️ Un remap qui ne trouve rien écrit une valeur VIDE sans faire
+          # échouer l'étape : le job mourait deux étapes plus loin sur un
+          # « DATABASE_URL manquant » invisible sans accès aux logs. On vérifie
+          # donc ici, et on annote les CLÉS trouvées (jamais les valeurs, qui
+          # contiennent la service_role key) pour voir tout de suite si la CLI
+          # a renommé sa sortie — le job installe `version: latest`.
+          if [ -z "$DB_URL" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::warning::DB_URL absent de 'supabase status -o env' (cles vues : ${KEYS:-aucune}) — repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+
           {
             echo "DATABASE_URL=$DB_URL"
             echo "SUPABASE_URL=$API_URL"
