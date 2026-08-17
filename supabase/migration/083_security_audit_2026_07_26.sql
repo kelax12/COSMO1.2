@@ -300,7 +300,7 @@ $$;
 
 -- ─── M-4 · credit_premium_token_from_ad : verrou anti-TOCTOU ────────
 CREATE OR REPLACE FUNCTION public.credit_premium_token_from_ad()
-RETURNS subscriptions
+RETURNS public.subscriptions
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
@@ -353,7 +353,7 @@ $$;
 
 -- ─── L-5 · consume_premium_token : search_path figé à '' ────────────
 CREATE OR REPLACE FUNCTION public.consume_premium_token()
-RETURNS subscriptions
+RETURNS public.subscriptions
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
@@ -414,7 +414,7 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.generate_join_code() FROM public, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.create_organization(p_name text)
-RETURNS organizations
+RETURNS public.organizations
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''

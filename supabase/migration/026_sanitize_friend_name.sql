@@ -53,17 +53,23 @@ $$;
 REVOKE ALL ON FUNCTION public.sanitize_display_name(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.sanitize_display_name(TEXT) TO authenticated, service_role;
 
+-- ⚠️ Types SCHEMA-QUALIFIÉS. Avec `SET search_path = ''`, PL/pgSQL valide le
+-- corps a la creation en appliquant ce search_path vide : `friend_requests`
+-- et `friends` non qualifies y sont introuvables (42704 « type does not
+-- exist »). C'est le prix normal de la protection contre le detournement de
+-- search_path — tout doit etre qualifie, les TYPES comme les tables. Le corps
+-- l'etait deja ; les declarations, non.
 CREATE OR REPLACE FUNCTION public.accept_friend_request_v2(request_id UUID)
-RETURNS friends
+RETURNS public.friends
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  req friend_requests;
+  req public.friend_requests;
   sender_user RECORD;
   receiver_user RECORD;
-  v_friend friends;
+  v_friend public.friends;
   sender_display TEXT;
   receiver_display TEXT;
 BEGIN
