@@ -1,6 +1,7 @@
 import React, { useId, useMemo, useState } from 'react';
 import { ArrowRight, Check, Users } from 'lucide-react';
 import { ENTERPRISE_PRICING_TIERS } from '@/modules/billing/premium-config';
+import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
@@ -51,6 +52,9 @@ function tierFor(members: number): Tier {
  */
 const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) => {
   const { t } = useT('landing');
+  // Les noms de paliers vivent dans `common` : la landing et le produit doivent
+  // annoncer le même nom, comme ils annoncent déjà le même montant.
+  const { t: tc } = useT('common');
   const sliderId = useId();
   const [members, setMembers] = useState(SLIDER_DEFAULT);
 
@@ -119,7 +123,12 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
               <span className="block font-mono text-caption uppercase tracking-[0.22em] text-slate-500">
                 {t('enterprise.pricing.yourTier')}
               </span>
-              <span className="text-sm text-slate-300">{tierLabel(activeTier)}</span>
+              {activeTier.priceEurPerMonth > 0 && (
+                <span className="block text-lg font-bold text-white">
+                  {tc(ORG_TIER_LABEL_KEYS[activeTier.key])}
+                </span>
+              )}
+              <span className="text-sm text-slate-400">{tierLabel(activeTier)}</span>
             </div>
             {/* Le montant n'est PAS animé par un compteur : un ressort passe par
                 des valeurs intermédiaires (48 € avant de se poser sur 50 €), et
@@ -154,6 +163,13 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                     : 'border-white/[0.08] bg-[#0A0C11] hover:border-white/15'
                 }`}
               >
+                {/* Le palier gratuit n'a pas de ligne de nom : « Gratuit » est
+                    déjà le prix, en gros, juste dessous. */}
+                {tier.priceEurPerMonth > 0 && (
+                  <span className={`mb-1 text-sm font-bold ${isActive ? 'text-white' : 'text-slate-200'}`}>
+                    {tc(ORG_TIER_LABEL_KEYS[tier.key])}
+                  </span>
+                )}
                 <span className="mb-4 flex items-center gap-1.5 font-mono text-caption uppercase tracking-[0.16em] text-slate-500">
                   <Users size={11} aria-hidden="true" />
                   {tierLabel(tier)}

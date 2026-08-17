@@ -314,6 +314,11 @@ Garde-fous propres à cette zone :
   Stripe de réessayer.
 - ❌ **Ne jamais écrire un montant en dur** côté Deno : `_shared/org-tiers.ts` est verrouillé sur
   `ENTERPRISE_PRICING_TIERS` par `src/modules/billing/org-tiers.parity.test.ts`.
+- Les **noms** des paliers (Gratuit · Équipe · Département · Entreprise · Illimité) vivent dans le
+  namespace `common` (`orgTier.*`), pas dans `org` ni `landing` : la landing et le produit doivent
+  dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
+  palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
+  palier ajouté sans nom ne compile pas).
 - Activation : `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'`,
   puis `ENTERPRISE_BILLING_ENFORCED = true` — procédure complète dans
   [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).

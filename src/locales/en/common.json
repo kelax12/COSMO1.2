@@ -252,5 +252,12 @@
     "sent": "Sent",
     "requestSent": "⏳ Friend request sent",
     "awaiting": "Awaiting acceptance"
+  },
+  "orgTier": {
+    "free": "Free",
+    "t10": "Team",
+    "t20": "Department",
+    "t50": "Business",
+    "tmax": "Unlimited"
   }
 }

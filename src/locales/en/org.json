@@ -808,10 +808,8 @@
     "alreadySubscribed": "This organization already has an active subscription. Use \"Manage subscription\" to change tier.",
     "error": "Could not reach Stripe. Please try again shortly.",
     "back": "Workspace",
-    "planFree": "Free plan",
-    "planSeats": "{{seats}}-seat plan",
-    "planUnlimited": "Unlimited plan",
     "planHint": "View and upgrade your plan",
-    "planAria": "Subscription: {{plan}}"
+    "planAria": "Subscription: {{plan}}",
+    "planNamed": "{{name}} plan"
   }
 }
