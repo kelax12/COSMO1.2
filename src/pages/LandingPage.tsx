@@ -13,6 +13,7 @@ import { TRACK_ANCHORS } from './landing/anchors';
 import { useT } from '@/i18n/useT';
 import { useRootSeoMeta } from '@/lib/useSeoMeta';
 import { buildOrgLink } from '@/components/organization/deep-link.helpers';
+import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
 
 // Le track entreprise est un parcours entier (10 sections, un shader WebGL) que
 // la moitié des visiteurs ne verra jamais. Il est chargé à la demande, à la
@@ -108,7 +109,17 @@ const LandingPage: React.FC = () => {
 
   useFaqSchema();
 
+  // La démo entreprise ouvre toujours en noir (OLED), quel que soit le thème
+  // choisi par le visiteur sur la landing : c'est la DA du track entreprise
+  // (graphite `#08090C`, cyan, or) qui se poursuit dans le produit, pas une
+  // préférence système qui pourrait rouvrir sur `light`.
+  const forceNoirTheme = () => {
+    applyTheme(document.documentElement, 'noir');
+    localStorage.setItem(THEME_STORAGE_KEY, 'noir');
+  };
+
   const handleDemo = () => {
+    if (isEnterprise) forceNoirTheme();
     loginDemo();
     setTimeout(() => navigate(isEnterprise ? '/entreprise' : '/dashboard'), 0);
   };
@@ -119,6 +130,7 @@ const LandingPage: React.FC = () => {
   // deep-link `?member=&memberTab=` que `PyramidTab` sait déjà lire (cf.
   // `src/components/organization/deep-link.helpers.ts`).
   const handlePyramidMemberDemo = (demoUserId: string, tab: 'tasks' | 'agenda' | 'contribution') => {
+    forceNoirTheme();
     loginDemo();
     setTimeout(
       () => navigate(buildOrgLink('pyramid', { member: demoUserId }, { memberTab: tab })),
