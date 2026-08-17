@@ -146,7 +146,9 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
           </span>
         )}
       </div>
-      {!collapsed && <span className="ml-3 truncate">{label}</span>}
+      {/* Pas de marge propre : l'écart avec l'icône vient du seul `gap` de
+          .sidebar-item — un `ml-3` ici s'additionnait au gap (24px cumulés). */}
+      {!collapsed && <span className="truncate">{label}</span>}
     </>
   );
 
