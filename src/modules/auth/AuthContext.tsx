@@ -9,6 +9,7 @@ import { withTimeout } from '../../lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '../../lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '../../lib/demo-metrics';
 import { readFirstTouch } from '@/lib/attribution';
+import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 
@@ -251,6 +252,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // clearDemoStorage ici — seul un loginDemo() explicite réinitialise).
       if (wasDemoPersisted()) {
         dlog('initializeAuth: restoring persisted demo session');
+        // Langue changée depuis le seed (bascule FR↔EN, ou arrivée sur `/en`
+        // après avoir lancé la démo depuis `/`) : les données en place sont
+        // dans l'ancienne langue et ne se retraduisent pas — elles sont
+        // modifiables, donc relues telles quelles. On les régénère, sinon
+        // l'interface et le contenu parlent deux langues différentes.
+        if (!seedLocaleMatchesCurrent()) {
+          dlog('initializeAuth: demo seed locale stale — reseeding');
+          clearDemoStorage(); // efface aussi cosmo_demo_active…
+          appModeStore.setDemo(true); // …que ce setter réécrit aussitôt.
+          resetRepositories();
+          queryClient.clear();
+          recordSeedLocale();
+        }
         appModeStore.setDemo(true);
         setUser({
           id: 'demo-user',
@@ -443,6 +457,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     appModeStore.setDemo(true);
     resetRepositories();
     queryClient.clear();
+    // Langue du seed qu'on vient d'invalider — relue au prochain démarrage
+    // pour détecter un changement de langue (cf. initializeAuth).
+    recordSeedLocale();
     // Compteur d'appareils distincts ayant testé la démo (fire-and-forget).
     recordDemoVisit();
     setUser({
