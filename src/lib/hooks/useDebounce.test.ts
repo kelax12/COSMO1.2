@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useDebounce, useDebouncedCallback, usePrevious, useLocalStorage } from './useDebounce';
+import {
+  useDebounce, useDebouncedCallback, usePrevious, useLocalStorage,
+  useThrottledCallback, useSelector,
+} from './useDebounce';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -84,5 +87,95 @@ describe('useLocalStorage', () => {
     localStorage.setItem('bad', '{nope');
     const { result } = renderHook(() => useLocalStorage('bad', 'fallback'));
     expect(result.current[0]).toBe('fallback');
+  });
+
+  it('accepte une valeur directe (branche non-fonction du setter)', () => {
+    const { result } = renderHook(() => useLocalStorage('direct', 'a'));
+    act(() => { result.current[1]('b'); });
+    expect(result.current[0]).toBe('b');
+    expect(JSON.parse(localStorage.getItem('direct') as string)).toBe('b');
+  });
+});
+
+describe('useThrottledCallback', () => {
+  it('exécute immédiatement le premier appel (fenêtre libre)', () => {
+    const fn = vi.fn();
+    const { result } = renderHook(() => useThrottledCallback(fn, 300));
+
+    act(() => { result.current('a'); });
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith('a');
+  });
+
+  it('diffère un appel arrivé dans la fenêtre, puis le joue avec ses arguments', () => {
+    const fn = vi.fn();
+    const { result } = renderHook(() => useThrottledCallback(fn, 300));
+
+    act(() => { result.current('immediat'); });
+    act(() => { result.current('differe'); });
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenLastCalledWith('differe');
+  });
+
+  it('un appel différé remplace le précédent — un seul rejeu, le dernier', () => {
+    const fn = vi.fn();
+    const { result } = renderHook(() => useThrottledCallback(fn, 300));
+
+    act(() => { result.current('immediat'); });
+    act(() => { result.current('vieux'); });
+    act(() => { result.current('recent'); });
+
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenLastCalledWith('recent');
+  });
+
+  it('rejoue immédiatement une fois la fenêtre écoulée', () => {
+    const fn = vi.fn();
+    const { result } = renderHook(() => useThrottledCallback(fn, 300));
+
+    act(() => { result.current('a'); });
+    act(() => { vi.advanceTimersByTime(300); });
+    act(() => { result.current('b'); });
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenLastCalledWith('b');
+  });
+
+  it('le démontage annule un appel encore différé', () => {
+    const fn = vi.fn();
+    const { result, unmount } = renderHook(() => useThrottledCallback(fn, 300));
+
+    act(() => { result.current('immediat'); });
+    act(() => { result.current('differe'); });
+    unmount();
+
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useSelector', () => {
+  it('applique le sélecteur et mémoïse tant que data et selector sont stables', () => {
+    const selector = vi.fn((d: { n: number }) => d.n * 2);
+    const data = { n: 21 };
+    const { result, rerender } = renderHook(() => useSelector(data, selector));
+
+    expect(result.current).toBe(42);
+    rerender();
+    expect(selector).toHaveBeenCalledTimes(1);
+  });
+
+  it('recalcule quand la source change', () => {
+    const selector = (d: { n: number }) => d.n * 2;
+    const { result, rerender } = renderHook(({ d }) => useSelector(d, selector), {
+      initialProps: { d: { n: 1 } },
+    });
+    expect(result.current).toBe(2);
+
+    rerender({ d: { n: 5 } });
+    expect(result.current).toBe(10);
   });
 });

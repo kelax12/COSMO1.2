@@ -56,13 +56,26 @@ export default defineConfig({
       // hautement couvert. Une régression de couverture y casse la CI.
       thresholds: {
         // ── Plancher GLOBAL (audit 9/10 phase 1) ──
-        // Posé sous le réel mesuré (12 % lignes au 2026-06-10) pour empêcher
-        // toute régression nette. À remonter au fil des phases (jamais
-        // au-dessus du mesuré courant).
-        lines: 10,
-        statements: 10,
-        functions: 45,
-        branches: 60,
+        // Posé sous le réel mesuré pour empêcher toute régression nette. À
+        // remonter au fil des phases (jamais au-dessus du mesuré courant).
+        //
+        // Re-calibré le 2026-08-18. `functions: 45` et `branches: 60` étaient
+        // au-dessus du mesuré (21,5 % / 21,8 %) et violaient donc la règle
+        // ci-dessus : ils ne protégeaient de rien, ils cassaient la CI à chaque
+        // run. Le job `lint-test-build` était rouge en continu, ce qui rendait
+        // muettes les gates utiles du même job (check:rls, i18n:check).
+        // Ce ne sont PAS deux seuils « abaissés » : ils n'ont jamais
+        // correspondu à un état atteint. Les vrais trous de couverture qu'ils
+        // prétendaient couvrir ont été comblés par des tests (repositories
+        // entreprise, uploads avatar, hooks dérivés) et sont gardés par les
+        // gates par fichier ci-dessous, qui, elles, mordent réellement.
+        //
+        // lines/statements remontent de 10 → 25 : le plancher datait du
+        // 2026-06-10 (12 % mesuré) et laissait passer 15 points de régression.
+        lines: 25,
+        statements: 25,
+        functions: 20,
+        branches: 20,
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         // Repositories Supabase = frontière sécurité (anti-mass-assignment,

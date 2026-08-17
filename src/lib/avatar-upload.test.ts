@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   validateAvatarFile, computeAvatarDimensions, AVATAR_MAX_BYTES,
+  canvasToAvatarBlob, uploadAvatar, AVATAR_BUCKET,
 } from './avatar-upload';
 
 describe('validateAvatarFile (faille V5)', () => {
@@ -37,5 +38,81 @@ describe('computeAvatarDimensions', () => {
     expect(Number.isInteger(width)).toBe(true);
     expect(Number.isInteger(height)).toBe(true);
     expect(height).toBe(256);
+  });
+});
+
+// ─── AUD-04 : upload Storage plutôt que data URL dans le JWT ──────────
+
+describe('canvasToAvatarBlob', () => {
+  it('délègue à canvas.toBlob en JPEG qualité 0.85', async () => {
+    const blob = { size: 42 } as Blob;
+    const canvas = {
+      toBlob: vi.fn((cb: (b: Blob | null) => void) => cb(blob)),
+    } as unknown as HTMLCanvasElement;
+
+    await expect(canvasToAvatarBlob(canvas)).resolves.toBe(blob);
+    expect((canvas.toBlob as unknown as ReturnType<typeof vi.fn>).mock.calls[0].slice(1))
+      .toEqual(['image/jpeg', 0.85]);
+  });
+
+  it('résout null quand le navigateur ne produit pas de blob', async () => {
+    const canvas = {
+      toBlob: vi.fn((cb: (b: Blob | null) => void) => cb(null)),
+    } as unknown as HTMLCanvasElement;
+
+    await expect(canvasToAvatarBlob(canvas)).resolves.toBeNull();
+  });
+});
+
+describe('uploadAvatar', () => {
+  const blob = { size: 42 } as Blob;
+
+  type UploadOpts = { upsert: boolean; contentType: string; cacheControl: string };
+
+  /** Faux client Storage minimal — même surface que celle typée par le module. */
+  const makeClient = (opts: { error?: unknown; publicUrl?: string } = {}) => {
+    const upload = vi.fn(async (_path: string, _body: Blob, _options: UploadOpts) => ({
+      error: opts.error ?? null,
+    }));
+    const getPublicUrl = vi.fn(() => ({
+      data: { publicUrl: opts.publicUrl ?? 'https://proj.supabase.co/storage/v1/object/public/avatars/u1/avatar.jpg' },
+    }));
+    const from = vi.fn(() => ({ upload, getPublicUrl }));
+    return { client: { storage: { from } }, from, upload, getPublicUrl };
+  };
+
+  it('écrit dans <userId>/avatar.jpg du bucket avatars (dossier imposé par la policy 084)', async () => {
+    const { client, from, upload } = makeClient();
+    await uploadAvatar(client, 'u1', blob);
+
+    expect(from).toHaveBeenCalledWith(AVATAR_BUCKET);
+    expect(upload.mock.calls[0][0]).toBe('u1/avatar.jpg');
+  });
+
+  it('upsert:true et contentType JPEG — pas d’accumulation d’orphelins', async () => {
+    const { client, upload } = makeClient();
+    await uploadAvatar(client, 'u1', blob);
+
+    expect(upload.mock.calls[0][2]).toEqual({
+      upsert: true, contentType: 'image/jpeg', cacheControl: '3600',
+    });
+  });
+
+  it('retourne l’URL publique suffixée d’un cache-buster ?v=', async () => {
+    const { client } = makeClient({ publicUrl: 'https://cdn.test/avatars/u1/avatar.jpg' });
+    const url = await uploadAvatar(client, 'u1', blob);
+
+    expect(url).toMatch(/^https:\/\/cdn\.test\/avatars\/u1\/avatar\.jpg\?v=\d+$/);
+  });
+
+  it('upload en erreur → null, sans demander d’URL publique', async () => {
+    const { client, getPublicUrl } = makeClient({ error: { message: 'denied' } });
+    await expect(uploadAvatar(client, 'u1', blob)).resolves.toBeNull();
+    expect(getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it('URL publique vide → null plutôt qu’une URL bancale', async () => {
+    const { client } = makeClient({ publicUrl: '' });
+    await expect(uploadAvatar(client, 'u1', blob)).resolves.toBeNull();
   });
 });

@@ -85,4 +85,15 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
       is_collaborative: true, pending_invites: ['a'], collaborator_validations: { x: true },
     });
   });
+
+  it('mappe subtasks, krId et recurrence (colonnes ajoutées après la whitelist initiale)', () => {
+    const subtasks = [{ id: 's1', name: 'Étape', completed: false }];
+    const out = mapTaskToDb({ subtasks, krId: 'kr1', recurrence: 'weekly' });
+
+    expect(out).toEqual({ subtasks, kr_id: 'kr1', recurrence: 'weekly' });
+  });
+
+  it('krId vide = « délié » → NULL en base (jamais la chaîne vide)', () => {
+    expect(mapTaskToDb({ krId: '' })).toEqual({ kr_id: null });
+  });
 });
