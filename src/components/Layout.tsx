@@ -162,7 +162,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
           <div
             role="button"
             tabIndex={0}
-            className={`sidebar-item cursor-pointer ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1'}`}
+            className={`sidebar-item cursor-pointer ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
             style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
             onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
             onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
@@ -183,7 +183,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       to={to}
       end={end}
       className={({ isActive }) =>
-        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1'}`
+        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`
       }
       style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
       onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
@@ -235,7 +235,7 @@ const Layout: React.FC = () => {
   const activeModules = useActiveModules();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
-    return saved ? JSON.parse(saved) : true;
+    return saved ? JSON.parse(saved) : false;
   });
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
