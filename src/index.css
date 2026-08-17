@@ -648,7 +648,11 @@ body {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.875rem 1.25rem;
+      /* Hauteur -8% (0.875rem -> 0.805rem). Le décalage vers la gauche (marge
+         gauche réduite, pour laisser plus de largeur au libellé) est posé en
+         JSX UNIQUEMENT à l'état déroulé — ici la marge reste symétrique, sinon
+         l'icône se recentre mal en repli (justify-center + px-0). */
+      padding: 0.805rem 1.25rem;
       margin: 0.25rem 0.5rem;
       color: rgb(var(--nav-item-text));
       background-color: transparent;
