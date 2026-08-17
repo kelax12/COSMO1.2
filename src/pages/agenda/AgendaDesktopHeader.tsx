@@ -51,7 +51,10 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 style={{
                   backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
                   borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
-                  color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))',
+                  // 'white' en dur était illisible en thème Noir : --color-accent
+                  // y est quasi-blanc (texte/liens), pas bleu comme Sombre/Gris/Clair.
+                  // --color-accent-solid-foreground existe pour ce pairage.
+                  color: showTaskSidebar ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-primary))',
                 }}
               >
                 <CalendarIcon size={18} />
