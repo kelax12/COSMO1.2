@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Sun, Moon, Circle, MoonStar } from 'lucide-react';
 import { useDarkMode } from '../hooks/useDarkMode';
 import type { Theme } from '@/lib/theme';
@@ -24,7 +25,10 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
   const { theme, setTheme, toggleTheme } = useDarkMode();
   const visibleThemes = THEMES;
 
-  /* ── Segmented control (4 buttons) ── */
+  /* ── Segmented control (4 options) ──
+     Un seul indicateur (layoutId) glisse sous l'option active au lieu que
+     chaque bouton porte son propre fond — lecture plus proche d'un
+     segmented control natif que de 4 boutons qui s'allument indépendamment. */
   if (showLabel) {
     return (
       <div
@@ -34,7 +38,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
         role="radiogroup"
         aria-label={t('theme.label')}
       >
-        {visibleThemes.map(({ id, icon: Icon, labelKey }) => {
+        {visibleThemes.map(({ id, labelKey }) => {
           const active = theme === id;
           return (
             <button
@@ -42,26 +46,23 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = f
               role="radio"
               aria-checked={active}
               onClick={() => setTheme(id)}
-              title={t(labelKey)}
               style={{ minHeight: '36px', minWidth: '60px' }}
-              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                active
-                  ? 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] shadow-sm border border-[rgb(var(--color-border))]'
-                  : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-              }`}
+              className="relative flex items-center justify-center px-3 py-1.5 rounded-lg"
             >
-              <Icon
-                size={13}
-                className={
-                  id === 'light'
-                    ? active ? 'text-amber-500' : ''
-                    : id === 'dark' || id === 'gris'
-                    ? active ? 'text-[rgb(var(--color-accent))]' : ''
-                    : active ? 'text-[rgb(var(--color-text-primary))]' : ''
-                }
-                fill="none"
-              />
-              {t(labelKey)}
+              {active && (
+                <motion.span
+                  layoutId="theme-toggle-active"
+                  className="absolute inset-0 rounded-lg bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] shadow-sm"
+                  transition={{ type: 'spring', stiffness: 500, damping: 34 }}
+                />
+              )}
+              <span
+                className={`relative text-xs font-semibold transition-colors duration-150 ${
+                  active ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                }`}
+              >
+                {t(labelKey)}
+              </span>
             </button>
           );
         })}

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, LogOut,
-  HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Languages,
+  HelpCircle, Camera,
+  Mail, ChevronRight, Repeat, BarChart3,
   Calendar, Target, BarChart2,
 } from 'lucide-react';
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
@@ -650,30 +650,20 @@ const SettingsPage: React.FC = () => {
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('appearance.hint')}</p>
                 <div style={{ minHeight: '72px' }}
-                  className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform">
-                      <Monitor size={18} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
-                    </div>
+                  className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
+                  <div>
+                    <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
+                    <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
                   </div>
                   <ThemeToggle showLabel />
                 </div>
 
                 {/* Rappel habitudes du soir (#24) — opt-in */}
                 <div style={{ minHeight: '72px' }}
-                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500 group-hover:scale-105 transition-transform">
-                      <Repeat size={18} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.eveningReminder')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('appearance.eveningReminderHint')}</p>
-                    </div>
+                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
+                  <div>
+                    <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.eveningReminder')}</p>
+                    <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('appearance.eveningReminderHint')}</p>
                   </div>
                   <button
                     type="button"
@@ -704,23 +694,15 @@ const SettingsPage: React.FC = () => {
                   seul), sinon on afficherait un titre au-dessus du vide. */}
               {SUPPORTED_LOCALES.length > 1 && (
                 <SectionCard className="mt-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Languages size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                    <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{tCommon('language.label')}</h2>
-                  </div>
-                  <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{tCommon('language.label')}</h2>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
                     {tCommon('language.sectionSubtitle')}
                   </p>
                   <div style={{ minHeight: '72px' }}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform shrink-0">
-                        <Languages size={18} aria-hidden="true" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tCommon('language.description')}</p>
-                        <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{tCommon('language.reloadNotice')}</p>
-                      </div>
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tCommon('language.description')}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{tCommon('language.reloadNotice')}</p>
                     </div>
                     <LocaleToggle />
                   </div>
@@ -731,11 +713,8 @@ const SettingsPage: React.FC = () => {
                   consultable sans avoir à ouvrir la palette. Source partagée
                   (components/keyboard-shortcuts) pour ne jamais diverger. */}
               <SectionCard className="mt-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Keyboard size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('appearance.shortcuts')}</h2>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
+                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.shortcuts')}</h2>
+                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
                   {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
                 </p>
                 <ShortcutsList compact />
