@@ -233,7 +233,7 @@ const Layout: React.FC = () => {
   const activeModules = useActiveModules();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
-    return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : true;
   });
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
@@ -435,7 +435,7 @@ const NavItems = () =>
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       {/* Sidebar */}
       <aside
-        className={`${isCollapsed ? 'w-20' : 'w-64'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
+        className={`${isCollapsed ? 'w-20' : 'w-[205px]'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
 
         <Button
           variant="ghost"
