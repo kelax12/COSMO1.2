@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { Building2, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 import { useT } from '@/i18n/useT';
@@ -26,7 +26,6 @@ const OrganizationSettingsCard = () => {
   return (
     <>
       <div className="flex items-center gap-2 mb-1">
-        <Building2 size={18} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
         <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))]">
           {t('common.settingsSection')}
         </h3>
