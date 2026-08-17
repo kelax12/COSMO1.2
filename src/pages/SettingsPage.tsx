@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Camera,
@@ -67,6 +67,12 @@ const SettingsPage: React.FC = () => {
   const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  // Sous prefers-reduced-motion, l'exit d'un onglet ne signale jamais sa fin
+  // à AnimatePresence (bug Framer Motion) : le panneau sortant reste dans le
+  // DOM (invisible mais toujours focusable) et bloque le nouvel onglet en
+  // mode="wait". Sans `exit`/`initial`, le montage/démontage redevient
+  // synchrone — comportement identique à un rendu conditionnel classique.
+  const prefersReducedMotion = useReducedMotion();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -344,7 +350,7 @@ const SettingsPage: React.FC = () => {
 
       {/* ──────── SIDEBAR ──────── */}
       <motion.aside
-        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0 h-full max-h-full overflow-y-auto"
+        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0"
         style={{ background: 'rgb(var(--color-surface))' }}
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -434,11 +440,18 @@ const SettingsPage: React.FC = () => {
           })}
         </div>
 
-        <AnimatePresence mode="wait">
+        {/* `mode="wait"` retiré : sous prefers-reduced-motion, l'exit de
+            l'onglet sortant ne signale jamais sa fin à AnimatePresence (bug
+            Framer Motion), donc le nouvel onglet ne montait jamais — les
+            onglets restaient bloqués sur Profil. Sans `wait`, le nouvel
+            onglet monte immédiatement ; l'ancien continue son exit en
+            parallèle (ou reste figé sans bloquer l'affichage si son
+            exit-complete ne se déclenche pas). */}
+        <AnimatePresence mode={prefersReducedMotion ? undefined : 'wait'}>
 
           {/* ── PROFIL ── */}
           {activeTab === 'profile' && (
-            <motion.div key="profile" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
+            <motion.div key="profile" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
               <SectionCard>
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                   <div className="relative group/av shrink-0">
@@ -613,7 +626,7 @@ const SettingsPage: React.FC = () => {
 
           {/* ── SÉCURITÉ ── */}
           {activeTab === 'security' && (
-            <motion.div key="security" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
+            <motion.div key="security" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
               <SectionCard>
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('security.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('security.hint')}</p>
@@ -645,7 +658,7 @@ const SettingsPage: React.FC = () => {
 
           {/* ── APPARENCE ── */}
           {activeTab === 'appearance' && (
-            <motion.div key="appearance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
+            <motion.div key="appearance" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
               <SectionCard>
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('appearance.hint')}</p>
@@ -730,7 +743,7 @@ const SettingsPage: React.FC = () => {
 
           {/* ── GUIDE ── */}
           {activeTab === 'guide' && (
-            <motion.div key="guide" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
+            <motion.div key="guide" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
 
               <div>
                 <h2 className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
