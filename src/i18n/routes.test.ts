@@ -151,4 +151,13 @@ describe('canonicalUrl', () => {
     // chaîne, sinon le canonical et le hreflang se contredisent.
     expect(canonicalUrl('/', DEFAULT_LOCALE)).toBe(`${SITE_ORIGIN}/`);
   });
+
+  it('locale inconnue → chemin rendu tel quel, sans préfixe inventé', () => {
+    // Garde de robustesse : `localizePath` est une fonction PURE appelée avec
+    // des valeurs qui peuvent venir d'une URL ou d'un localStorage trafiqué.
+    // Elle doit rendre le chemin inchangé plutôt que fabriquer un `/de/…`
+    // qui n'existe dans aucune table de slugs.
+    expect(localizePath('/tasks', 'de' as Locale)).toBe('/tasks');
+    expect(localizePath('/', '' as Locale)).toBe('/');
+  });
 });
