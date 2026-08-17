@@ -4,7 +4,7 @@
     "launchFree": "COSMO for companies is free",
     "launchFreeRest": " until 1 August, enjoy it with your whole team, no limits.",
     "freemiumOver": "Beyond 5 collaborators, a company subscription is required to accept new members.",
-    "freemiumInfo": "COSMO for companies stays free up to 5 collaborators. A paid plan will follow beyond that: the tiers are listed in the Billing tab. Nothing changes for you today.",
+    "freemiumInfo": "COSMO Enterprise stays free up to 5 collaborators. A paid offer will follow beyond that: the owner can review the tiers from the plan shown at the top of the page. Nothing changes for you today.",
     "dangerZone": "Danger zone",
     "dangerHint": "Permanently deletes the company, its projects, OKRs and teams.",
     "transferOwnership": "Transfer ownership",
@@ -717,8 +717,7 @@
     "projects": "Projects",
     "okr": "OKRs",
     "stats": "Statistics",
-    "members": "Members",
-    "billing": "Billing"
+    "members": "Members"
   },
   "colors": {
     "indigo": "Indigo",
@@ -807,6 +806,12 @@
     "checkoutSuccess": "Subscription active. Thank you!",
     "checkoutCancelled": "Payment cancelled, nothing was charged.",
     "alreadySubscribed": "This organization already has an active subscription. Use \"Manage subscription\" to change tier.",
-    "error": "Could not reach Stripe. Please try again shortly."
+    "error": "Could not reach Stripe. Please try again shortly.",
+    "back": "Workspace",
+    "planFree": "Free plan",
+    "planSeats": "{{seats}}-seat plan",
+    "planUnlimited": "Unlimited plan",
+    "planHint": "View and upgrade your plan",
+    "planAria": "Subscription: {{plan}}"
   }
 }

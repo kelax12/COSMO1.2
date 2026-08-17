@@ -31,6 +31,27 @@ export function effectiveQuota(sub: OrgSubscription | null): number | null {
   return sub.maxMembers;
 }
 
+/**
+ * Comment nommer le forfait courant dans l'UI.
+ *
+ * Le nom est dérivé du quota RÉELLEMENT accordé (`effectiveQuota`), pas du
+ * palier acheté : un abonnement impayé ou résilié affiche « gratuit », comme le
+ * serveur le traite. Un libellé qui annoncerait encore le palier payant
+ * mentirait sur ce que l'organisation peut faire.
+ */
+export function planDescriptor(sub: OrgSubscription | null): {
+  kind: 'free' | 'seats' | 'unlimited';
+  seats: number | null;
+  /** L'abonnement demande une action du propriétaire (impayé). */
+  needsAttention: boolean;
+} {
+  const quota = effectiveQuota(sub);
+  const needsAttention = sub?.status === 'past_due';
+  if (quota === null) return { kind: 'unlimited', seats: null, needsAttention };
+  if (quota <= ORG_FREE_SEATS) return { kind: 'free', seats: quota, needsAttention };
+  return { kind: 'seats', seats: quota, needsAttention };
+}
+
 /** Le prochain ajout de membre sera-t-il refusé par le serveur ? */
 export function isQuotaReached(memberCount: number, sub: OrgSubscription | null): boolean {
   const quota = effectiveQuota(sub);
