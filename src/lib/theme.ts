@@ -20,14 +20,17 @@ export function isTheme(value: unknown): value is Theme {
  * Thème appliqué quand l'utilisateur n'a jamais choisi.
  *
  * Sur mobile on part sur `gris` (fond graphite + accent bleu, palette GitHub) :
- * c'est la base du design system mobile. Sur desktop, quand le système
- * préfère le sombre, on part sur `noir` (OLED quasi-noir) plutôt que sur le
- * `dark` générique — c'est le thème sombre par défaut du produit.
+ * c'est la base du design system mobile. Sur desktop on suit la préférence
+ * système (`dark` générique) — c'est ce défaut qui s'applique aussi à la
+ * landing publique (`resolveInitialTheme()` tourne avant même le routing,
+ * dans `main.tsx`), donc il ne doit pas imposer une DA produit spécifique.
+ * Le thème `noir` reste un choix explicite de l'utilisateur (`ThemeToggle`)
+ * ou d'un point d'entrée précis (démo entreprise, cf. `LandingPage.tsx`).
  */
 export function defaultTheme(): Theme {
   if (typeof window === 'undefined') return 'light';
   if (window.innerWidth < MOBILE_BREAKPOINT) return 'gris';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'noir' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 /**
