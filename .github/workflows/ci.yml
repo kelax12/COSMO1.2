@@ -201,7 +201,26 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           exit 1
       - name: Run RLS integration tests
-        run: npm run test:rls
+        run: |
+          set -o pipefail
+          if npm run test:rls 2>&1 | tee rls.log; then exit 0; fi
+          # GoTrue masque les erreurs SQL derriere « Database error creating
+          # new user » : la vraie cause n'existe que dans le journal Postgres
+          # du conteneur. Sans ce vidage dans le resume (public), un echec ici
+          # est indiagnosticable — meme piege que pour le replay.
+          {
+            echo '### Tests RLS en echec'
+            echo
+            echo '```'
+            tail -n 40 rls.log
+            echo '```'
+            echo
+            echo '#### Journal Postgres (erreurs)'
+            echo '```'
+            docker ps --filter name=supabase_db --format '{{.Names}}' | head -1               | xargs -r -I{} docker logs --tail 200 {} 2>&1               | grep -iE 'error|fatal|exception' | tail -n 30
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
       - name: Stop Supabase stack
         if: ${{ always() }}
         run: supabase stop
