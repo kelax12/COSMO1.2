@@ -30,7 +30,7 @@
     "@fullcalendar/core": "^6.1.10",
     "@fullcalendar/daygrid": "^6.1.10",
     "@fullcalendar/interaction": "^6.1.10",
-    "@fullcalendar/react": "^6.1.10",
+    "@fullcalendar/react": "^7.0.2",
     "@fullcalendar/timegrid": "^6.1.10",
     "@gsap/react": "^2.1.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
