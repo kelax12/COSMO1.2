@@ -72,10 +72,19 @@ export default defineConfig({
         //
         // lines/statements remontent de 10 → 25 : le plancher datait du
         // 2026-06-10 (12 % mesuré) et laissait passer 15 points de régression.
-        lines: 25,
-        statements: 25,
-        functions: 20,
-        branches: 20,
+        // Recale au reel mesure le 2026-08-18 (26,67 / 26,28 / 21,48 / 21,86),
+        // avec ~0,5 pt de marge. C'est un CLIQUET : la barre ne peut plus que
+        // monter. Toute baisse nette casse la CI, y compris une baisse lente
+        // due a du code neuf non teste — c'est exactement ce qui avait fait
+        // deriver le projet de 12 % a 26 % sans que le plancher (10) bouge.
+        //
+        // 🔴 Ne JAMAIS baisser un de ces chiffres pour faire passer la CI.
+        // Si une PR les fait tomber, c'est la PR qui manque de tests.
+        // Les remonter apres un gain de couverture est en revanche attendu.
+        lines: 26,
+        statements: 26,
+        functions: 21,
+        branches: 21,
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         // Repositories Supabase = frontière sécurité (anti-mass-assignment,

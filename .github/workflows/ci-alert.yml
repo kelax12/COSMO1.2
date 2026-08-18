@@ -1,0 +1,84 @@
+# ──────────────────────────────────────────────────────────────────────
+# Alerte quand la CI passe au rouge sur `main`.
+#
+# POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
+# que personne ne réagisse — `rls-integration` n'avait JAMAIS été verte depuis
+# sa création. Une garde rouge est une garde muette : elle ne protège plus de
+# rien, et elle rend inaudibles les autres gardes du même job. Un résultat
+# affiché sur une page que personne n'ouvre n'est pas une alerte.
+#
+# CE QUE ÇA FAIT : ouvre une issue GitHub — donc une notification par mail, on
+# est abonné d'office à son propre dépôt — au premier échec, puis se contente
+# de commenter tant qu'elle reste ouverte. Pas de spam. Refermer l'issue une
+# fois la CI verte réarme l'alerte.
+#
+# Aucun service externe, aucun secret : seulement le jeton du workflow.
+# ──────────────────────────────────────────────────────────────────────
+name: CI alert
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+# Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  open-issue:
+    # Uniquement les échecs sur main : un run annulé par un push suivant ou une
+    # PR rouge n'ont pas à réveiller qui que ce soit.
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ouvrir ou mettre a jour l'issue « CI rouge »
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_NUM: ${{ github.event.workflow_run.run_number }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message }}
+        run: |
+          set -euo pipefail
+
+          # Le label peut ne pas exister au premier passage, et `gh issue
+          # create` echoue sur un label inconnu — d'ou cette creation
+          # idempotente.
+          gh label create ci-red --repo "$REPO" --color b60205 \
+            --description "CI en echec sur main" 2>/dev/null || true
+
+          SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n 1 | cut -c1-60)
+
+          # printf plutot qu'un bloc de texte : dans un `run:` indente, le
+          # marqueur de fin d'un heredoc devrait etre en debut de ligne, ce que
+          # l'indentation YAML interdit — et les espaces de tete finiraient
+          # dans le corps de l'issue.
+          BODY=$(printf '%s\n' \
+            "La CI est **rouge sur \`main\`**." \
+            "" \
+            "- Run : $RUN_URL (#$RUN_NUM)" \
+            "- Commit : \`${SHA:0:7}\` — $SUBJECT" \
+            "" \
+            "Une garde rouge ne protege plus rien et rend muettes les autres" \
+            "gardes du meme job. A traiter avant de livrer autre chose." \
+            "" \
+            "Cette issue se met a jour a chaque nouvel echec." \
+            "**La refermer une fois la CI verte** : c'est ce qui rearme l'alerte.")
+
+          EXISTING=$(gh issue list --repo "$REPO" --state open --label ci-red \
+                       --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$REPO" --body "$BODY"
+            echo "Commentaire ajoute sur l'issue #$EXISTING"
+          else
+            gh issue create --repo "$REPO" \
+              --title "CI rouge sur main (run #$RUN_NUM)" \
+              --label ci-red --body "$BODY"
+            echo "Issue creee"
+          fi
