@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
+import { mountAudienceScript } from './lib/audience';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
@@ -105,6 +106,21 @@ try {
 try {
   captureFirstTouch();
 } catch { /* l'analytics ne doit jamais empêcher l'app de démarrer */ }
+
+// Mesure d'audience — injectee ICI et plus par une balise d'index.html, pour
+// qu'elle ne soit JAMAIS presente quand une session existe. C'est le seul
+// script tiers de l'origine, et le jeton de session vit dans le localStorage :
+// charge sur toute la SPA, un compromis du fournisseur donnait la prise de
+// controle des comptes connectes. Detail et limite assumee : src/lib/audience.ts.
+//
+// Apres `captureFirstTouch` : l'attribution doit lire la query string d'origine
+// avant tout, et ne depend pas d'un tiers.
+try {
+  mountAudienceScript(document, {
+    pathname: window.location.pathname,
+    storage: window.localStorage,
+  });
+} catch { /* la mesure ne doit jamais empêcher l'app de démarrer */ }
 
 // ──────────────────────────────────────────────────────────────────
 // Amorçage i18n — locale, canonicalisation d'URL et `basename` du routeur.

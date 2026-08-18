@@ -1,5 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────
-# Alerte quand la CI passe au rouge sur `main`.
+# Alerte quand une garde automatique passe au rouge sur `main`.
+# Couvre `CI` et `Vendor script watch` (surveillance du script tiers).
 #
 # POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
 # que personne ne réagisse — `rls-integration` n'avait JAMAIS été verte depuis
@@ -18,7 +19,7 @@ name: CI alert
 
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [CI, Vendor script watch]
     types: [completed]
 
 # Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
@@ -42,6 +43,7 @@ jobs:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           RUN_NUM: ${{ github.event.workflow_run.run_number }}
           SHA: ${{ github.event.workflow_run.head_sha }}
+          WF: ${{ github.event.workflow_run.name }}
           COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message }}
         run: |
           set -euo pipefail
@@ -59,7 +61,7 @@ jobs:
           # l'indentation YAML interdit — et les espaces de tete finiraient
           # dans le corps de l'issue.
           BODY=$(printf '%s\n' \
-            "La CI est **rouge sur \`main\`**." \
+            "**$WF** est en echec sur \`main\`." \
             "" \
             "- Run : $RUN_URL (#$RUN_NUM)" \
             "- Commit : \`${SHA:0:7}\` — $SUBJECT" \
@@ -67,8 +69,12 @@ jobs:
             "Une garde rouge ne protege plus rien et rend muettes les autres" \
             "gardes du meme job. A traiter avant de livrer autre chose." \
             "" \
+            "Si c'est **Vendor script watch** : le script tiers charge sur les" \
+            "pages publiques a change. Relire le diff AVANT de mettre a jour" \
+            "\`.github/vendor-scripts.sha256\`." \
+            "" \
             "Cette issue se met a jour a chaque nouvel echec." \
-            "**La refermer une fois la CI verte** : c'est ce qui rearme l'alerte.")
+            "**La refermer une fois au vert** : c'est ce qui rearme l'alerte.")
 
           EXISTING=$(gh issue list --repo "$REPO" --state open --label ci-red \
                        --limit 1 --json number --jq '.[0].number // empty')
@@ -78,7 +84,7 @@ jobs:
             echo "Commentaire ajoute sur l'issue #$EXISTING"
           else
             gh issue create --repo "$REPO" \
-              --title "CI rouge sur main (run #$RUN_NUM)" \
+              --title "$WF en echec sur main (run #$RUN_NUM)" \
               --label ci-red --body "$BODY"
             echo "Issue creee"
           fi

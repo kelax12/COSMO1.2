@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────────────────────────────
+# Surveillance du script tiers charge par l'app (mesure d'audience).
+#
+# POURQUOI PAS UN ATTRIBUT `integrity` : le fournisseur met son fichier a jour
+# sans preavis. Un SRI fige transformerait chaque mise a jour legitime en perte
+# de mesure SILENCIEUSE — exactement le defaut qu'on cherche a eviter.
+#
+# CE WORKFLOW DONNE LE MEME SIGNAL SANS L'INCONVENIENT : il compare chaque jour
+# l'empreinte du fichier reellement servi a la reference versionnee. Le fichier
+# continue de se mettre a jour tout seul, mais un changement ne passe plus
+# inapercu : on le voit dans les 24 h et on relit le diff avant qu'il ne tourne
+# des mois chez tous les visiteurs.
+#
+# Le script n'est jamais execute ici — il est telecharge et hache, rien d'autre.
+#
+# QUAND CE JOB CASSE : verifier que le changement est legitime (note de version
+# du fournisseur, comportement inchange), puis mettre a jour
+# `.github/vendor-scripts.sha256` dans un commit dedie. Ne JAMAIS mettre a jour
+# l'empreinte sans avoir regarde ce qui a change.
+# ──────────────────────────────────────────────────────────────────────
+name: Vendor script watch
+
+on:
+  schedule:
+    - cron: '17 6 * * *'   # tous les jours, 06:17 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/vendor-scripts.sha256
+      - .github/workflows/vendor-watch.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Comparer l'empreinte du script servi
+        run: |
+          set -euo pipefail
+          STATUS=0
+
+          while read -r EXPECTED URL; do
+            [ -n "${URL:-}" ] || continue
+
+            if ! curl -sSfL --max-time 30 "$URL" -o /tmp/vendor.js; then
+              echo "::error::Script tiers injoignable : $URL"
+              STATUS=1
+              continue
+            fi
+
+            ACTUAL=$(sha256sum /tmp/vendor.js | cut -d' ' -f1)
+
+            if [ "$ACTUAL" = "$EXPECTED" ]; then
+              echo "OK  $URL"
+              continue
+            fi
+
+            STATUS=1
+            echo "::error::Le script tiers a change : $URL"
+            {
+              echo "### Le script tiers a change"
+              echo
+              echo "- URL : \`$URL\`"
+              echo "- Empreinte attendue : \`$EXPECTED\`"
+              echo "- Empreinte servie   : \`$ACTUAL\`"
+              echo
+              echo "Ce fichier s'execute sur les pages publiques avec les memes"
+              echo "droits que le site. Relire ce qui a change AVANT de mettre a"
+              echo "jour \`.github/vendor-scripts.sha256\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          done < .github/vendor-scripts.sha256
+
+          exit $STATUS
