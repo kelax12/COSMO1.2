@@ -443,7 +443,21 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**102 migrations, dernière = `101_org_subscriptions.sql`** (au 2026-08-17).
+**106 migrations, dernière = `102_seed_categories_search_path.sql`** (au 2026-08-18).
+
+> ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
+> l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
+> schéma `public` existaient en prod sans qu'aucune migration ne les crée — le
+> dépôt ne décrivait donc pas la base qu'il prétend reconstruire, et le replay
+> sur base vierge échouait. Elles sont **no-op en production** (`IF NOT EXISTS`,
+> `CREATE OR REPLACE`) : elles alignent le dépôt sur la prod, jamais l'inverse.
+> Deux d'entre elles sont numérotées `000_` parce qu'elles précèdent réellement
+> l'historique. Le job CI `rls-integration` est vert depuis (run #713) — il ne
+> l'avait **jamais** été depuis sa création le 2026-06-21.
+>
+> 🔴 **Ne jamais ajouter une colonne ou un GRANT depuis le dashboard Supabase.**
+> C'est ce qui a produit cette dérive : la prod avance, le dépôt non, et
+> personne ne le voit tant que rien ne rejoue les migrations à blanc.
 
 Toutes les tables ont **RLS activée**. Pattern obligatoire + checklist migration →
 [`docs/SECURITY.md`](./docs/SECURITY.md).
