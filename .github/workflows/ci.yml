@@ -38,13 +38,17 @@ jobs:
   # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Sans `tsc -b`
   # ci-dessous, des erreurs de type partent en prod. Ne pas retirer.
   # ──────────────────────────────────────────────────────────────────
+  # ⚠️ Node 22 minimum, et ce n'est pas cosmetique : depuis la 2.112,
+  # `@supabase/supabase-js` exige un WebSocket NATIF, absent avant Node 22.
+  # En Node 20 le simple `createClient()` de src/lib/supabase.ts jette, et
+  # toute la suite de tests tombe. Ne pas redescendre.
   lint-test-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
 
@@ -99,7 +103,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
       - name: npm audit (prod deps, high+)
@@ -115,7 +119,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
       - name: Install Playwright Chromium
@@ -146,7 +150,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       # `@v1` était une branche, pas un tag — pinné sur le commit de v1.7.1.
       - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1.7.1
