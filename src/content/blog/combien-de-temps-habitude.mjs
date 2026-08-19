@@ -8,6 +8,10 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 7,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['suivi-des-habitudes', 'time-blocking-guide', 'glossaire-productivite'],
   faq: [
     ['Alors, 21, 30, 66 ou 90 jours pour prendre une habitude ?', '66 jours en médiane selon l’étude de référence (Lally, 2009), avec une fourchette réelle de 18 à 254 jours selon l’habitude et la personne.'],
     ['Combien d’habitudes lancer en même temps ?', '2 ou 3 maximum. Chaque habitude en formation consomme de l’attention.'],
@@ -35,7 +39,7 @@ export const article = {
 <h3>2. Un jour raté ne casse rien, deux jours, si</h3>
 <p>La science est claire : l'accroc isolé est neutre. La règle opérationnelle qui en découle : <strong>« jamais deux fois de suite »</strong>. Ratez le lundi si la vie l'impose ; protégez le mardi comme si votre streak en dépendait, parce que c'est là qu'il se joue vraiment.</p>
 <h3>3. La difficulté prédit la durée : commencez ridicule</h3>
-<p>Puisque la complexité allonge le délai d'automatisation, la stratégie rationnelle est de réduire l'habitude à sa version minimale : 5 minutes de course, 1 page de lecture, 10 mots de vocabulaire. On automatise d'abord le <em>déclenchement</em> (courir chaque matin), on augmente la <em>dose</em> ensuite. L'inverse, commencer fort, maximise à la fois la difficulté et le délai.</p>
+<p>Puisque la complexité allonge le délai d'automatisation, la stratégie rationnelle est de réduire l'habitude à sa version minimale : 5 minutes de course, 1 page de lecture, 10 mots de vocabulaire, la logique même des <a href="/pour-etudiants">routines de révision étudiantes</a>. On automatise d'abord le <em>déclenchement</em> (courir chaque matin), on augmente la <em>dose</em> ensuite. L'inverse, commencer fort, maximise à la fois la difficulté et le délai.</p>
 <h3>4. Le déclencheur compte plus que la motivation</h3>
 <p>Dans l'étude de Lally, l'habitude était toujours ancrée à un contexte précis (« après le déjeuner », « après mon café »). C'est le principe du <em>habit stacking</em> : accrochez la nouvelle habitude à une routine existante plutôt qu'à une heure abstraite. « Après avoir posé ma tasse dans l'évier, je mets mes chaussures de course » bat « courir à 7 h » à plate couture.</p>
 
@@ -51,7 +55,7 @@ export const article = {
 <p>La traversée du désert est le moment exact où le <strong>suivi visuel</strong> devient décisif : quand la sensation de progrès est absente, la preuve visible du chemin parcouru la remplace.</p>
 
 <h2 id="mesurer">Rendre la régularité visible</h2>
-<p>C'est tout le principe du suivi d'habitudes dans <a href="/">Cosmo</a> : chaque habitude affiche une <strong>heatmap de 26 semaines</strong> (style GitHub) où chaque jour coché colore une case, plus votre <strong>streak</strong> en cours et votre taux de complétion. La chaîne de cases vertes matérialise exactement ce que la traversée du désert vous cache : vous avancez. Et parce que rater un jour isolé est scientifiquement anodin, c'est la tendance sur 26 semaines qui compte, pas la perfection. Créez vos 2-3 premières habitudes <a href="/signup">gratuitement</a>, ou testez la démo sans inscription avec des habitudes pré-remplies.</p>
+<p>C'est tout le principe du suivi d'habitudes dans <a href="/">Cosmo</a> : chaque habitude affiche une <strong>heatmap de 26 semaines</strong> (style GitHub) où chaque jour coché colore une case, plus votre <strong>streak</strong> en cours et votre taux de complétion. La chaîne de cases vertes matérialise exactement ce que la traversée du désert vous cache : vous avancez. Et parce que rater un jour isolé est scientifiquement anodin, c'est la tendance sur 26 semaines qui compte, pas la perfection. Sur le choix des indicateurs à regarder, et sur ceux qui découragent au lieu d'aider, l'article <a href="/blog/suivi-des-habitudes">suivi des habitudes</a> tranche. Créez vos 2-3 premières habitudes <a href="/signup">gratuitement</a>, ou testez la démo sans inscription avec des habitudes pré-remplies.</p>
 
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Alors, 21, 30, 66 ou 90 jours ?</h3>

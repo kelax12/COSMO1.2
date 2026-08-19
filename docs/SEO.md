@@ -5,9 +5,13 @@
 [`archive/AUDIT-SEO-2026-07-18.md`](./archive/AUDIT-SEO-2026-07-18.md) (note 54/100 à l'époque,
 216 commits de retard).
 
-> ⚠️ **Ce que cet audit ne peut pas mesurer** : positions, impressions, clics, backlinks, et Core
-> Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et PageSpeed Insights — hors
-> du dépôt. Tout ce qui suit porte donc sur ce que le site **émet**, pas sur ce qu'il **obtient**.
+**Complété le 2026-08-19** par les premières données Search Console réelles (§4), qui renversent
+l'ordre des priorités : ce que le site **émet** est propre, ce qu'il **obtient** est nul, et la
+cause n'est pas dans le dépôt.
+
+> ⚠️ Restent hors de portée du dépôt : le nombre de pages réellement indexées, le profil de
+> liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
+> PageSpeed Insights.
 
 ---
 
@@ -34,7 +38,7 @@ Mesuré sur les 24 pages prérendues :
 **Le grief central de juillet — « le prérendu ne sort que 161 mots » — est corrigé** : l'accueil
 émet ~600 mots de contenu propre, les pages use-case 680–900.
 
-## 2. International — correct et délibéré, une seule faille
+## 2. International — correct et délibéré, faille refermée
 
 **Ce n'est pas un oubli**, contrairement à ce que la seule lecture du `dist/` laisse croire.
 `INDEXABLE_LOCALES = ['fr']` dans `src/i18n/seo-urls.mjs` est un choix documenté dans le fichier
@@ -45,14 +49,19 @@ anglaises, soit exactement le duplicate content que le chantier i18n cherche à 
 La décision est appliquée de bout en bout, et c'est cohérent :
 
 - pas de prérendu `/en/`, pas d'URL `/en/` au sitemap, pas de `hreflang="en"` ;
-- `vercel.json` pose `X-Robots-Tag: noindex` sur `/en/(.*)`.
+- `vercel.json` pose `X-Robots-Tag: noindex` sur `/(en|es)` **et** `/(en|es)/(.*)`.
 
-**🟠 La faille** : la règle est `/en/(.*)` — elle exige la barre oblique. **`https://thecosmo.app/en`
-(sans slash final) ne la déclenche pas** et sort donc sans `noindex`. C'est précisément l'URL de
-l'accueil anglais, la plus susceptible d'être liée ou découverte. Le risque reste modéré (le
-rewrite SPA sert `/index.html`, qui porte un canonical vers `/`), mais la protection voulue n'est
-pas complète.
-**Correction** : `/en` et `/es` dans la même règle, ou source `/(en|es)(/.*)?`. 5 min.
+**✅ La faille est refermée (2026-08-19).** La règle était `/en/(.*)`, qui exige la barre
+oblique : **`https://thecosmo.app/en` sortait sans `noindex`** — précisément l'URL de l'accueil
+anglais, la plus susceptible d'être liée. Vérifié en prod le 2026-08-19 (`curl -I` → aucun
+`X-Robots-Tag`) avant correction. `vercel.json` porte désormais **deux** règles, `/(en|es)` et
+`/(en|es)/(.*)`.
+
+Surtout, `npm run i18n:check` (bloquant en CI) exigeait le motif exact `/xx/(.*)` : **il ne
+pouvait structurellement pas voir ce trou**, et ne l'a pas vu pendant cinq jours. Le contrôle
+distingue maintenant la **racine** du **sous-arbre** et réclame les deux, en acceptant les
+sources groupées (`/(en|es)…`). Régression rejouée : en retirant la règle racine, la CI casse
+avec le bon message.
 
 > `es` est déclaré dans `ALL_LOCALES` et dans `route-slugs.json` mais **absent de
 > `SUPPORTED_LOCALES`** — la langue n'est donc pas servie. C'est le mécanisme prévu (« ouvrir une
@@ -76,31 +85,60 @@ propre : login 742, signup 755, mentions légales 735) :
 | `matrice-eisenhower` | ~770 |
 | `glossaire-productivite` | ~730 |
 | `okr-vs-smart-vs-kpi` | ~700 |
-| `template-okr-gratuit` | ~560 |
+| ~~`template-okr-gratuit`~~ | **2 040 mots** ✅ — porté de 560 à 2 040 le 2026-08-19 (§4 : c'est le seul actif téléchargeable, donc le seul qui puisse attirer un lien) |
 
 **Un seul article sur onze atteint le plancher fixé** ; la médiane est à ~930 mots. Sur des
 requêtes où les pages en tête font 2 000+ mots, c'est le facteur limitant — pas la technique.
 
-**Correction** : approfondir les 5 articles les plus courts avant d'en publier de nouveaux. Un
-article de 700 mots qui ne se classe pas ne rapporte rien ; le même porté à 1 800 peut basculer.
-Priorité aux trois qui visent des requêtes commerciales : `template-okr-gratuit`,
-`cosmo-vs-todoist`, `okr-vs-smart-vs-kpi`.
+**Correction, telle qu'elle était formulée le 14/08** : approfondir les 5 plus courts avant d'en
+publier de nouveaux.
 
-## 4. Ce qu'il faut mesurer hors du dépôt
+> 🔴 **Le §4 renverse cette priorité.** Mesure faite : le contenu se classe en position 88, pas
+> en position 15 — un article allongé y reste. Seul `template-okr-gratuit` a été traité, et pour
+> une autre raison que sa longueur : c'est le seul **actif linkable** du site. Les autres
+> attendront que le domaine ait des liens entrants.
 
-Ces questions décident de la suite et **aucune ne se répond depuis le code** :
+## 4. 🔴 Ce que Search Console mesure — le contenu ne se classe sur rien
+
+Données relevées le **2026-08-19**, période 2026-05-18 → 2026-08-18 :
+
+| Périmètre | Clics | Impressions | CTR | Position moyenne |
+|---|---|---|---|---|
+| Toutes requêtes | 17 | 328 | 5,2 % | 15,5 |
+| **Requêtes ne contenant pas « cosmo »** | **0** | **13** | **0 %** | **88,1** |
+
+**La position moyenne de 15,5 est un artefact.** 96 % des impressions et 100 % des clics
+viennent du mot « cosmo », qui est générique (Cosmopolitan, cosmos) et ne nous appartient pas.
+Sur le contenu éditorial, la position réelle est **88 — la page 9**. Le CTR de 5,2 %, cinq fois
+au-dessus de la normale à la position 15, est le symptôme de ce mélange, pas une bonne nouvelle :
+❌ **ne pas « optimiser les titles pour le CTR »**, le CTR non-marque est nul faute d'impressions.
+
+La courbe des impressions non-marque est plate, avec deux pics isolés à mi-juillet et mi-août —
+les deux dates de publication. C'est le cycle complet d'un contenu indexé, testé, classé vers la
+position 88, jamais cliqué, puis plus montré.
+
+**Le facteur limitant n'est donc ni la technique ni la longueur des articles, mais l'autorité de
+domaine.** Un domaine sans lien entrant ne se classe sur rien. Conséquence directe sur les
+priorités, et elle est contre-intuitive :
+
+❌ **Ne pas approfondir les articles courts pour l'instant.** Un article de 2 000 mots en
+position 88 reste en position 88. La règle du §3 (« ne rien publier tant que les courts ne sont
+pas montés ») devient : **ne rien publier ni approfondir tant que le seuil de ~20 domaines
+référents n'est pas approché.**
+
+Le chantier, entièrement manuel, est décrit dans
+[`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) : kit de soumission prêt à coller,
+ordre des annuaires, suivi. Le premier signal à guetter n'est pas un clic, c'est **une page qui
+passe sous la position 30 sur une requête non-marque**.
+
+### Ce qui reste à mesurer hors du dépôt
 
 | Question | Outil | Statut |
 |---|---|---|
-| Combien de pages réellement indexées ? | Search Console | à connecter |
-| Quelles requêtes rapportent des impressions ? | Search Console | à connecter |
-| Le profil de liens est-il vide ? | Ahrefs Webmaster Tools (gratuit) | à connecter |
-| Core Web Vitals terrain | PageSpeed Insights / CrUX | jamais mesuré |
-
-Tant que Search Console n'est pas branchée, toute affirmation sur « le SEO marche ou ne marche
-pas » est une conjecture. Le rappel de contexte : la prod compte **27 comptes et 0 actif sur
-7 jours** — le SEO n'a encore produit aucun signal mesurable, ce qui est normal à ce stade et ne
-prouve rien dans un sens ou dans l'autre.
+| Combien de pages réellement indexées ? | Search Console → Indexation des pages | 🔴 jamais relevé — 13 impressions pour 20 URLs laisse l'hypothèse ouverte |
+| La propriété GSC est-elle de type *domaine* ? | Search Console | à vérifier (une propriété *préfixe d'URL* n'en montre qu'une fraction) |
+| Combien de domaines référents ? | Ahrefs Webmaster Tools (gratuit) | 🔴 à connecter — attendu : 0 à 2 |
+| Core Web Vitals terrain | PageSpeed Insights / CrUX | jamais mesuré, non prioritaire |
 
 ---
 
@@ -143,6 +181,43 @@ Procédure (Playwright, dev server sur le port de `dev-verify`) :
    plus lisible.
 4. Encoder en WebP 1500 px (`ffmpeg -c:v libwebp -quality 80`) — l'ensemble tient sous 250 kB.
 5. Mettre à jour les `alt` (`enterprise.cockpit.a1…a6`) si le contenu des écrans a changé.
+
+### `lastmod` et `dateModified` — jamais la date du build
+
+Le sitemap déclarait `lastmod = aujourd'hui` sur **toutes** les URLs à chaque déploiement, et le
+JSON-LD global faisait de même sur `dateModified`. Un sitemap qui annonce « tout a changé
+aujourd'hui » à chaque `git push` apprend à Google à ignorer le champ, et un `dateModified` qui
+avance sans que la copie bouge est un signal de fraîcheur artificielle. Corrigé le 2026-08-19.
+
+Chaque page tire désormais sa date de son contenu :
+
+| Page | Source de la date |
+|---|---|
+| Articles de blog | `dateModified` du registre `ARTICLES` (déjà le cas) |
+| Pages use-case | `dateModified` du registre `USE_CASES` (champ ajouté) |
+| Index du blog | la plus récente des `dateModified` des articles, calculée au build |
+| `/`, `/guide`, `/a-propos`, `/entreprise-presentation` | `CONTENT_LASTMOD` dans `prerender.mjs` |
+
+❌ **Ne jamais réintroduire `TODAY` dans le sitemap ni dans un `dateModified`.** `TODAY` ne sert
+plus qu'au `lastBuildDate` du flux RSS, où « date du build » est la bonne réponse.
+✅ Retoucher la copie d'une page sans registre = bouger sa ligne dans `CONTENT_LASTMOD`, au même
+titre qu'on met à jour son titre.
+
+### Maillage interne du blog — par sujet, jamais par date
+
+La suite de lecture (« À lire ensuite ») était `ARTICLES.slice(0, 3)`, soit **les 3 articles les
+plus récents, identiques depuis les 11 pages**. Effet mesuré le 2026-08-19 : 4 articles ne
+recevaient aucun lien entrant interne, dont `cosmo-vs-todoist`, la page à intention commerciale.
+
+Chaque article porte maintenant un champ `related: [slug, slug, slug]`, résolu par
+`relatedArticles()` (`src/content/blog/index.mjs`) et consommé **aux deux endroits** :
+`BlogArticlePage.tsx` et `prerender.mjs`. Repli sur la récence si un slug devient inconnu.
+
+- ✅ Un nouvel article déclare ses `related` **et** se fait citer en corps de texte par au moins
+  deux articles existants. Un article qu'on publie sans toucher aux autres naît orphelin.
+- ✅ Le blog pointe vers les pages commerciales (`/pour-*`, `/entreprise-presentation`) : elles
+  ne recevaient aucun lien depuis les articles avant le 2026-08-19.
+- ❌ Ne pas recalculer la suite de lecture par date : c'est la version qu'on vient de retirer.
 
 ### Ouvrir une langue à l'indexation
 

@@ -8,6 +8,10 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 6,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['methode-okr-exemples', 'template-okr-gratuit', 'tableau-de-bord-productivite'],
   faq: [
     ['Peut-on utiliser OKR et KPI en même temps ?', "Oui, et c'est même la configuration idéale : les KPI surveillent la santé en continu, les OKR concentrent l'effort du trimestre sur ce qui doit changer. Quand un KPI se dégrade durablement, il devient candidat à un OKR."],
     ['Un objectif SMART peut-il servir de résultat clé ?', "En pratique, un bon résultat clé ressemble beaucoup à un objectif SMART : spécifique, mesurable, temporellement borné. L'OKR ajoute la couche qui manque au SMART isolé : l'ambition qualitative qui relie plusieurs mesures entre elles."],
@@ -52,7 +56,7 @@ export const article = {
 </ul>
 
 <h2 id="cosmo">Et concrètement ?</h2>
-<p>Dans <a href="/">Cosmo</a>, cette articulation est intégrée : vos <strong>OKR</strong> portent le cycle (progression calculée automatiquement à chaque mise à jour de résultat clé), les <strong>statistiques</strong> jouent le rôle de KPI (temps investi par module et par catégorie, semaine après semaine), et vos tâches quotidiennes se relient au tout via le <a href="/blog/time-blocking-guide">time-blocking</a>. <a href="/signup">Gratuit</a>, démo sans inscription.</p>
+<p>Dans <a href="/">Cosmo</a>, cette articulation est intégrée : vos <strong>OKR</strong> portent le cycle (progression calculée automatiquement à chaque mise à jour de résultat clé), les <strong>statistiques</strong> jouent le rôle de KPI (temps investi par module et par catégorie, semaine après semaine), et vos tâches quotidiennes se relient au tout via le <a href="/blog/time-blocking-guide">time-blocking</a>. En organisation, ces mêmes OKR se déclinent par équipe et par service dans l'<a href="/entreprise-presentation">espace entreprise</a>. <a href="/signup">Gratuit</a>, démo sans inscription.</p>
 
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Peut-on utiliser OKR et KPI en même temps ?</h3>

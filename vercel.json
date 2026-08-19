@@ -55,7 +55,13 @@
       ]
     },
     {
-      "source": "/en/(.*)",
+      "source": "/(en|es)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/(en|es)/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex" }
       ]

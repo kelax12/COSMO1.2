@@ -12,6 +12,10 @@ export const article = {
   datePublished: '2026-08-12',
   dateModified: '2026-08-12',
   readingMinutes: 8,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['combien-de-temps-prendre-habitude', 'tableau-de-bord-productivite', 'methode-okr-exemples'],
   faq: [
     ['Quel est le meilleur indicateur pour suivre une habitude ?', "Le taux de complétion sur une période glissante (4 à 12 semaines). Il tolère les jours manqués, contrairement au streak, et reflète la régularité réelle plutôt que la performance récente."],
     ['Le streak est-il utile ou contre-productif ?', "Les deux. Il motive tant qu'il monte, mais un streak cassé provoque souvent un abandon total, l'effet « tout ou rien ». Utilisez-le comme encouragement secondaire, jamais comme indicateur principal."],
@@ -58,7 +62,7 @@ export const article = {
 <li><strong>Ne jugez rien avant trois semaines.</strong> Les deux premières mesurent l'installation, pas l'habitude.</li>
 <li><strong>À la quatrième semaine, regardez le taux de complétion</strong> et ajustez une seule chose : la taille de l'habitude, ou son moment. Jamais les deux, sinon vous ne saurez pas ce qui a fonctionné.</li>
 </ol>
-<p>Sur la durée nécessaire avant qu'une habitude devienne automatique, l'article <a href="/blog/combien-de-temps-prendre-habitude">combien de temps pour ancrer une habitude</a> détaille ce que dit réellement la recherche, et pourquoi le chiffre de 21 jours est un mythe tenace.</p>
+<p>Sur la durée nécessaire avant qu'une habitude devienne automatique, l'article <a href="/blog/combien-de-temps-prendre-habitude">combien de temps pour ancrer une habitude</a> détaille ce que dit réellement la recherche, et pourquoi le chiffre de 21 jours est un mythe tenace. Sur un rythme scolaire, où le calendrier impose ses propres pics, la page <a href="/pour-etudiants">Cosmo pour les étudiants</a> montre la même mécanique appliquée aux révisions.</p>
 
 <h2 id="pratique">Le suivi des habitudes dans Cosmo</h2>
 <p>Dans <a href="/">Cosmo</a>, une habitude se crée avec sa fréquence (quotidienne, hebdomadaire ou jours précis) et se coche en un geste. Les trois indicateurs de cet article sont fournis d'office : heatmap 26 semaines, streak et taux de complétion sur la période choisie, avec le taux mis en avant plutôt que le streak, exactement pour la raison décrite plus haut.</p>

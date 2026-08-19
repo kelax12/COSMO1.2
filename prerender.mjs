@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ARTICLES } from './src/content/blog/index.mjs';
+import { ARTICLES, relatedArticles } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
 import {
   BCP47_TAG,
@@ -48,12 +48,31 @@ const SEO = Object.fromEntries(
 
 /** Méta d'une route dans une locale, ou `null` si non traduite. */
 const seoFor = (routeId, locale) => SEO[locale]?.[routeId] ?? null;
-// Date de build (YYYY-MM-DD) — injectée dans les JSON-LD (dateModified) et le
-// sitemap (lastmod) pour ne plus figer une date stale codée en dur.
+// Date de build — utilisée UNIQUEMENT là où « date du build » est la bonne
+// réponse : le `lastBuildDate` du flux RSS.
 const TODAY = new Date().toISOString().slice(0, 10);
 
+// ── Dates de contenu (`lastmod` du sitemap, `dateModified` des JSON-LD) ───
+//
+// 🔴 Ne JAMAIS y remettre la date du build. Un sitemap qui déclare « toutes
+// les pages ont changé aujourd'hui » à chaque déploiement apprend à Google à
+// ignorer le champ entièrement — et un `dateModified` en JSON-LD qui avance
+// sans que la copie bouge est un signal de fraîcheur artificielle.
+//
+// Les articles portent déjà leur `dateModified` (registre `ARTICLES`) et les
+// use-cases le leur (registre `USE_CASES`). Ne restent ici que les pages dont
+// le contenu prérendu vit dans CE fichier : à mettre à jour quand on retouche
+// leur copie, au même titre que le titre ou la meta description.
+const CONTENT_LASTMOD = {
+  site: '2026-08-17', // JSON-LD global (SoftwareApplication, Organization)
+  '/': '2026-08-17',
+  '/guide': '2026-08-02',
+  '/a-propos': '2026-08-03',
+  '/entreprise-presentation': '2026-08-17',
+};
+
 let html = readFileSync(join(DIST, 'index.html'), 'utf8');
-html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${TODAY}"`);
+html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${CONTENT_LASTMOD.site}"`);
 
 // ── FAQ ───────────────────────────────────────────────────────────────────
 // LUE dans le catalogue que rend l'application (`faq.q1…qN`), pas recopiée ici.
@@ -360,7 +379,7 @@ const ROUTES = [
         ${a.html}
         <h2>À lire ensuite</h2>
         <ul>
-          ${ARTICLES.filter((o) => o.slug !== a.slug).slice(0, 3).map((o) => `<li><a href="/blog/${o.slug}">${o.title}</a></li>`).join('\n          ')}
+          ${relatedArticles(a).map((o) => `<li><a href="/blog/${o.slug}">${o.title}</a></li>`).join('\n          ')}
         </ul>
         <p><a href="/blog">← Tous les articles</a> · <a href="/signup">Essayer Cosmo gratuitement</a></p>`,
     },
@@ -589,8 +608,11 @@ for (const locale of availableLocales(homeRoute)) {
   writeFileSync(join(DIST, localizePath('/', locale), 'index.html'), home, 'utf8');
 }
 
-// ── Sitemap : lastmod = date de build + URLs blog/à-propos générées ───────
+// ── Sitemap : lastmod = date de CONTENU + URLs blog/à-propos générées ─────
 const sitemapPath = join(DIST, 'sitemap.xml');
+
+/** La date de l'index du blog est celle de son article le plus récemment modifié. */
+const BLOG_LASTMOD = ARTICLES.reduce((max, a) => (a.dateModified > max ? a.dateModified : max), '');
 //
 // Une entrée par (chemin × locale publiée), chacune portant les `xhtml:link`
 // de TOUTES les versions du groupe, elle-même comprise. Google exige cette
@@ -611,7 +633,20 @@ const sitemapGroup = (path, alternates, lastmod, changefreq, priority) =>
 
 try {
   let sitemap = readFileSync(sitemapPath, 'utf8');
-  sitemap = sitemap.replace(/<lastmod>[\d-]+<\/lastmod>/g, `<lastmod>${TODAY}</lastmod>`);
+  // Les deux URLs du socle (`public/sitemap.xml`) reçoivent leur date de
+  // contenu, pas celle du build (cf. CONTENT_LASTMOD). Remplacement par
+  // index plutôt que par regex : une URL contient `/` et `.`, qu'il faudrait
+  // sinon échapper à la main dans le motif.
+  const stampLastmod = (xml, path, date) => {
+    const at = xml.indexOf(`<loc>${BASE}${path}</loc>`);
+    if (at === -1) return xml;
+    const open = xml.indexOf('<lastmod>', at);
+    const close = xml.indexOf('</lastmod>', open);
+    if (open === -1 || close === -1) return xml;
+    return xml.slice(0, open) + `<lastmod>${date}` + xml.slice(close);
+  };
+  sitemap = stampLastmod(sitemap, '/', CONTENT_LASTMOD['/']);
+  sitemap = stampLastmod(sitemap, '/guide', CONTENT_LASTMOD['/guide']);
 
   // Déclaration du namespace xhtml, requise dès qu'on émet des `xhtml:link`.
   if (!sitemap.includes('xmlns:xhtml')) {
@@ -631,23 +666,25 @@ try {
     sitemapGroup(
       '/entreprise-presentation',
       localesOf('/entreprise-presentation'),
-      TODAY,
+      CONTENT_LASTMOD['/entreprise-presentation'],
       'monthly',
       '0.9'
     ) +
-    sitemapGroup('/a-propos', localesOf('/a-propos'), TODAY, 'yearly', '0.5') +
-    sitemapGroup('/blog', localesOf('/blog'), TODAY, 'weekly', '0.8') +
+    sitemapGroup('/a-propos', localesOf('/a-propos'), CONTENT_LASTMOD['/a-propos'], 'yearly', '0.5') +
+    // L'index du blog change quand un article change : sa date EST la plus
+    // récente des `dateModified` du registre.
+    sitemapGroup('/blog', localesOf('/blog'), BLOG_LASTMOD, 'weekly', '0.8') +
     ARTICLES.map((a) =>
       sitemapGroup(`/blog/${a.slug}`, localesOf(`/blog/${a.slug}`), a.dateModified, 'monthly', '0.7')
     ).join('') +
     USE_CASES.map((u) =>
-      sitemapGroup(`/${u.slug}`, localesOf(`/${u.slug}`), TODAY, 'monthly', '0.7')
+      sitemapGroup(`/${u.slug}`, localesOf(`/${u.slug}`), u.dateModified, 'monthly', '0.7')
     ).join('');
 
   sitemap = sitemap.replace('</urlset>', `${generated}</urlset>`);
   writeFileSync(sitemapPath, sitemap, 'utf8');
   const urlCount = (generated.match(/<loc>/g) ?? []).length;
-  console.log(`  sitemap → lastmod ${TODAY} + ${urlCount} URLs générées (blog, à-propos, use-cases)`);
+  console.log(`  sitemap → ${urlCount} URLs générées (blog, à-propos, use-cases), lastmod = dates de contenu`);
 } catch (err) {
   console.warn(`  ⚠ dist/sitemap.xml non enrichi, ${err.message}`);
 }

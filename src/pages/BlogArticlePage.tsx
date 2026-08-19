@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
-import { ARTICLES, getArticle } from '@/content/blog/index.mjs';
+import { getArticle, relatedArticles } from '@/content/blog/index.mjs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
@@ -67,7 +67,7 @@ const BlogArticlePage: React.FC = () => {
         <nav aria-label="À lire ensuite" className="mt-16">
           <h2 className="text-lg font-bold text-white mb-4">{t('blog.readNext')}</h2>
           <div className="space-y-3">
-            {ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3).map((a) => (
+            {relatedArticles(article).map((a) => (
               <Link
                 key={a.slug}
                 to={`/blog/${a.slug}`}

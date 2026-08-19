@@ -11,6 +11,10 @@ export const article = {
   datePublished: '2026-08-12',
   dateModified: '2026-08-12',
   readingMinutes: 8,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['methode-okr-exemples', 'suivi-des-habitudes', 'cosmo-vs-todoist'],
   faq: [
     ['Quels indicateurs mettre dans un tableau de bord de productivité ?', "Six suffisent : les tâches terminées sur la période, le taux de complétion des habitudes, le temps réparti par catégorie, l'avancement des objectifs, la charge de la semaine à venir et le ratio planifié/réalisé. Au-delà, on regarde sans agir."],
     ['À quelle fréquence consulter son tableau de bord ?', "Une fois par semaine pour la revue, plus un coup d'œil quotidien de dix secondes sur la charge du jour. Le consulter en continu ne change aucune décision et coûte de l'attention."],
@@ -29,7 +33,7 @@ export const article = {
 <p>Pas le total historique : le volume de la semaine écoulée, comparé aux précédentes. C'est votre débit réel, et il sert à une chose précise : calibrer ce que vous vous engagez à faire la semaine suivante. Quelqu'un qui termine douze tâches par semaine et en planifie trente organise sa propre déception, chaque lundi.</p>
 
 <h3>2. Le taux de complétion des habitudes</h3>
-<p>Le pourcentage de fois où vous avez tenu vos routines sur la période. Sous 50 %, l'habitude est mal calibrée : trop ambitieuse, mal placée dans la journée, ou pas assez désirée. C'est un signal d'ajustement, pas un motif de culpabilité, et il vaut mieux le voir en semaine 3 qu'en mois 4. La <a href="/blog/combien-de-temps-prendre-habitude">durée réelle d'ancrage d'une habitude</a> rend ce suivi indispensable.</p>
+<p>Le pourcentage de fois où vous avez tenu vos routines sur la période. Sous 50 %, l'habitude est mal calibrée : trop ambitieuse, mal placée dans la journée, ou pas assez désirée. C'est un signal d'ajustement, pas un motif de culpabilité, et il vaut mieux le voir en semaine 3 qu'en mois 4. La <a href="/blog/combien-de-temps-prendre-habitude">durée réelle d'ancrage d'une habitude</a> rend ce suivi indispensable, et l'article <a href="/blog/suivi-des-habitudes">suivi des habitudes</a> détaille lequel des trois indicateurs mérite la première place.</p>
 
 <h3>3. Le temps réparti par catégorie</h3>
 <p>L'indicateur qui surprend le plus, systématiquement. Vous croyez consacrer vos journées à la production ; la répartition montre que l'administratif et les réunions en prennent la moitié. C'est le seul chiffre qui permet une conversation honnête avec soi-même sur la charge, et, pour un indépendant, la base d'une meilleure tarification.</p>
@@ -38,7 +42,7 @@ export const article = {
 <p>Si vous travaillez en <a href="/blog/methode-okr-exemples">OKR</a>, c'est la progression de chaque résultat clé. Sinon, une simple estimation par objectif. L'important est la <strong>trajectoire</strong> : à mi-trimestre, un objectif à 20 % n'est pas « en retard », il est en train d'être abandonné silencieusement. Le voir tôt laisse deux options : accélérer ou renoncer explicitement. Les deux valent mieux que la dérive.</p>
 
 <h3>5. La charge de la semaine à venir</h3>
-<p>Le nombre d'heures déjà engagées dans l'agenda face aux heures réellement disponibles. C'est le seul indicateur tourné vers l'avant, et donc le seul qui empêche un problème au lieu de le constater. Une semaine à 45 heures engagées sur 35 disponibles ne se règle pas par plus de discipline : elle se règle en retirant quelque chose, avant qu'elle ne commence.</p>
+<p>Le nombre d'heures déjà engagées dans l'agenda face aux heures réellement disponibles. C'est le seul indicateur tourné vers l'avant, et donc le seul qui empêche un problème au lieu de le constater. Une semaine à 45 heures engagées sur 35 disponibles ne se règle pas par plus de discipline : elle se règle en retirant quelque chose, avant qu'elle ne commence. Pour un <a href="/pour-managers">manager</a>, c'est le même indicateur appliqué à l'équipe : la charge se lit avant d'être subie, jamais après.</p>
 
 <h3>6. Le ratio planifié / réalisé</h3>
 <p>Sur les créneaux que vous aviez bloqués, combien ont été tenus ? Ce ratio mesure la qualité de votre planification, pas votre valeur. Durablement sous 60 %, il dit que vos blocs sont trop longs, trop optimistes, ou posés à des moments où vous n'êtes pas disponible. C'est le complément naturel du <a href="/blog/time-blocking-guide">time-blocking</a>.</p>
