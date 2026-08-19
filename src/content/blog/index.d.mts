@@ -8,6 +8,8 @@ export interface BlogArticle {
   datePublished: string;
   dateModified: string;
   readingMinutes: number;
+  /** Slugs de la suite de lecture, par proximité de sujet (maillage interne). */
+  related?: string[];
   /** Paires [question, réponse] — FAQPage JSON-LD généré par prerender.mjs */
   faq?: [string, string][];
   html: string;
@@ -15,3 +17,4 @@ export interface BlogArticle {
 
 export declare const ARTICLES: BlogArticle[];
 export declare const getArticle: (slug: string) => BlogArticle | undefined;
+export declare const relatedArticles: (article: BlogArticle, count?: number) => BlogArticle[];

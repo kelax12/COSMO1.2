@@ -10,6 +10,10 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 9,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['template-okr-gratuit', 'okr-vs-smart-vs-kpi', 'tableau-de-bord-productivite'],
   faq: [
     ['Combien d’OKR faut-il définir ?', '2 à 4 objectifs maximum par cycle, avec 2 à 5 résultats clés chacun. Moins vous en avez, plus la méthode fonctionne.'],
     ['Quelle durée pour un cycle OKR ?', 'Le trimestre est le standard. Pour des objectifs personnels, un cycle de 6 à 12 semaines fonctionne très bien aussi.'],
@@ -24,7 +28,7 @@ export const article = {
 <li><strong>L'Objectif (O)</strong> : une direction qualitative, ambitieuse et motivante. Il répond à la question « où veux-je aller ? ». Exemple : <em>« Devenir une référence dans mon domaine »</em>.</li>
 <li><strong>Les Résultats Clés (KR)</strong> : 2 à 5 mesures chiffrées qui prouvent que l'objectif est atteint. Ils répondent à « comment saurai-je que j'y suis ? ». Exemple : <em>« Publier 12 articles », « Atteindre 1 000 abonnés à la newsletter »</em>.</li>
 </ul>
-<p>La règle d'or : <strong>l'objectif inspire, les résultats clés mesurent</strong>. Si votre objectif contient un chiffre, c'est probablement un résultat clé déguisé. Si votre résultat clé n'est pas mesurable sans débat (« améliorer la qualité »), ce n'est pas un résultat clé.</p>
+<p>La règle d'or : <strong>l'objectif inspire, les résultats clés mesurent</strong>. Si votre objectif contient un chiffre, c'est probablement un résultat clé déguisé. Le vocabulaire du domaine (KR, KPI, deep work, time-blocking) est réuni dans notre <a href="/blog/glossaire-productivite">glossaire de la productivité</a> si un terme vous échappe. Si votre résultat clé n'est pas mesurable sans débat (« améliorer la qualité »), ce n'est pas un résultat clé.</p>
 
 <h2 id="origines">D'où vient la méthode OKR ?</h2>
 <p>La méthode naît chez <strong>Intel</strong> dans les années 1970, sous l'impulsion d'Andy Grove. John Doerr, alors jeune ingénieur chez Intel, l'importe chez <strong>Google en 1999</strong>, quand l'entreprise compte à peine 40 salariés. Larry Page attribuera aux OKR une partie de la capacité de Google à croître sans perdre le cap. Depuis, la méthode s'est diffusée bien au-delà de la tech, et elle fonctionne aussi très bien à l'échelle individuelle, pour structurer une année, un trimestre ou un projet personnel.</p>
@@ -73,6 +77,7 @@ export const article = {
 <p><strong>O :</strong> Construire une pratique créative régulière.<br><strong>KR1 :</strong> Publier 12 créations (une par semaine). <strong>KR2 :</strong> Suivre 1 cours ou tutoriel structuré jusqu'au bout. <strong>KR3 :</strong> Recevoir un feedback de 3 créateurs que j'admire.</p>
 
 <h2 id="exemples-pro">7 exemples d'OKR professionnels</h2>
+<p>Les exemples qui suivent se lisent seuls, mais ils prennent tout leur sens en collectif : voir comment ils se déclinent par service et par équipe est l'objet de la page <a href="/pour-equipes">Cosmo pour les équipes</a>.</p>
 
 <h3>9. Startup early-stage : trouver le product-market fit</h3>
 <p><strong>O :</strong> Prouver que le produit résout un vrai problème.<br><strong>KR1 :</strong> 40 % des utilisateurs actifs reviennent chaque semaine. <strong>KR2 :</strong> 25 interviews utilisateurs menées. <strong>KR3 :</strong> NPS supérieur à 40.</p>
@@ -105,7 +110,7 @@ export const article = {
 </ol>
 
 <h2 id="okr-smart">OKR, SMART, KPI : quelle différence ?</h2>
-<p>Les trois coexistent très bien : le <strong>KPI</strong> est un indicateur de santé permanent (le tableau de bord), l'objectif <strong>SMART</strong> est un but unique bien formulé, l'<strong>OKR</strong> est un système complet qui relie une ambition à ses preuves chiffrées sur un cycle court. En pratique : surveillez vos KPI en continu, et quand un KPI doit bouger significativement, transformez-le en OKR le temps d'un trimestre.</p>
+<p>Les trois coexistent très bien : le <strong>KPI</strong> est un indicateur de santé permanent (le tableau de bord), l'objectif <strong>SMART</strong> est un but unique bien formulé, l'<strong>OKR</strong> est un système complet qui relie une ambition à ses preuves chiffrées sur un cycle court. En pratique : surveillez vos KPI en continu, et quand un KPI doit bouger significativement, transformez-le en OKR le temps d'un trimestre. Le <a href="/blog/okr-vs-smart-vs-kpi">comparatif détaillé des trois méthodes</a> donne le tableau complet et la règle de choix.</p>
 
 <h2 id="demarrer">Suivre ses OKR sans tableur</h2>
 <p>Pour démarrer aujourd'hui, nous proposons un <a href="/blog/template-okr-gratuit">template OKR Excel gratuit</a> (exemples pré-remplis, progression automatique, sans email). Mais le vrai point de friction des OKR n'est pas l'écriture, c'est le <strong>suivi hebdomadaire</strong>. Un tableur fonctionne, mais personne ne l'ouvre. <a href="/">Cosmo</a> intègre les OKR nativement : vous créez vos objectifs et résultats clés, la progression se calcule automatiquement à mesure que vous mettez à jour vos KR, et le graphique du dashboard montre vos KR réalisés semaine après semaine, à côté de vos <a href="/guide">tâches, habitudes et agenda</a>, pour que le suivi se fasse au même endroit que l'action. <a href="/signup">C'est gratuit</a>, et le mode démo permet d'essayer avec 8 OKR pré-remplis, sans inscription.</p>

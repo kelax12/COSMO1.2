@@ -3,6 +3,8 @@
 export const USE_CASES = [
   {
     slug: 'pour-freelances',
+    // `lastmod` du sitemap : à bouger quand la copie de cette page change.
+    dateModified: '2026-08-16',
     audience: 'freelances',
     title: "L'application de productivité pensée pour les freelances",
     metaTitle: 'App de productivité freelance : tâches et objectifs',
@@ -34,6 +36,8 @@ export const USE_CASES = [
   },
   {
     slug: 'pour-etudiants',
+    // `lastmod` du sitemap : à bouger quand la copie de cette page change.
+    dateModified: '2026-08-16',
     audience: 'étudiants',
     title: "L'application de productivité gratuite pour les étudiants",
     metaTitle: 'App de productivité étudiant : révisions et deadlines',
@@ -66,6 +70,8 @@ export const USE_CASES = [
   },
   {
     slug: 'pour-managers',
+    // `lastmod` du sitemap : à bouger quand la copie de cette page change.
+    dateModified: '2026-08-16',
     audience: 'managers',
     title: "L'application de productivité pour managers et chefs d'équipe",
     metaTitle: 'App de productivité manager : OKR et priorités',
@@ -98,6 +104,8 @@ export const USE_CASES = [
   },
   {
     slug: 'pour-equipes',
+    // `lastmod` du sitemap : à bouger quand la copie de cette page change.
+    dateModified: '2026-08-16',
     audience: 'équipes',
     title: "L'application de gestion d'équipe pour les PME et les studios",
     metaTitle: "App de gestion d'équipe : projets, OKR et pilotage",

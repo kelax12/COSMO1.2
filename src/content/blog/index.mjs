@@ -30,3 +30,24 @@ export const ARTICLES = [
 ];
 
 export const getArticle = (slug) => ARTICLES.find((a) => a.slug === slug);
+
+/**
+ * Suite de lecture d'un article : ses `related` déclarés, dans l'ordre.
+ *
+ * Le maillage interne est la seule redistribution d'autorité qu'on contrôle.
+ * Il était auparavant calculé par récence (`ARTICLES.slice(0, 3)`), ce qui
+ * envoyait les MÊMES 3 liens depuis les 11 articles : 4 articles ne recevaient
+ * aucun lien entrant, dont `cosmo-vs-todoist`, la page à intention commerciale.
+ *
+ * Repli sur la récence si un slug est inconnu (article renommé ou retiré) —
+ * la suite de lecture ne doit jamais se vider en silence.
+ */
+export const relatedArticles = (article, count = 3) => {
+  const picked = (article.related ?? [])
+    .map((slug) => ARTICLES.find((a) => a.slug === slug))
+    .filter((a) => a && a.slug !== article.slug);
+  const fillers = ARTICLES.filter(
+    (a) => a.slug !== article.slug && !picked.some((p) => p.slug === a.slug)
+  );
+  return [...picked, ...fillers].slice(0, count);
+};

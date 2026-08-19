@@ -6,6 +6,8 @@ export interface UseCase {
   title: string;
   metaTitle: string;
   description: string;
+  /** Date de dernière modification du contenu (`lastmod` du sitemap). */
+  dateModified: string;
   lead: string;
   html: string;
 }

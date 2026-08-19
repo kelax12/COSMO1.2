@@ -8,6 +8,10 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 8,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['gestion-du-temps-efficace', 'matrice-eisenhower', 'suivi-des-habitudes'],
   faq: [
     ['Combien de temps faut-il pour prendre le pli du time-blocking ?', 'Comptez deux semaines de rodage : la première sert surtout à découvrir que vous sous-estimez vos durées.'],
     ['Le time-blocking fonctionne-t-il avec un métier fait d’imprévus ?', 'Oui, en inversant la logique : bloquez seulement 2-3 heures protégées par jour et laissez le reste ouvert.'],
@@ -38,13 +42,13 @@ export const article = {
 <h3>4. Gardez du vide</h3>
 <p>Laissez 20 à 30 % de la journée non bloquée. Les imprévus arriveront ; s'ils n'ont nulle part où aller, ils dévoreront vos blocs profonds. Un bloc « tampon » en fin d'après-midi absorbe les débordements.</p>
 <h3>5. Replanifiez sans culpabiliser</h3>
-<p>Un bloc raté ne se rattrape pas en « essayant plus fort » : il se replanifie, comme on déplace un rendez-vous. La révision de 5 minutes en fin de journée (qu'est-ce qui saute, qu'est-ce qui bouge ?) fait partie de la méthode.</p>
+<p>Un bloc raté ne se rattrape pas en « essayant plus fort » : il se replanifie, comme on déplace un rendez-vous. La révision de 5 minutes en fin de journée (qu'est-ce qui saute, qu'est-ce qui bouge ?) fait partie de la méthode. Le time-blocking n'est d'ailleurs qu'un des sept principes d'une <a href="/blog/gestion-du-temps-efficace">gestion du temps efficace</a> : c'est celui qui rend les six autres applicables.</p>
 
 <h2 id="variantes">Les 3 variantes utiles</h2>
 <h3>Le task batching</h3>
 <p>Regrouper les tâches de même nature dans un même bloc (toutes les factures, tous les appels). Réduit le coût de changement de contexte à presque zéro.</p>
 <h3>Le day theming</h3>
-<p>Donner un thème à chaque journée : lundi produit, mardi clients, mercredi contenu… Idéal pour les fondateurs et freelances qui portent plusieurs casquettes.</p>
+<p>Donner un thème à chaque journée : lundi produit, mardi clients, mercredi contenu… Idéal pour les fondateurs et <a href="/pour-freelances">freelances</a> qui portent plusieurs casquettes.</p>
 <h3>Le time-boxing</h3>
 <p>La version « contrat » : le bloc a une fin ferme, et à la fin du temps, on s'arrête, terminé ou pas. Parfait pour les tâches qui n'ont pas de fin naturelle (veille, peaufinage, recherche).</p>
 
@@ -73,7 +77,7 @@ export const article = {
 </ol>
 
 <h2 id="outils">Quel outil pour time-blocker ?</h2>
-<p>Papier, Google Calendar, tout fonctionne, tant que la friction reste basse. C'est précisément le point faible du duo « todo-list + agenda séparés » : recopier chaque tâche dans le calendrier, deux fois par jour, tous les jours.</p>
+<p>Papier, Google Calendar, tout fonctionne, tant que la friction reste basse. C'est précisément le point faible du duo « todo-list + agenda séparés » : recopier chaque tâche dans le calendrier, deux fois par jour, tous les jours. Si votre hésitation porte justement sur ce point, notre <a href="/blog/cosmo-vs-todoist">comparatif Cosmo / Todoist</a> en fait son angle principal.</p>
 <p>Dans <a href="/">Cosmo</a>, le time-blocking est natif : vos tâches s'affichent dans un panneau à côté du calendrier, et <strong>glisser une tâche sur un créneau crée l'événement lié</strong> (durée, catégorie et couleur incluses). La tâche terminée met à jour vos statistiques de temps investi, et si elle nourrit un <a href="/blog/methode-okr-exemples">OKR</a>, la progression suit. Planifier sa journée prend deux minutes, <a href="/signup">gratuitement</a>, et la démo s'essaie sans inscription.</p>
 
 <h2 id="faq">Questions fréquentes</h2>

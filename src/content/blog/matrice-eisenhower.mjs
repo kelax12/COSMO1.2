@@ -8,6 +8,10 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 7,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['gestion-du-temps-efficace', 'time-blocking-guide', 'glossaire-productivite'],
   faq: [
     ['Quelle est la différence entre urgent et important ?', "Urgent = exige une action immédiate (une deadline, un appel). Important = contribue à vos objectifs de fond. Une tâche peut être l'un, l'autre, les deux ou aucun des deux, d'où les 4 quadrants."],
     ['Que faire des tâches ni urgentes ni importantes ?', "Les supprimer, ou les assumer comme du loisir choisi. Le piège n'est pas de se détendre, c'est de traiter ces tâches comme du travail."],
@@ -32,7 +36,7 @@ export const article = {
 <h3>Q2 : important, pas urgent, planifier</h3>
 <p>La prospection, la formation, le sport, la stratégie, les relations, la prévention. <strong>C'est le quadrant où se joue votre trajectoire</strong>, et c'est mécaniquement celui qu'on sacrifie, puisque rien n'y crie. La seule protection efficace : donner à ces tâches un créneau dans l'agenda, exactement ce que fait le <a href="/blog/time-blocking-guide">time-blocking</a>.</p>
 <h3>Q3 : urgent, pas important, déléguer ou réduire</h3>
-<p>La plupart des interruptions, une partie des réunions et des emails : urgent pour quelqu'un d'autre, pas pour vos objectifs. Déléguez quand c'est possible ; sinon, regroupez (traiter les emails en 2 blocs par jour plutôt qu'en continu) et apprenez le non poli.</p>
+<p>La plupart des interruptions, une partie des réunions et des emails : urgent pour quelqu'un d'autre, pas pour vos objectifs. Déléguez quand c'est possible, c'est le quotidien d'un <a href="/pour-managers">manager d'équipe</a> ; sinon, regroupez (traiter les emails en 2 blocs par jour plutôt qu'en continu) et apprenez le non poli.</p>
 <h3>Q4 : ni urgent ni important, supprimer</h3>
 <p>Le scroll par défaut, les réunions sans ordre du jour où votre présence n'apporte rien, le perfectionnisme sur des détails invisibles. À supprimer sans culpabilité, ou à assumer comme du vrai repos choisi, ce qui est différent.</p>
 
@@ -40,7 +44,7 @@ export const article = {
 <p>L'erreur n'est pas de mal classer : c'est de laisser l'urgence décider. Une journée pilotée par les notifications se passe intégralement dans Q1 et Q3 : on éteint des feux et on répond aux urgences des autres, avec le sentiment d'avoir été débordé et l'impression de n'avoir rien avancé. Les deux antidotes :</p>
 <ol>
 <li><strong>Classer le matin, pas en continu.</strong> 5 minutes pour trier la liste du jour avant d'ouvrir la boîte mail. Après, il est trop tard, l'urgence a pris la main.</li>
-<li><strong>Protéger Q2 physiquement.</strong> Une tâche Q2 sans créneau réservé perdra toujours contre une urgence Q3. La matrice classe ; l'agenda protège.</li>
+<li><strong>Protéger Q2 physiquement.</strong> Une tâche Q2 sans créneau réservé perdra toujours contre une urgence Q3. La matrice classe ; l'agenda protège. C'est le quatrième des sept principes d'une <a href="/blog/gestion-du-temps-efficace">gestion du temps efficace</a> : ce qui n'a pas de créneau n'existe pas.</li>
 </ol>
 
 <h2 id="important">« Important » par rapport à quoi ?</h2>

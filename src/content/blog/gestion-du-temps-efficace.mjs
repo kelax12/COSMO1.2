@@ -12,6 +12,10 @@ export const article = {
   datePublished: '2026-08-12',
   dateModified: '2026-08-12',
   readingMinutes: 9,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['time-blocking-guide', 'matrice-eisenhower', 'cosmo-vs-todoist'],
   faq: [
     ['Quelle est la méthode de gestion du temps la plus efficace ?', "Celle que vous tenez trois mois. En pratique, la combinaison qui résiste le mieux est : une liste unique, un arbitrage explicite des priorités, et des créneaux réservés dans l'agenda pour ce qui compte vraiment."],
     ['Comment gérer son temps quand tout est urgent ?', "Tout ne peut pas être urgent : c'est presque toujours le symptôme d'une absence d'arbitrage. Classez sur deux axes (urgent / important), traitez le quadrant 1, et surtout réservez un créneau pour le quadrant 2, c'est lui qui produit les urgences de la semaine prochaine."],
@@ -26,7 +30,7 @@ export const article = {
 
 <h2 id="liste-unique">2. Une seule liste, pas quatre</h2>
 <p>Des tâches dans un carnet, d'autres dans les emails non lus, d'autres encore dans des messages qu'on se laisse à soi-même : la charge mentale ne vient pas du volume de travail, elle vient de l'incertitude sur ce qu'on a oublié. Tant que la liste n'est pas unique, une partie de votre attention reste occupée à surveiller les autres.</p>
-<p>Le regroupement compte plus que l'outil choisi. Une seule liste sur papier bat trois applications parfaites.</p>
+<p>Le regroupement compte plus que l'outil choisi. Une seule liste sur papier bat trois applications parfaites. Si le choix de l'outil vous bloque malgré tout, le <a href="/blog/cosmo-vs-todoist">comparatif Cosmo / Todoist</a> pose les critères qui comptent vraiment.</p>
 
 <h2 id="arbitrer">3. Arbitrer explicitement, pas au feeling</h2>
 <p>Sans critère écrit, « prioriser » revient à traiter ce qui crie le plus fort. Deux questions suffisent pour chaque tâche : <strong>est-ce urgent ?</strong> et <strong>est-ce important ?</strong>, c'est la <a href="/blog/matrice-eisenhower">matrice Eisenhower</a>, et son intérêt n'est pas le classement en lui-même mais le fait de forcer la question « important par rapport à quoi ? ».</p>
@@ -58,7 +62,7 @@ export const article = {
 <p>Sans ce rendez-vous, un système d'organisation dérive en quelques semaines sans que personne ne s'en aperçoive, parce que rien, dans une semaine ordinaire, ne vous force à lever la tête.</p>
 
 <h2 id="pratique">Mettre les 7 principes en place concrètement</h2>
-<p>Aucun de ces principes n'exige un outil particulier ; tous exigent que les données soient au même endroit. C'est ce qui rend l'empilement d'applications coûteux : la revue hebdomadaire devient un travail de collecte, donc elle saute.</p>
+<p>Aucun de ces principes n'exige un outil particulier ; tous exigent que les données soient au même endroit. C'est ce qui rend l'empilement d'applications coûteux : la revue hebdomadaire devient un travail de collecte, donc elle saute. Les <a href="/pour-freelances">freelances</a> le vivent plus durement que les autres : personne d'autre ne tiendra le cadre à leur place. Et si un terme croisé ici vous est étranger, le <a href="/blog/glossaire-productivite">glossaire de la productivité</a> les définit tous.</p>
 <p><a href="/">Cosmo</a> a été construit sur cette contrainte : une liste unique avec priorités et catégories, un agenda qui accepte le glisser-déposer des tâches pour le time-blocking, des habitudes pour ce qui doit devenir automatique, des <a href="/blog/methode-okr-exemples">OKR</a> pour définir ce que « important » veut dire ce trimestre, et un <a href="/blog/tableau-de-bord-productivite">tableau de bord</a> qui rend la revue du vendredi possible en quinze minutes, sans ressaisie. <a href="/signup">Gratuit</a>, démo accessible sans inscription.</p>
 
 <h2 id="faq">Questions fréquentes</h2>

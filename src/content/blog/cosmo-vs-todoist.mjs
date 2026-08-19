@@ -9,6 +9,10 @@ export const article = {
   datePublished: '2026-07-18',
   dateModified: '2026-07-18',
   readingMinutes: 7,
+  // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
+  // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
+  // laissait 4 d'entre eux sans aucun lien entrant interne.
+  related: ['gestion-du-temps-efficace', 'methode-okr-exemples', 'time-blocking-guide'],
   html: `
 <p class="lead">Todoist est probablement le gestionnaire de tâches le plus abouti du marché : 18 ans d'existence, des applications natives partout, une saisie en langage naturel redoutable. Alors pourquoi comparer ? Parce que la question n'est pas « quelle est la meilleure todo-list ? » mais « <strong>de quoi votre organisation a-t-elle besoin ?</strong> ». Si la réponse inclut le suivi d'habitudes, le time-blocking ou des objectifs mesurables, le match devient intéressant. Comparatif honnête, point par point.</p>
 
@@ -66,10 +70,10 @@ export const article = {
 <h3>Vous fixez des objectifs trimestriels (perso ou pro)</h3>
 <p><strong>Cosmo.</strong> Todoist n'a tout simplement pas cette brique.</p>
 <h3>Votre équipe entière doit collaborer sur des projets</h3>
-<p><strong>Todoist</strong> pour la collaboration lourde et les intégrations ; Cosmo suffit pour du partage de tâches à deux ou trois.</p>
+<p><strong>Todoist</strong> pour la collaboration lourde et les intégrations ; Cosmo suffit pour du partage de tâches à deux ou trois, et va plus loin dès qu'il s'agit d'objectifs partagés, comme le montre la page <a href="/pour-equipes">Cosmo pour les équipes</a>.</p>
 
 <h2 id="migration">Passer de Todoist à Cosmo</h2>
-<p>Pas d'import automatique à ce jour, mais c'est l'occasion de faire le tri : recopiez uniquement vos tâches réellement actives (rarement plus de 20), recréez vos projets en catégories colorées, puis ajoutez ce que Todoist ne portait pas : 2-3 habitudes et un premier OKR de trimestre. Le <a href="/guide">guide d'utilisation</a> couvre la prise en main complète en dix minutes.</p>
+<p>Pas d'import automatique à ce jour, mais c'est l'occasion de faire le tri : recopiez uniquement vos tâches réellement actives (rarement plus de 20), recréez vos projets en catégories colorées, puis ajoutez ce que Todoist ne portait pas : 2-3 habitudes et un premier OKR de trimestre. Le <a href="/guide">guide d'utilisation</a> couvre la prise en main complète en dix minutes. Si vous travaillez à votre compte, la page <a href="/pour-freelances">Cosmo pour les freelances</a> montre ce même flux appliqué à un portefeuille de clients.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 <p>Todoist est un excellent outil, et si votre besoin s'arrête aux tâches, gardez-le. Mais si votre organisation ressemble à « une todo-list + une app d'habitudes + un agenda + un tableur d'objectifs », alors le vrai sujet n'est pas de choisir la meilleure todo-list : c'est d'arrêter de payer la friction entre quatre outils. C'est exactement le pari de Cosmo, et vous pouvez le vérifier en deux minutes, <a href="/signup">gratuitement et sans carte bancaire</a>.</p>

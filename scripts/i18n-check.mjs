@@ -156,31 +156,70 @@ if (existsSync(SEO_URLS_MODULE) && existsSync(VERCEL_JSON)) {
     }
 
     if (vercel) {
-      /** Locales couvertes par une règle noindex « pleine » (`/xx/(.*)`). */
-      const noindexed = new Set();
+      // Une locale n'est réellement protégée que si DEUX URLs le sont :
+      // le sous-arbre (`/en/quelque-chose`) ET la racine (`/en`, sans barre
+      // oblique finale). La règle historique `/en/(.*)` ne couvrait que le
+      // premier cas : `https://thecosmo.app/en` — soit l'accueil anglais, la
+      // page la plus susceptible d'être liée — sortait sans `noindex`, et ce
+      // contrôle ne le voyait pas. Les deux moitiés sont désormais exigées.
+      const noindexedSubtree = new Set();
+      const noindexedRoot = new Set();
+
+      /** Locales listées par une source, qu'elle soit `/en…` ou `/(en|es)…`. */
+      const localesOfSource = (prefix) => {
+        const group = /^\/\(([a-z|]+)\)$/.exec(prefix);
+        if (group) return group[1].split('|').filter(Boolean);
+        const single = /^\/([a-z]{2})$/.exec(prefix);
+        return single ? [single[1]] : [];
+      };
+
       for (const entry of vercel.headers ?? []) {
         const isNoindex = (entry.headers ?? []).some(
           (h) => h.key?.toLowerCase() === 'x-robots-tag' && /noindex/i.test(h.value ?? '')
         );
         if (!isNoindex) continue;
-        const match = /^\/([a-z]{2})\/\(\.\*\)$/.exec(entry.source ?? '');
-        if (match) noindexed.add(match[1]);
+        const source = entry.source ?? '';
+
+        // `/xx(/.*)?` ou `/(xx|yy)(/.*)?` : couvre racine ET sous-arbre.
+        const both = /^(.*?)\(\/\.\*\)\?$/.exec(source);
+        if (both) {
+          for (const l of localesOfSource(both[1])) {
+            noindexedRoot.add(l);
+            noindexedSubtree.add(l);
+          }
+          continue;
+        }
+        // `/xx/(.*)` ou `/(xx|yy)/(.*)` : sous-arbre seulement.
+        const subtree = /^(.*?)\/\(\.\*\)$/.exec(source);
+        if (subtree) {
+          for (const l of localesOfSource(subtree[1])) noindexedSubtree.add(l);
+          continue;
+        }
+        // `/xx` ou `/(xx|yy)` : racine seulement.
+        for (const l of localesOfSource(source)) noindexedRoot.add(l);
       }
 
       for (const locale of supportedLocales) {
         if (locale === REFERENCE_LOCALE) continue;
         const isIndexable = indexable.includes(locale);
-        if (isIndexable && noindexed.has(locale)) {
+        if (isIndexable && (noindexedSubtree.has(locale) || noindexedRoot.has(locale))) {
           err(
             VERCEL_JSON,
-            `\`${locale}\` est indexable mais garde un noindex sur /${locale}/(.*) — retirer la règle`
+            `\`${locale}\` est indexable mais garde un noindex sur /${locale} — retirer la règle`
           );
         }
-        if (!isIndexable && !noindexed.has(locale)) {
+        if (!isIndexable && !noindexedSubtree.has(locale)) {
           err(
             VERCEL_JSON,
             `\`${locale}\` est servie sans être indexable et SANS noindex sur /${locale}/(.*) — ` +
               `Google indexerait du contenu non traduit`
+          );
+        }
+        if (!isIndexable && !noindexedRoot.has(locale)) {
+          err(
+            VERCEL_JSON,
+            `\`${locale}\` est servie sans être indexable et SANS noindex sur /${locale} ` +
+              `(sans barre oblique finale) — c'est l'URL de son accueil, la plus exposée`
           );
         }
       }
