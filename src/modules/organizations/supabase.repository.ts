@@ -218,6 +218,21 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (error) throw normalizeApiError(error);
   }
 
+  async getPendingSentInvitationIds(orgId: string): Promise<string[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const uid = await getCurrentUserId();
+    if (!uid) return [];
+    const { data, error } = await supabase
+      .from('org_invitations')
+      .select('invitee_id')
+      .eq('org_id', orgId)
+      .eq('inviter_id', uid)
+      .is('accepted_at', null)
+      .is('declined_at', null);
+    if (error) throw normalizeApiError(error);
+    return (data as { invitee_id: string }[]).map((r) => r.invitee_id);
+  }
+
   async getMyOrgInvitations(): Promise<OrgInvitation[]> {
     if (!supabase) throw new Error("Supabase not configured");
     // RPC SECURITY DEFINER : le nom d une organisation n est PAS lisible par

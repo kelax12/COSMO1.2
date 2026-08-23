@@ -29,4 +29,6 @@ export const orgKeys = {
   myInvitations: () => [...orgKeys.all, 'myInvitations'] as const,
   /** Retraits d'entreprise non acquittes (boite de reception). */
   myRemovalNotices: () => [...orgKeys.all, 'myRemovalNotices'] as const,
+  /** Amis que j'ai invités dans cette org, invitation encore en attente. */
+  pendingSentInvitations: (orgId: string) => [...orgKeys.all, 'pendingSentInvitations', orgId] as const,
 };

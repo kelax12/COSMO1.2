@@ -20,7 +20,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { useFriends } from '@/modules/friends';
-import { useInviteFriendToOrg, useOrgMembers } from '@/modules/organizations';
+import { useInviteFriendToOrg, useOrgMembers, usePendingSentInvitations } from '@/modules/organizations';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useT } from '@/i18n/useT';
 
@@ -35,6 +35,8 @@ const InviteFriendsToOrg: React.FC<InviteFriendsToOrgProps> = ({ orgId, variant 
   const isDemo = useIsDemo();
   const { data: friends = [] } = useFriends();
   const { data: members = [] } = useOrgMembers(orgId);
+  const { data: pendingIds = [] } = usePendingSentInvitations(orgId);
+  const pendingSet = new Set(pendingIds);
   const inviteMutation = useInviteFriendToOrg();
 
   // Contacts invitables : ceux dont on connaît l'auth.uid (la RPC en a besoin)
@@ -63,33 +65,44 @@ const InviteFriendsToOrg: React.FC<InviteFriendsToOrgProps> = ({ orgId, variant 
             {t('inviteJoin.inviteHint')}
           </p>
           <ul className="flex flex-col gap-1.5 max-h-60 overflow-y-auto">
-            {invitable.map((friend) => (
-              <li key={friend.id}>
-                <div className="flex items-center gap-2.5 rounded-xl border border-[rgb(var(--color-border))] px-3 py-2">
-                  <span className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-xs font-semibold text-[rgb(var(--color-text-secondary))] shrink-0 overflow-hidden">
-                    {friend.avatar
-                      ? <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
-                      : (friend.name || friend.email || '?').slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className="flex-1 min-w-0 text-xs text-[rgb(var(--color-text-primary))] truncate">
-                    {friend.name || friend.email}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      inviteMutation.mutate({ orgId, friendUserId: friend.userId as string })
-                    }
-                    disabled={inviteMutation.isPending}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-colors shrink-0"
-                  >
-                    {inviteMutation.isPending && (
-                      <Loader2 size={13} className="animate-spin" aria-hidden="true" />
-                    )}
-                    {t('inviteJoin.inviteCta')}
-                  </button>
-                </div>
-              </li>
-            ))}
+            {invitable.map((friend) => {
+              // Invitation déjà envoyée, ni acceptée ni refusée : le bouton
+              // « Inviter » identique à un ami jamais sollicité laissait
+              // croire qu'on pouvait relancer indéfiniment sans effet visible.
+              const isPending = !!friend.userId && pendingSet.has(friend.userId);
+              return (
+                <li key={friend.id}>
+                  <div className="flex items-center gap-2.5 rounded-xl border border-[rgb(var(--color-border))] px-3 py-2">
+                    <span className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-xs font-semibold text-[rgb(var(--color-text-secondary))] shrink-0 overflow-hidden">
+                      {friend.avatar
+                        ? <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
+                        : (friend.name || friend.email || '?').slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="flex-1 min-w-0 text-xs text-[rgb(var(--color-text-primary))] truncate">
+                      {friend.name || friend.email}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        inviteMutation.mutate({ orgId, friendUserId: friend.userId as string })
+                      }
+                      disabled={inviteMutation.isPending || isPending}
+                      aria-label={isPending ? t('inviteJoin.inviteCtaPendingAria', { name: friend.name || friend.email || '' }) : undefined}
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors shrink-0 ${
+                        isPending
+                          ? 'bg-[rgb(var(--color-accent-solid))]/20 text-[rgb(var(--color-text-muted))] cursor-default'
+                          : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40'
+                      }`}
+                    >
+                      {inviteMutation.isPending && (
+                        <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                      )}
+                      {isPending ? t('inviteJoin.inviteCtaPending') : t('inviteJoin.inviteCta')}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
