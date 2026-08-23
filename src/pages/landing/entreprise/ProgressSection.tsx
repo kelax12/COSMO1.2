@@ -2,6 +2,7 @@ import React from 'react';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import AppShot from './AppShot';
+import ScrollHighlight from './ScrollHighlight';
 import StepSection from './StepSection';
 import { SHOTS } from './data';
 
@@ -55,7 +56,7 @@ const ProgressSection: React.FC = () => {
         <div>
           <h3 className="mb-2 text-lg font-semibold text-white">{t('enterprise.progress.overviewTitle')}</h3>
           <p className="text-sm leading-relaxed text-slate-400">
-            {t('enterprise.progress.overviewBody')}
+            <ScrollHighlight text={t('enterprise.progress.overviewBody')} />
           </p>
         </div>
         <div className="aspect-[16/10]">

@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import CardSwap, { Card } from '@/components/reactbits/CardSwap';
 import AppShot from './AppShot';
+import ScrollHighlight from './ScrollHighlight';
 import { HERO_SHOTS } from './data';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -150,7 +151,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
               data-ent-hero-fade
               className="mb-10 max-w-xl text-base leading-relaxed text-slate-400 lg:text-lg"
             >
-              {t('enterprise.hero.subtitle')}
+              <ScrollHighlight text={t('enterprise.hero.subtitle')} />
             </p>
 
             <div data-ent-hero-fade className="flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row">

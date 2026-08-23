@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import ScrollHighlight from './ScrollHighlight';
 
 // Pas de pictogramme décoratif : une icône générique posée en tête de carte ne
 // dit rien que le titre ne dise déjà, et c'est le tic visuel qui fait lire une
@@ -52,7 +53,9 @@ const ProblemSection: React.FC = () => {
           {PROBLEMS.map(({ titleKey, bodyKey }) => (
             <article key={titleKey} className="problem-card bg-[#0A0C11] p-7 lg:p-9">
               <h3 className="mb-3 text-lg font-semibold text-white">{t(titleKey)}</h3>
-              <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
+              <p className="text-sm leading-relaxed text-slate-500">
+                <ScrollHighlight text={t(bodyKey)} />
+              </p>
             </article>
           ))}
         </div>

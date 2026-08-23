@@ -300,7 +300,7 @@
       "line1": "Pilotez",
       "line2": "votre entreprise",
       "line3": "avec facilité.",
-      "subtitle": "Cosmo Entreprise se met en place en quatre étapes : vous invitez votre équipe, vous créez vos projets, vous posez vos objectifs, vous suivez la progression. Et chaque collaborateur garde le Cosmo personnel qu'il utilise déjà.",
+      "subtitle": "Cosmo Entreprise se met en place en <hl>quatre étapes</hl> : vous invitez votre équipe, vous créez vos projets, vous posez vos objectifs, vous suivez la progression. Et chaque collaborateur garde <hl>le Cosmo personnel</hl> qu'il utilise déjà.",
       "cta": "Ouvrir la démo entreprise",
       "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
       "ctaSecondary": "Voir les tarifs",
@@ -310,11 +310,11 @@
     "problem": {
       "title": "Trois raisons pour lesquelles vos outils d'équipe ne tiennent pas.",
       "p1t": "Ils sont plats",
-      "p1d": "Un tableau partagé ne sait pas qui manage qui. Alors on rejoue la hiérarchie à la main, en droits d'accès, et elle est fausse dès la première réorganisation.",
+      "p1d": "Un tableau partagé ne sait pas qui manage qui. Alors on rejoue <hl>la hiérarchie à la main</hl>, en droits d'accès, et elle est fausse dès la première réorganisation.",
       "p2t": "Ils arrivent en trop",
-      "p2d": "Le énième espace collaboratif ne sera pas ouvert le lundi matin. L'adoption ne se décrète pas en réunion de lancement.",
+      "p2d": "Le énième espace collaboratif ne sera pas ouvert le lundi matin. <hl>L'adoption ne se décrète pas</hl> en réunion de lancement.",
       "p3t": "Ils comptent trop tard",
-      "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est trop tard pour la rééquilibrer."
+      "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est <hl>trop tard pour la rééquilibrer</hl>."
     },
     "pyramid": {
       "title": "Invitez votre équipe. L'organigramme se dessine tout seul.",
@@ -392,7 +392,7 @@
       "p3t": "Temps investi",
       "p3d": "Le temps estimé sur les tâches terminées, agrégé par équipe et par projet. De quoi arbitrer, pas de quoi classer.",
       "overviewTitle": "Et tous les matins, l'aperçu",
-      "overviewBody": "L'écran d'accueil de l'espace entreprise : vos tâches assignées, vos échéances, et ce qui vient de bouger chez vos équipes. C'est là que la journée commence."
+      "overviewBody": "L'écran d'accueil de l'espace entreprise : vos tâches assignées, vos échéances, et ce qui vient de bouger chez vos équipes. C'est là que <hl>la journée commence</hl>."
     },
     "security": {
       "title": "Les questions qu'on vous posera en comité.",
