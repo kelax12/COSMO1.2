@@ -300,7 +300,7 @@
       "line1": "Run",
       "line2": "your business",
       "line3": "with ease.",
-      "subtitle": "Cosmo for companies sets up in four steps: invite your team, create your projects, set your objectives, track the progress. And every collaborator keeps the personal Cosmo they already use.",
+      "subtitle": "Cosmo for companies sets up in <hl>four steps</hl>: invite your team, create your projects, set your objectives, track the progress. And every collaborator keeps <hl>the personal Cosmo</hl> they already use.",
       "cta": "Open the company demo",
       "ctaAria": "Open the company mode demonstration, no sign-up",
       "ctaSecondary": "See pricing",
@@ -310,11 +310,11 @@
     "problem": {
       "title": "Three reasons your team tools never stick.",
       "p1t": "They are flat",
-      "p1d": "A shared board has no idea who reports to whom. So the hierarchy gets replayed by hand, as access rights, and it is wrong the day after the first reorg.",
+      "p1d": "A shared board has no idea who reports to whom. So <hl>the hierarchy gets replayed by hand</hl>, as access rights, and it is wrong the day after the first reorg.",
       "p2t": "They are one tool too many",
-      "p2d": "Yet another collaborative space will not be opened on Monday morning. Adoption is not decided in a kick-off meeting.",
+      "p2d": "Yet another collaborative space will not be opened on Monday morning. <hl>Adoption is not decided</hl> in a kick-off meeting.",
       "p3t": "They count too late",
-      "p3d": "An overloaded team is discovered in a steering meeting, at the exact moment when it is too late to rebalance."
+      "p3d": "An overloaded team is discovered in a steering meeting, at the exact moment when <hl>it is too late to rebalance</hl>."
     },
     "pyramid": {
       "title": "Invite your team. The org chart draws itself.",
@@ -392,7 +392,7 @@
       "p3t": "Time invested",
       "p3d": "Estimated time on completed tasks, aggregated per team and per project. Enough to arbitrate, not to rank.",
       "overviewTitle": "And every morning, the overview",
-      "overviewBody": "The home screen of the company space: your assigned tasks, your deadlines, and what just moved across your teams. That is where the day starts."
+      "overviewBody": "The home screen of the company space: your assigned tasks, your deadlines, and what just moved across your teams. That is where <hl>the day starts</hl>."
     },
     "security": {
       "title": "The questions your committee will ask.",
