@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check } from 'lucide-react';
+import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { OrgMember } from '@/modules/organizations';
@@ -14,6 +14,27 @@ import TeamSubtasksSection from './TeamSubtasksSection';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
+
+/**
+ * Emplacement des commentaires tant que la tâche n'existe pas encore — un
+ * commentaire référence `taskId` (mig. 082), impossible avant le premier
+ * enregistrement. Affiché à la même place que `TaskCommentsSection` pour que
+ * le panneau ne saute pas de position une fois la tâche créée.
+ */
+const CommentsPlaceholder = () => {
+  const { t } = useT('org');
+  return (
+    <div className="flex flex-col h-full min-h-0 border-t pt-4 mt-5" style={{ borderColor: 'rgb(var(--color-border))' }}>
+      <h3 className="flex items-center gap-2 text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+        <MessageSquare size={15} aria-hidden="true" />
+        Commentaires
+      </h3>
+      <p className="text-xs py-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        {t('comments.saveFirst')}
+      </p>
+    </div>
+  );
+};
 
 interface TeamTaskModalProps {
   /** Tâche à éditer — absente en création. */
@@ -453,11 +474,19 @@ const TeamTaskModal = ({
             </div>
           )}
 
-          {/* Commentaires (reco #9) — édition uniquement (la tâche existe),
-              et seulement en dessous de `lg` : au-delà, le panneau de droite
-              les affiche déjà en permanence. */}
-          {!isCreating && task && !isWide && (
-            <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
+          {/* Commentaires (reco #9) — visible dès la CRÉATION (placeholder tant
+              que la tâche n'existe pas), pas seulement en édition : le panneau
+              assignés (à gauche) est déjà présent en création, cacher celui-ci
+              rendait la mise en page asymétrique et laissait croire que les
+              commentaires n'existaient qu'en modification. Seulement en
+              dessous de `lg` : au-delà, le panneau de droite les affiche déjà
+              en permanence. */}
+          {!isWide && (
+            task ? (
+              <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
+            ) : (
+              <CommentsPlaceholder />
+            )
           )}
         </div>
 
@@ -510,12 +539,17 @@ const TeamTaskModal = ({
         </div>
       </div>
 
-        {/* Panneau droit : commentaires — édition uniquement (la tâche existe
-            déjà) : en création, il n'y a encore rien à commenter. */}
-        {isWide && !isCreating && task && (
+        {/* Panneau droit : commentaires — visible dès la CRÉATION (placeholder
+            tant que la tâche n'existe pas) pour rester symétrique avec le
+            panneau assignés à gauche, déjà présent en création. */}
+        {isWide && (
           <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 flex flex-col flex-1 min-h-0">
-              <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
+              {task ? (
+                <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
+              ) : (
+                <CommentsPlaceholder />
+              )}
             </div>
           </div>
         )}

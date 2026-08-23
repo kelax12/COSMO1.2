@@ -394,7 +394,12 @@
     "tasksTabColActions": "ACTIONS",
     "tasksTabNoDeadline": "No deadline",
     "tasksTabActionsAria": "Actions for {{name}}",
-    "tasksTabEdit": "Edit"
+    "tasksTabEdit": "Edit",
+    "tasksTabColStatus": "STATUS",
+    "tasksTabStatusUnassigned": "Unassigned",
+    "tasksTabStatusAria": "Change status of {{name}}",
+    "tasksTabAssignAction": "Assign to someone",
+    "tasksTabScheduleAction": "Schedule event"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -706,7 +711,8 @@
     "deleteAria": "Delete this comment",
     "mentionAria": "Mention a member",
     "sendAria": "Send comment",
-    "formerMember": "Former member"
+    "formerMember": "Former member",
+    "saveFirst": "Save the task to add comments."
   },
   "leaveDialog": {
     "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."

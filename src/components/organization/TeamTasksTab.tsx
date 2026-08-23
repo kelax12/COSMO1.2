@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, X, ArrowUpDown, ChevronDown, Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { Search, X, ArrowUpDown, ChevronDown, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -9,15 +9,20 @@ import {
 import type { OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTasks, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
-  type TeamTask, type CreateTeamTaskInput, type UpdateTeamTaskInput,
+  type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { showUndoToast } from '@/lib/undo-toast';
 import { formatDeadlineSmart } from '../task-table/helpers';
 import {
   projectColor, isTaskOverdue, filterByStatus, formatDuration,
+  STATUS_ORDER, STATUS_META, taskDisplayStatus,
   type TaskStatusFilter,
 } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
+import AssignMembersDialog from './AssignMembersDialog';
+import ScheduleTeamEventModal from './ScheduleTeamEventModal';
+import MemberAvatar from './MemberAvatar';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
 interface TeamTasksTabProps {
@@ -58,6 +63,7 @@ const chipInactive =
  */
 const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
   const { t, tp } = useT('org');
+  const { user } = useAuth();
   const { data: allProjects = [] } = useTeamProjects(orgId);
   const { data: tasks = [] } = useTeamTasks(orgId);
   const createTask = useCreateTeamTask(orgId);
@@ -66,6 +72,7 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
 
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
+  const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
@@ -73,6 +80,11 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
   const [sortField, setSortField] = useState<SortField>('priority');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [taskModal, setTaskModal] = useState<{ mode: 'create' | 'edit'; task?: TeamTask } | null>(null);
+  // Actions dédiées du menu ⋯ (remplace « Marquer comme terminée », cf. photo1) :
+  // cette table n'a ni colonne assignés ni raccourci agenda, contrairement à la
+  // vue perso — ces deux items comblent le manque sans dupliquer le modal.
+  const [assigningTask, setAssigningTask] = useState<TeamTask | null>(null);
+  const [schedulingTask, setSchedulingTask] = useState<TeamTask | null>(null);
 
   // Compteur par projet (chips) : tâches OUVERTES uniquement — même
   // convention que les chips de listes personnelles, qui comptent le reste
@@ -136,6 +148,12 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
+
+  const setStatus = (task: TeamTask, status: TeamTaskStatus) =>
+    updateTask.mutate({ taskId: task.id, input: { status } });
+
+  const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
+    updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
 
   // Suppression réversible (toast Annuler) — même pattern que TeamProjectsTab,
   // pas de confirm() bloquant pour un geste qu'on peut défaire dans les
@@ -303,7 +321,7 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
         </p>
       ) : (
         <div className="table-container shadow-sm overflow-x-auto">
-          <table className="data-table w-full" style={{ minWidth: '900px' }}>
+          <table className="data-table w-full" style={{ minWidth: '1050px' }}>
             <thead>
               <tr>
                 <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">{t('projects.tasksTabColComplete')}</span></th>
@@ -312,6 +330,7 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
                   {t('projects.tasksTabColName')}{sortIndicator('name')}
                 </th>
                 <th className="px-2 py-3" style={{ width: '160px' }}>{t('projects.tasksTabColProject')}</th>
+                <th className="px-2 py-3" style={{ width: '140px' }}>{t('projects.tasksTabColStatus')}</th>
                 <th className="cursor-pointer text-center px-1 py-3" style={{ width: '70px' }} onClick={() => handleSort('priority')}>
                   {t('projects.tasksTabColPriority')}{sortIndicator('priority')}
                 </th>
@@ -363,12 +382,62 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
                     </td>
                     <td className={`font-medium px-2 py-4 text-base ${task.completed ? 'line-through' : ''}`}
                         style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
-                      <span className="truncate block" title={task.name}>{task.name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate" title={task.name}>{task.name}</span>
+                        {/* Collaborateurs (hors nous) — visibilité immédiate de qui est
+                            dessus sans ouvrir la tâche. */}
+                        {(() => {
+                          const others = task.assigneeIds.filter((id) => id !== user?.id);
+                          if (others.length === 0) return null;
+                          return (
+                            <span className="flex -space-x-1.5 shrink-0" title={others.map((id) => memberById.get(id)?.displayName).filter(Boolean).join(', ')}>
+                              {others.slice(0, 3).map((id) => {
+                                const m = memberById.get(id);
+                                return m ? (
+                                  <span key={id} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
+                                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                                  </span>
+                                ) : null;
+                              })}
+                              {others.length > 3 && (
+                                <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
+                                  +{others.length - 3}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center gap-2 text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         {project?.name ?? '—'}
                       </span>
+                    </td>
+                    <td onClick={(e) => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
+                      {(() => {
+                        const display = taskDisplayStatus(task);
+                        return (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))]"
+                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
+                              aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${display.dot}`} aria-hidden="true" />
+                              <span className="truncate max-w-[90px]">{t(display.labelKey as Parameters<typeof t>[0])}</span>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {STATUS_ORDER.map((st) => (
+                                <DropdownMenuItem key={st} onClick={() => setStatus(task, st)}>
+                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_META[st].dot}`} aria-hidden="true" />
+                                  {t(STATUS_META[st].labelKey as Parameters<typeof t>[0])}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        );
+                      })()}
                     </td>
                     <td className="text-center px-1 py-4 whitespace-nowrap">
                       <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
@@ -398,8 +467,11 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
                           <DropdownMenuItem onClick={() => setTaskModal({ mode: 'edit', task })}>
                             <Pencil aria-hidden="true" /> {t('projects.tasksTabEdit')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleComplete(task)}>
-                            {task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
+                          <DropdownMenuItem onClick={() => setAssigningTask(task)}>
+                            <UserPlus aria-hidden="true" /> {t('projects.tasksTabAssignAction')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSchedulingTask(task)}>
+                            <CalendarPlus aria-hidden="true" /> {t('projects.tasksTabScheduleAction')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             variant="destructive"
@@ -433,6 +505,20 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
           isManager={isManager}
         />
       )}
+
+      <AssignMembersDialog
+        task={assigningTask}
+        members={members}
+        onSave={setAssignees}
+        onClose={() => setAssigningTask(null)}
+      />
+
+      <ScheduleTeamEventModal
+        open={!!schedulingTask}
+        onOpenChange={(o) => { if (!o) setSchedulingTask(null); }}
+        task={schedulingTask}
+        project={schedulingTask ? projectById.get(schedulingTask.projectId) : undefined}
+      />
     </div>
   );
 };
