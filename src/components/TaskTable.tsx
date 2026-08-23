@@ -688,7 +688,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <th className="text-center px-1 py-3" style={{ width: '70px' }}>{t('table.colActions')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {unifiedRows.map((row) => row.kind === 'perso' ? (
               <TaskRow
                 key={row.id}
