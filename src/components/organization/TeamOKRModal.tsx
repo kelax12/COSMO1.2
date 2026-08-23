@@ -311,7 +311,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             onClick={handleSave}
             className={`!border-0 ${
               !canSave
-                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100 !text-white'
+                ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40'
                 : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))]'
             }`}
           >

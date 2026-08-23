@@ -155,6 +155,22 @@ export interface OrgInvitation {
   createdAt: string;
 }
 
+/**
+ * « Vous avez ete retire de X » — notification lue par un EX-membre.
+ *
+ * Portee par `org_notifications` (kind = 'org_removed', mig. 106), dont la
+ * policy SELECT est `user_id = auth.uid()` et non `is_org_member` : c'est ce
+ * qui permet a quelqu'un qui n'est plus dans l'organisation de la lire.
+ */
+export interface OrgRemovalNotice {
+  id: string;
+  orgId: string;
+  orgName: string;
+  /** Admin ayant procede au retrait (null si son profil a disparu). */
+  actorName: string | null;
+  createdAt: string;
+}
+
 export type OrgJoinRequestStatus = 'pending' | 'accepted' | 'rejected';
 
 /**

@@ -291,12 +291,23 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   /**
-   * L'expéditeur retire sa propre demande.
+   * L'expéditeur retire sa propre demande — par un DELETE.
    *
-   * Doit écrire 'cancelled', PAS 'rejected' : le WITH CHECK de la policy
-   * `friend_requests_update_sender_or_receiver` (mig. 049) n'autorise
-   * 'rejected' qu'au destinataire. Passer par rejectFriendRequest levait donc
-   * une violation RLS et la demande restait affichée « en attente ».
+   * Deux impasses écartées ici, dans l'ordre où elles se présentent :
+   *
+   *  1. `rejectFriendRequest` (statut 'rejected') est RÉSERVÉ au destinataire
+   *     par le WITH CHECK de `friend_requests_update_sender_or_receiver`
+   *     (mig. 049). Un expéditeur qui l'appelait partait en violation RLS.
+   *  2. Le statut 'cancelled' que cette policy autorise pourtant à
+   *     l'expéditeur n'existe PAS dans la contrainte de la table :
+   *     `friend_requests_status_check` ne connaît que
+   *     pending / accepted / rejected. L'écrire viole la contrainte CHECK.
+   *     La policy décrit donc un état que la table refuse — c'est cette
+   *     contradiction qui laissait la demande collée dans la liste.
+   *
+   * Le DELETE, lui, est explicitement autorisé par la policy « Users can
+   * delete own requests » (USING auth.uid() = sender_id) et ne laisse aucune
+   * ligne morte derrière lui.
    */
   async cancelFriendRequest(requestId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
@@ -304,7 +315,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (!user) throw new Error('Non authentifié');
     const { error } = await supabase
       .from('friend_requests')
-      .update({ status: 'cancelled' })
+      .delete()
       .eq('id', requestId)
       .eq('sender_id', user.id); // defense-in-depth : la RLS scope déjà
 

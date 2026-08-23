@@ -10,7 +10,7 @@
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
 import {
   ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
@@ -230,6 +230,14 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async respondOrgInvitation(_invitationId: string, _accept: boolean): Promise<void> {
     throw new Error("En mode demo, les invitations d entreprise ne sont pas envoyees");
+  }
+
+  async getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]> {
+    return [];
+  }
+
+  async dismissOrgRemovalNotice(_noticeId: string): Promise<void> {
+    // Rien a acquitter en demo : personne ne peut y retirer le compte demo.
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {

@@ -36,13 +36,39 @@ export const useMyOrganizations = (enabled: boolean = true) => {
   });
 };
 
-export const useOrgMembers = (orgId: string | undefined) => {
+/**
+ * Membres de l'organisation.
+ *
+ * L'arrivée d'un membre est une action faite depuis UN AUTRE appareil : rien
+ * côté admin ne l'invalide. Avec les 5 min de fraîcheur d'origine et aucun
+ * refetch, un compte qui venait d'entrer restait invisible dans la pyramide et
+ * dans l'annuaire — l'admin croyait que l'invitation avait échoué.
+ *
+ * `live` distingue les DEUX usages de ce hook, parce qu'ils n'ont pas le même
+ * coût :
+ *
+ *  • par défaut (TaskTable, AgendaPage, CommandPalette…) l'annuaire ne sert
+ *    qu'à résoudre des noms d'assignés. Ces surfaces sont montées en
+ *    permanence : y brancher un sondage ferait payer deux requêtes toutes les
+ *    30 s à chaque utilisateur d'organisation, sur toutes les pages. C'est
+ *    exactement le garde-fou egress de CLAUDE.md (§ synchronisation de la
+ *    collaboration). On se contente donc du retour d'onglet.
+ *  • `live: true` — la page Entreprise, la seule où l'on REGARDE la liste des
+ *    membres et où l'on attend de voir quelqu'un arriver. Sondage borné à
+ *    cette page, à la même cadence que les demandes d'adhésion (20 s).
+ */
+export const useOrgMembers = (
+  orgId: string | undefined,
+  options?: { live?: boolean },
+) => {
   const repository = useOrgRepository();
   return useQuery({
     queryKey: orgKeys.members(orgId ?? ''),
     queryFn: () => repository.getMembers(orgId as string),
     enabled: !!orgId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
   });
 };
 
@@ -82,6 +108,36 @@ export const useMyOrgInvitations = () => {
     queryFn: () => repository.getMyOrgInvitations(),
     refetchInterval: 20_000,
     refetchOnWindowFocus: true,
+  });
+};
+
+/**
+ * Retraits d'entreprise non acquittes.
+ *
+ * Meme cadence que le reste de la boite de reception. Pas de garde `enabled` :
+ * en demo le repository local renvoie [] sans requete reseau.
+ */
+export const useMyOrgRemovalNotices = () => {
+  const repository = useOrgRepository();
+  return useQuery({
+    queryKey: orgKeys.myRemovalNotices(),
+    queryFn: () => repository.getMyOrgRemovalNotices(),
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useDismissOrgRemovalNotice = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: (noticeId: string) => repository.dismissOrgRemovalNotice(noticeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orgKeys.myRemovalNotices() });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 };
 

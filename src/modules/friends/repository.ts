@@ -97,7 +97,7 @@ export interface IFriendsRepository {
   sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest>;
   acceptFriendRequest(requestId: string): Promise<Friend>;
   rejectFriendRequest(requestId: string): Promise<void>;
-  /** L'EXPÉDITEUR retire sa propre demande (status → 'cancelled'). */
+  /** L'EXPÉDITEUR retire sa propre demande — DELETE (cf. implémentation). */
   cancelFriendRequest(requestId: string): Promise<void>;
   removeFriend(id: string): Promise<void>;
 
@@ -294,12 +294,10 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   }
 
   async cancelFriendRequest(requestId: string): Promise<void> {
+    // Suppression, pas un statut : parité exacte avec la prod, où la demande
+    // est DELETE (la contrainte CHECK de la table ne connaît pas 'cancelled').
     const requests = this.getRequests();
-    const request = requests.find(r => r.id === requestId);
-    if (request) {
-      request.status = 'cancelled';
-      this.saveRequests(requests);
-    }
+    this.saveRequests(requests.filter(r => r.id !== requestId));
   }
 
   async removeFriend(id: string): Promise<void> {

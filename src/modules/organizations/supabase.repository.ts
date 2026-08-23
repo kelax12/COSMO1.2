@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
 
 interface OrgRow {
   id: string;
@@ -245,6 +245,38 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       p_invitation: invitationId,
       p_accept: accept,
     });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RPC SECURITY DEFINER : un ex-membre ne peut plus lire `organizations`,
+    // donc pas moyen de nommer l'entreprise par une lecture directe.
+    const { data, error } = await supabase.rpc('get_my_org_removal_notices');
+    if (error) throw normalizeApiError(error);
+    const rows = (data ?? []) as Array<{
+      id: string; org_id: string; org_name: string;
+      actor_name: string | null; created_at: string;
+    }>;
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      orgName: r.org_name,
+      actorName: r.actor_name,
+      createdAt: r.created_at,
+    }));
+  }
+
+  async dismissOrgRemovalNotice(noticeId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const uid = await getCurrentUserId();
+    // DELETE direct : la policy `org_notifications_delete` autorise deja
+    // `user_id = auth.uid()`. Pas de RPC a ecrire pour ca.
+    const { error } = await supabase
+      .from('org_notifications')
+      .delete()
+      .eq('id', noticeId)
+      .eq('user_id', uid ?? ''); // defense-in-depth
     if (error) throw normalizeApiError(error);
   }
 

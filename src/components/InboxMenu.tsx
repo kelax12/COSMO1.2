@@ -30,6 +30,8 @@ import {
   useRespondJoinRequest,
   useMyOrgInvitations,
   useRespondOrgInvitation,
+  useMyOrgRemovalNotices,
+  useDismissOrgRemovalNotice,
 } from '@/modules/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
@@ -87,6 +89,12 @@ const InboxMenu: React.FC = () => {
   // qu'on invite, et c'est moi qui reponds.
   const { data: orgInvitations = [] } = useMyOrgInvitations();
   const respondOrgInvitationMutation = useRespondOrgInvitation();
+
+  // Retraits d'entreprise. Un ex-membre n'a plus AUCUNE surface entreprise
+  // (l'onglet disparaît avec l'appartenance) : la boîte de réception
+  // personnelle est le seul endroit où l'information peut encore l'atteindre.
+  const { data: removalNotices = [] } = useMyOrgRemovalNotices();
+  const dismissRemovalMutation = useDismissOrgRemovalNotice();
 
   // Acquittements locaux des tâches partagées en mode démo (cf.
   // lib/acknowledged-shares). En Supabase, l'état d'acceptation est porté par
@@ -151,7 +159,8 @@ const InboxMenu: React.FC = () => {
     tasksToAccept.length +
     incomingLists.length +
     pendingJoinRequests.length +
-    orgInvitations.length;
+    orgInvitations.length +
+    removalNotices.length;
 
   // Aperçu de l'impact d'une suppression d'ami : tâches dont je suis
   // propriétaire et que j'ai partagées avec lui (il perdra l'accès) + tâches
@@ -555,6 +564,42 @@ const InboxMenu: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Retrait d'une entreprise (mig. 106) ── */}
+        {!showManageFriends && removalNotices.length > 0 && (
+          <div>
+            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
+              {tOrg('inviteJoin.removedHeading')}
+            </p>
+            <div className="divide-y divide-[rgb(var(--color-border))]">
+              {removalNotices.map((notice) => {
+                const timeAgo = notice.createdAt
+                  ? formatDistanceToNow(new Date(notice.createdAt), { locale: getDateLocale(), addSuffix: true })
+                  : '';
+                return (
+                  <div key={notice.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                        {tOrg('inviteJoin.removedBody', { org: notice.orgName })}
+                      </p>
+                      <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                        {notice.actorName ? tOrg('inviteJoin.removedBy', { name: notice.actorName }) : ''}
+                        {notice.actorName && timeAgo ? ' · ' : ''}{timeAgo}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => dismissRemovalMutation.mutate(notice.id)}
+                      disabled={dismissRemovalMutation.isPending}
+                      className="shrink-0 text-caption sm:text-xs font-semibold px-2.5 py-1.5 rounded-lg text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                    >
+                      {tOrg('inviteJoin.removedDismiss')}
+                    </button>
+                  </div>
                 );
               })}
             </div>
