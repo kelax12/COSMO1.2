@@ -305,12 +305,28 @@ const App: React.FC = () => {
                 duration: 3000,
               }}
             />
-            <SharedTasksRealtime />
+            {/* Défense en profondeur autour des SATELLITES de l'app.
+                Ces trois-là sont montés au niveau App, donc au-dessus de tout
+                boundary de page : un throw dans l'un d'eux emportait
+                l'application entière.
+                C'est exactement ce qui est arrivé avec le canal Realtime — le
+                constructeur `WebSocket` lève « The operation is insecure » dans
+                un navigateur qui bloque les WebSockets, et l'écran devenait
+                noir à chaque visite. La cause est traitée dans
+                `useSharedTasksRealtime`, mais aucun de ces composants ne mérite
+                de pouvoir tuer l'app : `fallback={null}` les fait disparaître
+                en silence.
+                `AppRoutes` reste HORS de ce boundary — c'est l'application. */}
+            <AppErrorBoundary fallback={null}>
+              <SharedTasksRealtime />
+            </AppErrorBoundary>
             <AppRoutes />
-            <CookieBanner />
-            {/* Popup d'invitation de partage — niveau App pour survivre aux
-                changements de route (claim après login OU fin d'inscription). */}
-            <ShareInviteClaimer />
+            <AppErrorBoundary fallback={null}>
+              <CookieBanner />
+              {/* Popup d'invitation de partage — niveau App pour survivre aux
+                  changements de route (claim après login OU fin d'inscription). */}
+              <ShareInviteClaimer />
+            </AppErrorBoundary>
             {/* AppErrorBoundary ici, PAS seulement le Suspense : un chunk périmé
                 (déploiement récent, vieil index.html en cache) fait échouer ce
                 lazy() en dehors de toute route — sans boundary à ce niveau,

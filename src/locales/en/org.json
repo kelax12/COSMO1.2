@@ -829,6 +829,8 @@
     "requestPending": "An admin has to approve it. You'll be added as soon as they reply.",
     "cancelRequest": "Cancel request",
     "requestCancelled": "Request cancelled.",
+    "joinAnother": "Join another company",
+    "backToPending": "← Back to pending request",
     "navLabel": "Create / join",
     "navHint": "Create a company, or join one with a code",
     "navAria": "Create or join a company",

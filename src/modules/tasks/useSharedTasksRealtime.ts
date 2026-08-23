@@ -34,6 +34,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { taskKeys } from './constants';
@@ -57,28 +58,62 @@ export function useSharedTasksRealtime(userId: string | undefined): void {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     };
 
-    const channel = supabase
-      .channel(`shared-tasks:${userId}`)
-      // Destinataire : quelqu'un vient de me partager (ou de me retirer) une tâche.
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'shared_tasks', filter: `friend_id=eq.${userId}` },
-        invalidate,
-      )
-      // Émetteur : l'état de mes propres partages a changé (acceptation, retrait).
-      // Utile pour rafraîchir les marqueurs de collaboration sur MES tâches.
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'shared_tasks', filter: `shared_by=eq.${userId}` },
-        invalidate,
-      )
-      .subscribe();
+    // ⚠️ `subscribe()` construit un WebSocket, et le constructeur `WebSocket`
+    // LÈVE de façon SYNCHRONE dans les navigateurs qui les bloquent :
+    // « SecurityError: The operation is insecure » (navigation privée, blocage
+    // total des données de site, protection anti-pistage stricte — Safari et
+    // Firefox notamment).
+    //
+    // Ce hook étant monté dans `App.tsx`, AU-DESSUS de tout boundary de page,
+    // cette exception démontait l'application ENTIÈRE : écran noir en thème
+    // sombre, page blanche en clair, à CHAQUE visite depuis ce navigateur — et
+    // plus aucun bouton pour se déconnecter. C'est la cause des symptômes
+    // « écran noir à la connexion sur mobile » et « page blanche automatique ».
+    //
+    // Le temps réel est un CONFORT, pas une dépendance : `useTasks` garde son
+    // sondage de secours à 5 min. Une connexion impossible doit donc dégrader
+    // la synchronisation, jamais empêcher l'application de démarrer.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`shared-tasks:${userId}`)
+        // Destinataire : quelqu'un vient de me partager (ou de me retirer) une tâche.
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'shared_tasks', filter: `friend_id=eq.${userId}` },
+          invalidate,
+        )
+        // Émetteur : l'état de mes propres partages a changé (acceptation, retrait).
+        // Utile pour rafraîchir les marqueurs de collaboration sur MES tâches.
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'shared_tasks', filter: `shared_by=eq.${userId}` },
+          invalidate,
+        )
+        .subscribe();
+    } catch (err) {
+      // Remonté en `warning` et non en erreur : l'app fonctionne, elle est
+      // simplement moins réactive. Le savoir reste utile pour mesurer combien
+      // d'utilisateurs sont dans ce cas.
+      console.warn('[realtime] canal indisponible, repli sur le sondage', err);
+      Sentry.captureException(err, {
+        level: 'warning',
+        tags: { context: 'realtime-websocket-unavailable' },
+      });
+      return;
+    }
 
     return () => {
       // `removeChannel` ferme l'abonnement ET libère le socket s'il ne reste
       // aucun canal — indispensable pour ne pas fuir une connexion à chaque
       // changement d'utilisateur sur un appareil partagé.
-      void supabase.removeChannel(channel);
+      const opened = channel;
+      if (!opened) return;
+      try {
+        void supabase.removeChannel(opened);
+      } catch {
+        /* le socket n'a jamais existé — rien à libérer */
+      }
     };
   }, [userId, isDemo, queryClient]);
 }
