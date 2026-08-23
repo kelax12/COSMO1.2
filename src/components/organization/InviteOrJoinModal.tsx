@@ -24,7 +24,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Building2, Check, Copy, Loader2, Plus } from 'lucide-react';
+import { X, Building2, Check, Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useCreateOrganization,
@@ -64,6 +64,10 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
   const [codeCopied, setCodeCopied] = useState(false);
   const [code, setCode] = useState('');
   const [consent, setConsent] = useState(false);
+  // Une demande pending n'empêche pas d'en envoyer une autre vers une autre
+  // org (contrainte UNIQUE (org_id, user_id) côté serveur, cf. mig. 065) —
+  // ce flag rouvre le formulaire de code par-dessus l'écran d'attente.
+  const [joiningAnother, setJoiningAnother] = useState(false);
 
   const close = () => {
     onOpenChange(false);
@@ -71,6 +75,7 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
     // tard doit repartir du formulaire, pas rejouer une création déjà faite.
     setCreatedOrg(null);
     setOrgName('');
+    setJoiningAnother(false);
   };
 
   const handleCreate = () => {
@@ -91,7 +96,12 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
   };
 
   const handleJoin = () => {
-    requestJoinMutation.mutate(code.trim(), { onSuccess: () => setCode('') });
+    requestJoinMutation.mutate(code.trim(), {
+      onSuccess: () => {
+        setCode('');
+        setJoiningAnother(false);
+      },
+    });
   };
 
   if (!open) return null;
@@ -178,14 +188,9 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 sm:p-6">
               {/* ─── Colonne 1 : créer ────────────────────────────────── */}
               <section className={columnClasses} aria-labelledby="create-col-title">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                    <Plus size={18} className="text-blue-500" aria-hidden="true" />
-                  </div>
-                  <h3 id="create-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-                    {t('createJoin.createOrg')}
-                  </h3>
-                </div>
+                <h3 id="create-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+                  {t('createJoin.createOrg')}
+                </h3>
 
                 <p className="text-xs text-[rgb(var(--color-text-muted))]">
                   {t('createJoin.createOrgHint')}
@@ -222,16 +227,11 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
 
               {/* ─── Colonne 2 : rejoindre ────────────────────────────── */}
               <section className={columnClasses} aria-labelledby="join-col-title">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                    <Building2 size={18} className="text-indigo-500" aria-hidden="true" />
-                  </div>
-                  <h3 id="join-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-                    {t('inviteJoin.joinColTitle')}
-                  </h3>
-                </div>
+                <h3 id="join-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+                  {t('inviteJoin.joinColTitle')}
+                </h3>
 
-                {sentJoinRequest ? (
+                {sentJoinRequest && !joiningAnother ? (
                   <div className="space-y-3">
                     <p className="text-sm text-[rgb(var(--color-text-primary))] font-medium">
                       {t('inviteJoin.requestSent')}
@@ -251,9 +251,25 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
                     >
                       {t('inviteJoin.cancelRequest')}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setJoiningAnother(true)}
+                      className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] underline underline-offset-2 transition-colors"
+                    >
+                      {t('inviteJoin.joinAnother')}
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
+                    {sentJoinRequest && (
+                      <button
+                        type="button"
+                        onClick={() => setJoiningAnother(false)}
+                        className="text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] underline underline-offset-2 transition-colors"
+                      >
+                        {t('inviteJoin.backToPending')}
+                      </button>
+                    )}
                     <label htmlFor="join-org-code" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
                       {t('inviteJoin.codeLabel')}
                     </label>

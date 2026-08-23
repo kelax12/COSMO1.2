@@ -860,6 +860,8 @@
     "requestPending": "Un administrateur doit la valider. Vous serez ajouté dès qu'il aura répondu.",
     "cancelRequest": "Annuler la demande",
     "requestCancelled": "Demande annulée.",
+    "joinAnother": "Rejoindre une autre entreprise",
+    "backToPending": "← Revenir à la demande en attente",
     "navLabel": "Créer / rejoindre",
     "navHint": "Créer une entreprise ou en rejoindre une avec un code",
     "navAria": "Créer ou rejoindre une entreprise",
