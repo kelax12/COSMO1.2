@@ -214,6 +214,13 @@ export const useAcceptSharedTask = () => {
     mutationFn: (taskId: string) => repository.acceptSharedTask(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
+      // Depuis la mig. 103, l acceptation FAIT ENTRER la tache dans la liste
+      // (get_my_tasks ne renvoie que les partages acceptes) et la fait sortir
+      // de la boite de reception. Sans ces deux invalidations, la tache
+      // disparaissait de l inbox sans apparaitre nulle part ailleurs jusqu au
+      // prochain refetch.
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'accepter la tâche : ${error.message}`);
@@ -230,6 +237,11 @@ export const useUnshareTask = () => {
       repository.unshareTask(taskId, friendId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
+      // Refuser une tache partagee supprime la grant : elle doit quitter la
+      // boite de reception ET la liste (cas ou elle avait ete acceptee puis
+      // le partage revoque).
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'annuler le partage de la tâche : ${error.message}`);
