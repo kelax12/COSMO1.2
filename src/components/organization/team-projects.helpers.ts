@@ -33,6 +33,23 @@ export const PROJECT_COLOR_NAMES = Object.keys(PROJECT_COLORS);
 export const projectColor = (color: string): ProjectColorDef =>
   PROJECT_COLORS[color] ?? PROJECT_COLORS.blue;
 
+/** Équivalent hex de PROJECT_COLORS — pour les champs qui exigent une couleur
+ *  CSS littérale (ex. `CalendarEvent.color`) plutôt qu'une classe Tailwind. */
+export const PROJECT_COLOR_HEX: Record<string, string> = {
+  blue: '#3b82f6',
+  indigo: '#6366f1',
+  purple: '#a855f7',
+  pink: '#ec4899',
+  red: '#ef4444',
+  amber: '#f59e0b',
+  green: '#10b981',
+  teal: '#14b8a6',
+  slate: '#64748b',
+};
+
+export const projectColorHex = (color: string): string =>
+  PROJECT_COLOR_HEX[color] ?? PROJECT_COLOR_HEX.blue;
+
 // ─── Fusion avec la page Tâches perso ─────────────────────────────────
 
 /** Tâches d'équipe assignées à `userId` — toutes, sans filtre de statut. */
@@ -206,6 +223,19 @@ export const STATUS_META: Record<TeamTaskStatus, { labelKey: string; dot: string
   blocked: { labelKey: 'projects.statusBlocked', dot: 'bg-red-500' },
   done: { labelKey: 'projects.statusDone', dot: 'bg-emerald-500' },
 };
+
+/**
+ * Pastille « Non attribué » (dérivée de `assigneeIds`, PAS un statut réel en
+ * base) — même sémantique que la colonne `KANBAN_UNASSIGNED` du kanban par
+ * assigné. Une tâche sans assigné l'affiche à la place de son statut de
+ * flux : personne n'étant sur la tâche, son statut réel (à faire, bloquée…)
+ * est une information secondaire tant qu'elle n'est attribuée à personne.
+ */
+export const UNASSIGNED_STATUS_META = { labelKey: 'projects.tasksTabStatusUnassigned', dot: 'bg-slate-300 dark:bg-slate-600' };
+
+/** Pastille de statut à afficher pour une tâche (table, badges…). */
+export const taskDisplayStatus = (task: TeamTask): { labelKey: string; dot: string } =>
+  task.assigneeIds.length === 0 ? UNASSIGNED_STATUS_META : STATUS_META[task.status];
 
 /**
  * Groupe les tâches par statut, colonnes vides comprises.

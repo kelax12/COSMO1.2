@@ -360,13 +360,22 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   .filter((m): m is OrgMember => !!m)
                   .map((m) => firstName(m.displayName));
                 return (
-                  <li key={t.id} className="flex items-center justify-between text-sm gap-3">
-                    <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
-                    {names.length > 0 && (
-                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
-                      </span>
-                    )}
+                  <li key={t.id}>
+                    {/* Cliquable — ouvre la tâche pour la modifier (même
+                        deep-link `?task=` que la revue hebdomadaire). */}
+                    <button
+                      type="button"
+                      onClick={() => navigate(buildOrgLink('projects', { task: t.id }))}
+                      className="w-full flex items-center justify-between text-sm gap-3 rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+                      aria-label={t.name}
+                    >
+                      <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
+                      {names.length > 0 && (
+                        <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
+                          {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
+                        </span>
+                      )}
+                    </button>
                   </li>
                 );
               })}
