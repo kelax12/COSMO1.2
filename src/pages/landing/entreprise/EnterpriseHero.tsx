@@ -151,7 +151,10 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
               data-ent-hero-fade
               className="mb-10 max-w-xl text-base leading-relaxed text-slate-400 lg:text-lg"
             >
-              <ScrollHighlight text={t('enterprise.hero.subtitle')} />
+              {/* delay 1,3 s : laisse le fondu `data-ent-hero-fade` du hero
+                  (délai 0,45 s + durée 0,8 s) se terminer avant le coup de
+                  surligneur, sinon il se joue sur un texte encore transparent. */}
+              <ScrollHighlight text={t('enterprise.hero.subtitle')} delay={1.3} />
             </p>
 
             <div data-ent-hero-fade className="flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row">
