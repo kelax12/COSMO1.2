@@ -527,11 +527,17 @@ body {
       box-shadow: 0 0 0 1px rgb(var(--color-accent)) !important;
     }
 
-    /* Textarea plein écran (DescriptionField) : il occupe déjà toute la
-       popup, la bordure + le liseré d'accent au focus des styles globaux
-       ci-dessus n'y ont aucun sens — on les neutralise. */
+    /* Champ imbriqué dans un conteneur déjà bordé (textarea plein écran de
+       DescriptionField, input « + Que faut-il faire ? » des sous-tâches) :
+       la bordure + le liseré d'accent au focus des styles globaux ci-dessus
+       s'ajoutent à celle du conteneur parent — deux bordures visibles pour
+       un seul champ. On neutralise celle de l'input/textarea lui-même, le
+       conteneur porte la seule bordure visible (`focus-within` gère le focus). */
+    input.no-input-chrome,
     textarea.no-input-chrome,
+    input.no-input-chrome:hover,
     textarea.no-input-chrome:hover,
+    input.no-input-chrome:focus,
     textarea.no-input-chrome:focus {
       border: none !important;
       box-shadow: none !important;

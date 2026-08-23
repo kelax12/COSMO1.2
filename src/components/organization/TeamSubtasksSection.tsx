@@ -142,7 +142,12 @@ const TeamSubtasksSection = ({ taskId }: TeamSubtasksSectionProps) => {
           placeholder={t('taskModal.subtasksPlaceholder')}
           aria-label={t('taskModal.subtasksAdd')}
           maxLength={200}
-          className="flex-1 min-w-0 bg-transparent text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none"
+          // no-input-chrome : le style global `input { border !important }`
+          // (index.css) ajoute sa propre bordure par-dessus celle du
+          // conteneur ci-dessus — deux bordures pour un seul champ. Cette
+          // classe neutralise celle de l'input, le conteneur reste seul à en
+          // porter une (focus-within la colore déjà à l'activation).
+          className="no-input-chrome flex-1 min-w-0 bg-transparent text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none"
         />
       </div>
     </div>
