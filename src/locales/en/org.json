@@ -434,7 +434,11 @@
     "hasDescription": "Has a description",
     "assignTask": "Assign task",
     "nameRequired": "The task name is required",
-    "projectRequired": "Choose a project"
+    "projectRequired": "Choose a project",
+    "createProjectAria": "Create a project",
+    "projectNamePlaceholder": "Project name",
+    "projectNameTooShort": "The project name must be at least 2 characters",
+    "createProjectCta": "Create"
   },
   "team": {
     "newTeam": "New team",
