@@ -12,6 +12,7 @@ export type {
   OrgJoinRequestStatus,
   OrgJoinRequest,
   OrgInvitation,
+  OrgRemovalNotice,
   UpdateOrganizationInput,
   OrgInviteLink,
 } from './types';
@@ -48,6 +49,8 @@ export {
   useOrgJoinRequests,
   useMySentJoinRequest,
   useMyOrgInvitations,
+  useMyOrgRemovalNotices,
+  useDismissOrgRemovalNotice,
   useInviteFriendToOrg,
   useRespondOrgInvitation,
   useCreateOrganization,

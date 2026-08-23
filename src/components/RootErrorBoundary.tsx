@@ -152,25 +152,31 @@ export class RootErrorBoundary extends Component<Props, State> {
           </button>
         </div>
         {this.state.message && (
-          // Le message brut aide au diagnostic quand l'utilisateur envoie une
-          // capture. `<details>` pour ne pas en faire le sujet de l'écran.
-          <details style={{ marginTop: '4px', maxWidth: '420px' }}>
-            <summary style={{ cursor: 'pointer', fontSize: '12px', color: '#6e6e6e' }}>
-              Détail technique
-            </summary>
-            <pre
-              style={{
-                marginTop: '8px',
-                fontSize: '11px',
-                color: '#8a8a8a',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                textAlign: 'left',
-              }}
-            >
-              {this.state.message}
-            </pre>
-          </details>
+          // Message VISIBLE, pas replié derrière un `<details>`.
+          //
+          // Cet écran ne s'affiche que quand tout le reste a échoué : sa seule
+          // valeur restante est de dire POURQUOI. Replié, il obligeait
+          // l'utilisateur à penser à déplier avant de faire une capture — et
+          // une capture sans le message ne permet aucun diagnostic. Sur
+          // mobile, c'est souvent le seul canal disponible.
+          <pre
+            style={{
+              marginTop: '4px',
+              maxWidth: '420px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              background: '#141416',
+              border: '1px solid #2a2a2c',
+              fontSize: '11px',
+              lineHeight: 1.5,
+              color: '#9a9a9a',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              textAlign: 'left',
+            }}
+          >
+            {this.state.message}
+          </pre>
         )}
       </div>
     );

@@ -679,6 +679,23 @@ body {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
+  /* ── Pastille « accent plein » (filtre de catégorie OKR, etc.) ──────
+     Le duo de tokens accent-solid / accent-solid-foreground est correct dans
+     TROIS thèmes sur quatre. Seul Gris fait exception : son accent plein
+     (#388bfd) ne passe pas le contraste AA (3,3:1) avec du texte blanc, d'où
+     un bleu plus foncé pour lui SEUL.
+     Avant, ce bleu foncé était écrit en dur dans le composant et s'appliquait
+     donc partout — y compris en Noir, où l'accent plein est quasi-blanc et son
+     texte quasi-noir : la pastille sortait bleu nuit avec du texte noir. */
+  .chip-accent-solid {
+    background-color: rgb(var(--color-accent-solid));
+    color: rgb(var(--color-accent-solid-foreground));
+  }
+  .gris .chip-accent-solid {
+    background-color: #1f6feb;
+    color: #ffffff;
+  }
+
   /* Thèmes Gris/Noir : le fond actif de la sidebar est une teinte vive
      (bleu en Gris, quasi-blanc en Noir) proche de la couleur par-item posée
      en inline style par NavItemLink (hoverColor, ex. "#3b82f6") — contraste

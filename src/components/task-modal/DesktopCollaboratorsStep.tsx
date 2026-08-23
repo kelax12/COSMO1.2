@@ -135,7 +135,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                   size="icon"
                                   onClick={handleAddEmail}
                                   disabled={!emailInput.trim()}
-                                  className={emailInput.trim() ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-[rgb(var(--color-accent-solid-foreground))] border-0 !opacity-100'}
+                                  className={emailInput.trim() ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0' : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-0 !opacity-40'}
                                 >
                                   <UserPlus size={16} />
                                 </Button>

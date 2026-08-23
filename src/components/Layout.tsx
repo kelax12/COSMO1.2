@@ -340,19 +340,25 @@ const NavItems = () =>
           Monte INCONDITIONNELLEMENT, que l'entree « Entreprise » ci-dessus
           soit affichee ou non : c'est justement le point d'entree de
           quelqu'un qui n'appartient encore a aucune organisation. */}
+      {/* Alignement : memes classes que NavItemLink, plus une largeur explicite.
+          Les autres entrees sont des <a> — elements de bloc qui REMPLISSENT la
+          largeur disponible. Un <button> non : l'UA le reduit a son contenu,
+          et l'icone se retrouvait 8 px a cote de la colonne formee par les
+          autres. `w-full` ne marche pas ici : `.sidebar-item` pose
+          `margin: 0.25rem 0.5rem`, et une marge s'ajoute EN DEHORS de la
+          largeur — le bouton depassait alors de 16 px, decale de 8 px vers la
+          droite. Le `1rem` soustrait est donc exactement ces deux marges. */}
       <button
         type="button"
         onClick={() => setInviteOpen(true)}
         title={tOrg('inviteJoin.navAria')}
         aria-label={tOrg('inviteJoin.navAria')}
-        className={[
-          'sidebar-item w-full flex items-center rounded-xl transition-colors',
-          'text-[rgb(var(--nav-item-text))] hover:bg-[rgb(var(--nav-item-hover-bg))] hover:text-[rgb(var(--nav-item-hover-text))]',
-          isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5',
-        ].join(' ')}
+        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
       >
-        <Plus size={20} aria-hidden="true" />
-        {!isCollapsed && <span className="text-sm font-medium">{tOrg('inviteJoin.navLabel')}</span>}
+        <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
+          <Plus size={20} aria-hidden="true" />
+        </div>
+        {!isCollapsed && <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>}
       </button>
     </>;
 

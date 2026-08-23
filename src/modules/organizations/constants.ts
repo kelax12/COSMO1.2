@@ -27,4 +27,6 @@ export const orgKeys = {
   mySentRequest: () => [...orgKeys.all, 'mySentRequest'] as const,
   /** Invitations d'entreprise recues et non traitees (boite de reception). */
   myInvitations: () => [...orgKeys.all, 'myInvitations'] as const,
+  /** Retraits d'entreprise non acquittes (boite de reception). */
+  myRemovalNotices: () => [...orgKeys.all, 'myRemovalNotices'] as const,
 };

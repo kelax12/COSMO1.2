@@ -88,8 +88,14 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors min-h-touch sm:min-h-0 ${
     large ? 'gap-1.5 px-3 sm:py-1.5 text-sm' : 'gap-1 px-2.5 sm:py-1 text-xs'
   }`;
+  // `chip-accent-solid` plutot qu'un `bg-[#1f6feb]` en dur (cf. index.css) :
+  // ce bleu fonce n'existait que pour rattraper le contraste AA du theme Gris,
+  // et il s'appliquait aux QUATRE themes. En Noir, ou l'accent plein est
+  // quasi-blanc et son texte quasi-noir, il donnait une pastille bleu nuit
+  // avec du texte noir dessus. La classe porte le duo de tokens, et le seul
+  // theme qui en devie — Gris — le fait dans sa propre regle CSS.
   const allActiveCls = accentAllActive
-    ? 'bg-[#1f6feb] text-[rgb(var(--color-accent-solid-foreground))] border-transparent' // bleu fonce : --color-accent-solid (#388bfd) ne passe pas le contraste AA (3.3:1) avec du texte blanc
+    ? 'chip-accent-solid border-transparent'
     : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent';
   return (
       <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">

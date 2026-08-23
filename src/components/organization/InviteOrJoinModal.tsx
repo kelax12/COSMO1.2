@@ -2,36 +2,39 @@
 // InviteOrJoinModal — le « + » de la barre de navigation
 // ═══════════════════════════════════════════════════════════════════
 //
-// Deux colonnes, deux directions opposées du même geste social :
+// Deux colonnes, les deux seules façons d'obtenir une entreprise quand on n'en
+// a pas :
 //
-//   • GAUCHE  — je fais venir quelqu'un. Ajouter un contact COSMO par email,
-//               et/ou inviter un contact existant dans mon entreprise.
-//   • DROITE  — j'entre quelque part. Rejoindre une entreprise avec son code.
+//   • GAUCHE — j'en crée une. Une fois créée, on enchaîne SUR PLACE avec son
+//     code à partager et l'invitation de ses contacts : c'est le seul moment
+//     où l'organisation est vide, donc le seul moment où cet enchaînement
+//     tombe juste.
+//   • DROITE — j'en rejoins une avec son code.
 //
-// Le bouton est monté que l'utilisateur appartienne ou non à une organisation
-// (c'est la demande explicite) : sans org, la colonne « inviter dans mon
-// entreprise » explique simplement qu'il n'y a rien à rejoindre encore, la
-// colonne de droite reste pleinement utilisable.
+// ⚠️ Pourquoi « inviter un ami » N'EST PLUS une colonne autonome ici : ce
+// bouton est monté pour tout le monde, y compris pour quelqu'un qui
+// n'appartient à aucune organisation. Proposer d'inviter dans une entreprise
+// qu'on n'a pas est une impasse. L'invitation vit désormais là où elle a du
+// sens — après la création (ci-dessous) et dans l'onglet « Membres »
+// (`InviteFriendsToOrg`, même composant).
 //
-// Sur mobile, les deux colonnes s'empilent — l'ordre reste inviter puis
+// Sur mobile, les deux colonnes s'empilent — l'ordre reste créer puis
 // rejoindre.
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, UserPlus, Building2, Check, Send, Loader2 } from 'lucide-react';
+import { X, Building2, Check, Copy, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { useIsDemo } from '@/lib/app-mode.store';
-import { useFriends, useSendFriendRequest, useSentFriendRequests } from '@/modules/friends';
 import {
-  useActiveOrganization,
+  useCreateOrganization,
   useRequestJoinOrganization,
   useMySentJoinRequest,
   useCancelJoinRequest,
-  useInviteFriendToOrg,
+  type Organization,
 } from '@/modules/organizations';
 import OrgConsentNotice from './OrgConsentNotice';
+import InviteFriendsToOrg from './InviteFriendsToOrg';
 import { useT } from '@/i18n/useT';
 
 interface InviteOrJoinModalProps {
@@ -43,51 +46,53 @@ const inputClasses =
   'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40 transition-all';
 
 const primaryBtn =
-  'w-full py-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 transition-all inline-flex items-center justify-center gap-2';
+  'w-full py-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-all inline-flex items-center justify-center gap-2';
 
 const columnClasses =
   'flex flex-col gap-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5';
 
 const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChange }) => {
-  const { t, tp } = useT('org');
-  const { user } = useAuth();
-  const isDemo = useIsDemo();
-  const { activeOrg } = useActiveOrganization();
+  const { t } = useT('org');
 
-  const { data: friends = [] } = useFriends();
-  const { data: sentRequests = [] } = useSentFriendRequests();
-  const sendFriendMutation = useSendFriendRequest();
-  const inviteToOrgMutation = useInviteFriendToOrg();
-
+  const createMutation = useCreateOrganization();
   const { data: sentJoinRequest } = useMySentJoinRequest();
   const requestJoinMutation = useRequestJoinOrganization();
   const cancelJoinMutation = useCancelJoinRequest();
 
-  const [friendEmail, setFriendEmail] = useState('');
+  const [orgName, setOrgName] = useState('');
+  const [createdOrg, setCreatedOrg] = useState<Organization | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [code, setCode] = useState('');
   const [consent, setConsent] = useState(false);
 
-  const close = () => onOpenChange(false);
+  const close = () => {
+    onOpenChange(false);
+    // L'écran « entreprise créée » est un état de PASSAGE : le rouvrir plus
+    // tard doit repartir du formulaire, pas rejouer une création déjà faite.
+    setCreatedOrg(null);
+    setOrgName('');
+  };
 
-  const handleAddFriend = () => {
-    const email = friendEmail.trim().toLowerCase();
-    if (!email) return;
-    if (email === user?.email?.toLowerCase()) {
-      toast.error(t('inviteJoin.cannotInviteSelf'));
-      return;
+  const handleCreate = () => {
+    const name = orgName.trim();
+    if (name.length < 2) return;
+    createMutation.mutate(name, { onSuccess: (org) => setCreatedOrg(org) });
+  };
+
+  const copyCode = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCodeCopied(true);
+      toast.success(t('createJoin.codeCopied'));
+      setTimeout(() => setCodeCopied(false), 1500);
+    } catch {
+      toast.error(t('createJoin.copyFailed'));
     }
-    sendFriendMutation.mutate({ email }, { onSuccess: () => setFriendEmail('') });
   };
 
   const handleJoin = () => {
     requestJoinMutation.mutate(code.trim(), { onSuccess: () => setCode('') });
   };
-
-  // Contacts invitables : ceux dont on connaît l'auth.uid (obligatoire pour la
-  // RPC) et qui ne sont pas déjà dans l'organisation active. On ne dispose pas
-  // ici de la liste des membres — la RPC refuse proprement un doublon avec
-  // `already_a_member`, et le message est déjà traduit par normalizeApiError.
-  const invitableFriends = friends.filter((f) => !!f.userId);
 
   if (!open) return null;
 
@@ -131,174 +136,157 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 sm:p-6">
-            {/* ─── Colonne 1 : inviter ─────────────────────────────── */}
-            <section className={columnClasses} aria-labelledby="invite-col-title">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <UserPlus size={18} className="text-blue-500" aria-hidden="true" />
+          {createdOrg ? (
+            /* ── Entreprise créée : code à partager + invitation des amis ── */
+            <div className="p-5 sm:p-6 flex flex-col gap-5">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                  <Building2 size={26} className="text-indigo-500" aria-hidden="true" />
                 </div>
-                <h3 id="invite-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-                  {t('inviteJoin.inviteColTitle')}
+                <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
+                  {t('createJoin.orgCreated', { name: createdOrg.name })}
                 </h3>
+                <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                  {t('createJoin.shareCode')}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="text-base font-bold tracking-widest px-4 py-2.5 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]">
+                    {createdOrg.joinCode}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => createdOrg.joinCode && copyCode(createdOrg.joinCode)}
+                    className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors"
+                    aria-label={t('invite.copyCodeAria')}
+                  >
+                    {codeCopied
+                      ? <Check size={18} className="text-green-500" aria-hidden="true" />
+                      : <Copy size={18} aria-hidden="true" />}
+                  </button>
+                </div>
               </div>
 
-              {/* Ajouter un contact COSMO par email */}
-              <div className="space-y-2">
-                <label htmlFor="invite-friend-email" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-                  {t('inviteJoin.addByEmail')}
-                </label>
-                <input
-                  id="invite-friend-email"
-                  type="email"
-                  value={friendEmail}
-                  onChange={(e) => setFriendEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddFriend()}
-                  placeholder={t('inviteJoin.emailPlaceholder')}
-                  className={inputClasses}
-                  autoComplete="off"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddFriend}
-                  disabled={!friendEmail.trim() || sendFriendMutation.isPending}
-                  className={primaryBtn}
-                >
-                  {sendFriendMutation.isPending
-                    ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                    : <Send size={16} aria-hidden="true" />}
-                  {sendFriendMutation.isPending ? t('inviteJoin.sending') : t('inviteJoin.sendRequest')}
-                </button>
-                {sentRequests.length > 0 && (
-                  <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                    {tp('inviteJoin.pendingSent', sentRequests.length)}
-                  </p>
-                )}
+              <div className="border-t border-[rgb(var(--color-border))] pt-5">
+                <InviteFriendsToOrg orgId={createdOrg.id} />
               </div>
 
-              {/* Inviter un contact existant dans mon entreprise */}
-              <div className="pt-1 border-t border-[rgb(var(--color-border))] space-y-2">
-                <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))] pt-3">
-                  {t('inviteJoin.inviteToOrg')}
+              <button type="button" onClick={close} className={primaryBtn}>
+                {t('inviteJoin.done')}
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 sm:p-6">
+              {/* ─── Colonne 1 : créer ────────────────────────────────── */}
+              <section className={columnClasses} aria-labelledby="create-col-title">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Plus size={18} className="text-blue-500" aria-hidden="true" />
+                  </div>
+                  <h3 id="create-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+                    {t('createJoin.createOrg')}
+                  </h3>
+                </div>
+
+                <p className="text-xs text-[rgb(var(--color-text-muted))]">
+                  {t('createJoin.createOrgHint')}
                 </p>
 
-                {!activeOrg ? (
-                  <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                    {t('inviteJoin.noOrgYet')}
-                  </p>
-                ) : isDemo ? (
-                  <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                    {t('inviteJoin.demoNotice')}
-                  </p>
-                ) : invitableFriends.length === 0 ? (
-                  <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                    {t('inviteJoin.noFriendYet')}
-                  </p>
-                ) : (
-                  <>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                      {t('inviteJoin.inviteHint')}
-                    </p>
-                    <ul className="flex flex-col gap-1.5 max-h-52 overflow-y-auto">
-                      {invitableFriends.map((friend) => (
-                        <li key={friend.id}>
-                          <div className="flex items-center gap-2.5 rounded-xl border border-[rgb(var(--color-border))] px-3 py-2">
-                            <span className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-xs font-semibold text-[rgb(var(--color-text-secondary))] shrink-0 overflow-hidden">
-                              {friend.avatar
-                                ? <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
-                                : friend.name.slice(0, 1).toUpperCase()}
-                            </span>
-                            <span className="flex-1 min-w-0 text-xs text-[rgb(var(--color-text-primary))] truncate">
-                              {friend.name}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                inviteToOrgMutation.mutate({
-                                  orgId: activeOrg.id,
-                                  friendUserId: friend.userId as string,
-                                })
-                              }
-                              disabled={inviteToOrgMutation.isPending}
-                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 transition-colors shrink-0"
-                            >
-                              {t('inviteJoin.inviteCta')}
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </div>
-            </section>
-
-            {/* ─── Colonne 2 : rejoindre ───────────────────────────── */}
-            <section className={columnClasses} aria-labelledby="join-col-title">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                  <Building2 size={18} className="text-indigo-500" aria-hidden="true" />
-                </div>
-                <h3 id="join-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-                  {t('inviteJoin.joinColTitle')}
-                </h3>
-              </div>
-
-              {sentJoinRequest ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-[rgb(var(--color-text-primary))] font-medium">
-                    {t('inviteJoin.requestSent')}
-                  </p>
-                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-                    {t('inviteJoin.requestPending')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      cancelJoinMutation.mutate(sentJoinRequest.id, {
-                        onSuccess: () => toast.success(t('inviteJoin.requestCancelled')),
-                      })
-                    }
-                    disabled={cancelJoinMutation.isPending}
-                    className="text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:text-red-500 underline underline-offset-2 disabled:opacity-60 transition-colors"
-                  >
-                    {t('inviteJoin.cancelRequest')}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <label htmlFor="join-org-code" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-                    {t('inviteJoin.codeLabel')}
+                  <label htmlFor="new-org-name" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
+                    {t('common.orgNameLabel')}
                   </label>
                   <input
-                    id="join-org-code"
+                    id="new-org-name"
                     type="text"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => e.key === 'Enter' && code.trim() && consent && handleJoin()}
-                    placeholder="COSMO-XXXXXXXXXX"
-                    // 'COSMO-' + 10 caractères depuis la mig. 083 = 16. Une
-                    // valeur plus courte tronquerait un code valide à la saisie.
-                    maxLength={16}
-                    className={`${inputClasses} tracking-widest font-mono`}
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                    placeholder="Nova Studio"
+                    className={inputClasses}
+                    maxLength={80}
                     autoComplete="off"
                   />
-                  <OrgConsentNotice checked={consent} onChange={setConsent} />
                   <button
                     type="button"
-                    onClick={handleJoin}
-                    disabled={!code.trim() || !consent || requestJoinMutation.isPending}
+                    onClick={handleCreate}
+                    disabled={orgName.trim().length < 2 || createMutation.isPending}
                     className={primaryBtn}
                   >
-                    {requestJoinMutation.isPending
+                    {createMutation.isPending
                       ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                      : <Check size={16} aria-hidden="true" />}
-                    {requestJoinMutation.isPending ? t('inviteJoin.sending') : t('inviteJoin.sendRequest')}
+                      : <Building2 size={16} aria-hidden="true" />}
+                    {createMutation.isPending ? t('createJoin.creating') : t('createJoin.createCta')}
                   </button>
                 </div>
-              )}
-            </section>
-          </div>
+              </section>
+
+              {/* ─── Colonne 2 : rejoindre ────────────────────────────── */}
+              <section className={columnClasses} aria-labelledby="join-col-title">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
+                    <Building2 size={18} className="text-indigo-500" aria-hidden="true" />
+                  </div>
+                  <h3 id="join-col-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+                    {t('inviteJoin.joinColTitle')}
+                  </h3>
+                </div>
+
+                {sentJoinRequest ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-[rgb(var(--color-text-primary))] font-medium">
+                      {t('inviteJoin.requestSent')}
+                    </p>
+                    <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+                      {t('inviteJoin.requestPending')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        cancelJoinMutation.mutate(sentJoinRequest.id, {
+                          onSuccess: () => toast.success(t('inviteJoin.requestCancelled')),
+                        })
+                      }
+                      disabled={cancelJoinMutation.isPending}
+                      className="text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:text-red-500 underline underline-offset-2 disabled:opacity-60 transition-colors"
+                    >
+                      {t('inviteJoin.cancelRequest')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <label htmlFor="join-org-code" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
+                      {t('inviteJoin.codeLabel')}
+                    </label>
+                    <input
+                      id="join-org-code"
+                      type="text"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && code.trim() && consent && handleJoin()}
+                      placeholder="COSMO-XXXXXXXXXX"
+                      // 'COSMO-' + 10 caractères depuis la mig. 083 = 16. Une
+                      // valeur plus courte tronquerait un code valide à la saisie.
+                      maxLength={16}
+                      className={`${inputClasses} tracking-widest font-mono`}
+                      autoComplete="off"
+                    />
+                    <OrgConsentNotice checked={consent} onChange={setConsent} />
+                    <button
+                      type="button"
+                      onClick={handleJoin}
+                      disabled={!code.trim() || !consent || requestJoinMutation.isPending}
+                      className={primaryBtn}
+                    >
+                      {requestJoinMutation.isPending
+                        ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                        : <Check size={16} aria-hidden="true" />}
+                      {requestJoinMutation.isPending ? t('inviteJoin.sending') : t('inviteJoin.sendRequest')}
+                    </button>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>,

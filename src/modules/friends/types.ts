@@ -132,13 +132,15 @@ export interface SharedListGrant {
 /**
  * Friend request status
  */
-// `rejected` = le DESTINATAIRE refuse. `cancelled` = l'EXPÉDITEUR annule sa
-// propre demande. La policy RLS `friend_requests_update_sender_or_receiver`
-// (mig. 049) impose déjà cette séparation en base : un expéditeur ne peut
-// écrire que 'pending' ou 'cancelled', un destinataire que 'accepted' ou
-// 'rejected'. Le type l'ignorait, d'où une annulation qui partait en
-// 'rejected' et se faisait rejeter par le WITH CHECK.
-export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled';
+// Les trois seuls statuts que la contrainte `friend_requests_status_check`
+// accepte en base. `rejected` = le DESTINATAIRE refuse.
+//
+// ⚠️ Pas de 'cancelled' ici, malgré ce que laisse croire la policy
+// `friend_requests_update_sender_or_receiver` (mig. 049) qui l'autorise à
+// l'expéditeur : la contrainte CHECK de la table ne le connaît pas, donc
+// l'écrire échoue. L'expéditeur qui retire sa demande la SUPPRIME
+// (cf. `cancelFriendRequest`), ce que la policy DELETE autorise.
+export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected';
 
 /**
  * Pending friend request

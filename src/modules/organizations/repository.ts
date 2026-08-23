@@ -2,7 +2,7 @@
 // ORGANIZATIONS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
 
 export interface IOrganizationsRepository {
   // Read operations
@@ -31,6 +31,12 @@ export interface IOrganizationsRepository {
 
   /** J'accepte ou je refuse une invitation qui m'est adressee. */
   respondOrgInvitation(invitationId: string, accept: boolean): Promise<void>;
+
+  /** Les retraits d'entreprise dont je n'ai pas encore accuse reception. */
+  getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]>;
+
+  /** J'accuse reception d'un retrait (la notification disparait). */
+  dismissOrgRemovalNotice(noticeId: string): Promise<void>;
   /** Admin : accepte ou refuse une demande d'adhésion. */
   respondJoinRequest(requestId: string, accept: boolean): Promise<void>;
   /** Demandeur : annule sa demande en attente. */

@@ -14,6 +14,7 @@ import {
 import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
 import { PageHeading } from '@/components/ui/typography';
 import MemberDirectory from '@/components/organization/MemberDirectory';
+import InviteFriendsToOrg from '@/components/organization/InviteFriendsToOrg';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
 import OrgInviteLinkCard from '@/components/organization/OrgInviteLinkCard';
 import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
@@ -100,7 +101,8 @@ const OrganizationPage = () => {
     if (!orgId) return;
     return () => markOrgSeen(orgId);
   }, [myOrg?.id]);
-  const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
+  // `live` : c'est LA page où l'on attend de voir un membre arriver.
+  const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id, { live: true });
   const leaveMutation = useLeaveOrganization();
   const deleteMutation = useDeleteOrganization();
   const transferMutation = useTransferOwnership();
@@ -336,6 +338,11 @@ const OrganizationPage = () => {
             isAdmin={isAdmin}
             isManager={isManager}
           />
+
+          {/* Faire venir ses contacts COSMO — même composant que l'écran qui
+              suit la création d'une entreprise. Réservé aux admins : c'est eux
+              qui décident qui entre. */}
+          {isAdmin && <InviteFriendsToOrg orgId={myOrg.id} variant="card" />}
 
           <div>
             <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
