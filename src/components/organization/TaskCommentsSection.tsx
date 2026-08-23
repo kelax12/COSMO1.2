@@ -66,12 +66,16 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
   };
 
   return (
-    <div className="border-t pt-4 mt-5" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <h3 className="flex items-center gap-2 text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+    <div className="flex flex-col h-full min-h-0 border-t pt-4 mt-5" style={{ borderColor: 'rgb(var(--color-border))' }}>
+      <h3 className="flex items-center gap-2 text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
         <MessageSquare size={15} aria-hidden="true" />
         Commentaires{comments.length > 0 ? ` (${comments.length})` : ''}
       </h3>
 
+      {/* Liste scrollable — hauteur de contenu par défaut (pas de flex-1 qui
+          forcerait la zone à s'étirer et laisserait un vide sous « aucun
+          commentaire »). Seule une vraie liste longue déclenche le scroll
+          via max-h. */}
       {isLoading ? (
         <p className="text-xs py-3 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('comments.loading')}</p>
       ) : isError ? (
@@ -98,7 +102,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
           {t('comments.empty')}
         </p>
       ) : (
-        <ul className="space-y-3 mb-3 max-h-56 overflow-y-auto pr-1">
+        <ul className="space-y-3 mb-3 max-h-56 overflow-y-auto pr-1 min-h-0">
           {comments.map((c) => {
             const author = c.authorId ? memberById.get(c.authorId) : undefined;
             return (
@@ -135,7 +139,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
         </ul>
       )}
 
-      <div className="relative">
+      <div className="relative shrink-0">
         {mentionCandidates.length > 0 && (
           <ul
             className="absolute bottom-full mb-1 left-0 right-0 rounded-xl border shadow-lg overflow-hidden z-10"

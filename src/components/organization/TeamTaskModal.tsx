@@ -198,7 +198,11 @@ const TeamTaskModal = ({
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
       onClick={pending ? undefined : onClose}
     >
-      <div className="flex items-stretch justify-center gap-4 w-full sm:w-auto">
+      {/* items-start (pas items-stretch) : chaque panneau garde sa hauteur de
+          contenu au lieu d'être étiré à celle du modal central — sinon un
+          panneau avec peu d'éléments (2-3 membres, aucun commentaire) traîne
+          un grand vide sous sa liste. */}
+      <div className="flex items-start justify-center gap-4 w-full sm:w-auto">
         {/* Panneau gauche : assignés, en permanence visible dès `lg` — la
             tâche EN COURS DE CRÉATION en a besoin aussi (photo7), pas
             seulement l'édition. */}
@@ -221,7 +225,7 @@ const TeamTaskModal = ({
         )}
 
       <div
-        className="flex flex-col w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
+        className="flex flex-col w-full sm:max-w-xl sm:w-full shrink-0 max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -510,7 +514,7 @@ const TeamTaskModal = ({
             déjà) : en création, il n'y a encore rien à commenter. */}
         {isWide && !isCreating && task && (
           <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 overflow-y-auto flex-1 min-h-0">
+            <div className="px-4 py-3 flex flex-col flex-1 min-h-0">
               <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
             </div>
           </div>
