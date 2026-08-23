@@ -10,7 +10,7 @@
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation } from './types';
 import {
   ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
@@ -211,6 +211,25 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     );
     if (isMember) throw new Error('Vous êtes déjà membre de cette entreprise');
     throw new Error('Demande envoyée : en mode démo, utilisez les entreprises fournies');
+  }
+
+  // --- Invitations nominatives (mig. 105) ---------------------------
+  // Le mode demo est mono-utilisateur : il n existe personne pour emettre
+  // une invitation vers le compte demo, ni personne a inviter reellement.
+  // On garde les trois methodes pour respecter le contrat de l interface,
+  // avec le meme parti pris que requestJoin ci-dessus : un message honnete
+  // plutot qu une fausse reussite.
+
+  async inviteFriendToOrg(_orgId: string, _friendUserId: string): Promise<void> {
+    throw new Error("En mode demo, les invitations d entreprise ne sont pas envoyees");
+  }
+
+  async getMyOrgInvitations(): Promise<OrgInvitation[]> {
+    return [];
+  }
+
+  async respondOrgInvitation(_invitationId: string, _accept: boolean): Promise<void> {
+    throw new Error("En mode demo, les invitations d entreprise ne sont pas envoyees");
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {

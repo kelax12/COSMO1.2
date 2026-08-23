@@ -12,6 +12,7 @@ import { readFirstTouch } from '@/lib/attribution';
 import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
+import { toast } from 'sonner';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
@@ -155,6 +156,41 @@ const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): string =
     return "Cette adresse email n'est pas valide.";
   }
   return fallback;
+};
+
+/**
+ * Le fournisseur OAuth renvoie ses echecs dans l'URL, pas dans une exception.
+ *
+ * Google redirige vers `/dashboard?error=access_denied&error_description=...`
+ * (ou la meme chose dans le fragment, selon le flux). `detectSessionInUrl`
+ * n'ouvre alors aucune session et ne signale rien : cote utilisateur, la
+ * connexion « a marche » puis l'app est vide. On lit ces parametres au
+ * demarrage pour en laisser une trace exploitable, puis on nettoie l'URL
+ * (elle peut contenir un identifiant de tentative).
+ *
+ * Retourne la description lisible s'il y en a une.
+ */
+const consumeOAuthErrorFromUrl = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const code = query.get('error') ?? hash.get('error');
+    if (!code) return null;
+    const description =
+      query.get('error_description') ?? hash.get('error_description') ?? code;
+    console.error('[auth] retour OAuth en erreur', code, description);
+    Sentry.captureMessage(`OAuth callback error: ${code}`, {
+      level: 'warning',
+      tags: { context: 'oauth-callback' },
+    });
+    // Nettoie l'URL : sans ca, un rechargement rejoue l'erreur a l'infini.
+    const clean = window.location.pathname;
+    window.history.replaceState(null, '', clean);
+    return description;
+  } catch {
+    return null;
+  }
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -304,7 +340,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    // Message d'erreur OAuth eventuel, lu AVANT initializeAuth : c'est lui
+    // qui nettoie l'URL, et getSession() n'a de toute facon rien a en tirer.
+    const oauthError = consumeOAuthErrorFromUrl();
+    if (oauthError) {
+      // Toast differe : Sonner est monte par App, sous ce provider.
+      setTimeout(() => {
+        toast.error("La connexion n'a pas abouti.", { description: oauthError });
+      }, 0);
+    }
+
     initializeAuth();
+
+    // GARDE-FOU — `ProtectedRoute` ne rend RIEN tant que `isLoading` est vrai,
+    // et `RootRoute` non plus. Si la resolution de session ne se termine
+    // jamais (socket morte sur mobile Safari, echange PKCE bloque, onglet
+    // reveille apres un long arriere-plan), l'utilisateur reste devant un
+    // ecran vide — noir ou blanc selon son theme — sans le moindre bouton,
+    // deconnexion comprise.
+    //
+    // Au-dela de ce delai on tranche : pas de session resolue = non
+    // authentifie. L'utilisateur retombe sur la landing, d'ou il peut se
+    // reconnecter. Un `onAuthStateChange` tardif corrigera le tir tout seul.
+    const loadingWatchdog = window.setTimeout(() => {
+      setIsLoading((stillLoading) => {
+        if (stillLoading) {
+          dlog('watchdog: session non resolue apres 12 s — on debloque l UI');
+          Sentry.captureMessage('auth: isLoading watchdog fired', {
+            level: 'warning',
+            tags: { context: 'auth-watchdog' },
+          });
+        }
+        return false;
+      });
+    }, 12_000);
 
     // Track the previous user id so we only blow away the cache when the
     // user identity actually changes. Supabase JS fires SIGNED_IN on token
@@ -368,6 +437,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      window.clearTimeout(loadingWatchdog);
       subscription.unsubscribe();
       cacheWriteUnsub?.();
     };

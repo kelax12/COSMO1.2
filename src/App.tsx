@@ -148,10 +148,17 @@ const PageLoader = () => (
 );
 
 // Layout wrapper with Suspense
+// AppErrorBoundary ICI aussi : le Layout est le parent de TOUTES les pages
+// protegees et il est lazy. Sans boundary, un chunk perime ou un throw dans
+// la barre laterale faisait remonter l erreur au-dessus des routes et vidait
+// l ecran. Le fallback est le plein cadre par defaut (pas null) : c est une
+// coquille de page, pas un widget secondaire.
 const LayoutWithSuspense = () => (
-  <Suspense fallback={null}>
-    <Layout />
-  </Suspense>
+  <AppErrorBoundary>
+    <Suspense fallback={null}>
+      <Layout />
+    </Suspense>
+  </AppErrorBoundary>
 );
 
 // Page wrapper with Suspense

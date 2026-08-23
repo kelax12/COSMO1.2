@@ -41,6 +41,7 @@ import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
 import DemoBridgePrompt from './DemoBridgePrompt';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
+import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
 
@@ -235,6 +236,18 @@ const Layout: React.FC = () => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
   });
+  // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
+  // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  // La feuille « Plus » du mobile vit sous MobileTabBar, plusieurs niveaux
+  // sous cet etat. Meme convention que la palette de commandes : un evenement
+  // custom, plutot qu un contexte de plus pour un seul booleen.
+  useEffect(() => {
+    const open = () => setInviteOpen(true);
+    window.addEventListener("open-invite-join", open);
+    return () => window.removeEventListener("open-invite-join", open);
+  }, []);
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
@@ -322,6 +335,25 @@ const NavItems = () =>
             </>
           ) : undefined} />
       )}
+
+      {/* « + » — inviter un ami / rejoindre une entreprise avec un code.
+          Monte INCONDITIONNELLEMENT, que l'entree « Entreprise » ci-dessus
+          soit affichee ou non : c'est justement le point d'entree de
+          quelqu'un qui n'appartient encore a aucune organisation. */}
+      <button
+        type="button"
+        onClick={() => setInviteOpen(true)}
+        title={tOrg('inviteJoin.navAria')}
+        aria-label={tOrg('inviteJoin.navAria')}
+        className={[
+          'sidebar-item w-full flex items-center rounded-xl transition-colors',
+          'text-[rgb(var(--nav-item-text))] hover:bg-[rgb(var(--nav-item-hover-bg))] hover:text-[rgb(var(--nav-item-hover-text))]',
+          isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5',
+        ].join(' ')}
+      >
+        <Plus size={20} aria-hidden="true" />
+        {!isCollapsed && <span className="text-sm font-medium">{tOrg('inviteJoin.navLabel')}</span>}
+      </button>
     </>;
 
 
@@ -364,6 +396,7 @@ const NavItems = () =>
       <GlobalNavShortcuts />
       {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}
       <DeadlineReminder />
+      <InviteOrJoinModal open={inviteOpen} onOpenChange={setInviteOpen} />
     </>
   );
 

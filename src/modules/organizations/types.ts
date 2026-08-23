@@ -138,6 +138,23 @@ export interface OrgInviteLink {
   claimedAt?: string | null;
 }
 
+/**
+ * Invitation NOMINATIVE d'un ami dans une organisation (mig. 105).
+ *
+ * A ne pas confondre avec OrgJoinRequest, qui va dans l'autre sens : la
+ * demande part de la personne qui veut entrer et un admin l'approuve. Ici
+ * c'est un membre qui invite, et le destinataire repond depuis sa boite de
+ * reception.
+ */
+export interface OrgInvitation {
+  id: string;
+  orgId: string;
+  orgName: string;
+  inviterId: string;
+  inviterName: string;
+  createdAt: string;
+}
+
 export type OrgJoinRequestStatus = 'pending' | 'accepted' | 'rejected';
 
 /**

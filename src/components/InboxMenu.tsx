@@ -28,6 +28,8 @@ import {
   useActiveOrganization,
   useOrgJoinRequests,
   useRespondJoinRequest,
+  useMyOrgInvitations,
+  useRespondOrgInvitation,
 } from '@/modules/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
@@ -52,6 +54,7 @@ import { useT } from '@/i18n/useT';
 const InboxMenu: React.FC = () => {
   const { t, tp } = useT('common');
   const { t: tTasks } = useT('tasks');
+  const { t: tOrg } = useT('org');
   const { user } = useAuth();
 
   const queryClient = useQueryClient();
@@ -77,6 +80,13 @@ const InboxMenu: React.FC = () => {
   const isOrgAdmin = myOrg?.myRole === 'admin';
   const { data: joinRequests = [] } = useOrgJoinRequests(isOrgAdmin ? myOrg?.id : undefined);
   const respondJoinRequestMutation = useRespondJoinRequest();
+
+  // Invitations NOMINATIVES recues d'un ami (mig. 105). A ne pas confondre
+  // avec `joinRequests` juste au-dessus, qui va dans l'autre sens : la que
+  // des inconnus demandent a entrer et qu'un admin tranche. Ici c'est MOI
+  // qu'on invite, et c'est moi qui reponds.
+  const { data: orgInvitations = [] } = useMyOrgInvitations();
+  const respondOrgInvitationMutation = useRespondOrgInvitation();
 
   // Acquittements locaux des tâches partagées en mode démo (cf.
   // lib/acknowledged-shares). En Supabase, l'état d'acceptation est porté par
@@ -136,7 +146,12 @@ const InboxMenu: React.FC = () => {
   }, [tasks, pendingShared, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const pendingJoinRequests = isOrgAdmin ? joinRequests : [];
-  const total = incomingRequests.length + tasksToAccept.length + incomingLists.length + pendingJoinRequests.length;
+  const total =
+    incomingRequests.length +
+    tasksToAccept.length +
+    incomingLists.length +
+    pendingJoinRequests.length +
+    orgInvitations.length;
 
   // Aperçu de l'impact d'une suppression d'ami : tâches dont je suis
   // propriétaire et que j'ai partagées avec lui (il perdra l'accès) + tâches
@@ -540,6 +555,58 @@ const InboxMenu: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Invitations d'entreprise reçues (mig. 105) ── */}
+        {!showManageFriends && orgInvitations.length > 0 && (
+          <div>
+            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
+              {tOrg('inviteJoin.inboxHeading')}
+            </p>
+            <div className="divide-y divide-[rgb(var(--color-border))]">
+              {orgInvitations.map((invitation) => {
+                const timeAgo = invitation.createdAt
+                  ? formatDistanceToNow(new Date(invitation.createdAt), { locale: getDateLocale(), addSuffix: true })
+                  : '';
+                return (
+                  <div key={invitation.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                        {invitation.orgName}
+                      </p>
+                      <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                        {tOrg('inviteJoin.inboxFrom', { name: invitation.inviterName })}{timeAgo ? ` · ${timeAgo}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button
+                        onClick={() =>
+                          respondOrgInvitationMutation.mutate({ invitationId: invitation.id, accept: true })
+                        }
+                        disabled={respondOrgInvitationMutation.isPending}
+                        title={tTasks('inbox.accept')}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        aria-label={tOrg('inviteJoin.inboxAccept', { org: invitation.orgName })}
+                      >
+                        <Check size={15} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          respondOrgInvitationMutation.mutate({ invitationId: invitation.id, accept: false })
+                        }
+                        disabled={respondOrgInvitationMutation.isPending}
+                        title={tTasks('inbox.refuse')}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        aria-label={tOrg('inviteJoin.inboxRefuse', { org: invitation.orgName })}
+                      >
+                        <X size={15} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
                 );
               })}
             </div>

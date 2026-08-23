@@ -21,7 +21,18 @@ export const useMyOrganizations = (enabled: boolean = true) => {
     queryKey: orgKeys.mine(),
     queryFn: () => repository.getMyOrganizations(),
     enabled,
-    staleTime: 1000 * 60 * 5,
+    // Un retrait d'entreprise doit se voir. Avec 5 min de fraîcheur et aucun
+    // refetch, l'exclu gardait son onglet « Entreprise » et sa dernière vue
+    // en cache pendant tout ce temps — voire indéfiniment sur un onglet
+    // jamais quitté. 60 s + refetch au retour sur l'onglet : l'appartenance
+    // est revérifiée à chaque fois que l'utilisateur revient à l'app.
+    //
+    // Pas de `refetchInterval` : ce serait deux requêtes par tick pour tout le
+    // monde, et l'appartenance à une organisation ne change pas à la minute.
+    // Le retour d'onglet est le bon déclencheur (cf. garde-fou egress,
+    // CLAUDE.md § synchronisation de la collaboration).
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -54,6 +65,59 @@ export const useMySentJoinRequest = () => {
     queryFn: () => repository.getMySentJoinRequest(),
     refetchInterval: 20_000,
     refetchOnWindowFocus: true,
+  });
+};
+
+/**
+ * Invitations d entreprise recues et non traitees.
+ *
+ * Meme cadence que les autres surfaces de la boite de reception (20 s +
+ * refetch au retour d onglet) : une invitation doit apparaitre sans que le
+ * destinataire ait a recharger.
+ */
+export const useMyOrgInvitations = () => {
+  const repository = useOrgRepository();
+  return useQuery({
+    queryKey: orgKeys.myInvitations(),
+    queryFn: () => repository.getMyOrgInvitations(),
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useInviteFriendToOrg = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ orgId, friendUserId }: { orgId: string; friendUserId: string }) =>
+      repository.inviteFriendToOrg(orgId, friendUserId),
+    onSuccess: () => {
+      toast.success(translator('org').t('inviteJoin.inviteSent'));
+      queryClient.invalidateQueries({ queryKey: orgKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useRespondOrgInvitation = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ invitationId, accept }: { invitationId: string; accept: boolean }) =>
+      repository.respondOrgInvitation(invitationId, accept),
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.accept
+          ? translator('org').t('inviteJoin.joinedOrg')
+          : translator('org').t('inviteJoin.invitationRefused'),
+      );
+      queryClient.invalidateQueries({ queryKey: orgKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 };
 

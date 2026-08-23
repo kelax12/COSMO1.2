@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import * as Sentry from '@sentry/react';
 import App from './App.tsx';
+import { RootErrorBoundary } from './components/RootErrorBoundary';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
 import { mountAudienceScript } from './lib/audience';
@@ -198,9 +199,16 @@ if (supabaseUrl) {
 // par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
 function mount(): void {
   createRoot(document.getElementById('root')!).render(
-    <BrowserRouter basename={routerBasename}>
-      <App />
-    </BrowserRouter>
+    // RootErrorBoundary ENGLOBE le routeur et donc tous les providers. Sans
+    // lui, une erreur dans AuthProvider / ActiveOrgProvider / BillingProvider
+    // ou dans le chunk du Layout demontait l app entiere et ne laissait que
+    // le fond du body : ecran noir en theme sombre, page blanche en clair,
+    // et plus aucun bouton pour se deconnecter.
+    <RootErrorBoundary>
+      <BrowserRouter basename={routerBasename}>
+        <App />
+      </BrowserRouter>
+    </RootErrorBoundary>
   );
 }
 

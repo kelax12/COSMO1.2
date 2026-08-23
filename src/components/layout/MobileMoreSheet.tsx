@@ -233,6 +233,37 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                 })}
               </div>
 
+              {/* — Inviter / rejoindre — */}
+              {/* Toujours monte, que l entree « Entreprise » ci-dessus existe
+                  ou non : c est le point d entree de quelqu un qui n appartient
+                  encore a aucune organisation. */}
+              <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClose();
+                    window.dispatchEvent(new CustomEvent("open-invite-join"));
+                  }}
+                  className="w-full flex items-center gap-3.5 px-4 min-h-[60px] text-left active:bg-[rgb(var(--color-hover))] transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 bg-blue-500">
+                    <Plus size={20} className="text-white" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {/* Echelle mobile fermee (docs/MOBILE.md), pas de
+                        text-[Npx] : le garde design-system refuse toute
+                        nouvelle taille arbitraire. */}
+                    <p className="text-body font-medium text-[rgb(var(--color-text-primary))] leading-snug">
+                      {tOrg('inviteJoin.navLabel')}
+                    </p>
+                    <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5 truncate">
+                      {tOrg('inviteJoin.navHint')}
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
+                </button>
+              </div>
+
               {/* — Logout — */}
               <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                 <button

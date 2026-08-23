@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation } from './types';
 
 interface OrgRow {
   id: string;
@@ -205,6 +205,47 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (error) throw normalizeApiError(error);
     const row = (Array.isArray(data) ? data[0] : data) as { org_name: string } | null;
     return { orgName: row?.org_name ?? '' };
+  }
+
+  // --- Invitations nominatives d un ami (mig. 105) ------------------
+
+  async inviteFriendToOrg(orgId: string, friendUserId: string): Promise<void> {
+    if (!supabase) throw new Error("Supabase not configured");
+    const { error } = await supabase.rpc("invite_friend_to_org", {
+      p_org: orgId,
+      p_invitee: friendUserId,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getMyOrgInvitations(): Promise<OrgInvitation[]> {
+    if (!supabase) throw new Error("Supabase not configured");
+    // RPC SECURITY DEFINER : le nom d une organisation n est PAS lisible par
+    // un non-membre (organizations_select = is_org_member). Sans elle, on
+    // afficherait une invitation sans pouvoir nommer l entreprise.
+    const { data, error } = await supabase.rpc("get_my_org_invitations");
+    if (error) throw normalizeApiError(error);
+    const rows = (data ?? []) as Array<{
+      id: string; org_id: string; org_name: string;
+      inviter_id: string; inviter_name: string | null; created_at: string;
+    }>;
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      orgName: r.org_name,
+      inviterId: r.inviter_id,
+      inviterName: r.inviter_name ?? "Un collaborateur",
+      createdAt: r.created_at,
+    }));
+  }
+
+  async respondOrgInvitation(invitationId: string, accept: boolean): Promise<void> {
+    if (!supabase) throw new Error("Supabase not configured");
+    const { error } = await supabase.rpc("respond_org_invitation", {
+      p_invitation: invitationId,
+      p_accept: accept,
+    });
+    if (error) throw normalizeApiError(error);
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {
