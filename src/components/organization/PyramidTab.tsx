@@ -417,15 +417,18 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
               menuActionAtRef.current = Date.now();
             }}
           >
+            {/* Icônes SANS classe de couleur : DropdownMenuItem applique déjà
+                `text-muted-foreground` à tout svg qui n'en porte pas — même
+                style neutre que le menu d'actions de TaskTable. */}
             {canAddUnder && (
               <DropdownMenuItem onClick={() => onAddUnder(m)}>
-                <UserRoundPlus size={14} className="text-green-500" aria-hidden="true" />
+                <UserRoundPlus size={14} aria-hidden="true" />
                 {t('common.addCollaborator')}
               </DropdownMenuItem>
             )}
             {movable && (
               <DropdownMenuItem onClick={() => onStartDrag(m)}>
-                <Move size={14} className="text-indigo-500" aria-hidden="true" />
+                <Move size={14} aria-hidden="true" />
                 {t('pyramid.move')}
               </DropdownMenuItem>
             )}
@@ -433,15 +436,15 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'tasks')}>
-                  <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
+                  <ListTodo size={14} aria-hidden="true" />
                   {t('pyramid.seeTasksAction')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'agenda')}>
-                  <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
+                  <CalendarDays size={14} aria-hidden="true" />
                   {t('common.seeAgenda')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'contribution')}>
-                  <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
+                  <TrendingUp size={14} aria-hidden="true" />
                   {t('common.seeContribution')}
                 </DropdownMenuItem>
               </>
@@ -449,8 +452,16 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
             {canRemove && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={() => onRemove(m)}>
-                  <Trash2 size={14} aria-hidden="true" />
+                {/* `!text-red-500` explicite : le sélecteur Tailwind
+                    `data-[variant=destructive]:*:[svg]:!text-destructive`
+                    du composant ne colore pas l'icône (constaté), même
+                    override que TaskTable pour « Supprimer ». */}
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onRemove(m)}
+                  className="!text-red-500 focus:!text-red-500"
+                >
+                  <Trash2 className="!text-red-500" size={14} aria-hidden="true" />
                   {t('common.removeFromOrg')}
                 </DropdownMenuItem>
               </>

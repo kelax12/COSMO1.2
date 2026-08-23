@@ -24,7 +24,7 @@ interface TaskCommentsSectionProps {
  */
 const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSectionProps) => {
   const { t } = useT('org');
-  const { data: comments = [], isLoading } = useTeamTaskComments(taskId);
+  const { data: comments = [], isLoading, isError, refetch } = useTeamTaskComments(taskId);
   const addMutation = useAddTeamTaskComment(taskId);
   const deleteMutation = useDeleteTeamTaskComment(taskId);
   const [body, setBody] = useState('');
@@ -74,6 +74,25 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
 
       {isLoading ? (
         <p className="text-xs py-3 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('comments.loading')}</p>
+      ) : isError ? (
+        // Une erreur réseau/serveur affichée comme « aucun commentaire » est
+        // indiscernable d'une vraie absence de commentaire — c'est exactement
+        // ce qui a rendu un incident (compte B ne voyait rien) impossible à
+        // diagnostiquer depuis l'écran lui-même. On la nomme, avec un moyen
+        // de réessayer sans fermer/rouvrir la tâche.
+        <div className="text-center py-3">
+          <p className="text-xs mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            {t('comments.loadError')}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="text-xs font-semibold underline"
+            style={{ color: 'rgb(var(--color-accent))' }}
+          >
+            {t('comments.retry')}
+          </button>
+        </div>
       ) : comments.length === 0 ? (
         <p className="text-xs py-1 mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
           {t('comments.empty')}
