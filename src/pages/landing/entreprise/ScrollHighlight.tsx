@@ -23,10 +23,9 @@ interface ScrollHighlightProps {
  * un simple changement de couleur. `background-size` anime la largeur du
  * dégradé posé derrière le texte ; `<mark>` garde le sens sémantique.
  *
- * Le seuil de déclenchement (`top 70%`) est délibérément plus tardif que les
- * reveals d'entrée des sections (`top 82-85%` ailleurs dans le track) : sinon
- * le surlignage se joue au même instant que le fondu d'apparition du texte,
- * qui est encore quasi transparent, et l'animation est invisible.
+ * Déclenché quand le haut du mot atteint le milieu de l'écran (`top 50%`) —
+ * demande explicite : le surlignage doit se jouer une fois le texte au centre
+ * du viewport, pas dès son apparition en bas d'écran.
  *
  * Rendu en `<span>` : s'insère dans le `<p>` du parent, qui porte déjà les
  * classes de texte (héritées).
@@ -51,7 +50,7 @@ const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text, delay = 0.2 }) 
               duration: 0.5,
               delay,
               ease: 'power2.out',
-              scrollTrigger: { trigger: mark, start: 'top 70%', once: true },
+              scrollTrigger: { trigger: mark, start: 'top 50%', once: true },
             },
           );
         });
