@@ -52,6 +52,7 @@ export {
   useMyOrgRemovalNotices,
   useDismissOrgRemovalNotice,
   useInviteFriendToOrg,
+  usePendingSentInvitations,
   useRespondOrgInvitation,
   useCreateOrganization,
   useRequestJoinOrganization,

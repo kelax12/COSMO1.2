@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft, ListTodo } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -21,6 +21,7 @@ import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
 import DeleteOrganizationDialog from '@/components/organization/DeleteOrganizationDialog';
 import PyramidTab from '@/components/organization/PyramidTab';
 import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
+import TeamTasksTab from '@/components/organization/TeamTasksTab';
 import TeamsSection from '@/components/organization/TeamsSection';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
@@ -34,7 +35,7 @@ import TransferOwnershipDialog from '@/components/organization/TransferOwnership
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
-type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members' | 'billing';
+type OrgTab = 'overview' | 'pyramid' | 'tasks' | 'projects' | 'okr' | 'stats' | 'members' | 'billing';
 
 // Libellés = CLÉS : cette constante est évaluée au premier import, y écrire du
 // texte figerait les onglets en français pour toute la session.
@@ -51,6 +52,7 @@ const TABS: {
 }[] = [
   { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network },
+  { id: 'tasks', labelKey: 'tabs.tasks', Icon: ListTodo },
   { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban },
   { id: 'okr', labelKey: 'tabs.okr', Icon: Target },
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
@@ -302,6 +304,9 @@ const OrganizationPage = () => {
           isAdmin={isAdmin}
           loading={membersLoading}
         />
+      )}
+      {tab === 'tasks' && (
+        <TeamTasksTab orgId={myOrg.id} members={members} isManager={isManager} />
       )}
       {tab === 'projects' && (
         <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />

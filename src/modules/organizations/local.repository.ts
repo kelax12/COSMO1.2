@@ -228,6 +228,13 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     return [];
   }
 
+  // Aucune invitation n'est jamais réellement envoyée en démo
+  // (`inviteFriendToOrg` lève systématiquement) : il n'y a donc jamais rien
+  // « en attente » à distinguer.
+  async getPendingSentInvitationIds(_orgId: string): Promise<string[]> {
+    return [];
+  }
+
   async respondOrgInvitation(_invitationId: string, _accept: boolean): Promise<void> {
     throw new Error("En mode demo, les invitations d entreprise ne sont pas envoyees");
   }

@@ -141,6 +141,21 @@ export const useDismissOrgRemovalNotice = () => {
   });
 };
 
+/**
+ * Ids des amis que j'ai invités dans cette org et dont l'invitation est
+ * encore en attente — pour griser leur bouton « Inviter » dans
+ * InviteFriendsToOrg au lieu de le laisser identique à « jamais invité ».
+ */
+export const usePendingSentInvitations = (orgId: string | undefined) => {
+  const repository = useOrgRepository();
+  return useQuery({
+    queryKey: orgKeys.pendingSentInvitations(orgId ?? ''),
+    queryFn: () => repository.getPendingSentInvitationIds(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+  });
+};
+
 export const useInviteFriendToOrg = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();

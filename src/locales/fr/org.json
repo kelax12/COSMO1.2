@@ -383,7 +383,40 @@
     "sameProjectOnly": "Seules les tâches du même projet peuvent être liées.",
     "blockedWarning_one": "En attente de {{count}} tâche non terminée",
     "blockedWarning_other": "En attente de {{count}} tâches non terminées",
-    "blockedWarning_many": "En attente de {{count}} de tâches non terminées"
+    "blockedWarning_many": "En attente de {{count}} de tâches non terminées",
+    "tasksTabQuickAccess": "Accès rapide aux projets",
+    "tasksTabAll": "Toutes les tâches",
+    "tasksTabSearchPlaceholder": "Rechercher…",
+    "tasksTabSearchAria": "Rechercher une tâche",
+    "tasksTabClearSearch": "Effacer la recherche",
+    "tasksTabSortAria": "Trier par",
+    "tasksTabSortPriority": "Par priorité",
+    "tasksTabSortDeadline": "Par échéance",
+    "tasksTabSortName": "Par nom",
+    "tasksTabSortDuration": "Par durée",
+    "tasksTabSortAsc": "Ordre croissant",
+    "tasksTabSortDesc": "Ordre décroissant",
+    "tasksTabNewTask": "Nouvelle tâche",
+    "tasksTabFilterOpen": "En cours",
+    "tasksTabFilterOverdue": "Retard",
+    "tasksTabFilterDone": "Terminées",
+    "tasksTabFilterAll": "Tout",
+    "tasksTabShown_one": "{{count}} tâche affichée sur {{total}}",
+    "tasksTabShown_many": "{{count}} de tâches affichées sur {{total}}",
+    "tasksTabShown_other": "{{count}} tâches affichées sur {{total}}",
+    "tasksTabNoProject": "Aucun projet dans cette entreprise. Créez-en un depuis l'onglet Projets pour commencer à y ajouter des tâches.",
+    "tasksTabEmpty": "Aucune tâche ne correspond à ces filtres.",
+    "tasksTabColComplete": "Terminée",
+    "tasksTabColProjectColor": "Couleur du projet",
+    "tasksTabColName": "NOM DE LA TÂCHE",
+    "tasksTabColProject": "PROJET",
+    "tasksTabColPriority": "PRIORITÉ",
+    "tasksTabColDeadline": "ÉCHÉANCE",
+    "tasksTabColDuration": "DURÉE",
+    "tasksTabColActions": "ACTIONS",
+    "tasksTabNoDeadline": "Pas d'échéance",
+    "tasksTabActionsAria": "Actions pour {{name}}",
+    "tasksTabEdit": "Modifier"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -771,7 +804,8 @@
     "projects": "Projets",
     "okr": "OKR",
     "stats": "Statistiques",
-    "members": "Membres"
+    "members": "Membres",
+    "tasks": "Tâches"
   },
   "colors": {
     "indigo": "Indigo",
@@ -906,7 +940,9 @@
     "removedHeading": "Retrait d'entreprise",
     "removedBody": "Vous ne faites plus partie de {{org}}.",
     "removedBy": "Retrait effectué par {{name}}",
-    "removedDismiss": "J'ai compris"
+    "removedDismiss": "J'ai compris",
+    "inviteCtaPending": "En attente",
+    "inviteCtaPendingAria": "Invitation envoyée à {{name}}, en attente de réponse"
   },
   "teams": {
     "leadNamed": "Responsable d'équipe nommé",

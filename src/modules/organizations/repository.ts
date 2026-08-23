@@ -26,6 +26,15 @@ export interface IOrganizationsRepository {
   /** Invite un AMI (amitie confirmee) dans une organisation dont je suis membre. */
   inviteFriendToOrg(orgId: string, friendUserId: string): Promise<void>;
 
+  /**
+   * auth.users.id des amis que J'AI invités dans cette org et qui n'ont ni
+   * accepté ni refusé — sert uniquement à distinguer « jamais invité » de
+   * « invitation en attente » dans InviteFriendsToOrg (le bouton se grise).
+   * La policy `org_invitations_select` (mig. 105) autorise déjà tout membre
+   * de l'org à lire ces lignes ; pas de RPC dédiée nécessaire.
+   */
+  getPendingSentInvitationIds(orgId: string): Promise<string[]>;
+
   /** Mes invitations d'entreprise en attente (boite de reception). */
   getMyOrgInvitations(): Promise<OrgInvitation[]>;
 

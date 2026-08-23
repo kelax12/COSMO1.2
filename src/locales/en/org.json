@@ -362,7 +362,39 @@
     "criticalBadge": "Critical",
     "sameProjectOnly": "Only tasks from the same project can be linked.",
     "blockedWarning_one": "Waiting on {{count}} unfinished task",
-    "blockedWarning_other": "Waiting on {{count}} unfinished tasks"
+    "blockedWarning_other": "Waiting on {{count}} unfinished tasks",
+    "tasksTabQuickAccess": "Quick access to projects",
+    "tasksTabAll": "All tasks",
+    "tasksTabSearchPlaceholder": "Search…",
+    "tasksTabSearchAria": "Search a task",
+    "tasksTabClearSearch": "Clear search",
+    "tasksTabSortAria": "Sort by",
+    "tasksTabSortPriority": "By priority",
+    "tasksTabSortDeadline": "By deadline",
+    "tasksTabSortName": "By name",
+    "tasksTabSortDuration": "By duration",
+    "tasksTabSortAsc": "Ascending order",
+    "tasksTabSortDesc": "Descending order",
+    "tasksTabNewTask": "New task",
+    "tasksTabFilterOpen": "Open",
+    "tasksTabFilterOverdue": "Overdue",
+    "tasksTabFilterDone": "Done",
+    "tasksTabFilterAll": "All",
+    "tasksTabShown_one": "{{count}} task shown out of {{total}}",
+    "tasksTabShown_other": "{{count}} tasks shown out of {{total}}",
+    "tasksTabNoProject": "No project in this company yet. Create one from the Projects tab to start adding tasks.",
+    "tasksTabEmpty": "No task matches these filters.",
+    "tasksTabColComplete": "Done",
+    "tasksTabColProjectColor": "Project color",
+    "tasksTabColName": "TASK NAME",
+    "tasksTabColProject": "PROJECT",
+    "tasksTabColPriority": "PRIORITY",
+    "tasksTabColDeadline": "DEADLINE",
+    "tasksTabColDuration": "DURATION",
+    "tasksTabColActions": "ACTIONS",
+    "tasksTabNoDeadline": "No deadline",
+    "tasksTabActionsAria": "Actions for {{name}}",
+    "tasksTabEdit": "Edit"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -740,7 +772,8 @@
     "projects": "Projects",
     "okr": "OKRs",
     "stats": "Statistics",
-    "members": "Members"
+    "members": "Members",
+    "tasks": "Tasks"
   },
   "colors": {
     "indigo": "Indigo",
@@ -873,7 +906,9 @@
     "removedHeading": "Removed from a company",
     "removedBody": "You are no longer part of {{org}}.",
     "removedBy": "Removed by {{name}}",
-    "removedDismiss": "Got it"
+    "removedDismiss": "Got it",
+    "inviteCtaPending": "Pending",
+    "inviteCtaPendingAria": "Invitation sent to {{name}}, awaiting response"
   },
   "teams": {
     "leadNamed": "Team lead assigned",
