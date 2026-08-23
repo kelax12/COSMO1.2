@@ -24,6 +24,7 @@ export { SupabaseTasksRepository } from './supabase.repository';
 export {
   useTasks,
   useTask,
+  usePendingSharedTasks,
   useTasksByDate,
   useFilteredTasks,
   useTodaysTasks,

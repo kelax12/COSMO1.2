@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { calculateStreak } from '@/modules/habits/streak';
 import { useT } from '@/i18n/useT';
 
 // Hauteur approximative d'une carte habitude (p-4 + contenu + gap)
@@ -121,7 +122,13 @@ const TodayHabits: React.FC = () => {
                   </div>
                   <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     <span>🔥</span>
-                    <span>{tp('habits.streak', Object.values(habit.completions).filter(Boolean).length)}</span>
+                    {/* Une SEULE logique de streak dans l'app : celle de
+                        modules/habits/streak.ts, déjà utilisée par HabitCard et
+                        HabitTable. Le comptage précédent
+                        (`Object.values(completions).filter(Boolean).length`)
+                        était le TOTAL de complétions, donc il ne retombait
+                        jamais à zéro après un jour manqué. */}
+                    <span>{tp('habits.streak', calculateStreak(habit.completions))}</span>
                   </div>
                 </div>
               </div>

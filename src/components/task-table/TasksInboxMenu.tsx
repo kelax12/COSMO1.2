@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Inbox, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTasks, type Task, taskKeys } from '@/modules/tasks';
+import { useTasks, usePendingSharedTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
   useFriends,
   useRelatedTaskShares,
@@ -40,6 +40,7 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
   const isDemo = useIsDemo();
   const queryClient = useQueryClient();
   const { data: tasks = [] } = useTasks();
+  const { data: pendingShared = [] } = usePendingSharedTasks();
   const { data: friends = [] } = useFriends();
   const { data: relatedShares = [] } = useRelatedTaskShares();
   const unshareTaskMutation = useUnshareTask();
@@ -62,12 +63,20 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
         (t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed && !ack.has(t.id)
       );
     }
-    const pendingReceived = new Set(
+    // Prod : la RPC dediee (mig. 103). `useTasks()` ne contient PLUS les
+    // partages non acceptes — les filtrer depuis cette liste ne renverrait
+    // jamais rien. Le filtre `relatedShares` reste en garde-fou pour une
+    // instance ou la migration n'est pas encore appliquee : la RPC et le
+    // filtre disent alors la meme chose, et l'union ne double aucune ligne.
+    const pendingIds = new Set(
       relatedShares.filter((s) => s.friendId === user?.id && !s.accepted).map((s) => s.taskId)
     );
-    return tasks.filter((t) => pendingReceived.has(t.id) && !t.completed);
+    const byId = new Map<string, Task>();
+    for (const t of pendingShared) if (!t.completed) byId.set(t.id, t);
+    for (const t of tasks) if (pendingIds.has(t.id) && !t.completed) byId.set(t.id, t);
+    return [...byId.values()];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
+  }, [tasks, pendingShared, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const sharerName = (task: Task): string =>
     (task.userId ? friends.find((f) => f.userId === task.userId)?.name : undefined) ??
@@ -307,7 +316,13 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
               : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-border-strong))]'
           }`}
         >
-          <Inbox size={18} className={open ? 'text-white' : 'text-blue-600'} aria-hidden="true" />
+          {/* Ouvert, le fond du bouton est --color-accent-solid : quasi-blanc
+              en thème Noir. Un `text-white` en dur y rendait l'icône invisible. */}
+          <Inbox
+            size={18}
+            className={open ? 'text-[rgb(var(--color-accent-solid-foreground))]' : 'text-blue-600'}
+            aria-hidden="true"
+          />
           <span className="hidden sm:inline">{t('inbox.label')}</span>
           {badge}
         </motion.button>

@@ -29,17 +29,3 @@ export {
   getLastVisitedPage,
   useHabitReminderPref,
 } from './hooks';
-
-// Active modules (AM10 — onboarding progressif)
-export type { ModuleKey } from './active-modules.store';
-export {
-  OPTIONAL_MODULES,
-  MODULE_ONBOARDING_DONE_KEY,
-  activeModulesStore,
-  getActiveModules,
-  setActiveModules,
-  isModuleActive,
-  isModuleOnboardingDone,
-  markModuleOnboardingDone,
-  useActiveModules,
-} from './active-modules.store';

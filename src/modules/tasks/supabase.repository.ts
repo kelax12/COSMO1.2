@@ -138,6 +138,25 @@ export class SupabaseTasksRepository implements ITasksRepository {
     };
   }
 
+  /**
+   * Boîte de réception : tâches reçues d'un ami et pas encore acceptées.
+   *
+   * Depuis la mig. 103,  ne renvoie plus que les partages
+   * ACCEPTÉS — une tâche partagée n'apparaît donc plus dans le TaskTable du
+   * destinataire avant qu'il ne l'accepte. Cette RPC dédiée est ce qui reste
+   * pour la lui montrer et lui permettre d'accepter.
+   */
+  async getPendingSharedTasks(): Promise<Task[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .rpc('get_pending_shared_tasks')
+      .select(TASK_LIST_COLUMNS)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) throw normalizeApiError(error);
+    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+  }
+
   async getById(id: string): Promise<Task | null> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase

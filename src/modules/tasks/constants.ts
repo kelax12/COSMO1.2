@@ -20,4 +20,6 @@ export const taskKeys = {
   details: () => [...taskKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
   byDate: (date: string) => [...taskKeys.all, 'date', date] as const,
+  /** Tâches partagées avec moi et pas encore acceptées (boîte de réception). */
+  pendingShared: () => [...taskKeys.all, 'pending-shared'] as const,
 };

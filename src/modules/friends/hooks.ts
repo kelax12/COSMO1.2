@@ -121,6 +121,29 @@ export const useAcceptFriendRequest = () => {
   });
 };
 
+/**
+ * Annulation par l'EXPÉDITEUR de sa propre demande.
+ *
+ * Distinct de `useRejectFriendRequest` (refus par le destinataire) : la RLS
+ * n'accepte pas le même statut selon le côté. Les confondre faisait échouer
+ * silencieusement l'annulation.
+ */
+export const useCancelFriendRequest = () => {
+  const queryClient = useQueryClient();
+  const repository = useFriendsRepository();
+
+  return useMutation({
+    mutationFn: (requestId: string) => repository.cancelFriendRequest(requestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Impossible d'annuler la demande d'ami : ${error.message}`);
+    },
+  });
+};
+
 export const useRejectFriendRequest = () => {
   const queryClient = useQueryClient();
   const repository = useFriendsRepository();

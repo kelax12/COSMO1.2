@@ -12,7 +12,7 @@ import {
   useSendFriendRequest,
   type PendingFriendRequest,
 } from '@/modules/friends';
-import { useTasks, type Task, taskKeys } from '@/modules/tasks';
+import { useTasks, usePendingSharedTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
   useFriends,
   useUnshareTask,
@@ -58,6 +58,7 @@ const InboxMenu: React.FC = () => {
   const isDemo = useIsDemo();
   const { data: requests = [] } = useFriendRequests();
   const { data: tasks = [] } = useTasks();
+  const { data: pendingShared = [] } = usePendingSharedTasks();
   const { data: friends = [] } = useFriends();
   const { data: relatedShares = [] } = useRelatedTaskShares();
   const acceptFriendMutation = useAcceptFriendRequest();
@@ -118,15 +119,21 @@ const InboxMenu: React.FC = () => {
         (t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed && !ack.has(t.id)
       );
     }
-    // Supabase : tâches reçues (friend_id = moi) dont la grant n'est pas encore
-    // acceptée (accepted_at NULL).
-    const pendingReceived = new Set(
+    // Prod : la RPC dediee (mig. 103). `useTasks()` ne contient PLUS les
+    // partages non acceptes — les filtrer depuis cette liste ne renverrait
+    // jamais rien. Le filtre `relatedShares` reste en garde-fou pour une
+    // instance ou la migration n'est pas encore appliquee : la RPC et le
+    // filtre disent alors la meme chose, et l'union ne double aucune ligne.
+    const pendingIds = new Set(
       relatedShares.filter((s) => s.friendId === user?.id && !s.accepted).map((s) => s.taskId)
     );
-    return tasks.filter((t) => pendingReceived.has(t.id) && !t.completed);
-    // ackVersion en dép : recalcul après accept/reject (démo).
+    const byId = new Map<string, Task>();
+    for (const t of pendingShared) if (!t.completed) byId.set(t.id, t);
+    for (const t of tasks) if (pendingIds.has(t.id) && !t.completed) byId.set(t.id, t);
+    return [...byId.values()];
+    // ackVersion en dep : recalcul apres accept/reject (demo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
+  }, [tasks, pendingShared, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const pendingJoinRequests = isOrgAdmin ? joinRequests : [];
   const total = incomingRequests.length + tasksToAccept.length + incomingLists.length + pendingJoinRequests.length;

@@ -115,10 +115,10 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
             size="sm"
             disabled={!title.trim()}
             onClick={submit}
-            className={`!text-white !border-0 ${
+            className={`!border-0 ${
               !title.trim()
-                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
-                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
+                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100 !text-white'
+                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))]'
             }`}
           >
             {t('quickCreate.create')}

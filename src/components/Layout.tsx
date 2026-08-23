@@ -37,7 +37,6 @@ import type { KeyOf } from '@/i18n/catalog';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
-import { useActiveModules } from '@/modules/ui-states';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
 import DemoBridgePrompt from './DemoBridgePrompt';
@@ -232,7 +231,6 @@ const Layout: React.FC = () => {
   const tasksDueTodayCount = allTasks.filter(
     (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
   ).length;
-  const activeModules = useActiveModules();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
@@ -279,25 +277,17 @@ const NavItems = () =>
         badge={tasksDueTodayCount} badgeVariant="neutral"
         badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
-      {activeModules.agenda && (
-        <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
+      <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
-      )}
 
-      {activeModules.okr && (
-        <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
+      <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
-      )}
 
-      {activeModules.habits && (
-        <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
+      <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
-      )}
 
-      {activeModules.statistics && (
-        <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
+      <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
           hoverColor="#8b5cf6" collapsed={isCollapsed} />
-      )}
 
       {myOrg && (
         <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
@@ -459,12 +449,17 @@ const NavItems = () =>
             {/* Thème + Recherche (loupe juste en dessous) */}
             <div className="mt-6 flex flex-col items-center gap-3 w-full">
               <ThemeToggle />
+              {/* Raccourci Ctrl/Cmd+K : masqué sous `lg`. C'est une affordance
+                  purement clavier — elle n'a aucun sens sur un écran tactile,
+                  où la barre latérale s'affiche encore (entre 768 et 1024 px)
+                  alors qu'il n'y a pas de clavier. La palette reste ouvrable au
+                  clavier partout où un clavier existe. */}
               <button
                 type="button"
                 onClick={openCommandPalette}
                 aria-label={t('nav.search.ariaLabel', { shortcut: IS_MAC ? 'Cmd+K' : 'Ctrl+K' })}
                 title={t('nav.search.title', { shortcut: IS_MAC ? '⌘K' : 'Ctrl K' })}
-                className="p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
+                className="hidden lg:block p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
               >
                 <Search size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
               </button>

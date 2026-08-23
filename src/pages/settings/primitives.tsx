@@ -4,10 +4,10 @@
 // Typographie : Inter global — pas de font dédiée à cette page.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState } from 'react';
-import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2, LayoutGrid } from 'lucide-react';
+import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2 } from 'lucide-react';
 import type { KeyOf } from '@/i18n/catalog';
 
-export type SettingsTab = 'profile' | 'appearance' | 'modules' | 'security' | 'data' | 'guide';
+export type SettingsTab = 'profile' | 'appearance' | 'security' | 'data' | 'guide';
 
 /* ─── nav config ───────────────────────────────────────────────── */
 //
@@ -39,7 +39,6 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: 'nav.preferences',
     items: [
       { id: 'appearance' as SettingsTab, icon: Palette, labelKey: 'nav.appearance' },
-      { id: 'modules' as SettingsTab, icon: LayoutGrid, labelKey: 'nav.modules' },
     ],
   },
   {

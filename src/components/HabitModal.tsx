@@ -294,10 +294,10 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     <button
                       type="button"
                       onClick={doSave}
-                      className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
+                      className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold transition-colors ${
                         formData.name.trim()
-                          ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))]'
-                          : 'bg-blue-200 dark:bg-blue-900/40'
+                          ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                          : 'bg-blue-200 dark:bg-blue-900/40 text-white'
                       }`}
                     >
                       {isEditing ? 'Sauvegarder' : "Créer l'habitude"}

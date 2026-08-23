@@ -62,17 +62,26 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
               </motion.button>
 
               <div className="flex items-center gap-2 lg:gap-3">
-                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                {/* Tokens, pas de couleurs Tailwind en dur : `.dark` est posé
+                    pour Sombre ET Gris ET Noir, donc `dark:bg-gray-800` rendait
+                    le même gris bleuté dans les trois thèmes. */}
+                <div
+                  className="flex items-center gap-1 rounded-lg p-1 border"
+                  style={{
+                    backgroundColor: 'rgb(var(--color-hover))',
+                    borderColor: 'rgb(var(--color-border))',
+                  }}
+                >
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomIn}
                     disabled={zoomLevel === 0}
                     aria-label={t('nav.zoomIn')}
-                    className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                    className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] shadow-sm'}`}>
                     <ZoomIn size={18} aria-hidden="true" />
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomOut}
                     disabled={zoomLevel === zoomDurations.length - 1}
                     aria-label={t('nav.zoomOut')}
-                    className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                    className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] shadow-sm'}`}>
                     <ZoomOut size={18} aria-hidden="true" />
                   </motion.button>
                 </div>

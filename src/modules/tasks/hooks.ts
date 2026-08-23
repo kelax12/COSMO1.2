@@ -93,6 +93,28 @@ export const useTasks = (options?: { enabled?: boolean }) => {
 };
 
 /**
+ * Boite de reception : taches partagees avec moi et pas encore acceptees.
+ *
+ * Depuis la mig. 103 ces taches ne sont PLUS dans `useTasks()` — elles n'y
+ * entrent qu'apres acceptation. Sans ce hook, il n'y aurait plus aucun moyen
+ * de les voir ni de les accepter.
+ *
+ * Meme cadence que les autres surfaces collaboratives (20 s), et desactive en
+ * demo ou le partage cross-compte n'existe pas.
+ */
+export const usePendingSharedTasks = () => {
+  const repository = useTasksRepository();
+  const isDemo = useIsDemo();
+  return useQuery({
+    queryKey: taskKeys.pendingShared(),
+    queryFn: () => repository.getPendingSharedTasks(),
+    enabled: !isDemo,
+    refetchInterval: isDemo ? false : 20_000,
+    refetchOnWindowFocus: !isDemo,
+  });
+};
+
+/**
  * Fetch a single task by ID
  */
 export const useTask = (id: string, options?: { enabled?: boolean }) => {

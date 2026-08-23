@@ -66,6 +66,7 @@ export {
   useSendFriendRequest,
   useAcceptFriendRequest,
   useRejectFriendRequest,
+  useCancelFriendRequest,
   useRemoveFriend,
   useShareTask,
   useUnshareTask,
