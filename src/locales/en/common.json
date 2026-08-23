@@ -133,7 +133,8 @@
     "text": "You've just built yourself a real system. Create your account to have it on every device, it's free.",
     "disclaimer": "This demo's data isn't transferred: your account starts from a clean slate.",
     "cta": "Create my account",
-    "later": "Later"
+    "later": "Later",
+    "dismiss": "Hide this prompt"
   },
   "notFound": {
     "title": "Page not found",

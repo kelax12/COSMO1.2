@@ -25,6 +25,7 @@ import {
   UpdateTeamLabelInput,
   TeamTaskLabel,
   TeamTaskActivity,
+  TeamTaskDependency,
   TeamActivityField,
   CreateTeamTaskCommentInput,
 } from './types';
@@ -34,6 +35,7 @@ import {
   TEAM_LABELS_STORAGE_KEY,
   TEAM_TASK_LABELS_STORAGE_KEY,
   TEAM_TASK_ACTIVITY_STORAGE_KEY,
+  TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
 } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 
@@ -129,6 +131,26 @@ const DEMO_TASKS: TeamTask[] = [
   t('tproj-3', 'Budget prévisionnel Q3', 3, 4, -1, false, 'blocked'),
   t('tproj-3', 'Commande matériel', 2, 2, 3, true),
   t('tproj-3', 'Planifier le séminaire', 5, 3, 14, false),
+];
+
+/**
+ * Dépendances de démonstration (mig. 108). Aucune traduction : une arête ne
+ * porte pas de texte.
+ *
+ * Contrainte respectée ici comme en base : une dépendance ne relie que des
+ * tâches du MÊME projet. La chaîne du projet « Refonte du site » est
+ * volontairement non triviale — deux branches partent de l'intégration du
+ * header, et la plus longue n'est pas celle qui compte le plus de tâches,
+ * sinon le chemin critique serait devinable sans le calculer.
+ */
+const DEMO_TASK_DEPENDENCIES: TeamTaskDependency[] = [
+  // Refonte du site : maquettes → intégration → { images → analytics, audit }
+  { taskId: 'ttask-2', dependsOnId: 'ttask-1' },
+  { taskId: 'ttask-4', dependsOnId: 'ttask-2' },
+  { taskId: 'ttask-3', dependsOnId: 'ttask-2' },
+  { taskId: 'ttask-7', dependsOnId: 'ttask-4' },
+  // Lancement produit : le kit presse attend le plan de communication.
+  { taskId: 'ttask-9', dependsOnId: 'ttask-8' },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts. Les ids `ttask-N` reprennent
@@ -618,5 +640,67 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY)
       .filter((a) => a.orgId === orgId && a.createdAt >= since)
       .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+  }
+
+  // ─── Dépendances (mig. 108) ────────────────────────────────────────
+
+  private getDependenciesArray(): TeamTaskDependency[] {
+    return readOrSeed<TeamTaskDependency[]>(
+      TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
+      DEMO_TASK_DEPENDENCIES,
+    );
+  }
+
+  private saveDependencies(deps: TeamTaskDependency[]): void {
+    localStorage.setItem(TEAM_TASK_DEPENDENCIES_STORAGE_KEY, JSON.stringify(deps));
+  }
+
+  async getTaskDependencies(_orgId: string): Promise<TeamTaskDependency[]> {
+    return this.getDependenciesArray();
+  }
+
+  /**
+   * Rejoue les DEUX gardes que la base applique par trigger (mig. 108) :
+   * même projet, et pas de cycle. Sans elles, la démo laisserait construire un
+   * graphe que la production refuserait — et le chemin critique se calculerait
+   * sur une donnée impossible.
+   */
+  async addTaskDependency(taskId: string, dependsOnId: string, _orgId: string): Promise<void> {
+    if (taskId === dependsOnId) throw new Error('A task cannot depend on itself');
+
+    const deps = this.getDependenciesArray();
+    if (deps.some((d) => d.taskId === taskId && d.dependsOnId === dependsOnId)) return;
+
+    const tasks = this.getTasksArray();
+    const target = tasks.find((t) => t.id === taskId);
+    const blocker = tasks.find((t) => t.id === dependsOnId);
+    if (!target || !blocker) throw new Error('Both tasks must exist');
+    if (target.projectId !== blocker.projectId) {
+      throw new Error('A dependency must stay within a single project');
+    }
+
+    // Remonte les bloquantes de `dependsOnId` : atteindre `taskId` = cycle.
+    const seen = new Set<string>();
+    let frontier = [dependsOnId];
+    for (let depth = 0; depth < 200 && frontier.length > 0; depth++) {
+      const next: string[] = [];
+      for (const id of frontier) {
+        if (id === taskId) throw new Error('This dependency would create a cycle');
+        if (seen.has(id)) continue;
+        seen.add(id);
+        for (const d of deps) if (d.taskId === id) next.push(d.dependsOnId);
+      }
+      frontier = next;
+    }
+
+    this.saveDependencies([...deps, { taskId, dependsOnId }]);
+  }
+
+  async removeTaskDependency(taskId: string, dependsOnId: string): Promise<void> {
+    this.saveDependencies(
+      this.getDependenciesArray().filter(
+        (d) => !(d.taskId === taskId && d.dependsOnId === dependsOnId),
+      ),
+    );
   }
 }

@@ -113,3 +113,72 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     expect(restored.archivedAt).toBeNull();
   });
 });
+
+describe('LocalStorageTeamProjectsRepository — dépendances (mig. 108)', () => {
+  let repo: LocalStorageTeamProjectsRepository;
+
+  beforeEach(() => {
+    localStorage.clear();
+    repo = new LocalStorageTeamProjectsRepository();
+  });
+
+  it('seede un graphe de dépendances non vide', async () => {
+    const deps = await repo.getTaskDependencies(ORG);
+    expect(deps.length).toBeGreaterThan(0);
+  });
+
+  it('ne relie que des tâches du même projet dans les seeds', async () => {
+    const [deps, tasks] = await Promise.all([
+      repo.getTaskDependencies(ORG),
+      repo.getTasks(ORG),
+    ]);
+    const projectOf = new Map(tasks.map((t) => [t.id, t.projectId]));
+    for (const d of deps) {
+      expect(projectOf.get(d.taskId)).toBe(projectOf.get(d.dependsOnId));
+    }
+  });
+
+  it('ajoute une dépendance entre deux tâches du même projet', async () => {
+    const tasks = await repo.getTasks(ORG);
+    const [a, b] = tasks.filter((t) => t.projectId === 'tproj-3');
+    await repo.addTaskDependency(b.id, a.id, ORG);
+    const deps = await repo.getTaskDependencies(ORG);
+    expect(deps).toContainEqual({ taskId: b.id, dependsOnId: a.id });
+  });
+
+  it('refuse une dépendance vers soi-même', async () => {
+    await expect(repo.addTaskDependency('ttask-1', 'ttask-1', ORG)).rejects.toThrow();
+  });
+
+  it('refuse une dépendance entre deux projets différents', async () => {
+    // ttask-1 appartient à tproj-1, ttask-8 à tproj-2.
+    await expect(repo.addTaskDependency('ttask-1', 'ttask-8', ORG)).rejects.toThrow();
+  });
+
+  it('refuse un cycle direct', async () => {
+    // Le seed pose déjà ttask-2 bloquée par ttask-1 : l'inverse boucle.
+    await expect(repo.addTaskDependency('ttask-1', 'ttask-2', ORG)).rejects.toThrow();
+  });
+
+  it('refuse un cycle indirect', async () => {
+    // ttask-1 → ttask-2 → ttask-4 : rendre ttask-1 dépendante de ttask-4 ferme
+    // la boucle sans qu'aucune arête directe ne l'annonce.
+    await expect(repo.addTaskDependency('ttask-1', 'ttask-4', ORG)).rejects.toThrow();
+  });
+
+  it('reste idempotent sur un doublon', async () => {
+    const before = (await repo.getTaskDependencies(ORG)).length;
+    await repo.addTaskDependency('ttask-2', 'ttask-1', ORG);
+    expect((await repo.getTaskDependencies(ORG)).length).toBe(before);
+  });
+
+  it('retire une dépendance existante', async () => {
+    await repo.removeTaskDependency('ttask-2', 'ttask-1');
+    const deps = await repo.getTaskDependencies(ORG);
+    expect(deps).not.toContainEqual({ taskId: 'ttask-2', dependsOnId: 'ttask-1' });
+  });
+
+  it('refuse une dépendance vers une tâche inexistante', async () => {
+    await expect(repo.addTaskDependency('ttask-1', 'ttask-inexistante', ORG)).rejects.toThrow();
+  });
+});

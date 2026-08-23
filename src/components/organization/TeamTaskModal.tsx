@@ -8,6 +8,7 @@ import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import TeamSubtasksSection from './TeamSubtasksSection';
+import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import TeamTaskLabelsSection from './TeamTaskLabelsSection';
 import TeamTaskHistorySection from './TeamTaskHistorySection';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -329,6 +330,7 @@ const TeamTaskModal = ({
             <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
               <TeamTaskLabelsSection orgId={task.orgId} taskId={task.id} isManager={isManager} />
               <TeamSubtasksSection taskId={task.id} />
+              <TeamTaskDependenciesSection task={task} isManager={isManager} />
               <TeamTaskHistorySection taskId={task.id} members={members} projects={projects} />
             </div>
           )}

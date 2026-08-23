@@ -25,6 +25,7 @@ import {
   UpdateTeamLabelInput,
   TeamTaskLabel,
   TeamTaskActivity,
+  TeamTaskDependency,
 } from './types';
 
 interface ProjectRow {
@@ -486,6 +487,43 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .limit(500);
     if (error) throw normalizeApiError(error);
     return (data as ActivityRow[]).map(mapActivity);
+  }
+
+  // ─── Dépendances (mig. 108) ────────────────────────────────────────
+
+  async getTaskDependencies(orgId: string): Promise<TeamTaskDependency[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_dependencies')
+      .select('task_id, depends_on_id')
+      .eq('org_id', orgId)
+      .limit(5000);
+    if (error) throw normalizeApiError(error);
+    return (data as { task_id: string; depends_on_id: string }[]).map((r) => ({
+      taskId: r.task_id,
+      dependsOnId: r.depends_on_id,
+    }));
+  }
+
+  async addTaskDependency(taskId: string, dependsOnId: string, orgId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // `org_id` est réécrit par le trigger de cohérence (mig. 108) depuis la
+    // tâche elle-même ; on l'envoie parce que la colonne est NOT NULL, jamais
+    // comme une source de vérité.
+    const { error } = await supabase
+      .from('team_task_dependencies')
+      .insert({ task_id: taskId, depends_on_id: dependsOnId, org_id: orgId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async removeTaskDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('team_task_dependencies')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('depends_on_id', dependsOnId);
+    if (error) throw normalizeApiError(error);
   }
 }
 

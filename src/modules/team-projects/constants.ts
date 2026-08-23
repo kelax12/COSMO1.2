@@ -10,6 +10,7 @@ export const TEAM_TASK_SUBTASKS_STORAGE_KEY = 'cosmo_team_task_subtasks';
 export const TEAM_LABELS_STORAGE_KEY = 'cosmo_team_labels';
 export const TEAM_TASK_LABELS_STORAGE_KEY = 'cosmo_team_task_labels';
 export const TEAM_TASK_ACTIVITY_STORAGE_KEY = 'cosmo_team_task_activity';
+export const TEAM_TASK_DEPENDENCIES_STORAGE_KEY = 'cosmo_team_task_dependencies';
 
 export const teamProjectKeys = {
   all: ['team-projects'] as const,
@@ -20,6 +21,7 @@ export const teamProjectKeys = {
   labels: (orgId: string) => [...teamProjectKeys.all, 'labels', orgId] as const,
   taskLabels: (orgId: string) => [...teamProjectKeys.all, 'task-labels', orgId] as const,
   activity: (taskId: string) => [...teamProjectKeys.all, 'activity', taskId] as const,
+  dependencies: (orgId: string) => [...teamProjectKeys.all, 'dependencies', orgId] as const,
   orgActivity: (orgId: string, since: string) =>
     [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
 };

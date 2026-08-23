@@ -31,7 +31,9 @@ export function markOrgSeen(orgId: string): void {
   try { localStorage.setItem(lastSeenKey(orgId), String(Date.now())); } catch { /* no-op */ }
 }
 
-const EMPTY_BADGES: OrgBadges = { projects: 0, members: 0, total: 0 };
+const EMPTY_BADGES: OrgBadges = {
+  projects: 0, members: 0, total: 0, projectItems: [], memberItems: [],
+};
 
 /**
  * Compteurs ventilés par onglet — source unique du badge de navigation ET des
@@ -49,12 +51,21 @@ export function useOrgBadges(): OrgBadges {
 
   return useMemo(() => {
     if (!activeOrg || !user?.id) return EMPTY_BADGES;
+    const pending = requests.filter((r) => r.status === 'pending');
     return computeOrgBadges({
       userId: user.id,
       lastSeen: readOrgLastSeen(activeOrg.id),
-      pendingRequests: requests.filter((r) => r.status === 'pending').length,
+      pendingRequests: pending.length,
+      // `requesterName` n'est enrichi que pour la vue admin ; l'aperçu tombe
+      // sur l'email, puis se tait — jamais sur un UUID, qui ne dit rien.
+      pendingRequestNames: pending
+        .map((r) => r.requesterName ?? r.requesterEmail ?? '')
+        .filter(Boolean),
       tasks,
       unreadNotifications: unreadCount(notifications),
+      unreadNotificationTaskIds: notifications
+        .filter((n) => n.readAt === null && !!n.taskId)
+        .map((n) => n.taskId as string),
     });
   }, [activeOrg, user?.id, requests, tasks, notifications]);
 }

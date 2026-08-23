@@ -45,14 +45,41 @@ describe('SupabaseOrgTeamsRepository', () => {
 
   it('getTeamMembers: select colonnes explicites, filtre org_id, cap 2000, mappe en camelCase', async () => {
     supabaseMock.queueTable('org_team_members', {
-      data: [{ team_id: 't1', org_id: 'org1', user_id: 'u2' }],
+      data: [{ team_id: 't1', org_id: 'org1', user_id: 'u2', is_lead: true }],
     });
     const result = await repo.getTeamMembers('org1');
 
-    expect(supabaseMock.argsOf('org_team_members', 'select')).toEqual(['team_id, org_id, user_id']);
+    expect(supabaseMock.argsOf('org_team_members', 'select')).toEqual([
+      'team_id, org_id, user_id, is_lead',
+    ]);
     expect(supabaseMock.argsOf('org_team_members', 'eq')).toEqual(['org_id', 'org1']);
     expect(supabaseMock.argsOf('org_team_members', 'limit')).toEqual([2000]);
-    expect(result).toEqual([{ teamId: 't1', orgId: 'org1', userId: 'u2' }]);
+    expect(result).toEqual([{ teamId: 't1', orgId: 'org1', userId: 'u2', isLead: true }]);
+  });
+
+  it("getTeamMembers: is_lead absent vaut false, jamais undefined", async () => {
+    // Réponse d'une base où la mig. 107 n'est pas encore appliquée : le front
+    // doit dégrader vers « pas responsable », pas produire un booléen absent.
+    supabaseMock.queueTable('org_team_members', {
+      data: [{ team_id: 't1', org_id: 'org1', user_id: 'u2' }],
+    });
+    expect(await repo.getTeamMembers('org1')).toEqual([
+      { teamId: 't1', orgId: 'org1', userId: 'u2', isLead: false },
+    ]);
+  });
+
+  it('setTeamLead: whitelist is_lead, cible la paire (team, user)', async () => {
+    supabaseMock.queueTable('org_team_members', { data: null, error: null });
+    await repo.setTeamLead('t1', 'u2', true);
+
+    // `is_lead` est la SEULE colonne émise : l'identité de l'appartenance est
+    // immuable côté base (trigger mig. 107), on ne tente même pas de l'écrire.
+    expect(supabaseMock.argsOf('org_team_members', 'update')).toEqual([{ is_lead: true }]);
+  });
+
+  it('setTeamLead: normalise les erreurs DB (refus RLS)', async () => {
+    supabaseMock.queueTable('org_team_members', { data: null, error: { message: 'denied', code: '42501' } });
+    await expect(repo.setTeamLead('t1', 'u2', true)).rejects.toBeTruthy();
   });
 
   it('getTeamMembers: normalise les erreurs DB', async () => {

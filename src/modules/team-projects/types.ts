@@ -166,6 +166,21 @@ export interface TeamTaskLabel {
   labelId: string;
 }
 
+// ─── Dépendances entre tâches (mig. 108) ─────────────────────────────
+
+/**
+ * Arête orientée du graphe de dépendances : `taskId` est BLOQUÉE par
+ * `dependsOnId`, donc `dependsOnId` doit se terminer en premier.
+ *
+ * Le sens se lit toujours dans ce vocabulaire (« bloquée par »), jamais
+ * l'inverse : une arête relue à l'envers inverse le chemin critique sans
+ * qu'aucun type ne s'en aperçoive.
+ */
+export interface TeamTaskDependency {
+  taskId: string;
+  dependsOnId: string;
+}
+
 // ─── Historique (mig. 094) ───────────────────────────────────────────
 
 /** Champs journalisés par le trigger `log_team_task_activity`. */

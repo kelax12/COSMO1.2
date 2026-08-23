@@ -21,7 +21,12 @@
     "leaveOrg": "Quitter l'entreprise",
     "badgeCount_one": "{{count}} nouveauté",
     "badgeCount_other": "{{count}} nouveautés",
-    "badgeCount_many": "{{count}} de nouveautés"
+    "badgeCount_many": "{{count}} de nouveautés",
+    "badgePreviewProjects": "Tâches qui vous ont été assignées",
+    "badgePreviewMembers": "Demandes d'adhésion en attente",
+    "badgePreviewMore_one": "et {{count}} autre",
+    "badgePreviewMore_other": "et {{count}} autres",
+    "badgePreviewMore_many": "et {{count}} d'autres"
   },
   "onboarding": {
     "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
@@ -364,7 +369,21 @@
     "assignTaskAria": "Attribuer la tâche {{name}}",
     "removeTaskAria": "Retirer la tâche {{name}}",
     "noTaskForFilter": "Aucune tâche pour ce filtre.",
-    "noTask": "Aucune tâche."
+    "noTask": "Aucune tâche.",
+    "dependencyFailed": "Dépendance impossible : {{message}}",
+    "dependenciesTitle": "Dépendances",
+    "blockedBy": "Bloquée par",
+    "blocks": "Bloque",
+    "addDependency": "Ajouter une dépendance",
+    "noDependencies": "Aucune dépendance. Cette tâche peut démarrer dès maintenant.",
+    "removeDependency": "Retirer cette dépendance",
+    "criticalPath": "Chemin critique",
+    "criticalPathHint": "La plus longue chaîne de tâches liées : tout retard sur elle décale le projet.",
+    "criticalBadge": "Critique",
+    "sameProjectOnly": "Seules les tâches du même projet peuvent être liées.",
+    "blockedWarning_one": "En attente de {{count}} tâche non terminée",
+    "blockedWarning_other": "En attente de {{count}} tâches non terminées",
+    "blockedWarning_many": "En attente de {{count}} de tâches non terminées"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -806,7 +825,10 @@
     "byActor": "{{actor}} : {{label}}",
     "kindAssigned": "Une tâche vous a été assignée",
     "kindMention": "Vous avez été mentionné dans un commentaire",
-    "kindOverdue": "Une de vos tâches est en retard"
+    "kindOverdue": "Une de vos tâches est en retard",
+    "periodToday": "Aujourd'hui",
+    "periodWeek": "Cette semaine",
+    "periodEarlier": "Plus tôt"
   },
   "roles": {
     "admin": "Administrateur",
@@ -878,5 +900,14 @@
     "removedBody": "Vous ne faites plus partie de {{org}}.",
     "removedBy": "Retrait effectué par {{name}}",
     "removedDismiss": "J'ai compris"
+  },
+  "teams": {
+    "leadNamed": "Responsable d'équipe nommé",
+    "leadRemoved": "Responsable d'équipe retiré",
+    "leadFailed": "Impossible de changer le responsable : {{message}}",
+    "leadBadge": "Responsable",
+    "makeLead": "Nommer responsable de l'équipe",
+    "removeLead": "Retirer le rôle de responsable",
+    "leadHint": "Gère les membres et les projets de cette équipe, sans être administrateur de l'entreprise."
   }
 }

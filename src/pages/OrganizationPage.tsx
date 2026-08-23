@@ -25,6 +25,7 @@ import TeamsSection from '@/components/organization/TeamsSection';
 import TeamOKRTab from '@/components/organization/TeamOKRTab';
 import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
+import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import OrgBillingTab from '@/components/organization/OrgBillingTab';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
@@ -275,12 +276,12 @@ const OrganizationPage = () => {
             >
               <Icon size={16} aria-hidden="true" /> {t(labelKey)}
               {badge > 0 && (
-                <span
-                  className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center"
-                  aria-label={tp('page.badgeCount', badge)}
-                >
-                  {badge}
-                </span>
+                <OrgTabBadge
+                  count={badge}
+                  items={id === 'projects' ? badges.projectItems : badges.memberItems}
+                  title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
+                  ariaLabel={tp('page.badgeCount', badge)}
+                />
               )}
             </button>
           );

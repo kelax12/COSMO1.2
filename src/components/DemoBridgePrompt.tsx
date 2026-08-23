@@ -54,7 +54,10 @@ const DemoBridgePrompt: React.FC = () => {
               <button
                 type="button"
                 onClick={snooze}
-                aria-label={t('demoBridge.later')}
+                // Nom accessible distinct du bouton « Plus tard » plus bas :
+                // deux contrôles au même nom rendent la carte illisible pour un
+                // lecteur d'écran (et pour un test qui cible le libellé).
+                aria-label={t('demoBridge.dismiss')}
                 className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
               >
                 <X size={14} aria-hidden="true" />

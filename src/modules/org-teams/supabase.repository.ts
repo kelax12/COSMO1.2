@@ -43,14 +43,19 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('org_team_members')
-      .select('team_id, org_id, user_id')
+      .select('team_id, org_id, user_id, is_lead')
       .eq('org_id', orgId)
       .limit(2000);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as { team_id: string; org_id: string; user_id: string }[]).map((r) => ({
+    return (
+      (data ?? []) as { team_id: string; org_id: string; user_id: string; is_lead: boolean | null }[]
+    ).map((r) => ({
       teamId: r.team_id,
       orgId: r.org_id,
       userId: r.user_id,
+      // `?? false` et non `!`: la colonne est NOT NULL DEFAULT FALSE, mais une
+      // réponse d'avant l'application de la mig. 107 la renverrait absente.
+      isLead: r.is_lead ?? false,
     }));
   }
 
@@ -87,6 +92,19 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
     const { error } = await supabase
       .from('org_team_members')
       .delete()
+      .eq('team_id', teamId)
+      .eq('user_id', userId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  async setTeamLead(teamId: string, userId: string, isLead: boolean): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist stricte : `is_lead` est la SEULE colonne modifiable de cette
+    // table. Le trigger `freeze_team_membership_identity` (mig. 107) refuse de
+    // toute façon un changement d'identité, mais on ne l'émet même pas.
+    const { error } = await supabase
+      .from('org_team_members')
+      .update({ is_lead: isLead })
       .eq('team_id', teamId)
       .eq('user_id', userId);
     if (error) throw normalizeApiError(error);
