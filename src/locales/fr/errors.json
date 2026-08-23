@@ -18,7 +18,14 @@
     "own_link": "Vous ne pouvez pas utiliser votre propre lien d'invitation.",
     "not_org_admin": "Cette action est réservée aux administrateurs de l'entreprise.",
     "not_authenticated": "Vous devez être connecté pour effectuer cette action.",
-    "forbidden": "Vous n'avez pas les droits nécessaires pour cette action."
+    "forbidden": "Vous n'avez pas les droits nécessaires pour cette action.",
+    "cannot_invite_self": "Vous ne pouvez pas vous inviter vous-même.",
+    "not_a_member": "Vous devez appartenir à cette entreprise pour y inviter quelqu'un.",
+    "not_a_friend": "Vous ne pouvez inviter que vos contacts COSMO. Ajoutez d'abord cette personne en ami.",
+    "already_a_member": "Cette personne fait déjà partie de l'entreprise.",
+    "invitation_not_found": "Cette invitation n'existe plus.",
+    "invitation_already_processed": "Cette invitation a déjà été traitée.",
+    "inviter_no_longer_member": "La personne qui vous a invité ne fait plus partie de cette entreprise."
   },
   "validation": {
     "fallback": "Données invalides",

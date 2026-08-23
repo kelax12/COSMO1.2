@@ -11,6 +11,7 @@ export type {
   OrgTreeNode,
   OrgJoinRequestStatus,
   OrgJoinRequest,
+  OrgInvitation,
   UpdateOrganizationInput,
   OrgInviteLink,
 } from './types';
@@ -46,6 +47,9 @@ export {
   useOrgMembers,
   useOrgJoinRequests,
   useMySentJoinRequest,
+  useMyOrgInvitations,
+  useInviteFriendToOrg,
+  useRespondOrgInvitation,
   useCreateOrganization,
   useRequestJoinOrganization,
   useRespondJoinRequest,

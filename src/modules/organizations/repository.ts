@@ -2,7 +2,7 @@
 // ORGANIZATIONS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation } from './types';
 
 export interface IOrganizationsRepository {
   // Read operations
@@ -22,6 +22,15 @@ export interface IOrganizationsRepository {
   createOrganization(name: string): Promise<Organization>;
   /** Envoie une demande d'adhésion via le code. Renvoie le nom de l'org. */
   requestJoin(code: string): Promise<{ orgName: string }>;
+
+  /** Invite un AMI (amitie confirmee) dans une organisation dont je suis membre. */
+  inviteFriendToOrg(orgId: string, friendUserId: string): Promise<void>;
+
+  /** Mes invitations d'entreprise en attente (boite de reception). */
+  getMyOrgInvitations(): Promise<OrgInvitation[]>;
+
+  /** J'accepte ou je refuse une invitation qui m'est adressee. */
+  respondOrgInvitation(invitationId: string, accept: boolean): Promise<void>;
   /** Admin : accepte ou refuse une demande d'adhésion. */
   respondJoinRequest(requestId: string, accept: boolean): Promise<void>;
   /** Demandeur : annule sa demande en attente. */

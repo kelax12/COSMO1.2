@@ -13,6 +13,7 @@ export const ORG_JOIN_REQUESTS_STORAGE_KEY = 'cosmo_org_join_requests';
 export const ACTIVE_ORG_STORAGE_KEY = 'cosmo_active_org';
 export const ORG_INVITE_LINKS_STORAGE_KEY = 'cosmo_org_invite_links';
 export const ORG_NOTIFICATIONS_STORAGE_KEY = 'cosmo_org_notifications';
+export const ORG_INVITATIONS_STORAGE_KEY = 'cosmo_org_invitations';
 
 /**
  * React Query keys for organizations
@@ -24,4 +25,6 @@ export const orgKeys = {
   members: (orgId: string) => [...orgKeys.all, 'members', orgId] as const,
   joinRequests: (orgId: string) => [...orgKeys.all, 'joinRequests', orgId] as const,
   mySentRequest: () => [...orgKeys.all, 'mySentRequest'] as const,
+  /** Invitations d'entreprise recues et non traitees (boite de reception). */
+  myInvitations: () => [...orgKeys.all, 'myInvitations'] as const,
 };
