@@ -863,7 +863,8 @@
     "back": "Espace entreprise",
     "planHint": "Voir et faire évoluer votre forfait",
     "planAria": "Abonnement : {{plan}}",
-    "planNamed": "Plan {{name}}"
+    "planNamed": "Plan {{name}}",
+    "upgrade": "Améliorer"
   },
   "inviteJoin": {
     "title": "Créer ou rejoindre une entreprise",
