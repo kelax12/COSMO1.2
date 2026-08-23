@@ -42,11 +42,21 @@ const buttonVariants = cva(
   }
 )
 
+// `type` par défaut : "button", pas le défaut HTML "submit".
+//
+// Sans ça, tout <Button> posé dans un <form> sans `type` explicite soumettait
+// le formulaire au clic. Symptôme observé : dans le TaskModal desktop, le
+// bouton « Copier » du lien de partage soumettait le formulaire et fermait la
+// modale au lieu de simplement copier. Les 33 boutons de soumission réels du
+// projet déclarent tous `type="submit"` ; aucun ne comptait sur l'implicite
+// (vérifié : les seuls <Button> non typés d'un fichier contenant un <form>
+// sont hors de ce <form>). `type` reste surchargeable via les props.
 function Button({
   className,
   variant = "default",
   size = "default",
   asChild = false,
+  type = "button",
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -59,6 +69,10 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      // `asChild` : le Slot passe ses props à l'enfant, qui peut être un <a> ou
+      // un trigger Radix — `type` n'a pas de sens dessus, on ne le transmet
+      // que quand on rend réellement un <button>.
+      {...(asChild ? {} : { type })}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

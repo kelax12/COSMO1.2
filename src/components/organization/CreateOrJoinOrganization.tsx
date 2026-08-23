@@ -217,7 +217,12 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             onKeyDown={(e) => e.key === 'Enter' && code.trim() && consent && handleJoin()}
             placeholder="COSMO-XXXXXXXXXX"
             className={`${inputClasses} tracking-widest font-mono`}
-            maxLength={12}
+            // 'COSMO-' + 10 caractères depuis la mig. 083 (faille M-7) = 16.
+            // La valeur précédente (12, longueur des codes hérités à 6 chars)
+            // TRONQUAIT tout code récent à la saisie : le regex de
+            // joinCodeSchema échouait ensuite et l'utilisateur voyait « Code
+            // invalide » sur un code parfaitement valide.
+            maxLength={16}
             autoFocus
           />
           <OrgConsentNotice checked={consent} onChange={setConsent} />

@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useTasks } from '@/modules/tasks';
-import { useActiveModules } from '@/modules/ui-states';
 import MobileMoreSheet from './MobileMoreSheet';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -29,13 +28,11 @@ interface TabConfig {
   end?: boolean;
 }
 
-// `module` indique l'onglet optionnel correspondant (filtré selon AM10).
-// Accueil et Tâches n'ont pas de `module` → toujours visibles (socle).
-const TABS: (TabConfig & { module?: 'agenda' | 'habits' })[] = [
+const TABS: TabConfig[] = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, end: true },
   { to: '/tasks',     labelKey: 'nav.tasks',     icon: CheckSquare },
-  { to: '/agenda',    labelKey: 'nav.agenda',    icon: Calendar, module: 'agenda' },
-  { to: '/habits',    labelKey: 'nav.habits',    icon: Repeat, module: 'habits' },
+  { to: '/agenda',    labelKey: 'nav.agenda',    icon: Calendar },
+  { to: '/habits',    labelKey: 'nav.habits',    icon: Repeat },
 ];
 
 // `min-h-touch` sur toute la surface de l'onglet (et pas seulement sur le lien) :
@@ -55,8 +52,6 @@ const MobileTabBar: React.FC = () => {
   const tasksDueTodayCount = allTasks.filter(
     (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
   ).length;
-  const activeModules = useActiveModules();
-  const visibleTabs = TABS.filter((tab) => !tab.module || activeModules[tab.module]);
 
   return (
     <>
@@ -66,7 +61,7 @@ const MobileTabBar: React.FC = () => {
         style={{ boxShadow: '0 -1px 3px rgba(0,0,0,0.04)' }}
       >
         <ul className="flex items-stretch h-16">
-          {visibleTabs.map(({ to, labelKey, icon: Icon, end }) => (
+          {TABS.map(({ to, labelKey, icon: Icon, end }) => (
             <li key={to} className="flex-1 flex">
               <NavLink
                 to={to!}

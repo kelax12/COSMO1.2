@@ -318,7 +318,7 @@ export const TaskRow = React.memo(({
             }`}
           >
             {showChecked && (
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-3 h-3 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <motion.path
                   initial={isValidating ? { pathLength: 0 } : false}
                   animate={{ pathLength: 1 }}

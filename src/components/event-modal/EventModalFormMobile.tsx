@@ -190,7 +190,10 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                   className="px-2.5 py-1 rounded-full font-medium transition-colors text-[11px]"
                   style={{
                     backgroundColor: active ? 'rgb(var(--color-accent))' : 'transparent',
-                    color: active ? '#ffffff' : 'rgb(var(--color-text-secondary))',
+                    // Jamais de blanc en dur sur --color-accent : en thème Noir cet
+                    // accent vaut 240,240,240 (quasi-blanc), donc la puce active
+                    // devenait illisible. Le duo prévu est accent-solid-foreground.
+                    color: active ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-secondary))',
                   }}
                 >
                   {opt.label}

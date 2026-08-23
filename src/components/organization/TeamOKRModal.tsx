@@ -309,10 +309,10 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             type="button"
             disabled={!canSave || isPending}
             onClick={handleSave}
-            className={`!text-white !border-0 ${
+            className={`!border-0 ${
               !canSave
-                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
-                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
+                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100 !text-white'
+                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))]'
             }`}
           >
             {isPending ? t('okrModal.saving') : isEdit ? t('okrModal.save') : t('okrModal.create')}

@@ -9,6 +9,7 @@
 
 import { useMemo } from 'react';
 import { useHabits } from './hooks';
+import { calculateStreak as canonicalStreak } from './streak';
 import { Habit, HabitFrequency } from './types';
 
 // Convert the completions map to a list of ISO date strings (only the keys
@@ -28,33 +29,15 @@ const completedDatesFromCompletions = (
 // STREAK CALCULATIONS
 // ═══════════════════════════════════════════════════════════════════
 
+// UNE seule logique de streak dans l'app : `modules/habits/streak.ts`, celle
+// de la page Habitudes (HabitCard / HabitTable). Ce fichier en portait une
+// SECONDE implémentation, subtilement différente ; ce n'est plus qu'un
+// adaptateur de forme (liste de dates → Record attendu par la canonique).
 const calculateStreak = (completedDates: string[]): number => {
   if (completedDates.length === 0) return 0;
-
-  const sorted = [...completedDates].sort().reverse();
-  // Date LOCALE ('en-CA' → YYYY-MM-DD) — les complétions sont écrites avec la
-  // date locale côté UI (HabitCard/HabitTable/TodayHabits). toISOString() (UTC)
-  // décalait « aujourd'hui » d'un jour entre minuit et ~2h (France UTC+1/+2) :
-  // streak affiché à 0 juste après une complétion nocturne.
-  const today = new Date().toLocaleDateString('en-CA');
-
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-
-  if (sorted[0] !== today && sorted[0] !== yesterdayStr) {
-    return 0;
-  }
-
-  let streak = 1;
-  for (let i = 1; i < sorted.length; i++) {
-    const curr = new Date(sorted[i - 1]);
-    const prev = new Date(sorted[i]);
-    const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays === 1) streak++;
-    else break;
-  }
-  return streak;
+  const completions: Record<string, boolean> = {};
+  for (const date of completedDates) completions[date] = true;
+  return canonicalStreak(completions);
 };
 
 const calculateCompletionRate = (completedDates: string[], days: number): number => {

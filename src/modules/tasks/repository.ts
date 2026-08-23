@@ -35,6 +35,16 @@ export interface ITasksRepository {
   getAll(): Promise<Task[]>;
   
   /**
+   * Tâches partagées AVEC l'utilisateur courant et pas encore acceptées.
+   *
+   * Séparé de getAll() : depuis la migration 103, une tâche partagée n'entre
+   * dans la liste qu'une fois acceptée. C'est cette méthode qui alimente la
+   * boîte de réception, sinon la tâche serait invisible avant même de pouvoir
+   * être acceptée.
+   */
+  getPendingSharedTasks(): Promise<Task[]>;
+
+  /**
    * Fetch a single task by ID
    */
   getById(id: string): Promise<Task | null>;

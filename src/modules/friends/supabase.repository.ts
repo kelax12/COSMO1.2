@@ -290,6 +290,27 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (error) throw normalizeApiError(error);
   }
 
+  /**
+   * L'expéditeur retire sa propre demande.
+   *
+   * Doit écrire 'cancelled', PAS 'rejected' : le WITH CHECK de la policy
+   * `friend_requests_update_sender_or_receiver` (mig. 049) n'autorise
+   * 'rejected' qu'au destinataire. Passer par rejectFriendRequest levait donc
+   * une violation RLS et la demande restait affichée « en attente ».
+   */
+  async cancelFriendRequest(requestId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Non authentifié');
+    const { error } = await supabase
+      .from('friend_requests')
+      .update({ status: 'cancelled' })
+      .eq('id', requestId)
+      .eq('sender_id', user.id); // defense-in-depth : la RLS scope déjà
+
+    if (error) throw normalizeApiError(error);
+  }
+
   async removeFriend(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     // The friends table stores TWO rows per friendship (receiver→sender and

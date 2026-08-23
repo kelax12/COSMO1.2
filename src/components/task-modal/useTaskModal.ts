@@ -28,7 +28,7 @@ import { useCategories, useCreateCategory } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
-import { useFriends, useSendFriendRequest, useRejectFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
+import { useFriends, useSendFriendRequest, useCancelFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -104,7 +104,9 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const shareTaskMutation = useShareTask();
   const unshareTaskMutation = useUnshareTask();
   const sendFriendRequestMutation = useSendFriendRequest();
-  const cancelFriendRequestMutation = useRejectFriendRequest();
+  // ANNULATION par l expediteur : useCancelFriendRequest (status cancelled).
+  // useRejectFriendRequest ecrit rejected, reserve au destinataire par la RLS.
+  const cancelFriendRequestMutation = useCancelFriendRequest();
 
   const { user } = useAuth();
   const isDemo = useIsDemo();

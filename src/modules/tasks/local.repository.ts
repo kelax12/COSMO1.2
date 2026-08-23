@@ -134,6 +134,15 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     return this.getTasks();
   }
 
+  /**
+   * Mode démo : le partage cross-compte n'existe pas en LocalStorage, la
+   * boîte de réception démo s'appuie sur `task.sharedBy` + les acquittements
+   * locaux (cf. InboxMenu). Rien à renvoyer ici.
+   */
+  async getPendingSharedTasks(): Promise<Task[]> {
+    return [];
+  }
+
   async getById(id: string): Promise<Task | null> {
     const tasks = this.getTasks();
     return tasks.find(t => t.id === id) || null;

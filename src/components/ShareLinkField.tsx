@@ -92,6 +92,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
       {showGenerateButton ? (
         <>
           <Button
+            type="button"
             variant="default"
             onClick={handleGenerate}
             disabled={generating}
@@ -124,6 +125,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
               }}
             />
             <Button
+              type="button"
               variant="default"
               onClick={handleCopy}
               disabled={isCreating || !inviteUrl}

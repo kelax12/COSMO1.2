@@ -463,8 +463,8 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           type="button"
           onClick={handleCreateOrSave}
           disabled={isLoading}
-          className={`w-full h-[50px] rounded-2xl text-white text-[17px] font-semibold transition-colors ${
-            isValid && !isLoading ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))]' : 'bg-blue-200 dark:bg-blue-900/40'
+          className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold transition-colors ${
+            isValid && !isLoading ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'bg-blue-200 dark:bg-blue-900/40 text-white'
           }`}
         >
           {isLoading ? (

@@ -15,7 +15,7 @@ import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
 import DesktopDetailsStep from './DesktopDetailsStep';
 import { useCreateCategory } from '@/modules/categories';
 import { useCreateList } from '@/modules/lists';
-import { useRejectFriendRequest } from '@/modules/friends';
+import { useCancelFriendRequest } from '@/modules/friends';
 import type { Task } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
 
@@ -91,7 +91,7 @@ export interface DesktopBodyProps {
   sentRequests: Array<{ id: string; email: string; receiverId?: string }>;
   pendingInvitesLocal: string[];
   friends: Array<{ id: string; userId?: string; name: string; email: string; avatar?: string }>;
-  cancelFriendRequestMutation: ReturnType<typeof useRejectFriendRequest>;
+  cancelFriendRequestMutation: ReturnType<typeof useCancelFriendRequest>;
 }
 
 const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({

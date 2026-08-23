@@ -3,8 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   User, LogOut,
   HelpCircle, Camera,
-  Mail, ChevronRight, Repeat, BarChart3,
-  Calendar, Target, BarChart2,
+  Mail, ChevronRight, BarChart3,
 } from 'lucide-react';
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '../components/keyboard-shortcuts';
@@ -17,12 +16,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import LocaleToggle from '../components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
-import {
-  OPTIONAL_MODULES,
-  type ModuleKey,
-  useActiveModules,
-  activeModulesStore,
-} from '@/modules/ui-states';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
@@ -66,6 +60,7 @@ const SettingsPage: React.FC = () => {
   const isAdmin = useIsAdmin();
   const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   // Sous prefers-reduced-motion, l'exit d'un onglet ne signale jamais sa fin
   // à AnimatePresence (bug Framer Motion) : le panneau sortant reste dans le
@@ -451,7 +446,14 @@ const SettingsPage: React.FC = () => {
 
           {/* ── PROFIL ── */}
           {activeTab === 'profile' && (
-            <motion.div key="profile" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
+            <motion.div key="profile" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
+              // Deux colonnes à partir de `lg` : le groupe Entreprise vit à
+              // DROITE des cartes d'identité, pas empilé sous le fuseau
+              // horaire où il fallait scroller pour le trouver. `items-start`
+              // pour que la colonne courte ne s'étire pas à la hauteur de
+              // l'autre. Une seule colonne sous `lg` (ordre inchangé).
+              className="max-w-2xl lg:max-w-5xl grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] gap-5 items-start">
+              <div className="flex flex-col gap-5">
               <SectionCard>
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                   <div className="relative group/av shrink-0">
@@ -617,10 +619,14 @@ const SettingsPage: React.FC = () => {
                 </div>
               </SectionCard>
 
+              </div>
+
               {/* Mode entreprise : carte info (membre) ou conversion (particulier). */}
-              <SectionCard>
-                <OrganizationSettingsCard />
-              </SectionCard>
+              <div className="flex flex-col gap-5">
+                <SectionCard>
+                  <OrganizationSettingsCard />
+                </SectionCard>
+              </div>
             </motion.div>
           )}
 
@@ -724,19 +730,20 @@ const SettingsPage: React.FC = () => {
 
               {/* Raccourcis clavier — copie du contenu du popup « ? »,
                   consultable sans avoir à ouvrir la palette. Source partagée
-                  (components/keyboard-shortcuts) pour ne jamais diverger. */}
-              <SectionCard className="mt-4">
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.shortcuts')}</h2>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
-                  {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
-                </p>
-                <ShortcutsList compact />
-              </SectionCard>
+                  (components/keyboard-shortcuts) pour ne jamais diverger.
+                  Masqué en mobile : une liste de raccourcis clavier sur un
+                  écran sans clavier n'est que du remplissage. */}
+              {!isMobile && (
+                <SectionCard className="mt-4">
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.shortcuts')}</h2>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
+                    {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
+                  </p>
+                  <ShortcutsList compact />
+                </SectionCard>
+              )}
             </motion.div>
           )}
-
-          {/* ── MODULES ── */}
-          {activeTab === 'modules' && <ModulesTab isDemo={isDemo} />}
 
           {/* ── DONNÉES ── */}
           {activeTab === 'data' && <DataTab />}
@@ -848,95 +855,3 @@ const SettingsPage: React.FC = () => {
 
 export default SettingsPage;
 
-/* ─── Onglet "Modules" — activer/désactiver (AM10) ─────────────── */
-const MODULE_META: Record<ModuleKey, { label: string; description: string; icon: React.ElementType; accent: string }> = {
-  agenda:     { label: 'Agenda',       description: 'Planifiez vos tâches en blocs horaires', icon: Calendar,  accent: '#ef4444' },
-  habits:     { label: 'Habitudes',    description: 'Suivez vos routines quotidiennes',        icon: Repeat,    accent: '#eab308' },
-  okr:        { label: 'OKR',          description: 'Objectifs & résultats clés',              icon: Target,    accent: '#22c55e' },
-  statistics: { label: 'Statistiques', description: 'Analysez votre progression',              icon: BarChart2, accent: '#8b5cf6' },
-};
-
-function ModulesTab({ isDemo }: { isDemo: boolean }) {
-  const { t } = useT('settings');
-  const activeModules = useActiveModules();
-
-  const toggle = (key: ModuleKey) => {
-    if (isDemo) {
-      toast.info(t('modules.demoToast'));
-      return;
-    }
-    const next = !activeModules[key];
-    activeModulesStore.setModule(key, next);
-    toast.success(next ? t('modules.enabled', { module: t(`modules.${key}.label`) }) : t('modules.hidden', { module: t(`modules.${key}.label`) }));
-  };
-
-  return (
-    <motion.div
-      key="modules"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
-      className="max-w-2xl flex flex-col gap-5"
-    >
-      <SectionCard>
-        <div>
-          <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">
-            Modules de l'application
-          </h3>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {t('modules.hint')}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2.5">
-          {OPTIONAL_MODULES.map((key) => {
-            const meta = MODULE_META[key];
-            const Icon = meta.icon;
-            const isOn = activeModules[key];
-            return (
-              <div
-                key={key}
-                className="flex items-center gap-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] px-4 py-3"
-              >
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: isOn ? meta.accent : 'rgb(var(--color-hover))' }}
-                >
-                  <Icon size={18} className={isOn ? 'text-white' : 'text-[rgb(var(--color-text-muted))]'} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t(`modules.${key}.label`)}</p>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{meta.description}</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isOn}
-                  aria-label={isOn ? t('modules.hidden', { module: t(`modules.${key}.label`) }) : t('modules.enabled', { module: t(`modules.${key}.label`) })}
-                  onClick={() => toggle(key)}
-                  disabled={isDemo}
-                  className={`relative w-11 h-6 rounded-full shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/50 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isOn ? 'bg-[rgb(var(--color-accent))]' : 'bg-[rgb(var(--color-border))]'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                      isOn ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {isDemo && (
-          <p className="text-[11px] text-[rgb(var(--color-text-muted))]">
-            {t('modules.demoNotice')}
-          </p>
-        )}
-      </SectionCard>
-    </motion.div>
-  );
-}

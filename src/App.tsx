@@ -25,15 +25,11 @@ import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
-import { useActiveModules, type ModuleKey } from '@/modules/ui-states';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
-// AM10 — onboarding « Que voulez-vous gérer ? » : invisible tant que non
-// déclenché (1er login réel), donc lazy avec fallback null.
-const ModuleOnboarding = lazy(() => import('@/components/onboarding/ModuleOnboarding'));
 
 // ──────────────────────────────────────────────────────────────────
 // Lazy import wrapper — recharge la page si un chunk est obsolète
@@ -170,18 +166,6 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 // Pages protégées éligibles à la réouverture « dernière page visitée » (#34).
 const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings', '/entreprise'];
 
-// AM10 — Garde de module : si l'utilisateur a désactivé un module optionnel
-// (Agenda / Habitudes / OKR / Statistiques) dans l'onboarding ou les réglages,
-// l'accès direct par URL redirige vers le Dashboard. En démo, tout est actif.
-const RequireModule: React.FC<{ module: ModuleKey; children: React.ReactNode }> = ({
-  module,
-  children,
-}) => {
-  const activeModules = useActiveModules();
-  if (!activeModules[module]) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
-};
-
 /**
  * Racine publique — la landing, servie sur deux chemins.
  *
@@ -272,10 +256,10 @@ const AppRoutes = () => {
       <Route element={<LayoutWithSuspense />}>
         <Route path="dashboard" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
         <Route path="tasks" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
-        <Route path="agenda" element={<RequireModule module="agenda"><PageWithSuspense><AgendaPage /></PageWithSuspense></RequireModule>} />
-        <Route path="habits" element={<RequireModule module="habits"><PageWithSuspense><HabitsPage /></PageWithSuspense></RequireModule>} />
-        <Route path="okr" element={<RequireModule module="okr"><PageWithSuspense><OKRPage /></PageWithSuspense></RequireModule>} />
-        <Route path="statistics" element={<RequireModule module="statistics"><PageWithSuspense><StatisticsPage /></PageWithSuspense></RequireModule>} />
+        <Route path="agenda" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
+        <Route path="habits" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
+        <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
+        <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
         {/* Espace entreprise — visible pour les membres d'une organisation */}
         <Route path="entreprise" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
@@ -329,11 +313,6 @@ const App: React.FC = () => {
             <AppErrorBoundary fallback={null}>
               <Suspense fallback={null}>
                 <CommandPalette />
-              </Suspense>
-            </AppErrorBoundary>
-            <AppErrorBoundary fallback={null}>
-              <Suspense fallback={null}>
-                <ModuleOnboarding />
               </Suspense>
             </AppErrorBoundary>
             <Analytics />

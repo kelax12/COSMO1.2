@@ -97,6 +97,8 @@ export interface IFriendsRepository {
   sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest>;
   acceptFriendRequest(requestId: string): Promise<Friend>;
   rejectFriendRequest(requestId: string): Promise<void>;
+  /** L'EXPÉDITEUR retire sa propre demande (status → 'cancelled'). */
+  cancelFriendRequest(requestId: string): Promise<void>;
   removeFriend(id: string): Promise<void>;
 
   // Task sharing operations
@@ -284,9 +286,18 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   async rejectFriendRequest(requestId: string): Promise<void> {
     const requests = this.getRequests();
     const request = requests.find(r => r.id === requestId);
-    
+
     if (request) {
       request.status = 'rejected';
+      this.saveRequests(requests);
+    }
+  }
+
+  async cancelFriendRequest(requestId: string): Promise<void> {
+    const requests = this.getRequests();
+    const request = requests.find(r => r.id === requestId);
+    if (request) {
+      request.status = 'cancelled';
       this.saveRequests(requests);
     }
   }
