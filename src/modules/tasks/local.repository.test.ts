@@ -15,7 +15,7 @@ describe('lecture & seeds', () => {
   it('seede les tâches démo au premier accès', async () => {
     const all = await repo.getAll();
     expect(all.length).toBeGreaterThanOrEqual(10);
-    expect((await repo.getById('t001'))?.name).toBe('Bilan annuel 2025');
+    expect((await repo.getById('t002'))?.name).toBe('Préparer présentation Q1 2026');
     expect(await repo.getById('absent')).toBeNull();
   });
 
@@ -77,8 +77,8 @@ describe('écriture', () => {
 
   it('toggleBookmark bascule bookmarked', async () => {
     await repo.getAll();
-    const before = (await repo.getById('t004'))!.bookmarked;
-    const after = await repo.toggleBookmark('t004');
+    const before = (await repo.getById('t003'))!.bookmarked;
+    const after = await repo.toggleBookmark('t003');
     expect(after.bookmarked).toBe(!before);
     await expect(repo.toggleBookmark('absent')).rejects.toThrow();
   });

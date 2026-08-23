@@ -80,12 +80,9 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
   // Aujourd'hui — « Réunion d'équipe » ajoutée par un collaborateur (avatar visible).
   { id: 'event-1', title: "Réunion d'équipe",    start: eventDate(0, 10, 0),  end: eventDate(0, 11, 0),  color: '#3B82F6', description: "Point hebdomadaire", createdBy: 'friend-1' },
   { id: 'event-2', title: 'Déjeuner client',      start: eventDate(0, 12, 30), end: eventDate(0, 14, 0),  color: '#10B981', description: 'Restaurant Le Petit Bistrot' },
-  { id: 'event-3', title: 'Formation React',      start: eventDate(0, 15, 0),  end: eventDate(0, 17, 0),  color: '#8B5CF6', description: 'Module avancé sur les hooks' },
   { id: 'event-4', title: 'Sport',                start: eventDate(0, 18, 30), end: eventDate(0, 19, 30), color: '#EF4444', description: 'Séance de running' },
   // À venir
-  { id: 'event-fut-1', title: 'Sprint Review Q2',     start: eventDate(5, 14, 0),  end: eventDate(5, 16, 0),  color: '#8B5CF6', description: 'Démo des fonctionnalités du sprint', createdBy: 'user-lucas' },
   { id: 'event-fut-2', title: 'Entretien candidat',   start: eventDate(8, 10, 0),  end: eventDate(8, 11, 0),  color: '#F97316', description: 'Poste développeur front-end' },
-  { id: 'event-fut-3', title: 'DevFest 2026',          start: eventDate(18, 9, 0),  end: eventDate(19, 18, 0), color: '#EF4444', description: 'Conférence tech — talk React' },
   // Conférences passées
   { id: 'event-conf-1', title: 'DevFest Paris 2025',  start: eventDate(-370, 9, 0), end: eventDate(-370, 18, 0), color: '#8B5CF6', description: 'Talk React architecture — 300 participants' },
   { id: 'event-conf-2', title: 'React Summit 2025',   start: eventDate(-310, 9, 0), end: eventDate(-310, 18, 0), color: '#3B82F6', description: 'Amsterdam — remote' },
@@ -100,7 +97,6 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
   { id: 'event-train-1', title: 'Formation SQL avancé',       start: eventDate(-248, 9, 0),  end: eventDate(-247, 17, 0), color: '#F97316', description: 'Window functions + optimisation' },
   { id: 'event-train-2', title: 'Workshop Design Thinking',   start: eventDate(-142, 9, 0),  end: eventDate(-141, 17, 0), color: '#F97316', description: '2 jours avec l\'équipe produit' },
   { id: 'event-train-3', title: 'Formation Sécurité OWASP',   start: eventDate(-92, 9, 0),   end: eventDate(-91, 17, 0),  color: '#EF4444', description: 'Top 10 vulnérabilités web' },
-  { id: 'event-train-4', title: 'Formation Leadership',       start: eventDate(-197, 9, 0),  end: eventDate(-196, 17, 0), color: '#F97316', description: 'Communication et gestion d\'équipe' },
   // Rendez-vous santé
   { id: 'event-health-1', title: 'Bilan médecin annuel',  start: eventDate(-380, 9, 30), end: eventDate(-380, 10, 15), color: '#EF4444', description: 'Check-up complet' },
   { id: 'event-health-2', title: 'Dentiste',              start: eventDate(-201, 14, 0), end: eventDate(-201, 14, 45), color: '#EF4444', description: 'Détartrage + contrôle' },
@@ -108,7 +104,6 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
   // Planning sessions importantes
   { id: 'event-plan-1', title: 'Définition OKRs 2026',       start: eventDate(-128, 10, 0), end: eventDate(-128, 12, 0), color: '#8B5CF6', description: 'Session stratégique annuelle' },
   { id: 'event-plan-2', title: 'Présentation investisseurs',  start: eventDate(-270, 10, 0), end: eventDate(-270, 11, 30),color: '#8B5CF6', description: 'Pitch + métriques croissance' },
-  { id: 'event-plan-3', title: 'Kickoff projet COSMO',        start: eventDate(-427, 9, 0),  end: eventDate(-427, 17, 0), color: '#8B5CF6', description: 'Lancement officiel du projet' },
 ];
 
 // Overlay anglais des événements ponctuels — cf. src/lib/seed-i18n.ts.
@@ -116,11 +111,8 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
 const ONE_TIME_EVENTS_EN: Record<string, Partial<CalendarEvent>> = {
   'event-1': { title: 'Team meeting', description: 'Weekly sync' },
   'event-2': { title: 'Client lunch', description: 'Le Petit Bistrot restaurant' },
-  'event-3': { title: 'React training', description: 'Advanced hooks module' },
   'event-4': { title: 'Workout', description: 'Running session' },
-  'event-fut-1': { title: 'Sprint Review Q2', description: 'Demo of the sprint features' },
   'event-fut-2': { title: 'Candidate interview', description: 'Front-end developer role' },
-  'event-fut-3': { title: 'DevFest 2026', description: 'Tech conference — React talk' },
   'event-conf-1': { title: 'DevFest Paris 2025', description: 'React architecture talk — 300 attendees' },
   'event-conf-2': { title: 'React Summit 2025', description: 'Amsterdam — remote' },
   'event-conf-3': { title: 'Paris Web 2025', description: 'Accessibility + perf conference' },
@@ -131,13 +123,11 @@ const ONE_TIME_EVENTS_EN: Record<string, Partial<CalendarEvent>> = {
   'event-train-1': { title: 'Advanced SQL training', description: 'Window functions + optimization' },
   'event-train-2': { title: 'Design Thinking workshop', description: '2 days with the product team' },
   'event-train-3': { title: 'OWASP security training', description: 'Top 10 web vulnerabilities' },
-  'event-train-4': { title: 'Leadership training', description: 'Communication and team management' },
   'event-health-1': { title: 'Annual check-up', description: 'Full check-up' },
   'event-health-2': { title: 'Dentist', description: 'Cleaning + check-up' },
   'event-health-3': { title: 'Annual check-up', description: '2026 annual check-up' },
   'event-plan-1': { title: '2026 OKR planning', description: 'Annual strategy session' },
   'event-plan-2': { title: 'Investor presentation', description: 'Pitch + growth metrics' },
-  'event-plan-3': { title: 'COSMO project kickoff', description: 'Official project launch' },
 };
 
 const DEMO_EVENTS: CalendarEvent[] = [
