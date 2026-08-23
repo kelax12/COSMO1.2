@@ -74,9 +74,13 @@ test.describe('Espace entreprise (démo)', () => {
     const dialog = page.getByRole('dialog', { name: /modifier la tâche/i });
     await expect(dialog).toBeVisible({ timeout: 5_000 });
 
-    // Fil de commentaires (reco #9) présent en mode édition
-    await expect(dialog.getByRole('heading', { name: /commentaires/i })).toBeVisible();
-    await expect(dialog.getByPlaceholder(/écrire un commentaire/i)).toBeVisible();
+    // Fil de commentaires (reco #9) présent en mode édition. À partir de `lg`
+    // (viewport par défaut de ce projet Playwright), il vit dans un panneau
+    // séparé à droite du modal — pas DANS le `role="dialog"` lui-même,
+    // volontairement (léger espace + bordure, cf. TeamTaskModal.tsx). On
+    // cherche donc sur `page`, pas sur `dialog`.
+    await expect(page.getByRole('heading', { name: /commentaires/i })).toBeVisible();
+    await expect(page.getByPlaceholder(/écrire un commentaire/i)).toBeVisible();
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });

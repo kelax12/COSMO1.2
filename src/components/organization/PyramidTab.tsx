@@ -18,12 +18,14 @@ import {
   ListTodo,
   CalendarDays,
   TrendingUp,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
+import { useOrgTeams, useOrgTeamMembers, useCreateOrgTeam, useAddTeamMember, type OrgTeam } from '@/modules/org-teams';
+import CreateTeamModal from './CreateTeamModal';
 import {
   buildOrgTree,
   isManagerOf,
@@ -617,6 +619,21 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const removeMember = useRemoveMember();
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
+  const createTeam = useCreateOrgTeam(orgId);
+  const addTeamMember = useAddTeamMember(orgId);
+  const [showNewTeam, setShowNewTeam] = useState(false);
+
+  // Crée l'équipe PUIS y ajoute les membres choisis — même séquence que
+  // TeamsSection.handleCreateFull, seul point d'entrée dupliqué ici parce que
+  // le sélecteur de vue de la pyramide est un second endroit légitime pour
+  // créer une équipe (on y regarde déjà « par équipe »).
+  const handleCreateTeamFull = async (input: { name: string; color: string }, memberIds: string[]) => {
+    const team = await createTeam.mutateAsync(input);
+    for (const userId of memberIds) {
+      await addTeamMember.mutateAsync({ teamId: team.id, userId });
+    }
+    setViewTeamId(team.id);
+  };
 
   // Membres visibles selon la vue. Vue équipe : chaque membre de l'équipe + ses
   // ancêtres jusqu'à la racine (les liens managerId restent donc intacts).
@@ -1169,8 +1186,30 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                         {viewTeamId === t.id && <Check size={14} className="ml-auto text-indigo-500 shrink-0" aria-hidden="true" />}
                       </DropdownMenuItem>
                     ))}
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        {/* Même endroit d'où l'on regarde « par équipe » que
+                            celui où on en crée une — évite l'aller-retour vers
+                            l'onglet Membres pour la première équipe. */}
+                        <DropdownMenuItem onClick={() => setShowNewTeam(true)} className="text-blue-600 dark:text-blue-400">
+                          <Plus size={14} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                          {t('team.add')}
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+              )}
+
+              {showNewTeam && (
+                <CreateTeamModal
+                  members={members}
+                  currentUserId={currentUserId}
+                  isAdmin={isAdmin}
+                  onSubmit={handleCreateTeamFull}
+                  onClose={() => setShowNewTeam(false)}
+                />
               )}
               {canEdit && (
                 <div className="ml-auto flex items-center gap-2">

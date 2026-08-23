@@ -1,16 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
+import { useCreateTeamProject } from '@/modules/team-projects';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
+import AddCategoryButton from '@/components/AddCategoryButton';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import TeamSubtasksSection from './TeamSubtasksSection';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
-import TeamTaskLabelsSection from './TeamTaskLabelsSection';
-import TeamTaskHistorySection from './TeamTaskHistorySection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -71,6 +72,48 @@ const TeamTaskModal = ({
   const [pending, setPending] = useState(false);
   const { user } = useAuth();
 
+  // Bascule assignés/commentaires : panneaux latéraux dès `lg` (1024px), sinon
+  // repliés dans le modal. Un SEUL point de montage — pas un rendu CSS dupliqué
+  // caché/affiché par breakpoint : un brouillon de commentaire tapé côté panneau
+  // se serait perdu en repassant sous `lg` (la version mobile eût démarré vide),
+  // et un `getByPlaceholder` de test aurait résolu deux éléments.
+  const [isWide, setIsWide] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => setIsWide(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  // Créer un projet sans quitter la tâche — même pattern que « + Ajouter »
+  // pour une catégorie (DesktopDetailsStep). L'orgId ne vient jamais d'un
+  // prop dédié : tous les projets listés ici partagent déjà celui de la
+  // tâche (édition) ou de la liste passée par l'appelant (création).
+  const orgId = task?.orgId ?? projects[0]?.orgId ?? '';
+  const createProject = useCreateTeamProject(orgId);
+  const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+
+  const submitNewProject = () => {
+    const projectName = newProjectName.trim();
+    if (projectName.length < 2) {
+      toast.error(t('taskModal.projectNameTooShort'));
+      return;
+    }
+    createProject.mutate(
+      { name: projectName },
+      {
+        onSuccess: (created) => {
+          setProjectId(created.id);
+          setShowNewProjectInput(false);
+          setNewProjectName('');
+        },
+      },
+    );
+  };
+
   const hasChanges = useMemo(() => {
     if (isCreating) return true;
     if (!task) return false;
@@ -88,6 +131,35 @@ const TeamTaskModal = ({
 
   const toggleAssignee = (userId: string) =>
     setAssigneeIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+
+  // Une seule ligne pour les deux rendus (disclosure mobile ET panneau
+  // desktop) : même état (`assigneeIds`), même comportement, pas de logique
+  // dupliquée qui pourrait diverger.
+  const renderAssigneeRow = (m: OrgMember) => {
+    const checked = assigneeIds.includes(m.userId);
+    return (
+      <button
+        key={m.userId}
+        type="button"
+        onClick={() => toggleAssignee(m.userId)}
+        aria-pressed={checked}
+        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+      >
+        <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
+        <span className="text-sm truncate flex-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {m.displayName}
+        </span>
+        <span
+          className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'border-[rgb(var(--color-border))]'
+          }`}
+          aria-hidden="true"
+        >
+          {checked && <Check size={13} />}
+        </span>
+      </button>
+    );
+  };
 
   const handleSave = async () => {
     if (pending) return;
@@ -113,11 +185,41 @@ const TeamTaskModal = ({
     }
   };
 
+  // Panneaux latéraux (`lg` et plus) : même chrome que le modal (rounded-2xl,
+  // bordure, shadow-2xl, fond surface), mais jamais collés à lui — un `gap-4`
+  // sur la ligne qui les contient les sépare visuellement, sinon un panneau
+  // externe se lit comme un onglet du modal plutôt que comme un groupe à part.
+  const sidePanelClass =
+    'flex flex-col w-72 max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden shrink-0';
+  const sidePanelStyle = { backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' };
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
       onClick={pending ? undefined : onClose}
     >
+      <div className="flex items-stretch justify-center gap-4 w-full sm:w-auto">
+        {/* Panneau gauche : assignés, en permanence visible dès `lg` — la
+            tâche EN COURS DE CRÉATION en a besoin aussi (photo7), pas
+            seulement l'édition. */}
+        {isWide && (
+          <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
+              <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {t('taskModal.assignTask')}
+                {assigneeIds.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
+                    {assigneeIds.length}
+                  </span>
+                )}
+              </h3>
+            </div>
+            <div className="overflow-y-auto flex-1 min-h-0 py-1">
+              {members.map(renderAssigneeRow)}
+            </div>
+          </div>
+        )}
+
       <div
         className="flex flex-col w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
@@ -200,7 +302,15 @@ const TeamTaskModal = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="team-task-project" className={labelClass} style={labelStyle}>{t('taskModal.project')}</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="team-task-project" className={labelClass} style={{ ...labelStyle, marginBottom: 0 }}>{t('taskModal.project')}</label>
+                  {/* Créer un projet sans quitter la tâche — même pattern que
+                      « + Ajouter » pour une catégorie côté tâche personnelle. */}
+                  <AddCategoryButton
+                    onClick={() => { setShowNewProjectInput(true); setNewProjectName(''); }}
+                    ariaLabel={t('taskModal.createProjectAria')}
+                  />
+                </div>
                 <select
                   id="team-task-project"
                   value={projectId}
@@ -212,6 +322,31 @@ const TeamTaskModal = ({
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+                {showNewProjectInput && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={newProjectName}
+                      onChange={(e) => setNewProjectName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); submitNewProject(); }
+                        else if (e.key === 'Escape') { setShowNewProjectInput(false); setNewProjectName(''); }
+                      }}
+                      placeholder={t('taskModal.projectNamePlaceholder')}
+                      className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
+                      style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                    />
+                    <button
+                      type="button"
+                      disabled={newProjectName.trim().length < 2 || createProject.isPending}
+                      onClick={submitNewProject}
+                      className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-colors"
+                    >
+                      {t('taskModal.createProjectCta')}
+                    </button>
+                  </div>
+                )}
                 {projectId && (
                   <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     <span className={`w-2 h-2 rounded-full ${projectColor(projects.find((p) => p.id === projectId)?.color ?? 'blue').dot}`} aria-hidden="true" />
@@ -274,53 +409,34 @@ const TeamTaskModal = ({
               </div>
             </div>
 
-            {/* Assignés — disclosure, même pattern que « Partager la tâche » */}
-            <div className="border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
-              <button
-                type="button"
-                onClick={() => setShowAssignees((v) => !v)}
-                aria-expanded={showAssignees}
-                className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
-                style={{ color: 'rgb(var(--color-text-secondary))' }}
-              >
-                <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />
-                {t('taskModal.assignTask')}
-                {assigneeIds.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
-                    {assigneeIds.length}
-                  </span>
+            {/* Assignés — disclosure mobile/tablette uniquement : à partir de
+                `lg`, un panneau dédié à gauche du modal reprend ce rôle en
+                permanence (pas besoin de replier ce qu'il y a la place de
+                montrer). Même état, même `renderAssigneeRow`. */}
+            {!isWide && (
+              <div className="border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAssignees((v) => !v)}
+                  aria-expanded={showAssignees}
+                  className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
+                  style={{ color: 'rgb(var(--color-text-secondary))' }}
+                >
+                  <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />
+                  {t('taskModal.assignTask')}
+                  {assigneeIds.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
+                      {assigneeIds.length}
+                    </span>
+                  )}
+                </button>
+                {showAssignees && (
+                  <div className="mt-3 rounded-xl border overflow-hidden max-h-56 overflow-y-auto" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
+                    {members.map(renderAssigneeRow)}
+                  </div>
                 )}
-              </button>
-              {showAssignees && (
-                <div className="mt-3 rounded-xl border overflow-hidden max-h-56 overflow-y-auto" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
-                  {members.map((m) => {
-                    const checked = assigneeIds.includes(m.userId);
-                    return (
-                      <button
-                        key={m.userId}
-                        type="button"
-                        onClick={() => toggleAssignee(m.userId)}
-                        aria-pressed={checked}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
-                      >
-                        <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
-                        <span className="text-sm truncate flex-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {m.displayName}
-                        </span>
-                        <span
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
-                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'border-[rgb(var(--color-border))]'
-                          }`}
-                          aria-hidden="true"
-                        >
-                          {checked && <Check size={13} />}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </form>
 
           {/* Sous-tâches (mig. 092) — édition uniquement : une sous-tâche a
@@ -328,15 +444,15 @@ const TeamTaskModal = ({
               création. */}
           {!isCreating && task && (
             <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
-              <TeamTaskLabelsSection orgId={task.orgId} taskId={task.id} isManager={isManager} />
               <TeamSubtasksSection taskId={task.id} />
               <TeamTaskDependenciesSection task={task} isManager={isManager} />
-              <TeamTaskHistorySection taskId={task.id} members={members} projects={projects} />
             </div>
           )}
 
-          {/* Commentaires (reco #9) — édition uniquement (la tâche existe). */}
-          {!isCreating && task && (
+          {/* Commentaires (reco #9) — édition uniquement (la tâche existe),
+              et seulement en dessous de `lg` : au-delà, le panneau de droite
+              les affiche déjà en permanence. */}
+          {!isCreating && task && !isWide && (
             <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
           )}
         </div>
@@ -388,6 +504,17 @@ const TeamTaskModal = ({
             </Button>
           </div>
         </div>
+      </div>
+
+        {/* Panneau droit : commentaires — édition uniquement (la tâche existe
+            déjà) : en création, il n'y a encore rien à commenter. */}
+        {isWide && !isCreating && task && (
+          <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 overflow-y-auto flex-1 min-h-0">
+              <TaskCommentsSection taskId={task.id} members={members} currentUserId={user?.id} />
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body,

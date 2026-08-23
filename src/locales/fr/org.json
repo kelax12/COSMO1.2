@@ -455,7 +455,11 @@
     "hasDescription": "Contient une description",
     "assignTask": "Assigner la tâche",
     "nameRequired": "Le nom de la tâche est requis",
-    "projectRequired": "Choisissez un projet"
+    "projectRequired": "Choisissez un projet",
+    "createProjectAria": "Créer un projet",
+    "projectNamePlaceholder": "Nom du projet",
+    "projectNameTooShort": "Le nom du projet doit contenir au moins 2 caractères",
+    "createProjectCta": "Créer"
   },
   "team": {
     "newTeam": "Nouvelle équipe",

@@ -46,7 +46,7 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
                 : 'border-[rgb(var(--color-border))]'
             }`}
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col">
                 {/* Le nom porte le palier, l'effectif le qualifie : « Équipe »
                     seul ne dit pas à qui il s'adresse, « 5 à 10 membres » seul
@@ -66,7 +66,7 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
                   le même emplacement plutôt que d'empiler un bouton pleine
                   largeur sous le prix. */}
               {isCurrent && (
-                <Check size={16} className="mt-0.5 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden />
+                <Check size={16} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden />
               )}
               {!isFree && !isCurrent && (
                 onSelect ? (
@@ -91,7 +91,7 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
                         type="button"
                         aria-disabled="true"
                         onClick={(e) => e.preventDefault()}
-                        className="shrink-0 rounded-lg border border-[rgb(var(--color-border))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-text-muted))] cursor-not-allowed"
+                        className="shrink-0 rounded-lg border border-blue-600/40 dark:border-blue-400/40 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-not-allowed"
                       >
                         {t('billing.upgrade')}
                       </button>

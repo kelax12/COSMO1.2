@@ -120,7 +120,10 @@ const TeamSubtasksSection = ({ taskId }: TeamSubtasksSectionProps) => {
         </ul>
       )}
 
-      <div className="flex items-center gap-1.5">
+      {/* Même traitement que les autres champs du modal (bordé, rounded-xl) —
+          l'ancienne version était un texte nu sans bordure, visuellement
+          incohérente avec le reste de la tâche. */}
+      <div className="flex items-center gap-2 px-3 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] focus-within:border-[rgb(var(--color-accent-solid))] transition-colors">
         <Plus size={14} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
         <input
           type="text"
@@ -139,7 +142,7 @@ const TeamSubtasksSection = ({ taskId }: TeamSubtasksSectionProps) => {
           placeholder={t('taskModal.subtasksPlaceholder')}
           aria-label={t('taskModal.subtasksAdd')}
           maxLength={200}
-          className="flex-1 min-w-0 bg-transparent text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none py-1"
+          className="flex-1 min-w-0 bg-transparent text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none"
         />
       </div>
     </div>
