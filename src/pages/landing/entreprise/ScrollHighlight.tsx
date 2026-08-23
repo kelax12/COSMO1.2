@@ -4,6 +4,15 @@ import { gsap, useGSAP } from '@/lib/gsap';
 interface ScrollHighlightProps {
   /** Texte pouvant contenir des segments `<hl>...</hl>` à surligner. */
   text: string;
+  /**
+   * Délai (s) avant le coup de surligneur, une fois le seuil de scroll
+   * franchi. Le hero fait déjà fondre son texte à l'entrée (`data-ent-hero-fade`,
+   * ~1,25 s) : sans ce délai le surlignage se joue *pendant* que le texte est
+   * encore transparent et ne se voit tout simplement pas. Par défaut 0,2 s
+   * (marge de sécurité contre les autres reveals de la page) ; passer une
+   * valeur plus longue pour un texte qui a lui-même une entrée tardive.
+   */
+  delay?: number;
 }
 
 /**
@@ -14,10 +23,15 @@ interface ScrollHighlightProps {
  * un simple changement de couleur. `background-size` anime la largeur du
  * dégradé posé derrière le texte ; `<mark>` garde le sens sémantique.
  *
+ * Le seuil de déclenchement (`top 70%`) est délibérément plus tardif que les
+ * reveals d'entrée des sections (`top 82-85%` ailleurs dans le track) : sinon
+ * le surlignage se joue au même instant que le fondu d'apparition du texte,
+ * qui est encore quasi transparent, et l'animation est invisible.
+ *
  * Rendu en `<span>` : s'insère dans le `<p>` du parent, qui porte déjà les
  * classes de texte (héritées).
  */
-const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text }) => {
+const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text, delay = 0.2 }) => {
   const rootRef = useRef<HTMLSpanElement>(null);
   const parts = text.split(/(<hl>.*?<\/hl>)/g);
 
@@ -35,8 +49,9 @@ const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text }) => {
             {
               backgroundSize: '100% 100%',
               duration: 0.5,
+              delay,
               ease: 'power2.out',
-              scrollTrigger: { trigger: mark, start: 'top 85%', once: true },
+              scrollTrigger: { trigger: mark, start: 'top 70%', once: true },
             },
           );
         });
@@ -45,7 +60,7 @@ const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text }) => {
         gsap.set(marks, { backgroundSize: '100% 100%' });
       });
     },
-    { scope: rootRef, dependencies: [text] },
+    { scope: rootRef, dependencies: [text, delay] },
   );
 
   return (
