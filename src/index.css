@@ -495,10 +495,14 @@ body {
 
   /* Global Input Styles — bordure 1px constante, jamais 2px : le focus change
      la couleur (token accent) via un box-shadow inset, pas l'épaisseur, pour
-     ne jamais décaler le contenu voisin d'1px. */
-  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+     ne jamais décaler le contenu voisin d'1px.
+     `:not(.no-input-chrome)` exclut les champs imbriqués dans un conteneur
+     déjà bordé (cf. règle plus bas) — sans ça, la version `:focus` d'ici,
+     plus spécifique (6 `:not([type=...])` + `:focus`), continuerait à
+     gagner sur le `!important` de `.no-input-chrome:focus` malgré lui. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.no-input-chrome),
   select,
-  textarea,
+  textarea:not(.no-input-chrome),
   [data-slot="input"],
   [data-slot="textarea"],
   [data-slot="select-trigger"] {
@@ -506,18 +510,18 @@ body {
     border-color: rgb(var(--color-border)) !important;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):hover,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.no-input-chrome):hover,
   select:hover,
-  textarea:hover,
+  textarea:not(.no-input-chrome):hover,
   [data-slot="input"]:hover,
   [data-slot="textarea"]:hover,
   [data-slot="select-trigger"]:hover {
     border-color: rgb(var(--color-border-strong)) !important;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="time"]):focus,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="time"]):not(.no-input-chrome):focus,
   select:focus,
-  textarea:focus,
+  textarea:not(.no-input-chrome):focus,
   [data-slot="input"]:focus,
   [data-slot="textarea"]:focus,
   [data-slot="select-trigger"]:focus,
