@@ -22,11 +22,19 @@ const DEMO_LISTS: TaskList[] = [
   },
   {
     id: 'list-2',
-    name: 'Professionnel',
+    name: 'Lundi',
     color: 'purple',
-    taskIds: ['task-1', 'task-2'],
+    taskIds: ['t002', 't003', 't005', 't007', 't009'],
     type: 'manual',
     position: 1,
+  },
+  {
+    id: 'list-5',
+    name: 'Mardi',
+    color: 'blue',
+    taskIds: [],
+    type: 'manual',
+    position: 2,
   },
   {
     id: 'list-3-smart-overdue',
@@ -35,7 +43,7 @@ const DEMO_LISTS: TaskList[] = [
     taskIds: [],
     type: 'smart',
     smartRule: 'overdue',
-    position: 2,
+    position: 3,
   },
   {
     id: 'list-4-smart-priority',
@@ -44,14 +52,15 @@ const DEMO_LISTS: TaskList[] = [
     taskIds: [],
     type: 'smart',
     smartRule: 'high-priority',
-    position: 3,
+    position: 4,
   },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts.
 const DEMO_LISTS_EN: Record<string, Partial<TaskList>> = {
   'list-1': { name: 'Urgent' },
-  'list-2': { name: 'Work' },
+  'list-2': { name: 'Monday' },
+  'list-5': { name: 'Tuesday' },
   'list-3-smart-overdue': { name: 'Overdue' },
   'list-4-smart-priority': { name: 'High priority' },
 };

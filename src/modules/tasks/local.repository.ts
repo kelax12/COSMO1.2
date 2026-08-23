@@ -31,20 +31,17 @@ const t = (
   pendingInvites: [],
 });
 
-// 10 tâches — 2 par catégorie, variété de statuts et priorités
+// 10 tâches — variété de statuts, priorités et catégories
 const DEMO_TASKS: Task[] = [
   // ── TRAVAIL (cat-1) ───────────────────────────────────────────────────
-  t('t001','Bilan annuel 2025',               'Revue complète + plan 2026',               5,'cat-1',-105,-97, -99, true, 120),
   t('t002','Préparer présentation Q1 2026',   'Résultats 3 mois + projections',           5,'cat-1',-5,   3,  null, true, 90),
   t('t013','Envoyer facture client Dupont',   'Facture en retard, relance client',        4,'cat-1',-10,  -3, null, false, 30),
 
   // ── PROJETS (cat-5) ───────────────────────────────────────────────────
   t('t003','Audit sécurité Q1 2026',          'Pentest + correctifs CVE',                 5,'cat-5',-12,  5,  null),
-  t('t004','Mettre à jour dépendances npm',   'Màj majeure + breaking changes',           3,'cat-5',-3,   4,  null, false, 60),
 
   // ── APPRENTISSAGE (cat-4) ─────────────────────────────────────────────
   t('t005','Lire "Accelerate"',               'Forsgren, DevOps metrics DORA',           3,'cat-4',-28, -5,  -8, true, 360),
-  t('t006','Cours deep learning Coursera',    'Réseaux neuronaux + CNN + RNN',            3,'cat-4',-10,  50, null, false, 2400),
 
   // ── PERSONNEL (cat-2) ─────────────────────────────────────────────────
   t('t007','Préparer dossier crédit immo',    'Documents + simulation + banques',         5,'cat-2',-15,  10, null),
@@ -94,13 +91,10 @@ const DEMO_TASKS: Task[] = [
 // Overlay anglais — cf. src/lib/seed-i18n.ts. `sharedBy` (nom de personne)
 // n'est PAS traduit : un nom propre n'est pas une langue.
 const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
-  t001: { name: '2025 annual review', description: 'Full review + 2026 plan' },
   t002: { name: 'Prepare Q1 2026 presentation', description: '3-month results + projections' },
   t013: { name: 'Send invoice to Dupont client', description: 'Overdue invoice, follow up with client' },
   t003: { name: 'Q1 2026 security audit', description: 'Pentest + CVE fixes' },
-  t004: { name: 'Update npm dependencies', description: 'Major upgrade + breaking changes' },
   t005: { name: 'Read "Accelerate"', description: 'Forsgren, DORA DevOps metrics' },
-  t006: { name: 'Deep learning course on Coursera', description: 'Neural networks + CNN + RNN' },
   t007: { name: 'Prepare mortgage application', description: 'Documents + simulation + banks' },
   t008: { name: 'Look for a new apartment', description: 'Criteria + viewings + budget cap' },
   t009: { name: '2026 annual check-up', description: 'Check-up + vaccines + renewals' },

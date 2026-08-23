@@ -21,7 +21,7 @@ beforeEach(() => {
 describe('LocalStorageListsRepository', () => {
   it('seede les listes démo au premier accès', async () => {
     const all = await repo.getAll();
-    expect(all.length).toBe(4);
+    expect(all.length).toBe(5);
     expect(localStorage.getItem(LISTS_STORAGE_KEY)).not.toBeNull();
   });
 
