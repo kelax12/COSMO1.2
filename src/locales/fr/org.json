@@ -696,6 +696,8 @@
     "loading": "Chargement…",
     "placeholder": "Écrire un commentaire… (@ pour mentionner)",
     "empty": "Aucun commentaire, lancez la discussion. Tapez « @ » pour mentionner un membre.",
+    "loadError": "Impossible de charger les commentaires. Vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer",
     "deleteAria": "Supprimer ce commentaire",
     "mentionAria": "Mentionner un membre",
     "sendAria": "Envoyer le commentaire",

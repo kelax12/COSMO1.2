@@ -665,6 +665,8 @@
     "loading": "Loading…",
     "placeholder": "Write a comment… (@ to mention)",
     "empty": "No comment yet. Start the discussion. Type \"@\" to mention someone.",
+    "loadError": "Couldn't load comments. Check your connection and try again.",
+    "retry": "Retry",
     "deleteAria": "Delete this comment",
     "mentionAria": "Mention a member",
     "sendAria": "Send comment",

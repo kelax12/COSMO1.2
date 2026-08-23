@@ -266,28 +266,41 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                       <MoreVertical size={16} aria-hidden="true" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
+                      {/* Icônes SANS classe de couleur : le composant
+                          DropdownMenuItem applique déjà `text-muted-foreground`
+                          à tout svg qui n'en porte pas (cf. dropdown-menu.tsx),
+                          exactement le style neutre du menu d'actions de
+                          TaskTable. Seul l'item destructeur reste coloré. */}
                       <DropdownMenuItem onClick={() => setAssigning(m)}>
-                        <ClipboardList size={14} className="text-indigo-500" aria-hidden="true" />
+                        <ClipboardList size={14} aria-hidden="true" />
                         {t('directory.assignTask')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => openMember(m, 'tasks')}>
-                        <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
+                        <ListTodo size={14} aria-hidden="true" />
                         {t('directory.seeTasks')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openMember(m, 'agenda')}>
-                        <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
+                        <CalendarDays size={14} aria-hidden="true" />
                         {t('directory.seeAgenda')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openMember(m, 'contribution')}>
-                        <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
+                        <TrendingUp size={14} aria-hidden="true" />
                         {t('directory.seeContribution')}
                       </DropdownMenuItem>
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem variant="destructive" onClick={() => handleRemove(m)}>
-                            <LogOut size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
+                          {/* `!text-red-500` explicite : le sélecteur Tailwind
+                              `data-[variant=destructive]:*:[svg]:!text-destructive`
+                              du composant ne colore pas l'icône (constaté),
+                              même override que TaskTable pour « Supprimer ». */}
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => handleRemove(m)}
+                            className="!text-red-500 focus:!text-red-500"
+                          >
+                            <LogOut className="!text-red-500" size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
                           </DropdownMenuItem>
                         </>
                       )}
