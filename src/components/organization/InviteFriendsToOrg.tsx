@@ -18,7 +18,7 @@
 // de laisser l'utilisateur se heurter à un refus.
 
 import React from 'react';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useFriends } from '@/modules/friends';
 import { useInviteFriendToOrg, useOrgMembers } from '@/modules/organizations';
 import { useIsDemo } from '@/lib/app-mode.store';
@@ -97,14 +97,9 @@ const InviteFriendsToOrg: React.FC<InviteFriendsToOrgProps> = ({ orgId, variant 
   );
 
   const header = (
-    <div className="flex items-center gap-2.5">
-      <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-        <UserPlus size={18} className="text-blue-500" aria-hidden="true" />
-      </div>
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-        {t('inviteJoin.inviteToOrg')}
-      </h3>
-    </div>
+    <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+      {t('inviteJoin.inviteToOrg')}
+    </h3>
   );
 
   if (variant === 'card') {

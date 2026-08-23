@@ -46,7 +46,7 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
                 : 'border-[rgb(var(--color-border))]'
             }`}
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col">
                 {/* Le nom porte le palier, l'effectif le qualifie : « Équipe »
                     seul ne dit pas à qui il s'adresse, « 5 à 10 membres » seul
@@ -60,8 +60,45 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
                 )}
                 <span className="text-xs text-[rgb(var(--color-text-secondary))]">{range}</span>
               </div>
+
+              {/* Coin droit de l'en-tête : le palier actif ET l'action sur un
+                  autre palier sont mutuellement exclusifs, ils partagent donc
+                  le même emplacement plutôt que d'empiler un bouton pleine
+                  largeur sous le prix. */}
               {isCurrent && (
-                <Check size={16} className="mt-0.5 text-[rgb(var(--color-accent))]" aria-hidden />
+                <Check size={16} className="mt-0.5 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden />
+              )}
+              {!isFree && !isCurrent && (
+                onSelect ? (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => onSelect(tier.key)}
+                    className="shrink-0 rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
+                  >
+                    {t('billing.subscribe')}
+                  </button>
+                ) : (
+                  // La facturation entreprise est dormante (ENTERPRISE_BILLING_
+                  // ENFORCED = false) : ce bouton reste visuel, jamais un vrai
+                  // CTA de paiement — `onSelect` est la SEULE condition qui
+                  // monte un checkout, cf. OrgBillingTab. `aria-disabled` plutôt
+                  // que `disabled` : un bouton natif désactivé bloque les
+                  // événements pointeur, donc le tooltip qui explique pourquoi.
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="shrink-0 rounded-lg border border-[rgb(var(--color-border))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-text-muted))] cursor-not-allowed"
+                      >
+                        {t('billing.upgrade')}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{t('billing.dormant')}</TooltipContent>
+                  </Tooltip>
+                )
               )}
             </div>
 
@@ -72,39 +109,6 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
               <div className="text-xs text-[rgb(var(--color-text-secondary))]">
                 {t('billing.perMonth')}
               </div>
-            )}
-
-            {!isFree && !isCurrent && (
-              onSelect ? (
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => onSelect(tier.key)}
-                  className="mt-auto rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
-                >
-                  {t('billing.subscribe')}
-                </button>
-              ) : (
-                // La facturation entreprise est dormante (ENTERPRISE_BILLING_
-                // ENFORCED = false) : ce bouton reste visuel, jamais un vrai
-                // CTA de paiement — `onSelect` est la SEULE condition qui
-                // monte un checkout, cf. OrgBillingTab. `aria-disabled` plutôt
-                // que `disabled` : un bouton natif désactivé bloque les
-                // événements pointeur, donc le tooltip qui explique pourquoi.
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-disabled="true"
-                      onClick={(e) => e.preventDefault()}
-                      className="mt-auto rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-text-muted))] cursor-not-allowed"
-                    >
-                      {t('billing.upgrade')}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">{t('billing.dormant')}</TooltipContent>
-                </Tooltip>
-              )
             )}
           </div>
         );
