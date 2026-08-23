@@ -318,18 +318,29 @@ const OrganizationPage = () => {
 
       {tab === 'members' && (
         <div className="space-y-6">
-          {/* Inviter : par code (validation admin) ou par lien direct — deux
-              moyens côte à côte pour ne plus occuper toute la largeur.
+          {/* Inviter : par code (validation admin), par lien direct, ou en
+              faisant venir ses contacts COSMO — trois moyens côte à côte
+              plutôt qu'un troisième bloc qui redescendait toute la page.
 
               AUD-02 — le lien direct fait entrer quelqu'un SANS validation
               admin. Il n'est donc proposé qu'aux admins et aux managers
               (= au moins un subordonné), exactement comme la policy
               `org_invite_links_insert` de la mig. 084. Sans ce garde, la carte
               restait visible pour tout le monde et un simple membre recevrait
-              désormais une erreur 403 au clic. */}
-          <div className={`grid gap-4 items-start ${isManager ? 'md:grid-cols-2' : ''}`}>
+              désormais une erreur 403 au clic.
+
+              Faire venir ses contacts reste réservé aux admins : c'est eux qui
+              décident qui entre. `isAdmin` implique `isManager` (dérivé), donc
+              3 colonnes ne s'affichent que pour un admin, jamais 2 colonnes +
+              un member visible seul en dessous. */}
+          <div
+            className={`grid gap-4 items-start ${
+              isAdmin ? 'md:grid-cols-3' : isManager ? 'md:grid-cols-2' : ''
+            }`}
+          >
             <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} seatsFull={seatsFull} />
             {isManager && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} seatsFull={seatsFull} />}
+            {isAdmin && <InviteFriendsToOrg orgId={myOrg.id} variant="card" />}
           </div>
 
           <TeamsSection
@@ -339,11 +350,6 @@ const OrganizationPage = () => {
             isAdmin={isAdmin}
             isManager={isManager}
           />
-
-          {/* Faire venir ses contacts COSMO — même composant que l'écran qui
-              suit la création d'une entreprise. Réservé aux admins : c'est eux
-              qui décident qui entre. */}
-          {isAdmin && <InviteFriendsToOrg orgId={myOrg.id} variant="card" />}
 
           <div>
             <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
