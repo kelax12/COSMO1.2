@@ -115,3 +115,73 @@ describe('computeOrgBadges — notifications serveur (mig. 095)', () => {
     expect(badges.total).toBe(6);
   });
 });
+
+describe('computeOrgBadges — aperçu du contenu', () => {
+  it('nomme les tâches qui composent le compteur', () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [task({ id: 'a', name: 'Kit presse', assigneeIds: ['me'] })],
+    });
+    expect(badges.projectItems).toEqual(['Kit presse']);
+  });
+
+  it('nomme les demandeurs en attente', () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 2,
+      pendingRequestNames: ['Marie Dupont', 'Jean Martin'], tasks: [],
+    });
+    expect(badges.memberItems).toEqual(['Marie Dupont', 'Jean Martin']);
+  });
+
+  it('tronque l’aperçu à 4 items', () => {
+    const many = Array.from({ length: 9 }, (_, i) =>
+      task({ id: `t${i}`, name: `Tâche ${i}`, assigneeIds: ['me'] }));
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0, tasks: many,
+    });
+    expect(badges.projects).toBe(9);
+    expect(badges.projectItems).toHaveLength(4);
+  });
+
+  it("n'invente aucun libellé quand les notifications ne désignent aucune tâche lisible", () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [], unreadNotifications: 5,
+    });
+    expect(badges.projects).toBe(5);
+    expect(badges.projectItems).toEqual([]);
+  });
+
+  it('nomme l’aperçu depuis les tâches visées par les notifications non lues', () => {
+    // Le serveur fait autorité sur le NOMBRE ; les libellés se retrouvent en
+    // résolvant les tâches qu'il désigne, sinon le badge reste inexplicable.
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [task({ id: 'x1', name: 'Kit presse' }), task({ id: 'x2', name: 'Landing page' })],
+      unreadNotifications: 2,
+      unreadNotificationTaskIds: ['x1', 'x2'],
+    });
+    expect(badges.projects).toBe(2);
+    expect(badges.projectItems).toEqual(['Kit presse', 'Landing page']);
+  });
+
+  it('omet une notification dont la tâche n’est pas lisible', () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 0,
+      tasks: [task({ id: 'x1', name: 'Kit presse' })],
+      unreadNotifications: 2,
+      unreadNotificationTaskIds: ['x1', 'disparue'],
+    });
+    // Le compteur reste celui du serveur ; l'aperçu est simplement plus court.
+    expect(badges.projects).toBe(2);
+    expect(badges.projectItems).toEqual(['Kit presse']);
+  });
+
+  it('renvoie des listes vides sans nom de demandeur fourni', () => {
+    const badges = computeOrgBadges({
+      userId: 'me', lastSeen: LAST_SEEN, pendingRequests: 3, tasks: [],
+    });
+    expect(badges.members).toBe(3);
+    expect(badges.memberItems).toEqual([]);
+  });
+});

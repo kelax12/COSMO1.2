@@ -136,7 +136,8 @@
     "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils, c'est gratuit.",
     "disclaimer": "Les données de cette démo ne sont pas transférées : votre compte repart d'une page blanche.",
     "cta": "Créer mon compte",
-    "later": "Plus tard"
+    "later": "Plus tard",
+    "dismiss": "Masquer cette proposition"
   },
   "notFound": {
     "title": "Page introuvable",

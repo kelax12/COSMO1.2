@@ -21,4 +21,5 @@ export {
   useDeleteOrgTeam,
   useAddTeamMember,
   useRemoveTeamMember,
+  useSetTeamLead,
 } from './hooks';

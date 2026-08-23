@@ -3,13 +3,15 @@ import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { CalendarRange, CalendarOff, CalendarClock, UserRound } from 'lucide-react';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
+import { useTeamTaskDependencies } from '@/modules/team-projects';
+import { computeCriticalPath } from './critical-path.helpers';
 import type { OrgMember } from '@/modules/organizations';
 import {
   timelineRange, timelineWindow, timelineWeeks, timelineMonths, timelineRows,
   timelineRowsByAssignee, todayOffsetPercent, inWindowOrUnscheduled, UNASSIGNED_ID,
   type TimelineZoom, type TimelineMarker,
 } from './timeline.helpers';
-import { projectColor, PRIORITY_META } from './team-projects.helpers';
+import { projectColor, PRIORITY_META, formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
@@ -69,6 +71,25 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => { if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current); }, []);
+
+  // ─── Chemin critique (mig. 108) ────────────────────────────────────
+  // Calculé PAR PROJET puis fusionné : les dépendances ne traversent pas les
+  // projets, un calcul global ne ferait donc que mettre en concurrence des
+  // chaînes qui n'ont aucun rapport entre elles.
+  const orgId = tasks[0]?.orgId;
+  const { data: dependencies = [] } = useTeamTaskDependencies(orgId);
+
+  const { criticalIds, criticalMinutes } = useMemo(() => {
+    const ids = new Set<string>();
+    let minutes = 0;
+    for (const project of projects) {
+      const projectTasks = tasks.filter((x) => x.projectId === project.id);
+      const result = computeCriticalPath(projectTasks, dependencies);
+      for (const id of result.ids) ids.add(id);
+      minutes += result.totalMinutes;
+    }
+    return { criticalIds: ids, criticalMinutes: minutes };
+  }, [projects, tasks, dependencies]);
 
   // Souris uniquement (`hover: hover`) : sur tactile, mouseenter est absent ou
   // synthétique juste avant le tap — la card de survol n'y a pas sa place, le
@@ -177,9 +198,29 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          {t('projects.timelineNotGantt')}
-        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">
+            {t('projects.timelineNotGantt')}
+          </p>
+          {/* Légende montée UNIQUEMENT s'il existe un chemin critique : sans
+              dépendance, l'anneau n'apparaît nulle part et expliquer un
+              symbole absent n'aide personne. */}
+          {criticalIds.size > 0 && (
+            <span
+              title={t('projects.criticalPathHint')}
+              className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-secondary))]"
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-text-muted))] ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]"
+                aria-hidden="true"
+              />
+              {t('projects.criticalPath')}
+              <span className="text-[rgb(var(--color-text-muted))]">
+                {formatDuration(criticalMinutes)}
+              </span>
+            </span>
+          )}
+        </div>
 
         {/* Zoom : la fenêtre par défaut est bornée à 8 semaines autour
             d'aujourd'hui (cf. timeline.helpers.ts) — ces boutons l'élargissent.
@@ -338,6 +379,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                       const showLabel = Math.min(gapBefore, gapAfter) >= LABEL_GAP_PERCENT;
                       const flipLeft = marker.offsetPercent > 80;
                       const priority = PRIORITY_META[marker.task.priority] ?? PRIORITY_META[3];
+                      const onCriticalPath = criticalIds.has(marker.task.id);
                       const assignees = assigneeSummary(marker.task.assigneeIds);
 
                       return (
@@ -366,7 +408,13 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                                   name: marker.task.name,
                                   date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
                                 })}
-                                className={`relative block w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-surface))] transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${dotClass}`}
+                                // Le chemin critique se signale par un ANNEAU,
+                                // pas par une couleur de pastille : la couleur
+                                // porte déjà le projet et le retard, la
+                                // surcharger rendrait les trois illisibles.
+                                className={`relative block w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-surface))] transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${dotClass} ${
+                                  onCriticalPath ? 'ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]' : ''
+                                }`}
                               >
                                 {/* Nom en clair quand la place le permet (point 2) —
                                     sinon la card de survol / l'aria-label restent le

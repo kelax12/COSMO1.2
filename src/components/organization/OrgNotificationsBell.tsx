@@ -12,6 +12,7 @@ import {
   type OrgMember,
 } from '@/modules/organizations';
 import { buildOrgLink } from './deep-link.helpers';
+import { groupNotifications } from './notifications.helpers';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
@@ -55,6 +56,10 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
     () => new Map(members.map((m) => [m.userId, m.displayName])),
     [members],
   );
+
+  // Sections de récence. Recalculées à chaque changement de la liste — donc au
+  // plus une fois par poll, jamais à chaque rendu du panneau.
+  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
 
   // Fermeture au clic extérieur et à Échap — un panneau ancré qui ne se ferme
   // que par son propre bouton piège le pointeur.
@@ -119,8 +124,15 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
           <p className="px-2 py-1.5 text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
             {t('notifications.title')}
           </p>
-          <ul className="space-y-1">
-            {notifications.map((notification) => {
+          {groups.map((group) => (
+          <section key={group.period} aria-label={t(group.labelKey)}>
+            {/* Un flux plat ne dit pas si « il y a 2 jours » est récent ou
+                vieux pour cette organisation. Les sections donnent l'échelle. */}
+            <p className="px-2 pt-2 pb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
+              {t(group.labelKey)}
+            </p>
+            <ul className="space-y-1">
+            {group.items.map((notification) => {
               const { Icon, labelKey } = KIND_META[notification.kind];
               // `task_overdue` vient de pg_cron : son `actorId` est TOUJOURS
               // null. Afficher un auteur serait un mensonge — c'est le temps
@@ -154,7 +166,9 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
                 </li>
               );
             })}
-          </ul>
+            </ul>
+          </section>
+          ))}
         </div>
       )}
     </div>

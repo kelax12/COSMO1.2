@@ -19,6 +19,7 @@ import {
   CreateTeamLabelInput,
   UpdateTeamLabelInput,
   TeamTaskLabel,
+  TeamTaskDependency,
   TeamTaskActivity,
 } from './types';
 
@@ -63,4 +64,16 @@ export interface ITeamProjectsRepository {
    * (#26). Borné côté serveur : la revue lit deux semaines, pas l'historique.
    */
   getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]>;
+
+  // Dépendances entre tâches (mig. 108) — « bloque / bloqué par ».
+  /**
+   * Toutes les arêtes accessibles de l'org, en UNE requête (même contrat que
+   * `getTaskLabels`) : le chemin critique se calcule sur un projet entier, en
+   * charger une par tâche multiplierait les allers-retours par le nombre de
+   * cartes affichées.
+   */
+  getTaskDependencies(orgId: string): Promise<TeamTaskDependency[]>;
+  /** `taskId` devient bloquée par `dependsOnId`. */
+  addTaskDependency(taskId: string, dependsOnId: string, orgId: string): Promise<void>;
+  removeTaskDependency(taskId: string, dependsOnId: string): Promise<void>;
 }

@@ -345,3 +345,53 @@ export const useTeamTaskActivity = (taskId: string | undefined) => {
     staleTime: 1000 * 15,
   });
 };
+
+// ─── Dépendances entre tâches (mig. 108) ─────────────────────────────
+
+/**
+ * Toutes les arêtes de l'organisation, en une requête.
+ *
+ * Même raison que `useTeamTaskLabels` : le chemin critique se calcule sur un
+ * projet entier et le surlignage s'applique à chaque carte affichée — une
+ * requête par tâche multiplierait les allers-retours par le nombre de cartes.
+ */
+export const useTeamTaskDependencies = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.dependencies(orgId ?? ''),
+    queryFn: () => repository.getTaskDependencies(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useAddTaskDependency = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: { taskId: string; dependsOnId: string }) =>
+      repository.addTaskDependency(taskId, dependsOnId, orgId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.dependencies(orgId) });
+    },
+    // Le refus le plus courant est un CYCLE, rejeté par le trigger (mig. 108).
+    // On remonte le message tel quel plutôt qu'un « une erreur est survenue » :
+    // l'utilisateur peut agir sur un cycle, pas sur une erreur anonyme.
+    onError: (error: Error) =>
+      toast.error(translator('org').t('projects.dependencyFailed', { message: error.message })),
+  });
+};
+
+export const useRemoveTaskDependency = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: { taskId: string; dependsOnId: string }) =>
+      repository.removeTaskDependency(taskId, dependsOnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.dependencies(orgId) });
+    },
+    onError: (error: Error) =>
+      toast.error(translator('org').t('projects.dependencyFailed', { message: error.message })),
+  });
+};

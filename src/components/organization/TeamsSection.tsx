@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, UserMinus } from 'lucide-react';
+import { Plus, Trash2, UserMinus, Crown } from 'lucide-react';
 import {
   useOrgTeams,
   useOrgTeamMembers,
@@ -7,6 +7,7 @@ import {
   useDeleteOrgTeam,
   useAddTeamMember,
   useRemoveTeamMember,
+  useSetTeamLead,
 } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import {
@@ -61,6 +62,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
   const deleteTeam = useDeleteOrgTeam(orgId);
   const addMember = useAddTeamMember(orgId);
   const removeMember = useRemoveTeamMember(orgId);
+  const setLead = useSetTeamLead(orgId);
 
   const mySubtree = currentUserId ? subtreeOf(members, currentUserId) : new Set<string>();
   const memberOf = (userId: string) => members.find((m) => m.userId === userId);
@@ -107,8 +109,16 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
       ) : (
         <div className="space-y-3">
           {teams.map((team) => {
-            const teamMemberIds = memberships.filter((m) => m.teamId === team.id).map((m) => m.userId);
-            const canManageThisTeam = isAdmin || team.createdBy === currentUserId;
+            const teamMemberships = memberships.filter((m) => m.teamId === team.id);
+            const teamMemberIds = teamMemberships.map((m) => m.userId);
+            const leadIds = new Set(teamMemberships.filter((m) => m.isLead).map((m) => m.userId));
+            // Miroir EXACT de `can_manage_team` (mig. 107) : admin, créateur,
+            // ou responsable de cette équipe. Toute divergence ferait afficher
+            // des actions que le serveur refusera.
+            const canManageThisTeam =
+              isAdmin
+              || team.createdBy === currentUserId
+              || (!!currentUserId && leadIds.has(currentUserId));
             // Ajoutables : membres de l'org pas encore dans l'équipe ; un
             // non-admin ne propose que soi + ses subordonnés (miroir RLS).
             const addable = members.filter((m) => {
@@ -142,12 +152,49 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                   {teamMemberIds.map((uid) => {
                     const m = memberOf(uid);
                     if (!m) return null;
+                    const isLead = leadIds.has(uid);
                     return (
-                      <span key={uid} className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] pl-1 pr-2 py-0.5">
+                      <span
+                        key={uid}
+                        className={`inline-flex items-center gap-1.5 rounded-full border pl-1 pr-2 py-0.5 ${
+                          isLead
+                            ? 'border-amber-400/60 bg-amber-400/10'
+                            : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]'
+                        }`}
+                      >
                         <MemberAvatar avatar={m.avatar} size={20} />
                         <span className="text-xs text-[rgb(var(--color-text-primary))]">
                           {uid === currentUserId ? t('common.youBadge') : m.displayName.split(' ')[0]}
                         </span>
+                        {/* Le badge est rendu pour TOUS, pas seulement les
+                            gestionnaires : savoir à qui s'adresser dans une
+                            équipe est une information de lecture. */}
+                        {isLead && (
+                          <span
+                            title={t('teams.leadHint')}
+                            className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                          >
+                            <Crown size={10} aria-hidden="true" /> {t('teams.leadBadge')}
+                          </span>
+                        )}
+                        {canManageThisTeam && (
+                          <button
+                            type="button"
+                            onClick={() => setLead.mutate({ teamId: team.id, userId: uid, isLead: !isLead })}
+                            aria-label={
+                              isLead
+                                ? t('teams.removeLead')
+                                : t('teams.makeLead')
+                            }
+                            className={`transition-colors ${
+                              isLead
+                                ? 'text-amber-500 hover:text-amber-600'
+                                : 'text-[rgb(var(--color-text-muted))] hover:text-amber-500'
+                            }`}
+                          >
+                            <Crown size={11} aria-hidden="true" />
+                          </button>
+                        )}
                         {canManageThisTeam && (
                           <button
                             type="button"
