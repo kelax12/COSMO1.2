@@ -4,6 +4,7 @@ import type { OrgTierKey } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { formatCurrency } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface Props {
   /** Palier actuellement actif — mis en avant. */
@@ -73,15 +74,37 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
               </div>
             )}
 
-            {onSelect && !isFree && !isCurrent && (
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => onSelect(tier.key)}
-                className="mt-auto rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
-              >
-                {t('billing.subscribe')}
-              </button>
+            {!isFree && !isCurrent && (
+              onSelect ? (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => onSelect(tier.key)}
+                  className="mt-auto rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
+                >
+                  {t('billing.subscribe')}
+                </button>
+              ) : (
+                // La facturation entreprise est dormante (ENTERPRISE_BILLING_
+                // ENFORCED = false) : ce bouton reste visuel, jamais un vrai
+                // CTA de paiement — `onSelect` est la SEULE condition qui
+                // monte un checkout, cf. OrgBillingTab. `aria-disabled` plutôt
+                // que `disabled` : un bouton natif désactivé bloque les
+                // événements pointeur, donc le tooltip qui explique pourquoi.
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-disabled="true"
+                      onClick={(e) => e.preventDefault()}
+                      className="mt-auto rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-text-muted))] cursor-not-allowed"
+                    >
+                      {t('billing.upgrade')}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{t('billing.dormant')}</TooltipContent>
+                </Tooltip>
+              )
             )}
           </div>
         );
