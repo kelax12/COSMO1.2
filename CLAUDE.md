@@ -485,7 +485,8 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**118 fichiers de migration, dernière = `114_analytics_retention.sql`** (au 2026-08-24).
+**119 fichiers de migration, dernière = `115_org_member_permissions.sql`** (au 2026-08-25,
+**à appliquer en prod**).
 **Toutes appliquées en prod** — ledger et droits d'exécution revérifiés en base le 2026-08-24
 après application des `111`→`114` (colonnes `team_projects.category_id` / `team_tasks.category_id`
 créées, job `cosmo-prune-declined-invitations` actif, `get_my_team_projects`/`get_my_team_tasks`
@@ -580,6 +581,41 @@ supabase.rpc('get_my_team_projects', { p_org: orgId })           // ✅ mig. 113
 > l'appartenance en **jointure indexable** dans une RPC. `team_task_dependencies` (mig. 108)
 > délègue son périmètre à `team_tasks` et hérite donc du coût — à couvrir le jour où elle porte
 > du volume. Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+
+## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
+
+Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `is_org_manager`) et
+**surchargeables par membre** depuis l'annuaire → menu « … » → **Modifier les permissions**.
+
+- Table `org_member_permissions (org_id, user_id)`, colonnes booléennes **NULLables** :
+  `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
+  aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le
+  déploiement réversible.
+- Dix droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
+  `project.delete` · `okr.create` · `okr.delete` · `category.manage` · `team.create` ·
+  `member.invite`) + une portée d'assignation cumulable
+  (`self` · `peers` · `manager` · `subordinates` · `everyone`, `{}` = personne).
+- Côté client, **une seule source de vérité** : `src/modules/organizations/permissions.ts`
+  (fonctions pures, miroir du SQL) exposé par `useMyOrgPermissions(orgId)`. Aucun composant ne
+  recalcule un droit ; le hook lit l'utilisateur via `useAuth`, jamais via une prop.
+
+- ❌ **Ne jamais gater une création/suppression par `isManager`.** `isManager` ne désigne plus
+  qu'une **position** (onglets Pyramide et Statistiques, dépendances de tâches) ; un droit passe
+  par `can['<clé>']`.
+- ❌ **Ne jamais enregistrer un instantané des dix droits.** La fiche n'écrit que les lignes
+  DÉCIDÉES : figer les droits d'un manager le jour où on ouvre sa fiche ferait qu'un
+  déplacement dans la pyramide ne les lui retirerait plus jamais.
+- ❌ **Ne jamais confondre `assign_targets = NULL` (aucune décision → tout le monde) et `{}`
+  (personne).** Ce sont deux états opposés.
+- ❌ **Ne jamais poser de ligne sur un admin** : `my_org_perm` court-circuite sur
+  `is_org_admin`, et le trigger la refuse. Sans cette règle, un admin peut se retirer un droit
+  et bloquer son organisation sans chemin de retour.
+- ⚠️ Le contrôle des assignations ne porte que sur les **AJOUTS** : retirer un assigné reste
+  toujours permis, sinon une tâche héritée devient ingérable et les purges RGPD cassent. Les
+  sélecteurs de membres appliquent la même règle (`canAssign(id) || déjà assigné`).
+- ⚠️ **L'archivage d'un projet est un UPDATE**, pas un DELETE, et l'application ne supprime
+  jamais un projet : c'est le trigger `enforce_team_project_archive_scope` qui rattache
+  l'archivage à `project.delete`. Une policy, qui juge la ligne entière, ne sait pas le faire.
 
 ## 🔁 Récurrence des tâches — serveur uniquement
 

@@ -21,11 +21,12 @@ import { getColorHex } from '@/components/CategoryManager';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteCategoryConfirm from '@/pages/okr/DeleteCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';
+import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 
 interface TeamOKRTabProps {
   orgId: string;
-  isManager: boolean;
+
 }
 
 // Palette hex (value === color) — les catégories d'entreprise stockent l'hex.
@@ -124,7 +125,8 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
   );
 };
 
-const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
+const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
+  const { can } = useMyOrgPermissions(orgId);
   const { t } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
@@ -254,11 +256,11 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
             newCategoryColor={newCategoryColor}
             setNewCategoryColor={setNewCategoryColor}
             createCategoryMutation={createCategory}
-            canManage={isManager}
+            canManage={can['category.manage']}
             accentAllActive
           />
         )}
-        {isManager && (
+        {can['okr.create'] && (
           <button
             type="button"
             onClick={() => setShowCreate(true)}
@@ -276,7 +278,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
           </div>
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.empty')}</p>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-            {isManager ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
+            {can['okr.create'] ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
           </p>
         </div>
       ) : visibleOKRs.length === 0 ? (
@@ -331,8 +333,9 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                 <div className="text-right shrink-0">
                   <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{avg}%</span>
                 </div>
-                {isManager && (
+                {(can['okr.create'] || can['okr.delete']) && (
                   <div className="flex items-center gap-1 shrink-0">
+                    {can['okr.create'] && (
                     <button
                       type="button"
                       onClick={() => setEditingOKR(okr)}
@@ -341,6 +344,8 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                     >
                       <Pencil size={15} aria-hidden="true" />
                     </button>
+                    )}
+                    {can['okr.delete'] && (
                     <button
                       type="button"
                       onClick={() => {
@@ -351,6 +356,7 @@ const TeamOKRTab = ({ orgId, isManager }: TeamOKRTabProps) => {
                     >
                       <Trash2 size={15} aria-hidden="true" />
                     </button>
+                    )}
                   </div>
                 )}
               </div>

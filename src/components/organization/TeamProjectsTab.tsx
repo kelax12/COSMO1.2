@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { showUndoToast } from '@/lib/undo-toast';
+import { useTeamTasksSelection } from './use-team-tasks-selection';
 import {
   Plus, FolderKanban, AlarmClock, CircleDashed, CheckCircle2,
   ChevronDown, ChevronRight, Clock,
@@ -21,7 +22,7 @@ import {
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useOrgTeams, useCreateOrgTeam, useAddTeamMember } from '@/modules/org-teams';
-import type { OrgMember } from '@/modules/organizations';
+import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
 import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
   filterByStatus, sumEstimatedTime, formatDuration, type TaskStatusFilter,
@@ -42,7 +43,8 @@ interface TeamProjectsTabProps {
   orgId: string;
   members: OrgMember[];
   currentUserId?: string;
-  /** Manager/admin : peut créer des projets. */
+  /** Manager/admin — sert encore aux surfaces HIÉRARCHIQUES (dépendances de
+   *  tâches), jamais aux droits de création : ceux-ci viennent de la mig. 115. */
   isManager: boolean;
   /** Admin : peut ajouter n'importe qui à une équipe créée depuis ici (miroir RLS). */
   isAdmin: boolean;
@@ -109,6 +111,7 @@ const StatPill = ({ active, onClick, label, tone, children }: {
 };
 
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
+  const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   const [showNewProject, setShowNewProject] = useState(false);
@@ -252,59 +255,26 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     });
 
   // ─── Sélection multiple + actions groupées ──────────────────────────
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-
-  const toggleSelect = (task: TeamTask) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(task.id)) next.delete(task.id);
-      else next.add(task.id);
-      return next;
-    });
-
-  const clearSelection = () => setSelectedIds(new Set());
-
-  const exitSelectMode = () => {
-    setSelectMode(false);
-    clearSelection();
-  };
-
-  /** Tâches sélectionnées ENCORE visibles — une sélection ne survit pas au filtre. */
-  const selectedTasks = useMemo(
-    () => visibleTasks.filter((t) => selectedIds.has(t.id)),
-    [visibleTasks, selectedIds],
-  );
-
-  const bulkSetCompleted = (completed: boolean) => {
-    for (const task of selectedTasks) {
-      if (task.completed === completed) continue;
-      updateTask.mutate({ taskId: task.id, input: { completed } });
-    }
-    clearSelection();
-  };
-
-  // Suppression groupée : une seule ligne d'annulation qui recrée TOUT le lot,
-  // plutôt qu'un toast par tâche qui noierait l'écran.
-  const bulkDelete = () => {
-    const doomed = [...selectedTasks];
-    if (doomed.length === 0) return;
-    clearSelection();
-    for (const task of doomed) deleteTask.mutate(task.id);
-    showUndoToast(tp('projects.bulkDeleted', doomed.length), () => {
-      for (const task of doomed) {
-        createTask.mutate({
-          projectId: task.projectId,
-          name: task.name,
-          description: task.description,
-          priority: task.priority,
-          deadline: task.deadline,
-          estimatedTime: task.estimatedTime,
-          assigneeIds: task.assigneeIds,
-        });
-      }
-    });
-  };
+  // Le comportement vit dans `use-team-tasks-selection` : c'est un bloc
+  // autonome, et cet onglet est déjà au-dessus du budget de lignes.
+  const {
+    selectMode, setSelectMode, selectedIds, selectedTasks,
+    toggleSelect, exitSelectMode, bulkSetCompleted, bulkDelete,
+  } = useTeamTasksSelection({
+    visibleTasks,
+    setCompleted: (task, completed) => updateTask.mutate({ taskId: task.id, input: { completed } }),
+    deleteTask: (taskId) => deleteTask.mutate(taskId),
+    restoreTask: (task) => createTask.mutate({
+      projectId: task.projectId,
+      name: task.name,
+      description: task.description,
+      priority: task.priority,
+      deadline: task.deadline,
+      estimatedTime: task.estimatedTime,
+      assigneeIds: task.assigneeIds,
+    }),
+    deletedLabel: (count) => tp('projects.bulkDeleted', count),
+  });
 
   // ─── Deep-link `?task=<id>` ─────────────────────────────────────────
   const [searchParams, setSearchParams] = useSearchParams();
@@ -353,7 +323,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       tasks={tasksByProject(project.id)}
       members={members}
       teams={teams}
-      isManager={isManager}
+      canEditProject={can['project.create']}
+      canArchiveProject={can['project.delete']}
       // Le mode sélection ne vaut que pour la vue liste : superposer des cases
       // à cocher au glisser-déposer du kanban rendrait le clic ambigu.
       onStartSelect={view === 'list' ? () => setSelectMode(true) : undefined}
@@ -432,13 +403,14 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         currentUserId={currentUserId}
         prefs={prefs}
         updatePrefs={updatePrefs}
-        isManager={isManager}
+        canCreateProject={can['project.create']}
+        canCreateTeam={can['team.create']}
         onNewProject={() => setShowNewProject(true)}
         onCreateTeam={() => setShowNewTeam(true)}
       />
 
       {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
-      {isManager && showNewProject && (
+      {can['project.create'] && showNewProject && (
         <NewTeamProjectModal
           orgId={orgId}
           teams={teams}
@@ -451,7 +423,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
 
       {/* Popup nouvelle équipe — depuis le sélecteur d'équipe de la barre
           d'outils (même formulaire que l'onglet Pyramide). */}
-      {isManager && showNewTeam && (
+      {can['team.create'] && showNewTeam && (
         <CreateTeamModal
           members={members}
           currentUserId={currentUserId}
@@ -468,7 +440,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             <FolderKanban size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('projects.empty')}</p>
-          {isManager ? (
+          {can['project.create'] ? (
             <button
               type="button"
               onClick={() => setShowNewProject(true)}
@@ -495,6 +467,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           members={members}
           onSetAssignees={setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+          canAssign={canAssign}
           onAddToColumn={(memberId) =>
             memberId
               ? setAssignSheetFor(memberId)

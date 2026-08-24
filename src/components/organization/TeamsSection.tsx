@@ -27,7 +27,8 @@ interface TeamsSectionProps {
   currentUserId?: string;
   isAdmin: boolean;
   /** Manager dérivé (a des subordonnés) — peut créer des équipes. */
-  isManager: boolean;
+  /** Droit `team.create` (mig. 115) — remplace l'ancien « est manager ». */
+  canCreateTeam: boolean;
 }
 
 /** Sous-arbre strict (ids) de `root`. */
@@ -52,7 +53,7 @@ function subtreeOf(members: OrgMember[], root: string): Set<string> {
  * ajoute SES subordonnés (+ lui-même) ; l'admin gère tout. Les projets
  * rattachés à une équipe sont cloisonnés à ses membres + leur hiérarchie.
  */
-const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: TeamsSectionProps) => {
+const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }: TeamsSectionProps) => {
   const { t } = useT('org');
   const [showNewTeam, setShowNewTeam] = useState(false);
 
@@ -81,7 +82,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
         <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
           {t('team.sectionTitle', { count: teams.length })}
         </h2>
-        {isManager && (
+        {canCreateTeam && (
           <button
             type="button"
             onClick={() => setShowNewTeam(true)}
@@ -104,7 +105,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
 
       {teams.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">
-          {isManager ? t('team.emptyManager') : t('team.empty')}
+          {canCreateTeam ? t('team.emptyManager') : t('team.empty')}
         </p>
       ) : (
         <div className="space-y-3">

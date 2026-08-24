@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { useCreateTeamProject } from '@/modules/team-projects';
@@ -165,6 +166,7 @@ const TeamTaskModal = ({
   // prop dédié : tous les projets listés ici partagent déjà celui de la
   // tâche (édition) ou de la liste passée par l'appelant (création).
   const orgId = task?.orgId ?? projects[0]?.orgId ?? '';
+  const { canAssign } = useMyOrgPermissions(orgId);
   const createProject = useCreateTeamProject(orgId);
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -214,6 +216,13 @@ const TeamTaskModal = ({
 
   const toggleAssignee = (userId: string) =>
     setAssigneeIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+
+  // Portée d'assignation (mig. 115) : on ne propose que les membres à portée,
+  // en gardant ceux DÉJÀ assignés — le serveur ne contrôle que les ajouts, et
+  // masquer un assigné existant rendrait son retrait impossible.
+  const assignableMembers = members.filter(
+    (m) => canAssign(m.userId) || assigneeIds.includes(m.userId),
+  );
 
   // Une seule ligne pour les deux rendus (disclosure mobile ET panneau
   // desktop) : même état (`assigneeIds`), même comportement, pas de logique
@@ -343,7 +352,7 @@ const TeamTaskModal = ({
             </div>
             <div className="overflow-y-auto flex-1 min-h-0 py-1">
               <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={setAssigneeIds} />
-              {members.map(renderAssigneeRow)}
+              {assignableMembers.map(renderAssigneeRow)}
             </div>
           </div>
         )}
@@ -568,7 +577,7 @@ const TeamTaskModal = ({
                 {showAssignees && (
                   <div className="mt-3 rounded-xl border overflow-hidden max-h-56 overflow-y-auto" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
                     <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={setAssigneeIds} />
-                    {members.map(renderAssigneeRow)}
+                    {assignableMembers.map(renderAssigneeRow)}
                   </div>
                 )}
               </div>

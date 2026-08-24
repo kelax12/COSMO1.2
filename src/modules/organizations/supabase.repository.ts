@@ -14,6 +14,13 @@ import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
 import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
+import {
+  ORG_PERMISSION_KEYS,
+  type OrgAssignTarget,
+  type OrgMemberPermissions,
+  type OrgPermissionKey,
+  type SetOrgPermissionsInput,
+} from './permissions';
 
 interface OrgRow {
   id: string;
@@ -452,5 +459,67 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     const { data, error } = await supabase.rpc('regenerate_join_code', { p_org: orgId });
     if (error) throw normalizeApiError(error);
     return data as string;
+  }
+
+  // ─── Permissions par membre (mig. 115) ─────────────────────────────
+  //
+  // Colonnes NULLables : `null` = « suit le défaut dérivé », jamais « refusé ».
+  // La correspondance clé ↔ colonne est explicite dans les deux sens — c'est
+  // aussi la whitelist d'écriture : rien d'autre ne part vers la base.
+
+  private static readonly PERMISSION_COLUMNS: Record<OrgPermissionKey, string> = {
+    'task.create': 'can_create_task',
+    'task.editAny': 'can_edit_any_task',
+    'task.deleteAny': 'can_delete_task',
+    'project.create': 'can_create_project',
+    'project.delete': 'can_delete_project',
+    'okr.create': 'can_create_okr',
+    'okr.delete': 'can_delete_okr',
+    'category.manage': 'can_manage_category',
+    'team.create': 'can_create_team',
+    'member.invite': 'can_invite_member',
+  };
+
+  private mapPermissions(row: Record<string, unknown>): OrgMemberPermissions {
+    const overrides: Partial<Record<OrgPermissionKey, boolean | null>> = {};
+    for (const key of ORG_PERMISSION_KEYS) {
+      const value = row[SupabaseOrganizationsRepository.PERMISSION_COLUMNS[key]];
+      overrides[key] = typeof value === 'boolean' ? value : null;
+    }
+    const targets = row.assign_targets;
+    return {
+      orgId: row.org_id as string,
+      userId: row.user_id as string,
+      overrides,
+      assignTargets: Array.isArray(targets) ? (targets as OrgAssignTarget[]) : null,
+    };
+  }
+
+  async getMemberPermissions(orgId: string): Promise<OrgMemberPermissions[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('org_member_permissions')
+      .select('*')
+      .eq('org_id', orgId);
+    if (error) throw normalizeApiError(error);
+    return (data ?? []).map((r) => this.mapPermissions(r as Record<string, unknown>));
+  }
+
+  async setMemberPermissions(
+    orgId: string,
+    userId: string,
+    input: SetOrgPermissionsInput,
+  ): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist stricte : on part des dix clés connues, jamais de l'objet reçu.
+    const row: Record<string, unknown> = { org_id: orgId, user_id: userId };
+    for (const key of ORG_PERMISSION_KEYS) {
+      row[SupabaseOrganizationsRepository.PERMISSION_COLUMNS[key]] = input.overrides[key] ?? null;
+    }
+    row.assign_targets = input.assignTargets;
+    const { error } = await supabase
+      .from('org_member_permissions')
+      .upsert(row, { onConflict: 'org_id,user_id' });
+    if (error) throw normalizeApiError(error);
   }
 }

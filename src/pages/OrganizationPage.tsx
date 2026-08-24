@@ -9,6 +9,7 @@ import {
   useLeaveOrganization,
   useDeleteOrganization,
   useTransferOwnership,
+  useMyOrgPermissions,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
@@ -110,6 +111,10 @@ const OrganizationPage = () => {
   }, [myOrg?.id]);
   // `live` : c'est LA page où l'on attend de voir un membre arriver.
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id, { live: true });
+  // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
+  // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
+  // partagée par React Query avec celles des composants enfants.
+  const myPermissions = useMyOrgPermissions(myOrg?.id);
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
@@ -132,6 +137,10 @@ const OrganizationPage = () => {
   const isAdmin = myOrg.myRole === 'admin';
   // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
   const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
+  // Droits explicites (mig. 115). `isManager` reste la clé des surfaces
+  // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
+  // encadre n'est pas une permission réglable, c'est une position.
+  const canInvite = myPermissions.can['member.invite'];
   // Un membre qui arrive sur `?tab=billing` (lien partagé, ancien favori) ou
   // `?tab=pyramid` (favori d'un ancien manager, ou lien copié) sans en avoir
   // le droit ne voit pas un écran vide : il retombe sur l'aperçu.
@@ -322,12 +331,12 @@ const OrganizationPage = () => {
         />
       )}
       {tab === 'tasks' && (
-        <TeamTasksTab orgId={myOrg.id} members={members} isManager={isManager} isAdmin={isAdmin} />
+        <TeamTasksTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
       )}
       {tab === 'projects' && (
         <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
       )}
-      {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} isManager={isManager} />}
+      {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} />}
       {tab === 'billing' && (
         <OrgBillingTab
           orgId={myOrg.id}
@@ -356,11 +365,11 @@ const OrganizationPage = () => {
               un member visible seul en dessous. */}
           <div
             className={`grid gap-4 items-start ${
-              isAdmin ? 'md:grid-cols-3' : isManager ? 'md:grid-cols-2' : ''
+              isAdmin ? 'md:grid-cols-3' : canInvite ? 'md:grid-cols-2' : ''
             }`}
           >
             <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} seatsFull={seatsFull} />
-            {isManager && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} seatsFull={seatsFull} />}
+            {canInvite && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} seatsFull={seatsFull} />}
             {isAdmin && <InviteFriendsToOrg orgId={myOrg.id} variant="card" />}
           </div>
 
@@ -369,7 +378,7 @@ const OrganizationPage = () => {
             members={members}
             currentUserId={user?.id}
             isAdmin={isAdmin}
-            isManager={isManager}
+            canCreateTeam={myPermissions.can['team.create']}
           />
 
           <div>

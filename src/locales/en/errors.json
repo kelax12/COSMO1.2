@@ -102,7 +102,8 @@
     "updateHabit": "Couldn't update the habit: {{message}}",
     "createOkr": "Couldn't create the OKR: {{message}}",
     "createList": "Couldn't create the list: {{message}}",
-    "addTaskToList": "Couldn't add the task to the list: {{message}}"
+    "addTaskToList": "Couldn't add the task to the list: {{message}}",
+    "updatePermissions": "Could not update permissions: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",
@@ -132,6 +133,7 @@
     "taskValidated": "Task completed",
     "friendRequestSent": "Friend request sent to {{email}}",
     "listShared": "List shared",
-    "listAccepted": "List accepted"
+    "listAccepted": "List accepted",
+    "permissionsUpdated": "Permissions updated"
   }
 }

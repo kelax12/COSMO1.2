@@ -18,6 +18,25 @@ export type {
 } from './types';
 export { buildOrgTree, isManagerOf, subtreeOf } from './types';
 
+// ─── Permissions par membre (mig. 115) ───────────────────────────────
+export type {
+  OrgPermissionKey,
+  OrgAssignTarget,
+  OrgMemberPermissions,
+  SetOrgPermissionsInput,
+  EffectiveOrgPermissions,
+} from './permissions';
+export {
+  ORG_PERMISSION_KEYS,
+  ORG_ASSIGN_TARGETS,
+  DEFAULT_ASSIGN_TARGETS,
+  effectivePermissions,
+  effectiveAssignTargets,
+  canAssignTo,
+  canGrant,
+  canEditPermissionsOf,
+} from './permissions';
+
 // ─── Constants & query keys ──────────────────────────────────────────
 export {
   orgKeys,
@@ -25,6 +44,7 @@ export {
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
   ACTIVE_ORG_STORAGE_KEY,
+  ORG_MEMBER_PERMISSIONS_STORAGE_KEY,
 } from './constants';
 
 // ─── Contexte org active (multi-org) ─────────────────────────────────
@@ -68,7 +88,10 @@ export {
   useCreateInviteLink,
   useClaimOrgInvite,
   useRegenerateJoinCode,
+  useOrgMemberPermissions,
+  useSetMemberPermissions,
 } from './hooks';
+export { useMyOrgPermissions } from './use-my-permissions';
 
 // Notifications d'entreprise (mig. 095) — lecture seule côté client.
 export {

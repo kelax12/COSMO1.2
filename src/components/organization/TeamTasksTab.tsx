@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { subtreeOf, useOrgNotifications, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
+import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTasks, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
   useCreateTeamProject,
@@ -29,6 +29,9 @@ import { useT } from '@/i18n/useT';
 interface TeamTasksTabProps {
   orgId: string;
   members: OrgMember[];
+  /** Utilisateur courant — distingue « ma tâche » (toujours supprimable). */
+  currentUserId?: string;
+  /** Manager/admin — surfaces HIÉRARCHIQUES uniquement (dépendances de tâches). */
   isManager: boolean;
   /** Admin : agenda de tout le monde consultable dans « Assigner l'événement » ; sinon soi + son sous-arbre. */
   isAdmin: boolean;
@@ -64,7 +67,8 @@ const chipInactive =
  * n'y avait pas de raison de dupliquer pour cinq priorités déjà triables
  * par simple clic d'en-tête.
  */
-const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps) => {
+const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamTasksTabProps) => {
+  const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
   const { user } = useAuth();
   const { data: allProjects = [] } = useTeamProjects(orgId);
@@ -249,7 +253,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
               );
             })}
 
-            {!showCreateProject ? (
+            {!can['project.create'] ? null : !showCreateProject ? (
               <button
                 type="button"
                 onClick={() => setShowCreateProject(true)}
@@ -370,7 +374,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
         <button
           type="button"
           onClick={() => setTaskModal({ mode: 'create' })}
-          disabled={projects.length === 0}
+          disabled={projects.length === 0 || !can['task.create']}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
         >
           <Plus size={18} aria-hidden="true" />
@@ -574,19 +578,23 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
                           <DropdownMenuItem onClick={() => setTaskModal({ mode: 'edit', task })}>
                             <Pencil aria-hidden="true" /> {t('projects.tasksTabEdit')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setAssigningTask(task)}>
-                            <UserPlus aria-hidden="true" /> {t('projects.tasksTabAssignAction')}
-                          </DropdownMenuItem>
+                          {members.some((m) => canAssign(m.userId)) && (
+                            <DropdownMenuItem onClick={() => setAssigningTask(task)}>
+                              <UserPlus aria-hidden="true" /> {t('projects.tasksTabAssignAction')}
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => setSchedulingTask(task)}>
                             <CalendarPlus aria-hidden="true" /> {t('projects.tasksTabScheduleAction')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => removeWithUndo(task)}
-                            className="!text-red-500 focus:!text-red-500"
-                          >
-                            <Trash2 className="!text-red-500" aria-hidden="true" /> {t('common.deleteAction')}
-                          </DropdownMenuItem>
+                          {(can['task.deleteAny'] || task.createdBy === currentUserId) && (
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => removeWithUndo(task)}
+                              className="!text-red-500 focus:!text-red-500"
+                            >
+                              <Trash2 className="!text-red-500" aria-hidden="true" /> {t('common.deleteAction')}
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

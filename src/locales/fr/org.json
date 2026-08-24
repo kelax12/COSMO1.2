@@ -967,5 +967,70 @@
     "makeLead": "Nommer responsable de l'équipe",
     "removeLead": "Retirer le rôle de responsable",
     "leadHint": "Gère les membres et les projets de cette équipe, sans être administrateur de l'entreprise."
+  },
+  "permissions": {
+    "title": "Permissions de {{name}}",
+    "aria": "Modifier les permissions de {{name}}",
+    "menuItem": "Modifier les permissions",
+    "intro": "Ces réglages remplacent les droits déduits de la pyramide. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise.",
+    "sectionCreate": "Créer",
+    "sectionDelete": "Supprimer et archiver",
+    "sectionOrg": "Organisation",
+    "sectionAssign": "Assigner des tâches à",
+    "inherited": "Par défaut",
+    "inheritedOn": "Par défaut : autorisé",
+    "inheritedOff": "Par défaut : refusé",
+    "reset": "Revenir au défaut",
+    "ceiling": "Vous ne pouvez pas accorder un droit que vous n'avez pas vous-même.",
+    "assignNobody": "Personne — ce membre ne peut assigner aucune tâche.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler",
+    "key": {
+      "task": {
+        "create": "Créer des tâches",
+        "createHint": "Ajouter une tâche dans un projet d'équipe.",
+        "editAny": "Modifier une tâche non assignée",
+        "editAnyHint": "Éditer une tâche dont il n'est ni créateur ni assigné. Ses propres tâches restent toujours modifiables.",
+        "deleteAny": "Supprimer une tâche",
+        "deleteAnyHint": "Supprimer une tâche d'équipe créée par quelqu'un d'autre."
+      },
+      "project": {
+        "create": "Créer un projet",
+        "createHint": "Créer et renommer un projet d'équipe.",
+        "delete": "Archiver ou supprimer un projet",
+        "deleteHint": "Sortir un projet de la vue active, ou le supprimer définitivement."
+      },
+      "okr": {
+        "create": "Créer un OKR",
+        "createHint": "Créer un objectif d'équipe et ses résultats clés.",
+        "delete": "Supprimer un OKR",
+        "deleteHint": "Supprimer un objectif d'équipe ou l'un de ses résultats clés."
+      },
+      "category": {
+        "manage": "Gérer les catégories",
+        "manageHint": "Créer, renommer et supprimer les catégories de projets et d'OKR."
+      },
+      "team": {
+        "create": "Créer une équipe",
+        "createHint": "Créer une équipe transverse et en définir les membres."
+      },
+      "member": {
+        "invite": "Inviter des membres",
+        "inviteHint": "Générer un lien d'invitation vers une place de la pyramide."
+      }
+    },
+    "target": {
+      "self": "Lui-même",
+      "selfHint": "Il peut se confier une tâche.",
+      "peers": "Les personnes du même niveau",
+      "peersHint": "Les membres qui ont le même supérieur direct que lui.",
+      "manager": "Son manager direct",
+      "managerHint": "La personne juste au-dessus de lui dans la pyramide.",
+      "subordinates": "Ses subordonnés",
+      "subordinatesHint": "Toutes les personnes placées sous lui, à tous les niveaux.",
+      "everyone": "Tout le monde",
+      "everyoneHint": "N'importe quel membre de l'entreprise. Rend les autres cases inutiles."
+    }
   }
 }

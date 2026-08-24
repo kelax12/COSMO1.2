@@ -932,5 +932,70 @@
     "makeLead": "Make team lead",
     "removeLead": "Remove the lead role",
     "leadHint": "Manages this team's members and projects, without being a company administrator."
+  },
+  "permissions": {
+    "title": "{{name}}'s permissions",
+    "aria": "Edit {{name}}'s permissions",
+    "menuItem": "Edit permissions",
+    "intro": "These settings override the rights inferred from the pyramid. A row left on “Default” follows the member's position in the company.",
+    "sectionCreate": "Create",
+    "sectionDelete": "Delete and archive",
+    "sectionOrg": "Organisation",
+    "sectionAssign": "Assign tasks to",
+    "inherited": "Default",
+    "inheritedOn": "Default: allowed",
+    "inheritedOff": "Default: denied",
+    "reset": "Back to default",
+    "ceiling": "You cannot grant a right you do not hold yourself.",
+    "assignNobody": "Nobody — this member cannot assign any task.",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "key": {
+      "task": {
+        "create": "Create tasks",
+        "createHint": "Add a task to a team project.",
+        "editAny": "Edit an unassigned task",
+        "editAnyHint": "Edit a task they neither created nor were assigned. Their own tasks always stay editable.",
+        "deleteAny": "Delete a task",
+        "deleteAnyHint": "Delete a team task created by someone else."
+      },
+      "project": {
+        "create": "Create a project",
+        "createHint": "Create and rename a team project.",
+        "delete": "Archive or delete a project",
+        "deleteHint": "Move a project out of the active view, or delete it permanently."
+      },
+      "okr": {
+        "create": "Create an OKR",
+        "createHint": "Create a team objective and its key results.",
+        "delete": "Delete an OKR",
+        "deleteHint": "Delete a team objective or one of its key results."
+      },
+      "category": {
+        "manage": "Manage categories",
+        "manageHint": "Create, rename and delete project and OKR categories."
+      },
+      "team": {
+        "create": "Create a team",
+        "createHint": "Create a cross-functional team and set its members."
+      },
+      "member": {
+        "invite": "Invite members",
+        "inviteHint": "Generate an invite link to a seat in the pyramid."
+      }
+    },
+    "target": {
+      "self": "Themselves",
+      "selfHint": "They can assign a task to themselves.",
+      "peers": "People at the same level",
+      "peersHint": "Members who report to the same direct manager.",
+      "manager": "Their direct manager",
+      "managerHint": "The person right above them in the pyramid.",
+      "subordinates": "Their reports",
+      "subordinatesHint": "Everyone placed below them, at any depth.",
+      "everyone": "Everyone",
+      "everyoneHint": "Any member of the company. Makes the other boxes irrelevant."
+    }
   }
 }
