@@ -26,14 +26,15 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 | `org_removal_notices` *(mig. 106)* | UUID du membre retiré et de l'auteur du retrait | action d'un admin |
 | `team_task_dependencies` *(mig. 108)* | `created_by` | action utilisateur |
 
-> ✅ **Traité le 2026-08-24 — migration `112`, ÉCRITE mais PAS APPLIQUÉE.** Elle ajoute une purge
+> ✅ **Traité et APPLIQUÉ en prod le 2026-08-24 — migration `112`.** Elle ajoute une purge
 > quotidienne (pg_cron, 03:30 UTC) des invitations **refusées** de plus de 30 jours, sur le
 > modèle de `prune_processed_stripe_events` (mig. 089). Les lignes **acceptées** ne sont pas
 > purgées : elles disent qui a fait entrer qui, ce qui est l'historique légitime de la
 > composition de l'organisation, et elles tombent de toute façon avec le membre
 > (`ON DELETE CASCADE`). Les invitations **en attente** non plus : c'est l'action en cours.
-> Cette migration **supprime des lignes** — elle attend une décision explicite, contrairement
-> aux `109`/`110` qui ne faisaient que redéfinir des objets.
+> Cette migration **supprime des lignes** — contrairement aux `109`/`110` qui ne faisaient que
+> redéfinir des objets, elle a attendu une décision explicite avant d'être appliquée. Vérifié en
+> base après coup : job `cosmo-prune-declined-invitations` planifié et actif (`30 3 * * *`).
 >
 > Le constat qui l'a motivée — la policy `org_invitations_select` autorise
 > **tout membre** de l'organisation à lire l'`invitee_id` de **toutes** les invitations, y compris
@@ -145,8 +146,8 @@ C'est le chaînon manquant : le §3 (technique, 30 minutes) débloque le point 3
 ## 6. Ordre de traitement
 
 1. ✅ **`friends` dans l'effacement** (§2) — fait le 2026-08-24, avec garde.
-2. ✅ **Rétention `user_activity_days` + `demo_devices` converties** (§3) — mig. 114, **écrite, pas
-   encore appliquée**. Débloque la publication des durées.
+2. ✅ **Rétention `user_activity_days` + `demo_devices` converties** (§3) — mig. 114,
+   **appliquée en prod le 2026-08-24**. Débloque la publication des durées.
 3. 🟠 **Publier les durées** dans la politique de confidentialité : 90 j (visite démo non
    convertie), 400 j (activité, visite démo convertie), 90 j (marqueurs Stripe). C'est le seul
    point restant avant de pouvoir répondre à un acheteur B2B sur ce chapitre.

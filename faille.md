@@ -280,19 +280,18 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-Repo au 2026-08-24 : **118 fichiers, dernière = `114_analytics_retention.sql`**.
+Repo au 2026-08-24 : **118 fichiers, dernière = `114_analytics_retention.sql`**,
+**toutes appliquées en prod** — `111` → `114` déployées le 2026-08-24, après `109`/`110`.
 
-- `111` (catégories d'équipe), `112` (péremption des invitations refusées, RGPD),
-  `113` (lectures entreprise indexables — cf. [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2)
-  et `114` (rétention analytique — cf. [`docs/RGPD.md`](./docs/RGPD.md) §3) sont **écrites, PAS
-  appliquées**.
-- 🔴 **La `113` doit être appliquée AVANT de déployer le front** : le repository entreprise lit
-  désormais par `get_my_team_projects` / `get_my_team_tasks`. Sans la migration, la RPC n'existe
-  pas et les onglets Projets / Tâches d'équipe restent vides. Aucune policy n'est touchée, donc le
-  retour arrière est un simple redéploiement du front.
-- La `112` SUPPRIME des lignes ; la `114` en supprimera au bout de 400 jours (aucune aujourd'hui).
-
-Ancienne ligne (pour mémoire) : « 114 fichiers, dernière = `110_comment_notifications.sql` ».
+Vérifié en base immédiatement après application :
+- `team_categories` existe, avec `team_projects.category_id` / `team_tasks.category_id` (111).
+- Le job `cosmo-prune-declined-invitations` est planifié et actif, `30 3 * * *` (112).
+- `get_my_team_projects` / `get_my_team_tasks` exécutables par `authenticated` uniquement (`anon`
+  et `public` révoqués), `my_team_project_ids` fermée à tout le monde (113 — c'est la migration qui
+  débloquait le déploiement front : `main` appelle déjà ces deux RPC).
+- `touch_last_seen` / `record_demo_visit` portent la rétention 400 j (114).
+- Advisors relus après coup : aucune erreur, aucune fonction `anon`-exécutable de plus que les deux
+  volontaires (`preview_share_link`, `record_demo_visit`).
 
 - `099` → `108` : **appliquées en prod** (ledger relu le 2026-08-24), y compris la `100` qui
   referme la fuite des helpers.
