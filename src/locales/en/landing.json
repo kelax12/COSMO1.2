@@ -301,7 +301,7 @@
       "line1": "Run",
       "line2": "your business",
       "line3": "with ease.",
-      "subtitle": "Cosmo for companies sets up in <hl>five steps</hl>: invite your team, create your projects, track their execution, set your objectives, track the progress. And every collaborator keeps <hl>the personal Cosmo</hl> they already use.",
+      "subtitle": "Cosmo for companies sets up in <hl>five steps</hl>, from the org chart to team statistics. And every collaborator keeps <hl>the personal Cosmo</hl> they already use.",
       "cta": "Open the company demo",
       "ctaAria": "Open the company mode demonstration, no sign-up",
       "ctaSecondary": "See pricing",
@@ -311,15 +311,15 @@
     "problem": {
       "title": "Three reasons your team tools never stick.",
       "p1t": "They are flat",
-      "p1d": "A shared board has no idea who reports to whom. So <hl>the hierarchy gets replayed by hand</hl>, as access rights, and it is wrong the day after the first reorg.",
-      "p2t": "They are one tool too many",
-      "p2d": "Yet another collaborative space will not be opened on Monday morning. <hl>Adoption is not decided</hl> in a kick-off meeting.",
-      "p3t": "They count too late",
-      "p3d": "An overloaded team is discovered in a steering meeting, at the exact moment when <hl>it is too late to rebalance</hl>."
+      "p1d": "A shared board has no idea who reports to whom. You end up replaying <hl>the hierarchy by hand</hl>, as access rights — wrong the day after the first reorg.",
+      "p2t": "They don't bend",
+      "p2d": "A role changes, a team splits, a project changes owner — the setup doesn't follow. <hl>Reconfiguring takes longer</hl> than the change itself.",
+      "p3t": "No one can see who's doing what",
+      "p3d": "Without visibility into who's doing what, a project starts <hl>without knowing if it's even feasible</hl>. You find out midway — once it's too late."
     },
     "pyramid": {
       "title": "Invite your team. The org chart draws itself.",
-      "subtitle": "Everyone joins with the Cosmo account they already have, and <hl>you attach them to their manager</hl>. Then you group whoever you want into teams: those teams carry the projects, the objectives and the statistics.",
+      "subtitle": "Everyone joins with the Cosmo account they already have, and <hl>you attach them to their manager</hl>. Then group them into teams: those teams carry the projects, the objectives and the statistics.",
       "g1t": "Invite",
       "g1d": "An organisation code or a single-use link. The person arrives with their existing account, reporting to you, with nothing to approve.",
       "g2t": "Attach",
@@ -409,9 +409,9 @@
     },
     "progress": {
       "title": "Track how everyone is progressing.",
-      "subtitle": "The Statistics tab answers the Monday morning question: <hl>who is moving, who is falling behind, who is overloaded</hl>. A leadership team reads the whole organisation, a manager reads their scope, and it is the attachment from step 1 that decides.",
+      "subtitle": "The Statistics tab answers the Monday morning question: <hl>who is moving, who is falling behind, who is overloaded</hl>. A leadership team reads the whole organisation, a manager reads their scope — decided by the attachment from step 1.",
       "p1t": "The team's pace, week after week",
-      "p1d": "A chart of tasks completed each week, plus the completion-rate trend it draws: you see who's speeding up and who's slowing down before it shows up anywhere else.",
+      "p1d": "A chart of tasks completed each week, and its trend: you see who's speeding up, who's slowing down, before it shows up anywhere else.",
       "p2t": "Everyone's workload",
       "p2d": "Open tasks and overdue ones for each member, visible before the steering meeting rather than during it.",
       "p3t": "Time invested",

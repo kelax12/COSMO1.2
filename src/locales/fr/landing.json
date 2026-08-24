@@ -301,7 +301,7 @@
       "line1": "Pilotez",
       "line2": "votre entreprise",
       "line3": "avec facilité.",
-      "subtitle": "Cosmo Entreprise se met en place en <hl>cinq étapes</hl> : vous invitez votre équipe, vous créez vos projets, vous suivez leur exécution, vous posez vos objectifs, vous suivez la progression. Et chaque collaborateur garde <hl>le Cosmo personnel</hl> qu'il utilise déjà.",
+      "subtitle": "Cosmo Entreprise se met en place en <hl>cinq étapes</hl>, de l'organigramme à la statistique d'équipe. Et chaque collaborateur garde <hl>le Cosmo personnel</hl> qu'il utilise déjà.",
       "cta": "Ouvrir la démo entreprise",
       "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
       "ctaSecondary": "Voir les tarifs",
@@ -311,15 +311,15 @@
     "problem": {
       "title": "Trois raisons pour lesquelles vos outils d'équipe ne tiennent pas.",
       "p1t": "Ils sont plats",
-      "p1d": "Un tableau partagé ne sait pas qui manage qui. Alors on rejoue <hl>la hiérarchie à la main</hl>, en droits d'accès, et elle est fausse dès la première réorganisation.",
-      "p2t": "Ils arrivent en trop",
-      "p2d": "Le énième espace collaboratif ne sera pas ouvert le lundi matin. <hl>L'adoption ne se décrète pas</hl> en réunion de lancement.",
-      "p3t": "Ils comptent trop tard",
-      "p3d": "La surcharge d'une équipe se découvre en comité, au moment précis où il est <hl>trop tard pour la rééquilibrer</hl>."
+      "p1d": "Un tableau partagé ne sait pas qui manage qui. On rejoue <hl>la hiérarchie à la main</hl>, en droits d'accès — faux dès la première réorganisation.",
+      "p2t": "Manque de flexibilité",
+      "p2d": "Un rôle change, une équipe se scinde, un projet change de propriétaire — la configuration, elle, ne suit pas. <hl>Reconfigurer prend plus de temps</hl> que le changement lui-même.",
+      "p3t": "Personne ne voit qui fait quoi",
+      "p3d": "Sans vue sur qui fait quoi, un projet démarre <hl>sans savoir s'il est faisable</hl>. On le découvre en cours de route, une fois que c'est trop tard."
     },
     "pyramid": {
       "title": "Invitez votre équipe. L'organigramme se dessine tout seul.",
-      "subtitle": "Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, et <hl>vous le rattachez à son responsable</hl>. Vous regroupez ensuite qui vous voulez en équipes : ce sont elles qui porteront les projets, les objectifs et les statistiques.",
+      "subtitle": "Chacun rejoint avec le compte Cosmo qu'il a déjà, et <hl>vous le rattachez à son responsable</hl>. Regroupez-les ensuite en équipes : ce sont elles qui porteront projets, objectifs et statistiques.",
       "g1t": "Invitez",
       "g1d": "Un code d'organisation ou un lien à usage unique. La personne arrive avec son compte existant, rattachée à vous, sans validation à faire.",
       "g2t": "Rattachez",
@@ -409,9 +409,9 @@
     },
     "progress": {
       "title": "Suivez la progression de chacun.",
-      "subtitle": "L'onglet Statistiques répond à la question du lundi matin : <hl>qui avance, qui décroche, qui est surchargé</hl>. Une direction lit toute l'organisation, un responsable lit son périmètre, et c'est le rattachement de l'étape 1 qui le décide.",
+      "subtitle": "L'onglet Statistiques répond à la question du lundi matin : <hl>qui avance, qui décroche, qui est surchargé</hl>. Une direction lit toute l'organisation, un responsable lit son périmètre — décidé par le rattachement de l'étape 1.",
       "p1t": "Le rythme de l'équipe, semaine après semaine",
-      "p1d": "Un graphique des tâches terminées chaque semaine, et la tendance du taux de complétion qui s'en dégage : on voit qui accélère et qui ralentit avant que ça se voie ailleurs.",
+      "p1d": "Un graphique des tâches terminées chaque semaine, et sa tendance : on voit qui accélère, qui ralentit, avant que ça se voie ailleurs.",
       "p2t": "Charge de chacun",
       "p2d": "Les tâches ouvertes et les retards de chaque membre, visibles avant le comité plutôt que pendant.",
       "p3t": "Temps investi",
