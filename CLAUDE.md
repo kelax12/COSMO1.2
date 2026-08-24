@@ -463,10 +463,20 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**116 fichiers de migration, dernière = `112_org_invitations_retention.sql`** (au 2026-08-24).
-Appliquées en prod jusqu'à la **`110`**. La `111` (catégories d'équipe) et la `112` (péremption
-des invitations refusées, RGPD) sont **écrites, pas appliquées** — la `112` SUPPRIME des lignes,
-elle ne part pas sans décision explicite.
+**118 fichiers de migration, dernière = `114_analytics_retention.sql`** (au 2026-08-24).
+Appliquées en prod jusqu'à la **`110`** (ledger relu le 2026-08-24). **Quatre migrations sont
+écrites et NON appliquées** : `111` (catégories d'équipe), `112` (péremption RGPD des invitations
+refusées), `113` (lectures entreprise indexables), `114` (rétention analytique).
+
+> 🔴 **Blocage de déploiement — la `113` doit partir AVANT le prochain déploiement front.**
+> `src/modules/team-projects/supabase.repository.ts` appelle déjà `get_my_team_projects` et
+> `get_my_team_tasks` sur `main`. Vérifié en base le 2026-08-24 : **ces deux fonctions n'existent
+> pas en prod**. Vérifié aussi côté CDN : le bundle actuellement servi est un build ANTÉRIEUR au
+> basculement (il ne contient aucune des deux chaînes) — la prod n'est donc pas cassée
+> aujourd'hui, mais elle le devient au premier déploiement de `main`. Ordre obligatoire :
+> appliquer la `113`, **puis** déployer.
+>
+> Les `112` et `114` SUPPRIMENT des lignes : elles ne partent pas sans décision explicite.
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
