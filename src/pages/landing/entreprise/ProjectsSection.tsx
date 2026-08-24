@@ -6,6 +6,7 @@ import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import AppShot from './AppShot';
+import ScrollHighlight from './ScrollHighlight';
 import StepSection from './StepSection';
 import { SHOTS, type AppShotRef } from './data';
 
@@ -172,7 +173,9 @@ const ProjectsSection: React.FC = () => {
               {POINTS.map(({ titleKey, bodyKey }) => (
                 <li key={titleKey} className="border-l border-white/[0.12] pl-5">
                   <h3 className="mb-1.5 text-base font-semibold text-white">{t(titleKey)}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{t(bodyKey)}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    <ScrollHighlight text={t(bodyKey)} />
+                  </p>
                 </li>
               ))}
             </ul>
