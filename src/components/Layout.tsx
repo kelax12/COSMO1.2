@@ -552,7 +552,7 @@ const NavItems = () =>
           {CompanyItems()}
           {/* État de synchronisation (#37) + signaler un bug, sur la même
               ligne : deux indicateurs secondaires, pas deux entrées de nav. */}
-          <div className={`mt-3 flex items-center ${isCollapsed ? 'flex-col gap-2 justify-center' : 'justify-between px-2'}`}>
+          <div className={`mt-3 flex items-center gap-2 ${isCollapsed ? 'justify-center' : 'justify-between px-2'}`}>
             <SyncStatusIndicator compact={isCollapsed} />
             <BugReportButton />
           </div>
