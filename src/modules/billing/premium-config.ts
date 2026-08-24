@@ -69,5 +69,18 @@ export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 //  true  → le client masque/désactive les CTA d'ajout au-delà du quota ;
 //          le VRAI blocage est côté serveur (billing_flags
 //          'enterprise_seat_limit', mig. 067 — 1 UPDATE pour activer).
-export const ENTERPRISE_BILLING_ENFORCED = false;
+//
+// ACTIVÉ le 2026-08-24 (demande Axel). Le drapeau serveur
+// `billing_flags.enterprise_seat_limit` est passé à `true` le même jour, les
+// Edge Functions `stripe-org-checkout` / `stripe-org-portal` sont déployées et
+// les quatre price IDs sont posés en secrets Supabase.
+//
+// ⚠️ La grille Stripe branchée est celle du SANDBOX DE TEST : `STRIPE_SECRET_KEY`
+// en prod est une clé de test (les customers des vrais utilisateurs vivent dans
+// le compte « Environnement de test COSMO », le compte live est vide). Un
+// checkout n'accepte donc que des cartes de test — c'est un galop d'essai en
+// prod, pas encore un encaissement. Passer en live = recréer les 4 prix sur le
+// compte live, réenregistrer un endpoint webhook live, puis remplacer
+// STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
+export const ENTERPRISE_BILLING_ENFORCED = true;
 export const ORG_FREE_SEATS = 5;

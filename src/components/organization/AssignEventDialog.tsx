@@ -104,7 +104,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
               // en changeant seulement sa prop `member` — sans ce `key`, son
               // état interne (fenêtre chargée, vue, instance FullCalendar)
               // restait celui de la première personne sélectionnée.
-              <MemberAgendaBody key={selectedMember.userId} member={selectedMember} />
+              <MemberAgendaBody key={selectedMember.userId} member={selectedMember} onlyTaskId={task.id} />
             ) : (
               <div className="flex-1 flex items-center justify-center text-sm text-center px-6" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {t('assign.pickPersonAgenda')}

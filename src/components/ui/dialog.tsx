@@ -53,14 +53,19 @@ function DialogContent({
   children,
   showCloseButton = true,
   variant = 'default',
+  overlayClassName,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
   variant?: 'default' | 'bottom-sheet'
+  /** Classes supplémentaires sur l'overlay — ex. relever son z-index quand ce
+   *  Dialog est imbriqué dans un conteneur déjà positionné très haut (les
+   *  modales entreprise custom, hors Radix, montent à z-[9999]). */
+  overlayClassName?: string
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

@@ -11,7 +11,9 @@ import {
   useTransferOwnership,
   isManagerOf,
 } from '@/modules/organizations';
-import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
+import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import InviteFriendsToOrg from '@/components/organization/InviteFriendsToOrg';
@@ -106,6 +108,9 @@ const OrganizationPage = () => {
   }, [myOrg?.id]);
   // `live` : c'est LA page où l'on attend de voir un membre arriver.
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id, { live: true });
+  // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
+  // plus bas ne serait pas monté sur tous les rendus.
+  const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
   const deleteMutation = useDeleteOrganization();
   const transferMutation = useTransferOwnership();
@@ -135,7 +140,15 @@ const OrganizationPage = () => {
   // base. Tant que la facturation est dormante, les portes d'entrée restent
   // ouvertes — mais le jour où le drapeau passe à true, un clic sur « inviter »
   // partirait vers un `seat_limit_reached` sans que rien ne l'ait annoncé.
-  const seatsFull = ENTERPRISE_BILLING_ENFORCED && members.length >= ORG_FREE_SEATS;
+  //
+  // ⚠️ Le seuil est celui de l'ABONNEMENT, jamais `ORG_FREE_SEATS` en dur : une
+  // organisation qui a payé le palier « Département » a 20 sièges, et un gate
+  // client resté bloqué à 5 rendrait le paiement sans effet visible — on
+  // encaisserait sans rien débloquer. `isQuotaReached` porte exactement la même
+  // règle que `org_seats_allowed()` (dont le repli sans abonnement actif EST
+  // `ORG_FREE_SEATS`), pour que le client annonce ce que le serveur appliquera.
+  const seatsQuota = effectiveQuota(orgSubscription ?? null);
+  const seatsFull = ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
 
   let bannerDismissed = seatsBannerDismissed;
   try {
@@ -237,7 +250,7 @@ const OrganizationPage = () => {
       {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
           est false (gate dormant ; le vrai blocage sera côté serveur).
           #5 : dismissible (persistant par org) tant qu'elle est informative. */}
-      {members.length >= ORG_FREE_SEATS && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
+      {members.length >= (seatsQuota ?? Infinity) && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
         <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
             <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tp('page.memberCountDot', members.length)}</span>{' '}

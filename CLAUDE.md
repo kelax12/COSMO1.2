@@ -284,7 +284,7 @@ Comportement **quand `PREMIUM_ENFORCED = true`** :
 - Le client ne peut plus écrire `subscriptions` (mig. 015) : `addTokens(1)` passe par la RPC
   `credit_premium_token_from_ad` (cap 20 crédits/24 h).
 
-#### Facturation entreprise — Stripe branché, dormant (2026-08-17)
+#### Facturation entreprise — Stripe ACTIF en mode test (2026-08-24)
 
 `org_subscriptions` (mig. 101) porte l'abonnement d'une **organisation** : un palier
 (`ENTERPRISE_PRICING_TIERS`), un quota de sièges (`max_members`), un statut. Ne jamais la
@@ -327,9 +327,23 @@ Garde-fous propres à cette zone :
   dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
   palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
   palier ajouté sans nom ne compile pas).
-- Activation : `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'`,
-  puis `ENTERPRISE_BILLING_ENFORCED = true` — procédure complète dans
-  [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
+- **Activé le 2026-08-24** : `billing_flags.enterprise_seat_limit = true` en prod,
+  `ENTERPRISE_BILLING_ENFORCED = true`, `stripe-org-checkout` / `stripe-org-portal` déployées
+  et les 4 `STRIPE_ORG_PRICE_*` posés en secrets. `stripe-webhook` a été redéployée le même
+  jour : la version qui tournait en prod était **antérieure au routage `org_id`** et aurait
+  fait retomber une facture d'organisation sur l'abonnement personnel du propriétaire.
+- 🔴 **La grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
+  clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
+  test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
+  : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 4
+  prix sur le compte live, réenregistrer un endpoint webhook live (mêmes 5 events), puis
+  remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 4 `STRIPE_ORG_PRICE_*`.
+- ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
+  deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
+  `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
+- Retour arrière (immédiat, réversible) : `ENTERPRISE_BILLING_ENFORCED = false` +
+  `UPDATE billing_flags SET enabled = false WHERE key = 'enterprise_seat_limit'`.
+  Contexte historique : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
 
 ### Données métier
 

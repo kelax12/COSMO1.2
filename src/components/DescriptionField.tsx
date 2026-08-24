@@ -77,7 +77,12 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
             el.focus();
             el.setSelectionRange(el.value.length, el.value.length);
           }}
-          className="max-w-[calc(100%-1.5rem)] sm:max-w-3xl w-full h-[85vh] p-0 gap-0 flex flex-col overflow-hidden border-[rgb(var(--color-border))]"
+          // z-[10000] (overlay ET contenu) : ce champ peut être imbriqué dans
+          // une modale entreprise custom (TeamTaskModal, hors Radix) montée à
+          // z-[9999] — sans ça, cette popup s'ouvrait bien mais restait
+          // invisible derrière elle.
+          overlayClassName="z-[10000]"
+          className="z-[10000] max-w-[calc(100%-1.5rem)] sm:max-w-3xl w-full h-[85vh] p-0 gap-0 flex flex-col overflow-hidden border-[rgb(var(--color-border))]"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>

@@ -34,6 +34,13 @@ import type { KeyOf } from '@/i18n/catalog';
 
 interface MemberAgendaBodyProps {
   member: OrgMember;
+  /**
+   * Restreint le volet « tâches à planifier » à cette seule tâche — utilisé
+   * par AssignEventDialog, qui cible une tâche précise depuis l'action
+   * « Assigner l'événement ». Absent = toutes les tâches du membre (fiche
+   * membre / Pyramide « Voir l'agenda », comportement inchangé).
+   */
+  onlyTaskId?: string;
 }
 
 type ViewName = 'timeGridWeek' | 'timeGridDay' | 'dayGridMonth';
@@ -63,7 +70,7 @@ const PROJECT_HEX: Record<string, string> = {
  * conteneur masqué et rend une grille écrasée. Son hôte doit aussi lui donner
  * une hauteur DÉFINIE (`height="100%"` remonte jusqu'à un parent dimensionné).
  */
-export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
+export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) => {
   const { t } = useT('org');
   const calendarRef = useRef<FullCalendar>(null);
   const draggableRef = useRef<Draggable | null>(null);
@@ -110,15 +117,21 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
     () => new Set(teamMembers.filter((tm) => tm.userId === member.userId).map((tm) => tm.teamId)),
     [teamMembers, member.userId],
   );
-  const memberTasks = useMemo(
-    () => sortOpenTasks(allTeamTasks.filter((t) => {
+  const memberTasks = useMemo(() => {
+    // Assigner l'événement (item #3) : ne montrer QUE la tâche depuis laquelle
+    // l'action a été déclenchée, peu importe qui est assigné ou l'équipe du
+    // projet — c'est cette tâche précise que le manager veut planifier.
+    if (onlyTaskId) {
+      const task = allTeamTasks.find((t) => t.id === onlyTaskId);
+      return task ? [task] : [];
+    }
+    return sortOpenTasks(allTeamTasks.filter((t) => {
       if (t.completed) return false;
       if (t.assigneeIds.includes(member.userId)) return true;
       const projectTeamId = projects.find((p) => p.id === t.projectId)?.teamId;
       return !!projectTeamId && memberTeamIds.has(projectTeamId);
-    })),
-    [allTeamTasks, member.userId, projects, memberTeamIds],
-  );
+    }));
+  }, [allTeamTasks, member.userId, projects, memberTeamIds, onlyTaskId]);
 
   // Modales (mêmes états que la page Agenda).
   const [addOpen, setAddOpen] = useState(false);
