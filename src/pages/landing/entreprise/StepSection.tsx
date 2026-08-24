@@ -1,6 +1,7 @@
 import React from 'react';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import ScrollHighlight from './ScrollHighlight';
 
 interface StepSectionProps {
   /** Ancre de la section, utilisée par `TRACK_ANCHORS`. */
@@ -45,7 +46,9 @@ const StepSection: React.FC<StepSectionProps> = ({ id, step, titleKey, subtitleK
           >
             {t(titleKey)}
           </h2>
-          <p className="text-base leading-relaxed text-slate-400 lg:text-lg">{t(subtitleKey)}</p>
+          <p className="text-base leading-relaxed text-slate-400 lg:text-lg">
+            <ScrollHighlight text={t(subtitleKey)} />
+          </p>
         </header>
 
         {children}

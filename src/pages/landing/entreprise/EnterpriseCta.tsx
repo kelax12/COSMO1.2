@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
+import ScrollHighlight from './ScrollHighlight';
 import { pauseWhenOffscreen } from '../pause-offscreen';
 
 interface EnterpriseCtaProps {
@@ -70,7 +71,7 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
             </h2>
 
             <p className="mx-auto mb-9 max-w-xl text-base leading-relaxed text-slate-400">
-              {t('enterprise.cta.subtitle')}
+              <ScrollHighlight text={t('enterprise.cta.subtitle')} />
             </p>
 
             <div className="flex flex-col justify-center gap-3.5 sm:flex-row">

@@ -318,7 +318,7 @@
     },
     "pyramid": {
       "title": "Invitez votre équipe. L'organigramme se dessine tout seul.",
-      "subtitle": "Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, et vous le rattachez à son responsable. Vous regroupez ensuite qui vous voulez en équipes : ce sont elles qui porteront les projets, les objectifs et les statistiques.",
+      "subtitle": "Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, et <hl>vous le rattachez à son responsable</hl>. Vous regroupez ensuite qui vous voulez en équipes : ce sont elles qui porteront les projets, les objectifs et les statistiques.",
       "g1t": "Invitez",
       "g1d": "Un code d'organisation ou un lien à usage unique. La personne arrive avec son compte existant, rattachée à vous, sans validation à faire.",
       "g2t": "Rattachez",
@@ -347,7 +347,7 @@
     },
     "projects": {
       "title": "Créez vos projets, attribuez-les à l'échelle que vous voulez.",
-      "subtitle": "Un projet appartient à une équipe et rassemble ses tâches. Vous les assignez à une personne ou à plusieurs, et chacune les retrouve dans son propre Cosmo, à côté de ses tâches personnelles.",
+      "subtitle": "Un projet appartient à une équipe et rassemble ses tâches. Vous les assignez à une personne ou à plusieurs, et chacune les retrouve <hl>dans son propre Cosmo</hl>, à côté de ses tâches personnelles.",
       "p1t": "À une personne, à plusieurs, à toute une équipe",
       "p1d": "Vous assignez à qui vous voulez dans votre périmètre. Une tâche peut porter plusieurs noms, et se découper en sous-tâches assignées séparément.",
       "p2t": "Kanban ou frise chronologique",
@@ -361,7 +361,7 @@
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",
-      "subtitle": "Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Le même mécanisme à chaque niveau, et rien ne se perd entre deux étages.",
+      "subtitle": "Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Le même mécanisme à chaque niveau, et <hl>rien ne se perd entre deux étages</hl>.",
       "orgLabel": "Objectif d'organisation",
       "orgExample": "Faire de Nova Studio une référence du branding indépendant",
       "teamLabel": "OKR d'équipe",
@@ -384,7 +384,7 @@
     },
     "progress": {
       "title": "Suivez la progression de chacun.",
-      "subtitle": "L'onglet Statistiques répond à la question du lundi matin : qui avance, qui décroche, qui est surchargé. Une direction lit toute l'organisation, un responsable lit son périmètre, et c'est le rattachement de l'étape 1 qui le décide.",
+      "subtitle": "L'onglet Statistiques répond à la question du lundi matin : <hl>qui avance, qui décroche, qui est surchargé</hl>. Une direction lit toute l'organisation, un responsable lit son périmètre, et c'est le rattachement de l'étape 1 qui le décide.",
       "p1t": "Le rythme de l'équipe, semaine après semaine",
       "p1d": "Un graphique des tâches terminées chaque semaine, et la tendance du taux de complétion qui s'en dégage : on voit qui accélère et qui ralentit avant que ça se voie ailleurs.",
       "p2t": "Charge de chacun",
@@ -396,19 +396,19 @@
     },
     "security": {
       "title": "Les questions qu'on vous posera en comité.",
-      "subtitle": "Nous y répondons ici, avant qu'elles bloquent le déploiement.",
+      "subtitle": "Nous y répondons ici, <hl>avant qu'elles bloquent le déploiement</hl>.",
       "s1t": "Isolation en base de données",
-      "s1d": "Chaque table est protégée par des politiques d'accès évaluées côté serveur. Une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime.",
+      "s1d": "Chaque table est protégée par des politiques d'accès <hl>évaluées côté serveur</hl>. Une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime.",
       "s2t": "Aucune surveillance déguisée",
-      "s2d": "Un manager voit le travail de son périmètre, pas la vie privée de ses collaborateurs. Les tâches, habitudes et agenda personnels d'un membre ne remontent jamais à sa hiérarchie.",
+      "s2d": "Un manager voit le travail de son périmètre, pas la vie privée de ses collaborateurs. Les tâches, habitudes et agenda personnels d'un membre <hl>ne remontent jamais à sa hiérarchie</hl>.",
       "s3t": "Conformité RGPD",
-      "s3d": "Effacement du compte réellement exécuté côté serveur, rétention documentée, consentement explicite à l'entrée dans une organisation. Aucune donnée revendue.",
+      "s3d": "Effacement du compte <hl>réellement exécuté côté serveur</hl>, rétention documentée, consentement explicite à l'entrée dans une organisation. Aucune donnée revendue.",
       "s4t": "Réversibilité",
-      "s4d": "Vous partez quand vous voulez. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support."
+      "s4d": "Vous partez quand vous voulez. Transfert de propriété et suppression de l'organisation sont dans l'interface, <hl>pas dans un ticket de support</hl>."
     },
     "pricing": {
       "title": "20 € par mois pour dix personnes.",
-      "subtitle": "Le forfait couvre toute l'organisation, quel que soit le nombre de projets. Le prix suit le palier atteint : pas de module à débloquer, pas de devis à attendre.",
+      "subtitle": "Le forfait couvre toute l'organisation, quel que soit le nombre de projets. Le prix suit le palier atteint : <hl>pas de module à débloquer, pas de devis à attendre</hl>.",
       "sliderLabel": "Combien êtes-vous ?",
       "sliderAria": "Nombre de membres de votre organisation",
       "membersUnit": "membres",
@@ -423,7 +423,7 @@
       "i3": "Statistiques par périmètre managérial",
       "i4": "Un Cosmo personnel pour chaque membre",
       "i5": "Sans engagement, résiliable à tout moment",
-      "autoAdjust": "Le forfait s'ajuste tout seul quand l'organisation grandit, et redescend si l'effectif baisse. Aucune action de votre part.",
+      "autoAdjust": "Le forfait s'ajuste tout seul quand l'organisation grandit, et redescend si l'effectif baisse. <hl>Aucune action de votre part</hl>.",
       "cta": "Créer mon organisation",
       "ctaNote": "Gratuit jusqu'à 5 membres. Commencez sans nous parler."
     },
@@ -443,7 +443,7 @@
     "cta": {
       "line1": "Votre organisation exécute déjà.",
       "line2": "Donnez-lui la structure qui va avec.",
-      "subtitle": "Créez votre organisation en une minute, invitez votre première équipe, et regardez votre organigramme prendre vie.",
+      "subtitle": "Créez votre organisation <hl>en une minute</hl>, invitez votre première équipe, et regardez votre organigramme prendre vie.",
       "primary": "Créer mon organisation",
       "secondary": "Ouvrir la démo entreprise",
       "note": "Gratuit jusqu'à 5 membres · sans carte bancaire"

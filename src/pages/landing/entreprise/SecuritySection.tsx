@@ -1,6 +1,7 @@
 import React from 'react';
 import SpotlightCard from '@/components/reactbits/SpotlightCard';
 import { useT } from '@/i18n/useT';
+import ScrollHighlight from './ScrollHighlight';
 import { SECURITY_POINTS } from './data';
 
 /**
@@ -35,7 +36,7 @@ const SecuritySection: React.FC = () => {
             {t('enterprise.security.title')}
           </h2>
           <p className="text-base leading-relaxed text-slate-400 lg:text-lg">
-            {t('enterprise.security.subtitle')}
+            <ScrollHighlight text={t('enterprise.security.subtitle')} />
           </p>
         </header>
 
@@ -47,7 +48,9 @@ const SecuritySection: React.FC = () => {
               className="!rounded-xl !border-white/[0.08] !bg-[#0A0C11] !p-7 transition-colors duration-300 hover:!border-cyan-300/25"
             >
               <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>
-              <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>
+              <p className="text-sm leading-relaxed text-slate-500">
+                <ScrollHighlight text={t(bodyKey)} />
+              </p>
             </SpotlightCard>
           ))}
         </div>
