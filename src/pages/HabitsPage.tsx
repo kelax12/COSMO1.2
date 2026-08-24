@@ -11,10 +11,10 @@ const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; l
   { mode: 'list', icon: List, label: 'Liste' },
   { mode: 'global', icon: TrendingUp, label: 'Suivi global' },
 ];
-import HabitCard from '../components/HabitCard';
-import HabitModal from '../components/HabitModal';
-import HabitTable from '../components/HabitTable';
-import HabitGlobalTracking from '../components/HabitGlobalTracking';
+import HabitCard from '@/components/HabitCard';
+import HabitModal from '@/components/HabitModal';
+import HabitTable from '@/components/HabitTable';
+import HabitGlobalTracking from '@/components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
 import { HabitListSkeleton } from '@/components/skeletons';
 import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';

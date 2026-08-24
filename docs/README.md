@@ -5,7 +5,12 @@ confrontés au code de `main` **et à la prod** à cette date. Ont été remesur
 [`../faille.md`](../faille.md) (1 finding fermé, 3 ouverts), [`ARCHITECTURE.md`](./ARCHITECTURE.md),
 [`SECURITY.md`](./SECURITY.md), [`SCALABILITY.md`](./SCALABILITY.md),
 [`PERFORMANCE.md`](./PERFORMANCE.md) (build du jour), [`TESTING.md`](./TESTING.md) (suite rouge),
-[`ACQUISITION.md`](./ACQUISITION.md) et [`RGPD.md`](./RGPD.md). Les autres (`MOBILE`, `SEO`,
+[`ACQUISITION.md`](./ACQUISITION.md) et [`RGPD.md`](./RGPD.md).
+
+**Puis, le même jour, les correctifs** : la migration `109` referme les trois findings ouverts
+(B-1, B-2, B-3 — **écrite, pas encore appliquée en prod**), la suite unitaire repasse au vert, la
+convention d'alias `@/` devient une règle ESLint, et deux gardes de migration sont ajoutées **puis
+testées** (`scripts/migration-guards.test.mjs`). Les autres (`MOBILE`, `SEO`,
 `I18N`, `ACCESSIBILITY`, `UI-PATTERNS`, `DEPLOYMENT`, `POST-AUDIT-GUIDE`) portent encore la date de
 leur dernier audit propre : **ils n'ont pas été remesurés le 2026-08-24**, ne pas lire leur date
 comme une revérification.

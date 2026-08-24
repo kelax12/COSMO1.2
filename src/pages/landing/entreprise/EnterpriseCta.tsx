@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import ScrollHighlight from './ScrollHighlight';
-import { pauseWhenOffscreen } from '../pause-offscreen';
+import { pauseWhenOffscreen } from '@/pages/landing/pause-offscreen';
 
 interface EnterpriseCtaProps {
   onDemo: () => void;

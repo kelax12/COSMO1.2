@@ -12,18 +12,31 @@
 >   son périmètre ne tient qu'à sa logique, donc il doit être testé contre une
 >   vraie base, pas mocké.
 >
-> **Suite unitaire au 2026-08-24 : 1550 tests / 139 fichiers, dont 1 ROUGE** (`npm test`, mesuré
-> en local, 3 min 10 s — la suite est deux fois plus rapide qu'au 2026-08-14 à volume supérieur).
-> Un échec est une vraie régression, pas un test pré-existant cassé — et il y en a une :
+> **Suite unitaire au 2026-08-24 : 1560 tests / 140 fichiers, tous verts** (`npm test`, mesuré en
+> local, ~3 min 10 s — deux fois plus rapide qu'au 2026-08-14 à volume supérieur).
+> Un échec est donc une vraie régression, pas un test pré-existant cassé.
 >
-> | Test | Message | Cause |
-> |---|---|---|
-> | `src/design-system.guard.test.ts` → « ne laisse pas repartir à la hausse le stock de tailles arbitraires » | `205 > budget 203` | La vague entreprise du 2026-08-23/24 a introduit de nouvelles tailles arbitraires dans `src/components/organization/` — `TeamAssigneeGroups.tsx:45` (`text-[10px]`), `TeamsSection.tsx:175` (`text-[10px]`), `TeamTasksTab.tsx:415` — au lieu de l'échelle mobile fermée (`text-caption`, 11 px). Une occurrence a été retirée en face (`SettingsPage.tsx`) ; **net mesuré par la garde : +2**. |
+> **Corrigé le 2026-08-24** — `src/design-system.guard.test.ts` était ROUGE (`205 > budget 203`) :
+> la vague entreprise du 2026-08-23/24 avait introduit quatre tailles arbitraires, toutes SOUS le
+> plancher de 11 px, dans des fichiers sans système typographique local à préserver
+> (`TeamAssigneeGroups.tsx`, `TeamsSection.tsx`, `TeamTasksTab.tsx` ×2). Migrées en `text-caption`,
+> puis budget abaissé à **202** et plancher sub-11px à **82** — la règle du fichier est que ces
+> nombres ne remontent jamais. Remonter le budget aurait vidé la garde de son sens.
 >
-> **Ce n'est pas un faux positif** : ce cliquet existe précisément pour empêcher le stock de
-> remonter. Deux sorties, dans cet ordre de préférence : (1) remplacer les deux `text-[10px]` par
-> `text-caption` — ce qui fait *baisser* le stock et permet de baisser `ARBITRARY_BUDGET` ;
-> (2) jamais : remonter `ARBITRARY_BUDGET`, qui viderait la garde de son sens.
+> ## Gardes de migration — tester la garde, pas seulement le code (2026-08-24)
+>
+> `scripts/migration-guards.test.mjs` — **10 tests**. Deux findings sécurité du 2026-08-24 (B-1 et
+> B-3 de [`../faille.md`](../faille.md)) sont passés parce que la règle qu'ils enfreignaient ne
+> vivait que dans un Markdown. Les gardes ajoutées ce jour-là ne valent que si elles échouent
+> vraiment sur la régression qu'elles prétendent attraper : **une garde qu'on n'a jamais vue rouge
+> est une intention, pas une garde.**
+>
+> Chaque cas construit un jeu de migrations minimal dans un dossier temporaire et exécute le script
+> réel avec ce dossier comme `cwd` — le script tel qu'il tourne en CI, ni mocké ni ré-implémenté.
+> Sont couverts, pour les deux sens : la régression détectée, le correctif accepté, le
+> re-`GRANT` qui annule un `REVOKE`, le `REVOKE … FROM PUBLIC` qui **ne compte pas** (leçon de la
+> mig. `094b`), la réparation par une migration ultérieure, et le cliquet qui ne juge pas
+> l'historique.
 >
 > ## Audit de couverture — 2026-08-14
 >

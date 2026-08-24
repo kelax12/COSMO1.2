@@ -10,7 +10,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { UsersRound, ArrowUpRight } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { isTaskOverdue, projectColor, taskDisplayStatus } from '../organization/team-projects.helpers';
+import { isTaskOverdue, projectColor, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
 import { useT } from '@/i18n/useT';
 

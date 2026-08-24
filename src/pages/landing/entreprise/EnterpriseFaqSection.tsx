@@ -1,5 +1,5 @@
 import React from 'react';
-import FaqItem from '../FaqItem';
+import FaqItem from '@/pages/landing/FaqItem';
 import { useT } from '@/i18n/useT';
 import { ENTERPRISE_FAQ } from './data';
 

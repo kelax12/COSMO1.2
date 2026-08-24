@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import TaskTable from '../components/TaskTable';
-import TaskFilter from '../components/TaskFilter';
-import TaskModal from '../components/TaskModal';
-import TasksSummary from '../components/TasksSummary';
-import DeadlineCalendar from '../components/DeadlineCalendar';
-import ListActionsSheet from '../components/ListActionsSheet';
-import ShareListSheet from '../components/ShareListSheet';
+import TaskTable from '@/components/TaskTable';
+import TaskFilter from '@/components/TaskFilter';
+import TaskModal from '@/components/TaskModal';
+import TasksSummary from '@/components/TasksSummary';
+import DeadlineCalendar from '@/components/DeadlineCalendar';
+import ListActionsSheet from '@/components/ListActionsSheet';
+import ShareListSheet from '@/components/ShareListSheet';
 import { Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';

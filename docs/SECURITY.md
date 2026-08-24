@@ -69,8 +69,16 @@ Trois règles, dans cet ordre :
 
 ### Fonctions de trigger — `SECURITY INVOKER` et `REVOKE anon`
 
-Une fonction `RETURNS trigger` ne doit **jamais** être `SECURITY DEFINER` (règle de l'audit du
-2026-07-26) et doit être `REVOKE`-ée pour `anon` (mig. `064b`, réappliquée par `094b`).
+Une fonction `RETURNS trigger` qui ne fait que **valider** ne doit **jamais** être
+`SECURITY DEFINER` (règle de l'audit du 2026-07-26). Un trigger qui doit **écrire au-delà des
+droits de l'appelant** — notifier d'autres utilisateurs (`notify_task_assignment`,
+`notify_task_comment`), semer les catégories d'un nouveau compte — est l'exception légitime, et
+c'est la seule.
+
+Dans les deux cas, la fonction doit être `REVOKE`-ée pour `anon` **et** `authenticated`
+(mig. `064b`, réappliquée par `094b`) : `REVOKE … FROM PUBLIC` ne retire pas le `GRANT` par défaut
+posé par Supabase. Cela ne casse aucun trigger — Postgres vérifie le privilège `EXECUTE` d'une
+fonction de trigger au `CREATE TRIGGER`, pas à chaque déclenchement.
 
 Deux raisons, la seconde souvent oubliée :
 
@@ -230,10 +238,11 @@ supabase db push  # applique 017_processed_stripe_events.sql
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public' and p.proname in (<fonctions citées par la policy>);
   ```
-  Aucune garde automatique ne couvre ce cas aujourd'hui : `check:rls` vérifie le wrapping
-  d'`auth.uid()` et l'unicité des policies permissives, pas les **droits**. C'est ainsi que la
-  mig. `107` est passée (finding B-1).
-- ✅ **Fonction `RETURNS trigger` : `SECURITY INVOKER` (défaut) + `REVOKE ALL … FROM PUBLIC, anon`.** Cf. section dédiée plus haut.
+  ✅ **Automatisé depuis le 2026-08-24** : `npm run check:rls` rejoue les `GRANT`/`REVOKE` de tout
+  l'historique et refuse toute policy citant une fonction révoquée à `authenticated` (règle 3 du
+  script). La requête ci-dessus reste utile pour vérifier l'**état réel** en prod — le script, lui,
+  ne voit que les migrations.
+- ✅ **Fonction `RETURNS trigger` : `SECURITY INVOKER` (défaut) + `REVOKE ALL … FROM PUBLIC, anon, authenticated`.** Cf. section dédiée plus haut. ✅ **Automatisé depuis le 2026-08-24** : `npm run validate:migrations` (règle 5) échoue si le `REVOKE` manque, et avertit sur tout trigger `SECURITY DEFINER`. Cliquet à partir de la mig. `109` — les deux gardes sont elles-mêmes testées par `scripts/migration-guards.test.mjs`.
 
 ## Rotation des secrets
 

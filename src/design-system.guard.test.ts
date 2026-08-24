@@ -84,8 +84,21 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
  *   (`text-[15px]` → `text-body`, `text-[17px]` → `text-headline` — mêmes px,
  *   line-height différente, donc à vérifier visuellement). Ce jour-là, ce
  *   budget doit tomber d'environ 30.
+ *
+ * ── 2026-08-24 : 205 (ROUGE) → 202 ──
+ *
+ * La vague entreprise du 2026-08-23/24 avait fait remonter le stock à 205 et
+ * `main` était rouge. Les quatre ajouts étaient tous des violations FRANCHES
+ * (deux `text-[10px]`, un `text-[9px]`, tous sous le plancher de 11px, dans
+ * des fichiers qui n'ont aucun système local à préserver — contrairement à
+ * `TaskModalMobileBody`) : migrés en `text-caption`.
+ *   • TeamAssigneeGroups.tsx  `text-[10px]` → `text-caption`
+ *   • TeamsSection.tsx        `text-[10px]` → `text-caption`
+ *   • TeamTasksTab.tsx        `text-[10px]` et `text-[9px]` → `text-caption`
+ * Le budget descend donc à 202 et le plancher sub-11px à 82, conformément à
+ * la règle « chaque migration doit faire BAISSER ces nombres ».
  */
-const ARBITRARY_BUDGET = 203;
+const ARBITRARY_BUDGET = 202;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;
@@ -139,7 +152,7 @@ describe('design system mobile — échelle typographique', () => {
     // Le plancher bas s'applique même hors zone migrée : personne ne doit
     // AJOUTER un nouveau text-[8px]. Les occurrences historiques sont listées
     // ici — cette liste ne doit que rétrécir.
-    const KNOWN_SUB_11PX = 85;
+    const KNOWN_SUB_11PX = 82;
 
     const count = files.reduce(
       (sum, file) =>

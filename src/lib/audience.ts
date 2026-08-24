@@ -25,7 +25,7 @@
 // elle existe : ne pas la présenter comme fermée.
 // ═══════════════════════════════════════════════════════════════════
 
-import { ALL_LOCALES } from '../i18n/locale';
+import { ALL_LOCALES } from '@/i18n/locale';
 
 export const AUDIENCE_SCRIPT_SRC = 'https://www.vesk.dev/a.js';
 export const AUDIENCE_SITE_KEY = '676bad26713b4578aa3e002fd59ebba7';

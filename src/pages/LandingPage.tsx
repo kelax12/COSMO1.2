@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { useAuth } from '../modules/auth/AuthContext';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence, useReducedMotion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';

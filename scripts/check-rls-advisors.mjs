@@ -10,11 +10,16 @@
 //      le ré-évalue PAR LIGNE scannée au lieu d'une fois par requête (mig. 043).
 //   2. UNE SEULE policy PERMISSIVE par couple rôle+action — deux policies sont
 //      évaluées séparément puis OR'ées, à chaque requête (mig. 049).
+//   3. Toute fonction citée par une policy doit rester EXÉCUTABLE par
+//      `authenticated` — une policy s'évalue avec le RÔLE COURANT, pas avec le
+//      propriétaire (finding B-1, mig. 107).
 //
 // Ces deux règles ont DÉJÀ régressé deux fois :
 //   • mig. 059 (partage de listes) → 4 policies en `auth.uid()` nu
 //   • mig. 082 (commentaires) → 2 policies en `auth.uid()` nu
 //   • mig. 077 (agenda manager) → 2 policies PERMISSIVE de plus sur `events`
+//   • mig. 107 (leads d'équipe) → une policy rappelant `get_subtree`, révoqué à
+//     `authenticated` par la mig. 100 sept jours plus tôt (règle 3 ci-dessus)
 //
 // Une règle qui ne vit que dans un fichier Markdown n'est pas une règle : c'est
 // une intention. Ce script en fait une contrainte vérifiable.
@@ -64,10 +69,31 @@ const EXEMPT = new Set([
   // (aucune aujourd'hui)
 ]);
 
-const files = readdirSync(DIR)
-  .filter((f) => f.endsWith('.sql'))
-  .sort()
-  .filter((f) => Number.parseInt(f.slice(0, 3), 10) >= RULE_FLOOR);
+const allFiles = readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
+
+const files = allFiles.filter((f) => Number.parseInt(f.slice(0, 3), 10) >= RULE_FLOOR);
+
+// ── Droits d'EXÉCUTION des fonctions, rejoués dans l'ordre ──────────
+//
+// Pas de plancher ici : un REVOKE de la mig. 100 s'applique aux policies de
+// TOUTES les époques. On ne modélise QUE le rôle `authenticated`, et seulement
+// quand il est nommé EXPLICITEMENT — parce que `REVOKE … FROM PUBLIC` ne
+// retire pas le GRANT par défaut posé par Supabase (leçon de la mig. 094b).
+// Une fonction absente de cette map est donc réputée exécutable.
+const revokedFromAuthenticated = new Set();
+
+const GRANT_RE =
+  /(REVOKE|GRANT)\s+(?:ALL|EXECUTE)(?:\s+PRIVILEGES)?\s+ON\s+FUNCTION\s+(?:public\.)?(\w+)\s*\([^)]*\)\s*(FROM|TO)\s+([^;]+);/gi;
+
+for (const file of allFiles) {
+  const sql = readFileSync(join(DIR, file), 'utf8');
+  for (const m of sql.matchAll(GRANT_RE)) {
+    const [, verb, fn, , roles] = m;
+    if (!/\bauthenticated\b/i.test(roles)) continue;
+    if (/^revoke$/i.test(verb)) revokedFromAuthenticated.add(fn.toLowerCase());
+    else revokedFromAuthenticated.delete(fn.toLowerCase());
+  }
+}
 
 /** État final par policy : clé `table.policy` → { file, cmd, body, permissive } */
 const finalState = new Map();
@@ -132,6 +158,31 @@ for (const [k, list] of byTableCmd) {
     `      Fusionner en UNE policy dont le USING est le OR des deux (mig. 049).\n` +
     `      Ne JAMAIS élargir en ajoutant une policy : élargir le OR existant.`,
   );
+}
+
+// ─── Règle 3 : une policy ne peut appeler qu'une fonction exécutable ────
+//
+// C'est le finding B-1 (2026-08-24). Une fonction `SECURITY DEFINER` s'exécute
+// avec le rôle PROPRIÉTAIRE — ses appels INTERNES survivent donc à un REVOKE.
+// Mais un `USING` / `WITH CHECK` de policy s'évalue avec le RÔLE COURANT :
+// appeler depuis une policy une fonction révoquée donne, à l'exécution,
+// `ERROR: permission denied for function <nom>`. Et comme un `OR` court-circuite,
+// l'échec est INVISIBLE tant que les branches de gauche répondent vrai — il ne
+// frappe qu'un sous-ensemble d'utilisateurs, en production.
+for (const [key, p] of finalState) {
+  if (EXEMPT.has(key)) continue;
+  for (const fn of revokedFromAuthenticated) {
+    const called = new RegExp(`(?:public\\.)?\\b${fn}\\s*\\(`, 'i');
+    if (!called.test(p.body)) continue;
+    fail(
+      `${p.file} — policy "${p.name}" sur ${p.table} appelle ${fn}(), dont EXECUTE\n` +
+      `      a ete REVOQUE au role authenticated par une migration anterieure.\n` +
+      `    → une policy s'evalue avec le ROLE COURANT, pas avec le proprietaire :\n` +
+      `      l'appel echouera en "permission denied for function ${fn}".\n` +
+      `      Utiliser un helper borne par auth.uid() et reste executable\n` +
+      `      (is_above, i_have_subordinates...), cf. docs/SECURITY.md.`,
+    );
+  }
 }
 
 console.log(

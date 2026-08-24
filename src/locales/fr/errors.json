@@ -21,6 +21,7 @@
     "forbidden": "Vous n'avez pas les droits nécessaires pour cette action.",
     "cannot_invite_self": "Vous ne pouvez pas vous inviter vous-même.",
     "not_a_member": "Vous devez appartenir à cette entreprise pour y inviter quelqu'un.",
+    "not_allowed_to_invite": "Seuls un administrateur ou un responsable d'équipe peuvent faire entrer quelqu'un dans l'entreprise.",
     "not_a_friend": "Vous ne pouvez inviter que vos contacts COSMO. Ajoutez d'abord cette personne en ami.",
     "already_a_member": "Cette personne fait déjà partie de l'entreprise.",
     "invitation_not_found": "Cette invitation n'existe plus.",

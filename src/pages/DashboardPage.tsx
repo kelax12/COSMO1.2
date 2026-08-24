@@ -13,17 +13,17 @@ import { useEvents } from '@/modules/events';
 // statique le ferait retomber dans le chunk de DashboardPage (page post-login)
 // dès que SHOW_REPARTITION_CHART repasserait à true. Lazy = recharts payé
 // uniquement si le graphique est réellement rendu (audit perf P-2 / TOP-9).
-const DashboardBarChart = React.lazy(() => import('../components/DashboardBarChart'));
-import TodayHabits from '../components/TodayHabits';
-import InboxMenu from '../components/InboxMenu';
-import TodayTasks from '../components/TodayTasks';
-import TodayUnified from '../components/TodayUnified';
+const DashboardBarChart = React.lazy(() => import('@/components/DashboardBarChart'));
+import TodayHabits from '@/components/TodayHabits';
+import InboxMenu from '@/components/InboxMenu';
+import TodayTasks from '@/components/TodayTasks';
+import TodayUnified from '@/components/TodayUnified';
 import { useActiveOrganization } from '@/modules/organizations';
-import CollaborativeTasks from '../components/CollaborativeTasks';
-import ActiveOKRs from '../components/ActiveOKRs';
-import TextType from '../components/TextType';
-import MobileCollapsible from '../components/MobileCollapsible';
-import WeeklyCheckinModal, { useWeeklyCheckin } from '../components/WeeklyCheckinModal';
+import CollaborativeTasks from '@/components/CollaborativeTasks';
+import ActiveOKRs from '@/components/ActiveOKRs';
+import TextType from '@/components/TextType';
+import MobileCollapsible from '@/components/MobileCollapsible';
+import WeeklyCheckinModal, { useWeeklyCheckin } from '@/components/WeeklyCheckinModal';
 import { formatDate, formatTime } from '@/i18n/format';
 import { useT, type Translator } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';

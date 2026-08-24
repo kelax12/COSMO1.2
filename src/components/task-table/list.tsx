@@ -18,8 +18,8 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "../ui/dropdown-menu";
-import TaskCategoryIndicator from "../TaskCategoryIndicator";
+} from "@/components/ui/dropdown-menu";
+import TaskCategoryIndicator from "@/components/TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
 import { getSnoozeOptions } from "@/modules/tasks/snooze";

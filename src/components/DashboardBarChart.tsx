@@ -13,7 +13,7 @@ import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
-import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+import { calculateWorkTimeForPeriod } from '@/lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { type ViewMode } from '@/lib/view-mode';

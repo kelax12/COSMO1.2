@@ -8,7 +8,7 @@ import type { Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
 import type { OKR, KeyResult } from '@/modules/okrs';
-import { parseLocalDate } from '../../lib/workTimeCalculator';
+import { parseLocalDate } from '@/lib/workTimeCalculator';
 import type { WorkTimePeriodData, KeyResultHistory } from './types';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon, Circle, MoonStar } from 'lucide-react';
-import { useDarkMode } from '../hooks/useDarkMode';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import type { Theme } from '@/lib/theme';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';

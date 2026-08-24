@@ -1,6 +1,6 @@
 // Logique pure de EventModal — extraite pour être testable indépendamment.
 // Comportement déplacé verbatim depuis EventModal.tsx.
-import type { EventModalMode } from '../EventModal';
+import type { EventModalMode } from '@/components/EventModal';
 
 // Libellés courts des jours, indexés sur Date.getDay() (0 = dimanche).
 export const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];

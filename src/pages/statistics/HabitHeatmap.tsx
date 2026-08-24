@@ -5,7 +5,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import type { Habit } from '@/modules/habits';
-import { getLocalDateString } from '../../lib/workTimeCalculator';
+import { getLocalDateString } from '@/lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
