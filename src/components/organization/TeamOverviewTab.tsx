@@ -35,6 +35,10 @@ const firstName = (name: string) => name.split(' ')[0];
 const velocityColor = '#10b981';
 const trendColor = '#6366f1';
 
+// Fonctionnalité gardée telle quelle (handleExport, downloadCSV) — seul le
+// bouton est masqué. Repasser à `true` suffit à la remettre en place.
+const CSV_EXPORT_ENABLED = false;
+
 const SectionCard = ({ title, children, aside }: {
   title: string; children: React.ReactNode; aside?: React.ReactNode;
 }) => (
@@ -197,13 +201,17 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
               <ClipboardCheck size={13} aria-hidden="true" /> {t('weeklyReview.open')}
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleExport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-          >
-            <Download size={13} aria-hidden="true" /> Exporter CSV
-          </button>
+          {/* Bouton masqué (pas la fonctionnalité) — remise en place possible
+              en repassant CSV_EXPORT_ENABLED à true, cf. sa déclaration. */}
+          {CSV_EXPORT_ENABLED && (
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            >
+              <Download size={13} aria-hidden="true" /> Exporter CSV
+            </button>
+          )}
         </div>
       </div>
 

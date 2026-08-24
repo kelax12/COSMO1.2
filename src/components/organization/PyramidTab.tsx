@@ -367,14 +367,15 @@ const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnd
                   style={{ width: `${Math.min(100, Math.round(myWorkload.loadRatio * 66))}%` }}
                 />
               </span>
-              <span className="text-caption text-[rgb(var(--color-text-muted))] tabular-nums">
-                {myWorkload.open}
-              </span>
-              {myWorkload.overdue > 0 && (
-                <span className="text-caption font-bold text-red-500 tabular-nums">
-                  !{myWorkload.overdue}
+              {/* Format x/y : x = tâches ouvertes non en retard, y = en
+                  retard. Le "/" est un séparateur littéral, pas un symbole
+                  de division. */}
+              <span className="text-caption tabular-nums" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                {myWorkload.open - myWorkload.overdue}
+                <span className={myWorkload.overdue > 0 ? 'font-bold text-red-500' : ''}>
+                  /{myWorkload.overdue}
                 </span>
-              )}
+              </span>
             </span>
           )}
           <p

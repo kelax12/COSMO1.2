@@ -5,6 +5,13 @@
 > encore le chemin de réactivation à suivre. Les commandes et références de fichiers ont été
 > revérifiées à cette date.
 
+> ⚠️ **Ce guide ne couvre plus que le premium PARTICULIER.** La facturation
+> ENTREPRISE a été activée le 2026-08-24 (Edge Functions org déployées, 4 price IDs
+> en secrets, `billing_flags.enterprise_seat_limit = true`,
+> `ENTERPRISE_BILLING_ENFORCED = true`) — sur le **sandbox de test Stripe**, donc
+> cartes de test uniquement. État courant et procédure de passage en live :
+> `CLAUDE.md → Facturation entreprise`.
+
 > Issu de l'audit technique du 2026-06-21. Guide pas-à-pas pour exécuter les 4
 > actions prioritaires identifiées comme **hors du périmètre d'un fix automatique**.
 > Voir aussi : `docs/DEPLOYMENT.md`, `faille.md`, `CLAUDE.md → Modèle Premium`.
