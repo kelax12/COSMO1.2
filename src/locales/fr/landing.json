@@ -306,6 +306,7 @@
       "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
       "ctaSecondary": "Voir les tarifs",
       "reassurance": "Jusqu'à 5 membres gratuitement · sans carte bancaire · réversible à tout moment",
+      "reassuranceFree": "Gratuit pendant l'offre de lancement · sans carte bancaire · réversible à tout moment",
       "scroll": "Dérouler"
     },
     "problem": {
@@ -433,6 +434,12 @@
     },
     "pricing": {
       "title": "20 € par mois pour dix personnes.",
+      "promoBadge": "Offre de lancement",
+      "promoTitle": "Gratuit pour toute votre organisation.",
+      "promoSubtitle": "Cosmo Entreprise ne facture rien aujourd'hui, quel que soit votre effectif. Les tarifs ci-dessous sont ceux qui s'appliqueront <hl>quand l'offre de lancement prendra fin</hl> — vous serez prévenu avant, et rien ne sera jamais débité sans que vous l'ayez choisi.",
+      "insteadOf": "au lieu de {{price}} € / mois",
+      "insteadOfShort": "au lieu de {{price}} €",
+      "ctaNoteFree": "Gratuit pendant l'offre de lancement, quel que soit votre effectif. Sans carte bancaire.",
       "subtitle": "Le forfait couvre toute l'organisation, quel que soit le nombre de projets. Le prix suit le palier atteint : <hl>pas de module à débloquer, pas de devis à attendre</hl>.",
       "sliderLabel": "Combien êtes-vous ?",
       "sliderAria": "Nombre de membres de votre organisation",
@@ -463,7 +470,9 @@
       "q4": "Que se passe-t-il si nous dépassons un palier ?",
       "a4": "Vous ne pouvez plus inviter au-delà de votre palier tant que vous ne l'avez pas relevé. Mais aucun membre n'est jamais retiré, et rien n'est perdu si vous redescendez ensuite.",
       "q5": "Peut-on essayer sans engager l'entreprise ?",
-      "a5": "Oui. Créez une organisation jusqu'à cinq membres, gratuitement et sans carte bancaire. C'est le produit complet, pas une version bridée."
+      "a4Free": "Aujourd'hui, rien ne vous bloque : pendant l'offre de lancement, tous les paliers sont gratuits et vous invitez autant de personnes que vous voulez. Quand la facturation sera activée, vous ne pourrez plus inviter au-delà de votre palier tant que vous ne l'aurez pas relevé — mais aucun membre n'est jamais retiré, et rien n'est perdu si vous redescendez ensuite.",
+      "a5": "Oui. Créez une organisation jusqu'à cinq membres, gratuitement et sans carte bancaire. C'est le produit complet, pas une version bridée.",
+      "a5Free": "Oui. Créez votre organisation gratuitement et sans carte bancaire — pendant l'offre de lancement, quel que soit votre effectif. C'est le produit complet, pas une version bridée."
     },
     "cta": {
       "line1": "Votre organisation exécute déjà.",
@@ -471,7 +480,8 @@
       "subtitle": "Créez votre organisation <hl>en une minute</hl>, invitez votre première équipe, et regardez votre organigramme prendre vie.",
       "primary": "Créer mon organisation",
       "secondary": "Ouvrir la démo entreprise",
-      "note": "Gratuit jusqu'à 5 membres · sans carte bancaire"
+      "note": "Gratuit jusqu'à 5 membres · sans carte bancaire",
+      "noteFree": "Gratuit pendant l'offre de lancement · sans carte bancaire"
     }
   }
 }

@@ -443,6 +443,17 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   la landing et le produit doivent annoncer le même prix le jour de l'activation du paywall.
   Et le montant n'est **pas** animé par un compteur à ressort (il passerait par 48 € avant de
   se poser sur 50 €).
+- **Offre de lancement (2026-08-24)** : `landing/entreprise/free-offer.ts` expose
+  `ENTERPRISE_FREE_OFFER`, **dérivé de `ENTERPRISE_BILLING_ENFORCED`** — jamais une constante
+  indépendante, sinon la landing et le produit peuvent diverger. Tant qu'il est vrai, la section
+  tarifs affiche « Gratuit » à la place de chaque montant, le tarif d'après restant visible barré
+  (« au lieu de 20 € / mois »), sous un badge « Offre de lancement ». Les textes payants ne sont
+  pas remplacés : les variantes `promo*` / `*Free` **s'ajoutent** dans les catalogues, donc
+  rebasculer le drapeau restitue la page d'origine mot pour mot.
+- ⚠️ **Une page qui dit « gratuit » ne doit plus annoncer de plafond nulle part.** Quatre textes
+  décrivaient une limite de sièges qui n'est plus appliquée (`hero.reassurance`,
+  `pricing.ctaNote`, `cta.note`, `faq.a4`/`a5`) : tous ont leur variante d'offre. Toute nouvelle
+  phrase qui promet « jusqu'à 5 membres » doit en avoir une aussi.
 
 ---
 

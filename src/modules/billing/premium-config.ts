@@ -82,6 +82,11 @@ export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 // SEULE condition d'affichage du CTA de paiement : le rebasculer à `true` suffit
 // à réactiver la facturation côté client.
 //
+// La landing entreprise en dérive son offre de lancement
+// (`src/pages/landing/entreprise/free-offer.ts` → `ENTERPRISE_FREE_OFFER`), qui
+// remplace chaque montant par « Gratuit ». Ce fichier-là porte la procédure de
+// retour en arrière pas à pas.
+//
 // 🔴 Le flag client ne suffit PAS à tout rendre gratuit : le gate bloquant est en
 // base. Il doit rester désactivé tant que ce flag vaut `false` —
 //   UPDATE public.billing_flags SET enabled = false WHERE key = 'enterprise_seat_limit';

@@ -11,6 +11,7 @@
 // Si le seed démo change, cette liste et les captures doivent suivre.
 
 import type { KeyOf } from '@/i18n/catalog';
+import { ENTERPRISE_FREE_OFFER } from './free-offer';
 
 /** Un nœud de l'organigramme — calqué sur un membre réel du seed démo. */
 export interface PyramidNode {
@@ -188,8 +189,25 @@ export const SECURITY_POINTS: SecurityPoint[] = [
   { titleKey: 'enterprise.security.s4t', bodyKey: 'enterprise.security.s4d' },
 ];
 
+/**
+ * Réponses qui décrivent une limite de sièges — donc fausses pendant l'offre de
+ * lancement, où le drapeau serveur `enterprise_seat_limit` est éteint et où
+ * rien ne plafonne l'effectif.
+ *
+ * `a4` (« que se passe-t-il si nous dépassons un palier ? ») annonce un blocage
+ * qu'on n'applique pas, et `a5` promet « jusqu'à cinq membres » là où il n'y a
+ * aucun plafond. Les variantes `*Free` disent les deux états dans l'ordre : ce
+ * qui vaut aujourd'hui, puis ce qui vaudra à la fin de l'offre. Les réponses
+ * d'origine restent dans les catalogues, intactes, pour le jour du retour.
+ */
+const FREE_OFFER_ANSWERS = new Set([4, 5]);
+
 /** Les cinq questions de la FAQ entreprise. */
-export const ENTERPRISE_FAQ = Array.from({ length: 5 }, (_, i) => ({
-  questionKey: `enterprise.faq.q${i + 1}` as KeyOf<'landing'>,
-  answerKey: `enterprise.faq.a${i + 1}` as KeyOf<'landing'>,
-}));
+export const ENTERPRISE_FAQ = Array.from({ length: 5 }, (_, i) => {
+  const n = i + 1;
+  const free = ENTERPRISE_FREE_OFFER && FREE_OFFER_ANSWERS.has(n);
+  return {
+    questionKey: `enterprise.faq.q${n}` as KeyOf<'landing'>,
+    answerKey: `enterprise.faq.a${n}${free ? 'Free' : ''}` as KeyOf<'landing'>,
+  };
+});
