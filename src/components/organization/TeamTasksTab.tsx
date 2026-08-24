@@ -68,7 +68,8 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
   const { t, tp } = useT('org');
   const { user } = useAuth();
   const { data: allProjects = [] } = useTeamProjects(orgId);
-  const { data: tasks = [] } = useTeamTasks(orgId);
+  // `live` : c'est l'écran où l'on regarde la liste arriver (cf. useTeamTasks).
+  const { data: tasks = [] } = useTeamTasks(orgId, undefined, { live: true });
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);

@@ -2,7 +2,8 @@ import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router';
 import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
-import { motion, type Variants } from 'framer-motion';
+import { useRevealVariants } from '@/components/mobile/mobile-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
@@ -320,27 +321,13 @@ const DashboardPage: React.FC = () => {
   }, [tasks, events, habits, krCompletions, viewMode, today, t]);
 
   // Animation variants
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
+  // ⚠️ Variantes derivees de `useRevealVariants` et NON ecrites en dur : sous
+  // `prefers-reduced-motion`, les enfants d une cascade restent sur leur
+  // variante `hidden`. Mesure ici meme le 2026-08-24 : DIX blocs du tableau de
+  // bord etaient figes a `matrix(1, 0, 0, 1, 0, 20)` — 20 px trop bas, pour
+  // toujours. Cf. `src/components/mobile/mobile-motion.ts`.
+  const { container: containerVariants, item: itemVariants } = useRevealVariants(20);
+  const reduceMotion = useReducedMotion();
 
 
   return (
@@ -492,9 +479,16 @@ const DashboardPage: React.FC = () => {
               <motion.div
                 key={index}
                 className="relative overflow-hidden"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05, type: 'spring', stiffness: 100 }}
+                // Meme regle que les variantes ci-dessus : sous mouvement
+                // reduit, AUCUNE cle de transform — sinon les quatre cartes
+                // restent figees a `y: 20` (mesure le 2026-08-24).
+                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0.18 }
+                    : { delay: index * 0.05, type: 'spring', stiffness: 100 }
+                }
               >
                 <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
                   <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">

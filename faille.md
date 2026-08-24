@@ -280,7 +280,19 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-Repo au 2026-08-24 : **114 fichiers, dernière = `110_comment_notifications.sql`**.
+Repo au 2026-08-24 : **118 fichiers, dernière = `114_analytics_retention.sql`**.
+
+- `111` (catégories d'équipe), `112` (péremption des invitations refusées, RGPD),
+  `113` (lectures entreprise indexables — cf. [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2)
+  et `114` (rétention analytique — cf. [`docs/RGPD.md`](./docs/RGPD.md) §3) sont **écrites, PAS
+  appliquées**.
+- 🔴 **La `113` doit être appliquée AVANT de déployer le front** : le repository entreprise lit
+  désormais par `get_my_team_projects` / `get_my_team_tasks`. Sans la migration, la RPC n'existe
+  pas et les onglets Projets / Tâches d'équipe restent vides. Aucune policy n'est touchée, donc le
+  retour arrière est un simple redéploiement du front.
+- La `112` SUPPRIME des lignes ; la `114` en supprimera au bout de 400 jours (aucune aujourd'hui).
+
+Ancienne ligne (pour mémoire) : « 114 fichiers, dernière = `110_comment_notifications.sql` ».
 
 - `099` → `108` : **appliquées en prod** (ledger relu le 2026-08-24), y compris la `100` qui
   referme la fuite des helpers.

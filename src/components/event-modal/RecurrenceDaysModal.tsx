@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_ORDER } from './helpers';
 import { useT } from '@/i18n/useT';
+import { useSheetDrag } from '@/components/mobile/mobile-motion';
 
 interface RecurrenceDaysModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
   isOpen, onClose, recurrenceDays, setRecurrenceDays, setRecurrence,
 }) => {
   const { t } = useT('eventModal');
+  const sheetDrag = useSheetDrag(onClose);
   return (
       <AnimatePresence>
         {isOpen && (
@@ -32,6 +34,10 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
               transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              // La poignee ci-dessous promettait un geste qui n existait pas
+              // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
+              // affordance qui ment est pire que pas d affordance.
+              {...sheetDrag}
               className="rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full sm:max-w-md"
               style={{ backgroundColor: 'rgb(var(--color-surface))', paddingBottom: 'env(safe-area-inset-bottom)' }}
               onClick={(e) => e.stopPropagation()}

@@ -27,103 +27,45 @@ import {
   TeamTaskActivity,
   TeamTaskDependency,
 } from './types';
-
-interface ProjectRow {
-  id: string;
-  org_id: string;
-  name: string;
-  color: string;
-  created_by: string;
-  archived_at: string | null;
-  created_at: string;
-  team_id: string | null;
-  category_id: string | null;
-}
-
-interface TaskRow {
-  id: string;
-  org_id: string;
-  project_id: string;
-  name: string;
-  description: string | null;
-  priority: number;
-  deadline: string | null;
-  estimated_time: number | null;
-  assignee_ids: string[] | null;
-  created_by: string;
-  completed: boolean;
-  status: string | null;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
-  category_id: string | null;
-}
-
-const mapProject = (r: ProjectRow): TeamProject => ({
-  id: r.id,
-  orgId: r.org_id,
-  name: r.name,
-  color: r.color,
-  createdBy: r.created_by,
-  archivedAt: r.archived_at,
-  createdAt: r.created_at,
-  teamId: r.team_id,
-  categoryId: r.category_id,
-});
-
-interface CommentRow {
-  id: string;
-  task_id: string;
-  author_id: string | null;
-  body: string;
-  mentions: string[] | null;
-  created_at: string;
-}
-
-const mapComment = (r: CommentRow): TeamTaskComment => ({
-  id: r.id,
-  taskId: r.task_id,
-  authorId: r.author_id,
-  body: r.body,
-  mentions: r.mentions ?? [],
-  createdAt: r.created_at,
-});
-
-const mapTask = (r: TaskRow): TeamTask => ({
-  id: r.id,
-  orgId: r.org_id,
-  projectId: r.project_id,
-  name: r.name,
-  description: r.description ?? undefined,
-  priority: r.priority,
-  deadline: r.deadline ?? '',
-  estimatedTime: r.estimated_time ?? undefined,
-  assigneeIds: r.assignee_ids ?? [],
-  createdBy: r.created_by,
-  completed: r.completed,
-  // Repli sur `completed` : une ligne lue depuis un cache antérieur à la
-  // mig. 091 n'a pas encore de `status`, et un `undefined` casserait le
-  // groupement du kanban.
-  status: (r.status as TeamTask['status'] | null) ?? (r.completed ? 'done' : 'todo'),
-  completedAt: r.completed_at,
-  createdAt: r.created_at,
-  updatedAt: r.updated_at,
-  categoryId: r.category_id,
-});
+import {
+  mapProject,
+  mapComment,
+  mapTask,
+  mapSubtask,
+  mapLabel,
+  mapActivity,
+  type ProjectRow,
+  type TaskRow,
+  type CommentRow,
+  type SubtaskRow,
+  type LabelRow,
+  type ActivityRow,
+} from './supabase.mappers';
 
 export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   // ─── Projets ───────────────────────────────────────────────────────
 
   async getProjects(orgId: string): Promise<TeamProject[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    // ⚡ Lecture via la RPC `get_my_team_projects()` et NON `.from(...)` —
+    // correctif du finding §2 de SCALABILITY.md (mig. 113).
+    //
+    // La policy `team_projects_select` filtre par `can_access_team_project(id)`,
+    // une fonction appelée SUR UNE COLONNE : aucun index ne peut la servir, donc
+    // Seq Scan de toute la table + une CTE récursive (`get_subtree`) évaluée
+    // PAR LIGNE. Mesuré en prod : ≈ 60× le coût par ligne du prédicat de `tasks`.
+    //
+    // La RPC exprime le même ensemble en trois branches indexables et n'évalue
+    // le sous-arbre managérial qu'UNE fois par organisation. Les policies restent
+    // en place sur la table (défense en profondeur), et `p_org` est un filtre :
+    // le périmètre vient de `auth.uid()` seul.
     const { data, error } = await supabase
-      .from('team_projects')
+      .rpc('get_my_team_projects', { p_org: orgId })
       .select('*')
-      .eq('org_id', orgId)
       .order('created_at', { ascending: true })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as ProjectRow[]).map(mapProject);
+    return ((data ?? []) as unknown as ProjectRow[]).map(mapProject);
   }
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
@@ -193,7 +135,11 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
 
   async getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    let query = supabase.from('team_tasks').select('*').eq('org_id', orgId);
+    // ⚡ Même correctif que `getProjects` (mig. 113) : la policy `team_tasks_select`
+    // filtre par `can_access_team_project(project_id)`, non indexable. Les filtres
+    // applicatifs restent côté PostgREST — ils s'appliquent au résultat d'une RPC
+    // `SETOF` exactement comme à une table.
+    let query = supabase.rpc('get_my_team_tasks', { p_org: orgId }).select('*');
     if (filters?.projectId) query = query.eq('project_id', filters.projectId);
     if (filters?.assigneeId) query = query.contains('assignee_ids', [filters.assigneeId]);
     if (filters?.completed !== undefined) query = query.eq('completed', filters.completed);
@@ -201,7 +147,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (error) throw normalizeApiError(error);
     // Reco #20 : la limite 1000 était silencieuse — au-delà, on prévient
     // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
-    return warnIfTruncated((data ?? []) as TaskRow[], 1000, 'team_tasks').map(mapTask);
+    return warnIfTruncated((data ?? []) as unknown as TaskRow[], 1000, 'team_tasks').map(mapTask);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
@@ -535,67 +481,3 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (error) throw normalizeApiError(error);
   }
 }
-
-// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
-
-interface SubtaskRow {
-  id: string;
-  task_id: string;
-  title: string;
-  completed: boolean;
-  position: number;
-  created_by: string | null;
-  created_at: string;
-}
-
-export const mapSubtask = (r: SubtaskRow): TeamSubtask => ({
-  id: r.id,
-  taskId: r.task_id,
-  title: r.title,
-  completed: r.completed,
-  position: r.position,
-  createdBy: r.created_by,
-  createdAt: r.created_at,
-});
-
-// ─── Labels & historique : lignes brutes ─────────────────────────────
-
-interface LabelRow {
-  id: string;
-  org_id: string;
-  name: string;
-  color: string;
-  created_by: string | null;
-  created_at: string;
-}
-
-export const mapLabel = (r: LabelRow): TeamLabel => ({
-  id: r.id,
-  orgId: r.org_id,
-  name: r.name,
-  color: r.color,
-  createdBy: r.created_by,
-  createdAt: r.created_at,
-});
-
-interface ActivityRow {
-  id: string;
-  task_id: string;
-  org_id: string;
-  actor_id: string | null;
-  field: string;
-  old_value: string | null;
-  new_value: string | null;
-  created_at: string;
-}
-
-export const mapActivity = (r: ActivityRow): TeamTaskActivity => ({
-  id: r.id,
-  taskId: r.task_id,
-  orgId: r.org_id,
-  actorId: r.actor_id,
-  field: r.field as TeamTaskActivity['field'],
-  oldValue: r.old_value,
-  newValue: r.new_value,
-  createdAt: r.created_at,
-});

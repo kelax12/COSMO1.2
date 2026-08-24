@@ -26,13 +26,28 @@ const taskRow = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseTeamProjectsRepository — projets', () => {
-  it('getProjects: filtre org_id, ordonne created_at asc, cap 200, mappe en camelCase', async () => {
-    supabaseMock.queueTable('team_projects', { data: [projectRow] });
+  // Meme verrou que `get_my_tasks` (mig. 085) : ce test fixe le CHEMIN D ACCES.
+  // La policy `team_projects_select` filtre par `can_access_team_project(id)`,
+  // un appel de fonction sur une colonne — donc Seq Scan + CTE recursive PAR
+  // LIGNE (~60x le cout par ligne du predicat de `tasks`, mesure en prod).
+  // Si quelqu un rebascule sur `.from('team_projects')`, la regression revient
+  // sans aucun symptome visible avant la montee en charge.
+  it('getProjects: passe par la RPC indexable get_my_team_projects (pas de SELECT direct)', async () => {
+    supabaseMock.queueRpc('get_my_team_projects', { data: [projectRow] });
+    await repo.getProjects('org1');
+
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('get_my_team_projects');
+    expect(supabaseMock.queries.filter((q) => q.table === 'team_projects')).toHaveLength(0);
+  });
+
+  it('getProjects: passe org_id en argument de RPC, ordonne created_at asc, cap 200, mappe en camelCase', async () => {
+    supabaseMock.queueRpc('get_my_team_projects', { data: [projectRow] });
     const result = await repo.getProjects('org1');
 
-    expect(supabaseMock.argsOf('team_projects', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('team_projects', 'order')).toEqual(['created_at', { ascending: true }]);
-    expect(supabaseMock.argsOf('team_projects', 'limit')).toEqual([200]);
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_projects')?.args)
+      .toEqual({ p_org: 'org1' });
+    expect(supabaseMock.argsOf('get_my_team_projects', 'order')).toEqual(['created_at', { ascending: true }]);
+    expect(supabaseMock.argsOf('get_my_team_projects', 'limit')).toEqual([200]);
     expect(result).toEqual([{
       id: 'p1', orgId: 'org1', name: 'Site web', color: 'green',
       createdBy: 'u1', archivedAt: null, createdAt: projectRow.created_at, teamId: 't1',
@@ -40,10 +55,10 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
   });
 
   it('getProjects: data null → tableau vide, erreur DB → rejet normalisé', async () => {
-    supabaseMock.queueTable('team_projects', { data: null });
+    supabaseMock.queueRpc('get_my_team_projects', { data: null });
     expect(await repo.getProjects('org1')).toEqual([]);
 
-    supabaseMock.queueTable('team_projects', { data: null, error: { message: 'boom', code: '42P01' } });
+    supabaseMock.queueRpc('get_my_team_projects', { data: null, error: { message: 'boom', code: '42P01' } });
     await expect(repo.getProjects('org1')).rejects.toBeTruthy();
   });
 
@@ -118,14 +133,25 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
 });
 
 describe('SupabaseTeamProjectsRepository — tâches', () => {
-  it('getTasks: filtre org_id seul par défaut, ordonne created_at desc, cap 1000, mappe en camelCase', async () => {
-    supabaseMock.queueTable('team_tasks', { data: [taskRow] });
+  // Meme verrou de chemin d acces que getProjects ci-dessus (mig. 113).
+  it('getTasks: passe par la RPC indexable get_my_team_tasks (pas de SELECT direct)', async () => {
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [taskRow] });
+    await repo.getTasks('org1');
+
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('get_my_team_tasks');
+    expect(supabaseMock.queries.filter((q) => q.table === 'team_tasks')).toHaveLength(0);
+  });
+
+  it('getTasks: org_id passe en argument de RPC (plus de eq), ordonne created_at desc, cap 1000, mappe en camelCase', async () => {
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [taskRow] });
     const result = await repo.getTasks('org1');
 
-    const eqCalls = supabaseMock.callsFor('team_tasks').filter((c) => c.method === 'eq');
-    expect(eqCalls.map((c) => c.args)).toEqual([['org_id', 'org1']]);
-    expect(supabaseMock.argsOf('team_tasks', 'order')).toEqual(['created_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('team_tasks', 'limit')).toEqual([1000]);
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_tasks')?.args)
+      .toEqual({ p_org: 'org1' });
+    const eqCalls = supabaseMock.callsFor('get_my_team_tasks').filter((c) => c.method === 'eq');
+    expect(eqCalls.map((c) => c.args)).toEqual([]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'order')).toEqual(['created_at', { ascending: false }]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'limit')).toEqual([1000]);
     expect(result).toEqual([{
       id: 'tk1', orgId: 'org1', projectId: 'p1', name: 'Maquette',
       description: 'desc', priority: 2, deadline: '2026-07-20', estimatedTime: 60,
@@ -135,18 +161,20 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
   });
 
   it('getTasks: applique tous les filtres fournis (projectId eq, assigneeId contains, completed eq)', async () => {
-    supabaseMock.queueTable('team_tasks', { data: [] });
+    // Les filtres applicatifs restent cote PostgREST : ils s appliquent au
+    // resultat d une RPC `SETOF` exactement comme a une table.
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
     await repo.getTasks('org1', { projectId: 'p1', assigneeId: 'u2', completed: false });
 
-    const calls = supabaseMock.callsFor('team_tasks');
+    const calls = supabaseMock.callsFor('get_my_team_tasks');
     expect(calls.filter((c) => c.method === 'eq').map((c) => c.args)).toEqual([
-      ['org_id', 'org1'], ['project_id', 'p1'], ['completed', false],
+      ['project_id', 'p1'], ['completed', false],
     ]);
-    expect(supabaseMock.argsOf('team_tasks', 'contains')).toEqual(['assignee_ids', ['u2']]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'contains')).toEqual(['assignee_ids', ['u2']]);
   });
 
   it('getTasks: mappe les défauts (description/deadline/estimated_time/assignee_ids null)', async () => {
-    supabaseMock.queueTable('team_tasks', {
+    supabaseMock.queueRpc('get_my_team_tasks', {
       data: [{ ...taskRow, description: null, deadline: null, estimated_time: null, assignee_ids: null }],
     });
     const [task] = await repo.getTasks('org1');
@@ -157,7 +185,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
   });
 
   it('getTasks: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_tasks', { data: null, error: { message: 'boom', code: '42P01' } });
+    supabaseMock.queueRpc('get_my_team_tasks', { data: null, error: { message: 'boom', code: '42P01' } });
     await expect(repo.getTasks('org1')).rejects.toBeTruthy();
   });
 

@@ -51,7 +51,23 @@ Stripe (paiement, non activé à ce jour).
 **Minimisation côté Sentry** : `beforeSend` retire emails et UUID avant envoi. Bonne pratique déjà
 en place.
 
-## 2. 🟠 Droit à l'effacement — une rémanence structurelle
+## 2. ✅ Droit à l'effacement — corrigé le 2026-08-24
+
+> **Corrigé.** `delete-account` purge désormais `friends` sur ses DEUX colonnes
+> (`.or('user_id.eq.X,friend_user_id.eq.X')`), comme `friend_requests` et `shared_tasks`.
+> Garde de non-régression : `src/rgpd-erasure.guard.test.ts` (les trois tables symétriques).
+>
+> ⚠️ **Un détail de ce diagnostic était faux, et il aggravait le finding plutôt que l'inverse.**
+> Ce document affirmait « la table `friends` n'a aucune clé étrangère (vérifié : zéro FK) ».
+> Vérification sur `pg_constraint` en prod le 2026-08-24 : il y en a bien une,
+> `friends_friend_user_id_fkey`, mais elle est **`ON DELETE SET NULL`**. Elle ne supprime donc
+> rien — elle coupe le lien et laisse la ligne, avec l'email et le nom en clair, désormais
+> **introuvable par identifiant**. Le dépôt, lui, déclare `ON DELETE CASCADE` (mig. `007_out_of_band_columns`) :
+> comme cette migration est en `ADD COLUMN IF NOT EXISTS` sur une colonne déjà présente, la
+> contrainte n'a jamais été appliquée. **Le dépôt et la prod divergent sur la sémantique
+> d'effacement d'une table qui porte des données personnelles.**
+
+### Ce que c'était
 
 La fonction `delete-account` est sérieuse : elle purge 12 tables, transfère la propriété des
 organisations à un successeur avant suppression, nettoie les affectations d'équipe sans clé
@@ -84,11 +100,13 @@ gérées ; `friends` est restée dans la boucle générique. ~15 min.
 
 ## 3. 🟡 Rétention : deux tables analytiques sans expiration
 
+> **Corrigé le 2026-08-24 (mig. 114) — et l'un des deux constats était faux.**
+
 | Table | Lignes | Politique de rétention |
 |---|---|---|
 | `processed_stripe_events` | — | ✅ purge à 90 jours (`prune_processed_stripe_events`, finding A-6) |
-| `demo_devices` | 24 | ❌ **aucune** |
-| `user_activity_days` | 69 | ❌ **aucune** |
+| `demo_devices` | 24 | ✅ **90 j depuis la mig. 084** — ce document avait tort. Vérifié sur `pg_get_functiondef` en prod : la purge est en ligne dans `record_demo_visit`. En revanche elle EXCLUAIT `converted_at IS NOT NULL` : l'appareil d'un visiteur qui **s'inscrit** était conservé sans limite, avec son `converted_user_id` — le cas le plus sensible avait la rétention la plus longue, exactement à l'envers. Borné à 400 j par la mig. 114 |
+| `user_activity_days` | 69 | ✅ **400 j (mig. 114)** — c'était le seul écart réel. Purge portée par `touch_last_seen`, bornée à l'appelant (Index Scan sur le pkey), donc à coût constant. 400 j = le plus petit seuil qui préserve une comparaison d'une année sur l'autre dans `get_admin_stats` |
 
 Le principe de limitation de conservation (art. 5.1.e) demande une durée définie. Les volumes sont
 dérisoires, mais la règle a déjà été appliquée une fois (A-6, A-11) : elle doit valoir pour toutes
@@ -126,6 +144,13 @@ C'est le chaînon manquant : le §3 (technique, 30 minutes) débloque le point 3
 
 ## 6. Ordre de traitement
 
-1. **`friends` dans l'effacement** (§2) — le seul écart de conformité réel, et il est trivial.
-2. **Rétention `demo_devices` / `user_activity_days`** (§3) — débloque la publication des durées.
-3. Registre des traitements et DPA (§5) — quand une organisation cliente le demandera.
+1. ✅ **`friends` dans l'effacement** (§2) — fait le 2026-08-24, avec garde.
+2. ✅ **Rétention `user_activity_days` + `demo_devices` converties** (§3) — mig. 114, **écrite, pas
+   encore appliquée**. Débloque la publication des durées.
+3. 🟠 **Publier les durées** dans la politique de confidentialité : 90 j (visite démo non
+   convertie), 400 j (activité, visite démo convertie), 90 j (marqueurs Stripe). C'est le seul
+   point restant avant de pouvoir répondre à un acheteur B2B sur ce chapitre.
+4. 🟡 **Aligner la FK `friends_friend_user_id_fkey`** entre le dépôt (`CASCADE`) et la prod
+   (`SET NULL`) — cf. l'avertissement du §2. Le code ne dépend plus de la FK depuis le correctif,
+   mais la divergence rend le replay des migrations non fidèle.
+5. Registre des traitements et DPA (§5) — quand une organisation cliente le demandera.

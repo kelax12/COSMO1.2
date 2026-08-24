@@ -152,7 +152,8 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const { t, tp } = useT('org');
   const tt = t;
   const { data: projects = [] } = useTeamProjects(orgId);
-  const { data: tasks = [] } = useTeamTasks(orgId);
+  // `live` : onglet de travail quotidien, on y attend l'arrivée d'une tâche.
+  const { data: tasks = [] } = useTeamTasks(orgId, undefined, { live: true });
   const { data: okrs = [] } = useTeamOKRs(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const updateTask = useUpdateTeamTask(orgId);

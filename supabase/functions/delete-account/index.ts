@@ -43,6 +43,9 @@ function corsHeadersFor(req: Request) {
 // exist. `auth.admin.deleteUser` will cascade through `auth.users` references
 // where they exist; we explicitly clean tables that store `user_id` as a UUID
 // column rather than an FK to auth.users.
+// NOTE: `friends` and `friend_requests` are in this list for documentation but
+// are SKIPPED by the generic loop — both are symmetric (the deleted account can
+// appear as `friend_user_id` / `receiver_id`) and are handled explicitly above.
 // NOTE: `shared_tasks` is intentionally NOT in this list — its columns are
 // `friend_id` / `shared_by`, not `user_id`. It's handled separately below.
 // NOTE: `chat_messages` was removed (2026-06-07). The table does not exist in
@@ -144,6 +147,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    // RGPD §2 — `friends` stocke le nom, l'email et l'avatar de l'ami DANS la
+    // ligne de l'autre utilisateur. La boucle generique ne filtre que
+    // `user_id`, donc les lignes ou le compte supprime est `friend_user_id`
+    // survivaient. La FK `friends_friend_user_id_fkey` est `ON DELETE SET
+    // NULL` en production (verifie le 2026-08-24 sur `pg_constraint`) : elle
+    // ne supprime rien, elle se contente de couper le lien — la ligne reste,
+    // avec l'email et le nom en clair, et devient introuvable par identifiant.
+    // Meme traitement symetrique que `friend_requests` et `shared_tasks`.
+    {
+      const { error } = await supabaseAdmin.from('friends').delete().or(
+        `user_id.eq.${user.id},friend_user_id.eq.${user.id}`,
+      )
+      if (error) {
+        console.error('delete-account: failed to clean friends:', error.message)
+        failedTables.push('friends')
+      }
+    }
+
     // M-6 — shared_tasks uses `friend_id` / `shared_by`, NOT `user_id`.
     // The previous `.eq('user_id', uid)` was a silent no-op leaving every
     // share this user issued (and received) in the database after deletion.
@@ -205,7 +226,7 @@ Deno.serve(async (req) => {
     }
 
     for (const table of USER_OWNED_TABLES) {
-      if (table === 'friend_requests') continue
+      if (table === 'friend_requests' || table === 'friends') continue
       const { error } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
       if (error) {
         if (isMissingTableError(error)) {

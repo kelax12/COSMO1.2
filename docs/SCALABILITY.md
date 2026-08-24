@@ -35,7 +35,21 @@ deviennent bloquants à volume. Les mesurer maintenant est le seul moyen de les 
 
 ---
 
-## 2. 🔴 Le coût RLS du mode entreprise — mesuré, non corrigé
+## 2. ✅ Le coût RLS du mode entreprise — corrigé (mig. 113, 2026-08-24)
+
+> **Correctif livré, pas encore appliqué en prod.** `get_my_team_projects(p_org)` et
+> `get_my_team_tasks(p_org)` expriment le même ensemble en trois branches indexables et
+> n'évaluent le sous-arbre managérial qu'**une fois par organisation** au lieu d'une fois par
+> ligne. Les policies restent en place, inchangées. Le repository lit par ces RPC, et un test
+> verrouille le chemin d'accès. **Appliquer la mig. 113 AVANT de déployer le front.**
+>
+> Les index nécessaires existaient déjà — le problème n'a jamais été l'indexation des tables
+> d'appartenance, mais la FORME du prédicat, qui interdit d'utiliser un index sur la table lue.
+>
+> Reste ouvert : `team_task_dependencies` (§2bis) délègue son périmètre à `team_tasks` et n'a pas
+> été basculée (0 ligne aujourd'hui).
+
+### Le diagnostic d'origine
 
 **C'est le finding principal de cet audit, et il est nouveau.**
 
@@ -103,7 +117,28 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 
 ---
 
-## 3. 🟠 Le sondage périodique n'a été supprimé que sur `tasks`
+## 3. 🟠 Le sondage périodique — recompté et réduit le 2026-08-24
+
+> **Le comptage de ce document était périmé : 12 `refetchInterval`, pas 8.** La vague entreprise
+> en avait ajouté quatre depuis. Trois choses ont changé :
+>
+> - **`useTeamTasks` ne sonde plus par défaut.** C'était le pire des douze : monté par
+>   `CommandPalette`, `TaskTable` et la vue « Aujourd'hui » — des surfaces **permanentes** — il
+>   faisait payer à tout membre d'une organisation une lecture org-wide de `team_tasks` toutes les
+>   20 s, sur TOUTES les pages, sans que personne ne regarde la liste. Et c'est la lecture la plus
+>   chère du produit (§2). Il prend maintenant une option `live`, exactement comme `useOrgMembers`,
+>   réservée aux écrans de /entreprise où l'on attend de voir une tâche arriver.
+> - **`useRelatedTaskShares` ne sonde plus du tout.** `useSharedTasksRealtime` écoutait déjà
+>   `shared_tasks` dans les deux directions et invalide désormais aussi cette clé : le canal qui
+>   porte l'information était ouvert juste à côté, et on rejouait quand même la requête 180 fois
+>   par heure d'onglet.
+> - Le reste (demandes d'amis, boîte de réception d'organisation) est inchangé : petits payloads,
+>   prédicats indexables, et pas de canal Realtime existant à réutiliser.
+>
+> **Ce qu'il reste à faire** pour fermer ce point : étendre Realtime aux notifications
+> d'organisation, comme le suggère le paragraphe ci-dessous.
+
+### Le diagnostic d'origine
 
 L'audit du 2026-08-07 a remplacé le `refetchInterval` de 15 s de `useTasks` par du Realtime
 (≈ 58 Mo/mois/utilisateur d'egress économisés). **Les 8 autres sondages sont toujours là** :

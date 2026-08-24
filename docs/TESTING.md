@@ -12,7 +12,23 @@
 >   son périmètre ne tient qu'à sa logique, donc il doit être testé contre une
 >   vraie base, pas mocké.
 >
-> **Suite unitaire au 2026-08-24 : 1583 tests / 143 fichiers, tous verts** (`npm test`, mesuré en
+> ### ⚠️ La suite était ROUGE en arrivant sur cette passe (2026-08-24, 2ᵉ audit)
+> `src/design-system.guard.test.ts` échouait sur `main` (203 > budget 202, et 83 tailles sous
+> 11 px pour un plancher de 82). Cause : un badge `text-[10px]` entré dans
+> `TeamProjectCard.tsx` APRÈS que le budget ait été posé le matin même. Corrigé (les quatre
+> badges du fichier sont passés en `text-caption`, budget abaissé à 199 / 79).
+>
+> **C'est la deuxième fois dans la même journée que cette garde attrape la même chose au même
+> endroit** : le mode entreprise n'a jamais été migré sur l'échelle typographique, il la contourne
+> badge par badge. La garde fait son travail ; c'est la migration qui manque.
+>
+> Leçon opérationnelle : **ne jamais partir du principe que `main` est vert.** Le mesurer d'abord,
+> sinon on attribue à ses propres changements un échec préexistant — ou pire, on baisse la garde
+> pour « débloquer ».
+>
+> **Après correctifs : 1576 tests / 142 fichiers, tous verts** (`npm test`, mesuré en local).
+>
+> **Suite unitaire au 2026-08-24 (1ʳᵉ passe) : 1583 tests / 143 fichiers, tous verts** (`npm test`, mesuré en
 > local, ~3 min 10 s — deux fois plus rapide qu'au 2026-08-14 à volume supérieur).
 > Un échec est donc une vraie régression, pas un test pré-existant cassé.
 >
@@ -40,6 +56,18 @@
 >
 > ⚠️ Les commentaires sont retirés avant la recherche de `supabase.from(`. Sans ça, la phrase qui
 > **explique** la règle la déclenchait. Une garde qui se mord la queue finit désactivée.
+>
+> ## Gardes ajoutées par le 2ᵉ audit (2026-08-24)
+>
+> | Garde | Fichier | Ce qu'elle empêche |
+> |---|---|---|
+> | Effacement RGPD des tables symétriques | `src/rgpd-erasure.guard.test.ts` | Qu'une table où le compte supprimé apparaît dans une SECONDE colonne (`friends`, `friend_requests`, `shared_tasks`) retombe dans la boucle générique `user_id`. C'est arrivé trois fois, dont une avec l'email en clair |
+> | Échelle z-index fermée | `src/design-system.guard.test.ts` | Qu'un composant réinvente sa valeur. La table publiée listait 7 paliers pendant que le code en utilisait 16 |
+> | Mouvement des feuilles | `src/design-system.guard.test.ts` | Qu'une nouvelle feuille écrive `y: '100%'` à la main. Sous `prefers-reduced-motion`, ça peut l'ouvrir 100 % sous l'écran — mesuré, pas supposé |
+> | Chemin d'accès entreprise | `src/modules/team-projects/supabase.repository.test.ts` | Un retour à `.from('team_tasks')`, qui réintroduirait le `Seq Scan` + CTE par ligne sans aucun symptôme avant la montée en charge |
+>
+> Les trois premières sont des **cliquets** : le stock existant est toléré et ne peut que baisser.
+> Une gate rouge en permanence finit ignorée — c'est la règle du dossier.
 >
 > ## Gardes de migration — tester la garde, pas seulement le code (2026-08-24)
 >
