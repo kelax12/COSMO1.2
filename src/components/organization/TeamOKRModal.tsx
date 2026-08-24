@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -197,19 +198,15 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
             <div className="grid gap-2">
               <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
-              {/* Même style que la Deadline de TeamTaskModal (tâche d'équipe) —
-                  input natif, pas le DatePicker custom (Popover+Calendar) de la
-                  page perso : cohérence avec le reste du mode entreprise.
-                  `okr-deadline-icon` teinte l'icône native en accent plutôt
-                  que blanc (règle globale `.dark input[type="date"]…`, cf.
-                  index.css) — seule cette instance change de couleur. */}
-              <input
-                id="tokr-end"
-                type="date"
+              {/* Même composant que la page Tâches perso (DesktopDetailsStep) et
+                  que OKRModalSheet (OKR perso) : Popover + Calendar, pas l'input
+                  natif du navigateur — c'est LE calendrier de l'app, pas une
+                  variante entreprise. Icône teintée en accent via `[&_svg]`
+                  (le composant partagé n'expose pas de prop dédiée). */}
+              <DatePicker
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="okr-deadline-icon w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base appearance-none"
-                style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                onChange={setEndDate}
+                className="w-full [&_svg]:text-[rgb(var(--color-accent))]"
               />
             </div>
 
