@@ -384,7 +384,7 @@
     },
     "okr": {
       "title": "Set your objectives, at every scale.",
-      "subtitle": "An organisation objective breaks down into team OKRs, each OKR into numeric key results. The same mechanism at every level, and <hl>nothing is lost between two floors</hl>.",
+      "subtitle": "An organisation objective breaks down into team OKRs, each OKR into numeric key results. <hl>Every team sees how its work feeds the shared objective</hl>.",
       "orgLabel": "Organisation objective",
       "orgExample": "Make Nova Studio a reference in independent branding",
       "teamLabel": "Team OKR",
@@ -401,8 +401,8 @@
       "team3Objective": "Become the agency clients know they can count on",
       "team3Kr1": "90% of milestones delivered on the announced date",
       "team3Kr2": "Zero active project overrunning budget by more than 10%",
-      "b1": "Every team hooks its OKRs onto a shared objective, in the categories you define.",
-      "b2": "Key results carry a number and a target, not an intention.",
+      "b1": "Every team OKR attaches to the organisation objective that gives it meaning.",
+      "b2": "A key result is a number to hit, not a vague intention.",
       "b3": "Every key result reached is logged on the date it was reached."
     },
     "progress": {
