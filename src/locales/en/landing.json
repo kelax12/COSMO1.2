@@ -351,7 +351,7 @@
       "title": "Create your projects, assign them at any scale.",
       "subtitle": "A project's tasks follow its team. Assign them to whoever you want, one person or several: they simply land in <hl>everyone's personal Cosmo</hl>, no new tool to open.",
       "p1t": "To one person, to several, to a whole team",
-      "p1d": "You assign to anyone within your scope. A task can have several assignees at once, or split into subtasks, each given to someone.",
+      "p1d": "You assign to anyone within your scope. A task can have <hl>several assignees at once</hl>, or split into <hl>subtasks</hl>, each given to someone.",
       "p2t": "Board or timeline",
       "p2d": "The board to see where each task stands, the timeline to see deadlines coming. Same project, two readings.",
       "p3t": "Context stays in the task",
