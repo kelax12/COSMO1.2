@@ -433,7 +433,7 @@
       "title": "20 € a month for ten people.",
       "promoBadge": "Launch offer",
       "promoTitle": "Free for your whole organisation.",
-      "promoSubtitle": "Cosmo Enterprise charges nothing today, whatever your headcount. The prices below are the ones that will apply <hl>when the launch offer ends</hl> — you will be told beforehand, and nothing is ever charged unless you choose it.",
+      "promoSubtitle": "Cosmo Enterprise charges nothing today, whatever your headcount. The prices below are the ones that will apply <hl>when the launch offer ends</hl>. You will be told beforehand, and nothing is ever charged unless you choose it.",
       "insteadOf": "instead of €{{price}} / month",
       "insteadOfShort": "instead of €{{price}}",
       "ctaNoteFree": "Free during the launch offer, whatever your headcount. No credit card.",
