@@ -15,6 +15,7 @@ import {
   type CalendarEvent,
 } from '@/modules/events';
 import { useTeamTasks, useTeamProjects, useCreateTeamTask, type TeamTask } from '@/modules/team-projects';
+import { useTeamCategories } from '@/modules/team-categories';
 import { useOrgTeamMembers } from '@/modules/org-teams';
 import { useOrgMembers } from '@/modules/organizations';
 import EventModal, { type EventModalMode } from '@/components/EventModal';
@@ -94,6 +95,10 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
   const { data: projects = [] } = useTeamProjects(member.orgId);
   const { data: teamMembers = [] } = useOrgTeamMembers(member.orgId);
   const { data: orgMembers = [] } = useOrgMembers(member.orgId);
+  // Catégories d'ENTREPRISE (mig. 111) — remplacent les catégories
+  // personnelles par défaut d'EventModal : celles du manager qui planifie
+  // n'ont rien à voir avec celles de l'organisation.
+  const { data: teamCategories = [] } = useTeamCategories(member.orgId);
   const createTask = useCreateTeamTask(member.orgId);
   const [creatingTask, setCreatingTask] = useState(false);
   const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
@@ -417,16 +422,18 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
         </div>
       </div>
 
-      {/* Modale d'ajout — EventModal réutilisé tel quel */}
+      {/* Modale d'ajout — EventModal réutilisé tel quel, catégories
+          d'entreprise (mig. 111) au lieu des catégories personnelles. */}
       {addOpen && (
         <EventModal
           mode={'add' as EventModalMode}
           isOpen={addOpen}
           onClose={() => { setAddOpen(false); setSelectedSlot(null); }}
-          task={{ id: '', name: '', priority: 3, category: 'blue', deadline: '', estimatedTime: 60, createdAt: '', bookmarked: false, completed: false }}
+          task={{ id: '', name: '', priority: 3, category: '', deadline: '', estimatedTime: 60, createdAt: '', bookmarked: false, completed: false }}
           onAddEvent={handleAddEvent}
           prefilledTimeSlot={selectedSlot || undefined}
           enterprisePublic
+          categoriesOverride={teamCategories}
         />
       )}
 
@@ -440,6 +447,7 @@ export const MemberAgendaBody = ({ member }: MemberAgendaBodyProps) => {
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}
           enterprisePublic
+          categoriesOverride={teamCategories}
         />
       )}
 

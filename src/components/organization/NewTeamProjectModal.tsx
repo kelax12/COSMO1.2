@@ -7,6 +7,7 @@ import type { OrgTeam } from '@/modules/org-teams';
 import type { CreateTeamProjectInput } from '@/modules/team-projects';
 import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
+import TeamCategoryPicker from './TeamCategoryPicker';
 import { useT } from '@/i18n/useT';
 
 /** Tâche initiale saisie dans le popup (créée après le projet). */
@@ -16,6 +17,7 @@ export interface DraftTask {
 }
 
 interface NewTeamProjectModalProps {
+  orgId: string;
   teams: OrgTeam[];
   members: OrgMember[];
   /** Équipe présélectionnée (depuis le filtre courant) — '' = toute l'entreprise. */
@@ -36,10 +38,11 @@ const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(v
  * nom, couleur, équipe de rattachement (= collaborateurs qui y ont accès) et une
  * liste de tâches initiales, chacune assignable à des membres.
  */
-const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose }: NewTeamProjectModalProps) => {
+const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, onClose }: NewTeamProjectModalProps) => {
   const { t, tp } = useT('org');
   const [name, setName] = useState('');
   const [color, setColor] = useState('blue');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [teamId, setTeamId] = useState(defaultTeamId ?? '');
   const [tasks, setTasks] = useState<DraftTask[]>([]);
   const [composerName, setComposerName] = useState('');
@@ -67,7 +70,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
       ? [...tasks, { name: composerName.trim(), assigneeIds: composerAssignees }]
       : tasks;
     try {
-      await onSubmit({ name: name.trim(), color, teamId: teamId || null }, pendingDraft);
+      await onSubmit({ name: name.trim(), color, teamId: teamId || null, categoryId }, pendingDraft);
       onClose();
     } catch {
       setPending(false); // erreur déjà notifiée par les hooks (toast)
@@ -153,6 +156,13 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Catégorie — distincte du projet (mig. 111) : une étiquette
+              transverse, pas une unité de travail. Facultative. */}
+          <div>
+            <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
+            <TeamCategoryPicker orgId={orgId} value={categoryId} onChange={setCategoryId} />
           </div>
 
           {/* Équipe / collaborateurs */}

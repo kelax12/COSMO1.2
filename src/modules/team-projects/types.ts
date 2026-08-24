@@ -12,6 +12,11 @@ export interface TeamProject {
   createdAt: string;
   /** Équipe propriétaire (cloisonnement) — null = projet d'org, visible par tous. */
   teamId?: string | null;
+  /**
+   * Catégorie d'entreprise (mig. 111) — étiquette transverse, distincte du
+   * projet lui-même. null = aucune catégorie.
+   */
+  categoryId?: string | null;
 }
 
 export interface CreateTeamProjectInput {
@@ -19,6 +24,7 @@ export interface CreateTeamProjectInput {
   color?: string;
   /** null/absent = projet d'org visible par toute l'entreprise. */
   teamId?: string | null;
+  categoryId?: string | null;
 }
 
 /** Patch projet (managers only — RLS team_projects_update, mig. 068). */
@@ -26,6 +32,7 @@ export interface UpdateTeamProjectInput {
   name?: string;
   color?: string;
   teamId?: string | null;
+  categoryId?: string | null;
   /** true = archiver (archived_at → now), false = désarchiver (→ null). */
   archived?: boolean;
 }
@@ -60,6 +67,12 @@ export interface TeamTask {
   completedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Catégorie d'entreprise (mig. 111) — une tâche porte SA PROPRE catégorie,
+   * indépendamment de celle de son projet (elle n'en hérite jamais
+   * automatiquement). null = aucune catégorie.
+   */
+  categoryId?: string | null;
 }
 
 export interface CreateTeamTaskInput {
@@ -71,6 +84,7 @@ export interface CreateTeamTaskInput {
   estimatedTime?: number;
   assigneeIds?: string[];
   status?: TeamTaskStatus;
+  categoryId?: string | null;
 }
 
 /** Champs modifiables — jamais orgId/createdBy (whitelist mapToDb). */
@@ -84,6 +98,7 @@ export interface UpdateTeamTaskInput {
   projectId?: string;
   completed?: boolean;
   status?: TeamTaskStatus;
+  categoryId?: string | null;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */

@@ -529,6 +529,8 @@
     "namePlaceholder": "Ex : Refonte du site",
     "color": "Couleur",
     "colorAria": "Couleur du projet",
+    "category": "Catégorie",
+    "noCategory": "Aucune catégorie",
     "team": "Collaborateurs · équipe",
     "wholeOrg": "Toute l'entreprise",
     "teamOption": "Équipe {{name}}",

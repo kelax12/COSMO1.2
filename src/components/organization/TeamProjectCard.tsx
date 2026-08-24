@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette, Clock, ListChecks,
+  Pencil, Archive, ArchiveRestore, Palette, Clock, ListChecks, Tag,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ import {
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
+import { useTeamCategories } from '@/modules/team-categories';
 import { useT } from '@/i18n/useT';
 
 interface TeamProjectCardProps {
@@ -64,9 +65,11 @@ const TeamProjectCard = ({
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
+  const { data: categories = [] } = useTeamCategories(project.orgId);
 
   const color = projectColor(project.color);
   const teamName = teams.find((t) => t.id === project.teamId)?.name;
+  const categoryName = categories.find((c) => c.id === project.categoryId)?.name;
   const archived = !!project.archivedAt;
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
@@ -137,6 +140,11 @@ const TeamProjectCard = ({
           {teamName && (
             <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${color.soft}`}>
               <UsersRound size={10} aria-hidden="true" /> {teamName}
+            </span>
+          )}
+          {categoryName && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
+              <Tag size={10} aria-hidden="true" /> {categoryName}
             </span>
           )}
           {archived && (
@@ -247,6 +255,25 @@ const TeamProjectCard = ({
                       <DropdownMenuItem key={t.id} onClick={() => onUpdateProject({ teamId: t.id })}>
                         <span className="truncate">{t.name}</span>
                         {project.teamId === t.id && <span className="ml-auto text-xs">✓</span>}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+              {isManager && categories.length > 0 && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Tag size={14} aria-hidden="true" /> {t('project.category')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-48">
+                    <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null })}>
+                      {t('project.noCategory')} {!project.categoryId && <span className="ml-auto text-xs">✓</span>}
+                    </DropdownMenuItem>
+                    {categories.map((c) => (
+                      <DropdownMenuItem key={c.id} onClick={() => onUpdateProject({ categoryId: c.id })}>
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} aria-hidden="true" />
+                        <span className="truncate">{c.name}</span>
+                        {project.categoryId === c.id && <span className="ml-auto text-xs">✓</span>}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>

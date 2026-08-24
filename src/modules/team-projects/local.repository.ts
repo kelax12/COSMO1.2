@@ -373,6 +373,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       archivedAt: null,
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
+      categoryId: input.categoryId ?? null,
     };
     this.saveProjects([...projects, project]);
     return project;
@@ -385,6 +386,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.name !== undefined) p.name = input.name;
     if (input.color !== undefined) p.color = input.color;
     if (input.teamId !== undefined) p.teamId = input.teamId;
+    if (input.categoryId !== undefined) p.categoryId = input.categoryId;
     if (input.archived !== undefined) p.archivedAt = input.archived ? new Date().toISOString() : null;
     this.saveProjects(projects);
     return p;
@@ -428,6 +430,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       completedAt: null,
       createdAt: now,
       updatedAt: now,
+      categoryId: input.categoryId ?? null,
     };
     this.saveTasks([task, ...tasks]);
     return task;
@@ -444,6 +447,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.estimatedTime !== undefined) task.estimatedTime = input.estimatedTime;
     if (input.assigneeIds !== undefined) task.assigneeIds = input.assigneeIds;
     if (input.projectId !== undefined) task.projectId = input.projectId;
+    if (input.categoryId !== undefined) task.categoryId = input.categoryId;
     // Reproduit le trigger `sync_team_task_status` de la mig. 091 : sans cette
     // symétrie, le mode démo divergerait de la production dès qu'un statut est
     // changé, et le kanban afficherait deux vérités différentes selon le mode.

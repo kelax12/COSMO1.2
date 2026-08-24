@@ -440,6 +440,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
       {isManager && showNewProject && (
         <NewTeamProjectModal
+          orgId={orgId}
           teams={teams}
           members={members}
           defaultTeamId={teamFilter && teamFilter !== 'org' ? teamFilter : ''}

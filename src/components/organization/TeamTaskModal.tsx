@@ -12,6 +12,7 @@ import DescriptionField from '@/components/DescriptionField';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
+import TeamCategoryPicker from './TeamCategoryPicker';
 import TeamSubtasksSection from './TeamSubtasksSection';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -120,6 +121,9 @@ const TeamTaskModal = ({
   const [deadline, setDeadline] = useState(task?.deadline ?? '');
   const [estimatedTime, setEstimatedTime] = useState(task?.estimatedTime?.toString() ?? '');
   const [projectId, setProjectId] = useState(task?.projectId ?? defaultProjectId ?? projects[0]?.id ?? '');
+  // Catégorie (mig. 111) — indépendante du projet : la tâche ne l'hérite
+  // jamais automatiquement, même en changeant de projet.
+  const [categoryId, setCategoryId] = useState<string | null>(task?.categoryId ?? null);
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds ?? defaultAssigneeIds ?? []);
   const [showAssignees, setShowAssignees] = useState(isCreating ? (defaultAssigneeIds?.length ?? 0) > 0 : (task?.assigneeIds.length ?? 0) > 0);
   const [error, setError] = useState<string | null>(null);
@@ -203,9 +207,10 @@ const TeamTaskModal = ({
       deadline !== (task.deadline ?? '') ||
       (minutes ?? 0) !== (task.estimatedTime ?? 0) ||
       projectId !== task.projectId ||
+      categoryId !== (task.categoryId ?? null) ||
       JSON.stringify([...assigneeIds].sort()) !== JSON.stringify([...task.assigneeIds].sort())
     );
-  }, [isCreating, task, name, description, priority, deadline, estimatedTime, projectId, assigneeIds]);
+  }, [isCreating, task, name, description, priority, deadline, estimatedTime, projectId, categoryId, assigneeIds]);
 
   const toggleAssignee = (userId: string) =>
     setAssigneeIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
@@ -250,6 +255,7 @@ const TeamTaskModal = ({
       deadline,
       ...(minutes !== undefined && !Number.isNaN(minutes) ? { estimatedTime: minutes } : {}),
       assigneeIds,
+      categoryId,
     };
   };
 
@@ -420,6 +426,13 @@ const TeamTaskModal = ({
                 className={`${inputClass} h-auto py-3 resize-y min-h-[76px]`}
                 style={inputStyle}
               />
+            </div>
+
+            {/* Catégorie (mig. 111) — distincte du projet, jamais héritée de
+                lui : une tâche porte sa propre catégorie. */}
+            <div>
+              <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
+              <TeamCategoryPicker orgId={orgId} value={categoryId} onChange={setCategoryId} />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
