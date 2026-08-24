@@ -105,7 +105,16 @@ export function DatePicker({
           className="w-full p-3 [--cell-size:2.5rem]"
           classNames={{
             root: "w-full",
-            months: "w-full",
+            // `relative` est OBLIGATOIRE ici : le défaut de shadcn le porte
+            // (cf. ui/calendar.tsx, "relative flex flex-col…"), et cette
+            // surcharge REMPLACE la chaîne entière au lieu de la compléter.
+            // Sans lui, `nav` (position: absolute, inset-x-0, top-0) perd son
+            // ancrage et remonte jusqu'au prochain ancêtre positionné — ici
+            // le PopoverContent lui-même — s'étalant en zone invisible sur
+            // toute la largeur du popover, PAR-DESSUS la rangée de presets.
+            // C'était le bug : Aujourd'hui / Demain / etc. semblaient morts
+            // au clic, en réalité c'est la nav du calendrier qui l'interceptait.
+            months: "relative w-full",
             month: "w-full",
             weekdays: "flex w-full",
             weekday: "flex-1 text-center",
