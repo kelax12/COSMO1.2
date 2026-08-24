@@ -9,13 +9,14 @@ import {
 import { subtreeOf, useOrgNotifications, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTasks, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
+  useCreateTeamProject,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { showUndoToast } from '@/lib/undo-toast';
-import { formatDeadlineSmart } from '../task-table/helpers';
+import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import {
   projectColor, isTaskOverdue, filterByStatus, formatDuration,
-  STATUS_ORDER, STATUS_META, taskDisplayStatus,
+  STATUS_ORDER, STATUS_META, taskDisplayStatus, PROJECT_COLOR_NAMES,
   type TaskStatusFilter,
 } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
@@ -33,7 +34,7 @@ interface TeamTasksTabProps {
   isAdmin: boolean;
 }
 
-type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime';
+type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime' | 'project';
 
 /** Sans accents/casse — même normalisation que MemberDirectory. */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -71,6 +72,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
+  const createProject = useCreateTeamProject(orgId);
 
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
@@ -111,6 +113,12 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
   // vue perso — ces deux items comblent le manque sans dupliquer le modal.
   const [assigningTask, setAssigningTask] = useState<TeamTask | null>(null);
   const [schedulingTask, setSchedulingTask] = useState<TeamTask | null>(null);
+  // Chip « + Nouveau projet » de l'accès rapide — même pattern que la barre
+  // de listes personnelle (TaskListsBar) : chip pointillée → formulaire
+  // inline (couleur cyclique + nom), pas de modal séparée.
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLOR_NAMES[0]);
 
   // Compteur par projet (chips) : tâches OUVERTES uniquement — même
   // convention que les chips de listes personnelles, qui comptent le reste
@@ -140,6 +148,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
         case 'deadline': return task.deadline || '9999-99-99';
         case 'name': return normalize(task.name);
         case 'estimatedTime': return task.estimatedTime ?? 0;
+        case 'project': return normalize(projectById.get(task.projectId)?.name ?? '');
       }
     };
     const sorted = [...visibleTasks].sort((a, b) => {
@@ -150,7 +159,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
       return 0;
     });
     return sortDirection === 'asc' ? sorted : sorted.reverse();
-  }, [visibleTasks, sortField, sortDirection]);
+  }, [visibleTasks, sortField, sortDirection, projectById]);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -238,6 +247,67 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
                 </button>
               );
             })}
+
+            {!showCreateProject ? (
+              <button
+                type="button"
+                onClick={() => setShowCreateProject(true)}
+                className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 h-10 sm:h-auto sm:py-2 px-3.5 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+              >
+                <Plus size={16} aria-hidden="true" /> {t('projects.newProject')}
+              </button>
+            ) : (
+              <form
+                className="flex items-center gap-2 shrink-0"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const name = newProjectName.trim();
+                  if (!name) return;
+                  createProject.mutate({ name, color: newProjectColor }, {
+                    onSuccess: () => {
+                      setNewProjectName('');
+                      setNewProjectColor(PROJECT_COLOR_NAMES[0]);
+                      setShowCreateProject(false);
+                    },
+                  });
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = PROJECT_COLOR_NAMES.indexOf(newProjectColor);
+                    setNewProjectColor(PROJECT_COLOR_NAMES[(idx + 1) % PROJECT_COLOR_NAMES.length]);
+                  }}
+                  className={`w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110 ${projectColor(newProjectColor).dot}`}
+                  title={t('project.colorAria')}
+                />
+                <input
+                  autoFocus
+                  type="text"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  placeholder={t('project.namePlaceholder')}
+                  className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0 w-40"
+                  style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateProject(false); setNewProjectName(''); } }}
+                />
+                <button
+                  type="submit"
+                  disabled={!newProjectName.trim() || createProject.isPending}
+                  className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
+                >
+                  {t('project.create')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateProject(false); setNewProjectName(''); }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  aria-label={t('common.cancel')}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -279,6 +349,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
             <option value="deadline">{t('projects.tasksTabSortDeadline')}</option>
             <option value="name">{t('projects.tasksTabSortName')}</option>
             <option value="estimatedTime">{t('projects.tasksTabSortDuration')}</option>
+            <option value="project">{t('projects.tasksTabSortProject')}</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
             <ChevronDown size={16} aria-hidden="true" />
@@ -412,7 +483,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
                             est ouverte (useMarkTaskNotificationsRead, TeamTaskModal). */}
                         {(unreadCommentsByTask.get(task.id) ?? 0) > 0 && (
                           <span
-                            className="inline-flex items-center gap-1 shrink-0 rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5"
+                            className="inline-flex items-center gap-1 shrink-0 rounded-full bg-red-500 text-white text-caption font-bold px-1.5 py-0.5"
                             title={tp('common.unreadComments', unreadCommentsByTask.get(task.id) ?? 0)}
                           >
                             <MessageSquare size={10} aria-hidden="true" />
@@ -435,7 +506,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
                                 ) : null;
                               })}
                               {others.length > 3 && (
-                                <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
+                                <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-caption font-bold text-[rgb(var(--color-text-muted))]">
                                   +{others.length - 3}
                                 </span>
                               )}

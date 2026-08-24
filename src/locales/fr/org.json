@@ -394,6 +394,7 @@
     "tasksTabSortDeadline": "Par échéance",
     "tasksTabSortName": "Par nom",
     "tasksTabSortDuration": "Par durée",
+    "tasksTabSortProject": "Par projet",
     "tasksTabSortAsc": "Ordre croissant",
     "tasksTabSortDesc": "Ordre décroissant",
     "tasksTabNewTask": "Nouvelle tâche",

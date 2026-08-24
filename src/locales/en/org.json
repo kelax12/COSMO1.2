@@ -373,6 +373,7 @@
     "tasksTabSortDeadline": "By deadline",
     "tasksTabSortName": "By name",
     "tasksTabSortDuration": "By duration",
+    "tasksTabSortProject": "By project",
     "tasksTabSortAsc": "Ascending order",
     "tasksTabSortDesc": "Descending order",
     "tasksTabNewTask": "New task",

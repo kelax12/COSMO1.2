@@ -69,7 +69,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
       onClick={onClose}
     >
       <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl h-[92dvh] sm:h-[90vh] sm:max-w-6xl"
+        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl h-[92dvh] sm:h-[90vh] sm:max-w-[79.2rem]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -79,11 +79,8 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
         <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">
           <div className="min-w-0">
             <h2 className="text-base font-bold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {task.name}
-            </h2>
-            <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {t('projects.tasksTabScheduleAction')}
-            </p>
+            </h2>
           </div>
           <button
             type="button"
@@ -100,7 +97,14 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
         <div className="flex-1 min-h-0 flex overflow-hidden">
           <div className="flex-1 min-w-0 flex flex-col min-h-0">
             {selectedMember ? (
-              <MemberAgendaBody member={selectedMember} />
+              // `key` force un remontage complet à chaque changement de
+              // personne : MemberAgendaBody a été conçu pour un montage par
+              // personne (fiche membre, cf. son commentaire d'en-tête sur la
+              // mesure du conteneur FullCalendar), jamais pour rester monté
+              // en changeant seulement sa prop `member` — sans ce `key`, son
+              // état interne (fenêtre chargée, vue, instance FullCalendar)
+              // restait celui de la première personne sélectionnée.
+              <MemberAgendaBody key={selectedMember.userId} member={selectedMember} />
             ) : (
               <div className="flex-1 flex items-center justify-center text-sm text-center px-6" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {t('assign.pickPersonAgenda')}

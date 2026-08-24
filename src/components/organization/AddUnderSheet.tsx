@@ -7,6 +7,7 @@ import {
   useCreateInviteLink,
   type OrgMember,
 } from '@/modules/organizations';
+import InviteFriendsToOrg from './InviteFriendsToOrg';
 import { useT } from '@/i18n/useT';
 
 interface AddUnderSheetProps {
@@ -135,7 +136,7 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
 
         {/* ── Code d'invitation de l'entreprise ── */}
         {joinCode && (
-          <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
+          <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4 mb-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
               {t('invite.orgCodeTitle')}
             </h3>
@@ -157,6 +158,11 @@ const AddUnderSheet = ({ orgId, under, currentUserId, onClose }: AddUnderSheetPr
             </div>
           </section>
         )}
+
+        {/* ── Inviter un ami déjà sur COSMO ── */}
+        <section className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
+          <InviteFriendsToOrg orgId={orgId} variant="inline" />
+        </section>
       </div>
     </div>,
     document.body,
