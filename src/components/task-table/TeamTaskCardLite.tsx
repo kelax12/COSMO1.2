@@ -7,7 +7,7 @@
 import React from 'react';
 import { CalendarClock, UsersRound } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { isTaskOverdue, projectColor, formatDuration } from '../organization/team-projects.helpers';
+import { isTaskOverdue, projectColor, formatDuration, taskDisplayStatus } from '../organization/team-projects.helpers';
 import { formatDate } from './helpers';
 import { useT } from '@/i18n/useT';
 
@@ -21,8 +21,10 @@ interface TeamTaskCardLiteProps {
 const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteProps>(
   ({ task, project, onToggleComplete, onEdit }, ref) => {
     const { t } = useT('tasks');
+    const { t: tOrg } = useT('org');
     const overdue = isTaskOverdue(task);
     const color = project ? projectColor(project.color) : projectColor('blue');
+    const status = taskDisplayStatus(task);
 
     return (
       <div
@@ -62,6 +64,10 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
           <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
             <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
               <UsersRound size={10} aria-hidden="true" /> {project?.name ?? t('team.badge')}
+            </span>
+            <span className="inline-flex items-center gap-1 shrink-0">
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} aria-hidden="true" />
+              {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
             </span>
             {task.deadline && (
               <span className={overdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : 'inline-flex items-center gap-0.5'}>

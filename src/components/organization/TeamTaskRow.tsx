@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
-import { PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
+import { PRIORITY_META, isTaskOverdue, taskDisplayStatus } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
 import { useT } from '@/i18n/useT';
 
@@ -30,6 +30,7 @@ const TeamTaskRow = ({
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
   const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
+  const status = taskDisplayStatus(task);
   const rowPad = 'py-2.5 px-3 gap-3';
 
   return (
@@ -99,6 +100,17 @@ const TeamTaskRow = ({
           </span>
         )}
       </button>
+
+      {/* Statut de flux — pastille + libellé, dérivé de assigneeIds quand
+          personne n'est dessus (« Non attribué »). */}
+      <span
+        className="hidden sm:inline-flex items-center gap-1.5 text-xs shrink-0"
+        style={{ color: 'rgb(var(--color-text-muted))' }}
+        title={t(status.labelKey as Parameters<typeof t>[0])}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} aria-hidden="true" />
+        {t(status.labelKey as Parameters<typeof t>[0])}
+      </span>
 
       {/* Assignés (multi) — « + » d'ajout révélé au survol de la ligne */}
       <AssigneesPicker

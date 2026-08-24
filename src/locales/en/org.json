@@ -591,7 +591,8 @@
     "assignMembers": "Assign members",
     "assignShort": "Assign",
     "assigneeCount_one": "{{count}} assignee",
-    "assigneeCount_other": "{{count}} assignees"
+    "assigneeCount_other": "{{count}} assignees",
+    "pickPersonAgenda": "Select a person to see their agenda."
   },
   "directory": {
     "searchPlaceholder": "Search a member (name, email)…",

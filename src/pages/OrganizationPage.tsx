@@ -306,7 +306,7 @@ const OrganizationPage = () => {
         />
       )}
       {tab === 'tasks' && (
-        <TeamTasksTab orgId={myOrg.id} members={members} isManager={isManager} />
+        <TeamTasksTab orgId={myOrg.id} members={members} isManager={isManager} isAdmin={isAdmin} />
       )}
       {tab === 'projects' && (
         <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
