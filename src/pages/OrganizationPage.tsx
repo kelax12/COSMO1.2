@@ -53,7 +53,9 @@ const TABS: {
   managerOnly?: boolean;
 }[] = [
   { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
-  { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network },
+  // Réservé à ceux qui encadrent au moins une personne : un membre sans
+  // subordonné n'a rien à y arbitrer (même logique que `isManager` plus bas).
+  { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network, managerOnly: true },
   { id: 'tasks', labelKey: 'tabs.tasks', Icon: ListTodo },
   { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban },
   { id: 'okr', labelKey: 'tabs.okr', Icon: Target },
@@ -127,13 +129,14 @@ const OrganizationPage = () => {
   if (!myOrg) return <Navigate to="/dashboard" replace />;
 
   const isOwner = user?.id === myOrg.ownerId;
-  // Un membre qui arrive sur `?tab=billing` (lien partagé, ancien favori) ne
-  // voit pas un écran vide : il retombe sur l'aperçu. Le vrai contrôle reste
-  // côté Edge Function (`owner_id`).
-  const tab: OrgTab = rawTab === 'billing' && !isOwner ? 'overview' : urlTab;
   const isAdmin = myOrg.myRole === 'admin';
   // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
   const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
+  // Un membre qui arrive sur `?tab=billing` (lien partagé, ancien favori) ou
+  // `?tab=pyramid` (favori d'un ancien manager, ou lien copié) sans en avoir
+  // le droit ne voit pas un écran vide : il retombe sur l'aperçu.
+  const tab: OrgTab =
+    (rawTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) ? 'overview' : urlTab;
 
   // Quota de sièges RÉELLEMENT bloquant : le gate serveur (`org_seats_allowed`,
   // mig. 067) ne refuse que si le drapeau `enterprise_seat_limit` est activé en
@@ -308,7 +311,7 @@ const OrganizationPage = () => {
       {tab === 'stats' && isManager && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
       )}
-      {tab === 'pyramid' && (
+      {tab === 'pyramid' && isManager && (
         <PyramidTab
           orgId={myOrg.id}
           ownerId={myOrg.ownerId}

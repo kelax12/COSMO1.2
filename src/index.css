@@ -580,6 +580,15 @@ body {
       cursor: pointer;
     }
 
+    /* Icône de l'input Échéance du modal OKR entreprise (TeamOKRModal) —
+       teintée en accent plutôt que blanche, `!important` pour l'emporter sur
+       la règle générique ci-dessus (même sélecteur `.dark input[type=date]`,
+       spécificité égale, donc l'ordre de cascade seul ne suffirait pas). */
+    .okr-deadline-icon::-webkit-calendar-picker-indicator {
+      filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(190deg) brightness(101%) contrast(101%) !important;
+      cursor: pointer;
+    }
+
     /* Inputs sans bordure (modals landing) */
     input.borderless-input,
     input.borderless-input:hover,
