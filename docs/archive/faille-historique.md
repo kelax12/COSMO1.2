@@ -1,8 +1,8 @@
-> ⚠️ **ARCHIVE — historique sécurité figé au 2026-08-08, non maintenu.**
+> ⚠️ **ARCHIVE — historique sécurité, non maintenu. Dernier ajout : 2026-08-24.**
 > Ce document conserve la **preuve de ce qui a été corrigé, comment et pourquoi** :
 > tableaux récapitulatifs, audits datés (2026-04 → 2026-08), et anciens ordres de priorité.
 > Les findings **ouverts** et l'ordre de priorité **courant** vivent dans [`faille.md`](../../faille.md) — c'est lui qui fait foi.
-> ⚠️ La section « Migrations sécurité à exécuter » ci-dessous s'arrête à la mig. 024 : elle est **périmée**, le repo est à la 099.
+> ⚠️ La section « Migrations sécurité à exécuter » ci-dessous s'arrête à la mig. 024 : elle est **périmée**, le repo est à la 108.
 
 # Failles & roadmap sécurité — COSMO 1.2
 
@@ -19,6 +19,46 @@ Légende :
 
 ---
 
+
+### ✅ Fuite inter-organisations par les helpers RLS — ouverte le 2026-08-14, fermée le 2026-08-23
+
+**Finding** — les helpers qui portent la RLS du mode entreprise (`get_subtree`,
+`org_admin_count`, `has_subordinates`) étaient `SECURITY DEFINER` — donc « sans RLS » — **et**
+exposés comme RPC PostgREST à tout utilisateur authentifié, sans vérifier que l'appelant
+appartient à l'organisation passée en argument.
+
+**PoC en prod (2026-08-14)** — compte membre de la seule organisation « entreprisetest »,
+interrogeant une organisation étrangère dont il connaissait l'UUID :
+
+| Appel | Résultat |
+|---|---|
+| `select … from organization_members where org_id = <étrangère>` | 0 ligne ✅ la RLS fait son travail |
+| `get_subtree(<org étrangère>, <root>)` | **8 UUID de membres** 🔴 |
+| `org_admin_count(<org étrangère>)` | **1** 🔴 |
+| `has_subordinates(<org étrangère>, <tiers>)` | **true** 🔴 |
+| `is_org_member(<org étrangère>)` | false ✅ (ne parle que de soi) |
+
+Scénario réaliste : non pas l'attaque à l'aveugle (UUID v4 non devinable) mais la **révocation
+incomplète** — un membre exclu conserve indéfiniment la capacité d'énumérer les membres et la
+hiérarchie de l'organisation qu'il a quittée.
+
+**Correctif** — migration `100_private_rls_helpers.sql`, appliquée en prod le **2026-08-23** :
+`REVOKE EXECUTE … FROM authenticated, anon` sur les trois helpers, plus la réécriture des deux
+policies qui les appelaient **directement** (`org_team_members_insert` →
+`is_above(org_id, user_id)`, `org_invite_links_insert` → nouveau `i_have_subordinates(p_org)`,
+borné par `auth.uid()`). Un `REVOKE` suffit parce que dans une fonction `SECURITY DEFINER` le
+rôle effectif est le **propriétaire** : `claim_org_invite` et `can_access_team_project`
+continuent d'appeler les helpers en interne.
+
+**Vérifié le 2026-08-24** en prod : `has_function_privilege('authenticated', …, 'EXECUTE')` →
+`false` sur `get_subtree`, `has_subordinates`, `org_admin_count`.
+
+> **Note de méthode** — le premier PoC concluait à tort à une fuite plus large : le compte de
+> test appartenait en réalité aux **deux** organisations. Toujours vérifier l'appartenance réelle
+> du compte d'attaque avant de conclure.
+>
+> **Suite** — la mig. `107` a réintroduit un appel direct à `get_subtree` depuis une policy,
+> désormais refusé au niveau des droits (finding B-1 dans [`faille.md`](../../faille.md)).
 
 ### Audit architecture 2026-08-07 — entrées à portée sécurité
 

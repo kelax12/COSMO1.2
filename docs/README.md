@@ -1,7 +1,14 @@
 # Documentation COSMO — carte
 
-**Dernière revue de cohérence : 2026-08-14** (tous les documents vivants ci-dessous ont été
-confrontés au code à cette date).
+**Dernière revue de cohérence : 2026-08-24** — tous les documents vivants ci-dessous ont été
+confrontés au code de `main` **et à la prod** à cette date. Ont été remesurés à cette occasion :
+[`../faille.md`](../faille.md) (1 finding fermé, 3 ouverts), [`ARCHITECTURE.md`](./ARCHITECTURE.md),
+[`SECURITY.md`](./SECURITY.md), [`SCALABILITY.md`](./SCALABILITY.md),
+[`PERFORMANCE.md`](./PERFORMANCE.md) (build du jour), [`TESTING.md`](./TESTING.md) (suite rouge),
+[`ACQUISITION.md`](./ACQUISITION.md) et [`RGPD.md`](./RGPD.md). Les autres (`MOBILE`, `SEO`,
+`I18N`, `ACCESSIBILITY`, `UI-PATTERNS`, `DEPLOYMENT`, `POST-AUDIT-GUIDE`) portent encore la date de
+leur dernier audit propre : **ils n'ont pas été remesurés le 2026-08-24**, ne pas lire leur date
+comme une revérification.
 
 ## Deux statuts, jamais à confondre
 

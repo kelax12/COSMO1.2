@@ -1,6 +1,7 @@
 # Architecture — invariants, dette et vérification
 
-**Audit du 2026-08-14**, mesuré contre le code de `main` et la prod. Remplace
+**Audit du 2026-08-14, invariants remesurés le 2026-08-24** (colonne « 2026-08-24 » du tableau
+§1). Mesuré contre le code de `main` et la prod. Remplace
 [`archive/AUDIT-ARCHITECTURE-2026-08-07.md`](./archive/AUDIT-ARCHITECTURE-2026-08-07.md)
 (20 correctifs, note 60→79), 77 commits plus tôt.
 
@@ -11,20 +12,24 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 
 ## 1. Les invariants, vérifiés un par un
 
-| Invariant | Où il est écrit | État |
+| Invariant | Où il est écrit | État au 2026-08-24 |
 |---|---|---|
-| Les lectures de liste de `tasks` passent par `get_my_tasks()` | CLAUDE.md ⚡ | ✅ **Tenu.** Les 4 `.from('tasks')` restants sont `getById` (exception légitime), `insert`, `update`, `delete` |
+| Les lectures de liste de `tasks` passent par `get_my_tasks()` | CLAUDE.md ⚡ | ✅ **Tenu.** Les 4 `.from('tasks')` de `supabase.repository.ts` restent `getById` (exception légitime), `insert`, `update`, `delete` |
 | Aucun import GSAP hors de la landing | CLAUDE.md | ✅ **Tenu.** 0 import direct de `'gsap'` |
 | `useAuth` vient de `@/modules/auth/AuthContext` | CLAUDE.md | ✅ **Tenu.** 0 import depuis `@/modules/user` |
-| Une seule policy PERMISSIVE par rôle + action | mig. 049 + `check:rls` | ✅ **Tenu.** 114 policies, 0 violation |
+| Une seule policy PERMISSIVE par rôle + action | mig. 049 + `check:rls` | ✅ **Tenu.** **120** policies sur **66** migrations, 0 violation |
 | La récurrence est générée côté serveur | mig. 086 | ✅ Tenu |
 | Un seul canal Realtime, monté dans `App.tsx` | CLAUDE.md 📡 | ✅ Tenu (1 seul `.channel()` dans tout `src/`) |
-| **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 | ❌ **Violé** — voir §2 |
-| Imports toujours via l'alias `@/` | CLAUDE.md | ❌ **Violé** — voir §2 |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 | ❌ **Violé** — voir §3 |
+| Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod le 2026-08-24 : 0 table avec `relrowsecurity = false` |
+| **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 | ❌ **Violé** — voir §2 (toujours le seul `SettingsPage.tsx`) |
+| Imports toujours via l'alias `@/` | CLAUDE.md | ❌ **Violé, et ça empire** — 1 occurrence au 2026-08-14, **6** au 2026-08-24 (§2) |
+| Aucun fichier source > 600 LOC | refactor de juin 2026 | ❌ **Violé, et ça empire** — 13 fichiers au 2026-08-14, **15** au 2026-08-24 (§3) |
+| Suite unitaire verte | `TESTING.md` | ❌ **Violé depuis le 2026-08-23/24** — `design-system.guard` rouge (cf. [`TESTING.md`](./TESTING.md)) |
 
-Sept invariants sur dix tiennent, dont tous ceux qui portent la sécurité ou la performance. Les
-trois violations sont de la dette, pas des régressions fonctionnelles.
+Les invariants qui portent la **sécurité** et la **performance** tiennent tous. Les quatre
+violations sont de la dette — mais trois d'entre elles **ont progressé** depuis le 2026-08-14, et
+aucune n'a de garde automatique sauf la dernière. C'est le motif de fond de cet audit : *une règle
+qu'aucun script ne mesure recule à chaque vague de features.*
 
 ## 2. 🟡 Deux entorses ponctuelles dans `SettingsPage`
 
@@ -34,16 +39,32 @@ trois violations sont de la dette, pas des régressions fonctionnelles.
   (« ne jamais appeler `supabase.from()` hors d'un repository ») n'est pas cosmétique : c'est elle
   qui garde le pattern repository comme unique frontière de données, donc qui rend une sortie de
   Supabase envisageable en jours plutôt qu'en mois.
-- **Ligne 15** : `import { useUpdateUserSettings } from '../modules/user'` — chemin relatif au lieu
+- **Ligne 14** : `import { useUpdateUserSettings } from '../modules/user'` — chemin relatif au lieu
   de l'alias `@/`.
 
-Le reste du dépôt est propre sur ces deux points. Correction : ~30 min.
+**Mise à jour du 2026-08-24 : l'entorse d'import s'est répandue.** Elle touche maintenant
+**6 lignes dans 4 fichiers** :
+
+| Fichier | Lignes |
+|---|---|
+| `src/modules/auth/AuthContext.tsx` | 6, 7 (`../../modules/tasks/constants`, `../../modules/habits/constants`) |
+| `src/pages/LandingPage.tsx` | 2 |
+| `src/pages/PremiumPage.tsx` | 5 |
+| `src/pages/SettingsPage.tsx` | 13, 14 |
+
+Aucune n'est fautive individuellement ; c'est la démonstration qu'une convention non outillée se
+dilue. Correction : ~30 min, plus une règle ESLint `no-restricted-imports` pour que ça ne revienne
+pas — c'est le seul vrai correctif.
 
 ## 3. 🟠 L'objectif « aucun fichier > 600 LOC » n'est plus tenu
 
-**13 fichiers dépassent 600 lignes**, le plus gros à **1 455**
-(`src/components/organization/PyramidTab.tsx`), suivi de `TaskTable.tsx` (977),
-`SettingsPage.tsx` (951) et `AgendaPage.tsx` (900).
+**Au 2026-08-24 : 15 fichiers dépassent 600 lignes** (13 au 2026-08-14), le plus gros à
+**1 505** (`src/components/organization/PyramidTab.tsx`, +50 lignes en dix jours), suivi de
+`TaskTable.tsx` (1 124, **+147**), `AgendaPage.tsx` (900) et `SettingsPage.tsx` (857).
+La liste complète au 2026-08-24 compte quatre fichiers `src/components/organization/`
+(`PyramidTab` 1 505, `TeamTaskModal` 672, `TeamProjectsTab` 602) et
+`src/modules/team-projects/local.repository.ts` (706) : la croissance vient de la vague
+entreprise.
 
 Le refactor de juin 2026 avait ramené le maximum sous 600 et la règle avait été inscrite comme
 acquise. Elle a cédé pendant la construction du mode entreprise, sans que rien ne le signale —

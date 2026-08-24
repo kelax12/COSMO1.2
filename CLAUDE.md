@@ -1,6 +1,6 @@
 # CLAUDE.md — COSMO 1.2
 
-Guide de travail dans ce dépôt. **Vérifié dans le code le 2026-08-14.**
+Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 2026-08-24.**
 
 **Plan** : [Docs](#-carte-de-la-documentation) · [CLI données réelles](#-tu-peux-écrire-dans-le-vrai-compte-cosmo-daxel) · [Stack](#stack-technique) · [Scripts](#scripts) · [Env](#variables-denvironnement) · [Double mode](#architecture--double-mode-démo--production) · [Modules](#structure-des-modules) · [Hooks](#hooks-essentiels) · [Providers / Routing](#hiérarchie-des-providers-srcapptsx) · [Supabase](#base-de-données-supabase) · [Conventions](#conventions-de-code) · [i18n](#i18n--catalogues-maison-fr--en) · [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire)
 
@@ -105,7 +105,8 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once) — 1362 tests, ~7 min
+npm test           # Vitest (run once) — 1550 tests, ~3 min 10 s
+                   # 🔴 ROUGE sur main au 2026-08-24 : design-system.guard (stock de tailles arbitraires 205 > 203)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils par fichier — 🔴 ROUGE sur main (cf. TESTING.md)
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
@@ -444,7 +445,8 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**106 migrations, dernière = `102_seed_categories_search_path.sql`** (au 2026-08-18).
+**112 fichiers de migration, dernière = `108_team_task_dependencies.sql`** (au 2026-08-24,
+toutes appliquées en prod — ledger relu le 2026-08-24).
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
@@ -685,6 +687,16 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
 - ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
 - ❌ Committer sans vérifier que `.env` reste gitignored
 - ❌ Écrire en base via le MCP Supabase (contourne la RLS)
+- ❌ **Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy.** La
+  mig. `100` leur a révoqué `EXECUTE` à `authenticated` pour fermer une fuite inter-organisations,
+  et une policy s'évalue avec le **rôle courant** : l'appel échoue par `permission denied`. Dans
+  une policy, utiliser `is_above(org_id, user_id)` ou `i_have_subordinates(org_id)`. À l'intérieur
+  d'une fonction `SECURITY DEFINER`, les helpers restent appelables (rôle = propriétaire).
+  Régression en cours en prod : mig. `107`, finding B-1 de [`faille.md`](./faille.md).
+- ❌ **Une fonction de trigger en `SECURITY DEFINER`.** Une garde doit être `SECURITY INVOKER`
+  (défaut) et `REVOKE`-ée pour `anon` (mig. `064b` / `094b`). Un trigger `BEFORE` s'exécutant
+  **avant** le `WITH CHECK` de la RLS, en DEFINER ses messages d'erreur deviennent un oracle sur
+  des lignes non lisibles (mig. `108`, finding B-3).
 
 ### Documentation
 

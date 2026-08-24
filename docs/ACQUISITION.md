@@ -56,11 +56,21 @@ va la regarder.
 **Correction** : appliquer `supabase/migration/099_admin_stats_v3.sql`. C'est le geste à plus fort
 levier de tout ce document — il conditionne la lecture de tout le reste.
 
+> ✅ **Fait.** La mig. `099` est appliquée en prod depuis le **2026-08-23** (ledger vérifié le
+> 2026-08-24). Les stats admin v3 sont donc disponibles ; ce document n'a pas encore été relu à
+> leur lumière.
+
 ## 3. 🔴 Aucune attribution n'a jamais été capturée
 
 Les **27 comptes ont `acquisition_source` à NULL**. Ce n'est pas une panne : la mig. 097 est en
 prod depuis le 2026-08-13 et **aucun compte n'a été créé depuis**. La machinerie est donc
 **non éprouvée en conditions réelles** — elle n'a jamais eu une seule inscription à traiter.
+
+> 🔴 **Toujours vrai le 2026-08-24, et c'est maintenant un fait, plus une hypothèse.** Remesuré
+> en prod : **28 comptes** (+1 en onze jours), et **`acquisition_source` renseignée sur 0**. Un
+> compte a donc bien été créé depuis la mig. `097` — sans passer par un `?ref=`, ou sans que la
+> chaîne fonctionne. Le test de bout en bout ci-dessous n'est plus « à faire avant de lancer » :
+> c'est le seul moyen de savoir laquelle des deux explications est la bonne.
 
 **À faire avant de lancer quoi que ce soit** : un test de bout en bout — ouvrir
 `https://thecosmo.app/?ref=test_manuel`, créer un compte jetable, vérifier que

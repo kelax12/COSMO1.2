@@ -2,28 +2,36 @@
 
 ## Vendor chunks isolés (commenter toute modif)
 
-**Tailles réelles, `npm run build` du 2026-08-15** (brut / gzip) :
+**Tailles réelles, `npm run build` du 2026-08-24** (brut / gzip). La colonne « 08-15 » garde la
+mesure précédente pour rendre la dérive lisible :
 
-| Chunk | Contenu | Taille (gzip) | Quand chargé |
-|---|---|---|---|
-| `index` (app) | code applicatif partagé | **448 kB (128 kB)** | Toujours |
-| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | Toujours |
-| `vendor-router` | react-router | 38 kB (14 kB) | Toujours (split pour parallel HTTP/2) |
-| `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | Toujours |
-| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | Toujours (extrait pour cache CDN) |
-| `vendor-sentry` | @sentry/react | 140 kB (47 kB) | Toujours (extrait pour cache CDN) |
-| `vendor-animation` | framer-motion | 146 kB (49 kB) | Toujours |
-| `vendor-utils` | date-fns + lucide-react | 71 kB (21 kB) | Toujours |
-| `vendor-query` | @tanstack/* | 55 kB (16 kB) | Toujours |
-| `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
-| `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
-| `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
-| `vendor-ogl` | ogl — micro-runtime WebGL | 44 kB (13 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
-| `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | **Lazy** (`/`) |
-| `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
+| Chunk | Contenu | 08-15 (gzip) | **08-24 (gzip)** | Quand chargé |
+|---|---|---|---|---|
+| `index` (app) | code applicatif partagé | 448 kB (128 kB) | **470 kB (134 kB)** 🟠 | Toujours |
+| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | 227 kB (72 kB) | Toujours |
+| `vendor-router` | react-router | 38 kB (14 kB) | 38 kB (14 kB) | Toujours (split pour parallel HTTP/2) |
+| `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | 145 kB (45 kB) | Toujours |
+| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | 215 kB (56 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-sentry` | @sentry/react | 140 kB (47 kB) | 146 kB (49 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-animation` | framer-motion | 146 kB (49 kB) | 148 kB (49 kB) | Toujours |
+| `vendor-utils` | date-fns + lucide-react | 71 kB (21 kB) | 70 kB (21 kB) | Toujours |
+| `vendor-query` | @tanstack/* | 55 kB (16 kB) | 60 kB (18 kB) | Toujours |
+| `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | 414 kB (118 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
+| `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
+| `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
+| `vendor-ogl` | ogl — micro-runtime WebGL | 44 kB (13 kB) | 44 kB (13 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
+| **`OrganizationPage`** | **tout le mode entreprise** | non listé | **265 kB (61 kB)** 🟠 | **Lazy** (`/entreprise`) |
+| `TasksPage` | page Tâches | non listé | 130 kB (30 kB) | **Lazy** |
+| `TaskModal` | modal de tâche | non listé | 104 kB (24 kB) | **Lazy** |
+| `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | 81 kB (21 kB) | **Lazy** (`/`) |
+| `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | 44 kB (11 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
 
-> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-15) :
-> le chunk `index` est à 448 kB brut / 128 kB gzip. La hausse depuis les 124 kB du 2026-08-14
+> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-24) :
+> le chunk `index` est à **470 kB brut / 134 kB gzip**, et `vendor-charts` à 414 kB brut (lazy,
+> donc sans effet sur le critical path). La trajectoire du chunk `index` est le seul point qui
+> demande une décision : **124 kB (08-14) → 128 kB (08-15) → 134 kB (08-24)**, soit +10 kB gzip
+> en dix jours pour un budget de 150 kB. Au rythme actuel, le budget est franchi autour de
+> **mi-septembre 2026**. La hausse initiale depuis les 124 kB du 2026-08-14
 > **ne vient pas du track entreprise** : vérifié par `grep` sur le chunk construit, aucun de ses
 > symboles (`gate-panel`, `pyramid-stage`, `ent-hero-line`) n'y figure — il vit dans
 > `LandingPage` et `EnterpriseTrack`, tous deux lazy. Sous le budget gzip (< 150 kB) mais la marge
@@ -42,9 +50,14 @@
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : **< 150 kB gzip** (au 2026-08-14 : **124 kB** — marge réduite, à surveiller).
-- Chaque chunk lazy : **< 80 kB gzip**. Exceptions documentées : `vendor-charts` (116 kB),
-  `vendor-calendar` (85 kB), `vendor-gsap` (52 kB).
+- Chunk `index` : **< 150 kB gzip** (au 2026-08-24 : **134 kB** — **marge : 16 kB**, cf. la
+  trajectoire ci-dessus. C'est le poste à surveiller en priorité).
+- Chaque chunk lazy : **< 80 kB gzip**. Exceptions documentées : `vendor-charts` (118 kB),
+  `vendor-calendar` (85 kB), `vendor-gsap` (55 kB).
+  ⚠️ **`OrganizationPage` est à 61 kB gzip au 2026-08-24** : sous le budget, mais c'est de loin le
+  plus gros chunk de page, et il grossit à chaque vague entreprise. Il découle directement de la
+  dette « fichiers > 600 LOC » ([`ARCHITECTURE.md`](./ARCHITECTURE.md) §3) : `PyramidTab.tsx`
+  pèse à lui seul 1 505 lignes.
 
 > **`vendor-calendar` : 76 → 85 kB gzip (2026-08-02, i18n Agenda).** `AgendaPage`
 > importe `@fullcalendar/core/locales-all` (+9 kB gzip). Sans données de locale,

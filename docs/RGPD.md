@@ -1,6 +1,7 @@
 # RGPD — inventaire, droits des personnes et dette
 
-**Audit du 2026-08-14** — premier audit dédié de ce domaine. Jusqu'ici, la conformité était
+**Audit du 2026-08-14, inventaire complété le 2026-08-24** (trois tables entreprise ajoutées par
+les migrations 105/106/108). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
 > Ce document décrit l'état technique. Il ne remplace pas un avis juridique, et la
@@ -21,6 +22,18 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 | `tasks`, `habits`, `events`, `okrs`, `team_tasks` | contenu libre (`name`, `description`) | saisie utilisateur |
 | `demo_devices` | identifiant d'appareil, horodatages | analytique |
 | `user_activity_days` | jours d'activité par compte | analytique |
+| **`org_invitations`** *(mig. 105, 2026-08-23)* | **UUID d'un tiers invité, et trace d'un refus (`declined_at`)** | saisie d'un membre de l'organisation |
+| `org_removal_notices` *(mig. 106)* | UUID du membre retiré et de l'auteur du retrait | action d'un admin |
+| `team_task_dependencies` *(mig. 108)* | `created_by` | action utilisateur |
+
+> 🟡 **Nouveau, à arbitrer avant toute vente B2B** — la policy `org_invitations_select` autorise
+> **tout membre** de l'organisation à lire l'`invitee_id` de **toutes** les invitations, y compris
+> celles qui ont été **refusées**. Ce ne sont que des UUID (ni email, ni nom : la policy de
+> `profiles` reste la frontière), mais c'est une trace persistante et partagée d'un refus, sans
+> date de péremption. Aligner sur la règle maison : *toute donnée personnelle conservée doit avoir
+> une date de péremption* (A-11). Piste minimale : purger les lignes `declined_at IS NOT NULL` de
+> plus de 30 jours, comme `processed_stripe_events`. Cf. finding B-2 de
+> [`../faille.md`](../faille.md).
 
 **Hébergement** : Supabase, région **eu-west-1 (Irlande)** — dans l'UE, pas de transfert hors UE
 au niveau base. Sous-traitants : Supabase (hébergement), Vercel (diffusion), Sentry (erreurs),

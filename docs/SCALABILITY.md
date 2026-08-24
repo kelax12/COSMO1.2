@@ -1,6 +1,8 @@
 # Scalabilité — audit mesuré, décisions et runbook
 
-**Audit refait le 2026-08-14** contre la prod (`ykeugqfgklejcdbrmawy`, Postgres 17.6, eu-west-1)
+**Audit refait le 2026-08-14** contre la prod, **volumétrie et périmètre remesurés le 2026-08-24**
+(§1, §2bis). Le finding principal (§2) n'a **pas** été corrigé depuis, et la vague entreprise du
+2026-08-23/24 l'a élargi. Mesuré contre la prod (`ykeugqfgklejcdbrmawy`, Postgres 17.6, eu-west-1)
 et contre le code de `main`. Remplace l'édition du 2026-06-10, dont les volumétries étaient
 périmées et dont une conclusion s'est révélée fausse.
 
@@ -9,13 +11,21 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 
 ---
 
-## 1. Volumétrie réelle (2026-08-14)
+## 1. Volumétrie réelle (remesurée le 2026-08-24)
 
-| Métrique | Valeur |
+| Métrique | Valeur au 2026-08-14 | Valeur au 2026-08-24 |
+|---|---|---|
+| Comptes | 27 | **28** (**+1 en 11 jours**) |
+| Comptes actifs sur 7 j | 0 | **8** — mais ce sont les comptes de test du mode entreprise, pas des utilisateurs acquis |
+| `profiles.acquisition_source` renseignée | 0 | **0** — la machinerie d'attribution (mig. 097) n'a toujours **jamais** été exercée |
+| Organisations | — | **4** |
+| `org_subscriptions` | — | **0** (paywall entreprise dormant, conforme) |
+| Table la plus grosse (métier) | `tasks` — 710 lignes | `tasks` — **709 lignes**, 504 ko |
+| Tables entreprise | — | `team_tasks` 8 · `team_projects` 5 · `org_team_members` 4 · `organization_members` 10 |
+
+| Métrique (inchangée) | Valeur |
 |---|---|
 | Taille base | **18 Mo** |
-| Comptes | **27** au total, **4** créés sur 30 j, **0 actif sur 7 j** |
-| Table la plus grosse (métier) | `tasks` — 710 lignes, 504 ko |
 | Profondeur max par compte | **289 tâches**, 128 événements (moyenne : 39 tâches) |
 | Plafond applicatif | `MAX_ROWS = 5000` lignes par `getAll()` |
 
@@ -55,6 +65,24 @@ Le prédicat RLS entreprise coûte donc **≈ 60 fois plus cher par ligne** que 
 personnel, et il est appliqué à toute la table à chaque lecture. Confirmation indépendante par
 les compteurs cumulés : `organization_members` totalise **1 144 966 `seq_scan`** pour **11 lignes**
 — c'est la fréquence d'appel des helpers, pas un problème de plan.
+
+### 2bis. La mig. 108 étend le défaut à une table de plus (2026-08-24)
+
+`team_task_dependencies` (mig. `108`) délègue **volontairement** son périmètre à `team_tasks` :
+
+```sql
+USING     (EXISTS (SELECT 1 FROM team_tasks t WHERE t.id = task_id))
+WITH CHECK(EXISTS (… task_id) AND EXISTS (… depends_on_id))   -- deux fois, à l'écriture
+```
+
+Le choix est **bon côté sécurité** — pas de nouveau helper `SECURITY DEFINER`, pas de règle de
+cloisonnement dupliquée, et la migration le dit explicitement. Mais il **hérite du coût mesuré
+ci-dessus** : chaque sous-requête déclenche l'évaluation du prédicat de `team_tasks`, donc un
+`Seq Scan` filtré par `can_access_team_project`. À l'écriture, **deux fois**.
+
+Volume actuel : 0 ligne, donc invisible. À retenir pour la correction de §2 : elle devra couvrir
+`team_task_dependencies` en même temps que `team_tasks` — sinon la RPC indexée sera contournée
+par la table qui la référence.
 
 **Projection linéaire** (le seul modèle valide ici, le coût est proportionnel aux lignes scannées) :
 
