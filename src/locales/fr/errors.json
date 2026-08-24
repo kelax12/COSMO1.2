@@ -102,7 +102,8 @@
     "updateHabit": "Impossible de mettre à jour l'habitude : {{message}}",
     "createOkr": "Impossible de créer l'OKR : {{message}}",
     "createList": "Impossible de créer la liste : {{message}}",
-    "addTaskToList": "Impossible d'ajouter la tâche à la liste : {{message}}"
+    "addTaskToList": "Impossible d'ajouter la tâche à la liste : {{message}}",
+    "updatePermissions": "Impossible de mettre à jour les permissions : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",
@@ -132,6 +133,7 @@
     "taskValidated": "Tâche validée",
     "friendRequestSent": "Demande d'ami envoyée à {{email}}",
     "listShared": "Liste partagée",
-    "listAccepted": "Liste acceptée"
+    "listAccepted": "Liste acceptée",
+    "permissionsUpdated": "Permissions mises à jour"
   }
 }

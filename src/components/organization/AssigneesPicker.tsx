@@ -19,6 +19,13 @@ interface AssigneesPickerProps {
   onChange: (assigneeIds: string[]) => void;
   disabled?: boolean;
   /**
+   * Portée d'assignation de l'utilisateur courant (mig. 115). Un membre hors
+   * portée n'apparaît pas dans le menu — SAUF s'il est déjà assigné : le
+   * serveur ne contrôle que les AJOUTS, et masquer un assigné existant
+   * empêcherait de le retirer.
+   */
+  canAssign?: (userId: string) => boolean;
+  /**
    * Affiche, quand il y a déjà des assignés, une pastille « + » à côté des
    * avatars, révélée au survol de la ligne parente (`.group`). Rend l'ajout
    * d'un collaborateur découvrable sans deviner que les avatars sont cliquables.
@@ -30,11 +37,15 @@ interface AssigneesPickerProps {
  * Sélecteur MULTI-assignés (avatars empilés + menu à cases). Le déclencheur
  * montre jusqu'à 3 avatars (+N), ou une icône « assigner » si personne.
  */
-const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover }: AssigneesPickerProps) => {
+const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, revealAddOnHover }: AssigneesPickerProps) => {
   const { t } = useT('org');
   const assigned = value
     .map((id) => members.find((m) => m.userId === id))
     .filter((m): m is OrgMember => !!m);
+
+  const selectable = canAssign
+    ? members.filter((m) => canAssign(m.userId) || value.includes(m.userId))
+    : members;
 
   const toggle = (userId: string) =>
     onChange(value.includes(userId) ? value.filter((id) => id !== userId) : [...value, userId]);
@@ -92,7 +103,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
             <DropdownMenuSeparator />
           </>
         )}
-        {members.map((m) => (
+        {selectable.map((m) => (
           <DropdownMenuCheckboxItem
             key={m.userId}
             checked={value.includes(m.userId)}

@@ -9,6 +9,7 @@ import { validateOrThrow } from '@/lib/validation/validate';
 import { createOrganizationSchema, joinCodeSchema } from './organization.schema';
 import { orgKeys } from './constants';
 import type { OrgRole } from './types';
+import type { SetOrgPermissionsInput } from './permissions';
 import { translator } from '@/i18n/useT';
 
 const useOrgRepository = () => getOrganizationsRepository();
@@ -411,6 +412,46 @@ export const useUpdateOrganization = () => {
     },
     onError: (error: Error) => {
       toast.error(translator('errors').t('mutation.updateOrgProfile', { message: error.message }));
+    },
+  });
+};
+
+// ─── Permissions par membre (mig. 115) ───────────────────────────────
+
+/**
+ * Les SURCHARGES de permissions posées dans l'organisation.
+ *
+ * Un membre absent de la liste n'a « aucune surcharge », pas « aucun droit » :
+ * la résolution passe toujours par `effectivePermissions`, jamais par la
+ * présence d'une ligne.
+ *
+ * Pas de sondage : une permission change à la main, rarement, et cette requête
+ * accompagne déjà `useOrgMembers` sur la page Entreprise (garde-fou egress,
+ * CLAUDE.md § synchronisation de la collaboration).
+ */
+export const useOrgMemberPermissions = (orgId: string | undefined) => {
+  const repository = useOrgRepository();
+  return useQuery({
+    queryKey: orgKeys.permissions(orgId ?? ''),
+    queryFn: () => repository.getMemberPermissions(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useSetMemberPermissions = () => {
+  const queryClient = useQueryClient();
+  const repository = useOrgRepository();
+  return useMutation({
+    mutationFn: ({ orgId, userId, input }: { orgId: string; userId: string; input: SetOrgPermissionsInput }) =>
+      repository.setMemberPermissions(orgId, userId, input),
+    onSuccess: (_d, variables) => {
+      toast.success(translator('errors').t('success.permissionsUpdated'));
+      queryClient.invalidateQueries({ queryKey: orgKeys.permissions(variables.orgId) });
+    },
+    onError: (error: Error) => {
+      toast.error(translator('errors').t('mutation.updatePermissions', { message: error.message }));
     },
   });
 };

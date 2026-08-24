@@ -33,7 +33,10 @@ interface ProjectsToolbarProps {
   currentUserId?: string;
   prefs: ProjectsUiPrefs;
   updatePrefs: (patch: Partial<ProjectsUiPrefs>) => void;
-  isManager: boolean;
+  /** Droit `project.create` — affiche « Nouveau projet ». */
+  canCreateProject: boolean;
+  /** Droit `team.create` — affiche « Créer une équipe » dans le sélecteur. */
+  canCreateTeam: boolean;
   onNewProject: () => void;
   /** Ouvre la création d'équipe — n'existe que si le sélecteur d'équipe est
    *  affiché (au moins une équipe déjà créée). */
@@ -86,7 +89,7 @@ const FilterChip = ({ label, removeLabel, onRemove }: {
 );
 
 const ProjectsToolbar = ({
-  members, teams, currentUserId, prefs, updatePrefs, isManager, onNewProject, onCreateTeam,
+  members, teams, currentUserId, prefs, updatePrefs, canCreateProject, canCreateTeam, onNewProject, onCreateTeam,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
   // La barre ne porte QUE le périmètre, la vue et la création. Les deux réglages
@@ -253,7 +256,7 @@ const ProjectsToolbar = ({
                       )}
                     </DropdownMenuItem>
                   ))}
-                  {isManager && (
+                  {canCreateTeam && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={onCreateTeam}>
@@ -343,7 +346,7 @@ const ProjectsToolbar = ({
           {/* La seule action créative de la page — et donc le seul bouton plein.
               L'état vide proposait déjà cet indigo : la barre s'aligne dessus
               au lieu de peindre « Nouveau projet » comme un réglage. */}
-          {isManager && (
+          {canCreateProject && (
             <button
               type="button"
               onClick={onNewProject}

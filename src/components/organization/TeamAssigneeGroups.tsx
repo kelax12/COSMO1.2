@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Check, Users2 } from 'lucide-react';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
+import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 
 interface TeamAssigneeGroupsProps {
@@ -20,6 +21,7 @@ const TeamAssigneeGroups = ({ orgId, value, onChange }: TeamAssigneeGroupsProps)
   const { t } = useT('org');
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  const { canAssign } = useMyOrgPermissions(orgId);
 
   const memberIdsByTeam = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -33,8 +35,18 @@ const TeamAssigneeGroups = ({ orgId, value, onChange }: TeamAssigneeGroupsProps)
 
   if (teams.length === 0) return null;
 
+  /**
+   * Membres d'une équipe RÉELLEMENT manipulables : ceux à portée
+   * d'assignation, plus ceux déjà cochés (le serveur ne contrôle que les
+   * ajouts — retirer une équipe entière doit rester possible). Sans ce filtre,
+   * cocher une équipe dont un seul membre est hors portée ferait rejeter TOUT
+   * l'enregistrement de la tâche.
+   */
+  const reachable = (teamId: string) =>
+    (memberIdsByTeam.get(teamId) ?? []).filter((id) => canAssign(id) || value.includes(id));
+
   const toggleTeam = (teamId: string) => {
-    const ids = memberIdsByTeam.get(teamId) ?? [];
+    const ids = reachable(teamId);
     if (ids.length === 0) return;
     const allSelected = ids.every((id) => value.includes(id));
     onChange(allSelected ? value.filter((id) => !ids.includes(id)) : [...new Set([...value, ...ids])]);
@@ -46,7 +58,7 @@ const TeamAssigneeGroups = ({ orgId, value, onChange }: TeamAssigneeGroupsProps)
         {t('team.sectionTitle', { count: teams.length })}
       </p>
       {teams.map((team) => {
-        const ids = memberIdsByTeam.get(team.id) ?? [];
+        const ids = reachable(team.id);
         const checked = ids.length > 0 && ids.every((id) => value.includes(id));
         return (
           <button

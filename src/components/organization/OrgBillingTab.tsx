@@ -107,7 +107,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           {/* Même badge que la landing entreprise (`PricingSection.tsx`) :
               annoncer la nature temporaire de l'offre AVANT le premier prix
               barré, pas seulement dans la phrase qui suit. */}
-          <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+          <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
             {t('billing.promoBadge')}
           </span>
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.dormant')}</p>

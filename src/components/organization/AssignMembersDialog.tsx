@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useMyOrgPermissions } from '@/modules/organizations';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
@@ -30,7 +31,11 @@ interface AssignMembersDialogProps {
  */
 const AssignMembersDialog = ({ orgId, task, members, onSave, onClose }: AssignMembersDialogProps) => {
   const { t } = useT('org');
+  const { canAssign } = useMyOrgPermissions(orgId);
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds ?? []);
+  // Portée d'assignation (mig. 115). Un membre déjà assigné reste listé : le
+  // serveur ne contrôle que les AJOUTS, on doit pouvoir le retirer.
+  const assignable = members.filter((m) => canAssign(m.userId) || assigneeIds.includes(m.userId));
 
   // `task` change à chaque ouverture (nouvelle tâche ciblée) — resynchronise
   // la sélection locale sans dépendre d'un useEffect.
@@ -59,7 +64,7 @@ const AssignMembersDialog = ({ orgId, task, members, onSave, onClose }: AssignMe
 
         <div className="max-h-72 overflow-y-auto rounded-xl border" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={setAssigneeIds} />
-          {members.map((m) => {
+          {assignable.map((m) => {
             const checked = assigneeIds.includes(m.userId);
             return (
               <button

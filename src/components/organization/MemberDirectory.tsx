@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Shield, UserCog, UserRound, MoreVertical, LogOut,
+  Shield, UserCog, UserRound, MoreVertical, LogOut, ShieldCheck,
   ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X,
 } from 'lucide-react';
 import {
@@ -14,6 +14,11 @@ import {
 import {
   useRemoveMember,
   useSetMemberManager,
+  useOrgMemberPermissions,
+  useSetMemberPermissions,
+  useMyOrgPermissions,
+  canEditPermissionsOf,
+  effectivePermissions,
   isManagerOf,
   subtreeOf,
   type OrgMember,
@@ -35,6 +40,7 @@ import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
+import MemberPermissionsSheet from './MemberPermissionsSheet';
 import { useT } from '@/i18n/useT';
 
 interface MemberDirectoryProps {
@@ -79,6 +85,9 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const { t } = useT('org');
   const removeMutation = useRemoveMember();
   const setManager = useSetMemberManager();
+  const { data: orgPermissions = [] } = useOrgMemberPermissions(orgId);
+  const setPermissions = useSetMemberPermissions();
+  const myPermissions = useMyOrgPermissions(orgId);
 
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
@@ -96,6 +105,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
   const [removing, setRemoving] = useState<OrgMember | null>(null);
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
+  const [editingPerms, setEditingPerms] = useState<OrgMember | null>(null);
 
   // ─── Deep-link `?member=<id>` ───────────────────────────────────────
   // Même contrat que `?task=` : on ouvre la fiche puis on retire le paramètre,
@@ -130,6 +140,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
    */
   const isAbove = (m: OrgMember) =>
     m.userId !== currentUserId && (isAdmin || mySubtree.has(m.userId));
+
+  // Droits effectifs de l'utilisateur courant : ils PLAFONNENT ce qu'il peut
+  // accorder (miroir de `enforce_org_permission_ceiling`, mig. 115).
+  const myEffective = useMemo(() => {
+    const me = currentUserId ? members.find((m) => m.userId === currentUserId) : undefined;
+    if (!me) return null;
+    const mine = orgPermissions.find((o) => o.userId === me.userId) ?? null;
+    return effectivePermissions({ member: me, members, overrides: mine });
+  }, [members, orgPermissions, currentUserId]);
 
   const teamsByUser = useMemo(() => {
     const byId = new Map(orgTeams.map((t) => [t.id, t]));
@@ -271,11 +290,18 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                           à tout svg qui n'en porte pas (cf. dropdown-menu.tsx),
                           exactement le style neutre du menu d'actions de
                           TaskTable. Seul l'item destructeur reste coloré. */}
-                      <DropdownMenuItem onClick={() => setAssigning(m)}>
-                        <ClipboardList size={14} aria-hidden="true" />
-                        {t('directory.assignTask')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      {/* Attribuer : seulement si ce membre est dans la portée
+                          d'assignation de l'utilisateur courant (mig. 115) —
+                          sinon le sheet s'ouvrirait pour finir en erreur RLS. */}
+                      {myPermissions.canAssign(m.userId) && (
+                        <>
+                          <DropdownMenuItem onClick={() => setAssigning(m)}>
+                            <ClipboardList size={14} aria-hidden="true" />
+                            {t('directory.assignTask')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem onClick={() => openMember(m, 'tasks')}>
                         <ListTodo size={14} aria-hidden="true" />
                         {t('directory.seeTasks')}
@@ -288,6 +314,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                         <TrendingUp size={14} aria-hidden="true" />
                         {t('directory.seeContribution')}
                       </DropdownMenuItem>
+                      {canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }) && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditingPerms(m)}>
+                            <ShieldCheck size={14} aria-hidden="true" />
+                            {t('permissions.menuItem')}
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       {isAdmin && (
                         <>
                           <DropdownMenuSeparator />
@@ -371,6 +406,25 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
             )
           }
           onCancel={() => setRemoving(null)}
+        />
+      )}
+
+      {editingPerms && myEffective && (
+        <MemberPermissionsSheet
+          member={editingPerms}
+          members={members}
+          current={orgPermissions.find((o) => o.userId === editingPerms.userId) ?? null}
+          actorPermissions={myEffective}
+          actorIsAdmin={isAdmin}
+          actorAssignTargets={myPermissions.assignTargets}
+          pending={setPermissions.isPending}
+          onSave={(input) =>
+            setPermissions.mutate(
+              { orgId, userId: editingPerms.userId, input },
+              { onSuccess: () => setEditingPerms(null) },
+            )
+          }
+          onClose={() => setEditingPerms(null)}
         />
       )}
 

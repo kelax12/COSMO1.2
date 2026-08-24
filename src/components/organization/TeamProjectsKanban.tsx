@@ -21,6 +21,13 @@ interface TeamProjectsKanbanProps {
   onOpenTask: (task: TeamTask) => void;
   /** Ouvre le sheet « attribuer / créer » pour une colonne (null = non assignées). */
   onAddToColumn: (memberId: string | null) => void;
+  /**
+   * Portée d'assignation de l'utilisateur courant (mig. 115). Une colonne
+   * « personne » hors portée refuse le dépôt et n'affiche pas son « + » :
+   * laisser le geste aboutir pour finir sur une erreur RLS donnerait
+   * l'impression d'un kanban cassé.
+   */
+  canAssign: (userId: string) => boolean;
   /** Axe des colonnes : charge par personne, ou flux par statut (mig. 091).
    *  Le contrôle qui le change vit dans ProjectsToolbar, juste à côté de
    *  l'onglet « Tableau » — pas ici : loin sous les colonnes, il passait
@@ -48,7 +55,7 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, groupBy, onSetStatus, assigneeFilter }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, canAssign, groupBy, onSetStatus, assigneeFilter }: TeamProjectsKanbanProps) => {
   const { t, tp } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -127,6 +134,9 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
     }
 
     // Déplace l'assignation : retire la colonne d'origine, ajoute la cible.
+    // Retirer est toujours permis (le serveur ne contrôle que les AJOUTS),
+    // ajouter suppose que la colonne cible soit à portée.
+    if (colId !== KANBAN_UNASSIGNED && !task.assigneeIds.includes(colId) && !canAssign(colId)) return;
     let next = task.assigneeIds.filter((id) => id !== payload!.from);
     if (colId !== KANBAN_UNASSIGNED && !next.includes(colId)) next = [...next, colId];
     onSetAssignees(task, next);
@@ -167,6 +177,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                     </span>
                   )}
                 </span>
+                {(!col.member || canAssign(col.id)) && (
                 <button
                   type="button"
                   onClick={() => onAddToColumn(col.member ? col.id : null)}
@@ -176,6 +187,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                 >
                   <Plus size={14} aria-hidden="true" />
                 </button>
+                )}
               </span>
             </div>
 

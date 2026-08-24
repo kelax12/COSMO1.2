@@ -14,6 +14,8 @@ export const ACTIVE_ORG_STORAGE_KEY = 'cosmo_active_org';
 export const ORG_INVITE_LINKS_STORAGE_KEY = 'cosmo_org_invite_links';
 export const ORG_NOTIFICATIONS_STORAGE_KEY = 'cosmo_org_notifications';
 export const ORG_INVITATIONS_STORAGE_KEY = 'cosmo_org_invitations';
+// Surcharges de permissions par membre (mig. 115) — vide par défaut.
+export const ORG_MEMBER_PERMISSIONS_STORAGE_KEY = 'cosmo_org_member_permissions';
 
 /**
  * React Query keys for organizations
@@ -31,4 +33,6 @@ export const orgKeys = {
   myRemovalNotices: () => [...orgKeys.all, 'myRemovalNotices'] as const,
   /** Amis que j'ai invités dans cette org, invitation encore en attente. */
   pendingSentInvitations: (orgId: string) => [...orgKeys.all, 'pendingSentInvitations', orgId] as const,
+  /** Surcharges de permissions posées dans cette org (mig. 115). */
+  permissions: (orgId: string) => [...orgKeys.all, 'permissions', orgId] as const,
 };

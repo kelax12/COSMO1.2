@@ -321,3 +321,88 @@ describe('SupabaseOrganizationsRepository — invitations placées', () => {
     expect(supabaseMock.rpcCalls[0]).toEqual({ fn: 'regenerate_join_code', args: { p_org: 'org1' } });
   });
 });
+
+describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)', () => {
+  const permRow = {
+    org_id: 'org1',
+    user_id: 'u2',
+    can_create_task: false,
+    can_edit_any_task: null,
+    can_delete_task: null,
+    can_create_project: true,
+    can_delete_project: null,
+    can_create_okr: null,
+    can_delete_okr: null,
+    can_manage_category: null,
+    can_create_team: null,
+    can_invite_member: null,
+    assign_targets: ['self'],
+  };
+
+  it('getMemberPermissions: lit la table filtrée sur l’org, NULL → « pas de décision »', async () => {
+    supabaseMock.queueTable('org_member_permissions', { data: [permRow] });
+    const result = await repo.getMemberPermissions('org1');
+
+    expect(supabaseMock.argsOf('org_member_permissions', 'eq')).toEqual(['org_id', 'org1']);
+    expect(result).toEqual([
+      {
+        orgId: 'org1',
+        userId: 'u2',
+        overrides: {
+          'task.create': false,
+          'task.editAny': null,
+          'task.deleteAny': null,
+          'project.create': true,
+          'project.delete': null,
+          'okr.create': null,
+          'okr.delete': null,
+          'category.manage': null,
+          'team.create': null,
+          'member.invite': null,
+        },
+        assignTargets: ['self'],
+      },
+    ]);
+  });
+
+  it('getMemberPermissions: un `assign_targets` absent reste null, jamais []', async () => {
+    // `null` (aucune décision → tout le monde) et `[]` (personne) sont deux
+    // états OPPOSÉS : les confondre couperait l'assignation à des membres qui
+    // n'ont jamais été restreints.
+    supabaseMock.queueTable('org_member_permissions', {
+      data: [{ ...permRow, assign_targets: null }],
+    });
+    const result = await repo.getMemberPermissions('org1');
+    expect(result[0].assignTargets).toBeNull();
+  });
+
+  it('setMemberPermissions: whitelist stricte — les dix colonnes, rien d’autre', async () => {
+    supabaseMock.queueTable('org_member_permissions', { data: null });
+    await repo.setMemberPermissions('org1', 'u2', {
+      // Une clé inconnue soumise par un appelant négligent ne doit pas
+      // atteindre PostgREST : on part des clés connues, jamais de l'objet reçu.
+      overrides: { 'project.create': true, 'task.create': false } as never,
+      assignTargets: ['self', 'manager'],
+    });
+
+    const upserted = supabaseMock.argsOf('org_member_permissions', 'upsert')?.[0] as Record<string, unknown>;
+    expect(upserted).toEqual({
+      org_id: 'org1',
+      user_id: 'u2',
+      can_create_task: false,
+      can_edit_any_task: null,
+      can_delete_task: null,
+      can_create_project: true,
+      can_delete_project: null,
+      can_create_okr: null,
+      can_delete_okr: null,
+      can_manage_category: null,
+      can_create_team: null,
+      can_invite_member: null,
+      assign_targets: ['self', 'manager'],
+    });
+    expect(supabaseMock.argsOf('org_member_permissions', 'upsert')?.[1]).toEqual({
+      onConflict: 'org_id,user_id',
+    });
+  });
+});

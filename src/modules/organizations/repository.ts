@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
+import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 
 export interface IOrganizationsRepository {
   // Read operations
@@ -82,4 +83,18 @@ export interface IOrganizationsRepository {
   claimInviteLink(token: string): Promise<{ orgId: string; orgName: string }>;
   /** Régénère le code permanent de l'org (admin) — l'ancien est invalidé. */
   regenerateJoinCode(orgId: string): Promise<string>;
+
+  // Permissions explicites par membre (mig. 115) — SURCHARGES uniquement.
+  /**
+   * Les surcharges posées dans cette org. Un membre absent de la liste suit
+   * les défauts dérivés (admin / manager / membre) : ne jamais interpréter
+   * une absence comme « aucun droit ».
+   */
+  getMemberPermissions(orgId: string): Promise<OrgMemberPermissions[]>;
+  /**
+   * Pose ou met à jour la surcharge d'un membre. Le plafond (« ne pas
+   * accorder un droit qu'on n'a pas ») est appliqué par le SERVEUR
+   * (`enforce_org_permission_ceiling`) — ce chemin n'est qu'une façade.
+   */
+  setMemberPermissions(orgId: string, userId: string, input: SetOrgPermissionsInput): Promise<void>;
 }

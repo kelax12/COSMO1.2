@@ -126,7 +126,6 @@ const KNOWN_OVERSIZED = new Set([
   'src/components/organization/TeamTasksTab.tsx', // 633
   'src/modules/auth/AuthContext.tsx', // 626
   'src/pages/tasks/TaskListsBar.tsx', // 615
-  'src/components/organization/TeamProjectsTab.tsx', // 603
   'src/modules/friends/supabase.repository.ts', // 601
 ]);
 
@@ -137,6 +136,12 @@ const KNOWN_OVERSIZED = new Set([
  * `friends/supabase.repository.ts`, oublié du premier comptage manuel
  * (troisième fois que le comptage à la main se trompe dans cet audit : c’est
  * l’argument de ce fichier).
+ *
+ * 2026-08-25 (permissions par membre, mig. 115) : **15 fichiers, 11 915 lignes.**
+ * `TeamProjectsTab.tsx` est sorti de la liste (603 → 576) par extraction de
+ * `use-team-tasks-selection.ts`. Même mécanique que la fois précédente : la
+ * feature ajoutait une poignée de lignes à trois fichiers déjà hors budget, le
+ * cliquet a refusé la croissance nette, la découpe a suivi.
  *
  * 2026-08-24 (2ᵉ passe) : **16 fichiers, 12 503 lignes.**
  * `team-projects/supabase.repository.ts` est sorti de la liste (601 → 483) par
@@ -149,7 +154,7 @@ const KNOWN_OVERSIZED = new Set([
  * Ne doit JAMAIS monter. Un découpage la fait baisser — baisser aussi ce
  * nombre le jour où c'est fait, sinon le cliquet reprend du mou.
  */
-const OVERSIZED_BUDGET = 12503;
+const OVERSIZED_BUDGET = 11915;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

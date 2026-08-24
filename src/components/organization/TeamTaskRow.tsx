@@ -1,7 +1,7 @@
 import { Check, Trash2, CalendarClock, AlignLeft } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import type { OrgMember } from '@/modules/organizations';
+import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue, taskDisplayStatus } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
@@ -26,6 +26,9 @@ const TeamTaskRow = ({
   task, members, onToggleComplete, onReassign, onDelete, onOpen,
   selectable = false, selected = false, onToggleSelect,
 }: TeamTaskRowProps) => {
+  // Portée d'assignation : la ligne ne connaît que sa tâche, et `task.orgId`
+  // suffit — le hook résout l'utilisateur courant lui-même.
+  const { canAssign } = useMyOrgPermissions(task.orgId);
   const { t } = useT('org');
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
@@ -117,6 +120,7 @@ const TeamTaskRow = ({
         members={members}
         value={task.assigneeIds}
         onChange={(ids) => onReassign(task, ids)}
+        canAssign={canAssign}
         revealAddOnHover
       />
 

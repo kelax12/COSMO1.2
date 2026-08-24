@@ -16,7 +16,9 @@ import {
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
   ORG_INVITE_LINKS_STORAGE_KEY,
+  ORG_MEMBER_PERMISSIONS_STORAGE_KEY,
 } from './constants';
+import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
 
 const DEMO_USER_ID = 'demo-user';
@@ -484,5 +486,42 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     org.joinCode = code;
     this.saveOrgs(orgs);
     return code;
+  }
+
+  // ─── Permissions par membre (mig. 115) ─────────────────────────────
+  //
+  // Aucune seed : la démo part sans surcharge, exactement comme une vraie
+  // organisation qui n'a jamais ouvert la fiche. L'utilisateur démo est admin
+  // de « Nova Studio », donc tout lui reste ouvert quoi qu'il règle.
+
+  private getPermissionsArray(): OrgMemberPermissions[] {
+    return readOrSeed<OrgMemberPermissions[]>(ORG_MEMBER_PERMISSIONS_STORAGE_KEY, []);
+  }
+
+  async getMemberPermissions(orgId: string): Promise<OrgMemberPermissions[]> {
+    return this.getPermissionsArray().filter((p) => p.orgId === orgId);
+  }
+
+  async setMemberPermissions(
+    orgId: string,
+    userId: string,
+    input: SetOrgPermissionsInput,
+  ): Promise<void> {
+    const target = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === userId);
+    if (!target) throw new Error('Membre introuvable');
+    // Miroir de la garde serveur : un admin détient tout par construction.
+    if (target.role === 'admin') {
+      throw new Error('Un administrateur détient déjà toutes les permissions');
+    }
+    const rows = this.getPermissionsArray().filter(
+      (p) => !(p.orgId === orgId && p.userId === userId),
+    );
+    rows.push({
+      orgId,
+      userId,
+      overrides: { ...input.overrides },
+      assignTargets: input.assignTargets,
+    });
+    localStorage.setItem(ORG_MEMBER_PERMISSIONS_STORAGE_KEY, JSON.stringify(rows));
   }
 }

@@ -32,7 +32,10 @@ interface TeamProjectCardProps {
   tasks: TeamTask[];
   members: OrgMember[];
   teams: OrgTeam[];
-  isManager: boolean;
+  /** Renommer, recolorer, rattacher à une équipe/catégorie (`project.create`). */
+  canEditProject: boolean;
+  /** Archiver ou restaurer (`project.delete` — l'archivage EST la suppression ici). */
+  canArchiveProject: boolean;
   collapsed: boolean;
   onToggleCollapse: () => void;
   /** True quand un filtre assigné est actif (adapte l'empty state). */
@@ -55,7 +58,7 @@ interface TeamProjectCardProps {
 
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
 const TeamProjectCard = ({
-  project, tasks, members, teams, isManager,
+  project, tasks, members, teams, canEditProject, canArchiveProject,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject, onStartSelect,
@@ -207,8 +210,8 @@ const TeamProjectCard = ({
             désormais pour tous, car « Sélectionner des tâches » y a remplacé le
             bouton ⋯ de la barre d'outils — un contributeur doit garder l'accès
             aux actions groupées. Les entrées d'administration restent gardées
-            par `isManager` une à une. */}
-        {(isManager || !!onStartSelect) && (
+            par les droits une à une. */}
+        {(canEditProject || canArchiveProject || !!onStartSelect) && (
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t('project.actionsAria', { name: project.name })}
@@ -217,12 +220,12 @@ const TeamProjectCard = ({
               <MoreHorizontal size={16} aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              {isManager && (
+              {canEditProject && (
                 <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
                   <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
                 </DropdownMenuItem>
               )}
-              {isManager && (
+              {canEditProject && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <Palette size={14} aria-hidden="true" /> {t('project.color')}
@@ -242,7 +245,7 @@ const TeamProjectCard = ({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               )}
-              {isManager && teams.length > 0 && (
+              {canEditProject && teams.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
@@ -260,7 +263,7 @@ const TeamProjectCard = ({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
               )}
-              {isManager && categories.length > 0 && (
+              {canEditProject && categories.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Tag size={14} aria-hidden="true" /> {t('project.category')}
@@ -283,14 +286,14 @@ const TeamProjectCard = ({
                   des tâches à cocher. */}
               {onStartSelect && tasks.length > 0 && (
                 <>
-                  {isManager && <DropdownMenuSeparator />}
+                  {canEditProject && <DropdownMenuSeparator />}
                   <DropdownMenuItem onClick={onStartSelect}>
                     <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMultiple')}
                   </DropdownMenuItem>
                 </>
               )}
-              {isManager && <DropdownMenuSeparator />}
-              {isManager && (archived ? (
+              {canArchiveProject && <DropdownMenuSeparator />}
+              {canArchiveProject && (archived ? (
                 <DropdownMenuItem onClick={() => onUpdateProject({ archived: false })}>
                   <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
                 </DropdownMenuItem>
