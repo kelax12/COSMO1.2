@@ -22,7 +22,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 | `npm run i18n:check` | ✅ 19 namespaces, 0 erreur |
 | Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 48 WARN `authenticated_security_definer_function_executable`, **5** WARN `anon_security_definer_function_executable` (2 de plus qu'au 2026-08-14, cf. finding B-3) |
 | Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée (vérifié en prod : `relrowsecurity = false` sur 0 table) |
-| Migrations appliquées en prod | ⏳ ledger à jour jusqu'à `108` (vérifié le 2026-08-24). **`109` et `110` écrites, PAS appliquées.** |
+| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `110_comment_notifications` (appliqué et vérifié le 2026-08-24) |
 
 Les fonctions exécutables par `anon` étaient **cinq** au 2026-08-24. Deux le sont
 volontairement : `preview_share_link(uuid)` (aperçu d'un lien d'invitation avant connexion) et
@@ -48,17 +48,17 @@ Trois choses ont changé depuis le 2026-08-14 :
   [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md).
 - 🟠 **Trois findings ouverts par la vague entreprise du 2026-08-23/24** (migrations `103` → `108`) :
   B-1, B-2, B-3.
-- 🟡 **Les trois sont corrigés dans le dépôt** par la migration
-  `109_policy_exec_rights_and_trigger_hardening.sql` — **mais elle n'est PAS encore appliquée en
-  prod**. Tant qu'elle ne l'est pas, les trois restent OUVERTS EN PRODUCTION. C'est la seule
-  action manuelle que ce fichier réclame aujourd'hui, avec A-9.
+- ✅ **Les trois sont refermés, dépôt ET production.** Migration `109` appliquée en prod le
+  2026-08-24, vérifiée en base immédiatement après (policy, droits d'exécution, `prosecdef`).
+  Advisor `anon_security_definer_function_executable` retombé de 5 à **2** — les deux seules
+  fonctions volontaires (`preview_share_link`, `record_demo_visit`).
 
 Un seul **bloquant** subsiste côté sécurité, et c'est un point de **résilience**, pas une faille :
 le plan Supabase `free`. Tout le reste est du réglage de console Supabase.
 
 ---
 
-## 🟡 B-1 · corrigé dans le dépôt (mig. 109), en attente de prod
+## ✅ B-1 · refermé (mig. 109, appliquée en prod le 2026-08-24)
 
 **Ce que c'était.** La mig. `100` a fermé la fuite des helpers en révoquant `EXECUTE` à
 `authenticated` sur `get_subtree` — et a réécrit la seule policy qui l'appelait **directement**,
@@ -87,7 +87,7 @@ identique, droit d'exécution conservé.
 Vérifié en réinjectant la régression : le script sort **exit 1** avec le nom de la fonction.
 Verrouillé par `scripts/migration-guards.test.mjs`.
 
-## 🟡 B-2 · corrigé dans le dépôt (mig. 109), en attente de prod
+## ✅ B-2 · refermé (mig. 109, appliquée en prod le 2026-08-24)
 
 **Ce que c'était.** `invite_friend_to_org` (mig. `105`) n'exigeait que `is_org_member(p_org)`, là
 où les deux autres chemins d'entrée dans une organisation sont bien plus stricts — vérifié en prod
@@ -113,14 +113,17 @@ l'organisation ».
 `InviteFriendsToOrg` sous `isAdmin`, et `AddUnderSheet` sous
 `canEdit = isAdmin || isManagerOf(members, currentUserId)` — or `isManagerOf` est, à la lettre,
 « quelqu'un a `managerId === moi` », c'est-à-dire `i_have_subordinates`. Aucun changement d'écran
-n'est donc nécessaire ; la clé d'erreur `api.not_allowed_to_invite` est ajoutée aux deux catalogues
-comme filet, pas comme parcours attendu.
+n'a donc été nécessaire ; la clé d'erreur `api.not_allowed_to_invite` est ajoutée aux deux
+catalogues comme filet, pas comme parcours attendu.
+
+**Vérifié en base le 2026-08-24** : `invite_friend_to_org(uuid, uuid)` redéployée avec la garde,
+signature inchangée.
 
 > ⚠️ **Reste ouvert, non traité** : `org_invitations_select` laisse tout membre lire l'`invitee_id`
 > de toutes les invitations, **y compris refusées**, sans date de péremption. Ce ne sont que des
 > UUID, mais c'est une trace persistante d'un refus. Cf. [`docs/RGPD.md`](./docs/RGPD.md) §1.
 
-## 🟡 B-3 · corrigé dans le dépôt (mig. 109), en attente de prod
+## ✅ B-3 · refermé (mig. 109, appliquée en prod le 2026-08-24)
 
 **Ce que c'était.** La mig. `108` enfreignait deux règles déjà écrites :
 
@@ -211,7 +214,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
 | # | Action | Nature | Qui | État |
 |---|---|---|---|---|
-| 1 | **Appliquer les migrations `109` et `110` en prod** (`109` referme B-1, B-2, B-3 ; `110` est la feature « badge de commentaires » livrée le 2026-08-24) | 🟠 les trois findings restent ouverts EN PROD tant que ce n'est pas fait | **Axel** (le CLI n'écrit pas de DDL, et écrire via le MCP est interdit) | ⏳ **en attente** |
+| 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |

@@ -445,8 +445,8 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**114 fichiers de migration, dernière = `110_comment_notifications.sql`** (au 2026-08-24).
-Appliquées en prod jusqu'à la `108` ; **`109` et `110` sont en attente d'application**.
+**114 fichiers de migration, dernière = `110_comment_notifications.sql`** (au 2026-08-24),
+**toutes appliquées en prod**.
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
