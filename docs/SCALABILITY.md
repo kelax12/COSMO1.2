@@ -1,10 +1,10 @@
 # Scalabilité — audit mesuré, décisions et runbook
 
 **Audit refait le 2026-08-14** contre la prod, **volumétrie et périmètre remesurés le 2026-08-24**
-(§1, §2bis). Le finding principal (§2) n'a **pas** été corrigé depuis, et la vague entreprise du
-2026-08-23/24 l'a élargi. Mesuré contre la prod (`ykeugqfgklejcdbrmawy`, Postgres 17.6, eu-west-1)
-et contre le code de `main`. Remplace l'édition du 2026-06-10, dont les volumétries étaient
-périmées et dont une conclusion s'est révélée fausse.
+(§1, §2bis). Le finding principal (§2) est **corrigé et appliqué en prod le 2026-08-24**. Mesuré
+contre la prod (`ykeugqfgklejcdbrmawy`, Postgres 17.6, eu-west-1) et contre le code de `main`.
+Remplace l'édition du 2026-06-10, dont les volumétries étaient périmées et dont une conclusion
+s'est révélée fausse.
 
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
@@ -37,11 +37,14 @@ deviennent bloquants à volume. Les mesurer maintenant est le seul moyen de les 
 
 ## 2. ✅ Le coût RLS du mode entreprise — corrigé (mig. 113, 2026-08-24)
 
-> **Correctif livré, pas encore appliqué en prod.** `get_my_team_projects(p_org)` et
+> **Correctif livré ET appliqué en prod le 2026-08-24.** `get_my_team_projects(p_org)` et
 > `get_my_team_tasks(p_org)` expriment le même ensemble en trois branches indexables et
 > n'évaluent le sous-arbre managérial qu'**une fois par organisation** au lieu d'une fois par
 > ligne. Les policies restent en place, inchangées. Le repository lit par ces RPC, et un test
-> verrouille le chemin d'accès. **Appliquer la mig. 113 AVANT de déployer le front.**
+> verrouille le chemin d'accès. Droits vérifiés en base après application : les deux RPC
+> exécutables par `authenticated` seulement, le helper interne (`my_team_project_ids`) fermé à
+> tout le monde — c'était la condition d'ordre : `main` appelait déjà ces RPC avant même que la
+> migration parte, donc le déploiement front devait attendre celui-ci, jamais l'inverse.
 >
 > Les index nécessaires existaient déjà — le problème n'a jamais été l'indexation des tables
 > d'appartenance, mais la FORME du prédicat, qui interdit d'utiliser un index sur la table lue.

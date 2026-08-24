@@ -464,19 +464,11 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **118 fichiers de migration, dernière = `114_analytics_retention.sql`** (au 2026-08-24).
-Appliquées en prod jusqu'à la **`110`** (ledger relu le 2026-08-24). **Quatre migrations sont
-écrites et NON appliquées** : `111` (catégories d'équipe), `112` (péremption RGPD des invitations
-refusées), `113` (lectures entreprise indexables), `114` (rétention analytique).
-
-> 🔴 **Blocage de déploiement — la `113` doit partir AVANT le prochain déploiement front.**
-> `src/modules/team-projects/supabase.repository.ts` appelle déjà `get_my_team_projects` et
-> `get_my_team_tasks` sur `main`. Vérifié en base le 2026-08-24 : **ces deux fonctions n'existent
-> pas en prod**. Vérifié aussi côté CDN : le bundle actuellement servi est un build ANTÉRIEUR au
-> basculement (il ne contient aucune des deux chaînes) — la prod n'est donc pas cassée
-> aujourd'hui, mais elle le devient au premier déploiement de `main`. Ordre obligatoire :
-> appliquer la `113`, **puis** déployer.
->
-> Les `112` et `114` SUPPRIMENT des lignes : elles ne partent pas sans décision explicite.
+**Toutes appliquées en prod** — ledger et droits d'exécution revérifiés en base le 2026-08-24
+après application des `111`→`114` (colonnes `team_projects.category_id` / `team_tasks.category_id`
+créées, job `cosmo-prune-declined-invitations` actif, `get_my_team_projects`/`get_my_team_tasks`
+exécutables par `authenticated` uniquement, rétention 400 j présente dans `touch_last_seen` /
+`record_demo_visit`).
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
@@ -557,7 +549,8 @@ supabase.rpc('get_my_team_projects', { p_org: orgId })           // ✅ mig. 113
   d'une fois par ligne lue.
 - Les policies restent en place, inchangées (défense en profondeur). Le déploiement est donc
   réversible sans downtime — mais la **mig. 113 doit être appliquée AVANT** de déployer le front,
-  sinon la RPC n'existe pas.
+  sinon la RPC n'existe pas. **Appliquée en prod le 2026-08-24**, avant que `main` (qui appelle
+  déjà ces RPC) ne soit déployé sur Vercel.
 - Le chemin d'accès est verrouillé par test (`src/modules/team-projects/supabase.repository.test.ts`) :
   un retour à `.from('team_tasks')` échoue en CI.
 
