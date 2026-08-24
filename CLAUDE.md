@@ -284,7 +284,7 @@ Comportement **quand `PREMIUM_ENFORCED = true`** :
 - Le client ne peut plus écrire `subscriptions` (mig. 015) : `addTokens(1)` passe par la RPC
   `credit_premium_token_from_ad` (cap 20 crédits/24 h).
 
-#### Facturation entreprise — Stripe ACTIF en mode test (2026-08-24)
+#### Facturation entreprise — plomberie Stripe COMPLÈTE, facturation DÉSACTIVÉE (2026-08-24)
 
 `org_subscriptions` (mig. 101) porte l'abonnement d'une **organisation** : un palier
 (`ENTERPRISE_PRICING_TIERS`), un quota de sièges (`max_members`), un statut. Ne jamais la
@@ -327,12 +327,22 @@ Garde-fous propres à cette zone :
   dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
   palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
   palier ajouté sans nom ne compile pas).
-- **Activé le 2026-08-24** : `billing_flags.enterprise_seat_limit = true` en prod,
-  `ENTERPRISE_BILLING_ENFORCED = true`, `stripe-org-checkout` / `stripe-org-portal` déployées
-  et les 4 `STRIPE_ORG_PRICE_*` posés en secrets. `stripe-webhook` a été redéployée le même
-  jour : la version qui tournait en prod était **antérieure au routage `org_id`** et aurait
-  fait retomber une facture d'organisation sur l'abonnement personnel du propriétaire.
-- 🔴 **La grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
+- 🟢 **DÉSACTIVÉ le 2026-08-24, même jour que son activation** : la micro-entreprise d'Axel
+  n'existe pas encore, donc COSMO ne peut légalement rien encaisser. **Tout est gratuit, sans
+  plafond de sièges.** `ENTERPRISE_BILLING_ENFORCED = false` **et**
+  `billing_flags.enterprise_seat_limit = false` en prod — les **deux** ensemble, jamais l'un
+  sans l'autre (cf. règle ci-dessous).
+- **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
+  4 `STRIPE_ORG_PRICE_*` en secrets, `org_subscriptions` (mig. 101), `org_seats_allowed()`, et
+  `stripe-webhook` — redéployée le 2026-08-24, car la version qui tournait en prod était
+  **antérieure au routage `org_id`** et aurait fait retomber une facture d'organisation sur
+  l'abonnement personnel du propriétaire. Réactiver = rebasculer les deux drapeaux, rien à
+  reconstruire.
+- 🔴 **Les deux drapeaux se déplacent ensemble.** Le flag TS ne masque que les CTA ; le blocage
+  réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
+  propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
+  propose de payer : impasse. Client `true` + serveur `false` = on encaisse sans rien débloquer.
+- 🔴 **Le jour de la réactivation : la grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
   clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
   test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
   : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 4
@@ -341,8 +351,9 @@ Garde-fous propres à cette zone :
 - ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
   deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
   `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
-- Retour arrière (immédiat, réversible) : `ENTERPRISE_BILLING_ENFORCED = false` +
-  `UPDATE billing_flags SET enabled = false WHERE key = 'enterprise_seat_limit'`.
+- Réactivation (immédiate, réversible) : `ENTERPRISE_BILLING_ENFORCED = true` +
+  `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'` — **après** la
+  création de la micro-entreprise et le passage du compte Stripe en live.
   Contexte historique : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
 
 ### Données métier

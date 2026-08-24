@@ -65,22 +65,33 @@ export const ENTERPRISE_PRICING_TIERS = [
 export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 
 //  false → aucune limite appliquée ; la bannière informative s'affiche à
-//          partir de ORG_FREE_SEATS membres (préparation du marché).
+//          partir de ORG_FREE_SEATS membres (préparation du marché), aucun CTA
+//          de paiement n'est monté.
 //  true  → le client masque/désactive les CTA d'ajout au-delà du quota ;
 //          le VRAI blocage est côté serveur (billing_flags
 //          'enterprise_seat_limit', mig. 067 — 1 UPDATE pour activer).
 //
-// ACTIVÉ le 2026-08-24 (demande Axel). Le drapeau serveur
-// `billing_flags.enterprise_seat_limit` est passé à `true` le même jour, les
-// Edge Functions `stripe-org-checkout` / `stripe-org-portal` sont déployées et
-// les quatre price IDs sont posés en secrets Supabase.
+// REPASSÉ À `false` le 2026-08-24 (demande Axel) : la micro-entreprise n'est pas
+// encore créée, donc COSMO ne peut légalement rien encaisser. Tout est gratuit,
+// sans plafond de sièges.
 //
-// ⚠️ La grille Stripe branchée est celle du SANDBOX DE TEST : `STRIPE_SECRET_KEY`
-// en prod est une clé de test (les customers des vrais utilisateurs vivent dans
-// le compte « Environnement de test COSMO », le compte live est vide). Un
-// checkout n'accepte donc que des cartes de test — c'est un galop d'essai en
-// prod, pas encore un encaissement. Passer en live = recréer les 4 prix sur le
-// compte live, réenregistrer un endpoint webhook live, puis remplacer
-// STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
-export const ENTERPRISE_BILLING_ENFORCED = true;
+// ⚠️ RIEN N'A ÉTÉ SUPPRIMÉ — toute la plomberie Stripe entreprise reste en place
+// et déployée : Edge Functions `stripe-org-checkout` / `stripe-org-portal`, les
+// quatre secrets `STRIPE_ORG_PRICE_*`, `stripe-webhook` (routage `org_id`), la
+// table `org_subscriptions` (mig. 101) et `org_seats_allowed()`. Ce flag est la
+// SEULE condition d'affichage du CTA de paiement : le rebasculer à `true` suffit
+// à réactiver la facturation côté client.
+//
+// 🔴 Le flag client ne suffit PAS à tout rendre gratuit : le gate bloquant est en
+// base. Il doit rester désactivé tant que ce flag vaut `false` —
+//   UPDATE public.billing_flags SET enabled = false WHERE key = 'enterprise_seat_limit';
+// Sinon un propriétaire se verrait refuser une invitation (`seat_limit_reached`)
+// sans qu'aucun écran ne lui propose de payer : impasse totale.
+//
+// ⚠️ Rappel pour le jour de la réactivation : la grille Stripe branchée est celle
+// du SANDBOX DE TEST (`STRIPE_SECRET_KEY` en prod est une clé de test, le compte
+// live est vide). Passer en live = recréer les 4 prix sur le compte live,
+// réenregistrer un endpoint webhook live, puis remplacer STRIPE_SECRET_KEY /
+// STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
+export const ENTERPRISE_BILLING_ENFORCED = false;
 export const ORG_FREE_SEATS = 5;
